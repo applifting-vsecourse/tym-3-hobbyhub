@@ -1,6 +1,7 @@
 name: User story
 description: Nový požadavek ve formátu user story
-title: "User Story"
+projects: ["applifting-vsecourse/14"]
+labels: ["Priority: MVP"]
 body:
   - type: markdown
     attributes:
