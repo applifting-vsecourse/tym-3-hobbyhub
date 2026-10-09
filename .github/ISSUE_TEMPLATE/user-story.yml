@@ -1,6 +1,6 @@
 name: User story
 description: Nový požadavek ve formátu user story
-title: ""
+title: "User Story"
 body:
   - type: markdown
     attributes:
