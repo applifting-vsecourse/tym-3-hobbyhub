@@ -1,0 +1,72 @@
+name: User story
+description: Nový požadavek ve formátu user story
+title: ""
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Vyplň všech šest sekcí. Každá má svůj důvod — akceptační kritéria musí být ověřitelná, protože podle nich testuje QA i PO.
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      description: Jako [role] chci [akce], abych [cíl].
+      value: "**Jako** [role] **chci** [akce], **abych** [cíl]."
+    validations:
+      required: true
+
+  - type: textarea
+    id: kontext
+    attributes:
+      label: Kontext
+      description: Odkaz na feature a proč to řešíme.
+      value: |
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: akceptacni-kriteria
+    attributes:
+      label: Akceptační kritéria
+      description: Ověřitelná kritéria. Podle nich testuje QA i PO. Jedno kritérium = jeden řádek.
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: mimo-rozsah
+    attributes:
+      label: Mimo rozsah
+      description: Co agent dělat nemá. Odkaž na issue, kde se to řeší.
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: podklady
+    attributes:
+      label: Podklady
+      description: Wireframe, data, odkazy.
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: false
+
+  - type: textarea
+    id: zdroj
+    attributes:
+      label: Zdroj
+      description: Odkud požadavek je — klient, rozhovor.
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
