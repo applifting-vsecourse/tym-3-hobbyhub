@@ -21,12 +21,12 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
       <Header userMenu={null} />
       <main className="min-h-svh">
         <section className="mx-auto w-full max-w-sm px-4 py-16">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+          <h1 className="typo-h1 text-foreground">{title}</h1>
+          <p className="mt-2 typo-body text-muted-foreground">{description}</p>
 
           <div className="mt-8">{children}</div>
 
-          <p className="mt-6 text-sm text-muted-foreground">{footer}</p>
+          <p className="mt-6 typo-small text-muted-foreground">{footer}</p>
         </section>
       </main>
     </>

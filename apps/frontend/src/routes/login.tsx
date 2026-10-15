@@ -47,7 +47,7 @@ function LoginPage() {
       <Seo title="Sign in" />
       <AuthLayout
         title="Sign in"
-        description="Welcome back to Quacker."
+        description="Welcome back to HobbyHub."
         footer={
           <>
             No account?{" "}

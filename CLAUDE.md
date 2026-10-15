@@ -24,6 +24,8 @@ Deliberately sparse — this file grows as the team learns what it expects from 
 
 Need a control that isn't in `src/components/ui/`? Add it with `pnpm dlx shadcn@latest add <name>` — don't hand-roll one in a feature folder, even where a native input would do the job. One accessibility implementation to reason about beats a per-control judgement call.
 
+The CLI sometimes writes `import { cn } from "cn"` and installs an unrelated `cn` package — change the import to `@/lib/utils` and `pnpm remove cn`.
+
 The CLI puts `shadow-xs`/`shadow-sm` on inputs, textareas and cards. [`DESIGN.md`](DESIGN.md) keeps shadows for things that genuinely float — dialogs, dropdowns, toasts. Strip them.
 
 ### The app is already running

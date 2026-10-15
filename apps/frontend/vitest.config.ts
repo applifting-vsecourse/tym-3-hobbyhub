@@ -1,8 +1,9 @@
 import react from "@vitejs/plugin-react"
+import svgr from "vite-plugin-svgr"
 import { configDefaults, defineConfig } from "vitest/config"
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), svgr()],
   // Vite 8 resolves tsconfig `paths` (the `@/` alias) natively.
   resolve: { tsconfigPaths: true },
   test: {
