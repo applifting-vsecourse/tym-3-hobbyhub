@@ -5,14 +5,18 @@
 **Rozhodující:** <names>
 
 ## Kontext
+
 Jakému problému čelíme? Jaké vlivy (technické, obchodní, týmové) zde působí?
 
 ## Rozhodnutí
+
 To, pro co jsme se rozhodli – vyjádřeno aktivně „Budeme…“.
 
 ## Zvažované možnosti
-* Možnost A – výhody / nevýhody
-* Možnost B – výhody / nevýhody
+
+- Možnost A – výhody / nevýhody
+- Možnost B – výhody / nevýhody
 
 ## Důsledky
+
 Co se v důsledku toho stane snazším nebo obtížnějším? Vyžaduje to nějakou navazující práci nebo s sebou nese rizika?

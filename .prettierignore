@@ -5,3 +5,6 @@ apps
 
 # Prisma client (generated)
 apps/backend/src/generated/
+
+# Issue forms: block scalars keep trailing spaces on purpose ("- [ ] " stays a checkbox)
+.github/ISSUE_TEMPLATE/
