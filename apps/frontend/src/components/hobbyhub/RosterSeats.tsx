@@ -1,3 +1,4 @@
+import { Fragment, type CSSProperties } from "react"
 import { cva } from "class-variance-authority"
 
 import { ActivityAvatar, AVATAR_KINDS } from "@/components/hobbyhub/ActivityAvatar"
@@ -25,6 +26,8 @@ type RosterSeatsProps = {
   size?: keyof typeof avatarSize
   /** `dark` for the signal surface (hero, roster band in e-mails). */
   surface?: "light" | "dark"
+  /** Seats pop in one after another on first render. Off by default: rosters in lists must not replay it. */
+  isAnimated?: boolean
   className?: string
 }
 
@@ -37,6 +40,7 @@ export function RosterSeats({
   capacity,
   size = "md",
   surface = "light",
+  isAnimated = false,
   className,
 }: RosterSeatsProps) {
   const filled = Math.min(Math.max(taken, 0), capacity)
@@ -47,17 +51,29 @@ export function RosterSeats({
       aria-label={capacityLabel({ taken: filled, min: capacity })}
       className={cn(rosterVariants({ size }), className)}
     >
-      {Array.from({ length: capacity }, (_, index) => (
-        <ActivityAvatar
-          // Seats have no identity beyond their position.
-          key={index}
-          size={avatarSize[size]}
-          avatar={index < filled ? (AVATAR_KINDS[index % AVATAR_KINDS.length] ?? "free") : "free"}
-          tone={surface === "dark" ? "inverse" : "default"}
-          // In the 5-column grids each seat fills its column, so the roster shrinks on small phones.
-          isFluid={size === "lg" || size === "xl"}
-        />
-      ))}
+      {Array.from({ length: capacity }, (_, index) => {
+        const seat = (
+          <ActivityAvatar
+            size={avatarSize[size]}
+            avatar={index < filled ? (AVATAR_KINDS[index % AVATAR_KINDS.length] ?? "free") : "free"}
+            tone={surface === "dark" ? "inverse" : "default"}
+            // In the 5-column grids each seat fills its column, so the roster shrinks on small phones.
+            isFluid={size === "lg" || size === "xl"}
+          />
+        )
+        // Seats have no identity beyond their position.
+        return isAnimated ? (
+          <span
+            key={index}
+            className="flex seat-enter"
+            style={{ "--seat-index": index } as CSSProperties}
+          >
+            {seat}
+          </span>
+        ) : (
+          <Fragment key={index}>{seat}</Fragment>
+        )
+      })}
     </div>
   )
 }

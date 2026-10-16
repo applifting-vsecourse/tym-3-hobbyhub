@@ -91,9 +91,10 @@ function LandingPage() {
           </>
         }
       />
-      <main className="mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 py-6 md:py-8">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8">
         <Hero
-          className="enter"
+          className="enter [--seat-delay:300ms]"
+          isAnimated
           titleAs="h1"
           kicker="Čtvrteční florbal · dnes 19:00"
           title="Doplňte chybějící hráče dřív, než se akce zruší"
@@ -127,10 +128,11 @@ function LandingPage() {
             Dnes večer
           </h2>
           {TONIGHT.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 [--seat-delay:500ms] md:grid-cols-2 lg:grid-cols-3">
               {TONIGHT.map(({ id, ...event }) => (
                 <EventCard
                   key={id}
+                  isAnimated
                   {...event}
                 />
               ))}

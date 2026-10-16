@@ -11,6 +11,8 @@ type EventCardProps = {
   taken: number
   capacity: number
   photo: { src: string; alt: string }
+  /** Seats pop in one by one on first render. */
+  isAnimated?: boolean
   className?: string
 }
 
@@ -26,6 +28,7 @@ export function EventCard({
   taken,
   capacity,
   photo,
+  isAnimated = false,
   className,
 }: EventCardProps) {
   const missing = Math.max(capacity - taken, 0)
@@ -56,6 +59,7 @@ export function EventCard({
           size="sm"
           taken={taken}
           capacity={capacity}
+          isAnimated={isAnimated}
         />
         {missing > 0 ? (
           <span className="shrink-0 rounded-full bg-signal px-2.5 py-0.75 typo-small text-signal-foreground">

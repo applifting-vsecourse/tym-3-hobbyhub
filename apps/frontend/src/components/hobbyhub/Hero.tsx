@@ -15,6 +15,8 @@ type HeroProps = {
   /** Desktop-only secondary action, e.g. <Button variant="secondary">Vypsat akci</Button>. */
   secondaryAction?: ReactNode
   titleAs?: "h1" | "h2"
+  /** Seats pop in one by one on first render. */
+  isAnimated?: boolean
   className?: string
 }
 
@@ -32,6 +34,7 @@ export function Hero({
   action,
   secondaryAction,
   titleAs: Title = "h2",
+  isAnimated = false,
   className,
 }: HeroProps) {
   return (
@@ -51,6 +54,7 @@ export function Hero({
           surface="dark"
           taken={taken}
           capacity={capacity}
+          isAnimated={isAnimated}
           className="md:hidden"
         />
         <p className="typo-body text-signal-soft md:typo-body-lg">{text}</p>
@@ -64,6 +68,7 @@ export function Hero({
         surface="dark"
         taken={taken}
         capacity={capacity}
+        isAnimated={isAnimated}
         className="hidden md:grid xl:hidden"
       />
       <RosterSeats
@@ -71,6 +76,7 @@ export function Hero({
         surface="dark"
         taken={taken}
         capacity={capacity}
+        isAnimated={isAnimated}
         className="hidden xl:grid"
       />
     </section>

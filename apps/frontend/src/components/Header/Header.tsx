@@ -20,7 +20,8 @@ export function Header({ userMenu, search }: HeaderProps) {
       <div
         className={cn(
           "mx-auto flex h-14 w-full items-center gap-4 px-4",
-          search ? "max-w-screen-2xl md:h-16" : "max-w-4xl",
+          search && "md:px-6 lg:px-8",
+          search ? "max-w-6xl md:h-16" : "max-w-4xl",
         )}
       >
         <HeaderLogo />
