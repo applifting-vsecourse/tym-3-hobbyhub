@@ -378,7 +378,7 @@
 }
 
 /*
- * Roster seats appear one after another (70ms apart, after --seat-delay) so
+ * Roster seats appear one after another (130ms apart, after --seat-delay) so
  * the table visibly fills up. Reduced motion keeps a plain cross-fade.
  */
 @keyframes seat-fade {
@@ -393,8 +393,8 @@
   }
 }
 @utility seat-enter {
-  animation: seat-fade 300ms cubic-bezier(0.2, 0, 0, 1) both;
-  animation-delay: calc(var(--seat-delay, 0ms) + var(--seat-index, 0) * 70ms);
+  animation: seat-fade 500ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(var(--seat-delay, 0ms) + var(--seat-index, 0) * 130ms);
   @media (prefers-reduced-motion: no-preference) {
     animation-name: seat-pop;
   }
