@@ -26,6 +26,29 @@ describe("translations", () => {
   })
 })
 
+describe("plurals", () => {
+  const cases = [
+    ["cs", 1, "Maximálně 1 znak"],
+    ["cs", 3, "Maximálně 3 znaky"],
+    ["cs", 280, "Maximálně 280 znaků"],
+    ["en", 1, "Keep it under 1 character"],
+    ["en", 280, "Keep it under 280 characters"],
+  ] as const
+
+  it.each(cases)("%s, count %i", async (language, count, expected) => {
+    await i18n.changeLanguage(language)
+    expect(i18n.t("quacks.form.tooLong", { count })).toBe(expected)
+    await i18n.changeLanguage("cs")
+  })
+
+  it("keeps 'missing' invariant in Czech and English", async () => {
+    expect(i18n.t("hobbyhub.capacity.missing", { count: 5 })).toBe("chybí 5")
+    await i18n.changeLanguage("en")
+    expect(i18n.t("hobbyhub.capacity.missing", { count: 5 })).toBe("5 missing")
+    await i18n.changeLanguage("cs")
+  })
+})
+
 describe("LanguageSwitcher", () => {
   afterEach(async () => {
     await i18n.changeLanguage("cs")
