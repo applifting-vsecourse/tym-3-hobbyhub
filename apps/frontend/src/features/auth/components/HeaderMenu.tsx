@@ -26,8 +26,8 @@ export function HeaderMenu() {
       <Button
         asChild
         size="sm"
-        // Outline on a phone (Figma W1), primary from md where the header has room.
-        className="max-md:border max-md:border-input max-md:bg-transparent max-md:text-foreground max-md:hover:bg-accent"
+        // Outline at every width: the screen's one primary action is its own, not signing in.
+        variant="outline"
       >
         <Link to="/login">{t("header.signIn")}</Link>
       </Button>
