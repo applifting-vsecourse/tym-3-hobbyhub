@@ -173,7 +173,7 @@ function LandingPage() {
               </li>
             ))}
           </ol>
-          <div className="flex flex-col gap-3 pt-2 sm:flex-row md:hidden">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <Button
               asChild
               variant="secondary"
