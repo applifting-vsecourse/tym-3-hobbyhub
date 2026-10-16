@@ -24,8 +24,9 @@ export function HeaderMenu() {
       <Button
         asChild
         size="sm"
+        variant="outline"
       >
-        <Link to="/login">Sign in</Link>
+        <Link to="/login">Přihlásit se</Link>
       </Button>
     )
   }
