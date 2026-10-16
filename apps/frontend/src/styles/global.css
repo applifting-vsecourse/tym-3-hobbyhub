@@ -1,9 +1,21 @@
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/outfit";
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
+
+/*
+ * HobbyHub design system — tokens from Figma "HobbyHub – návrh designu",
+ * page "1 · Design system" (variable collection HobbyHub DS / Barvy).
+ * shadcn/ui semantic names are kept; the domain adds four state families:
+ *   signal   — people are missing (graphite + dashes)
+ *   success  — approved / full
+ *   pending  — waiting for approval
+ *   destructive — error, irreversible action
+ * Each family has a solid colour, its foreground, a soft surface and an ink
+ * (text on the soft surface).
+ */
 
 @theme inline {
   --color-background: var(--background);
@@ -20,84 +32,324 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  /* Scrim behind drawers and dialogs. */
+  --color-overlay: var(--overlay);
+
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
+  --color-signal-soft: var(--signal-soft);
+  --color-signal-ink: var(--signal-ink);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-pending: var(--pending);
+  --color-pending-foreground: var(--pending-foreground);
+  --color-pending-soft: var(--pending-soft);
+  --color-pending-ink: var(--pending-ink);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-ink: var(--destructive-ink);
 
   --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
 
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
+  /* Radius hierarchy: fields and buttons md, cards lg, event card and
+     dialogs xl, seats and filters pill (rounded-full). */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  /* One shadow, for things that float: pins, popovers, dialogs, toasts.
+     The small steps are deliberately empty so a stray shadow-sm from the
+     shadcn CLI renders nothing. */
+  --shadow-2xs: var(--shadow-none);
+  --shadow-xs: var(--shadow-none);
+  --shadow-sm: var(--shadow-none);
+  --shadow: var(--shadow-float);
+  --shadow-md: var(--shadow-float);
+  --shadow-lg: var(--shadow-float);
+  --shadow-xl: var(--shadow-float);
+  --shadow-2xl: var(--shadow-float);
+  --shadow-float: var(--shadow-float);
+  /* The same float shadow for non-rectangular shapes (map pins). */
+  --drop-shadow-float: var(--drop-shadow-float);
 }
 
-:root {
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.2153 0.0187 235.1251);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2153 0.0187 235.1251);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2153 0.0187 235.1251);
-  --primary: oklch(0.761 0.2015 149.7403);
-  --primary-foreground: oklch(0.2153 0.0187 235.1251);
-  --secondary: oklch(0.9644 0.0208 166.1014);
-  --secondary-foreground: oklch(0.4335 0.0754 182.2315);
-  --muted: oklch(0.9605 0.0046 258.3248);
-  --muted-foreground: oklch(0.5589 0.0255 233.7233);
-  --accent: oklch(0.9644 0.0208 166.1014);
-  --accent-foreground: oklch(0.4335 0.0754 182.2315);
-  --destructive: oklch(0.55 0.2058 29.0773);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9436 0.0051 228.8204);
-  --input: oklch(0.9436 0.0051 228.8204);
-  --ring: oklch(0.761 0.2015 149.7403);
-  --radius: 0.5rem;
-  --shadow-2xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0px 2px 10px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0px 2px 10px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0px 2px 10px 0px hsl(0 0% 0% / 0.1), 0px 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0px 2px 10px 0px hsl(0 0% 0% / 0.1), 0px 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0px 2px 10px 0px hsl(0 0% 0% / 0.1), 0px 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0px 2px 10px 0px hsl(0 0% 0% / 0.25);
+/* Loader motion. Every loader is wrapped in motion-safe, so it stands still
+   under prefers-reduced-motion. */
+@theme {
+  --animate-loader-bounce: loader-bounce 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite alternate;
+  --animate-loader-shadow: loader-shadow 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite alternate;
+  --animate-loader-spin: spin 1.4s linear infinite;
+  --animate-loader-roll: loader-roll 2s ease-in-out infinite;
+  --animate-loader-roll-shadow: loader-roll-shadow 2s ease-in-out infinite;
+  --animate-loader-seat: loader-seat 2.5s ease-in-out infinite both;
+  --animate-loader-found: loader-found 2.4s ease-in-out infinite;
+
+  @keyframes loader-bounce {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(14px);
+    }
+  }
+  @keyframes loader-shadow {
+    from {
+      transform: scaleX(0.46);
+      opacity: 0.12;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 0.35;
+    }
+  }
+  @keyframes loader-roll {
+    0% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-8px) rotate(90deg);
+    }
+    50% {
+      transform: translateY(0) rotate(180deg);
+    }
+    75% {
+      transform: translateY(-8px) rotate(270deg);
+    }
+    100% {
+      transform: translateY(0) rotate(360deg);
+    }
+  }
+  @keyframes loader-roll-shadow {
+    0%,
+    50%,
+    100% {
+      transform: scaleX(1);
+      opacity: 0.2;
+    }
+    25%,
+    75% {
+      transform: scaleX(0.67);
+      opacity: 0.12;
+    }
+  }
+  @keyframes loader-seat {
+    0%,
+    10% {
+      opacity: 0;
+    }
+    20%,
+    75% {
+      opacity: 1;
+    }
+    85%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes loader-found {
+    0%,
+    35% {
+      opacity: 0;
+    }
+    55%,
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+/* `.light` forces the light values inside a dark page (design-system page). */
+:root,
+.light {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Outfit Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --background: #fbfafc;
+  --foreground: #1f1a29;
+  --card: #ffffff;
+  --card-foreground: #1f1a29;
+  --popover: #ffffff;
+  --popover-foreground: #1f1a29;
+  --primary: #6d28d9;
+  --primary-foreground: #ffffff;
+  --secondary: #f1eef5;
+  --secondary-foreground: #3b3249;
+  --muted: #f1eef5;
+  --muted-foreground: #6a6277;
+  --accent: #ede7fb;
+  --accent-foreground: #4c1d95;
+  --border: #e3deea;
+  --input: #8b839a;
+  --ring: #7c3aed;
+  --overlay: rgb(31 26 41 / 0.45);
+
+  --signal: #1f1a29;
+  --signal-foreground: #ffffff;
+  --signal-soft: #ece9f1;
+  --signal-ink: #1f1a29;
+  --success: #15803d;
+  --success-foreground: #ffffff;
+  --success-soft: #dcfce7;
+  --success-ink: #166534;
+  --pending: #6a6277;
+  --pending-foreground: #ffffff;
+  --pending-soft: #f1eef5;
+  --pending-ink: #4a4256;
+  --destructive: #b8321f;
+  --destructive-foreground: #ffffff;
+  --destructive-soft: #fde4df;
+  --destructive-ink: #8f1f0f;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-none: 0 0 #0000;
+  --shadow-float: 0 8px 24px 0 rgb(76 29 149 / 0.1);
+  --drop-shadow-float: 0 8px 24px rgb(76 29 149 / 0.1);
 }
 
 .dark {
-  --background: oklch(0.1854 0.0182 238.2143);
-  --foreground: oklch(0.9436 0.0051 228.8204);
-  --card: oklch(0.2848 0.023 235.6578);
-  --card-foreground: oklch(0.9436 0.0051 228.8204);
-  --popover: oklch(0.2848 0.023 235.6578);
-  --popover-foreground: oklch(0.9436 0.0051 228.8204);
-  --primary: oklch(0.6509 0.1283 170.4258);
-  --primary-foreground: oklch(0.2153 0.0187 235.1251);
-  --secondary: oklch(0.2933 0.0423 172.8195);
-  --secondary-foreground: oklch(0.6509 0.1283 170.4258);
-  --muted: oklch(0.2456 0.0195 239.1061);
-  --muted-foreground: oklch(0.6637 0.0236 235.1968);
-  --accent: oklch(0.2933 0.0423 172.8195);
-  --accent-foreground: oklch(0.6509 0.1283 170.4258);
-  --destructive: oklch(0.6257 0.2058 29.0773);
-  --destructive-foreground: oklch(0.9436 0.0051 228.8204);
-  --border: oklch(0.3351 0.0253 234.8586);
-  --input: oklch(0.3351 0.0253 234.8586);
-  --ring: oklch(0.6509 0.1283 170.4258);
+  --background: #15121c;
+  --foreground: #f3f0f8;
+  --card: #1d1927;
+  --card-foreground: #f3f0f8;
+  --popover: #1d1927;
+  --popover-foreground: #f3f0f8;
+  --primary: #a78bfa;
+  --primary-foreground: #1a0f3a;
+  --secondary: #272235;
+  --secondary-foreground: #e6e0f0;
+  --muted: #272235;
+  --muted-foreground: #a69fb5;
+  --accent: #2b2150;
+  --accent-foreground: #ddd0ff;
+  --border: #342d44;
+  --input: #7a7090;
+  --ring: #a78bfa;
+  --overlay: rgb(0 0 0 / 0.6);
+
+  --signal: #f3f0f8;
+  --signal-foreground: #15121c;
+  --signal-soft: #2a2535;
+  --signal-ink: #f3f0f8;
+  --success: #4ade80;
+  --success-foreground: #052e16;
+  --success-soft: #12301f;
+  --success-ink: #86efac;
+  --pending: #a69fb5;
+  --pending-foreground: #15121c;
+  --pending-soft: #272235;
+  --pending-ink: #cfc8da;
+  --destructive: #ff8a75;
+  --destructive-foreground: #3a0d06;
+  --destructive-soft: #3d1612;
+  --destructive-ink: #ffb4a6;
+}
+
+/*
+ * Type scale (HobbyHub DS text styles). Headings and numbers use Outfit,
+ * everything else Inter. Named `typo-*` rather than `text-*` so
+ * tailwind-merge never mistakes them for text colours.
+ */
+@utility typo-display {
+  font-family: var(--font-heading);
+  font-size: 2.75rem;
+  line-height: 3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+@utility typo-h1 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  line-height: 2.375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+@utility typo-h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  line-height: 1.875rem;
+  font-weight: 600;
+}
+@utility typo-h3 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  line-height: 1.625rem;
+  font-weight: 500;
+}
+@utility typo-title {
+  font-family: var(--font-heading);
+  font-size: 1.0625rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+@utility typo-numeral {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+@utility typo-time {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  line-height: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+@utility typo-body-lg {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.625rem;
+  font-weight: 400;
+}
+@utility typo-body {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  font-weight: 400;
+}
+@utility typo-label-lg {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+@utility typo-label {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+@utility typo-small {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  font-weight: 400;
+}
+@utility typo-caption {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 @layer base {
@@ -105,6 +357,12 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
   }
 }

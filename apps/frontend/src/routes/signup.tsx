@@ -48,7 +48,7 @@ function SignUpPage() {
       <Seo title="Sign up" />
       <AuthLayout
         title="Sign up"
-        description="Create your Quacker account."
+        description="Create your HobbyHub account."
         footer={
           <>
             Already have an account?{" "}
