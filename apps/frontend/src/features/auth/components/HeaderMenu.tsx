@@ -62,7 +62,7 @@ export function HeaderMenu() {
         <DropdownMenuLabel>
           <div className="flex flex-col">
             <span className="text-sm leading-none font-medium">{user.name}</span>
-            <span className="mt-1 text-xs text-muted-foreground">@{user.username}</span>
+            <span className="mt-1 truncate text-xs text-muted-foreground">{user.email}</span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

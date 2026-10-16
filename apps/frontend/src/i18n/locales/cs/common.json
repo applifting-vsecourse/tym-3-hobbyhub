@@ -2,23 +2,32 @@
   "auth": {
     "errors": {
       "emailNotVerified": "E-mail zatím není ověřený.",
+      "invalidBirthDate": "Neplatné datum narození.",
       "invalidCredentials": "Nesprávný e-mail nebo heslo.",
       "invalidEmail": "Neplatný e-mail.",
-      "invalidUsername": "Neplatné uživatelské jméno.",
+      "invalidGender": "Vyberte pohlaví.",
       "passwordTooShort": "Heslo je příliš krátké.",
       "signInFailed": "Přihlášení se nezdařilo.",
       "signUpFailed": "Registrace se nezdařila.",
-      "userExists": "Účet s tímto e-mailem už existuje.",
-      "usernameTaken": "Toto uživatelské jméno je obsazené."
+      "termsNotAccepted": "Bez souhlasu s podmínkami se nelze zaregistrovat.",
+      "tooManyRequests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli.",
+      "underage": "Registrace je možná až od 18 let.",
+      "userExists": "Účet s tímto e-mailem už existuje."
     },
     "fields": {
+      "birthDate": "Datum narození",
       "email": "E-mail",
-      "name": "Jméno",
+      "gender": "Pohlaví",
+      "name": "Jméno / přezdívka",
       "password": "Heslo",
-      "passwordConfirmation": "Heslo znovu",
-      "username": "Uživatelské jméno"
+      "passwordConfirmation": "Heslo znovu"
+    },
+    "gender": {
+      "female": "Žena",
+      "male": "Muž"
     },
     "placeholders": {
+      "birthDate": "Vyberte datum",
       "email": "např. jan@novak.cz"
     },
     "signIn": {
@@ -31,19 +40,24 @@
     "signUp": {
       "description": "Vytvořte si účet v HobbyHubu.",
       "haveAccount": "Už máte účet?",
+      "privacyNote": "Pohlaví a věk se ukazují jen souhrnně ve statistikách akce, nikdy ve vašem profilu.",
       "signInLink": "Přihlaste se",
       "submit": "Zaregistrovat se",
+      "terms": "Souhlasím s <terms>podmínkami používání</terms>",
       "title": "Registrace"
     },
     "validation": {
+      "birthDateRequired": "Vyberte datum narození",
       "emailInvalid": "Neplatný e-mail",
       "emailRequired": "Zadejte e-mail",
-      "nameRequired": "Zadejte jméno",
+      "genderRequired": "Vyberte pohlaví",
+      "nameRequired": "Zadejte jméno nebo přezdívku",
       "passwordConfirmationRequired": "Potvrďte heslo",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
       "passwordRequired": "Zadejte heslo",
       "passwordsMustMatch": "Hesla se musí shodovat",
-      "usernameRequired": "Zadejte uživatelské jméno"
+      "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",
+      "underage": "Registrace je možná až od 18 let"
     }
   },
   "errors": {
@@ -264,5 +278,9 @@
       "reload": "Načíst znovu"
     },
     "title": "Quacks"
+  },
+  "terms": {
+    "placeholder": "Znění podmínek připravujeme. Provozovatel HobbyHubu ho doplní před spuštěním.",
+    "title": "Podmínky používání"
   }
 }

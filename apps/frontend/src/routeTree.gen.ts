@@ -14,6 +14,7 @@ import { Route as ProtectedPagesRouteImport } from './routes/_ProtectedPages'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +41,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtectedPagesQuacksRoute = ProtectedPagesQuacksRouteImport.update({
   id: '/quacks',
   path: '/quacks',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/design-system': typeof DesignSystemRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/design-system': typeof DesignSystemRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,15 @@ export interface FileRoutesById {
   '/design-system': typeof DesignSystemRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/design-system' | '/login' | '/signup' | '/quacks'
+  fullPaths:
+    '/' | '/design-system' | '/login' | '/signup' | '/terms' | '/quacks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/design-system' | '/login' | '/signup' | '/quacks'
+  to: '/' | '/design-system' | '/login' | '/signup' | '/terms' | '/quacks'
   id:
     | '__root__'
     | '/'
@@ -81,6 +91,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/login'
     | '/signup'
+    | '/terms'
     | '/_ProtectedPages/quacks'
   fileRoutesById: FileRoutesById
 }
@@ -90,6 +101,7 @@ export interface RootRouteChildren {
   DesignSystemRoute: typeof DesignSystemRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -129,6 +141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_ProtectedPages/quacks': {
       id: '/_ProtectedPages/quacks'
       path: '/quacks'
@@ -157,6 +176,7 @@ const rootRouteChildren: RootRouteChildren = {
   DesignSystemRoute: DesignSystemRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
