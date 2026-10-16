@@ -8,6 +8,24 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    # Same database as `docker-compose.yml`, so the migrations and the schema
+    # tests (DB_TESTS) run against a real PostgreSQL.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quacker
+          POSTGRES_PASSWORD: quacker
+          POSTGRES_DB: quacker
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U quacker -d quacker"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://quacker:quacker@localhost:5433/quacker
     steps:
       - uses: actions/checkout@v5
 
@@ -39,8 +57,13 @@ jobs:
       - name: Type-check frontend
         run: pnpm frontend type-check
 
+      - name: Apply database migrations
+        run: pnpm backend migrate
+
       - name: Test backend
         run: pnpm backend test
+        env:
+          DB_TESTS: '1'
 
       - name: Test frontend
         run: pnpm frontend test:ci
