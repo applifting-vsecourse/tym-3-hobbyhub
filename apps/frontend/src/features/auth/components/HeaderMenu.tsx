@@ -24,7 +24,8 @@ export function HeaderMenu() {
       <Button
         asChild
         size="sm"
-        variant="outline"
+        // Outline on a phone (Figma W1), primary from md where the header has room.
+        className="max-md:border max-md:border-input max-md:bg-transparent max-md:text-foreground max-md:hover:bg-accent"
       >
         <Link to="/login">Přihlásit se</Link>
       </Button>
