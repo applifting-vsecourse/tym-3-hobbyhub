@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 
 import { HeaderLogo } from "@/components/Header/HeaderLogo"
 import { HeaderNav } from "@/components/Header/HeaderNav"
+import { LanguageSwitcher } from "@/components/Header/LanguageSwitcher"
 import { ThemeSwitcher } from "@/components/Header/ThemeSwitcher"
 import { cn } from "@/lib/utils"
 
@@ -27,6 +28,7 @@ export function Header({ userMenu, search }: HeaderProps) {
         <HeaderLogo />
         {search ? <div className="hidden max-w-xl flex-1 md:block">{search}</div> : <HeaderNav />}
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <LanguageSwitcher />
           <ThemeSwitcher />
           {userMenu}
         </div>

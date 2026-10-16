@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import BikeFrame from "@/assets/loaders/bike-frame.svg?react"
 import FreeSeat from "@/assets/loaders/free-seat.svg?react"
@@ -98,13 +99,13 @@ function PlayerIllustration() {
   )
 }
 
-const LOADERS: Record<LoaderVariant, { label: string; Illustration: () => ReactNode }> = {
-  ball: { label: "Hledáme akce…", Illustration: BallIllustration },
-  volleyball: { label: "Odesíláme žádost…", Illustration: VolleyballIllustration },
-  dice: { label: "Vybíráme náhradníka…", Illustration: DiceIllustration },
-  seats: { label: "Načítáme soupisku…", Illustration: SeatsIllustration },
-  bike: { label: "Načítáme mapu…", Illustration: BikeIllustration },
-  player: { label: "Hledáme hráče…", Illustration: PlayerIllustration },
+const LOADERS: Record<LoaderVariant, () => ReactNode> = {
+  ball: BallIllustration,
+  volleyball: VolleyballIllustration,
+  dice: DiceIllustration,
+  seats: SeatsIllustration,
+  bike: BikeIllustration,
+  player: PlayerIllustration,
 }
 
 type LoaderProps = {
@@ -126,6 +127,7 @@ type LoaderProps = {
  * under reduced motion.
  */
 export function Loader({ variant = "ball", label, isImmediate = false, className }: LoaderProps) {
+  const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(isImmediate)
 
   useEffect(() => {
@@ -134,7 +136,7 @@ export function Loader({ variant = "ball", label, isImmediate = false, className
     return () => window.clearTimeout(timer)
   }, [isImmediate])
 
-  const { label: defaultLabel, Illustration } = LOADERS[variant]
+  const Illustration = LOADERS[variant]
 
   return (
     <div
@@ -150,7 +152,9 @@ export function Loader({ variant = "ball", label, isImmediate = false, className
           >
             <Illustration />
           </div>
-          <p className="text-center typo-small text-muted-foreground">{label ?? defaultLabel}</p>
+          <p className="text-center typo-small text-muted-foreground">
+            {label ?? t(`hobbyhub.loader.${variant}`)}
+          </p>
         </>
       ) : null}
     </div>

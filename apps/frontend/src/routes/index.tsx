@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react"
 import { createFileRoute } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
@@ -60,21 +61,19 @@ const TONIGHT: TonightEvent[] = [
   },
 ]
 
-const STEPS = [
-  "Vypište akci a řekněte, kolik lidí vám chybí do minima.",
-  "Ostatní uvidí volná místa na mapě nebo v seznamu a požádají o účast.",
-  "Schválíte účastníky a akce se uskuteční.",
-]
+const STEP_KEYS = ["step1", "step2", "step3"] as const
 
 function LandingPage() {
+  const { t } = useTranslation()
+
   return (
     <>
-      <Seo title="Úvodní stránka" />
+      <Seo title={t("landing.seoTitle")} />
       <Header
         search={
           <SearchField
-            label="Lokalita"
-            placeholder="Lokalita: Praha 8"
+            label={t("landing.search.label")}
+            placeholder={t("landing.search.placeholder")}
           />
         }
         userMenu={
@@ -85,7 +84,7 @@ function LandingPage() {
               variant="outline"
               className="max-md:hidden"
             >
-              <a href={ROUTES.newEvent}>Vypsat akci</a>
+              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
             </Button>
             <HeaderMenu />
           </>
@@ -96,14 +95,14 @@ function LandingPage() {
           className="enter [--seat-delay:400ms]"
           isAnimated
           titleAs="h1"
-          kicker="Čtvrteční florbal · dnes 19:00"
-          title="Doplňte chybějící hráče dřív, než se akce zruší"
-          text="Chybí 3 do minima. Jedno z nich může být tvoje."
+          kicker={t("landing.hero.kicker")}
+          title={t("landing.hero.title")}
+          text={t("landing.hero.text")}
           taken={7}
           capacity={10}
           action={
             <Button asChild>
-              <a href={ROUTES.events}>Obsadit místo</a>
+              <a href={ROUTES.events}>{t("landing.hero.join")}</a>
             </Button>
           }
           secondaryAction={
@@ -111,7 +110,7 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.newEvent}>Vypsat akci</a>
+              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
             </Button>
           }
         />
@@ -125,7 +124,7 @@ function LandingPage() {
             id="tonight-heading"
             className="typo-h3"
           >
-            Dnes večer
+            {t("landing.tonight.title")}
           </h2>
           {TONIGHT.length > 0 ? (
             <div className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
@@ -144,10 +143,7 @@ function LandingPage() {
               ))}
             </div>
           ) : (
-            <p className="typo-body text-muted-foreground">
-              Na dnešní večer zatím nic nemáme. Hledejte na další dny, nebo akci vypište sami — až
-              se objeví, najdete je tady.
-            </p>
+            <p className="typo-body text-muted-foreground">{t("landing.tonight.empty")}</p>
           )}
         </section>
 
@@ -160,16 +156,16 @@ function LandingPage() {
             id="how-heading"
             className="typo-h3"
           >
-            Jak to funguje
+            {t("landing.how.title")}
           </h2>
           <ol className="flex flex-col gap-2 typo-body text-muted-foreground lg:grid lg:grid-cols-3 lg:gap-8">
-            {STEPS.map((step, index) => (
+            {STEP_KEYS.map((key, index) => (
               <li
-                key={step}
+                key={key}
                 className="flex gap-3"
               >
                 <span className="w-4 shrink-0 text-foreground">{index + 1}.</span>
-                {step}
+                {t(`landing.how.${key}`)}
               </li>
             ))}
           </ol>
@@ -178,13 +174,13 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.events}>Najít akci</a>
+              <a href={ROUTES.events}>{t("landing.actions.find")}</a>
             </Button>
             <Button
               asChild
               variant="outline"
             >
-              <a href={ROUTES.newEvent}>Vypsat akci</a>
+              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
             </Button>
           </div>
         </section>

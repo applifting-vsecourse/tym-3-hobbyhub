@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { cn } from "@/lib/utils"
@@ -31,6 +33,7 @@ export function EventCard({
   isAnimated = false,
   className,
 }: EventCardProps) {
+  const { t } = useTranslation()
   const missing = Math.max(capacity - taken, 0)
 
   return (
@@ -63,10 +66,10 @@ export function EventCard({
         />
         {missing > 0 ? (
           <span className="shrink-0 rounded-full bg-signal px-2.5 py-0.75 typo-small text-signal-foreground">
-            chybí {missing}
+            {t("hobbyhub.capacity.missing", { count: missing })}
           </span>
         ) : (
-          <StatusBadge status="approved">naplněno</StatusBadge>
+          <StatusBadge status="approved">{t("hobbyhub.capacity.full")}</StatusBadge>
         )}
       </div>
     </article>

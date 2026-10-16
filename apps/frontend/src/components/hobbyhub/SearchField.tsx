@@ -1,4 +1,5 @@
 import { useId, type ComponentProps } from "react"
+import { useTranslation } from "react-i18next"
 
 import FiltersIcon from "@/assets/ui-icons/filters.svg?react"
 import SearchIcon from "@/assets/ui-icons/search.svg?react"
@@ -15,12 +16,8 @@ type SearchFieldProps = Omit<ComponentProps<"input">, "type"> & {
  * Vyhledávání — pill search field with an optional filters button. The focus
  * ring sits on the whole pill, so it stays visible around both controls.
  */
-export function SearchField({
-  label = "Hledat akce",
-  onOpenFilters,
-  className,
-  ...props
-}: SearchFieldProps) {
+export function SearchField({ label, onOpenFilters, className, ...props }: SearchFieldProps) {
+  const { t } = useTranslation()
   const id = useId()
 
   return (
@@ -35,7 +32,7 @@ export function SearchField({
         htmlFor={id}
         className="sr-only"
       >
-        {label}
+        {label ?? t("hobbyhub.search.label")}
       </label>
       <SearchIcon
         aria-hidden
@@ -52,7 +49,7 @@ export function SearchField({
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label="Filtry"
+          aria-label={t("hobbyhub.search.filters")}
           onClick={onOpenFilters}
           className="-mr-2 rounded-full text-foreground"
         >

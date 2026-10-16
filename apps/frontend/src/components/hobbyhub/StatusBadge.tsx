@@ -1,13 +1,14 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 
 const STATUSES = {
-  pending: { variant: "pending", label: "Čeká na schválení" },
-  approved: { variant: "success", label: "Schváleno" },
-  rejected: { variant: "destructive", label: "Zamítnuto" },
-  deadline: { variant: "signal", label: "Uzávěrka" },
-  neutral: { variant: "secondary", label: "Plno" },
+  pending: "pending",
+  approved: "success",
+  rejected: "destructive",
+  deadline: "signal",
+  neutral: "secondary",
 } as const
 
 export type Status = keyof typeof STATUSES
@@ -21,14 +22,15 @@ type StatusBadgeProps = {
 
 /** Štítek — application state or a property of an event. */
 export function StatusBadge({ status, children, className }: StatusBadgeProps) {
-  const { variant, label } = STATUSES[status]
+  const { t } = useTranslation()
+  const variant = STATUSES[status]
 
   return (
     <Badge
       variant={variant}
       className={className}
     >
-      {children ?? label}
+      {children ?? t(`hobbyhub.status.${status}`)}
     </Badge>
   )
 }

@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next"
+
 import type { SeatState } from "@/components/hobbyhub/Seat"
 
 export type Capacity = {
@@ -21,15 +23,17 @@ export function seatStates(capacity: Capacity): SeatState[] {
   const free = max - taken - missing
 
   return [
-    ...Array<SeatState>(taken).fill("taken"),
-    ...Array<SeatState>(missing).fill("missing"),
-    ...Array<SeatState>(free).fill("free"),
+    ...new Array<SeatState>(taken).fill("taken"),
+    ...new Array<SeatState>(missing).fill("missing"),
+    ...new Array<SeatState>(free).fill("free"),
   ]
 }
 
-/** Czech one-line summary used as the accessible name of seat graphics. */
-export function capacityLabel(capacity: Capacity) {
+/** One-line summary used as the accessible name of seat graphics. */
+export function capacityLabel(t: TFunction, capacity: Capacity) {
   const missing = missingCount(capacity)
-  const base = `Obsazeno ${capacity.taken} z ${capacity.max ?? capacity.min}`
-  return missing > 0 ? `${base}, chybí ${missing}` : `${base}, naplněno`
+  const values = { taken: capacity.taken, total: capacity.max ?? capacity.min }
+  return missing > 0
+    ? t("hobbyhub.capacity.summaryMissing", { ...values, count: missing })
+    : t("hobbyhub.capacity.summaryFull", values)
 }

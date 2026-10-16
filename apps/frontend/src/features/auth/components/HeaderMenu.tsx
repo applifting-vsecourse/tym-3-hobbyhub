@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { LogOut } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ import { useSignOut } from "@/features/auth/hooks/useSignOut"
 export function HeaderMenu() {
   const { user } = useSession()
   const signOut = useSignOut()
+  const { t } = useTranslation()
 
   if (!user) {
     return (
@@ -27,7 +29,7 @@ export function HeaderMenu() {
         // Outline on a phone (Figma W1), primary from md where the header has room.
         className="max-md:border max-md:border-input max-md:bg-transparent max-md:text-foreground max-md:hover:bg-accent"
       >
-        <Link to="/login">Přihlásit se</Link>
+        <Link to="/login">{t("header.signIn")}</Link>
       </Button>
     )
   }
@@ -45,7 +47,7 @@ export function HeaderMenu() {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="User menu"
+          aria-label={t("header.userMenu")}
           className="rounded-full"
         >
           <Avatar className="size-8">
@@ -69,7 +71,7 @@ export function HeaderMenu() {
           disabled={signOut.isPending}
         >
           <LogOut className="size-4" />
-          Sign out
+          {t("header.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

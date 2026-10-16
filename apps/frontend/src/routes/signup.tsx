@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import { AuthLayout } from "@/components/AuthLayout"
@@ -8,6 +9,7 @@ import { Seo } from "@/components/Seo"
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { SignUpForm } from "@/features/auth/components/SignUpForm"
 import { useSignUp } from "@/features/auth/hooks/useSignUp"
+import { authErrorMessage } from "@/features/auth/lib/authErrors"
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
@@ -20,8 +22,9 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const signUp = useSignUp()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
 
   const handleSubmit = async (values: {
     email: string
@@ -29,7 +32,7 @@ function SignUpPage() {
     username: string
     password: string
   }) => {
-    setErrorMessage(null)
+    setError(null)
     try {
       await signUp.mutateAsync({
         email: values.email,
@@ -39,31 +42,31 @@ function SignUpPage() {
       })
       await navigate({ to: ROUTES.quacks })
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Sign up failed")
+      setError(error)
     }
   }
 
   return (
     <>
-      <Seo title="Sign up" />
+      <Seo title={t("auth.signUp.title")} />
       <AuthLayout
-        title="Sign up"
-        description="Create your HobbyHub account."
+        title={t("auth.signUp.title")}
+        description={t("auth.signUp.description")}
         footer={
           <>
-            Already have an account?{" "}
+            {t("auth.signUp.haveAccount")}{" "}
             <Link
               to={ROUTES.login}
               className="font-medium text-foreground underline underline-offset-4"
             >
-              Sign in
+              {t("auth.signUp.signInLink")}
             </Link>
           </>
         }
       >
         <SignUpForm
           isLoading={signUp.isPending}
-          errorMessage={errorMessage}
+          errorMessage={error ? authErrorMessage(t, error, "signUpFailed") : null}
           onSubmit={handleSubmit}
         />
       </AuthLayout>

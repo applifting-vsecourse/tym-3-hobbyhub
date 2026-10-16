@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps } from "react"
+import { useTranslation } from "react-i18next"
 
 import DiscoverIcon from "@/assets/ui-icons/nav-discover.svg?react"
 import GroupsIcon from "@/assets/ui-icons/nav-groups.svg?react"
@@ -11,41 +12,46 @@ export type BottomNavSection = "discover" | "my-events" | "groups" | "profile"
 
 const SECTIONS: {
   key: BottomNavSection
-  label: string
   Icon: ComponentType<SVGProps<SVGSVGElement>>
 }[] = [
-  { key: "discover", label: "Objevovat", Icon: DiscoverIcon },
-  { key: "my-events", label: "Moje akce", Icon: MyEventsIcon },
-  { key: "groups", label: "Skupiny", Icon: GroupsIcon },
-  { key: "profile", label: "Profil", Icon: ProfileIcon },
+  { key: "discover", Icon: DiscoverIcon },
+  { key: "my-events", Icon: MyEventsIcon },
+  { key: "groups", Icon: GroupsIcon },
+  { key: "profile", Icon: ProfileIcon },
 ]
 
+const NAV_LABELS = {
+  discover: "hobbyhub.nav.discover",
+  "my-events": "hobbyhub.nav.myEvents",
+  groups: "hobbyhub.nav.groups",
+  profile: "hobbyhub.nav.profile",
+} as const
+
 type BottomNavProps = {
-  active: BottomNavSection
-  onNavigate: (section: BottomNavSection) => void
-  onAdd: () => void
-  /** Shows the dot on "Moje akce" when requests wait for approval. */
-  hasNewRequests?: boolean
-  className?: string
+  readonly active: BottomNavSection
+  readonly onNavigate: (section: BottomNavSection) => void
+  readonly onAdd: () => void
+  readonly hasNewRequests?: boolean
+  readonly className?: string
 }
 
-function NavItem({
-  section,
-  isActive,
-  hasDot,
-  onNavigate,
-}: {
-  section: (typeof SECTIONS)[number]
-  isActive: boolean
-  hasDot: boolean
-  onNavigate: BottomNavProps["onNavigate"]
-}) {
-  const { key, label, Icon } = section
+type NavItemProps = {
+  readonly section: (typeof SECTIONS)[number]
+  readonly isActive: boolean
+  readonly hasDot: boolean
+  readonly onNavigate: BottomNavProps["onNavigate"]
+}
+
+function NavItem({ section, isActive, hasDot, onNavigate }: NavItemProps) {
+  const { t } = useTranslation()
+  const { key, Icon } = section
+  const label = t(NAV_LABELS[key])
 
   return (
     <button
       type="button"
       aria-current={isActive ? "page" : undefined}
+      aria-label={hasDot ? t("hobbyhub.nav.withNewRequests", { label }) : undefined}
       onClick={() => onNavigate(key)}
       className={cn(
         "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -58,9 +64,7 @@ function NavItem({
           className="size-6"
         />
         {hasDot ? (
-          <span className="absolute -top-0.5 -right-1 size-2 rounded-full bg-primary">
-            <span className="sr-only">, nové žádosti</span>
-          </span>
+          <span className="absolute -top-0.5 -right-1 size-2 rounded-full bg-primary" />
         ) : null}
       </span>
       {label}
@@ -79,6 +83,7 @@ export function BottomNav({
   hasNewRequests = false,
   className,
 }: BottomNavProps) {
+  const { t } = useTranslation()
   const renderItem = (section: (typeof SECTIONS)[number]) => (
     <NavItem
       key={section.key}
@@ -91,7 +96,7 @@ export function BottomNav({
 
   return (
     <nav
-      aria-label="Hlavní navigace"
+      aria-label={t("hobbyhub.nav.label")}
       className={cn("w-full pt-9", className)}
     >
       <div className="flex items-start border-t border-border bg-card pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -111,7 +116,7 @@ export function BottomNav({
             />
           </span>
           <span className="size-6" />
-          Přidat
+          {t("hobbyhub.nav.add")}
         </button>
         {SECTIONS.slice(2).map(renderItem)}
       </div>

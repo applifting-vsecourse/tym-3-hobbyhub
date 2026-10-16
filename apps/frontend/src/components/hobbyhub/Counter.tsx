@@ -1,4 +1,5 @@
 import { useId } from "react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -21,6 +22,7 @@ export function Counter({
   max = Number.POSITIVE_INFINITY,
   className,
 }: CounterProps) {
+  const { t } = useTranslation()
   const labelId = useId()
 
   return (
@@ -40,7 +42,7 @@ export function Counter({
           type="button"
           variant="secondary"
           size="icon-sm"
-          aria-label={`${label}: méně`}
+          aria-label={t("hobbyhub.counter.less", { label })}
           disabled={value <= min}
           onClick={() => onValueChange(value - 1)}
           className="rounded-full"
@@ -62,7 +64,7 @@ export function Counter({
           type="button"
           variant="secondary"
           size="icon-sm"
-          aria-label={`${label}: více`}
+          aria-label={t("hobbyhub.counter.more", { label })}
           disabled={value >= max}
           onClick={() => onValueChange(value + 1)}
           className="rounded-full"

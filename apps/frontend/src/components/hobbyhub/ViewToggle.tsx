@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 
@@ -11,6 +13,8 @@ type ViewToggleProps = {
 
 /** Přepínač Mapa / Seznam — switches the event listing between map and list. */
 export function ViewToggle({ value, onValueChange, className }: ViewToggleProps) {
+  const { t } = useTranslation()
+
   return (
     <ToggleGroup
       type="single"
@@ -21,20 +25,20 @@ export function ViewToggle({ value, onValueChange, className }: ViewToggleProps)
       onValueChange={(next) => {
         if (next) onValueChange(next as EventsView)
       }}
-      aria-label="Zobrazení akcí"
+      aria-label={t("hobbyhub.viewToggle.label")}
       className={cn("h-11 w-65 rounded-full bg-muted p-1", className)}
     >
       <ToggleGroupItem
         value="map"
         className="h-full flex-1"
       >
-        Mapa
+        {t("hobbyhub.viewToggle.map")}
       </ToggleGroupItem>
       <ToggleGroupItem
         value="list"
         className="h-full flex-1"
       >
-        Seznam
+        {t("hobbyhub.viewToggle.list")}
       </ToggleGroupItem>
     </ToggleGroup>
   )

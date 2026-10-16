@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import LevelIcon from "@/assets/ui-icons/level.svg?react"
 import MapPinIcon from "@/assets/ui-icons/map-pin.svg?react"
@@ -40,6 +41,7 @@ export function EventDetailCard({
   className,
   ...capacity
 }: EventDetailCardProps) {
+  const { t } = useTranslation()
   const missing = missingCount(capacity)
   const total = capacity.max ?? capacity.min
 
@@ -61,7 +63,9 @@ export function EventDetailCard({
             {day}
           </p>
           <p className="typo-time text-foreground">{time}</p>
-          <p className="typo-small text-muted-foreground">do {endTime}</p>
+          <p className="typo-small text-muted-foreground">
+            {t("hobbyhub.eventDetail.until", { time: endTime })}
+          </p>
         </div>
         <ul className="flex flex-col gap-1.5">
           <li className="flex items-center gap-1.5 typo-small text-muted-foreground">
@@ -83,7 +87,9 @@ export function EventDetailCard({
 
       <SeatMeter {...capacity} />
       <p className="typo-label text-foreground">
-        {capacity.taken}/{total}, {missing > 0 ? `chybí ${missing}` : "naplněno"}
+        {missing > 0
+          ? t("hobbyhub.eventDetail.seatsMissing", { taken: capacity.taken, total, count: missing })
+          : t("hobbyhub.eventDetail.seatsFull", { taken: capacity.taken, total })}
       </p>
 
       <div className="w-full *:w-full">{action}</div>
