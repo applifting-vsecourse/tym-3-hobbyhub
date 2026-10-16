@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -15,15 +16,16 @@ type ChatShareProps = {
  * group chat, with copy and native share.
  */
 export function ChatShare({ message, url, className }: ChatShareProps) {
+  const { t } = useTranslation()
   const text = `${message} ${url}`
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function"
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success("Zpráva je zkopírovaná")
+      toast.success(t("hobbyhub.chatShare.copied"))
     } catch {
-      toast.error("Zprávu se nepodařilo zkopírovat")
+      toast.error(t("hobbyhub.chatShare.copyFailed"))
     }
   }
 
@@ -43,7 +45,7 @@ export function ChatShare({ message, url, className }: ChatShareProps) {
           href={url}
           className="rounded-sm bg-accent px-2 py-1 typo-small text-accent-foreground underline-offset-4 hover:underline"
         >
-          odkaz na akci
+          {t("hobbyhub.chatShare.link")}
         </a>
       </div>
       <div className="flex gap-3">
@@ -51,7 +53,7 @@ export function ChatShare({ message, url, className }: ChatShareProps) {
           size="sm"
           onClick={copy}
         >
-          Zkopírovat zprávu
+          {t("hobbyhub.chatShare.copy")}
         </Button>
         {canShare ? (
           <Button
@@ -59,7 +61,7 @@ export function ChatShare({ message, url, className }: ChatShareProps) {
             variant="outline"
             onClick={share}
           >
-            Sdílet
+            {t("hobbyhub.chatShare.share")}
           </Button>
         ) : null}
       </div>

@@ -172,10 +172,17 @@ export default [
     // User-facing text lives in src/i18n/locales, not in components. A warning
     // for now: untranslated screens are moved over one PR at a time.
     files: ["src/**/*.tsx"],
-    ignores: ["src/**/*.test.tsx", "src/features/design-system/**"],
+    ignores: ["src/**/*.test.tsx", "src/features/design-system/**", "src/routes/design-system.tsx"],
     plugins: { i18next },
     rules: {
-      "i18next/no-literal-string": ["warn", { mode: "jsx-text-only" }],
+      "i18next/no-literal-string": [
+        "warn",
+        {
+          mode: "jsx-text-only",
+          // Default exclusions (punctuation, digits) plus brand names, which are not translated.
+          words: { exclude: ["[0-9!-/:-@[-`{-~]+", "WhatsApp", "Messenger", "Discord", "·", "−"] },
+        },
+      ],
     },
   },
 ]

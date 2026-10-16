@@ -13,10 +13,16 @@ const keysOf = (value: object, prefix = ""): string[] =>
       : [`${prefix}${key}`],
   )
 
+// Languages have different plural forms (cs: one/few/other, en: one/other),
+// so "tooLong_few" only has to exist where the language needs it.
+const withoutPluralSuffix = (keys: string[]) => [
+  ...new Set(keys.map((key) => key.replace(/_(zero|one|two|few|many|other)$/, ""))),
+]
+
 describe("translations", () => {
   it("have the same keys in every language", () => {
-    const cs = keysOf(resources.cs.common).sort()
-    expect(keysOf(resources.en.common).sort()).toEqual(cs)
+    const cs = withoutPluralSuffix(keysOf(resources.cs.common)).sort()
+    expect(withoutPluralSuffix(keysOf(resources.en.common)).sort()).toEqual(cs)
   })
 })
 

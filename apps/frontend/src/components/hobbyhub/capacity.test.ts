@@ -1,4 +1,5 @@
 import { capacityLabel, missingCount, seatStates } from "@/components/hobbyhub/capacity"
+import { i18n } from "@/i18n"
 
 describe("seatStates", () => {
   it("fills taken seats, then missing up to the minimum", () => {
@@ -26,10 +27,10 @@ describe("seatStates", () => {
 describe("capacityLabel", () => {
   it("counts missing people towards the minimum", () => {
     expect(missingCount({ taken: 8, min: 10, max: 12 })).toBe(2)
-    expect(capacityLabel({ taken: 8, min: 10, max: 12 })).toBe("Obsazeno 8 z 12, chybí 2")
+    expect(capacityLabel(i18n.t, { taken: 8, min: 10, max: 12 })).toBe("Obsazeno 8 z 12, chybí 2")
   })
 
   it("says full when nobody is missing", () => {
-    expect(capacityLabel({ taken: 5, min: 5 })).toBe("Obsazeno 5 z 5, naplněno")
+    expect(capacityLabel(i18n.t, { taken: 5, min: 5 })).toBe("Obsazeno 5 z 5, naplněno")
   })
 })

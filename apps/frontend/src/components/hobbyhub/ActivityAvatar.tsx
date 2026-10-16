@@ -17,18 +17,18 @@ import { cn } from "@/lib/utils"
 
 /** Illustrated people from Figma "Avatary sportovců a koníčkářů (Avatar)". */
 export const AVATARS = {
-  florbalista: { label: "Florbalista", src: florbalista },
-  volejbalistka: { label: "Volejbalistka", src: volejbalistka },
-  tenistka: { label: "Tenistka", src: tenistka },
-  bezec: { label: "Běžec", src: bezec },
-  cyklista: { label: "Cyklista", src: cyklista },
-  plavkyne: { label: "Plavkyně", src: plavkyne },
-  fotbalista: { label: "Fotbalista", src: fotbalista },
-  basketbalista: { label: "Basketbalista", src: basketbalista },
-  deskar: { label: "Deskař", src: deskar },
-  "hrac-her": { label: "Hráč her", src: hracHer },
-  turistka: { label: "Turistka", src: turistka },
-  joginka: { label: "Jogínka", src: joginka },
+  florbalista: { src: florbalista },
+  volejbalistka: { src: volejbalistka },
+  tenistka: { src: tenistka },
+  bezec: { src: bezec },
+  cyklista: { src: cyklista },
+  plavkyne: { src: plavkyne },
+  fotbalista: { src: fotbalista },
+  basketbalista: { src: basketbalista },
+  deskar: { src: deskar },
+  "hrac-her": { src: hracHer },
+  turistka: { src: turistka },
+  joginka: { src: joginka },
 } as const
 
 export type AvatarKind = keyof typeof AVATARS

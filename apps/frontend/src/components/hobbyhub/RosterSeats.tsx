@@ -1,5 +1,6 @@
 import { Fragment, type CSSProperties } from "react"
 import { cva } from "class-variance-authority"
+import { useTranslation } from "react-i18next"
 
 import { ActivityAvatar, AVATAR_KINDS } from "@/components/hobbyhub/ActivityAvatar"
 import { capacityLabel } from "@/components/hobbyhub/capacity"
@@ -43,12 +44,13 @@ export function RosterSeats({
   isAnimated = false,
   className,
 }: RosterSeatsProps) {
+  const { t } = useTranslation()
   const filled = Math.min(Math.max(taken, 0), capacity)
 
   return (
     <div
       role="img"
-      aria-label={capacityLabel({ taken: filled, min: capacity })}
+      aria-label={capacityLabel(t, { taken: filled, min: capacity })}
       className={cn(rosterVariants({ size }), className)}
     >
       {Array.from({ length: capacity }, (_, index) => {

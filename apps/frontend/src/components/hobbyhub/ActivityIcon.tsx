@@ -22,23 +22,23 @@ type SvgComponent = ComponentType<SVGProps<SVGSVGElement>>
 
 /** The 16 sport and game activities from Figma "Ikony aktivit (Ikona)". */
 export const ACTIVITIES = {
-  florbal: { label: "Florbal", Icon: FlorbalIcon },
-  volejbal: { label: "Volejbal", Icon: VolejbalIcon },
-  tenis: { label: "Tenis", Icon: TenisIcon },
-  fotbal: { label: "Fotbal", Icon: FotbalIcon },
-  basketbal: { label: "Basketbal", Icon: BasketbalIcon },
-  beh: { label: "Běh", Icon: BehIcon },
-  cyklistika: { label: "Cyklistika", Icon: CyklistikaIcon },
-  plavani: { label: "Plavání", Icon: PlavaniIcon },
-  "stolni-tenis": { label: "Stolní tenis", Icon: StolniTenisIcon },
-  badminton: { label: "Badminton", Icon: BadmintonIcon },
-  "deskove-hry": { label: "Deskové hry", Icon: DeskoveHryIcon },
-  sachy: { label: "Šachy", Icon: SachyIcon },
-  "lan-party": { label: "LAN party", Icon: LanPartyIcon },
-  turistika: { label: "Turistika", Icon: TuristikaIcon },
-  ostatni: { label: "Ostatní", Icon: OstatniIcon },
-  cviceni: { label: "Cvičení", Icon: CviceniIcon },
-} satisfies Record<string, { label: string; Icon: SvgComponent }>
+  florbal: { Icon: FlorbalIcon },
+  volejbal: { Icon: VolejbalIcon },
+  tenis: { Icon: TenisIcon },
+  fotbal: { Icon: FotbalIcon },
+  basketbal: { Icon: BasketbalIcon },
+  beh: { Icon: BehIcon },
+  cyklistika: { Icon: CyklistikaIcon },
+  plavani: { Icon: PlavaniIcon },
+  "stolni-tenis": { Icon: StolniTenisIcon },
+  badminton: { Icon: BadmintonIcon },
+  "deskove-hry": { Icon: DeskoveHryIcon },
+  sachy: { Icon: SachyIcon },
+  "lan-party": { Icon: LanPartyIcon },
+  turistika: { Icon: TuristikaIcon },
+  ostatni: { Icon: OstatniIcon },
+  cviceni: { Icon: CviceniIcon },
+} satisfies Record<string, { Icon: SvgComponent }>
 
 export type Activity = keyof typeof ACTIVITIES
 

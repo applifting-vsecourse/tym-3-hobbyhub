@@ -1,4 +1,5 @@
 import { useId, useRef } from "react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -13,13 +14,8 @@ type PhotoPickerProps = {
 }
 
 /** Fotka nebo ilustrace — optional event photo upload field. */
-export function PhotoPicker({
-  label = "Fotka nebo ilustrace (nepovinné)",
-  hint = "nebo vyberte ilustraci aktivity",
-  value,
-  onFileSelect,
-  className,
-}: PhotoPickerProps) {
+export function PhotoPicker({ label, hint, value, onFileSelect, className }: PhotoPickerProps) {
+  const { t } = useTranslation()
   const id = useId()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -29,7 +25,7 @@ export function PhotoPicker({
         htmlFor={id}
         className="typo-label-lg text-foreground"
       >
-        {label}
+        {label ?? t("hobbyhub.photoPicker.label")}
       </label>
       <input
         ref={inputRef}
@@ -51,7 +47,7 @@ export function PhotoPicker({
         {value ? (
           <img
             src={value}
-            alt="Vybraná fotka akce"
+            alt={t("hobbyhub.photoPicker.chosen")}
             className="size-18 rounded-md object-cover"
           />
         ) : null}
@@ -61,9 +57,13 @@ export function PhotoPicker({
           variant="outline"
           onClick={() => inputRef.current?.click()}
         >
-          {value ? "Změnit fotku" : "Nahrát fotku"}
+          {value ? t("hobbyhub.photoPicker.change") : t("hobbyhub.photoPicker.upload")}
         </Button>
-        {value ? null : <p className="flex-1 typo-small text-muted-foreground">{hint}</p>}
+        {value ? null : (
+          <p className="flex-1 typo-small text-muted-foreground">
+            {hint ?? t("hobbyhub.photoPicker.hint")}
+          </p>
+        )}
       </div>
     </div>
   )

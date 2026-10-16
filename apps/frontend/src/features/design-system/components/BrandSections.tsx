@@ -1,11 +1,15 @@
-import { ActivityAvatar, AVATAR_KINDS, AVATARS } from "@/components/hobbyhub/ActivityAvatar"
-import { ACTIVITIES, ACTIVITY_KEYS, ActivityIcon } from "@/components/hobbyhub/ActivityIcon"
+import { useTranslation } from "react-i18next"
+
+import { ActivityAvatar, AVATAR_KINDS } from "@/components/hobbyhub/ActivityAvatar"
+import { ACTIVITY_KEYS, ActivityIcon } from "@/components/hobbyhub/ActivityIcon"
 import { ActivityToken } from "@/components/hobbyhub/ActivityToken"
 import { Logo } from "@/components/hobbyhub/Logo"
 
 import { Example, ShowcaseSection } from "@/features/design-system/components/ShowcaseSection"
 
 export function BrandSections() {
+  const { t } = useTranslation()
+
   return (
     <>
       <ShowcaseSection
@@ -36,7 +40,7 @@ export function BrandSections() {
               className="flex items-center gap-3 typo-small text-foreground"
             >
               <ActivityIcon activity={activity} />
-              {ACTIVITIES[activity].label}
+              {t(`hobbyhub.activities.${activity}`)}
             </li>
           ))}
         </ul>
@@ -66,7 +70,7 @@ export function BrandSections() {
             >
               <ActivityAvatar avatar={kind} />
               <span className="text-center typo-caption text-muted-foreground">
-                {AVATARS[kind].label}
+                {t(`hobbyhub.avatars.${kind}`)}
               </span>
             </div>
           ))}

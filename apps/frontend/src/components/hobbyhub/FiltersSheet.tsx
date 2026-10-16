@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
-import { ACTIVITIES, type Activity } from "@/components/hobbyhub/ActivityIcon"
+import type { Activity } from "@/components/hobbyhub/ActivityIcon"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { Button } from "@/components/ui/button"
@@ -16,11 +17,7 @@ export type EventFilters = {
 
 export const EMPTY_FILTERS: EventFilters = { activities: [], when: null, location: "" }
 
-const WHEN_OPTIONS = [
-  { value: "week", label: "Tento týden" },
-  { value: "weekend", label: "Víkend" },
-  { value: "date", label: "Datum…" },
-] as const
+const WHEN_OPTIONS = ["week", "weekend", "date"] as const
 
 type FiltersSheetProps = {
   isOpen: boolean
@@ -32,12 +29,6 @@ type FiltersSheetProps = {
   /** How many events the current draft would show, for the button label. */
   countResults?: (filters: EventFilters) => number
   trigger?: ReactNode
-}
-
-function czechEvents(count: number) {
-  if (count === 1) return "1 akci"
-  if (count >= 2 && count <= 4) return `${count} akce`
-  return `${count} akcí`
 }
 
 /**
@@ -53,6 +44,7 @@ export function FiltersSheet({
   countResults,
   trigger,
 }: FiltersSheetProps) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState(value)
   const locationId = useId()
   const activityLabelId = useId()
@@ -75,15 +67,15 @@ export function FiltersSheet({
     }))
 
   const resultLabel = countResults
-    ? `Zobrazit ${czechEvents(countResults(draft))}`
-    : "Zobrazit výsledky"
+    ? t("hobbyhub.filters.results", { count: countResults(draft) })
+    : t("hobbyhub.filters.showResults")
 
   return (
     <ResponsiveSheet
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       trigger={trigger}
-      title="Filtry"
+      title={t("hobbyhub.filters.title")}
       headerAction={
         <Button
           variant="ghost"
@@ -91,7 +83,7 @@ export function FiltersSheet({
           className="h-11 md:h-9"
           onClick={() => setDraft(EMPTY_FILTERS)}
         >
-          Vymazat
+          {t("hobbyhub.filters.clear")}
         </Button>
       }
       footer={
@@ -111,7 +103,7 @@ export function FiltersSheet({
           id={activityLabelId}
           className="typo-label-lg text-foreground"
         >
-          Aktivita
+          {t("hobbyhub.filters.activity")}
         </p>
         <div
           role="group"
@@ -124,7 +116,7 @@ export function FiltersSheet({
               pressed={draft.activities.includes(activity)}
               onPressedChange={(isPressed) => toggleActivity(activity, isPressed)}
             >
-              {ACTIVITIES[activity].label}
+              {t(`hobbyhub.activities.${activity}`)}
             </FilterChip>
           ))}
         </div>
@@ -133,7 +125,7 @@ export function FiltersSheet({
           id={whenLabelId}
           className="typo-label-lg text-foreground"
         >
-          Kdy
+          {t("hobbyhub.filters.when")}
         </p>
         <ToggleGroup
           type="single"
@@ -151,29 +143,27 @@ export function FiltersSheet({
         >
           {WHEN_OPTIONS.map((option) => (
             <ToggleGroupItem
-              key={option.value}
-              value={option.value}
+              key={option}
+              value={option}
               className="h-11 px-3 md:h-9"
             >
-              {option.label}
+              {t(`hobbyhub.filters.${option}`)}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={locationId}>Lokalita</Label>
+          <Label htmlFor={locationId}>{t("hobbyhub.filters.location")}</Label>
           <Input
             id={locationId}
-            placeholder="Praha 8"
+            placeholder={t("hobbyhub.filters.locationPlaceholder")}
             value={draft.location}
             onChange={(event) =>
               setDraft((current) => ({ ...current, location: event.target.value }))
             }
           />
         </div>
-        <p className="typo-small text-muted-foreground">
-          Výsledky řadíme podle nejbližšího termínu.
-        </p>
+        <p className="typo-small text-muted-foreground">{t("hobbyhub.filters.sortNote")}</p>
       </div>
     </ResponsiveSheet>
   )

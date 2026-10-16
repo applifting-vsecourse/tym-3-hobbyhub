@@ -1,6 +1,9 @@
+import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -15,20 +18,29 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
-const schema = z
-  .object({
-    email: z.string().trim().min(1, "Email is required").email("Invalid email"),
-    name: z.string().trim().min(1, "Name is required"),
-    username: z.string().trim().min(1, "Username is required"),
-    password: z.string().trim().min(8, "Password must be at least 8 characters"),
-    passwordConfirmation: z.string().trim().min(1, "Password confirmation is required"),
-  })
-  .refine((values) => values.password === values.passwordConfirmation, {
-    message: "Passwords must match",
-    path: ["passwordConfirmation"],
-  })
+// Built per render so validation messages follow the current language.
+const createSchema = (t: TFunction) =>
+  z
+    .object({
+      email: z
+        .string()
+        .trim()
+        .min(1, t("auth.validation.emailRequired"))
+        .email(t("auth.validation.emailInvalid")),
+      name: z.string().trim().min(1, t("auth.validation.nameRequired")),
+      username: z.string().trim().min(1, t("auth.validation.usernameRequired")),
+      password: z.string().trim().min(8, t("auth.validation.passwordMin")),
+      passwordConfirmation: z
+        .string()
+        .trim()
+        .min(1, t("auth.validation.passwordConfirmationRequired")),
+    })
+    .refine((values) => values.password === values.passwordConfirmation, {
+      message: t("auth.validation.passwordsMustMatch"),
+      path: ["passwordConfirmation"],
+    })
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof createSchema>>
 
 const defaultValues: FormValues = {
   email: "",
@@ -45,6 +57,8 @@ type SignUpFormProps = {
 }
 
 export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProps) {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues,
@@ -68,7 +82,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>{t("auth.fields.name")}</FormLabel>
               <FormControl>
                 <Input
                   autoComplete="name"
@@ -85,7 +99,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>{t("auth.fields.username")}</FormLabel>
               <FormControl>
                 <Input
                   autoComplete="username"
@@ -102,11 +116,11 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("auth.fields.email")}</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="e.g. john@doe.com"
+                  placeholder={t("auth.placeholders.email")}
                   autoComplete="email"
                   {...field}
                 />
@@ -121,7 +135,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t("auth.fields.password")}</FormLabel>
               <FormControl>
                 <Input
                   type="password"
@@ -139,7 +153,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           name="passwordConfirmation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm password</FormLabel>
+              <FormLabel>{t("auth.fields.passwordConfirmation")}</FormLabel>
               <FormControl>
                 <Input
                   type="password"
@@ -159,7 +173,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           disabled={isLoading}
         >
           {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-          Sign up
+          {t("auth.signUp.submit")}
         </Button>
       </form>
     </Form>

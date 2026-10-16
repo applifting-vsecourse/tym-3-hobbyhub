@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps } from "react"
+import { useTranslation } from "react-i18next"
 
 import DiscoverIcon from "@/assets/ui-icons/nav-discover.svg?react"
 import GroupsIcon from "@/assets/ui-icons/nav-groups.svg?react"
@@ -11,14 +12,20 @@ export type BottomNavSection = "discover" | "my-events" | "groups" | "profile"
 
 const SECTIONS: {
   key: BottomNavSection
-  label: string
   Icon: ComponentType<SVGProps<SVGSVGElement>>
 }[] = [
-  { key: "discover", label: "Objevovat", Icon: DiscoverIcon },
-  { key: "my-events", label: "Moje akce", Icon: MyEventsIcon },
-  { key: "groups", label: "Skupiny", Icon: GroupsIcon },
-  { key: "profile", label: "Profil", Icon: ProfileIcon },
+  { key: "discover", Icon: DiscoverIcon },
+  { key: "my-events", Icon: MyEventsIcon },
+  { key: "groups", Icon: GroupsIcon },
+  { key: "profile", Icon: ProfileIcon },
 ]
+
+const NAV_LABELS = {
+  discover: "hobbyhub.nav.discover",
+  "my-events": "hobbyhub.nav.myEvents",
+  groups: "hobbyhub.nav.groups",
+  profile: "hobbyhub.nav.profile",
+} as const
 
 type BottomNavProps = {
   active: BottomNavSection
@@ -40,7 +47,8 @@ function NavItem({
   hasDot: boolean
   onNavigate: BottomNavProps["onNavigate"]
 }) {
-  const { key, label, Icon } = section
+  const { t } = useTranslation()
+  const { key, Icon } = section
 
   return (
     <button
@@ -59,11 +67,11 @@ function NavItem({
         />
         {hasDot ? (
           <span className="absolute -top-0.5 -right-1 size-2 rounded-full bg-primary">
-            <span className="sr-only">, nové žádosti</span>
+            <span className="sr-only">{t("hobbyhub.nav.newRequests")}</span>
           </span>
         ) : null}
       </span>
-      {label}
+      {t(NAV_LABELS[key])}
     </button>
   )
 }
@@ -79,6 +87,7 @@ export function BottomNav({
   hasNewRequests = false,
   className,
 }: BottomNavProps) {
+  const { t } = useTranslation()
   const renderItem = (section: (typeof SECTIONS)[number]) => (
     <NavItem
       key={section.key}
@@ -91,7 +100,7 @@ export function BottomNav({
 
   return (
     <nav
-      aria-label="Hlavní navigace"
+      aria-label={t("hobbyhub.nav.label")}
       className={cn("w-full pt-9", className)}
     >
       <div className="flex items-start border-t border-border bg-card pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -111,7 +120,7 @@ export function BottomNav({
             />
           </span>
           <span className="size-6" />
-          Přidat
+          {t("hobbyhub.nav.add")}
         </button>
         {SECTIONS.slice(2).map(renderItem)}
       </div>
