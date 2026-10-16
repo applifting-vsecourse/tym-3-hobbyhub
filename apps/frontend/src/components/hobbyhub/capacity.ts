@@ -23,20 +23,17 @@ export function seatStates(capacity: Capacity): SeatState[] {
   const free = max - taken - missing
 
   return [
-    ...Array<SeatState>(taken).fill("taken"),
-    ...Array<SeatState>(missing).fill("missing"),
-    ...Array<SeatState>(free).fill("free"),
+    ...new Array<SeatState>(taken).fill("taken"),
+    ...new Array<SeatState>(missing).fill("missing"),
+    ...new Array<SeatState>(free).fill("free"),
   ]
 }
 
 /** One-line summary used as the accessible name of seat graphics. */
 export function capacityLabel(t: TFunction, capacity: Capacity) {
   const missing = missingCount(capacity)
-  const base = t("hobbyhub.capacity.taken", {
-    taken: capacity.taken,
-    total: capacity.max ?? capacity.min,
-  })
+  const values = { taken: capacity.taken, total: capacity.max ?? capacity.min }
   return missing > 0
-    ? `${base}, ${t("hobbyhub.capacity.missing", { count: missing })}`
-    : `${base}, ${t("hobbyhub.capacity.full")}`
+    ? t("hobbyhub.capacity.summaryMissing", { ...values, count: missing })
+    : t("hobbyhub.capacity.summaryFull", values)
 }

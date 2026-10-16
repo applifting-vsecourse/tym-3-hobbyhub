@@ -24,7 +24,7 @@ function SignUpPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signUp = useSignUp()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
 
   const handleSubmit = async (values: {
     email: string
@@ -32,7 +32,7 @@ function SignUpPage() {
     username: string
     password: string
   }) => {
-    setErrorMessage(null)
+    setError(null)
     try {
       await signUp.mutateAsync({
         email: values.email,
@@ -42,7 +42,7 @@ function SignUpPage() {
       })
       await navigate({ to: ROUTES.quacks })
     } catch (error) {
-      setErrorMessage(authErrorMessage(t, error, "signUpFailed"))
+      setError(error)
     }
   }
 
@@ -59,14 +59,14 @@ function SignUpPage() {
               to={ROUTES.login}
               className="font-medium text-foreground underline underline-offset-4"
             >
-              {t("auth.signIn.title")}
+              {t("auth.signUp.signInLink")}
             </Link>
           </>
         }
       >
         <SignUpForm
           isLoading={signUp.isPending}
-          errorMessage={errorMessage}
+          errorMessage={error ? authErrorMessage(t, error, "signUpFailed") : null}
           onSubmit={handleSubmit}
         />
       </AuthLayout>

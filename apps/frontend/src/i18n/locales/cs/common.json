@@ -24,12 +24,14 @@
     "signIn": {
       "description": "Vítejte zpět v HobbyHubu.",
       "noAccount": "Nemáte účet?",
+      "signUpLink": "Zaregistrujte se",
       "submit": "Přihlásit se",
       "title": "Přihlášení"
     },
     "signUp": {
       "description": "Vytvořte si účet v HobbyHubu.",
       "haveAccount": "Už máte účet?",
+      "signInLink": "Přihlaste se",
       "submit": "Zaregistrovat se",
       "title": "Registrace"
     },
@@ -110,7 +112,8 @@
     "capacity": {
       "full": "naplněno",
       "missing": "chybí {{count}}",
-      "taken": "Obsazeno {{taken}} z {{total}}"
+      "summaryFull": "Obsazeno {{taken}} z {{total}}, naplněno",
+      "summaryMissing": "Obsazeno {{taken}} z {{total}}, chybí {{count}}"
     },
     "chatShare": {
       "copied": "Zpráva je zkopírovaná",
@@ -124,6 +127,8 @@
       "more": "{{label}}: více"
     },
     "eventDetail": {
+      "seatsFull": "{{taken}}/{{total}}, naplněno",
+      "seatsMissing": "{{taken}}/{{total}}, chybí {{count}}",
       "until": "do {{time}}"
     },
     "filters": {
@@ -169,8 +174,8 @@
       "groups": "Skupiny",
       "label": "Hlavní navigace",
       "myEvents": "Moje akce",
-      "newRequests": ", nové žádosti",
-      "profile": "Profil"
+      "profile": "Profil",
+      "withNewRequests": "{{label}}, nové žádosti"
     },
     "photoPicker": {
       "change": "Změnit fotku",

@@ -33,15 +33,15 @@ function LoginPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signIn = useSignIn()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
 
   const handleSubmit = async (values: { email: string; password: string }) => {
-    setErrorMessage(null)
+    setError(null)
     try {
       await signIn.mutateAsync(values)
       await navigate({ to: redirectTo })
     } catch (error) {
-      setErrorMessage(authErrorMessage(t, error, "signInFailed"))
+      setError(error)
     }
   }
 
@@ -58,14 +58,14 @@ function LoginPage() {
               to={ROUTES.signup}
               className="font-medium text-foreground underline underline-offset-4"
             >
-              {t("auth.signUp.title")}
+              {t("auth.signIn.signUpLink")}
             </Link>
           </>
         }
       >
         <SignInForm
           isLoading={signIn.isPending}
-          errorMessage={errorMessage}
+          errorMessage={error ? authErrorMessage(t, error, "signInFailed") : null}
           onSubmit={handleSubmit}
         />
       </AuthLayout>

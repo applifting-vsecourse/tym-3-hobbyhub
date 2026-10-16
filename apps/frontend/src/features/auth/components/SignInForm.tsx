@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
@@ -46,6 +47,7 @@ export function SignInForm({ isLoading, errorMessage, onSubmit }: SignInFormProp
     resolver: zodResolver(schema),
     defaultValues,
   })
+  useRevalidateOnLanguageChange(form)
 
   return (
     <Form {...form}>

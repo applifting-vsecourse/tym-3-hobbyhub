@@ -87,10 +87,9 @@ export function EventDetailCard({
 
       <SeatMeter {...capacity} />
       <p className="typo-label text-foreground">
-        {capacity.taken}/{total},{" "}
         {missing > 0
-          ? t("hobbyhub.capacity.missing", { count: missing })
-          : t("hobbyhub.capacity.full")}
+          ? t("hobbyhub.eventDetail.seatsMissing", { taken: capacity.taken, total, count: missing })
+          : t("hobbyhub.eventDetail.seatsFull", { taken: capacity.taken, total })}
       </p>
 
       <div className="w-full *:w-full">{action}</div>

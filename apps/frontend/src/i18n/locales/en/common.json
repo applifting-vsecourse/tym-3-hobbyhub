@@ -24,12 +24,14 @@
     "signIn": {
       "description": "Welcome back to HobbyHub.",
       "noAccount": "No account?",
+      "signUpLink": "Sign up",
       "submit": "Sign in",
       "title": "Sign in"
     },
     "signUp": {
       "description": "Create your HobbyHub account.",
       "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
       "submit": "Sign up",
       "title": "Sign up"
     },
@@ -110,7 +112,8 @@
     "capacity": {
       "full": "full",
       "missing": "{{count}} missing",
-      "taken": "{{taken}} of {{total}} taken"
+      "summaryFull": "{{taken}} of {{total}} taken, full",
+      "summaryMissing": "{{taken}} of {{total}} taken, {{count}} missing"
     },
     "chatShare": {
       "copied": "Message copied",
@@ -124,6 +127,8 @@
       "more": "{{label}}: more"
     },
     "eventDetail": {
+      "seatsFull": "{{taken}}/{{total}}, full",
+      "seatsMissing": "{{taken}}/{{total}}, {{count}} missing",
       "until": "until {{time}}"
     },
     "filters": {
@@ -167,8 +172,8 @@
       "groups": "Groups",
       "label": "Main navigation",
       "myEvents": "My events",
-      "newRequests": ", new requests",
-      "profile": "Profile"
+      "profile": "Profile",
+      "withNewRequests": "{{label}}, new requests"
     },
     "photoPicker": {
       "change": "Change photo",

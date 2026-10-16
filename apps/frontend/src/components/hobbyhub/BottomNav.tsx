@@ -28,12 +28,18 @@ const NAV_LABELS = {
 } as const
 
 type BottomNavProps = {
-  active: BottomNavSection
-  onNavigate: (section: BottomNavSection) => void
-  onAdd: () => void
-  /** Shows the dot on "Moje akce" when requests wait for approval. */
-  hasNewRequests?: boolean
-  className?: string
+  readonly active: BottomNavSection
+  readonly onNavigate: (section: BottomNavSection) => void
+  readonly onAdd: () => void
+  readonly hasNewRequests?: boolean
+  readonly className?: string
+}
+
+type NavItemProps = {
+  readonly section: (typeof SECTIONS)[number];
+  readonly isActive: boolean;
+  readonly hasDot: boolean;
+  readonly onNavigate: BottomNavProps["onNavigate"];
 }
 
 function NavItem({
@@ -41,19 +47,16 @@ function NavItem({
   isActive,
   hasDot,
   onNavigate,
-}: {
-  section: (typeof SECTIONS)[number]
-  isActive: boolean
-  hasDot: boolean
-  onNavigate: BottomNavProps["onNavigate"]
-}) {
+}: NavItemProps) {
   const { t } = useTranslation()
   const { key, Icon } = section
+  const label = t(NAV_LABELS[key])
 
   return (
     <button
       type="button"
       aria-current={isActive ? "page" : undefined}
+      aria-label={hasDot ? t("hobbyhub.nav.withNewRequests", { label }) : undefined}
       onClick={() => onNavigate(key)}
       className={cn(
         "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -66,12 +69,10 @@ function NavItem({
           className="size-6"
         />
         {hasDot ? (
-          <span className="absolute -top-0.5 -right-1 size-2 rounded-full bg-primary">
-            <span className="sr-only">{t("hobbyhub.nav.newRequests")}</span>
-          </span>
+          <span className="absolute -top-0.5 -right-1 size-2 rounded-full bg-primary" />
         ) : null}
       </span>
-      {t(NAV_LABELS[key])}
+      {label}
     </button>
   )
 }
