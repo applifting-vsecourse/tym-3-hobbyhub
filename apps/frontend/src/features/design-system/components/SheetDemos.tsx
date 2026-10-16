@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react"
+import type { TFunction } from "i18next"
+import { useTranslation } from "react-i18next"
 
-import { ACTIVITIES } from "@/components/hobbyhub/ActivityIcon"
 import { EMPTY_FILTERS, FiltersSheet, type EventFilters } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { ShareEventSheet } from "@/components/hobbyhub/ShareEventSheet"
@@ -23,9 +24,9 @@ function sampleCount(filters: EventFilters) {
 
 const WHEN_LABELS = { week: "tento týden", weekend: "víkend", date: "vlastní datum" } as const
 
-function describeFilters(filters: EventFilters) {
+function describeFilters(filters: EventFilters, t: TFunction) {
   const parts = [
-    ...filters.activities.map((activity) => ACTIVITIES[activity].label),
+    ...filters.activities.map((activity) => t(`hobbyhub.activities.${activity}`)),
     filters.when ? WHEN_LABELS[filters.when] : "",
     filters.location,
   ].filter((part) => part !== "")
@@ -34,6 +35,7 @@ function describeFilters(filters: EventFilters) {
 
 /** Search field whose filter button opens the filters panel. */
 export function SearchWithFilters() {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState<EventFilters>(EMPTY_FILTERS)
 
@@ -43,7 +45,9 @@ export function SearchWithFilters() {
         placeholder="Florbal, Praha 8"
         onOpenFilters={() => setIsOpen(true)}
       />
-      <p className="typo-small text-muted-foreground">Použité filtry: {describeFilters(filters)}</p>
+      <p className="typo-small text-muted-foreground">
+        Použité filtry: {describeFilters(filters, t)}
+      </p>
       <FiltersSheet
         isOpen={isOpen}
         onOpenChange={setIsOpen}

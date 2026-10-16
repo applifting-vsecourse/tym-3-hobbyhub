@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { LogOut } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,14 +19,17 @@ import { useSignOut } from "@/features/auth/hooks/useSignOut"
 export function HeaderMenu() {
   const { user } = useSession()
   const signOut = useSignOut()
+  const { t } = useTranslation()
 
   if (!user) {
     return (
       <Button
         asChild
         size="sm"
+        // Outline at every width: the screen's one primary action is its own, not signing in.
+        variant="outline"
       >
-        <Link to="/login">Sign in</Link>
+        <Link to="/login">{t("header.signIn")}</Link>
       </Button>
     )
   }
@@ -43,7 +47,7 @@ export function HeaderMenu() {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="User menu"
+          aria-label={t("header.userMenu")}
           className="rounded-full"
         >
           <Avatar className="size-8">
@@ -67,7 +71,7 @@ export function HeaderMenu() {
           disabled={signOut.isPending}
         >
           <LogOut className="size-4" />
-          Sign out
+          {t("header.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import PinCircle from "@/assets/map-pin/circle.svg?react"
 import PinCluster from "@/assets/map-pin/cluster.svg?react"
 import PinFilled from "@/assets/map-pin/filled.svg?react"
@@ -9,20 +11,14 @@ type MapPinProps =
   | { variant: "missing" | "selected" | "cluster"; count: number; className?: string }
   | { variant: "filled"; count?: never; className?: string }
 
-const LABELS = {
-  missing: (count: number) => `Akce, chybí ${count}`,
-  selected: (count: number) => `Vybraná akce, chybí ${count}`,
-  cluster: (count: number) => `${count} akcí`,
-  filled: () => "Akce, naplněno",
-}
-
 /**
  * Pin na mapě. The number is how many people are missing; a filled event is
  * a green tick; a cluster groups nearby events; the selected pin is a circle
  * without a tail inside a full ring. Wrap it in a button to make it interactive.
  */
 export function MapPin({ variant, count, className }: MapPinProps) {
-  const label = LABELS[variant](count ?? 0)
+  const { t } = useTranslation()
+  const label = t(`hobbyhub.mapPin.${variant}`, { count: count ?? 0 })
 
   if (variant === "filled") {
     return (

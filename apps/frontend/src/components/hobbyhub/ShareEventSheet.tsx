@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { ChatShare } from "@/components/hobbyhub/ChatShare"
@@ -21,15 +22,6 @@ type ShareEventSheetProps = {
 // Share targets look like filter chips (Figma "Kam poslat") but are links or buttons.
 const targetClass = cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")
 
-async function copy(text: string, success: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.success(success)
-  } catch {
-    toast.error("Nepodařilo se zkopírovat")
-  }
-}
-
 /**
  * Sdílet do chatu — opened from an event with missing people. The organiser
  * copies a ready-made message or sends the link straight to a chat app.
@@ -39,29 +31,39 @@ export function ShareEventSheet({
   onOpenChange,
   message,
   url,
-  description = "Pošli zprávu do skupiny, kde už jste, a zbytek vyřeší odkaz.",
+  description,
   trigger,
 }: ShareEventSheetProps) {
+  const { t } = useTranslation()
   const text = `${message} ${url}`
+
+  const copy = async (value: string, success: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      toast.success(success)
+    } catch {
+      toast.error(t("hobbyhub.shareSheet.copyFailed"))
+    }
+  }
 
   return (
     <ResponsiveSheet
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       trigger={trigger}
-      title="Sdílet do chatu"
-      description={description}
+      title={t("hobbyhub.shareSheet.title")}
+      description={description ?? t("hobbyhub.shareSheet.description")}
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
-          <p className="typo-label-lg text-muted-foreground">Zpráva</p>
+          <p className="typo-label-lg text-muted-foreground">{t("hobbyhub.shareSheet.message")}</p>
           <ChatShare
             message={message}
             url={url}
           />
         </div>
 
-        <h3 className="typo-h3 text-foreground">Kam poslat</h3>
+        <h3 className="typo-h3 text-foreground">{t("hobbyhub.shareSheet.where")}</h3>
         <ul className="flex flex-wrap gap-2">
           <li>
             <a
@@ -78,7 +80,7 @@ export function ShareEventSheet({
             <button
               type="button"
               className={targetClass}
-              onClick={() => copy(text, "Zpráva je zkopírovaná, vlož ji do Messengeru")}
+              onClick={() => copy(text, t("hobbyhub.shareSheet.copiedMessenger"))}
             >
               Messenger
             </button>
@@ -90,14 +92,14 @@ export function ShareEventSheet({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Facebook skupina
+              {t("hobbyhub.shareSheet.facebook")}
             </a>
           </li>
           <li>
             <button
               type="button"
               className={targetClass}
-              onClick={() => copy(text, "Zpráva je zkopírovaná, vlož ji do Discordu")}
+              onClick={() => copy(text, t("hobbyhub.shareSheet.copiedDiscord"))}
             >
               Discord
             </button>
@@ -106,16 +108,13 @@ export function ShareEventSheet({
             <button
               type="button"
               className={targetClass}
-              onClick={() => copy(url, "Odkaz je zkopírovaný")}
+              onClick={() => copy(url, t("hobbyhub.shareSheet.linkCopied"))}
             >
-              Zkopírovat odkaz
+              {t("hobbyhub.shareSheet.copyLink")}
             </button>
           </li>
         </ul>
-        <p className="typo-small text-muted-foreground">
-          Odkaz vede na veřejnou stránku akce. Kdokoli ji uvidí bez účtu, žádost o účast už vyžaduje
-          přihlášení.
-        </p>
+        <p className="typo-small text-muted-foreground">{t("hobbyhub.shareSheet.note")}</p>
       </div>
     </ResponsiveSheet>
   )

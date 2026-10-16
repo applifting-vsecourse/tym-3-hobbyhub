@@ -1,102 +1,187 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import type { CSSProperties } from "react"
+import { createFileRoute } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
+import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
+import florbalPhoto from "@/assets/event-photos/florbal.jpg"
+import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import { Header } from "@/components/Header/Header"
+import { EventCard } from "@/components/hobbyhub/EventCard"
+import { Hero } from "@/components/hobbyhub/Hero"
+import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
 import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
-import { useSession } from "@/features/auth/hooks/useSession"
-import type { Quack } from "@/features/quack/api/quackSchemas"
-import { QuackItem } from "@/features/quack/components/QuackItem"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
 })
 
-// Static sample for the preview below. It renders through the same <Quack />
-// component as the real feed, so the landing page can never drift from it.
-const SAMPLE_QUACKS: Quack[] = [
+type TonightEvent = {
+  id: string
+  title: string
+  when: string
+  meta: string
+  taken: number
+  capacity: number
+  photo: { src: string; alt: string }
+}
+
+// Static preview until the events API exists. Swap for a query then; the
+// empty state below already handles an empty list.
+const TONIGHT: TonightEvent[] = [
   {
-    id: "sample-1",
-    text: "me: throws one crumb into the pond\nducks: assemble like the Avengers\ni fear i may have started something",
-    userId: "sample-user-1",
-    createdAt: new Date("2026-09-22T09:12:00"),
-    user: { id: "sample-user-1", name: "Caffeinated Duck", username: "CaffeinatedDuck" },
+    id: "florbal",
+    title: "Čtvrteční florbal",
+    when: "Dnes 19:00",
+    meta: "ZŠ Kobylisy · pokročilí",
+    taken: 7,
+    capacity: 10,
+    photo: { src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" },
   },
   {
-    id: "sample-2",
-    text: "If ducks wore pants, would they wear them on their legs or over their whole lower half like a cape?\nAsking for a friend. A feathery friend.",
-    userId: "sample-user-2",
-    createdAt: new Date("2026-09-22T08:40:00"),
-    user: { id: "sample-user-2", name: "Deep Duck Thoughts", username: "DeepDuckThoughts" },
+    id: "deskovky",
+    title: "Deskovky v herně",
+    when: "Dnes 18:00",
+    meta: "Herna Kostka · všechny úrovně",
+    taken: 3,
+    capacity: 5,
+    photo: { src: deskovkyPhoto, alt: "Desková hra rozložená na stole" },
+  },
+  {
+    id: "volejbal",
+    title: "Volejbal na hřišti",
+    when: "Zítra 10:00",
+    meta: "Hřiště Letná · začátečníci",
+    taken: 4,
+    capacity: 6,
+    photo: { src: volejbalPhoto, alt: "Volejbal na pláži ve městě" },
   },
 ]
 
+const STEP_KEYS = ["step1", "step2", "step3"] as const
+
 function LandingPage() {
-  const { user } = useSession()
+  const { t } = useTranslation()
 
   return (
     <>
-      <Seo title="Welcome" />
-      <Header userMenu={<HeaderMenu />} />
-      <main className="min-h-svh">
-        <section className="mx-auto w-full max-w-2xl px-4 pt-16 pb-12 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl">
-            Say it in a few words.
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-lg text-pretty text-muted-foreground">
-            Quacker is a tiny social network for short messages. Post a quack, read what everyone
-            else is up to.
-          </p>
+      <Seo title={t("landing.seoTitle")} />
+      <Header
+        search={
+          <SearchField
+            label={t("landing.search.label")}
+            placeholder={t("landing.search.placeholder")}
+          />
+        }
+        userMenu={
+          <>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="max-md:hidden"
+            >
+              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+            </Button>
+            <HeaderMenu />
+          </>
+        }
+      />
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8">
+        <Hero
+          className="enter [--seat-delay:400ms]"
+          isAnimated
+          titleAs="h1"
+          kicker={t("landing.hero.kicker")}
+          title={t("landing.hero.title")}
+          text={t("landing.hero.text")}
+          taken={7}
+          capacity={10}
+          action={
+            <Button asChild>
+              <a href={ROUTES.events}>{t("landing.hero.join")}</a>
+            </Button>
+          }
+          secondaryAction={
+            <Button
+              asChild
+              variant="secondary"
+            >
+              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+            </Button>
+          }
+        />
 
-          {/* The call to action depends on who is asking: no point offering an
-              account to someone who already has one. */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            {user ? (
-              <Button
-                asChild
-                size="lg"
-              >
-                <Link to={ROUTES.quacks}>Go to your feed</Link>
-              </Button>
-            ) : (
-              <>
-                <Button
-                  asChild
-                  size="lg"
+        <section
+          aria-labelledby="tonight-heading"
+          className="flex enter flex-col gap-3"
+          style={{ "--enter-index": 1 } as CSSProperties}
+        >
+          <h2
+            id="tonight-heading"
+            className="typo-h3"
+          >
+            {t("landing.tonight.title")}
+          </h2>
+          {TONIGHT.length > 0 ? (
+            <div className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
+              {TONIGHT.map(({ id, ...event }) => (
+                <a
+                  key={id}
+                  href={ROUTES.events}
+                  className="group block rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5"
                 >
-                  <Link to={ROUTES.signup}>Create an account</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                >
-                  <Link to={ROUTES.login}>Sign in</Link>
-                </Button>
-              </>
-            )}
-          </div>
+                  <EventCard
+                    isAnimated
+                    className="h-full transition-colors duration-200 group-hover:border-primary group-focus-visible:border-primary"
+                    {...event}
+                  />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="typo-body text-muted-foreground">{t("landing.tonight.empty")}</p>
+          )}
         </section>
 
         <section
-          aria-labelledby="preview-heading"
-          className="mx-auto w-full max-w-2xl px-4 pb-20"
+          aria-labelledby="how-heading"
+          className="flex enter flex-col gap-3"
+          style={{ "--enter-index": 2 } as CSSProperties}
         >
           <h2
-            id="preview-heading"
-            className="mb-3 text-center text-xs font-medium tracking-widest text-muted-foreground uppercase"
+            id="how-heading"
+            className="typo-h3"
           >
-            A peek at the feed
+            {t("landing.how.title")}
           </h2>
-          <div className="rounded-xl border border-border bg-card px-5 py-2">
-            {SAMPLE_QUACKS.map((quack) => (
-              <QuackItem
-                key={quack.id}
-                quack={quack}
-              />
+          <ol className="flex flex-col gap-2 typo-body text-muted-foreground lg:grid lg:grid-cols-3 lg:gap-8">
+            {STEP_KEYS.map((key, index) => (
+              <li
+                key={key}
+                className="flex gap-3"
+              >
+                <span className="w-4 shrink-0 text-foreground">{index + 1}.</span>
+                {t(`landing.how.${key}`)}
+              </li>
             ))}
+          </ol>
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+            <Button
+              asChild
+              variant="secondary"
+            >
+              <a href={ROUTES.events}>{t("landing.actions.find")}</a>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+            >
+              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+            </Button>
           </div>
         </section>
       </main>

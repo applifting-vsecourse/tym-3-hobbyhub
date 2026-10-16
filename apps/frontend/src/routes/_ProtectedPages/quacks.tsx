@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 
 import { Seo } from "@/components/Seo"
 
@@ -12,13 +13,14 @@ export const Route = createFileRoute("/_ProtectedPages/quacks")({
 })
 
 function QuacksPage() {
+  const { t } = useTranslation()
   const quacksQuery = useQuery(quacksQueryOptions())
 
   return (
     <>
-      <Seo title="Quacks" />
+      <Seo title={t("quacks.title")} />
       <section className="mx-auto w-full max-w-2xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight">Quacks</h1>
+        <h1 className="mb-4 text-2xl font-semibold tracking-tight">{t("quacks.title")}</h1>
 
         <QuackForm className="mb-4" />
 

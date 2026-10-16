@@ -33,3 +33,7 @@ The CLI puts `shadow-xs`/`shadow-sm` on inputs, textareas and cards. [`DESIGN.md
 Assume the dev servers are up. If something is listening on the app's ports, that is this application: use it. Don't start a second instance, don't restart it, don't run `pnpm dev`.
 
 Don't reach for the browser to check your own work. Tests and type-checks are the evidence; open the running app when asked to, not on your own initiative.
+
+### Text lives in translations
+
+No user-facing strings in components — not text, `aria-label`s, placeholders or validation messages. Add the key to both `apps/frontend/src/i18n/locales/cs/common.json` and `.../en/common.json` and read it with `useTranslation()`. Czech is the default and types the keys; a test fails if the two files drift apart. Plurals use `_one`/`_few`/`_other` keys, dates and numbers go through `Intl`. `i18next/no-literal-string` warns about what is still hardcoded.

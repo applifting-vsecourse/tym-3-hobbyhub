@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { ActivityAvatar, type AvatarKind } from "@/components/hobbyhub/ActivityAvatar"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
@@ -34,6 +36,8 @@ export function JoinRequestCard({
   isPending = false,
   className,
 }: JoinRequestCardProps) {
+  const { t } = useTranslation()
+
   return (
     <article
       className={cn(
@@ -49,7 +53,9 @@ export function JoinRequestCard({
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="typo-title text-foreground">{name}</h3>
-            {hasVerifiedEmail ? <StatusBadge status="approved">Ověřený e-mail</StatusBadge> : null}
+            {hasVerifiedEmail ? (
+              <StatusBadge status="approved">{t("hobbyhub.joinRequest.verified")}</StatusBadge>
+            ) : null}
           </div>
           <p className="typo-small text-muted-foreground">{activityLine}</p>
           <p className="typo-small text-muted-foreground">{historyLine}</p>
@@ -68,7 +74,7 @@ export function JoinRequestCard({
           onClick={onApprove}
           disabled={isPending}
         >
-          Schválit
+          {t("hobbyhub.joinRequest.approve")}
         </Button>
         <Button
           size="sm"
@@ -76,7 +82,7 @@ export function JoinRequestCard({
           onClick={onReject}
           disabled={isPending}
         >
-          Zamítnout
+          {t("hobbyhub.joinRequest.reject")}
         </Button>
       </div>
 

@@ -1,0 +1,265 @@
+{
+  "auth": {
+    "errors": {
+      "emailNotVerified": "Your email is not verified yet.",
+      "invalidCredentials": "Incorrect email or password.",
+      "invalidEmail": "Invalid email.",
+      "invalidUsername": "Invalid username.",
+      "passwordTooShort": "The password is too short.",
+      "signInFailed": "Sign in failed.",
+      "signUpFailed": "Sign up failed.",
+      "userExists": "An account with this email already exists.",
+      "usernameTaken": "This username is already taken."
+    },
+    "fields": {
+      "email": "Email",
+      "name": "Name",
+      "password": "Password",
+      "passwordConfirmation": "Confirm password",
+      "username": "Username"
+    },
+    "placeholders": {
+      "email": "e.g. john@doe.com"
+    },
+    "signIn": {
+      "description": "Welcome back to HobbyHub.",
+      "noAccount": "No account?",
+      "signUpLink": "Sign up",
+      "submit": "Sign in",
+      "title": "Sign in"
+    },
+    "signUp": {
+      "description": "Create your HobbyHub account.",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "submit": "Sign up",
+      "title": "Sign up"
+    },
+    "validation": {
+      "emailInvalid": "Invalid email",
+      "emailRequired": "Email is required",
+      "nameRequired": "Name is required",
+      "passwordConfirmationRequired": "Password confirmation is required",
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordRequired": "Password is required",
+      "passwordsMustMatch": "Passwords must match",
+      "usernameRequired": "Username is required"
+    }
+  },
+  "errors": {
+    "generic": {
+      "description": "An unexpected error occurred.",
+      "reload": "Reload",
+      "title": "Something went wrong"
+    },
+    "notFound": {
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "goHome": "Go home",
+      "title": "Page not found"
+    }
+  },
+  "header": {
+    "language": {
+      "label": "Language"
+    },
+    "nav": {
+      "designSystem": "Design system",
+      "quacks": "Quacks"
+    },
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System",
+      "toggle": "Toggle theme"
+    },
+    "userMenu": "User menu"
+  },
+  "hobbyhub": {
+    "activities": {
+      "badminton": "Badminton",
+      "basketbal": "Basketball",
+      "beh": "Running",
+      "cviceni": "Exercise",
+      "cyklistika": "Cycling",
+      "deskove-hry": "Board games",
+      "florbal": "Floorball",
+      "fotbal": "Football",
+      "lan-party": "LAN party",
+      "ostatni": "Other",
+      "plavani": "Swimming",
+      "sachy": "Chess",
+      "stolni-tenis": "Table tennis",
+      "tenis": "Tennis",
+      "turistika": "Hiking",
+      "volejbal": "Volleyball"
+    },
+    "avatars": {
+      "basketbalista": "Basketball player",
+      "bezec": "Runner",
+      "cyklista": "Cyclist",
+      "deskar": "Board gamer",
+      "florbalista": "Floorball player",
+      "fotbalista": "Football player",
+      "hrac-her": "Gamer",
+      "joginka": "Yogi",
+      "plavkyne": "Swimmer",
+      "tenistka": "Tennis player",
+      "turistka": "Hiker",
+      "volejbalistka": "Volleyball player"
+    },
+    "capacity": {
+      "full": "full",
+      "missing": "{{count}} missing",
+      "summaryFull": "{{taken}} of {{total}} taken, full",
+      "summaryMissing": "{{taken}} of {{total}} taken, {{count}} missing"
+    },
+    "chatShare": {
+      "copied": "Message copied",
+      "copy": "Copy message",
+      "copyFailed": "Couldn't copy the message",
+      "link": "event link",
+      "share": "Share"
+    },
+    "counter": {
+      "less": "{{label}}: less",
+      "more": "{{label}}: more"
+    },
+    "eventDetail": {
+      "seatsFull": "{{taken}}/{{total}}, full",
+      "seatsMissing": "{{taken}}/{{total}}, {{count}} missing",
+      "until": "until {{time}}"
+    },
+    "filters": {
+      "activity": "Activity",
+      "clear": "Clear",
+      "date": "Date…",
+      "location": "Location",
+      "locationPlaceholder": "Prague 8",
+      "results_one": "Show {{count}} event",
+      "results_other": "Show {{count}} events",
+      "showResults": "Show results",
+      "sortNote": "Results are sorted by the nearest date.",
+      "title": "Filters",
+      "week": "This week",
+      "weekend": "Weekend",
+      "when": "When"
+    },
+    "joinRequest": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "verified": "Verified email"
+    },
+    "loader": {
+      "ball": "Looking for events…",
+      "bike": "Loading the map…",
+      "dice": "Picking a substitute…",
+      "player": "Looking for players…",
+      "seats": "Loading the roster…",
+      "volleyball": "Sending your request…"
+    },
+    "mapPin": {
+      "cluster_one": "{{count}} event",
+      "cluster_other": "{{count}} events",
+      "filled": "Event, full",
+      "missing": "Event, {{count}} missing",
+      "selected": "Selected event, {{count}} missing"
+    },
+    "nav": {
+      "add": "Add",
+      "discover": "Discover",
+      "groups": "Groups",
+      "label": "Main navigation",
+      "myEvents": "My events",
+      "profile": "Profile",
+      "withNewRequests": "{{label}}, new requests"
+    },
+    "photoPicker": {
+      "change": "Change photo",
+      "chosen": "Selected event photo",
+      "hint": "or pick an activity illustration",
+      "label": "Photo or illustration (optional)",
+      "upload": "Upload photo"
+    },
+    "roster": {
+      "free": "Free seat",
+      "missingToMinimum": "Needed to reach the minimum"
+    },
+    "search": {
+      "filters": "Filters",
+      "label": "Search events"
+    },
+    "shareSheet": {
+      "copiedDiscord": "Message copied, paste it into Discord",
+      "copiedMessenger": "Message copied, paste it into Messenger",
+      "copyFailed": "Couldn't copy",
+      "copyLink": "Copy link",
+      "description": "Send a message to a group you're already in and the link does the rest.",
+      "facebook": "Facebook group",
+      "linkCopied": "Link copied",
+      "message": "Message",
+      "note": "The link leads to the public event page. Anyone can view it without an account; asking to join requires signing in.",
+      "title": "Share to chat",
+      "where": "Where to send"
+    },
+    "status": {
+      "approved": "Approved",
+      "deadline": "Deadline",
+      "neutral": "Full",
+      "pending": "Awaiting approval",
+      "rejected": "Rejected"
+    },
+    "viewToggle": {
+      "label": "Events view",
+      "list": "List",
+      "map": "Map"
+    },
+    "yourSeat": {
+      "title": "Your seat?"
+    }
+  },
+  "landing": {
+    "actions": {
+      "create": "Create an event",
+      "find": "Find an event"
+    },
+    "hero": {
+      "join": "Take a seat",
+      "kicker": "Thursday floorball · today 19:00",
+      "text": "3 more needed to reach the minimum. One of them could be you.",
+      "title": "Fill the missing players before the event is cancelled"
+    },
+    "how": {
+      "step1": "Create an event and say how many people you still need to reach the minimum.",
+      "step2": "Others see the free seats on the map or in the list and ask to join.",
+      "step3": "You approve participants and the event goes ahead.",
+      "title": "How it works"
+    },
+    "search": {
+      "label": "Location",
+      "placeholder": "Location: Prague 8"
+    },
+    "seoTitle": "Home",
+    "tonight": {
+      "empty": "Nothing planned for tonight yet. Look at other days, or create an event yourself — it will show up here.",
+      "title": "Tonight"
+    }
+  },
+  "quacks": {
+    "form": {
+      "label": "New quack",
+      "placeholder": "Quack something...",
+      "required": "Write something first",
+      "submit": "Quack",
+      "tooLong_one": "Keep it under {{count}} character",
+      "tooLong_other": "Keep it under {{count}} characters"
+    },
+    "list": {
+      "empty": "No quacks yet. Post the first one.",
+      "loadError": "Couldn't load quacks",
+      "reload": "Reload"
+    },
+    "title": "Quacks"
+  }
+}

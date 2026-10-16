@@ -352,6 +352,54 @@
   letter-spacing: 0.02em;
 }
 
+/*
+ * Staged entrance for a view's first load: opacity, 4px blur and 12px rise
+ * over 300ms, chunks staggered 100ms via --enter-index. Reduced motion keeps
+ * a plain cross-fade.
+ */
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(12px);
+  }
+}
+@utility enter {
+  animation: enter-fade 300ms ease-out both;
+  animation-delay: calc(var(--enter-index, 0) * 100ms);
+  @media (prefers-reduced-motion: no-preference) {
+    animation-name: enter-rise;
+  }
+}
+
+/*
+ * Roster seats appear one after another (130ms apart, after --seat-delay) so
+ * the table visibly fills up. Reduced motion keeps a plain cross-fade.
+ */
+@keyframes seat-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes seat-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@utility seat-enter {
+  animation: seat-fade 500ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(var(--seat-delay, 0ms) + var(--seat-index, 0) * 130ms);
+  @media (prefers-reduced-motion: no-preference) {
+    animation-name: seat-pop;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

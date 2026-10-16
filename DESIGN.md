@@ -28,7 +28,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 
 - **Cards are for separable items in a list** — an event, a join request, a search result. They are not page sections and not layout tools.
 - **Never nest a card inside a card.** If content needs grouping inside a card, use spacing, a hairline divider or a tinted band (like the roster band on `EventCard`).
-- **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts), not inside a floating panel. The `Hero` is the one coloured section surface, and a screen has at most one.
+- **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts, `max-w-6xl` for discovery screens like the landing page, where event cards sit three across; the header then takes the same width), not inside a floating panel. The `Hero` is the one coloured section surface, and a screen has at most one.
 - **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands.
 - Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
 
@@ -59,7 +59,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - Activity icons come from `ActivityIcon` (24 px grid, 1.75 px stroke, `currentColor`); UI icons from `src/assets/ui-icons/` imported as components (`?react`). Size them with `size-*`.
 - Icons are decorative (`aria-hidden`) unless they stand alone — then they get a label.
 - People are drawn as `ActivityAvatar` illustrations — never photos or initials, and the face is always blank. An empty place is the dashed free avatar with a plus.
-- The logo comes from `Logo`; the header shows the wordmark on phones and the full logo from `sm`.
+- The logo comes from `Logo`; the header shows the wordmark at every width, as in the Figma header.
 
 ## Forms
 
@@ -80,7 +80,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 
 - **One primary action per screen.** Destructive only for irreversible actions and never next to a filled primary. Sizes: M (`default`, 44 px) and S (`sm`, 36 px); icon buttons `icon` (44 px) and `icon-sm` (36 px).
 - The main action of a free seat ("Obsadit místo") sits inside `YourSeat`, not under it.
-- A loader appears only after 300 ms, there is only one at a time, it always has a text label and it stands still under reduced motion — use `Loader`, pick the variant by context. Any other animation is also wrapped in `motion-safe:`.
+- A loader appears only after 300 ms, there is only one at a time, it always has a text label and it stands still under reduced motion — use `Loader`, pick the variant by context. Any other movement (rise, scale, blur) runs only under `motion-safe:`; under reduced motion an animation may at most cross-fade in opacity, as the `enter` and `seat-enter` utilities do.
 
 ## Every list has three states
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import { ActivityAvatar } from "@/components/hobbyhub/ActivityAvatar"
 import { cn } from "@/lib/utils"
@@ -15,12 +16,14 @@ type YourSeatProps = {
 
 /** Tvoje místo — the free seat that invites the visitor to take it. */
 export function YourSeat({
-  title = "Tvoje místo?",
+  title,
   description,
   action,
   surface = "light",
   className,
 }: YourSeatProps) {
+  const { t } = useTranslation()
+
   return (
     <div
       className={cn(
@@ -32,7 +35,7 @@ export function YourSeat({
       <div className="flex items-center gap-3">
         <ActivityAvatar avatar="free" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-accent-foreground">
-          <p className="typo-title">{title}</p>
+          <p className="typo-title">{title ?? t("hobbyhub.yourSeat.title")}</p>
           <p className="typo-small">{description}</p>
         </div>
       </div>
