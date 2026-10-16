@@ -26,9 +26,13 @@ export const seedDatabase = async (
     // Lookups and example events are additive, so an existing database gets
     // them too (they skip themselves when already there).
     await seedLookups(prisma);
+    // Administrators run the platform, they do not take part in events.
     await seedEvents(
       prisma,
-      await prisma.user.findMany({ orderBy: { createdAt: 'asc' } }),
+      await prisma.user.findMany({
+        where: { role: 'user' },
+        orderBy: { createdAt: 'asc' },
+      }),
     );
     return;
   }

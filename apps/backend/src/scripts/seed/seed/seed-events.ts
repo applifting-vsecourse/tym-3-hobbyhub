@@ -133,10 +133,13 @@ export async function seedEvents(
     prisma.level.findUniqueOrThrow({ where: { name } });
 
   const now = Date.now();
+  // A time that is still ahead: "today 20:00" run at 21:00 moves to tomorrow.
   const at = (days: number, hour: number): Date => {
     const date = new Date(now + days * DAY_IN_MS);
     date.setHours(hour, 0, 0, 0);
-    return date;
+    return date.getTime() > now + HOUR_IN_MS
+      ? date
+      : new Date(date.getTime() + DAY_IN_MS);
   };
 
   const examples = [
