@@ -1,0 +1,20 @@
+{
+  "header": {
+    "language": {
+      "label": "Jazyk"
+    },
+    "nav": {
+      "designSystem": "Design systém",
+      "quacks": "Quacks"
+    },
+    "signIn": "Přihlásit se",
+    "signOut": "Odhlásit se",
+    "theme": {
+      "dark": "Tmavý",
+      "light": "Světlý",
+      "system": "Podle systému",
+      "toggle": "Přepnout motiv"
+    },
+    "userMenu": "Uživatelské menu"
+  }
+}

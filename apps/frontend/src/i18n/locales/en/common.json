@@ -1,0 +1,20 @@
+{
+  "header": {
+    "language": {
+      "label": "Language"
+    },
+    "nav": {
+      "designSystem": "Design system",
+      "quacks": "Quacks"
+    },
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System",
+      "toggle": "Toggle theme"
+    },
+    "userMenu": "User menu"
+  }
+}

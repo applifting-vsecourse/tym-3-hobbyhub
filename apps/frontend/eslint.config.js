@@ -1,10 +1,10 @@
 import fs from "node:fs"
 import path from "node:path"
-
 import { fixupConfigRules } from "@eslint/compat"
 import js from "@eslint/js"
 import pluginQuery from "@tanstack/eslint-plugin-query"
 import pluginRouter from "@tanstack/eslint-plugin-router"
+import i18next from "eslint-plugin-i18next"
 import importPlugin from "eslint-plugin-import"
 import jsxA11y from "eslint-plugin-jsx-a11y"
 import pluginReact from "eslint-plugin-react"
@@ -29,14 +29,8 @@ const featureZones = (() => {
 
 const typescriptRules = {
   "@typescript-eslint/consistent-type-definitions": ["error", "type"],
-  "@typescript-eslint/no-misused-promises": [
-    2,
-    { checksVoidReturn: { attributes: false } },
-  ],
-  "@typescript-eslint/consistent-type-imports": [
-    "warn",
-    { fixStyle: "inline-type-imports" },
-  ],
+  "@typescript-eslint/no-misused-promises": [2, { checksVoidReturn: { attributes: false } }],
+  "@typescript-eslint/consistent-type-imports": ["warn", { fixStyle: "inline-type-imports" }],
   "@typescript-eslint/no-unused-vars": [
     "error",
     {
@@ -111,12 +105,7 @@ const importRules = {
           except: ["./routes.ts"],
         },
         {
-          target: [
-            "./src/components",
-            "./src/config",
-            "./src/hooks",
-            "./src/lib",
-          ],
+          target: ["./src/components", "./src/config", "./src/hooks", "./src/lib"],
           from: ["./src/features", "./src/app"],
           except: ["./routes.ts"],
         },
@@ -131,7 +120,7 @@ export default [
       "build/**",
       "dist/**",
       "src/routeTree.gen.ts",
-            // Vendored shadcn/ui primitives follow upstream conventions
+      // Vendored shadcn/ui primitives follow upstream conventions
       // (default React import, interface for props) that diverge from
       // the project's lint rules.
       "src/components/ui/**",
@@ -177,6 +166,16 @@ export default [
       ...typescriptRules,
       ...commonRules,
       ...importRules,
+    },
+  },
+  {
+    // User-facing text lives in src/i18n/locales, not in components. A warning
+    // for now: untranslated screens are moved over one PR at a time.
+    files: ["src/**/*.tsx"],
+    ignores: ["src/**/*.test.tsx", "src/features/design-system/**"],
+    plugins: { i18next },
+    rules: {
+      "i18next/no-literal-string": ["warn", { mode: "jsx-text-only" }],
     },
   },
 ]
