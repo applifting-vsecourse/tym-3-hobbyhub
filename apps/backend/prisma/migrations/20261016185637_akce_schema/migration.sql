@@ -28,7 +28,7 @@ CREATE TYPE "participation_status" AS ENUM ('APPROVED', 'WAITLISTED', 'CANCELLED
 -- AlterTable
 ALTER TABLE "user" ADD COLUMN     "bio" TEXT,
 ADD COLUMN     "birthDate" DATE,
-ADD COLUMN     "disabledNotifications" "notification_type"[],
+ADD COLUMN     "disabledNotifications" "notification_type"[] DEFAULT ARRAY[]::"notification_type"[],
 ADD COLUMN     "gender" "gender",
 ADD COLUMN     "homeCity" VARCHAR(100),
 ADD COLUMN     "homeCountry" VARCHAR(100),

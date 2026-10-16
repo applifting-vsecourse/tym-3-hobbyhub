@@ -345,7 +345,7 @@ model User {
   onboardingCompletedAt DateTime?
   termsAcceptedAt       DateTime?
   termsVersion          String?            @db.VarChar(20)
-  disabledNotifications NotificationType[]
+  disabledNotifications NotificationType[] @default([])
 
   // Model datatype `Location` (private): where the user lives, and a temporary
   // place (e.g. on holiday) that is valid until `temporaryLocationValidUntil`.
