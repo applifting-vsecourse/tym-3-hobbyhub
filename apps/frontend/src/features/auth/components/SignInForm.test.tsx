@@ -27,4 +27,20 @@ describe("SignInForm", () => {
     expect(await screen.findByText("Email is required")).toBeInTheDocument()
     expect(screen.queryByText("Zadejte e-mail")).not.toBeInTheDocument()
   })
+
+  it("tells an empty e-mail apart from a malformed one", async () => {
+    const user = userEvent.setup()
+    render(
+      <SignInForm
+        isLoading={false}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("E-mail"), "  jana@  ")
+    await user.click(screen.getByRole("button", { name: "Přihlásit se" }))
+
+    expect(await screen.findByText("Neplatný e-mail")).toBeInTheDocument()
+    expect(screen.queryByText("Zadejte e-mail")).not.toBeInTheDocument()
+  })
 })

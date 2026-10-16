@@ -26,7 +26,7 @@ const createSchema = (t: TFunction) =>
       .string()
       .trim()
       .min(1, t("auth.validation.emailRequired"))
-      .email(t("auth.validation.emailInvalid")),
+      .pipe(z.email(t("auth.validation.emailInvalid"))),
     password: z.string().trim().min(1, t("auth.validation.passwordRequired")),
   })
 
@@ -35,9 +35,9 @@ type FormValues = z.infer<ReturnType<typeof createSchema>>
 const defaultValues: FormValues = { email: "", password: "" }
 
 type SignInFormProps = {
-  isLoading: boolean
-  errorMessage?: string | null
-  onSubmit: (values: FormValues) => void | Promise<void>
+  readonly isLoading: boolean
+  readonly errorMessage?: string | null
+  readonly onSubmit: (values: FormValues) => void | Promise<void>
 }
 
 export function SignInForm({ isLoading, errorMessage, onSubmit }: SignInFormProps) {

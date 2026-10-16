@@ -2,23 +2,32 @@
   "auth": {
     "errors": {
       "emailNotVerified": "Your email is not verified yet.",
+      "invalidBirthDate": "Invalid date of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
-      "invalidUsername": "Invalid username.",
+      "invalidGender": "Choose your gender.",
       "passwordTooShort": "The password is too short.",
       "signInFailed": "Sign in failed.",
       "signUpFailed": "Sign up failed.",
-      "userExists": "An account with this email already exists.",
-      "usernameTaken": "This username is already taken."
+      "termsNotAccepted": "You need to accept the terms to register.",
+      "tooManyRequests": "Too many attempts. Please try again in a moment.",
+      "underage": "You must be at least 18 to register.",
+      "userExists": "An account with this email already exists."
     },
     "fields": {
+      "birthDate": "Date of birth",
       "email": "Email",
-      "name": "Name",
+      "gender": "Gender",
+      "name": "Name / nickname",
       "password": "Password",
-      "passwordConfirmation": "Confirm password",
-      "username": "Username"
+      "passwordConfirmation": "Confirm password"
+    },
+    "gender": {
+      "female": "Female",
+      "male": "Male"
     },
     "placeholders": {
+      "birthDate": "Pick a date",
       "email": "e.g. john@doe.com"
     },
     "signIn": {
@@ -31,19 +40,24 @@
     "signUp": {
       "description": "Create your HobbyHub account.",
       "haveAccount": "Already have an account?",
+      "privacyNote": "Gender and age only appear as totals in event statistics, never on your profile.",
       "signInLink": "Sign in",
       "submit": "Sign up",
+      "terms": "I agree to the <terms>terms of use</terms>",
       "title": "Sign up"
     },
     "validation": {
+      "birthDateRequired": "Pick your date of birth",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
-      "nameRequired": "Name is required",
+      "genderRequired": "Choose your gender",
+      "nameRequired": "Enter your name or a nickname",
       "passwordConfirmationRequired": "Password confirmation is required",
       "passwordMin": "Password must be at least 8 characters",
       "passwordRequired": "Password is required",
       "passwordsMustMatch": "Passwords must match",
-      "usernameRequired": "Username is required"
+      "termsRequired": "You need to accept the terms to register",
+      "underage": "You must be at least 18 to register"
     }
   },
   "errors": {
@@ -261,5 +275,9 @@
       "reload": "Reload"
     },
     "title": "Quacks"
+  },
+  "terms": {
+    "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",
+    "title": "Terms of use"
   }
 }

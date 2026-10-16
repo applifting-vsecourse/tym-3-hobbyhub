@@ -1,0 +1,88 @@
+import { createRootRoute, createRouter, RouterProvider } from "@tanstack/react-router"
+import { render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { describe, expect, it, vi } from "vitest"
+
+import { SignUpForm } from "@/features/auth/components/SignUpForm"
+
+// The terms link is a router <Link>, so the form needs a router around it.
+const renderForm = (onSubmit = vi.fn()) => {
+  const rootRoute = createRootRoute({
+    component: () => (
+      <SignUpForm
+        isLoading={false}
+        onSubmit={onSubmit}
+      />
+    ),
+  })
+  render(<RouterProvider router={createRouter({ routeTree: rootRoute })} />)
+  return onSubmit
+}
+
+const pickBirthDate = async (year: number, month: number, day: number) => {
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole("button", { name: /datum narození/i }))
+  const dialog = await screen.findByRole("dialog")
+  // The month dropdown is rendered anew once the year changes, so look it up after.
+  const yearSelect = within(dialog).getAllByRole("combobox")[1]
+  await user.selectOptions(yearSelect!, String(year))
+  const monthSelect = within(dialog).getAllByRole("combobox")[0]
+  await user.selectOptions(monthSelect!, String(month - 1))
+  await user.click(within(dialog).getByRole("button", { name: new RegExp(`^.*\\b${day}\\.`) }))
+}
+
+describe("SignUpForm", () => {
+  it("links the consent to the terms, in a new tab", async () => {
+    renderForm()
+
+    const link = await screen.findByRole("link", { name: "podmínkami používání" })
+    expect(link).toHaveAttribute("href", "/terms")
+    expect(link).toHaveAttribute("target", "_blank")
+  })
+
+  it("asks for gender, birth date and consent", async () => {
+    const onSubmit = renderForm()
+
+    await userEvent.click(await screen.findByRole("button", { name: "Zaregistrovat se" }))
+
+    expect(await screen.findByText("Vyberte pohlaví")).toBeInTheDocument()
+    expect(screen.getByText("Vyberte datum narození")).toBeInTheDocument()
+    expect(screen.getByText("Bez souhlasu s podmínkami se nelze zaregistrovat")).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("submits a complete registration", async () => {
+    const onSubmit = renderForm()
+    const user = userEvent.setup()
+
+    await user.type(await screen.findByLabelText("Jméno / přezdívka"), "Jana")
+    await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
+    await user.type(screen.getByLabelText("Heslo"), "correct-horse")
+    await user.type(screen.getByLabelText("Heslo znovu"), "correct-horse")
+    await user.click(screen.getByRole("radio", { name: "Žena" }))
+    await pickBirthDate(1995, 4, 12)
+    await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
+    await user.click(screen.getByRole("button", { name: "Zaregistrovat se" }))
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
+    expect(onSubmit.mock.calls[0]?.[0]).toEqual({
+      name: "Jana",
+      email: "jana@example.com",
+      password: "correct-horse",
+      passwordConfirmation: "correct-horse",
+      gender: "FEMALE",
+      birthDate: "1995-04-12",
+      termsAccepted: true,
+    })
+  })
+
+  it("does not let someone under 18 register", async () => {
+    const onSubmit = renderForm()
+
+    await pickBirthDate(new Date().getFullYear() - 10, 1, 1)
+    await userEvent.click(screen.getByRole("button", { name: "Zaregistrovat se" }))
+
+    expect(await screen.findByText("Registrace je možná až od 18 let")).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+})

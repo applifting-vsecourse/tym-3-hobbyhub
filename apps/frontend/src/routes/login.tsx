@@ -11,7 +11,7 @@ import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOpt
 import { SignInForm } from "@/features/auth/components/SignInForm"
 import { useSignIn } from "@/features/auth/hooks/useSignIn"
 import { authErrorMessage } from "@/features/auth/lib/authErrors"
-import { decodeRedirectUri } from "@/features/auth/lib/redirect"
+import { redirectTarget } from "@/features/auth/lib/redirect"
 
 const loginSearchParamsSchema = z.object({
   from: z.string().optional(),
@@ -23,13 +23,13 @@ export const Route = createFileRoute("/login")({
   loader: async ({ context }) => {
     const session = await context.queryClient.ensureQueryData(authSessionQueryOptions())
     if (!session) return
-    throw redirect({ to: ROUTES.quacks })
+    throw redirect({ to: ROUTES.home })
   },
 })
 
 function LoginPage() {
   const { from } = Route.useSearch()
-  const redirectTo = from ? decodeRedirectUri(from) : ROUTES.quacks
+  const redirectTo = redirectTarget(from, ROUTES.home)
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signIn = useSignIn()
@@ -56,6 +56,7 @@ function LoginPage() {
             {t("auth.signIn.noAccount")}{" "}
             <Link
               to={ROUTES.signup}
+              search={{ from }}
               className="font-medium text-foreground underline underline-offset-4"
             >
               {t("auth.signIn.signUpLink")}

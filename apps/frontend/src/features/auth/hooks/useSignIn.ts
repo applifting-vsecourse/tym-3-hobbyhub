@@ -17,7 +17,7 @@ export function useSignIn() {
   return useMutation({
     mutationFn: async ({ email, password, rememberMe = false }: SignInInput) => {
       const { error } = await authClient.signIn.email({ email, password, rememberMe })
-      if (error) throw new AuthError(error.code, error.message)
+      if (error) throw new AuthError(error.code, error.message, error.status)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authKeys.session() })

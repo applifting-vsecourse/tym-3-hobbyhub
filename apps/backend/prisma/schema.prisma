@@ -22,6 +22,238 @@ enum UserRole {
   @@map("user_role")
 }
 
+// ---------------------------------------------------------------------------
+// Doménový model (wiki: Domenovy-model). Names follow the model; derived
+// attributes ("/freeSpots", "/approvedCount", …) are computed in code.
+// ---------------------------------------------------------------------------
+
+enum Language {
+  CS
+  EN
+
+  @@map("language")
+}
+
+enum UserStatus {
+  ACTIVE
+  RESTRICTED
+  BLOCKED
+  DELETED
+
+  @@map("user_status")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+
+  @@map("gender")
+}
+
+enum NotificationType {
+  NEW_REQUESTS
+  PARTICIPANT_CANCELLED
+  REQUEST_DECIDED
+  CONFIRMATION_PROMPT
+  SPOT_AVAILABLE
+  GROUP_INVITATION
+  EVENT_BOARD
+  ONBOARDING_SERIES
+  MONTHLY_RECOMMENDATION
+
+  @@map("notification_type")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  FINISHED
+  NOT_HELD
+
+  @@map("event_status")
+}
+
+enum EventVisibility {
+  PUBLIC
+  GROUP_ONLY
+  PRIVATE
+
+  @@map("event_visibility")
+}
+
+enum ApprovalMode {
+  MANUAL
+  AUTOMATIC
+
+  @@map("approval_mode")
+}
+
+enum VenueType {
+  PUBLIC_VENUE
+  PRIVATE_VENUE
+  ONLINE
+
+  @@map("venue_type")
+}
+
+enum ParticipationStatus {
+  APPROVED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+  INVITED
+  DECLINED
+
+  @@map("participation_status")
+}
+
+// Lookup tables ----------------------------------------------------------
+
+model ActivityCategory {
+  id         String     @id @default(cuid())
+  name       String     @unique @db.VarChar(100)
+  activities Activity[]
+
+  @@map("activity_category")
+}
+
+model Activity {
+  id                     String           @id @default(cuid())
+  category               ActivityCategory @relation(fields: [categoryId], references: [id])
+  categoryId             String
+  name                   String           @unique @db.VarChar(100)
+  // Key of the icon in the frontend (`ACTIVITIES` in ActivityIcon.tsx).
+  icon                   String           @db.VarChar(50)
+  defaultMinParticipants Int
+  defaultMaxParticipants Int
+  isActive               Boolean          @default(true)
+  events                 Event[]
+
+  @@index([categoryId])
+  @@map("activity")
+}
+
+model Level {
+  id     String  @id @default(cuid())
+  name   String  @unique @db.VarChar(100)
+  order  Int     @unique
+  events Event[]
+
+  @@map("level")
+}
+
+model CancellationReason {
+  id     String  @id @default(cuid())
+  name   String  @unique @db.VarChar(200)
+  events Event[]
+
+  @@map("cancellation_reason")
+}
+
+// Event & Participation ---------------------------------------------------
+
+model Event {
+  id String @id @default(cuid())
+
+  title       String  @db.VarChar(200)
+  description String  @db.Text
+  equipment   String? @db.Text
+  notes       String? @db.Text
+  imageUrl    String? @db.Text
+
+  status       EventStatus     @default(DRAFT)
+  visibility   EventVisibility @default(PUBLIC)
+  approvalMode ApprovalMode    @default(MANUAL)
+  venueType    VenueType
+
+  startAt     DateTime
+  endAt       DateTime
+  publishedAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  minParticipants       Int
+  maxParticipants       Int
+  // People already coming who are not on the app (friends, a whole team).
+  externalOccupiedSpots Int @default(0)
+
+  // F-05.1 fill deadline: X hours before the start.
+  fillDeadlineHours             Int
+  freeCancellationHours         Int?
+  confirmationRequestDaysBefore Int?
+  // F-05.1 contribution per seat, information only.
+  contributionAmount            Decimal? @db.Decimal(10, 2)
+
+  // F-05.2 / F-05.4 private event via an invitation link.
+  inviteToken     String? @unique @db.VarChar(100)
+  // F-06.5 link to an external group chat.
+  externalChatUrl String? @db.Text
+  // Shown to APPROVED participants only.
+  onlineUrl       String? @db.Text
+  // F-11.3, F-11.4 hidden by an administrator.
+  isHidden        Boolean @default(false)
+
+  // Model datatype `Location`, stored as columns. All-or-nothing (see the
+  // CHECK constraints in the migration); an ONLINE event has none.
+  locationStreet     String?  @db.VarChar(200)
+  locationCity       String?  @db.VarChar(100)
+  locationPostalCode String?  @db.VarChar(20)
+  locationCountry    String?  @db.VarChar(100)
+  locationDistrict   String?  @db.VarChar(100)
+  locationPlaceName  String?  @db.VarChar(200)
+  locationLatitude   Decimal? @db.Decimal(9, 6)
+  locationLongitude  Decimal? @db.Decimal(9, 6)
+
+  activity             Activity            @relation(fields: [activityId], references: [id])
+  activityId           String
+  level                Level?              @relation(fields: [levelId], references: [id])
+  levelId              String?
+  organizer            User                @relation("EventOrganizer", fields: [organizerId], references: [id])
+  organizerId          String
+  coOrganizers         User[]              @relation("EventCoOrganizers")
+  copiedFrom           Event?              @relation("EventCopies", fields: [copiedFromId], references: [id], onDelete: SetNull)
+  copiedFromId         String?
+  copies               Event[]             @relation("EventCopies")
+  cancellationReason   CancellationReason? @relation(fields: [cancellationReasonId], references: [id])
+  cancellationReasonId String?
+  participations       Participation[]
+
+  @@index([organizerId])
+  @@index([activityId])
+  @@index([status, visibility, startAt])
+  @@map("event")
+}
+
+model Participation {
+  id String @id @default(cuid())
+
+  status             ParticipationStatus
+  // Set exactly while the status is WAITLISTED.
+  waitlistPosition   Int?
+  // Deadline to accept: a substitute (F-05.9) or an invited group member.
+  offerExpiresAt     DateTime?
+  confirmedAt        DateTime?
+  cancelledAt        DateTime?
+  isLateCancellation Boolean             @default(false)
+  checkInCode        String?             @db.VarChar(20)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  // A person is on an event's roster once.
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([eventId, status])
+  @@map("participation")
+}
+
 model Quack {
   id        String   @id @default(cuid())
   text      String   @db.Text
@@ -83,20 +315,65 @@ model Verification {
 }
 
 model User {
-  id              String    @id
-  name            String
-  email           String
-  emailVerified   Boolean
-  image           String?   @db.Text
-  createdAt       DateTime
-  updatedAt       DateTime
-  sessions        Session[]
-  accounts        Account[]
-  quacks          Quack[]
-  role            UserRole  @default(user)
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?   @db.Text
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      Session[]
+  accounts      Account[]
+  quacks        Quack[]
+  role          UserRole  @default(user)
 
   username        String? @db.VarChar(50)
   displayUsername String? @db.VarChar(50)
+
+  // Profile fields from the domain model. BetterAuth keeps name, email,
+  // emailVerified and image. Several fields the model marks as required are
+  // optional here until registration (F-03.1) collects them.
+  bio                   String?            @db.Text
+  birthDate             DateTime?          @db.Date
+  gender                Gender?
+  phone                 String?            @db.VarChar(30)
+  phoneVerifiedAt       DateTime?
+  preferredLanguage     Language           @default(CS)
+  prefersOnlineEvents   Boolean            @default(false)
+  status                UserStatus         @default(ACTIVE)
+  travelRadiusKm        Int?
+  onboardingCompletedAt DateTime?
+  termsAcceptedAt       DateTime?
+  termsVersion          String?            @db.VarChar(20)
+  disabledNotifications NotificationType[] @default([])
+
+  // Model datatype `Location` (private): where the user lives, and a temporary
+  // place (e.g. on holiday) that is valid until `temporaryLocationValidUntil`.
+  homeStreet     String?  @db.VarChar(200)
+  homeCity       String?  @db.VarChar(100)
+  homePostalCode String?  @db.VarChar(20)
+  homeCountry    String?  @db.VarChar(100)
+  homeDistrict   String?  @db.VarChar(100)
+  homePlaceName  String?  @db.VarChar(200)
+  homeLatitude   Decimal? @db.Decimal(9, 6)
+  homeLongitude  Decimal? @db.Decimal(9, 6)
+
+  temporaryStreet             String?   @db.VarChar(200)
+  temporaryCity               String?   @db.VarChar(100)
+  temporaryPostalCode         String?   @db.VarChar(20)
+  temporaryCountry            String?   @db.VarChar(100)
+  temporaryDistrict           String?   @db.VarChar(100)
+  temporaryPlaceName          String?   @db.VarChar(200)
+  temporaryLatitude           Decimal?  @db.Decimal(9, 6)
+  temporaryLongitude          Decimal?  @db.Decimal(9, 6)
+  temporaryLocationValidUntil DateTime?
+
+  blockedUsers User[] @relation("UserBlocks")
+  blockedBy    User[] @relation("UserBlocks")
+
+  organizedEvents   Event[]         @relation("EventOrganizer")
+  coOrganizedEvents Event[]         @relation("EventCoOrganizers")
+  participations    Participation[]
 
   @@unique([email])
   @@unique([username])

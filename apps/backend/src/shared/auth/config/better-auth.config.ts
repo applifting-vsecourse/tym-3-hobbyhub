@@ -13,6 +13,34 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
         defaultValue: 'user',
         input: false,
       },
+      // F-03.1. Required at sign-up by the registration hook, nullable in the
+      // database for accounts created another way (seeded admin, later Google).
+      // Never returned: they only feed aggregated statistics (F-06.7).
+      gender: {
+        type: 'string',
+        required: false,
+        input: true,
+        returned: false,
+      },
+      birthDate: {
+        type: 'date',
+        required: false,
+        input: true,
+        returned: false,
+      },
+      // Set by the registration database hook, not by the client.
+      termsAcceptedAt: {
+        type: 'date',
+        required: false,
+        input: false,
+        returned: false,
+      },
+      termsVersion: {
+        type: 'string',
+        required: false,
+        input: false,
+        returned: false,
+      },
     },
   },
   plugins: [openAPI(), username()],
