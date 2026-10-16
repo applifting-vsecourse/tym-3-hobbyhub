@@ -36,18 +36,13 @@ type BottomNavProps = {
 }
 
 type NavItemProps = {
-  readonly section: (typeof SECTIONS)[number];
-  readonly isActive: boolean;
-  readonly hasDot: boolean;
-  readonly onNavigate: BottomNavProps["onNavigate"];
+  readonly section: (typeof SECTIONS)[number]
+  readonly isActive: boolean
+  readonly hasDot: boolean
+  readonly onNavigate: BottomNavProps["onNavigate"]
 }
 
-function NavItem({
-  section,
-  isActive,
-  hasDot,
-  onNavigate,
-}: NavItemProps) {
+function NavItem({ section, isActive, hasDot, onNavigate }: NavItemProps) {
   const { t } = useTranslation()
   const { key, Icon } = section
   const label = t(NAV_LABELS[key])
