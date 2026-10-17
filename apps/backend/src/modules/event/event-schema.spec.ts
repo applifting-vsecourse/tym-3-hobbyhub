@@ -8,7 +8,6 @@
 // The suite builds PrismaService by hand, outside Nest's config loading, so
 // DATABASE_URL has to come from .env here. Variables already set (CI) win.
 import 'dotenv/config';
-
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,
