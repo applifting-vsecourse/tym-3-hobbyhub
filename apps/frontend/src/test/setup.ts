@@ -11,3 +11,13 @@ globalThis.ResizeObserver ??= class {
   unobserve = () => undefined
   disconnect = () => undefined
 }
+
+// jsdom has no pointer capture or scrollIntoView; Radix Select calls both.
+const elementStubs = {
+  hasPointerCapture: () => false,
+  releasePointerCapture: () => undefined,
+  scrollIntoView: () => undefined,
+}
+for (const [name, stub] of Object.entries(elementStubs)) {
+  if (!(name in Element.prototype)) Object.defineProperty(Element.prototype, name, { value: stub })
+}

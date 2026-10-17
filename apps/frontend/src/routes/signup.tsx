@@ -6,6 +6,7 @@ import { z } from "zod"
 import { ROUTES } from "@/app/routes"
 import { AuthLayout } from "@/components/AuthLayout"
 import { Seo } from "@/components/Seo"
+import { Button } from "@/components/ui/button"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { SignUpForm, type SignUpFormValues } from "@/features/auth/components/SignUpForm"
@@ -36,7 +37,7 @@ function SignUpPage() {
   const signUp = useSignUp()
   const [error, setError] = useState<unknown>(null)
 
-  const handleSubmit = async ({ passwordConfirmation: _, ...values }: SignUpFormValues) => {
+  const handleSubmit = async (values: SignUpFormValues) => {
     setError(null)
     try {
       await signUp.mutateAsync(values)
@@ -51,18 +52,20 @@ function SignUpPage() {
       <Seo title={t("auth.signUp.title")} />
       <AuthLayout
         title={t("auth.signUp.title")}
-        description={t("auth.signUp.description")}
+        description={t(from ? "auth.signUp.descriptionReturn" : "auth.signUp.description")}
+        backTo={redirectTarget(from, ROUTES.home)}
         footer={
-          <>
-            {t("auth.signUp.haveAccount")}{" "}
+          <Button
+            asChild
+            variant="link"
+          >
             <Link
               to={ROUTES.login}
               search={{ from }}
-              className="font-medium text-foreground underline underline-offset-4"
             >
               {t("auth.signUp.signInLink")}
             </Link>
-          </>
+          </Button>
         }
       >
         <SignUpForm

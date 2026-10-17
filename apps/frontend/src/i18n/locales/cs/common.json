@@ -1,5 +1,6 @@
 {
   "auth": {
+    "back": "Zpět",
     "errors": {
       "emailNotVerified": "E-mail zatím není ověřený.",
       "invalidBirthDate": "Neplatné datum narození.",
@@ -19,16 +20,22 @@
       "email": "E-mail",
       "gender": "Pohlaví",
       "name": "Jméno / přezdívka",
-      "password": "Heslo",
-      "passwordConfirmation": "Heslo znovu"
+      "password": "Heslo"
     },
     "gender": {
       "female": "Žena",
       "male": "Muž"
     },
+    "password": {
+      "hide": "Skrýt",
+      "hideLabel": "Skrýt heslo",
+      "show": "Zobrazit",
+      "showLabel": "Zobrazit heslo"
+    },
     "placeholders": {
       "birthDate": "Vyberte datum",
-      "email": "např. jan@novak.cz"
+      "email": "např. jan@novak.cz",
+      "gender": "Vyberte"
     },
     "signIn": {
       "description": "Vítejte zpět v HobbyHubu.",
@@ -38,13 +45,13 @@
       "title": "Přihlášení"
     },
     "signUp": {
-      "description": "Vytvořte si účet v HobbyHubu.",
-      "haveAccount": "Už máte účet?",
-      "privacyNote": "Pohlaví a věk se ukazují jen souhrnně ve statistikách akce, nikdy ve vašem profilu.",
-      "signInLink": "Přihlaste se",
-      "submit": "Zaregistrovat se",
-      "terms": "Souhlasím s <terms>podmínkami používání</terms>",
-      "title": "Registrace"
+      "description": "Profil doplníte později.",
+      "descriptionReturn": "Po registraci se vrátíte k akci. Profil doplníte později.",
+      "privacyNote": "Věk 18+ ověříme z data narození. Datum narození a pohlaví nejsou veřejné.",
+      "signInLink": "Už mám účet · Přihlásit se",
+      "submit": "Vytvořit účet a pokračovat",
+      "terms": "Souhlasím s <terms>podmínkami a zásadami ochrany údajů</terms>.",
+      "title": "Rychlá registrace"
     },
     "validation": {
       "birthDateRequired": "Vyberte datum narození",
@@ -52,10 +59,8 @@
       "emailRequired": "Zadejte e-mail",
       "genderRequired": "Vyberte pohlaví",
       "nameRequired": "Zadejte jméno nebo přezdívku",
-      "passwordConfirmationRequired": "Potvrďte heslo",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
       "passwordRequired": "Zadejte heslo",
-      "passwordsMustMatch": "Hesla se musí shodovat",
       "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",
       "underage": "Registrace je možná až od 18 let"
     }

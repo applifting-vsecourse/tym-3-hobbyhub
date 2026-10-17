@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react"
+import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link } from "@tanstack/react-router"
 import type { TFunction } from "i18next"
@@ -21,10 +21,17 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 
 import { BirthDatePicker } from "@/features/auth/components/BirthDatePicker"
+import { PasswordInput } from "@/features/auth/components/PasswordInput"
 import { isAdult } from "@/features/auth/lib/birthDate"
 
 const GENDERS = ["MALE", "FEMALE"] as const
@@ -36,30 +43,21 @@ const GENDER_LABELS = {
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
-  z
-    .object({
-      name: z.string().trim().min(1, t("auth.validation.nameRequired")),
-      email: z
-        .string()
-        .trim()
-        .min(1, t("auth.validation.emailRequired"))
-        .pipe(z.email(t("auth.validation.emailInvalid"))),
-      password: z.string().trim().min(8, t("auth.validation.passwordMin")),
-      passwordConfirmation: z
-        .string()
-        .trim()
-        .min(1, t("auth.validation.passwordConfirmationRequired")),
-      gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
-      birthDate: z
-        .string()
-        .min(1, t("auth.validation.birthDateRequired"))
-        .refine((value) => isAdult(value, new Date()), t("auth.validation.underage")),
-      termsAccepted: z.boolean().refine(Boolean, t("auth.validation.termsRequired")),
-    })
-    .refine((values) => values.password === values.passwordConfirmation, {
-      message: t("auth.validation.passwordsMustMatch"),
-      path: ["passwordConfirmation"],
-    })
+  z.object({
+    name: z.string().trim().min(1, t("auth.validation.nameRequired")),
+    email: z
+      .string()
+      .trim()
+      .min(1, t("auth.validation.emailRequired"))
+      .pipe(z.email(t("auth.validation.emailInvalid"))),
+    password: z.string().trim().min(8, t("auth.validation.passwordMin")),
+    gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
+    birthDate: z
+      .string()
+      .min(1, t("auth.validation.birthDateRequired"))
+      .refine((value) => isAdult(value, new Date()), t("auth.validation.underage")),
+    termsAccepted: z.boolean().refine(Boolean, t("auth.validation.termsRequired")),
+  })
 
 export type SignUpFormValues = z.infer<ReturnType<typeof createSchema>>
 
@@ -68,7 +66,6 @@ const defaultValues: DefaultValues<SignUpFormValues> = {
   name: "",
   email: "",
   password: "",
-  passwordConfirmation: "",
   birthDate: "",
   termsAccepted: false,
 }
@@ -81,7 +78,6 @@ type SignUpFormProps = {
 
 export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProps) {
   const { t } = useTranslation()
-  const genderLabelId = useId()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(schema),
@@ -94,7 +90,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
       <form
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
+        className="flex flex-col gap-4"
       >
         {errorMessage ? (
           <Alert variant="destructive">
@@ -145,8 +141,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
             <FormItem>
               <FormLabel>{t("auth.fields.password")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
                   autoComplete="new-password"
                   {...field}
                 />
@@ -156,83 +151,71 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="passwordConfirmation"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.passwordConfirmation")}</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 items-start gap-3">
+          <FormField
+            control={form.control}
+            name="birthDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
+                <FormControl>
+                  <BirthDatePicker {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel id={genderLabelId}>{t("auth.fields.gender")}</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  aria-labelledby={genderLabelId}
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.gender")}</FormLabel>
+                <Select
+                  name={field.name}
                   value={field.value ?? ""}
                   onValueChange={field.onChange}
-                  className="flex gap-6"
                 >
-                  {GENDERS.map((gender) => (
-                    <FormItem
-                      key={gender}
-                      className="flex h-11 items-center gap-2 md:h-9"
+                  <FormControl>
+                    <SelectTrigger
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      className="w-full"
                     >
-                      <FormControl>
-                        <RadioGroupItem value={gender} />
-                      </FormControl>
-                      <FormLabel className="typo-body">{t(GENDER_LABELS[gender])}</FormLabel>
-                    </FormItem>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="birthDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
-              <FormControl>
-                <BirthDatePicker {...field} />
-              </FormControl>
-              <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                      <SelectValue placeholder={t("auth.placeholders.gender")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {GENDERS.map((gender) => (
+                      <SelectItem
+                        key={gender}
+                        value={gender}
+                      >
+                        {t(GENDER_LABELS[gender])}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
           name="termsAccepted"
           render={({ field }) => (
-            <FormItem>
-              <div className="flex min-h-11 items-center gap-3 md:min-h-9">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={(checked) => field.onChange(checked === true)}
-                  />
-                </FormControl>
-                <FormLabel className="typo-body">
+            <FormItem className="flex items-start gap-3">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                />
+              </FormControl>
+              <div className="grid gap-1">
+                <FormLabel className="block typo-small text-muted-foreground">
                   <Trans
                     i18nKey="auth.signUp.terms"
                     components={{
@@ -243,14 +226,15 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
                           to={ROUTES.terms}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium underline underline-offset-4"
+                          className="font-medium text-foreground underline underline-offset-4"
                         />
                       ),
                     }}
                   />
                 </FormLabel>
+                <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
+                <FormMessage />
               </div>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -258,7 +242,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
         <Button
           type="submit"
           size="lg"
-          className="w-full"
+          className="mt-8 w-full"
           disabled={isLoading}
         >
           {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}

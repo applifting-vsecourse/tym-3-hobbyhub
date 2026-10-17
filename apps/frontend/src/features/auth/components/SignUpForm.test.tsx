@@ -31,11 +31,13 @@ const pickBirthDate = async (year: number, month: number, day: number) => {
   await user.click(within(dialog).getByRole("button", { name: new RegExp(`^.*\\b${day}\\.`) }))
 }
 
+const SUBMIT = "Vytvořit účet a pokračovat"
+
 describe("SignUpForm", () => {
   it("links the consent to the terms, in a new tab", async () => {
     renderForm()
 
-    const link = await screen.findByRole("link", { name: "podmínkami používání" })
+    const link = await screen.findByRole("link", { name: "podmínkami a zásadami ochrany údajů" })
     expect(link).toHaveAttribute("href", "/terms")
     expect(link).toHaveAttribute("target", "_blank")
   })
@@ -43,7 +45,7 @@ describe("SignUpForm", () => {
   it("asks for gender, birth date and consent", async () => {
     const onSubmit = renderForm()
 
-    await userEvent.click(await screen.findByRole("button", { name: "Zaregistrovat se" }))
+    await userEvent.click(await screen.findByRole("button", { name: SUBMIT }))
 
     expect(await screen.findByText("Vyberte pohlaví")).toBeInTheDocument()
     expect(screen.getByText("Vyberte datum narození")).toBeInTheDocument()
@@ -58,18 +60,17 @@ describe("SignUpForm", () => {
     await user.type(await screen.findByLabelText("Jméno / přezdívka"), "Jana")
     await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
     await user.type(screen.getByLabelText("Heslo"), "correct-horse")
-    await user.type(screen.getByLabelText("Heslo znovu"), "correct-horse")
-    await user.click(screen.getByRole("radio", { name: "Žena" }))
+    await user.click(screen.getByRole("combobox", { name: "Pohlaví" }))
+    await user.click(await screen.findByRole("option", { name: "Žena" }))
     await pickBirthDate(1995, 4, 12)
     await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
-    await user.click(screen.getByRole("button", { name: "Zaregistrovat se" }))
+    await user.click(screen.getByRole("button", { name: SUBMIT }))
 
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
     expect(onSubmit.mock.calls[0]?.[0]).toEqual({
       name: "Jana",
       email: "jana@example.com",
       password: "correct-horse",
-      passwordConfirmation: "correct-horse",
       gender: "FEMALE",
       birthDate: "1995-04-12",
       termsAccepted: true,
@@ -80,9 +81,21 @@ describe("SignUpForm", () => {
     const onSubmit = renderForm()
 
     await pickBirthDate(new Date().getFullYear() - 10, 1, 1)
-    await userEvent.click(screen.getByRole("button", { name: "Zaregistrovat se" }))
+    await userEvent.click(screen.getByRole("button", { name: SUBMIT }))
 
     expect(await screen.findByText("Registrace je možná až od 18 let")).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("shows and hides the password", async () => {
+    renderForm()
+    const user = userEvent.setup()
+    const password = await screen.findByLabelText("Heslo")
+
+    expect(password).toHaveAttribute("type", "password")
+    await user.click(screen.getByRole("button", { name: "Zobrazit heslo" }))
+    expect(password).toHaveAttribute("type", "text")
+    await user.click(screen.getByRole("button", { name: "Skrýt heslo" }))
+    expect(password).toHaveAttribute("type", "password")
   })
 })

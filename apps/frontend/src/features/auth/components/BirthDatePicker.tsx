@@ -72,7 +72,7 @@ export function BirthDatePicker({ value, onChange, className, ...props }: BirthD
             className="size-4"
           />
           {selected
-            ? new Intl.DateTimeFormat(language, { dateStyle: "long" }).format(selected)
+            ? new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(selected)
             : t("auth.placeholders.birthDate")}
         </Button>
       </PopoverTrigger>

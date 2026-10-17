@@ -1,5 +1,6 @@
 {
   "auth": {
+    "back": "Back",
     "errors": {
       "emailNotVerified": "Your email is not verified yet.",
       "invalidBirthDate": "Invalid date of birth.",
@@ -19,16 +20,22 @@
       "email": "Email",
       "gender": "Gender",
       "name": "Name / nickname",
-      "password": "Password",
-      "passwordConfirmation": "Confirm password"
+      "password": "Password"
     },
     "gender": {
       "female": "Female",
       "male": "Male"
     },
+    "password": {
+      "hide": "Hide",
+      "hideLabel": "Hide password",
+      "show": "Show",
+      "showLabel": "Show password"
+    },
     "placeholders": {
       "birthDate": "Pick a date",
-      "email": "e.g. john@doe.com"
+      "email": "e.g. john@doe.com",
+      "gender": "Select"
     },
     "signIn": {
       "description": "Welcome back to HobbyHub.",
@@ -38,13 +45,13 @@
       "title": "Sign in"
     },
     "signUp": {
-      "description": "Create your HobbyHub account.",
-      "haveAccount": "Already have an account?",
-      "privacyNote": "Gender and age only appear as totals in event statistics, never on your profile.",
-      "signInLink": "Sign in",
-      "submit": "Sign up",
-      "terms": "I agree to the <terms>terms of use</terms>",
-      "title": "Sign up"
+      "description": "You can complete your profile later.",
+      "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
+      "privacyNote": "We check you are 18+ from your date of birth. Date of birth and gender are not public.",
+      "signInLink": "I already have an account · Sign in",
+      "submit": "Create account and continue",
+      "terms": "I agree to the <terms>terms and privacy policy</terms>.",
+      "title": "Quick sign-up"
     },
     "validation": {
       "birthDateRequired": "Pick your date of birth",
@@ -52,10 +59,8 @@
       "emailRequired": "Email is required",
       "genderRequired": "Choose your gender",
       "nameRequired": "Enter your name or a nickname",
-      "passwordConfirmationRequired": "Password confirmation is required",
       "passwordMin": "Password must be at least 8 characters",
       "passwordRequired": "Password is required",
-      "passwordsMustMatch": "Passwords must match",
       "termsRequired": "You need to accept the terms to register",
       "underage": "You must be at least 18 to register"
     }
