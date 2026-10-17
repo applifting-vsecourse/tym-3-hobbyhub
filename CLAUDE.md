@@ -16,6 +16,22 @@ The worked example is the quack feed: `Quack` model → seed → repository → 
 - `pnpm backend test` / `pnpm frontend test:ci` — unit tests
 - `pnpm backend prisma:migrations:run` — create/apply migrations after schema changes
 
+## Migrations
+
+Prisma migrations live in `apps/backend/prisma/migrations/`. Production runs `prisma migrate deploy` on every push to `main`: it applies every migration folder not yet recorded in the database, in timestamp order, and does not check that order against what is already applied.
+
+- **Never edit a migration that is already on `main`.** It is frozen and CI enforces it (`Check migrations on base branch are unchanged`). Editing its SQL changes nothing in production and forces a database reset for everyone locally. Need to fix or extend it? Write a new migration with `pnpm backend prisma:migrations:run`.
+- **A migration added in a PR must sort after every migration on `main`.** CI enforces this (`Check migrations order`). When it fails, or after merging `main` into a branch that adds migrations, run `scripts/rebase-migrations.sh <name>` (agents: the `rebase-migrations` skill): it deletes the branch-only migrations and lets Prisma regenerate one from `main`'s schema. Renaming the folder is only safe when `main`'s newer migrations touch unrelated tables; two migrations generated from different schema states can merge cleanly and still fail on deploy.
+
+## Git Commits
+
+- **Format**: `type(scope): short description` - single line, no body
+- **Scope**: workspace names like `backend`, `frontend`, `lib` (can combine: `admin, api, worker`)
+- **Types**: `feat`, `fix`, `refactor`, `chore`
+- **No multi-line descriptions** - single line only
+- **Language**: Czech
+- Example: `feat(backend): add Stripe subscription`
+
 ## Conventions
 
 Deliberately sparse — this file grows as the team learns what it expects from generated code. Add rules here when you find yourself repeating the same review feedback.
@@ -33,3 +49,7 @@ The CLI puts `shadow-xs`/`shadow-sm` on inputs, textareas and cards. [`DESIGN.md
 Assume the dev servers are up. If something is listening on the app's ports, that is this application: use it. Don't start a second instance, don't restart it, don't run `pnpm dev`.
 
 Don't reach for the browser to check your own work. Tests and type-checks are the evidence; open the running app when asked to, not on your own initiative.
+
+### Text lives in translations
+
+No user-facing strings in components — not text, `aria-label`s, placeholders or validation messages. Add the key to both `apps/frontend/src/i18n/locales/cs/common.json` and `.../en/common.json` and read it with `useTranslation()`. Czech is the default and types the keys; a test fails if the two files drift apart. Plurals use `_one`/`_few`/`_other` keys, dates and numbers go through `Intl`. `i18next/no-literal-string` warns about what is still hardcoded.

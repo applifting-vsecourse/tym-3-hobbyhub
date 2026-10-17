@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
@@ -9,6 +10,7 @@ import { Seo } from "@/components/Seo"
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { SignInForm } from "@/features/auth/components/SignInForm"
 import { useSignIn } from "@/features/auth/hooks/useSignIn"
+import { authErrorMessage } from "@/features/auth/lib/authErrors"
 import { decodeRedirectUri } from "@/features/auth/lib/redirect"
 
 const loginSearchParamsSchema = z.object({
@@ -29,40 +31,41 @@ function LoginPage() {
   const { from } = Route.useSearch()
   const redirectTo = from ? decodeRedirectUri(from) : ROUTES.quacks
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const signIn = useSignIn()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
 
   const handleSubmit = async (values: { email: string; password: string }) => {
-    setErrorMessage(null)
+    setError(null)
     try {
       await signIn.mutateAsync(values)
       await navigate({ to: redirectTo })
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Sign in failed")
+      setError(error)
     }
   }
 
   return (
     <>
-      <Seo title="Sign in" />
+      <Seo title={t("auth.signIn.title")} />
       <AuthLayout
-        title="Sign in"
-        description="Welcome back to HobbyHub."
+        title={t("auth.signIn.title")}
+        description={t("auth.signIn.description")}
         footer={
           <>
-            No account?{" "}
+            {t("auth.signIn.noAccount")}{" "}
             <Link
               to={ROUTES.signup}
               className="font-medium text-foreground underline underline-offset-4"
             >
-              Sign up
+              {t("auth.signIn.signUpLink")}
             </Link>
           </>
         }
       >
         <SignInForm
           isLoading={signIn.isPending}
-          errorMessage={errorMessage}
+          errorMessage={error ? authErrorMessage(t, error, "signInFailed") : null}
           onSubmit={handleSubmit}
         />
       </AuthLayout>

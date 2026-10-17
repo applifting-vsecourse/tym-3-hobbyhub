@@ -1,0 +1,268 @@
+{
+  "auth": {
+    "errors": {
+      "emailNotVerified": "E-mail zatím není ověřený.",
+      "invalidCredentials": "Nesprávný e-mail nebo heslo.",
+      "invalidEmail": "Neplatný e-mail.",
+      "invalidUsername": "Neplatné uživatelské jméno.",
+      "passwordTooShort": "Heslo je příliš krátké.",
+      "signInFailed": "Přihlášení se nezdařilo.",
+      "signUpFailed": "Registrace se nezdařila.",
+      "userExists": "Účet s tímto e-mailem už existuje.",
+      "usernameTaken": "Toto uživatelské jméno je obsazené."
+    },
+    "fields": {
+      "email": "E-mail",
+      "name": "Jméno",
+      "password": "Heslo",
+      "passwordConfirmation": "Heslo znovu",
+      "username": "Uživatelské jméno"
+    },
+    "placeholders": {
+      "email": "např. jan@novak.cz"
+    },
+    "signIn": {
+      "description": "Vítejte zpět v HobbyHubu.",
+      "noAccount": "Nemáte účet?",
+      "signUpLink": "Zaregistrujte se",
+      "submit": "Přihlásit se",
+      "title": "Přihlášení"
+    },
+    "signUp": {
+      "description": "Vytvořte si účet v HobbyHubu.",
+      "haveAccount": "Už máte účet?",
+      "signInLink": "Přihlaste se",
+      "submit": "Zaregistrovat se",
+      "title": "Registrace"
+    },
+    "validation": {
+      "emailInvalid": "Neplatný e-mail",
+      "emailRequired": "Zadejte e-mail",
+      "nameRequired": "Zadejte jméno",
+      "passwordConfirmationRequired": "Potvrďte heslo",
+      "passwordMin": "Heslo musí mít alespoň 8 znaků",
+      "passwordRequired": "Zadejte heslo",
+      "passwordsMustMatch": "Hesla se musí shodovat",
+      "usernameRequired": "Zadejte uživatelské jméno"
+    }
+  },
+  "errors": {
+    "generic": {
+      "description": "Došlo k neočekávané chybě.",
+      "reload": "Načíst znovu",
+      "title": "Něco se pokazilo"
+    },
+    "notFound": {
+      "description": "Stránka, kterou hledáte, neexistuje nebo se přesunula.",
+      "goHome": "Na úvodní stránku",
+      "title": "Stránka nenalezena"
+    }
+  },
+  "header": {
+    "language": {
+      "label": "Jazyk"
+    },
+    "nav": {
+      "designSystem": "Design systém",
+      "quacks": "Quacks"
+    },
+    "signIn": "Přihlásit se",
+    "signOut": "Odhlásit se",
+    "theme": {
+      "dark": "Tmavý",
+      "light": "Světlý",
+      "system": "Podle systému",
+      "toggle": "Přepnout motiv"
+    },
+    "userMenu": "Uživatelské menu"
+  },
+  "hobbyhub": {
+    "activities": {
+      "badminton": "Badminton",
+      "basketbal": "Basketbal",
+      "beh": "Běh",
+      "cviceni": "Cvičení",
+      "cyklistika": "Cyklistika",
+      "deskove-hry": "Deskové hry",
+      "florbal": "Florbal",
+      "fotbal": "Fotbal",
+      "lan-party": "LAN party",
+      "ostatni": "Ostatní",
+      "plavani": "Plavání",
+      "sachy": "Šachy",
+      "stolni-tenis": "Stolní tenis",
+      "tenis": "Tenis",
+      "turistika": "Turistika",
+      "volejbal": "Volejbal"
+    },
+    "avatars": {
+      "basketbalista": "Basketbalista",
+      "bezec": "Běžec",
+      "cyklista": "Cyklista",
+      "deskar": "Deskař",
+      "florbalista": "Florbalista",
+      "fotbalista": "Fotbalista",
+      "hrac-her": "Hráč her",
+      "joginka": "Jogínka",
+      "plavkyne": "Plavkyně",
+      "tenistka": "Tenistka",
+      "turistka": "Turistka",
+      "volejbalistka": "Volejbalistka"
+    },
+    "capacity": {
+      "full": "naplněno",
+      "missing": "chybí {{count}}",
+      "summaryFull": "Obsazeno {{taken}} z {{total}}, naplněno",
+      "summaryMissing": "Obsazeno {{taken}} z {{total}}, chybí {{count}}"
+    },
+    "chatShare": {
+      "copied": "Zpráva je zkopírovaná",
+      "copy": "Zkopírovat zprávu",
+      "copyFailed": "Zprávu se nepodařilo zkopírovat",
+      "link": "odkaz na akci",
+      "share": "Sdílet"
+    },
+    "counter": {
+      "less": "{{label}}: méně",
+      "more": "{{label}}: více"
+    },
+    "eventDetail": {
+      "seatsFull": "{{taken}}/{{total}}, naplněno",
+      "seatsMissing": "{{taken}}/{{total}}, chybí {{count}}",
+      "until": "do {{time}}"
+    },
+    "filters": {
+      "activity": "Aktivita",
+      "clear": "Vymazat",
+      "date": "Datum…",
+      "location": "Lokalita",
+      "locationPlaceholder": "Praha 8",
+      "results_few": "Zobrazit {{count}} akce",
+      "results_one": "Zobrazit {{count}} akci",
+      "results_other": "Zobrazit {{count}} akcí",
+      "showResults": "Zobrazit výsledky",
+      "sortNote": "Výsledky řadíme podle nejbližšího termínu.",
+      "title": "Filtry",
+      "week": "Tento týden",
+      "weekend": "Víkend",
+      "when": "Kdy"
+    },
+    "joinRequest": {
+      "approve": "Schválit",
+      "reject": "Zamítnout",
+      "verified": "Ověřený e-mail"
+    },
+    "loader": {
+      "ball": "Hledáme akce…",
+      "bike": "Načítáme mapu…",
+      "dice": "Vybíráme náhradníka…",
+      "player": "Hledáme hráče…",
+      "seats": "Načítáme soupisku…",
+      "volleyball": "Odesíláme žádost…"
+    },
+    "mapPin": {
+      "cluster_few": "{{count}} akce",
+      "cluster_one": "{{count}} akce",
+      "cluster_other": "{{count}} akcí",
+      "filled": "Akce, naplněno",
+      "missing": "Akce, chybí {{count}}",
+      "selected": "Vybraná akce, chybí {{count}}"
+    },
+    "nav": {
+      "add": "Přidat",
+      "discover": "Objevovat",
+      "groups": "Skupiny",
+      "label": "Hlavní navigace",
+      "myEvents": "Moje akce",
+      "profile": "Profil",
+      "withNewRequests": "{{label}}, nové žádosti"
+    },
+    "photoPicker": {
+      "change": "Změnit fotku",
+      "chosen": "Vybraná fotka akce",
+      "hint": "nebo vyberte ilustraci aktivity",
+      "label": "Fotka nebo ilustrace (nepovinné)",
+      "upload": "Nahrát fotku"
+    },
+    "roster": {
+      "free": "Volné místo",
+      "missingToMinimum": "Chybí do minima"
+    },
+    "search": {
+      "filters": "Filtry",
+      "label": "Hledat akce"
+    },
+    "shareSheet": {
+      "copiedDiscord": "Zpráva je zkopírovaná, vlož ji do Discordu",
+      "copiedMessenger": "Zpráva je zkopírovaná, vlož ji do Messengeru",
+      "copyFailed": "Nepodařilo se zkopírovat",
+      "copyLink": "Zkopírovat odkaz",
+      "description": "Pošli zprávu do skupiny, kde už jste, a zbytek vyřeší odkaz.",
+      "facebook": "Facebook skupina",
+      "linkCopied": "Odkaz je zkopírovaný",
+      "message": "Zpráva",
+      "note": "Odkaz vede na veřejnou stránku akce. Kdokoli ji uvidí bez účtu, žádost o účast už vyžaduje přihlášení.",
+      "title": "Sdílet do chatu",
+      "where": "Kam poslat"
+    },
+    "status": {
+      "approved": "Schváleno",
+      "deadline": "Uzávěrka",
+      "neutral": "Plno",
+      "pending": "Čeká na schválení",
+      "rejected": "Zamítnuto"
+    },
+    "viewToggle": {
+      "label": "Zobrazení akcí",
+      "list": "Seznam",
+      "map": "Mapa"
+    },
+    "yourSeat": {
+      "title": "Tvoje místo?"
+    }
+  },
+  "landing": {
+    "actions": {
+      "create": "Vypsat akci",
+      "find": "Najít akci"
+    },
+    "hero": {
+      "join": "Obsadit místo",
+      "kicker": "Čtvrteční florbal · dnes 19:00",
+      "text": "Chybí 3 do minima. Jedno z nich může být tvoje.",
+      "title": "Doplňte chybějící hráče dřív, než se akce zruší"
+    },
+    "how": {
+      "step1": "Vypište akci a řekněte, kolik lidí vám chybí do minima.",
+      "step2": "Ostatní uvidí volná místa na mapě nebo v seznamu a požádají o účast.",
+      "step3": "Schválíte účastníky a akce se uskuteční.",
+      "title": "Jak to funguje"
+    },
+    "search": {
+      "label": "Lokalita",
+      "placeholder": "Lokalita: Praha 8"
+    },
+    "seoTitle": "Úvodní stránka",
+    "tonight": {
+      "empty": "Na dnešní večer zatím nic nemáme. Hledejte na další dny, nebo akci vypište sami — až se objeví, najdete je tady.",
+      "title": "Dnes večer"
+    }
+  },
+  "quacks": {
+    "form": {
+      "label": "Nový quack",
+      "placeholder": "Quackni něco…",
+      "required": "Nejdřív něco napište",
+      "submit": "Quacknout",
+      "tooLong_few": "Maximálně {{count}} znaky",
+      "tooLong_one": "Maximálně {{count}} znak",
+      "tooLong_other": "Maximálně {{count}} znaků"
+    },
+    "list": {
+      "empty": "Zatím žádné quacky. Napište první.",
+      "loadError": "Quacky se nepodařilo načíst",
+      "reload": "Načíst znovu"
+    },
+    "title": "Quacks"
+  }
+}

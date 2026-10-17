@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { missingCount, type Capacity } from "@/components/hobbyhub/capacity"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
 import { cn } from "@/lib/utils"
@@ -16,6 +18,7 @@ type ScheduleRowProps = Capacity & {
  * separated by a hairline.
  */
 export function ScheduleRow({ time, title, subtitle, className, ...capacity }: ScheduleRowProps) {
+  const { t } = useTranslation()
   const missing = missingCount(capacity)
 
   return (
@@ -31,7 +34,9 @@ export function ScheduleRow({ time, title, subtitle, className, ...capacity }: S
           {...capacity}
         />
         <p className={cn("typo-small", missing > 0 ? "text-signal-ink" : "text-success-ink")}>
-          {missing > 0 ? `chybí ${missing}` : "naplněno"}
+          {missing > 0
+            ? t("hobbyhub.capacity.missing", { count: missing })
+            : t("hobbyhub.capacity.full")}
         </p>
       </div>
     </div>

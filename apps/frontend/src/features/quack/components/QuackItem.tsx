@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { formatDate } from "@/lib/date"
 
@@ -9,6 +11,7 @@ type QuackItemProps = { quack: Quack }
 
 export function QuackItem({ quack }: QuackItemProps) {
   const { name, username } = quack.user
+  const { i18n } = useTranslation()
 
   const initials = name
     .split(" ")
@@ -29,7 +32,9 @@ export function QuackItem({ quack }: QuackItemProps) {
             <UsersName name={name} /> <UsersUserName username={username} />
           </span>
           <span className="text-xs text-muted-foreground">·</span>
-          <time className="text-xs text-muted-foreground">{formatDate(quack.createdAt)}</time>
+          <time className="text-xs text-muted-foreground">
+            {formatDate(quack.createdAt, i18n.language)}
+          </time>
         </div>
         <p className="text-sm break-words whitespace-pre-line">{quack.text}</p>
       </div>

@@ -8,9 +8,9 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    # Same database as `docker-compose.yml`, so the migrations and the schema
-    # tests (DB_TESTS) run against a real PostgreSQL.
     services:
+      # Same image, credentials and host port as apps/backend/docker-compose.yml,
+      # so the .env created by `pnpm env:check` points at it unchanged.
       postgres:
         image: postgres:17-alpine
         env:
@@ -24,10 +24,16 @@ jobs:
           --health-interval 3s
           --health-timeout 3s
           --health-retries 20
-    env:
-      DATABASE_URL: postgresql://quacker:quacker@localhost:5433/quacker
     steps:
       - uses: actions/checkout@v5
+
+      - name: Check migrations order
+        if: github.event_name == 'pull_request'
+        run: scripts/check-migrations-order.sh "origin/${{ github.base_ref }}"
+
+      - name: Check migrations on base branch are unchanged
+        if: github.event_name == 'pull_request'
+        run: scripts/check-migrations-frozen.sh "origin/${{ github.base_ref }}"
 
       - uses: pnpm/action-setup@v6
 
@@ -45,6 +51,17 @@ jobs:
       - name: Generate Prisma client
         run: pnpm backend prisma:generate
 
+      # Replays every migration into an empty database in timestamp order,
+      # exactly as `prisma migrate deploy` does on a fresh deployment.
+      - name: Apply migrations to an empty database
+        run: pnpm backend migrate
+
+      # Exit code 2 when the migrated database differs from schema.prisma:
+      # a schema change without a migration, or two parallel migrations that
+      # merged cleanly in git but do not add up to the schema.
+      - name: Check migrations match schema.prisma
+        run: pnpm backend exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
       - name: Format check
         run: pnpm format:check
 
@@ -56,9 +73,6 @@ jobs:
 
       - name: Type-check frontend
         run: pnpm frontend type-check
-
-      - name: Apply database migrations
-        run: pnpm backend migrate
 
       - name: Test backend
         run: pnpm backend test

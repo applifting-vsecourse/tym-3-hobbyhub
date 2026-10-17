@@ -1,6 +1,9 @@
+import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -22,20 +25,24 @@ import { useAddQuack } from "@/features/quack/hooks/useAddQuack"
 // the request is made — the server still validates independently.
 const MAX_LENGTH = 280
 
-const schema = z.object({
-  text: z
-    .string()
-    .trim()
-    .min(1, "Write something first")
-    .max(MAX_LENGTH, `Keep it under ${MAX_LENGTH} characters`),
-})
+// Built per render so validation messages follow the current language.
+const createSchema = (t: TFunction) =>
+  z.object({
+    text: z
+      .string()
+      .trim()
+      .min(1, t("quacks.form.required"))
+      .max(MAX_LENGTH, t("quacks.form.tooLong", { count: MAX_LENGTH })),
+  })
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof createSchema>>
 
 type QuackFormProps = { className?: string }
 
 export function QuackForm({ className }: QuackFormProps) {
+  const { t } = useTranslation()
   const addQuack = useAddQuack()
+  const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { text: "" },
@@ -66,11 +73,11 @@ export function QuackForm({ className }: QuackFormProps) {
           name="text"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>New quack</FormLabel>
+              <FormLabel>{t("quacks.form.label")}</FormLabel>
               <FormControl>
                 <Textarea
                   rows={3}
-                  placeholder="Quack something..."
+                  placeholder={t("quacks.form.placeholder")}
                   disabled={addQuack.isPending}
                   {...field}
                 />
@@ -95,7 +102,7 @@ export function QuackForm({ className }: QuackFormProps) {
             disabled={addQuack.isPending}
           >
             {addQuack.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            Quack
+            {t("quacks.form.submit")}
           </Button>
         </div>
       </form>

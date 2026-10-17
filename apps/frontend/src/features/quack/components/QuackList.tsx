@@ -1,4 +1,5 @@
 import { Loader2, RefreshCw } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,8 @@ type QuackListProps = {
 }
 
 export function QuackList({ quacks, isLoading, error, onReload }: QuackListProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col">
       {isLoading && quacks.length === 0 ? (
@@ -27,7 +30,7 @@ export function QuackList({ quacks, isLoading, error, onReload }: QuackListProps
           variant="destructive"
           className="mb-4"
         >
-          <AlertTitle>Couldn&apos;t load quacks</AlertTitle>
+          <AlertTitle>{t("quacks.list.loadError")}</AlertTitle>
           <AlertDescription className="flex items-center justify-between gap-3">
             <span>{error.message}</span>
             {onReload ? (
@@ -37,7 +40,7 @@ export function QuackList({ quacks, isLoading, error, onReload }: QuackListProps
                 onClick={onReload}
               >
                 <RefreshCw className="size-4" />
-                Reload
+                {t("quacks.list.reload")}
               </Button>
             ) : null}
           </AlertDescription>
@@ -45,9 +48,7 @@ export function QuackList({ quacks, isLoading, error, onReload }: QuackListProps
       ) : null}
 
       {!isLoading && !error && quacks.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          No quacks yet. Post the first one.
-        </p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("quacks.list.empty")}</p>
       ) : null}
 
       {quacks.map((quack) => (

@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router"
 import { ROUTES } from "@/app/routes"
 import { Logo } from "@/components/hobbyhub/Logo"
 
-// The full logo is too wide for a phone header, so phones get the wordmark.
+// One wordmark at every width, as in the Figma header (mobile and desktop).
 export function HeaderLogo() {
   return (
     <Link
@@ -12,11 +12,7 @@ export function HeaderLogo() {
     >
       <Logo
         variant="wordmark"
-        className="h-7 sm:hidden"
-      />
-      <Logo
-        variant="main"
-        className="hidden h-7 sm:block"
+        className="h-7"
       />
     </Link>
   )
