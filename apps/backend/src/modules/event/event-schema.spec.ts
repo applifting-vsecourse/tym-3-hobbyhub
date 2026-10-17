@@ -4,6 +4,11 @@
 //
 // Every case runs in a transaction that is rolled back, so the database the
 // test points at (DATABASE_URL) is left exactly as it was.
+//
+// The suite builds PrismaService by hand, outside Nest's config loading, so
+// DATABASE_URL has to come from .env here. Variables already set (CI) win.
+import 'dotenv/config';
+
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,
