@@ -23,6 +23,15 @@ Prisma migrations live in `apps/backend/prisma/migrations/`. Production runs `pr
 - **Never edit a migration that is already on `main`.** It is frozen. Editing its SQL changes nothing in production and forces a database reset for everyone locally. Need to fix or extend it? Write a new migration with `pnpm backend prisma:migrations:run`.
 - **A migration added in a PR must sort after every migration on `main`.** CI enforces this (`Check migrations order`). When it fails, or after merging `main` into a branch that adds migrations, run `scripts/rebase-migrations.sh <name>` (agents: the `rebase-migrations` skill): it deletes the branch-only migrations and lets Prisma regenerate one from `main`'s schema. Renaming the folder is only safe when `main`'s newer migrations touch unrelated tables; two migrations generated from different schema states can merge cleanly and still fail on deploy.
 
+## Git Commits
+
+- **Format**: `type(scope): short description` - single line, no body
+- **Scope**: workspace names like `backend`, `frontend`, `lib` (can combine: `admin, api, worker`)
+- **Types**: `feat`, `fix`, `refactor`, `chore`
+- **No multi-line descriptions** - single line only
+- **Language**: Czech
+- Example: `feat(backend): add Stripe subscription`
+
 ## Conventions
 
 Deliberately sparse — this file grows as the team learns what it expects from generated code. Add rules here when you find yourself repeating the same review feedback.
