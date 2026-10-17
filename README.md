@@ -51,6 +51,7 @@ pnpm check-all                     # lint + type-check + tests + builds (what CI
 pnpm backend test                  # backend unit tests (jest)
 pnpm frontend test:ci              # frontend component tests (vitest)
 pnpm backend prisma:migrations:run # create + apply a migration after schema changes
+scripts/rebase-migrations.sh <n>   # squash branch-only migrations into one against main
 pnpm backend prisma:studio         # browse/edit the database
 pnpm backend seed                  # re-seed the database
 pnpm dev:down                      # stop the database container
