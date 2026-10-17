@@ -61,17 +61,8 @@ base_migrations="$(list_at_ref "$BASE_REF")"
 branch_only="$(comm -13 <(echo "$base_migrations") <(list_worktree))"
 
 # Migrations shared with main must be byte-identical: they are frozen.
-modified_shared=""
-while IFS= read -r file; do
-  [[ -n "$file" ]] || continue
-  dir="$(basename "$(dirname "$file")")"
-  if grep -qx -- "$dir" <<< "$base_migrations"; then modified_shared+="  $dir"$'\n'; fi
-done < <(git diff --name-only "$BASE_REF" -- "$MIGRATIONS_DIR/")
-if [[ -n "$modified_shared" ]]; then
-  echo "These migrations also exist on $BASE_REF but differ here:"
-  printf '%s' "$modified_shared"
-  die "migrations on main are frozen; restore them (git checkout $BASE_REF -- $MIGRATIONS_DIR/<dir>) and write a new migration instead"
-fi
+scripts/check-migrations-frozen.sh "$BASE_REF" >/dev/null \
+  || { scripts/check-migrations-frozen.sh "$BASE_REF" || true; die "fix the frozen migrations above before rebasing"; }
 
 echo "Branch: $branch"
 echo "Newest migration on $BASE_REF: $(echo "$base_migrations" | tail -n1)"

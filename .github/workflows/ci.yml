@@ -31,6 +31,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: scripts/check-migrations-order.sh "origin/${{ github.base_ref }}"
 
+      - name: Check migrations on base branch are unchanged
+        if: github.event_name == 'pull_request'
+        run: scripts/check-migrations-frozen.sh "origin/${{ github.base_ref }}"
+
       - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v5

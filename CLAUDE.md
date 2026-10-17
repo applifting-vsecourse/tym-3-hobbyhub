@@ -20,7 +20,7 @@ The worked example is the quack feed: `Quack` model → seed → repository → 
 
 Prisma migrations live in `apps/backend/prisma/migrations/`. Production runs `prisma migrate deploy` on every push to `main`: it applies every migration folder not yet recorded in the database, in timestamp order, and does not check that order against what is already applied.
 
-- **Never edit a migration that is already on `main`.** It is frozen. Editing its SQL changes nothing in production and forces a database reset for everyone locally. Need to fix or extend it? Write a new migration with `pnpm backend prisma:migrations:run`.
+- **Never edit a migration that is already on `main`.** It is frozen and CI enforces it (`Check migrations on base branch are unchanged`). Editing its SQL changes nothing in production and forces a database reset for everyone locally. Need to fix or extend it? Write a new migration with `pnpm backend prisma:migrations:run`.
 - **A migration added in a PR must sort after every migration on `main`.** CI enforces this (`Check migrations order`). When it fails, or after merging `main` into a branch that adds migrations, run `scripts/rebase-migrations.sh <name>` (agents: the `rebase-migrations` skill): it deletes the branch-only migrations and lets Prisma regenerate one from `main`'s schema. Renaming the folder is only safe when `main`'s newer migrations touch unrelated tables; two migrations generated from different schema states can merge cleanly and still fail on deploy.
 
 ## Git Commits

@@ -6,6 +6,7 @@
     "frontend": "pnpm --filter frontend",
     "env:check": "node scripts/check-env.js",
     "migrations:check-order": "scripts/check-migrations-order.sh",
+    "migrations:check-frozen": "scripts/check-migrations-frozen.sh",
     "dev": "run-s env:check \"backend docker:up:wait\" \"backend migrate\" \"backend seed\" dev:servers",
     "dev:servers": "run-p \"backend start:dev\" \"frontend dev\"",
     "dev:down": "pnpm backend docker:down",
