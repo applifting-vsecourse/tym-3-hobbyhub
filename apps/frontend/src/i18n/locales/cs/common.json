@@ -77,12 +77,63 @@
       "title": "Stránka nenalezena"
     }
   },
+  "groups": {
+    "back": "Zpět",
+    "detail": {
+      "loadError": "Skupinu se nepodařilo načíst",
+      "loading": "Načítáme skupinu…",
+      "members_few": "{{count}} členové",
+      "members_one": "{{count}} člen",
+      "members_other": "{{count}} členů"
+    },
+    "fields": {
+      "activity": "Aktivita",
+      "description": "Popis",
+      "location": "Lokalita (nepovinné)",
+      "name": "Název skupiny",
+      "usualSchedule": "Obvyklý termín (nepovinné)"
+    },
+    "form": {
+      "activityEmpty": "Zatím tu nejsou žádné aktivity",
+      "activityError": "Aktivity se nepodařilo načíst.",
+      "activityLoading": "Načítáme aktivity…",
+      "activityPlaceholder": "Vyberte aktivitu",
+      "createFailed": "Skupinu se nepodařilo založit. Zkuste to prosím znovu.",
+      "created": "Skupina je založená.",
+      "retry": "Zkusit znovu",
+      "submit": "Vytvořit skupinu",
+      "title": "Nová skupina"
+    },
+    "list": {
+      "create": "Nová skupina",
+      "empty": "Tady uvidíte skupiny, ve kterých jste, i ty ve vašem okolí. Zatím můžete založit vlastní.",
+      "title": "Skupiny"
+    },
+    "placeholders": {
+      "description": "Např. Hrajeme každý čtvrtek v hale ZŠ Kobylisy, nováčci vítáni.",
+      "location": "Např. Praha 8",
+      "name": "Např. Čtvrteční florbalisté",
+      "usualSchedule": "Např. čtvrtky 19:00"
+    },
+    "validation": {
+      "activityRequired": "Vyberte aktivitu",
+      "descriptionRequired": "Napište pár vět o skupině",
+      "nameRequired": "Zadejte název skupiny",
+      "nameTooShort_few": "Alespoň {{count}} znaky",
+      "nameTooShort_one": "Alespoň {{count}} znak",
+      "nameTooShort_other": "Alespoň {{count}} znaků",
+      "tooLong_few": "Maximálně {{count}} znaky",
+      "tooLong_one": "Maximálně {{count}} znak",
+      "tooLong_other": "Maximálně {{count}} znaků"
+    }
+  },
   "header": {
     "language": {
       "label": "Jazyk"
     },
     "nav": {
       "designSystem": "Design systém",
+      "groups": "Skupiny",
       "quacks": "Quacks"
     },
     "signIn": "Přihlásit se",

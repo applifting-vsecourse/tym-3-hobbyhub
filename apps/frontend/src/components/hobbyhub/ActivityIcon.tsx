@@ -44,6 +44,9 @@ export type Activity = keyof typeof ACTIVITIES
 
 export const ACTIVITY_KEYS = Object.keys(ACTIVITIES) as Activity[]
 
+/** Icon keys come from the API as plain strings; not every one has an icon. */
+export const isActivityKey = (key: string): key is Activity => Object.hasOwn(ACTIVITIES, key)
+
 type ActivityIconProps = Omit<SVGProps<SVGSVGElement>, "ref"> & {
   activity: Activity
   /** Pass when the icon carries meaning on its own; otherwise it is decorative. */
