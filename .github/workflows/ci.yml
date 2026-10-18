@@ -80,6 +80,9 @@ jobs:
       - name: Test backend
         run: pnpm backend test
         env:
+          # Jest does not read apps/backend/.env; PrismaService takes the
+          # connection string from the process environment.
+          DATABASE_URL: postgresql://quacker:quacker@localhost:5433/quacker
           DB_TESTS: '1'
 
       - name: Test frontend
