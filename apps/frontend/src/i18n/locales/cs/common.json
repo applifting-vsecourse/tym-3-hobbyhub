@@ -106,8 +106,31 @@
     },
     "list": {
       "create": "Nová skupina",
-      "empty": "Tady uvidíte skupiny, ve kterých jste, i ty ve vašem okolí. Zatím můžete založit vlastní.",
-      "title": "Skupiny"
+      "discoverEmpty": "Tady uvidíte veřejné skupiny, ve kterých ještě nejste. Zatím žádná není.",
+      "loadError": "Skupiny se nepodařilo načíst",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",
+      "loading": "Načítáme skupiny…",
+      "loadingMore": "Načítáme…",
+      "mineEmpty": "Zatím nejste v žádné skupině. Najděte si nějakou v záložce <discover>Objevit</discover>.",
+      "nearbyEmpty": "Ve vašem okolí zatím žádná skupina není.",
+      "nearbyNoCity": "<profile>Nastavte si město v profilu</profile> a ukážeme vám skupiny ve vašem okolí.",
+      "nearbyTitle": "Skupiny ve vašem okolí",
+      "role": {
+        "ADMIN": "Správce",
+        "MEMBER": "Člen",
+        "OWNER": "Organizátor"
+      },
+      "tabs": {
+        "discover": "Objevit",
+        "mine": "Moje skupiny"
+      },
+      "tabsLabel": "Zobrazit skupiny",
+      "title": "Skupiny",
+      "visibility": {
+        "PRIVATE": "Soukromá",
+        "PUBLIC": "Veřejná"
+      }
     },
     "placeholders": {
       "description": "Např. Hrajeme každý čtvrtek v hale ZŠ Kobylisy, nováčci vítáni.",

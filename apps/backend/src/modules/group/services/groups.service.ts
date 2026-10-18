@@ -1,5 +1,13 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
-import { CreateGroupData, Group } from '@/modules/group/domain/group';
+import {
+  CreateGroupData,
+  DISCOVER_PAGE_SIZE,
+  Group,
+  GroupPage,
+  MyGroup,
+  NEARBY_GROUPS_LIMIT,
+  NearbyGroups,
+} from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
@@ -31,5 +39,31 @@ export class GroupsService {
     const group = await this.groupRepository.getGroupById(id);
     if (!group) throw new NotFoundException('Group not found');
     return group;
+  }
+
+  async listMyGroups(user: Identity): Promise<MyGroup[]> {
+    return this.groupRepository.listGroupsOfUser(user.id);
+  }
+
+  async listNearbyGroups(
+    user: Identity,
+    now = new Date(),
+  ): Promise<NearbyGroups> {
+    const city = (await this.groupRepository.getUserCity(user.id, now))?.trim();
+    if (!city) return { city: null, groups: [] };
+    const groups = await this.groupRepository.listGroupsInCity(
+      user.id,
+      city,
+      NEARBY_GROUPS_LIMIT,
+    );
+    return { city, groups };
+  }
+
+  async discoverGroups(user: Identity, cursor?: string): Promise<GroupPage> {
+    return this.groupRepository.listDiscoverableGroups(
+      user.id,
+      DISCOVER_PAGE_SIZE,
+      cursor,
+    );
   }
 }

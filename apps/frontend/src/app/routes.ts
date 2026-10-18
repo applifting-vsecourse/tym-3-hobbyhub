@@ -10,4 +10,5 @@ export const ROUTES = {
   // Not built yet — plain hrefs until the routes exist.
   events: "/events",
   newEvent: "/events/new",
+  profile: "/profile",
 } as const

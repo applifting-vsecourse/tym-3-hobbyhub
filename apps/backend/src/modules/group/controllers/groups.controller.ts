@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -21,7 +22,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { DiscoverGroupsQueryDto } from './dto/discover-groups.query.dto';
+import { GroupPageResponseDto } from './dto/group-page.response.dto';
 import { GroupResponseDto } from './dto/group.response.dto';
+import { MyGroupResponseDto } from './dto/my-group.response.dto';
+import { NearbyGroupsResponseDto } from './dto/nearby-groups.response.dto';
 
 @ApiTags('groups')
 @Controller('groups')
@@ -55,6 +60,43 @@ export class GroupsController {
       usualSchedule: body.usualSchedule,
     });
     return GroupResponseDto.fromDomain(group);
+  }
+
+  // The list routes come before `:id`, which would otherwise match them.
+  @Get('mine')
+  @ApiOperation({ summary: 'List active groups the signed-in user is in' })
+  @ApiResponse({ status: 200, type: [MyGroupResponseDto] })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async mine(@User() user: Identity): Promise<MyGroupResponseDto[]> {
+    const groups = await this.groupsService.listMyGroups(user);
+    return groups.map((group) => MyGroupResponseDto.fromDomain(group));
+  }
+
+  @Get('nearby')
+  @ApiOperation({
+    summary: "List a few public groups in the signed-in user's city",
+  })
+  @ApiResponse({ status: 200, type: NearbyGroupsResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async nearby(@User() user: Identity): Promise<NearbyGroupsResponseDto> {
+    return NearbyGroupsResponseDto.fromDomain(
+      await this.groupsService.listNearbyGroups(user),
+    );
+  }
+
+  @Get('discover')
+  @ApiOperation({
+    summary: 'Page through public groups the signed-in user is not in',
+  })
+  @ApiResponse({ status: 200, type: GroupPageResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async discover(
+    @User() user: Identity,
+    @Query() query: DiscoverGroupsQueryDto,
+  ): Promise<GroupPageResponseDto> {
+    return GroupPageResponseDto.fromDomain(
+      await this.groupsService.discoverGroups(user, query.cursor),
+    );
   }
 
   @Get(':id')
