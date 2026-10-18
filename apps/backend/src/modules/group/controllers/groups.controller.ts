@@ -12,7 +12,6 @@ import {
   Post,
   UseGuards,
   UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiCookieAuth,
@@ -22,18 +21,13 @@ import {
 } from '@nestjs/swagger';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { GroupResponseDto } from './dto/group.response.dto';
+import { groupsValidationPipe } from './groups-validation.pipe';
 
 @ApiTags('groups')
 @Controller('groups')
 @UseGuards(AuthenticatedUserGuard)
 @ApiCookieAuth()
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }),
-)
+@UsePipes(groupsValidationPipe)
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
@@ -62,6 +56,9 @@ export class GroupsController {
   @ApiResponse({ status: 200, type: GroupResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in' })
   @ApiResponse({ status: 404, description: 'Group not found' })
+  // TODO(F-07.1b #93): every group is public and the list hides cancelled
+  // ones, so this returns any group to anyone signed in. Private groups must
+  // be shown to members only, and a cancelled group needs a decision too.
   async detail(@Param('id') id: string): Promise<GroupResponseDto> {
     const group = await this.groupsService.getGroup(id);
     return GroupResponseDto.fromDomain(group);

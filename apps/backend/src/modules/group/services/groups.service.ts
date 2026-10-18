@@ -17,7 +17,9 @@ export class GroupsService {
 
   async createGroup(user: Identity, data: CreateGroupData): Promise<Group> {
     if (!(await this.activitiesService.isAvailable(data.activityId))) {
-      throw new BadRequestException('Activity does not exist');
+      throw new BadRequestException(
+        'Activity does not exist or is no longer offered',
+      );
     }
     return this.groupRepository.createGroupWithOwner({
       ...data,

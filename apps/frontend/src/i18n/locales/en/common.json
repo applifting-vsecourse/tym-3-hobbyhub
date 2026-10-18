@@ -105,7 +105,7 @@
     },
     "list": {
       "create": "New group",
-      "empty": "Groups you belong to and groups near you will show up here. For now, you can start your own.",
+      "empty": "An overview of your groups and groups near you is coming soon. In the meantime, you can start a new one.",
       "title": "Groups"
     },
     "placeholders": {

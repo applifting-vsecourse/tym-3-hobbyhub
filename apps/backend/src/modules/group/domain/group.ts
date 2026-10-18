@@ -6,6 +6,14 @@ export const GROUP_DESCRIPTION_MAX_LENGTH = 2000;
 export const GROUP_LOCATION_MAX_LENGTH = 100;
 export const GROUP_SCHEDULE_MAX_LENGTH = 100;
 
+export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER';
+
+// The founder (OWNER) is a superset of an ADMIN: anything an admin may do in a
+// group, the owner may too. Use this for every admin check, never
+// `role === 'ADMIN'`, or the founder loses rights they have.
+export const hasGroupAdminRights = (role: GroupRole): boolean =>
+  role === 'OWNER' || role === 'ADMIN';
+
 export type GroupVisibility = 'PUBLIC' | 'PRIVATE';
 export type GroupStatus = 'ACTIVE' | 'CANCELLED';
 
