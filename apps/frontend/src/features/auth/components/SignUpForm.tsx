@@ -1,66 +1,85 @@
 import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Link } from "@tanstack/react-router"
 import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { useTranslation } from "react-i18next"
+import { useForm, type DefaultValues } from "react-hook-form"
+import { Trans, useTranslation } from "react-i18next"
 import { z } from "zod"
 
+import { ROUTES } from "@/app/routes"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+
+import { BirthDatePicker } from "@/features/auth/components/BirthDatePicker"
+import { PasswordInput } from "@/features/auth/components/PasswordInput"
+import { isAdult } from "@/features/auth/lib/birthDate"
+
+const GENDERS = ["MALE", "FEMALE"] as const
+
+const GENDER_LABELS = {
+  MALE: "auth.gender.male",
+  FEMALE: "auth.gender.female",
+} as const
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
-  z
-    .object({
-      email: z
-        .string()
-        .trim()
-        .min(1, t("auth.validation.emailRequired"))
-        .email(t("auth.validation.emailInvalid")),
-      name: z.string().trim().min(1, t("auth.validation.nameRequired")),
-      username: z.string().trim().min(1, t("auth.validation.usernameRequired")),
-      password: z.string().trim().min(8, t("auth.validation.passwordMin")),
-      passwordConfirmation: z
-        .string()
-        .trim()
-        .min(1, t("auth.validation.passwordConfirmationRequired")),
-    })
-    .refine((values) => values.password === values.passwordConfirmation, {
-      message: t("auth.validation.passwordsMustMatch"),
-      path: ["passwordConfirmation"],
-    })
+  z.object({
+    name: z.string().trim().min(1, t("auth.validation.nameRequired")),
+    email: z
+      .string()
+      .trim()
+      .min(1, t("auth.validation.emailRequired"))
+      .pipe(z.email(t("auth.validation.emailInvalid"))),
+    password: z.string().trim().min(8, t("auth.validation.passwordMin")),
+    gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
+    birthDate: z
+      .string()
+      .min(1, t("auth.validation.birthDateRequired"))
+      .refine((value) => isAdult(value, new Date()), t("auth.validation.underage")),
+    termsAccepted: z.boolean().refine(Boolean, t("auth.validation.termsRequired")),
+  })
 
-type FormValues = z.infer<ReturnType<typeof createSchema>>
+export type SignUpFormValues = z.infer<ReturnType<typeof createSchema>>
 
-const defaultValues: FormValues = {
-  email: "",
+// Gender has no default: the user picks one.
+const defaultValues: DefaultValues<SignUpFormValues> = {
   name: "",
-  username: "",
+  email: "",
   password: "",
-  passwordConfirmation: "",
+  birthDate: "",
+  termsAccepted: false,
 }
 
 type SignUpFormProps = {
-  isLoading: boolean
-  errorMessage?: string | null
-  onSubmit: (values: FormValues) => void | Promise<void>
+  readonly isLoading: boolean
+  readonly errorMessage?: string | null
+  readonly onSubmit: (values: SignUpFormValues) => void | Promise<void>
 }
 
 export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
-  const form = useForm<FormValues>({
+  const form = useForm<SignUpFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   })
@@ -71,7 +90,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
       <form
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
+        className="flex flex-col gap-4"
       >
         {errorMessage ? (
           <Alert variant="destructive">
@@ -87,24 +106,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
               <FormLabel>{t("auth.fields.name")}</FormLabel>
               <FormControl>
                 <Input
-                  autoComplete="name"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.username")}</FormLabel>
-              <FormControl>
-                <Input
-                  autoComplete="username"
+                  autoComplete="nickname"
                   {...field}
                 />
               </FormControl>
@@ -139,8 +141,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
             <FormItem>
               <FormLabel>{t("auth.fields.password")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
                   autoComplete="new-password"
                   {...field}
                 />
@@ -150,20 +151,90 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
           )}
         />
 
+        <div className="grid grid-cols-2 items-start gap-3">
+          <FormField
+            control={form.control}
+            name="birthDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
+                <FormControl>
+                  <BirthDatePicker {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.gender")}</FormLabel>
+                <Select
+                  name={field.name}
+                  value={field.value ?? ""}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      className="w-full"
+                    >
+                      <SelectValue placeholder={t("auth.placeholders.gender")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {GENDERS.map((gender) => (
+                      <SelectItem
+                        key={gender}
+                        value={gender}
+                      >
+                        {t(GENDER_LABELS[gender])}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
-          name="passwordConfirmation"
+          name="termsAccepted"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.passwordConfirmation")}</FormLabel>
+            <FormItem className="flex items-start gap-3">
               <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  {...field}
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="grid gap-1">
+                <FormLabel className="block typo-small text-muted-foreground">
+                  <Trans
+                    i18nKey="auth.signUp.terms"
+                    components={{
+                      // Not <link>: that is a void HTML element, so it would drop the text.
+                      terms: (
+                        // A new tab, so the half-filled form stays where it is.
+                        <Link
+                          to={ROUTES.terms}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-foreground underline underline-offset-4"
+                        />
+                      ),
+                    }}
+                  />
+                </FormLabel>
+                <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
+                <FormMessage />
+              </div>
             </FormItem>
           )}
         />
@@ -171,7 +242,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
         <Button
           type="submit"
           size="lg"
-          className="w-full"
+          className="mt-8 w-full"
           disabled={isLoading}
         >
           {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}

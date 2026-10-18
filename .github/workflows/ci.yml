@@ -74,6 +74,9 @@ jobs:
       - name: Type-check frontend
         run: pnpm frontend type-check
 
+      - name: Apply database migrations
+        run: pnpm backend migrate
+
       - name: Test backend
         run: pnpm backend test
         env:

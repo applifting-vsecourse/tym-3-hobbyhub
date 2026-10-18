@@ -7,9 +7,12 @@ import { AuthError } from "@/features/auth/lib/authErrors"
 
 export type SignUpInput = {
   name: string
-  username: string
   email: string
   password: string
+  gender: "MALE" | "FEMALE"
+  /** "YYYY-MM-DD" */
+  birthDate: string
+  termsAccepted: boolean
 }
 
 export function useSignUp() {
@@ -17,14 +20,12 @@ export function useSignUp() {
 
   return useMutation({
     mutationFn: async (input: SignUpInput) => {
-      // BetterAuth handles the whole flow (and signs the user in by default)
-      const { error } = await authClient.signUp.email({
-        name: input.name,
-        username: input.username,
-        email: input.email,
-        password: input.password,
-      })
-      if (error) throw new AuthError(error.code, error.message)
+      // BetterAuth handles the whole flow (and signs the user in by default).
+      // Gender, birth date and consent are read by the backend's registration
+      // hook; the typed sign-up body does not list them, hence the variable.
+      const body = { ...input }
+      const { error } = await authClient.signUp.email(body)
+      if (error) throw new AuthError(error.code, error.message, error.status)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authKeys.session() })

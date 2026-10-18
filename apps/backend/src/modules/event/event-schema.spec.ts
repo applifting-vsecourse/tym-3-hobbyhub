@@ -1,9 +1,13 @@
 // Database constraints from the domain model (CHECK, unique). They need a real
-// PostgreSQL with the migrations applied. CI runs them with DB_TESTS=1; locally:
-//   DB_TESTS=1 pnpm backend test event-schema
+// PostgreSQL with the migrations applied, which CI does not start, so the suite
+// only runs on request:  DB_TESTS=1 pnpm backend test event-schema
 //
 // Every case runs in a transaction that is rolled back, so the database the
 // test points at (DATABASE_URL) is left exactly as it was.
+//
+// The suite builds PrismaService by hand, outside Nest's config loading, so
+// DATABASE_URL has to come from .env here. Variables already set (CI) win.
+import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,

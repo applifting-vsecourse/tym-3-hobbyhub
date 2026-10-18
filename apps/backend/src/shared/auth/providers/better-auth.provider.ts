@@ -4,6 +4,10 @@ import { ResetPassword } from '@/core/email/templates/reset-password';
 import { VerifyEmail } from '@/core/email/templates/verify-email';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { betterAuthCoreConfig } from '@/shared/auth/config/better-auth.config';
+import {
+  registrationBeforeHook,
+  registrationDatabaseHooks,
+} from '@/shared/auth/registration/registration.hooks';
 import { Config } from '@/shared/config/config.service';
 import { Inject, Provider } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
@@ -54,6 +58,20 @@ const createAuth = (
         );
       },
       sendOnSignUp: true,
+    },
+    hooks: {
+      before: registrationBeforeHook,
+    },
+    databaseHooks: registrationDatabaseHooks,
+    // On in every environment, not just production (BetterAuth's default).
+    // Sign-up gets a much tighter limit against bulk account creation.
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 100,
+      customRules: {
+        '/sign-up/email': { window: 60, max: 3 },
+      },
     },
     // If change (setup) affects database, must be in core config, in order to be able to run migrations
     ...betterAuthCoreConfig,

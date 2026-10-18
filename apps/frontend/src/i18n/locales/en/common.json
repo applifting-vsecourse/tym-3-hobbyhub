@@ -1,25 +1,41 @@
 {
   "auth": {
+    "back": "Back",
     "errors": {
       "emailNotVerified": "Your email is not verified yet.",
+      "invalidBirthDate": "Invalid date of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
-      "invalidUsername": "Invalid username.",
+      "invalidGender": "Choose your gender.",
       "passwordTooShort": "The password is too short.",
       "signInFailed": "Sign in failed.",
       "signUpFailed": "Sign up failed.",
-      "userExists": "An account with this email already exists.",
-      "usernameTaken": "This username is already taken."
+      "termsNotAccepted": "You need to accept the terms to register.",
+      "tooManyRequests": "Too many attempts. Please try again in a moment.",
+      "underage": "You must be at least 18 to register.",
+      "userExists": "An account with this email already exists."
     },
     "fields": {
+      "birthDate": "Date of birth",
       "email": "Email",
-      "name": "Name",
-      "password": "Password",
-      "passwordConfirmation": "Confirm password",
-      "username": "Username"
+      "gender": "Gender",
+      "name": "Name / nickname",
+      "password": "Password"
+    },
+    "gender": {
+      "female": "Female",
+      "male": "Male"
+    },
+    "password": {
+      "hide": "Hide",
+      "hideLabel": "Hide password",
+      "show": "Show",
+      "showLabel": "Show password"
     },
     "placeholders": {
-      "email": "e.g. john@doe.com"
+      "birthDate": "Pick a date",
+      "email": "e.g. john@doe.com",
+      "gender": "Select"
     },
     "signIn": {
       "description": "Welcome back to HobbyHub.",
@@ -29,21 +45,24 @@
       "title": "Sign in"
     },
     "signUp": {
-      "description": "Create your HobbyHub account.",
-      "haveAccount": "Already have an account?",
-      "signInLink": "Sign in",
-      "submit": "Sign up",
-      "title": "Sign up"
+      "description": "You can complete your profile later.",
+      "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
+      "privacyNote": "We check you are 18+ from your date of birth. Date of birth and gender are not public.",
+      "signInLink": "I already have an account · Sign in",
+      "submit": "Create account and continue",
+      "terms": "I agree to the <terms>terms and privacy policy</terms>.",
+      "title": "Quick sign-up"
     },
     "validation": {
+      "birthDateRequired": "Pick your date of birth",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
-      "nameRequired": "Name is required",
-      "passwordConfirmationRequired": "Password confirmation is required",
+      "genderRequired": "Choose your gender",
+      "nameRequired": "Enter your name or a nickname",
       "passwordMin": "Password must be at least 8 characters",
       "passwordRequired": "Password is required",
-      "passwordsMustMatch": "Passwords must match",
-      "usernameRequired": "Username is required"
+      "termsRequired": "You need to accept the terms to register",
+      "underage": "You must be at least 18 to register"
     }
   },
   "errors": {
@@ -261,5 +280,9 @@
       "reload": "Reload"
     },
     "title": "Quacks"
+  },
+  "terms": {
+    "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",
+    "title": "Terms of use"
   }
 }
