@@ -211,4 +211,29 @@ describeDb('event schema constraints', () => {
       }),
     ).rejects.toThrow();
   });
+
+  it.each([
+    ['user_home_location_all_or_nothing', { homeLatitude: 50.08 }],
+    [
+      'user_temporary_location_all_or_nothing',
+      { temporaryCity: 'Brno', temporaryLocationValidUntil: new Date() },
+    ],
+  ])('rejects a partial user address (%s)', async (constraint, override) => {
+    await expect(
+      inRolledBackTransaction(async (tx) => {
+        const now = new Date();
+        await tx.user.create({
+          data: {
+            id: `test-${Math.random().toString(36).slice(2)}`,
+            name: 'Test User',
+            email: `test-${Math.random().toString(36).slice(2)}@example.com`,
+            emailVerified: true,
+            createdAt: now,
+            updatedAt: now,
+            ...override,
+          },
+        });
+      }),
+    ).rejects.toThrow(constraint);
+  });
 });

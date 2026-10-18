@@ -25,6 +25,11 @@ enum UserRole {
 // ---------------------------------------------------------------------------
 // Doménový model (wiki: Domenovy-model). Names follow the model; derived
 // attributes ("/freeSpots", "/approvedCount", …) are computed in code.
+//
+// Prisma cannot express CHECK constraints, so they are invisible here. They
+// live in the SQL migrations (mostly `akce_schema`, user addresses in
+// `user_location_all_or_nothing`) and are covered by `event-schema.spec.ts`.
+// Keep that in mind when writing the next migration.
 // ---------------------------------------------------------------------------
 
 enum Language {
@@ -211,6 +216,9 @@ model Event {
   activityId           String
   level                Level?              @relation(fields: [levelId], references: [id])
   levelId              String?
+  // ON DELETE RESTRICT (default): a user who organized an event cannot be
+  // hard-deleted. Account deletion is soft (`UserStatus.DELETED`); participations
+  // and co-organizing cascade, organizing does not.
   organizer            User                @relation("EventOrganizer", fields: [organizerId], references: [id])
   organizerId          String
   coOrganizers         User[]              @relation("EventCoOrganizers")
