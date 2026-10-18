@@ -314,6 +314,16 @@ model Verification {
   @@map("verification")
 }
 
+// BetterAuth rate limiter (F-03.4): one row per IP and path.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
+
 model User {
   id            String    @id
   name          String
