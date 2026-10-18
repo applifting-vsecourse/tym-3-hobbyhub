@@ -128,6 +128,8 @@ enum GroupStatus {
   @@map("group_status")
 }
 
+// OWNER is the founder: one per group, with every right an ADMIN has and more.
+// Check admin rights with `hasGroupAdminRights`, never `role === 'ADMIN'`.
 enum GroupRole {
   OWNER
   ADMIN

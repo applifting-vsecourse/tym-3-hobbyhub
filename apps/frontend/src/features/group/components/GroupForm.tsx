@@ -30,19 +30,23 @@ import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageCh
 
 import { GROUP_LIMITS, type CreateGroupInput } from "@/features/group/api/groupSchemas"
 
+// Characters as the server and database count them: an emoji is one, not the
+// two UTF-16 units of `string.length`.
+const charCount = (value: string) => [...value].length
+
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) => {
   const text = (max: number) =>
     z
       .string()
       .trim()
-      .max(max, t("groups.validation.tooLong", { count: max }))
+      .refine((value) => charCount(value) <= max, t("groups.validation.tooLong", { count: max }))
 
   return z.object({
     name: text(GROUP_LIMITS.nameMax)
-      .min(1, t("groups.validation.nameRequired"))
-      .min(
-        GROUP_LIMITS.nameMin,
+      .refine((value) => value.length > 0, t("groups.validation.nameRequired"))
+      .refine(
+        (value) => value.length === 0 || charCount(value) >= GROUP_LIMITS.nameMin,
         t("groups.validation.nameTooShort", { count: GROUP_LIMITS.nameMin }),
       ),
     activityId: z.string().min(1, t("groups.validation.activityRequired")),

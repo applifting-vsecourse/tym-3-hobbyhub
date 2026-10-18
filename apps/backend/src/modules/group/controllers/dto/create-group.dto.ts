@@ -1,3 +1,4 @@
+import { CharLength } from '@/core/validation/char-length.decorator';
 import {
   GROUP_DESCRIPTION_MAX_LENGTH,
   GROUP_LOCATION_MAX_LENGTH,
@@ -7,13 +8,7 @@ import {
 } from '@/modules/group/domain/group';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Length,
-  MaxLength,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
@@ -30,7 +25,7 @@ export class CreateGroupDto {
   })
   @Transform(trim)
   @IsString()
-  @Length(GROUP_NAME_MIN_LENGTH, GROUP_NAME_MAX_LENGTH)
+  @CharLength(GROUP_NAME_MIN_LENGTH, GROUP_NAME_MAX_LENGTH)
   name!: string;
 
   @ApiProperty({ description: 'Id from GET /api/activities' })
@@ -45,7 +40,7 @@ export class CreateGroupDto {
   @Transform(trim)
   @IsString()
   @IsNotEmpty()
-  @MaxLength(GROUP_DESCRIPTION_MAX_LENGTH)
+  @CharLength(0, GROUP_DESCRIPTION_MAX_LENGTH)
   description!: string;
 
   @ApiPropertyOptional({
@@ -55,7 +50,7 @@ export class CreateGroupDto {
   @Transform(trimToUndefined)
   @IsOptional()
   @IsString()
-  @MaxLength(GROUP_LOCATION_MAX_LENGTH)
+  @CharLength(0, GROUP_LOCATION_MAX_LENGTH)
   locationName?: string;
 
   @ApiPropertyOptional({
@@ -65,6 +60,6 @@ export class CreateGroupDto {
   @Transform(trimToUndefined)
   @IsOptional()
   @IsString()
-  @MaxLength(GROUP_SCHEDULE_MAX_LENGTH)
+  @CharLength(0, GROUP_SCHEDULE_MAX_LENGTH)
   usualSchedule?: string;
 }

@@ -46,6 +46,15 @@ describe("GroupForm", () => {
     expect(await screen.findByText("Alespoň 3 znaky")).toBeInTheDocument()
   })
 
+  it("counts an emoji as one character, as the server does", async () => {
+    const { user } = renderForm()
+
+    await user.type(screen.getByLabelText("Název skupiny"), "🏀🏀")
+    await user.click(screen.getByRole("button", { name: "Vytvořit skupinu" }))
+
+    expect(await screen.findByText("Alespoň 3 znaky")).toBeInTheDocument()
+  })
+
   it("sends trimmed values and leaves out empty optional fields", async () => {
     const { onSubmit, user } = renderForm()
 
