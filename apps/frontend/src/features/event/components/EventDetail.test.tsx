@@ -49,9 +49,11 @@ describe("EventDetail", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Čtvrteční florbal" })).toBeInTheDocument()
     expect(screen.getByText("Florbal")).toBeInTheDocument()
     expect(screen.getByText("Přátelský zápas v tělocvičně.")).toBeInTheDocument()
-    expect(
-      screen.getByText("Dnes 19:00–20:30 · ZŠ Kobylisy, Praha 8 · Pokročilí"),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Dnes")).toBeInTheDocument()
+    expect(screen.getByText("19:00")).toBeInTheDocument()
+    expect(screen.getByText("do 20:30")).toBeInTheDocument()
+    expect(screen.getByText("ZŠ Kobylisy, Praha 8")).toBeInTheDocument()
+    expect(screen.getByText("Pokročilí")).toBeInTheDocument()
     expect(screen.getByText("Pořádá Jana Nováková")).toBeInTheDocument()
     expect(screen.getByText("Hokejka a sálová obuv")).toBeInTheDocument()
     expect(screen.getByText(/80\s*Kč/)).toBeInTheDocument()
@@ -69,8 +71,10 @@ describe("EventDetail", () => {
   it("shows the mix of participants with its coverage", () => {
     renderDetail()
 
-    expect(screen.getByText("Medián věku: 36 let")).toBeInTheDocument()
-    expect(screen.getByText("Muži 3 · Ženy 1")).toBeInTheDocument()
+    expect(screen.getByText("Medián věku")).toBeInTheDocument()
+    expect(screen.getByText("36")).toBeInTheDocument()
+    expect(screen.getByText("Muži : ženy")).toBeInTheDocument()
+    expect(screen.getByText("3 : 1")).toBeInTheDocument()
     expect(
       screen.getByText("Počítáno z 4 registrovaných účastníků, obsazených míst je 5."),
     ).toBeInTheDocument()

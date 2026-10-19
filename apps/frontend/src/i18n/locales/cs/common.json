@@ -93,6 +93,7 @@
         "online": "Odkaz po schválení",
         "private": "Přesná adresa po schválení"
       },
+      "addressLabel": "Adresa",
       "approvalAutomatic": "Místo získáš hned po přihlášení.",
       "approvalManual": "Organizátor žádost schvaluje ručně.",
       "back": "Zpět na akce",
@@ -101,6 +102,7 @@
       "hasAccount": "Už máš účet?",
       "join": "Obsadit místo",
       "joinSoon": "Žádost o účast zatím nejde odeslat.",
+      "linkLabel": "Odkaz",
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
@@ -120,11 +122,9 @@
       },
       "stats": {
         "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
-        "gender": "Muži {{male}} · Ženy {{female}}",
+        "genderLabel": "Muži : ženy",
         "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
-        "medianAge_few": "Medián věku: {{count}} roky",
-        "medianAge_one": "Medián věku: {{count}} rok",
-        "medianAge_other": "Medián věku: {{count}} let",
+        "medianAgeLabel": "Medián věku",
         "title": "Složení účastníků"
       },
       "title": "Detail akce"

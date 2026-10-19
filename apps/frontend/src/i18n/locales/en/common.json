@@ -93,6 +93,7 @@
         "online": "Link after approval",
         "private": "Exact address after approval"
       },
+      "addressLabel": "Address",
       "approvalAutomatic": "You get the seat as soon as you sign in.",
       "approvalManual": "The organizer approves requests by hand.",
       "back": "Back to events",
@@ -101,6 +102,7 @@
       "hasAccount": "Already have an account?",
       "join": "Take a seat",
       "joinSoon": "Requests to join are not available yet.",
+      "linkLabel": "Link",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
@@ -120,10 +122,9 @@
       },
       "stats": {
         "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
-        "gender": "Men {{male}} · Women {{female}}",
+        "genderLabel": "Men : women",
         "hidden": "The mix shows once at least {{count}} people have joined.",
-        "medianAge_one": "Median age: {{count}} year",
-        "medianAge_other": "Median age: {{count}} years",
+        "medianAgeLabel": "Median age",
         "title": "Who is coming"
       },
       "title": "Event detail"

@@ -1,14 +1,17 @@
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
+import LevelIcon from "@/assets/ui-icons/level.svg?react"
+import MapPinIcon from "@/assets/ui-icons/map-pin.svg?react"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { missingCount } from "@/components/hobbyhub/capacity"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
+import { cn } from "@/lib/utils"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
-import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
+import { eventDay, eventTime } from "@/features/event/lib/eventLabels"
 
 type EventDetailProps = {
   event: EventDetailData
@@ -57,46 +60,85 @@ export function EventDetail({
     currency: "CZK",
     maximumFractionDigits: 0,
   })
-  // Activity is shown on its own line above, so only place and level here.
-  const place = eventMeta(t, event, "")
   const { stats } = event
-  // A public venue is already named above; the others stay vague until approval.
+  const day = eventDay(t, event.startAt, now, locale)
+  const isToday = day === t("events.day.today")
+  const where =
+    event.venueType === "ONLINE"
+      ? t("events.online")
+      : [event.placeName, event.district ?? event.city].filter(Boolean).join(", ")
+  // A public venue is named above; the others stay vague until approval.
   const addressNote =
     event.venueType === "ONLINE"
-      ? t("events.detail.address.online")
+      ? { label: t("events.detail.linkLabel"), value: t("events.detail.address.online") }
       : event.venueType === "PRIVATE_VENUE"
-        ? t("events.detail.address.private")
+        ? { label: t("events.detail.addressLabel"), value: t("events.detail.address.private") }
         : null
-  const when = [
-    `${eventDay(t, event.startAt, now, locale)} ${eventTime(event.startAt, locale)}–${eventTime(event.endAt, locale)}`,
-    place,
-  ]
-    .filter(Boolean)
-    .join(" · ")
+  const practical = [
+    addressNote,
+    event.contributionAmount !== null
+      ? { label: t("events.detail.contribution"), value: money.format(event.contributionAmount) }
+      : null,
+    event.equipment ? { label: t("events.detail.equipment"), value: event.equipment } : null,
+  ].filter((row) => row !== null)
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8">
-      <header className="flex flex-col gap-2 lg:col-start-1 lg:row-start-1">
-        <p className="flex items-center gap-2 typo-label text-muted-foreground">
-          {isActivityKey(event.activity.icon) ? (
-            <ActivityIcon
-              activity={event.activity.icon}
-              className="size-5"
-            />
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8">
+      <header className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
+        <div className="flex flex-col gap-2">
+          <p className="flex items-center gap-2 typo-label text-muted-foreground">
+            {isActivityKey(event.activity.icon) ? (
+              <ActivityIcon
+                activity={event.activity.icon}
+                className="size-5"
+              />
+            ) : null}
+            {activityLabel}
+          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="typo-h1 text-foreground">{event.title}</h1>
+            {state !== "open" ? <StateBadge state={state} /> : null}
+          </div>
+          {state !== "open" ? (
+            <p className="typo-body text-foreground">{t(`events.detail.state.${state}Text`)}</p>
           ) : null}
-          {activityLabel}
-        </p>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="typo-h1 text-foreground">{event.title}</h1>
-          {state !== "open" ? <StateBadge state={state} /> : null}
         </div>
-        <p className="typo-body text-muted-foreground">{when}</p>
-        <p className="typo-body text-muted-foreground">
+
+        {/* When and where: the time is the main fact, so it is the one big thing. */}
+        <div className="flex flex-wrap items-start gap-x-8 gap-y-3">
+          <div className="flex flex-col">
+            <p className={cn("typo-small", isToday ? "text-signal-ink" : "text-muted-foreground")}>
+              {day}
+            </p>
+            <p className="typo-time text-foreground">{eventTime(event.startAt, locale)}</p>
+            <p className="typo-small text-muted-foreground">
+              {t("hobbyhub.eventDetail.until", { time: eventTime(event.endAt, locale) })}
+            </p>
+          </div>
+          <ul className="flex flex-col gap-1.5 pt-5 typo-body text-muted-foreground">
+            {where ? (
+              <li className="flex items-center gap-2">
+                <MapPinIcon
+                  aria-hidden
+                  className="size-4 shrink-0"
+                />
+                {where}
+              </li>
+            ) : null}
+            {event.level ? (
+              <li className="flex items-center gap-2">
+                <LevelIcon
+                  aria-hidden
+                  className="size-4 shrink-0"
+                />
+                {event.level}
+              </li>
+            ) : null}
+          </ul>
+        </div>
+        <p className="typo-small text-muted-foreground">
           {t("events.detail.organizer", { name: event.organizerName })}
         </p>
-        {state !== "open" ? (
-          <p className="typo-body text-foreground">{t(`events.detail.state.${state}Text`)}</p>
-        ) : null}
       </header>
 
       <aside
@@ -138,48 +180,49 @@ export function EventDetail({
         ) : null}
       </aside>
 
-      <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-2">
-        <p className="typo-body-lg break-words whitespace-pre-line text-foreground">
+      <div className="flex flex-col gap-8 lg:col-start-1 lg:row-start-2">
+        <p className="max-w-prose typo-body-lg break-words whitespace-pre-line text-foreground">
           {event.description}
         </p>
 
-        {addressNote || event.contributionAmount !== null || event.equipment ? (
-          <div className="flex flex-col gap-2 typo-body text-muted-foreground">
-            {addressNote ? <p>{addressNote}</p> : null}
-            <dl className="flex flex-col gap-1">
-            {event.contributionAmount !== null ? (
-              <div className="flex gap-2">
-                <dt className="text-foreground">{t("events.detail.contribution")}</dt>
-                <dd>{money.format(event.contributionAmount)}</dd>
+        {practical.length > 0 ? (
+          <dl className="grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-3 border-t border-border pt-4 typo-body">
+            {practical.map(({ label, value }) => (
+              <div
+                key={label}
+                className="col-span-2 grid grid-cols-subgrid"
+              >
+                <dt className="typo-label text-foreground">{label}</dt>
+                <dd className="break-words whitespace-pre-line text-muted-foreground">{value}</dd>
               </div>
-            ) : null}
-            {event.equipment ? (
-              <div className="flex gap-2">
-                <dt className="text-foreground">{t("events.detail.equipment")}</dt>
-                <dd className="whitespace-pre-line">{event.equipment}</dd>
-              </div>
-            ) : null}
-            </dl>
-          </div>
+            ))}
+          </dl>
         ) : null}
 
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.stats.title")}</h2>
           {stats ? (
             <>
-              <ul className="flex flex-col gap-1 typo-body text-foreground">
+              <dl className="flex flex-wrap gap-x-10 gap-y-3">
                 {stats.medianAge !== null ? (
-                  <li>{t("events.detail.stats.medianAge", { count: stats.medianAge })}</li>
+                  <div className="flex flex-col-reverse">
+                    <dt className="typo-small text-muted-foreground">
+                      {t("events.detail.stats.medianAgeLabel")}
+                    </dt>
+                    <dd className="typo-numeral text-foreground">{stats.medianAge}</dd>
+                  </div>
                 ) : null}
                 {stats.gender ? (
-                  <li>
-                    {t("events.detail.stats.gender", {
-                      male: stats.gender.male,
-                      female: stats.gender.female,
-                    })}
-                  </li>
+                  <div className="flex flex-col-reverse">
+                    <dt className="typo-small text-muted-foreground">
+                      {t("events.detail.stats.genderLabel")}
+                    </dt>
+                    <dd className="typo-numeral text-foreground">
+                      {stats.gender.male} : {stats.gender.female}
+                    </dd>
+                  </div>
                 ) : null}
-              </ul>
+              </dl>
               <p className="typo-small text-muted-foreground">
                 {t("events.detail.stats.coverage", {
                   included: stats.included,
