@@ -26,7 +26,7 @@ const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
 })
 
 describe("EventList", () => {
-  it("shows activity, title, date and time, approximate place and missing seats on a card", () => {
+  it("shows day, time, activity, title, approximate place and missing seats in a row", () => {
     render(
       <EventList
         activityLabel={(activity) => activity.name}
@@ -35,10 +35,11 @@ describe("EventList", () => {
       />,
     )
 
-    expect(screen.getByText("Florbal")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Dnes" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Čtvrteční florbal" })).toBeInTheDocument()
-    expect(screen.getByText("Dnes 19:00")).toBeInTheDocument()
-    expect(screen.getByText("ZŠ Kobylisy, Praha 8 · Pokročilí")).toBeInTheDocument()
+    expect(screen.getByText("19:00")).toBeInTheDocument()
+    expect(screen.getByText("Florbal · ZŠ Kobylisy, Praha 8 · Pokročilí")).toBeInTheDocument()
+    expect(screen.getByText("1 akce")).toBeInTheDocument()
     // Missing counts towards the minimum (8), not the capacity (10).
     expect(screen.getByText("chybí 1")).toBeInTheDocument()
   })

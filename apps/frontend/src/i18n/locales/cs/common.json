@@ -84,7 +84,14 @@
     }
   },
   "events": {
+    "day": {
+      "today": "Dnes",
+      "tomorrow": "Zítra"
+    },
     "list": {
+      "count_few": "{{count}} akce",
+      "count_one": "{{count}} akce",
+      "count_other": "{{count}} akcí",
       "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
       "loadError": "Akce se nepodařilo načíst",
       "loading": "Načítáme akce…",
@@ -92,11 +99,10 @@
       "seoTitle": "Akce",
       "title": "Akce"
     },
-    "online": "Online",
-    "when": {
-      "today": "Dnes {{time}}",
-      "tomorrow": "Zítra {{time}}"
-    }
+    "map": {
+      "placeholder": "Tady bude mapa"
+    },
+    "online": "Online"
   },
   "groups": {
     "back": "Zpět",
@@ -154,6 +160,7 @@
     },
     "nav": {
       "designSystem": "Design systém",
+      "events": "Akce",
       "groups": "Skupiny",
       "quacks": "Quacks"
     },

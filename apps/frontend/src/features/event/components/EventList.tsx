@@ -1,13 +1,13 @@
 import { RefreshCw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { EventCard } from "@/components/hobbyhub/EventCard"
 import { Loader } from "@/components/hobbyhub/Loader"
+import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
-import { eventMeta, eventWhen } from "@/features/event/lib/eventLabels"
+import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
 type EventListProps = {
   events: EventListItem[]
@@ -66,22 +66,42 @@ export function EventList({
     return <p className="typo-body text-muted-foreground">{t("events.list.empty")}</p>
   }
 
+  // Events arrive soonest first, so a day's events are next to each other.
+  const days: { day: string; events: EventListItem[] }[] = []
+  for (const event of events) {
+    const day = eventDay(t, event.startAt, now, i18n.language)
+    const last = days[days.length - 1]
+    if (last?.day === day) last.events.push(event)
+    else days.push({ day, events: [event] })
+  }
+
   return (
-    <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {events.map((event) => (
-        <li key={event.id}>
-          <EventCard
-            className="h-full"
-            title={event.title}
-            when={eventWhen(t, event.startAt, now, i18n.language)}
-            meta={eventMeta(t, event)}
-            activity={{ icon: event.activity.icon, name: activityLabel(event.activity) }}
-            taken={event.takenCount}
-            capacity={event.maxParticipants}
-            min={event.minParticipants}
-          />
-        </li>
+    <div className="flex flex-col gap-6">
+      <p className="typo-small text-muted-foreground">
+        {t("events.list.count", { count: events.length })}
+      </p>
+      {days.map(({ day, events: dayEvents }) => (
+        <section
+          key={day}
+          className="flex flex-col gap-1"
+        >
+          <h2 className="typo-h3">{day}</h2>
+          <ul>
+            {dayEvents.map((event) => (
+              <li key={event.id}>
+                <ScheduleRow
+                  time={eventTime(event.startAt, i18n.language)}
+                  title={event.title}
+                  subtitle={eventMeta(t, event, activityLabel(event.activity))}
+                  taken={event.takenCount}
+                  min={event.minParticipants}
+                  max={event.maxParticipants}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   )
 }

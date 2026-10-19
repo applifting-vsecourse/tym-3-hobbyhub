@@ -84,7 +84,13 @@
     }
   },
   "events": {
+    "day": {
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
     "list": {
+      "count_one": "{{count}} event",
+      "count_other": "{{count}} events",
       "empty": "There are no upcoming events yet. Check back later, or create one yourself.",
       "loadError": "Could not load events",
       "loading": "Loading events…",
@@ -92,11 +98,10 @@
       "seoTitle": "Events",
       "title": "Events"
     },
-    "online": "Online",
-    "when": {
-      "today": "Today {{time}}",
-      "tomorrow": "Tomorrow {{time}}"
-    }
+    "map": {
+      "placeholder": "The map will be here"
+    },
+    "online": "Online"
   },
   "groups": {
     "back": "Back",
@@ -151,6 +156,7 @@
     },
     "nav": {
       "designSystem": "Design system",
+      "events": "Events",
       "groups": "Groups",
       "quacks": "Quacks"
     },
