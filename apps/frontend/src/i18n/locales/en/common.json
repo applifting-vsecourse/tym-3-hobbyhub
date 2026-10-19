@@ -71,6 +71,14 @@
       "underage": "You must be at least 18 to register"
     }
   },
+  "common": {
+    "unsavedChanges": {
+      "description": "You have changes that were not submitted. Leaving loses them.",
+      "leave": "Leave",
+      "stay": "Stay",
+      "title": "Leave the page?"
+    }
+  },
   "errors": {
     "generic": {
       "description": "An unexpected error occurred.",

@@ -71,6 +71,14 @@
       "underage": "Registrace je možná až od 18 let"
     }
   },
+  "common": {
+    "unsavedChanges": {
+      "description": "Máte rozpracované změny, které nejsou odeslané. Když odejdete, ztratí se.",
+      "leave": "Odejít",
+      "stay": "Zůstat",
+      "title": "Opustit stránku?"
+    }
+  },
   "errors": {
     "generic": {
       "description": "Došlo k neočekávané chybě.",

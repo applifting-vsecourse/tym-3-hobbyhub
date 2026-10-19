@@ -62,6 +62,10 @@ The CLI sometimes writes `import { cn } from "cn"` and installs an unrelated `cn
 
 The CLI puts `shadow-xs`/`shadow-sm` on inputs, textareas and cards. [`DESIGN.md`](DESIGN.md) keeps shadows for things that genuinely float — dialogs, dropdowns, toasts. Strip them.
 
+### Forms go through `AppForm`
+
+Build every form with `AppForm` from `src/components/form/AppForm.tsx`, never with `Form` from the kit (ESLint refuses that import). `AppForm` is the `<form>` element, the react-hook-form provider and the unsaved-changes guard in one: leaving a page with a dirty form, inside the app or by closing the tab, asks first, until a submit succeeds. Let a failed save throw from `onSubmit` so react-hook-form records it; the page shows the error from its mutation state. Pass `isGuarded={false}` only where half-typed input costs nothing (sign-in, a one-line post). Tests of guarded forms render through `renderWithRouter` from `src/test/`, because the guard needs the router.
+
 ### The app is already running
 
 Assume the dev servers are up. If something is listening on the app's ports, that is this application: use it. Don't start a second instance, don't restart it, don't run `pnpm dev`.

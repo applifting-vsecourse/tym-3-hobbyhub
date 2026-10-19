@@ -74,6 +74,12 @@ const commonRules = {
     {
       paths: [
         {
+          name: "@/components/ui/form",
+          importNames: ["Form"],
+          message:
+            "Build forms with AppForm from @/components/form/AppForm: it is the form element, the provider and the unsaved-changes guard in one.",
+        },
+        {
           name: "react",
           importNames: ["default"],
           message:

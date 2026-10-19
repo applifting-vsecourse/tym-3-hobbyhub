@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 import { ChevronDown, Plus } from "lucide-react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
@@ -50,6 +52,28 @@ const ACTIVITY_OPTIONS = [
   { id: "volejbal", label: "Volejbal", icon: "volejbal" },
   { id: "deskove-hry", label: "Deskové hry", icon: "deskove-hry" },
 ]
+
+function UnsavedChangesExample() {
+  const form = useForm({ defaultValues: { note: "" } })
+
+  return (
+    <AppForm
+      form={form}
+      onSubmit={() => form.reset()}
+      className="flex flex-col gap-1.5"
+    >
+      <Label htmlFor="ds-unsaved">Rozpracované změny</Label>
+      <Input
+        id="ds-unsaved"
+        placeholder="Napište něco a zkuste odejít na jinou stránku"
+        {...form.register("note")}
+      />
+      <p className="typo-small text-muted-foreground">
+        Každý formulář přes AppForm se před odchodem ze stránky zeptá, dokud změny nejsou odeslané.
+      </p>
+    </AppForm>
+  )
+}
 
 function ActivityComboboxExample() {
   const [activity, setActivity] = useState("")
@@ -234,6 +258,7 @@ export function ControlSections() {
             />
           </div>
           <ActivityComboboxExample />
+          <UnsavedChangesExample />
           <PhotoPickerExample />
           <Counter
             label="Minimum"
