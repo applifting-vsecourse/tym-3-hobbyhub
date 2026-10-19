@@ -83,8 +83,6 @@ describeDb('event schema constraints', () => {
       locationCity: 'Praha',
       locationPostalCode: '11000',
       locationCountry: 'Česko',
-      locationLatitude: 50.08,
-      locationLongitude: 14.43,
       activityId: activity.id,
       organizerId: user.id,
     };
@@ -111,6 +109,21 @@ describeDb('event schema constraints', () => {
     ['event_external_spots_non_negative', { externalOccupiedSpots: -1 }],
     ['event_external_spots_lte_max', { externalOccupiedSpots: 9 }],
     ['event_location_all_or_nothing', { locationCity: null }],
+    [
+      'event_location_all_or_nothing',
+      {
+        locationStreet: null,
+        locationCity: null,
+        locationPostalCode: null,
+        locationCountry: null,
+        locationPlaceName: 'Klubovna',
+      },
+    ],
+    ['event_coordinates_together', { locationLatitude: 50.08 }],
+    ['event_title_length', { title: '  ab ' }],
+    ['event_description_not_blank', { description: '   ' }],
+    ['event_contribution_non_negative', { contributionAmount: -1 }],
+    ['event_contribution_note_with_amount', { contributionNote: 'na místě' }],
     [
       'event_online_has_no_location',
       { venueType: VenueType.ONLINE, onlineUrl: 'https://meet.example.com/x' },
@@ -140,9 +153,28 @@ describeDb('event schema constraints', () => {
           locationCity: null,
           locationPostalCode: null,
           locationCountry: null,
-          locationLatitude: null,
-          locationLongitude: null,
         },
+      });
+    });
+  });
+
+  // F-05.1 enters the address without a map; geocoding (F-12.3) adds both
+  // coordinates later, never one of them.
+  it('accepts an address with both coordinates and without any', async () => {
+    await inRolledBackTransaction(async (tx) => {
+      const { data } = await baseEvent(tx);
+      await tx.event.create({ data });
+      await tx.event.create({
+        data: { ...data, locationLatitude: 50.08, locationLongitude: 14.43 },
+      });
+    });
+  });
+
+  it('accepts a contribution with a note', async () => {
+    await inRolledBackTransaction(async (tx) => {
+      const { data } = await baseEvent(tx);
+      await tx.event.create({
+        data: { ...data, contributionAmount: 80, contributionNote: 'na místě' },
       });
     });
   });
