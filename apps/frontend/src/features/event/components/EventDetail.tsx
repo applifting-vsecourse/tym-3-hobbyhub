@@ -10,9 +10,6 @@ import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
-// Mirrors the server: below this many included people the mix stays hidden.
-const MIN_STATS_PARTICIPANTS = 3
-
 type EventDetailProps = {
   event: EventDetailData
   /** Display name of the activity; the activity feature owns the translation. */
@@ -23,10 +20,11 @@ type EventDetailProps = {
   now?: Date
 }
 
-type EventState = "open" | "full" | "cancelled" | "finished"
+type EventState = "open" | "full" | "cancelled" | "finished" | "notHeld"
 
 function eventState(event: EventDetailData, now: Date): EventState {
   if (event.status === "CANCELLED") return "cancelled"
+  if (event.status === "NOT_HELD") return "notHeld"
   if (event.status !== "PUBLISHED" || event.endAt < now) return "finished"
   if (event.takenCount >= event.maxParticipants) return "full"
   return "open"
@@ -34,7 +32,12 @@ function eventState(event: EventDetailData, now: Date): EventState {
 
 function StateBadge({ state }: { state: Exclude<EventState, "open"> }) {
   const { t } = useTranslation()
-  const status = { cancelled: "rejected", finished: "neutral", full: "approved" } as const
+  const status = {
+    cancelled: "rejected",
+    finished: "neutral",
+    notHeld: "neutral",
+    full: "approved",
+  } as const
 
   return <StatusBadge status={status[state]}>{t(`events.detail.state.${state}`)}</StatusBadge>
 }
@@ -57,6 +60,13 @@ export function EventDetail({
   // Activity is shown on its own line above, so only place and level here.
   const place = eventMeta(t, event, "")
   const { stats } = event
+  // A public venue is already named above; the others stay vague until approval.
+  const addressNote =
+    event.venueType === "ONLINE"
+      ? t("events.detail.address.online")
+      : event.venueType === "PRIVATE_VENUE"
+        ? t("events.detail.address.private")
+        : null
   const when = [
     `${eventDay(t, event.startAt, now, locale)} ${eventTime(event.startAt, locale)}–${eventTime(event.endAt, locale)}`,
     place,
@@ -133,15 +143,10 @@ export function EventDetail({
           {event.description}
         </p>
 
-        <section className="flex flex-col gap-3 rounded-lg border border-border p-4">
-          <h2 className="typo-label-lg text-foreground">
-            {t(
-              event.venueType === "ONLINE"
-                ? "events.detail.address.online"
-                : "events.detail.address.private",
-            )}
-          </h2>
-          <dl className="flex flex-col gap-1 typo-small text-muted-foreground">
+        {addressNote || event.contributionAmount !== null || event.equipment ? (
+          <div className="flex flex-col gap-2 typo-body text-muted-foreground">
+            {addressNote ? <p>{addressNote}</p> : null}
+            <dl className="flex flex-col gap-1">
             {event.contributionAmount !== null ? (
               <div className="flex gap-2">
                 <dt className="text-foreground">{t("events.detail.contribution")}</dt>
@@ -154,8 +159,9 @@ export function EventDetail({
                 <dd className="whitespace-pre-line">{event.equipment}</dd>
               </div>
             ) : null}
-          </dl>
-        </section>
+            </dl>
+          </div>
+        ) : null}
 
         <section className="flex flex-col gap-2">
           <h2 className="typo-h3 text-foreground">{t("events.detail.stats.title")}</h2>
@@ -183,7 +189,7 @@ export function EventDetail({
             </>
           ) : (
             <p className="typo-small text-muted-foreground">
-              {t("events.detail.stats.hidden", { count: MIN_STATS_PARTICIPANTS })}
+              {t("events.detail.stats.hidden", { count: event.statsMinParticipants })}
             </p>
           )}
         </section>

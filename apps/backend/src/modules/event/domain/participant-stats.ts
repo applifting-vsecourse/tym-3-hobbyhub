@@ -9,13 +9,31 @@ export type StatsParticipant = {
   gender: Gender | null;
 };
 
+const EVENT_TIME_ZONE = 'Europe/Prague';
+
+// Calendar day of the event where it takes place, not in UTC: an event at
+// 00:30 Prague time still starts on the previous day in UTC.
+const localDay = (at: Date): { year: number; month: number; day: number } => {
+  const [year, month, day] = new Intl.DateTimeFormat('en-CA', {
+    timeZone: EVENT_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(at)
+    .split('-')
+    .map(Number);
+  return { year, month: month - 1, day };
+};
+
 // Full years between the birth date and the day of the event.
 export const ageAt = (birthDate: Date, at: Date): number => {
-  let age = at.getUTCFullYear() - birthDate.getUTCFullYear();
+  const event = localDay(at);
+  let age = event.year - birthDate.getUTCFullYear();
   const hadBirthday =
-    at.getUTCMonth() > birthDate.getUTCMonth() ||
-    (at.getUTCMonth() === birthDate.getUTCMonth() &&
-      at.getUTCDate() >= birthDate.getUTCDate());
+    event.month > birthDate.getUTCMonth() ||
+    (event.month === birthDate.getUTCMonth() &&
+      event.day >= birthDate.getUTCDate());
   if (!hadBirthday) age -= 1;
   return age;
 };

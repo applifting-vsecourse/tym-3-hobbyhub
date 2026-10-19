@@ -57,4 +57,6 @@ export type EventDetail = EventListItem & {
   approvalMode: ApprovalMode;
   organizerName: string;
   stats: ParticipantStats | null;
+  // How many included people the stats need, so the UI can say when they appear.
+  statsMinParticipants: number;
 };

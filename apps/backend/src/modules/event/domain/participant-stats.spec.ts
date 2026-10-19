@@ -19,6 +19,12 @@ describe('ageAt', () => {
     expect(ageAt(new Date('1990-10-22'), EVENT_START)).toBe(36);
     expect(ageAt(new Date('1990-10-23'), EVENT_START)).toBe(35);
   });
+
+  it('uses the Prague day, even when UTC is still the day before', () => {
+    // 00:30 on 1 March in Prague is 23:30 on 28 February in UTC.
+    const start = new Date('2026-02-28T23:30:00Z');
+    expect(ageAt(new Date('1990-03-01'), start)).toBe(36);
+  });
 });
 
 describe('computeParticipantStats', () => {

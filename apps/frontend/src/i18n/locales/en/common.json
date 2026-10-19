@@ -100,6 +100,7 @@
       "equipment": "Equipment",
       "hasAccount": "Already have an account?",
       "join": "Take a seat",
+      "joinSoon": "Requests to join are not available yet.",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
@@ -113,7 +114,9 @@
         "finished": "Finished",
         "finishedText": "This event is over, you cannot ask to join.",
         "full": "Full",
-        "fullText": "This event is full, you cannot ask to join."
+        "fullText": "This event is full, you cannot ask to join.",
+        "notHeld": "Not held",
+        "notHeldText": "This event did not take place, you cannot ask to join."
       },
       "stats": {
         "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",

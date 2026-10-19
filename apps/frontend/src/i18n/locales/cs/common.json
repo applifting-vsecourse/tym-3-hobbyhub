@@ -100,6 +100,7 @@
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
       "join": "Obsadit místo",
+      "joinSoon": "Žádost o účast zatím nejde odeslat.",
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
@@ -113,7 +114,9 @@
         "finished": "Proběhlo",
         "finishedText": "Akce už proběhla, o účast se nedá žádat.",
         "full": "Naplněno",
-        "fullText": "Akce je plná, o účast se nedá žádat."
+        "fullText": "Akce je plná, o účast se nedá žádat.",
+        "notHeld": "Neuskutečnilo se",
+        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat."
       },
       "stats": {
         "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",

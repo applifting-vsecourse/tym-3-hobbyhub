@@ -9,6 +9,7 @@ import {
   EventDetail,
   EventListItem,
   EventListPage,
+  MIN_STATS_PARTICIPANTS,
   Page,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
@@ -18,6 +19,14 @@ const TAKEN_STATUSES: ParticipationStatus[] = [
   ParticipationStatus.APPROVED,
   ParticipationStatus.ATTENDED,
 ];
+
+// Visibility shared by the list and the detail: public and not hidden by a
+// moderator. Drafts never show; the detail also keeps over and cancelled events.
+const PUBLIC_EVENT = {
+  status: { not: 'DRAFT' },
+  visibility: 'PUBLIC',
+  isHidden: false,
+} as const;
 
 const include = {
   activity: true,
@@ -70,9 +79,8 @@ export class EventRepository {
     { limit, offset }: Page,
   ): Promise<EventListPage> {
     const where = {
+      ...PUBLIC_EVENT,
       status: 'PUBLISHED',
-      visibility: 'PUBLIC',
-      isHidden: false,
       endAt: { gt: now },
     } as const;
     const [events, total] = await Promise.all([
@@ -92,12 +100,7 @@ export class EventRepository {
   // or is over stays reachable, so a shared link still explains what happened.
   async getPublicEventById(id: string): Promise<EventDetail | null> {
     const event = await this.prisma.event.findFirst({
-      where: {
-        id,
-        status: { in: ['PUBLISHED', 'CANCELLED', 'FINISHED', 'NOT_HELD'] },
-        visibility: 'PUBLIC',
-        isHidden: false,
-      },
+      where: { id, ...PUBLIC_EVENT },
       include: {
         activity: true,
         level: true,
@@ -132,6 +135,7 @@ export class EventRepository {
         event.startAt,
         listItem.takenCount,
       ),
+      statsMinParticipants: MIN_STATS_PARTICIPANTS,
     };
   }
 }

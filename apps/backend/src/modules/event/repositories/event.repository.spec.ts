@@ -119,7 +119,7 @@ describe('EventRepository.getPublicEventById', () => {
       expect.objectContaining({
         where: {
           id: 'e1',
-          status: { in: ['PUBLISHED', 'CANCELLED', 'FINISHED', 'NOT_HELD'] },
+          status: { not: 'DRAFT' },
           visibility: 'PUBLIC',
           isHidden: false,
         },
@@ -152,5 +152,7 @@ describe('EventRepository.getPublicEventById', () => {
     });
     expect(detail).not.toHaveProperty('onlineUrl');
     expect(detail).not.toHaveProperty('locationStreet');
+    expect(detail).not.toHaveProperty('locationLatitude');
+    expect(JSON.stringify(detail)).not.toContain('1990-01-01');
   });
 });

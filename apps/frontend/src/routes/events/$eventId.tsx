@@ -37,7 +37,20 @@ function EventDetailPage() {
   const joinAction =
     user || isSessionPending ? (
       // TODO(F-06.1 #40): the request to join goes here.
-      <Button disabled>{t("events.detail.join")}</Button>
+      <>
+        <Button
+          disabled
+          aria-describedby="join-soon"
+        >
+          {t("events.detail.join")}
+        </Button>
+        <p
+          id="join-soon"
+          className="text-center typo-small text-accent-foreground"
+        >
+          {t("events.detail.joinSoon")}
+        </p>
+      </>
     ) : (
       <>
         <Button asChild>
@@ -69,6 +82,7 @@ function EventDetailPage() {
     return (
       <>
         <Seo title={t("events.detail.title")} />
+        <Header userMenu={<HeaderMenu />} />
         <NotFound />
       </>
     )
@@ -102,8 +116,7 @@ function EventDetailPage() {
         ) : eventQuery.isError ? (
           <Alert variant="destructive">
             <AlertTitle>{t("events.detail.loadError")}</AlertTitle>
-            <AlertDescription className="flex items-center justify-between gap-3">
-              <span>{eventQuery.error.message}</span>
+            <AlertDescription className="flex items-center justify-end gap-3">
               <Button
                 variant="outline"
                 size="sm"

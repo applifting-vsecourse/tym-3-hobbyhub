@@ -153,6 +153,11 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   })
   stats!: ParticipantStatsResponseDto | null;
 
+  @ApiProperty({
+    description: 'Included participants needed before stats are shown',
+  })
+  statsMinParticipants!: number;
+
   static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
@@ -165,6 +170,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       stats: event.stats
         ? ParticipantStatsResponseDto.fromDomain(event.stats)
         : null,
+      statsMinParticipants: event.statsMinParticipants,
     };
   }
 }

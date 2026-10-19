@@ -47,6 +47,8 @@ export const eventDetailSchema = eventListItemSchema.extend({
   organizerName: z.string(),
   /** Hidden by the server until enough participants are included. */
   stats: participantStatsSchema.nullable(),
+  /** Included participants needed before the server shows stats. */
+  statsMinParticipants: z.number(),
 })
 
 export type EventDetail = z.infer<typeof eventDetailSchema>

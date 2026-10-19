@@ -28,6 +28,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   approvalMode: "MANUAL",
   organizerName: "Jana Nováková",
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1 } },
+  statsMinParticipants: 3,
   ...overrides,
 })
 
@@ -98,6 +99,12 @@ describe("EventDetail", () => {
       "Akce už proběhla, o účast se nedá žádat.",
     ],
     [
+      "an event that was not held",
+      { status: "NOT_HELD" as const },
+      "Neuskutečnilo se",
+      "Akce se neuskutečnila, o účast se nedá žádat.",
+    ],
+    [
       "an event that ended but was not closed yet",
       { endAt: new Date(2026, 9, 21, 20, 0) },
       "Proběhlo",
@@ -109,6 +116,13 @@ describe("EventDetail", () => {
     expect(screen.getByText(badge)).toBeInTheDocument()
     expect(screen.getByText(text)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
+  })
+
+  it("does not promise a hidden address for a public venue", () => {
+    renderDetail({ equipment: null, contributionAmount: null })
+
+    expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
+    expect(screen.queryByText("Odkaz po schválení")).not.toBeInTheDocument()
   })
 
   it("promises the link, not an address, for an online event", () => {
