@@ -17,16 +17,21 @@ Compared to the bare bones Nest app you get when you create a new project, we al
 
 ## Basic feature module architecture
 
-Just a general example on how to structure a feature module, not a strict rule.
+The layers every module follows; what belongs in each and where validation goes is in the root `CLAUDE.md`, section "Backend module layers".
 
 ```mermaid
 classDiagram
+
+  namespace domain {
+    class Feature
+    class featureRuleViolations
+  }
 
   namespace services {
     class FeatureService
   }
 
-  namespace presentation {
+  namespace controllers {
     class FeatureController
     class CreateFeatureDto
     class UpdateFeatureDto
@@ -42,6 +47,9 @@ classDiagram
   FeatureController --> FeatureResponseDto
   FeatureController ..> FeatureService
   FeatureService ..> FeatureRepository
+  FeatureService ..> featureRuleViolations
+  FeatureRepository --> Feature
+  FeatureResponseDto --> Feature
 ```
 
 ## Decisions explanation
