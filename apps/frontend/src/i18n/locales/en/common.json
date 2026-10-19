@@ -83,12 +83,60 @@
       "title": "Page not found"
     }
   },
+  "groups": {
+    "back": "Back",
+    "detail": {
+      "loadError": "Could not load the group",
+      "loading": "Loading the group…",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members"
+    },
+    "fields": {
+      "activity": "Activity",
+      "description": "Description",
+      "location": "Location (optional)",
+      "name": "Group name",
+      "usualSchedule": "Usual time (optional)"
+    },
+    "form": {
+      "activityEmpty": "There are no activities yet",
+      "activityError": "Could not load activities.",
+      "activityLoading": "Loading activities…",
+      "activityPlaceholder": "Choose an activity",
+      "createFailed": "Could not create the group. Please try again.",
+      "created": "The group has been created.",
+      "retry": "Try again",
+      "submit": "Create group",
+      "title": "New group"
+    },
+    "list": {
+      "create": "New group",
+      "empty": "An overview of your groups and groups near you is coming soon. In the meantime, you can start a new one.",
+      "title": "Groups"
+    },
+    "placeholders": {
+      "description": "E.g. We play every Thursday in the school gym, newcomers welcome.",
+      "location": "E.g. Prague 8",
+      "name": "E.g. Thursday floorball crew",
+      "usualSchedule": "E.g. Thursdays 7 pm"
+    },
+    "validation": {
+      "activityRequired": "Choose an activity",
+      "descriptionRequired": "Write a few words about the group",
+      "nameRequired": "Enter a group name",
+      "nameTooShort_one": "At least {{count}} character",
+      "nameTooShort_other": "At least {{count}} characters",
+      "tooLong_one": "Keep it under {{count}} character",
+      "tooLong_other": "Keep it under {{count}} characters"
+    }
+  },
   "header": {
     "language": {
       "label": "Language"
     },
     "nav": {
       "designSystem": "Design system",
+      "groups": "Groups",
       "quacks": "Quacks"
     },
     "signIn": "Sign in",

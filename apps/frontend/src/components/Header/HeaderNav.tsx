@@ -9,6 +9,7 @@ export function HeaderNav() {
 
   return (
     <nav className="flex min-w-0 [scrollbar-width:none] items-center gap-1 overflow-x-auto">
+      <HeaderNavLink to={ROUTES.groups}>{t("header.nav.groups")}</HeaderNavLink>
       <HeaderNavLink to={ROUTES.quacks}>{t("header.nav.quacks")}</HeaderNavLink>
       <HeaderNavLink to={ROUTES.designSystem}>{t("header.nav.designSystem")}</HeaderNavLink>
     </nav>

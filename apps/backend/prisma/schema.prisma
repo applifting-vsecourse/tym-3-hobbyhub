@@ -114,6 +114,30 @@ enum ParticipationStatus {
   @@map("participation_status")
 }
 
+enum GroupVisibility {
+  PUBLIC
+  PRIVATE
+
+  @@map("group_visibility")
+}
+
+enum GroupStatus {
+  ACTIVE
+  CANCELLED
+
+  @@map("group_status")
+}
+
+// OWNER is the founder: one per group, with every right an ADMIN has and more.
+// Check admin rights with `hasGroupAdminRights`, never `role === 'ADMIN'`.
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+
+  @@map("group_role")
+}
+
 // Lookup tables ----------------------------------------------------------
 
 model ActivityCategory {
@@ -135,6 +159,7 @@ model Activity {
   defaultMaxParticipants Int
   isActive               Boolean          @default(true)
   events                 Event[]
+  groups                 Group[]
 
   @@index([categoryId])
   @@map("activity")
@@ -155,6 +180,50 @@ model CancellationReason {
   events Event[]
 
   @@map("cancellation_reason")
+}
+
+// Groups (F-07) ------------------------------------------------------------
+
+// Only what F-07.1 needs; tags, approval, invitations and moderation come
+// with their features.
+model Group {
+  id String @id @default(cuid())
+
+  name          String          @db.VarChar(80)
+  description   String          @db.Text
+  // Model datatype `Location` needs coordinates, which need geocoding. Until
+  // that exists the place is free text ("Praha 8", "Brno-Žabovřesky").
+  locationName  String?         @db.VarChar(100)
+  usualSchedule String?         @db.VarChar(100)
+  // F-07.1: every group is public for now; PRIVATE arrives with F-07.1b.
+  visibility    GroupVisibility @default(PUBLIC)
+  status        GroupStatus     @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  activity    Activity          @relation(fields: [activityId], references: [id])
+  activityId  String
+  memberships GroupMembership[]
+
+  @@index([activityId])
+  @@map("group")
+}
+
+// Exactly one OWNER per group: a partial unique index in the migration.
+model GroupMembership {
+  id       String    @id @default(cuid())
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  // A user is in a group at most once.
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@map("group_membership")
 }
 
 // Event & Participation ---------------------------------------------------
@@ -389,9 +458,10 @@ model User {
   blockedUsers User[] @relation("UserBlocks")
   blockedBy    User[] @relation("UserBlocks")
 
-  organizedEvents   Event[]         @relation("EventOrganizer")
-  coOrganizedEvents Event[]         @relation("EventCoOrganizers")
+  organizedEvents   Event[]           @relation("EventOrganizer")
+  coOrganizedEvents Event[]           @relation("EventCoOrganizers")
   participations    Participation[]
+  groupMemberships  GroupMembership[]
 
   @@unique([email])
   @@unique([username])

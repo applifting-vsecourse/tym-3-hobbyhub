@@ -16,6 +16,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
+import { Route as ProtectedPagesGroupsIndexRouteImport } from './routes/_ProtectedPages/groups/index'
+import { Route as ProtectedPagesGroupsGroupIdRouteImport } from './routes/_ProtectedPages/groups/$groupId'
+import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_ProtectedPages/groups/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +54,23 @@ const ProtectedPagesQuacksRoute = ProtectedPagesQuacksRouteImport.update({
   path: '/quacks',
   getParentRoute: () => ProtectedPagesRoute,
 } as any)
+const ProtectedPagesGroupsIndexRoute =
+  ProtectedPagesGroupsIndexRouteImport.update({
+    id: '/groups/',
+    path: '/groups/',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
+const ProtectedPagesGroupsGroupIdRoute =
+  ProtectedPagesGroupsGroupIdRouteImport.update({
+    id: '/groups/$groupId',
+    path: '/groups/$groupId',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
+const ProtectedPagesGroupsNewRoute = ProtectedPagesGroupsNewRouteImport.update({
+  id: '/groups/new',
+  path: '/groups/new',
+  getParentRoute: () => ProtectedPagesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +79,9 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
+  '/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
+  '/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/groups/': typeof ProtectedPagesGroupsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +90,9 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
+  '/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
+  '/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/groups': typeof ProtectedPagesGroupsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,13 +103,33 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
+  '/_ProtectedPages/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
+  '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/_ProtectedPages/groups/': typeof ProtectedPagesGroupsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/design-system' | '/login' | '/signup' | '/terms' | '/quacks'
+    | '/'
+    | '/design-system'
+    | '/login'
+    | '/signup'
+    | '/terms'
+    | '/quacks'
+    | '/groups/$groupId'
+    | '/groups/new'
+    | '/groups/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/design-system' | '/login' | '/signup' | '/terms' | '/quacks'
+  to:
+    | '/'
+    | '/design-system'
+    | '/login'
+    | '/signup'
+    | '/terms'
+    | '/quacks'
+    | '/groups/$groupId'
+    | '/groups/new'
+    | '/groups'
   id:
     | '__root__'
     | '/'
@@ -93,6 +139,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/_ProtectedPages/quacks'
+    | '/_ProtectedPages/groups/$groupId'
+    | '/_ProtectedPages/groups/new'
+    | '/_ProtectedPages/groups/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -155,15 +204,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesQuacksRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/groups/': {
+      id: '/_ProtectedPages/groups/'
+      path: '/groups'
+      fullPath: '/groups/'
+      preLoaderRoute: typeof ProtectedPagesGroupsIndexRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
+    '/_ProtectedPages/groups/$groupId': {
+      id: '/_ProtectedPages/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof ProtectedPagesGroupsGroupIdRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
+    '/_ProtectedPages/groups/new': {
+      id: '/_ProtectedPages/groups/new'
+      path: '/groups/new'
+      fullPath: '/groups/new'
+      preLoaderRoute: typeof ProtectedPagesGroupsNewRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
   }
 }
 
 interface ProtectedPagesRouteChildren {
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
+  ProtectedPagesGroupsGroupIdRoute: typeof ProtectedPagesGroupsGroupIdRoute
+  ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
+  ProtectedPagesGroupsIndexRoute: typeof ProtectedPagesGroupsIndexRoute
 }
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
+  ProtectedPagesGroupsGroupIdRoute: ProtectedPagesGroupsGroupIdRoute,
+  ProtectedPagesGroupsNewRoute: ProtectedPagesGroupsNewRoute,
+  ProtectedPagesGroupsIndexRoute: ProtectedPagesGroupsIndexRoute,
 }
 
 const ProtectedPagesRouteWithChildren = ProtectedPagesRoute._addFileChildren(
