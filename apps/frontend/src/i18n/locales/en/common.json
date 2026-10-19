@@ -39,10 +39,16 @@
     },
     "signIn": {
       "description": "Welcome back to HobbyHub.",
+      "lockoutNote": "After repeated failed attempts we block signing in for a while.",
       "noAccount": "No account?",
+      "rememberMe": "Stay signed in",
       "signUpLink": "Sign up",
       "submit": "Sign in",
       "title": "Sign in"
+    },
+    "signOut": {
+      "failed": "Signing out failed. Please try again.",
+      "success": "You have been signed out."
     },
     "signUp": {
       "description": "You can complete your profile later.",

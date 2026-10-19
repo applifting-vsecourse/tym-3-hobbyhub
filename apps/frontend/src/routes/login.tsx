@@ -8,7 +8,7 @@ import { AuthLayout } from "@/components/AuthLayout"
 import { Seo } from "@/components/Seo"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
-import { SignInForm } from "@/features/auth/components/SignInForm"
+import { SignInForm, type SignInFormValues } from "@/features/auth/components/SignInForm"
 import { useSignIn } from "@/features/auth/hooks/useSignIn"
 import { authErrorMessage } from "@/features/auth/lib/authErrors"
 import { redirectTarget } from "@/features/auth/lib/redirect"
@@ -35,7 +35,7 @@ function LoginPage() {
   const signIn = useSignIn()
   const [error, setError] = useState<unknown>(null)
 
-  const handleSubmit = async (values: { email: string; password: string }) => {
+  const handleSubmit = async (values: SignInFormValues) => {
     setError(null)
     try {
       await signIn.mutateAsync(values)
