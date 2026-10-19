@@ -84,8 +84,7 @@ const continueToNextStep = async (user: ReturnType<typeof userEvent.setup>) =>
 const counterButton = (label: string, direction: "více" | "méně") =>
   screen.getByRole("button", { name: `${label}: ${direction}` })
 
-const counterValue = (label: string) =>
-  within(screen.getByRole("group", { name: label })).getByRole("status")
+const counterValue = (label: string) => screen.getByRole("textbox", { name: label })
 
 describe("EventForm on a phone", () => {
   it("tells which required fields of the first step are missing", async () => {
@@ -136,9 +135,25 @@ describe("EventForm on a phone", () => {
     await continueToNextStep(user)
 
     expect(await screen.findByText("Krok 2 ze 3 · Kdo a kolik")).toBeInTheDocument()
-    expect(counterValue("Minimum")).toHaveTextContent("8")
-    expect(counterValue("Maximum")).toHaveTextContent("12")
+    expect(counterValue("Minimum")).toHaveValue("8")
+    expect(counterValue("Maximum")).toHaveValue("12")
     expect(screen.getByText("Chybí 8 do minima")).toBeInTheDocument()
+  })
+
+  it("takes a typed count without clicking a hundred times", async () => {
+    const { user } = await renderForm()
+    await fillFirstStep(user)
+    await continueToNextStep(user)
+    await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
+
+    await user.clear(counterValue("Maximum"))
+    await user.type(counterValue("Maximum"), "100")
+    await user.clear(counterValue("Už obsazeno mimo aplikaci"))
+    await user.type(counterValue("Už obsazeno mimo aplikaci"), "40")
+
+    expect(screen.getByText("Minimum je naplněné")).toBeInTheDocument()
+    await continueToNextStep(user)
+    expect(await screen.findByText("Krok 3 ze 3 · Detaily a zveřejnění")).toBeInTheDocument()
   })
 
   it("keeps the counts consistent with each other", async () => {
