@@ -93,7 +93,7 @@ export function EventList({
                 <Link
                   to="/events/$eventId"
                   params={{ eventId: event.id }}
-                  className="block rounded-md transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   <ScheduleRow
                     time={eventTime(event.startAt, i18n.language)}
