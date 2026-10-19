@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -84,7 +84,7 @@ function LandingPage() {
               variant="outline"
               className="max-md:hidden"
             >
-              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
             </Button>
             <HeaderMenu />
           </>
@@ -110,7 +110,7 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
             </Button>
           }
         />
@@ -180,7 +180,7 @@ function LandingPage() {
               asChild
               variant="outline"
             >
-              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
             </Button>
           </div>
         </section>
