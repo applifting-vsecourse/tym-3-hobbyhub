@@ -36,14 +36,12 @@ function NewEventPage() {
     [activitiesQuery.data, t],
   )
 
+  // A failed save throws on purpose: the form then keeps guarding the typed
+  // values, and the message comes from the mutation state below.
   const handleSubmit = async (values: CreateEventInput) => {
-    try {
-      const event = await createEvent.mutateAsync(values)
-      toast.success(t("events.form.created"))
-      await navigate({ to: "/events/$eventId", params: { eventId: event.id } })
-    } catch {
-      // Shown in the form from the mutation state; the typed values stay.
-    }
+    const event = await createEvent.mutateAsync(values)
+    toast.success(t("events.form.created"))
+    await navigate({ to: "/events/$eventId", params: { eventId: event.id } })
   }
 
   return (

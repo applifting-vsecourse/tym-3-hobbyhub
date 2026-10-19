@@ -2,16 +2,16 @@ import { useId, useMemo, useState, type ComponentProps, type ReactNode } from "r
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
 import { ChevronLeft, Loader2 } from "lucide-react"
-import { useForm, useFormContext, useWatch } from "react-hook-form"
+import { useForm, useFormContext, useWatch, type FieldErrors } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
+import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -284,18 +284,15 @@ export function EventForm({
     if (await form.trigger(STEP_FIELDS[step])) goToStep(stepIndex + 1)
   }
 
-  const submit = form.handleSubmit(
-    (values) => onSubmit(toInput(values)),
-    // A rule broken on an earlier step (the start slipped into the past while
-    // typing) must be shown, not hidden behind the last step.
-    (errors) => {
-      if (isDesktop) return
-      const firstBrokenStep = STEPS.findIndex((candidate) =>
-        STEP_FIELDS[candidate].some((field) => field in errors),
-      )
-      if (firstBrokenStep >= 0 && firstBrokenStep !== stepIndex) goToStep(firstBrokenStep)
-    },
-  )
+  // A rule broken on an earlier step (the start slipped into the past while
+  // typing) must be shown, not hidden behind the last step.
+  const showFirstBrokenStep = (errors: FieldErrors<FormValues>) => {
+    if (isDesktop) return
+    const firstBrokenStep = STEPS.findIndex((candidate) =>
+      STEP_FIELDS[candidate].some((field) => field in errors),
+    )
+    if (firstBrokenStep >= 0 && firstBrokenStep !== stepIndex) goToStep(firstBrokenStep)
+  }
 
   const activityProps = {
     activities: sortedActivities,
@@ -311,135 +308,132 @@ export function EventForm({
   ) : null
 
   return (
-    <Form {...form}>
-      <form
-        noValidate
-        // Enter on a phone step moves on; only the last step publishes.
-        onSubmit={
-          isDesktop || isLastStep
-            ? submit
-            : (event) => {
-                event.preventDefault()
-                void goNext()
-              }
-        }
-      >
-        {isDesktop ? (
-          <div>
-            <h1 className="typo-h1 text-foreground">{t("events.form.title")}</h1>
-            <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_20rem] md:items-start">
-              <div className="space-y-8">
-                {error}
-                {STEPS.map((section, index) => (
-                  <section
-                    key={section}
-                    aria-labelledby={`event-section-${section}`}
-                  >
-                    {index > 0 ? <Separator className="mb-8" /> : null}
-                    <h2
-                      id={`event-section-${section}`}
-                      className="typo-h3 text-foreground"
-                    >
-                      {[index + 1, t(`events.form.steps.${section}`)].join(" · ")}
-                    </h2>
-                    <div className="mt-4 space-y-4">
-                      <StepFields
-                        step={section}
-                        {...activityProps}
-                      />
-                    </div>
-                  </section>
-                ))}
-              </div>
-              <aside className="space-y-4 md:sticky md:top-20">
-                <PreviewFromForm activities={sortedActivities} />
-                <MissingToMinimum />
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full"
-                  disabled={isSubmitting}
+    <AppForm
+      form={form}
+      onSubmit={(values) => onSubmit(toInput(values))}
+      onInvalid={showFirstBrokenStep}
+      // Enter on a phone step moves on; only the last step publishes.
+      onBeforeSubmit={() => {
+        if (isDesktop || isLastStep) return false
+        void goNext()
+        return true
+      }}
+    >
+      {isDesktop ? (
+        <div>
+          <h1 className="typo-h1 text-foreground">{t("events.form.title")}</h1>
+          <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_20rem] md:items-start">
+            <div className="space-y-8">
+              {error}
+              {STEPS.map((section, index) => (
+                <section
+                  key={section}
+                  aria-labelledby={`event-section-${section}`}
                 >
-                  {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {t("events.form.publish")}
-                </Button>
-                {cancelAction}
-              </aside>
+                  {index > 0 ? <Separator className="mb-8" /> : null}
+                  <h2
+                    id={`event-section-${section}`}
+                    className="typo-h3 text-foreground"
+                  >
+                    {[index + 1, t(`events.form.steps.${section}`)].join(" · ")}
+                  </h2>
+                  <div className="mt-4 space-y-4">
+                    <StepFields
+                      step={section}
+                      {...activityProps}
+                    />
+                  </div>
+                </section>
+              ))}
             </div>
+            <aside className="space-y-4 md:sticky md:top-20">
+              <PreviewFromForm activities={sortedActivities} />
+              <MissingToMinimum />
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {t("events.form.publish")}
+              </Button>
+              {cancelAction}
+            </aside>
           </div>
-        ) : (
-          // Room for the action bar fixed to the bottom.
-          <div className="pb-24">
-            {stepIndex === 0 ? (
-              backLink
+        </div>
+      ) : (
+        // Room for the action bar fixed to the bottom.
+        <div className="pb-24">
+          {stepIndex === 0 ? (
+            backLink
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="mb-4 rounded-full"
+              aria-label={t("events.form.previousStep")}
+              onClick={() => goToStep(stepIndex - 1)}
+            >
+              <ChevronLeft aria-hidden />
+            </Button>
+          )}
+          <p className="typo-caption text-muted-foreground">
+            {[
+              t("events.form.stepOf", { step: stepIndex + 1, total: STEPS.length }),
+              t(`events.form.steps.${step}`),
+            ].join(" · ")}
+          </p>
+          <div
+            aria-hidden
+            className="mt-2 flex gap-2"
+          >
+            {STEPS.map((candidate, index) => (
+              <span
+                key={candidate}
+                className={cn(
+                  "h-1 flex-1 rounded-full",
+                  index <= stepIndex ? "bg-primary" : "bg-muted",
+                )}
+              />
+            ))}
+          </div>
+          <h1 className="mt-4 typo-h1 text-foreground">{t("events.form.title")}</h1>
+          <div className="mt-6 space-y-4">
+            {error}
+            <StepFields
+              step={step}
+              {...activityProps}
+            />
+            {step === "who" ? <MissingToMinimum /> : null}
+            {step === "details" ? <PreviewFromForm activities={sortedActivities} /> : null}
+          </div>
+          <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {isLastStep ? (
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {t("events.form.publish")}
+              </Button>
             ) : (
               <Button
                 type="button"
-                variant="outline"
-                size="icon"
-                className="mb-4 rounded-full"
-                aria-label={t("events.form.previousStep")}
-                onClick={() => goToStep(stepIndex - 1)}
+                size="lg"
+                className="w-full"
+                onClick={() => void goNext()}
               >
-                <ChevronLeft aria-hidden />
+                {t("events.form.continue")}
               </Button>
             )}
-            <p className="typo-caption text-muted-foreground">
-              {[
-                t("events.form.stepOf", { step: stepIndex + 1, total: STEPS.length }),
-                t(`events.form.steps.${step}`),
-              ].join(" · ")}
-            </p>
-            <div
-              aria-hidden
-              className="mt-2 flex gap-2"
-            >
-              {STEPS.map((candidate, index) => (
-                <span
-                  key={candidate}
-                  className={cn(
-                    "h-1 flex-1 rounded-full",
-                    index <= stepIndex ? "bg-primary" : "bg-muted",
-                  )}
-                />
-              ))}
-            </div>
-            <h1 className="mt-4 typo-h1 text-foreground">{t("events.form.title")}</h1>
-            <div className="mt-6 space-y-4">
-              {error}
-              <StepFields
-                step={step}
-                {...activityProps}
-              />
-              {step === "who" ? <MissingToMinimum /> : null}
-              {step === "details" ? <PreviewFromForm activities={sortedActivities} /> : null}
-            </div>
-            <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              {isLastStep ? (
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {t("events.form.publish")}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => void goNext()}
-                >
-                  {t("events.form.continue")}
-                </Button>
-              )}
-            </div>
           </div>
-        )}
-      </form>
-    </Form>
+        </div>
+      )}
+    </AppForm>
   )
 }
 

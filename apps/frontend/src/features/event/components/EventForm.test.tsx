@@ -1,6 +1,8 @@
-import { fireEvent, render, screen, within } from "@testing-library/react"
+import { fireEvent, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+
+import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { EventForm, type ActivityOption } from "@/features/event/components/EventForm"
 
@@ -40,9 +42,9 @@ beforeEach(() => {
   window.scrollTo = vi.fn()
 })
 
-const renderForm = (props: Partial<Parameters<typeof EventForm>[0]> = {}) => {
+const renderForm = async (props: Partial<Parameters<typeof EventForm>[0]> = {}) => {
   const onSubmit = vi.fn()
-  render(
+  await renderWithRouter(
     <EventForm
       activities={ACTIVITIES}
       isActivitiesLoading={false}
@@ -87,7 +89,7 @@ const counterValue = (label: string) =>
 
 describe("EventForm on a phone", () => {
   it("tells which required fields of the first step are missing", async () => {
-    const { onSubmit, user } = renderForm()
+    const { onSubmit, user } = await renderForm()
 
     await continueToNextStep(user)
 
@@ -102,14 +104,14 @@ describe("EventForm on a phone", () => {
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it("prefills the country", () => {
-    renderForm()
+  it("prefills the country", async () => {
+    await renderForm()
 
     expect(screen.getByLabelText("Země")).toHaveValue("Česko")
   })
 
   it("refuses a start in the past and an end before the start", async () => {
-    const { user } = renderForm()
+    const { user } = await renderForm()
 
     await fillFirstStep(user, { startDate: "2020-01-01", endDate: "2019-12-31" })
     await continueToNextStep(user)
@@ -119,8 +121,8 @@ describe("EventForm on a phone", () => {
     expect(screen.getByText("Krok 1 ze 3 · Co a kdy")).toBeInTheDocument()
   })
 
-  it("follows the start date with the end date until it is set", () => {
-    renderForm()
+  it("follows the start date with the end date until it is set", async () => {
+    await renderForm()
 
     setValue("Datum", "2030-01-15")
 
@@ -128,7 +130,7 @@ describe("EventForm on a phone", () => {
   })
 
   it("starts the counts from the usual size of the chosen activity", async () => {
-    const { user } = renderForm()
+    const { user } = await renderForm()
 
     await fillFirstStep(user)
     await continueToNextStep(user)
@@ -140,7 +142,7 @@ describe("EventForm on a phone", () => {
   })
 
   it("keeps the counts consistent with each other", async () => {
-    const { user } = renderForm()
+    const { user } = await renderForm()
     await fillFirstStep(user)
     await continueToNextStep(user)
     await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
@@ -160,7 +162,7 @@ describe("EventForm on a phone", () => {
   })
 
   it("goes back a step without losing what was typed", async () => {
-    const { user } = renderForm()
+    const { user } = await renderForm()
     await fillFirstStep(user)
     await continueToNextStep(user)
     await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
@@ -173,7 +175,7 @@ describe("EventForm on a phone", () => {
   })
 
   it("previews the event and publishes it with trimmed values", async () => {
-    const { onSubmit, user } = renderForm()
+    const { onSubmit, user } = await renderForm()
     await fillFirstStep(user)
     await continueToNextStep(user)
     await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
@@ -222,8 +224,8 @@ describe("EventForm on a phone", () => {
     })
   })
 
-  it("shows the error and keeps the values when publishing fails", () => {
-    renderForm({ errorMessage: "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu." })
+  it("shows the error and keeps the values when publishing fails", async () => {
+    await renderForm({ errorMessage: "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu." })
 
     expect(
       screen.getByText("Akci se nepodařilo zveřejnit. Zkuste to prosím znovu."),
@@ -236,7 +238,7 @@ describe("EventForm on a desktop", () => {
   beforeEach(() => setViewport(true))
 
   it("shows every section at once with the preview beside them", async () => {
-    const { onSubmit, user } = renderForm()
+    const { onSubmit, user } = await renderForm()
 
     expect(screen.getByRole("heading", { name: "1 · Co a kdy" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "2 · Kdo a kolik" })).toBeInTheDocument()

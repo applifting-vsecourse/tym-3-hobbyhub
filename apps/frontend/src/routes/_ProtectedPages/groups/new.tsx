@@ -33,14 +33,12 @@ function NewGroupPage() {
     [activitiesQuery.data, t],
   )
 
+  // A failed save throws on purpose: the form then keeps guarding the typed
+  // values, and the message comes from the mutation state below.
   const handleSubmit = async (values: CreateGroupInput) => {
-    try {
-      const group = await createGroup.mutateAsync(values)
-      toast.success(t("groups.form.created"))
-      await navigate({ to: "/groups/$groupId", params: { groupId: group.id } })
-    } catch {
-      // Shown in the form from the mutation state.
-    }
+    const group = await createGroup.mutateAsync(values)
+    toast.success(t("groups.form.created"))
+    await navigate({ to: "/groups/$groupId", params: { groupId: group.id } })
   }
 
   return (
