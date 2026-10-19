@@ -161,6 +161,18 @@ describe("EventForm on a phone", () => {
     expect(screen.getByText("Krok 2 ze 3 · Kdo a kolik")).toBeInTheDocument()
   })
 
+  it("arrives on the last step without a submit having happened", async () => {
+    const { onSubmit, user } = await renderForm()
+    await fillFirstStep(user)
+    await continueToNextStep(user)
+    await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
+    await continueToNextStep(user)
+
+    await screen.findByText("Krok 3 ze 3 · Detaily a zveřejnění")
+    expect(screen.queryByText("Napište pár vět o akci")).not.toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
   it("goes back a step without losing what was typed", async () => {
     const { user } = await renderForm()
     await fillFirstStep(user)

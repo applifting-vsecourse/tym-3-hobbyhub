@@ -26,9 +26,11 @@ type UnsavedChangesGuardProps = {
  */
 export function UnsavedChangesGuard({ message }: UnsavedChangesGuardProps) {
   const { t } = useTranslation()
-  const { isDirty, isSubmitSuccessful } = useFormState()
+  const { isDirty, isSubmitting, isSubmitSuccessful } = useFormState()
   // A submit that resolved means the data is safe; a thrown one keeps guarding.
-  const hasUnsavedChanges = isDirty && !isSubmitSuccessful
+  // While one is in flight the handler itself may navigate (to the created
+  // record), and that must not be blocked: success is recorded only after it.
+  const hasUnsavedChanges = isDirty && !isSubmitting && !isSubmitSuccessful
 
   // Stable while the answer is the same: the router re-registers the blocker
   // whenever this function changes.

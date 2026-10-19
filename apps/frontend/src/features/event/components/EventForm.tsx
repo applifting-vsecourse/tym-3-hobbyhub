@@ -410,8 +410,16 @@ export function EventForm({
             {step === "details" ? <PreviewFromForm activities={sortedActivities} /> : null}
           </div>
           <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {/*
+              Distinct keys, so the two buttons never share a DOM node. The step
+              changes while the click on "Pokračovat" is still being handled;
+              with one node React would flip its type to "submit" before the
+              browser runs the click's default action, and the form would be
+              submitted behind the organizer's back.
+            */}
             {isLastStep ? (
               <Button
+                key="publish"
                 type="submit"
                 size="lg"
                 className="w-full"
@@ -422,6 +430,7 @@ export function EventForm({
               </Button>
             ) : (
               <Button
+                key="continue"
                 type="button"
                 size="lg"
                 className="w-full"

@@ -84,6 +84,23 @@ describe("AppForm unsaved-changes guard", () => {
     await expectLocation(router, AWAY_PATH)
   })
 
+  it("lets the submit handler navigate away while it is still running", async () => {
+    let leaveFromHandler: () => void = () => undefined
+    const { router, leave, user } = await renderHarness({
+      onSubmit: async () => {
+        leaveFromHandler()
+        await Promise.resolve()
+      },
+    })
+    leaveFromHandler = leave
+    await user.type(screen.getByLabelText("Název"), "x")
+
+    await user.click(screen.getByRole("button", { name: "Odeslat" }))
+
+    await expectLocation(router, AWAY_PATH)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
   it("keeps guarding when the submit failed", async () => {
     const { leave, user } = await renderHarness({
       onSubmit: () => Promise.reject(new Error("server down")),
