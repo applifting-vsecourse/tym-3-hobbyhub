@@ -1,6 +1,11 @@
 import { Activity } from '@/modules/activity/domain/activity';
 
-export const EVENT_LIST_LIMIT = 100;
+export const EVENT_LIST_DEFAULT_LIMIT = 20;
+export const EVENT_LIST_MAX_LIMIT = 50;
+
+export type Page = { limit: number; offset: number };
+
+export type EventListPage = { items: EventListItem[]; total: number };
 
 export type VenueType = 'PUBLIC_VENUE' | 'PRIVATE_VENUE' | 'ONLINE';
 

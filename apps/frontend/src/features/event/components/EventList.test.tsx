@@ -51,6 +51,7 @@ describe("EventList", () => {
       <EventList
         activityLabel={(activity) => activity.name}
         events={[event()]}
+        total={1}
         now={NOW}
       />,
     )
@@ -68,6 +69,7 @@ describe("EventList", () => {
     render(
       <EventList
         events={[event()]}
+        total={1}
         activityLabel={(activity) => activity.name}
         now={NOW}
       />,
@@ -84,6 +86,7 @@ describe("EventList", () => {
       <EventList
         activityLabel={(activity) => activity.name}
         events={[event({ takenCount: 8 })]}
+        total={1}
         now={NOW}
       />,
     )
@@ -92,10 +95,29 @@ describe("EventList", () => {
     expect(screen.queryByText(/^chybí/)).not.toBeInTheDocument()
   })
 
+  it("shows the total and loads more on request", async () => {
+    const onLoadMore = vi.fn()
+    render(
+      <EventList
+        events={[event()]}
+        total={45}
+        hasMore
+        onLoadMore={onLoadMore}
+        activityLabel={(activity) => activity.name}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("45 akcí")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Načíst další" }))
+    expect(onLoadMore).toHaveBeenCalled()
+  })
+
   it("explains an empty list", () => {
     render(
       <EventList
         events={[]}
+        total={0}
         activityLabel={(activity) => activity.name}
       />,
     )
@@ -109,6 +131,7 @@ describe("EventList", () => {
       <EventList
         activityLabel={(activity) => activity.name}
         events={[]}
+        total={0}
         error={new Error("Network down")}
         onReload={onReload}
       />,

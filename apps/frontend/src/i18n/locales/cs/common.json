@@ -99,6 +99,7 @@
       "count_other": "{{count}} akcí",
       "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
       "loadError": "Akce se nepodařilo načíst",
+      "loadMore": "Načíst další",
       "loading": "Načítáme akce…",
       "reload": "Načíst znovu",
       "seoTitle": "Akce",

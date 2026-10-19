@@ -12,21 +12,30 @@ import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels
 
 type EventListProps = {
   events: EventListItem[]
+  /** All upcoming events, which can be more than the ones loaded. */
+  total: number
   /** Display name of an event's activity; the activity feature owns the translation. */
   activityLabel: (activity: EventListItem["activity"]) => string
   isLoading?: boolean
   error?: Error | null
   onReload?: () => void
+  hasMore?: boolean
+  isLoadingMore?: boolean
+  onLoadMore?: () => void
   /** Injectable so "today" is stable in tests. */
   now?: Date
 }
 
 export function EventList({
   events,
+  total,
   activityLabel,
   isLoading,
   error,
   onReload,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   now = new Date(),
 }: EventListProps) {
   const { t, i18n } = useTranslation()
@@ -78,9 +87,7 @@ export function EventList({
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="typo-small text-muted-foreground">
-        {t("events.list.count", { count: events.length })}
-      </p>
+      <p className="typo-small text-muted-foreground">{t("events.list.count", { count: total })}</p>
       {days.map(({ day, events: dayEvents }) => (
         <section
           key={day}
@@ -109,6 +116,16 @@ export function EventList({
           </ul>
         </section>
       ))}
+      {hasMore && onLoadMore ? (
+        <Button
+          variant="outline"
+          className="self-center"
+          disabled={isLoadingMore}
+          onClick={onLoadMore}
+        >
+          {t("events.list.loadMore")}
+        </Button>
+      ) : null}
     </div>
   )
 }

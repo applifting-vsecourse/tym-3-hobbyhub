@@ -62,21 +62,46 @@ describe('mapPrismaEventToListItem', () => {
 describe('EventRepository', () => {
   it('asks only for upcoming, public, published, visible events, soonest first', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
-    const prisma = { event: { findMany } } as unknown as PrismaService;
+    const count = jest.fn().mockResolvedValue(0);
+    const prisma = { event: { findMany, count } } as unknown as PrismaService;
     const now = new Date('2026-10-20T10:00:00Z');
+    const where = {
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      isHidden: false,
+      endAt: { gt: now },
+    };
 
-    await new EventRepository(prisma).getUpcomingPublicEvents(now);
+    await new EventRepository(prisma).getUpcomingPublicEvents(now, {
+      limit: 20,
+      offset: 40,
+    });
 
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
-          status: 'PUBLISHED',
-          visibility: 'PUBLIC',
-          isHidden: false,
-          endAt: { gt: now },
-        },
+        where,
         orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: 40,
+        take: 20,
       }),
     );
+    expect(count).toHaveBeenCalledWith({ where });
+  });
+
+  it('returns the total of all matching events next to the page', async () => {
+    const prisma = {
+      event: {
+        findMany: jest.fn().mockResolvedValue([anEvent()]),
+        count: jest.fn().mockResolvedValue(57),
+      },
+    } as unknown as PrismaService;
+
+    const page = await new EventRepository(prisma).getUpcomingPublicEvents(
+      new Date(),
+      { limit: 20, offset: 0 },
+    );
+
+    expect(page.items).toHaveLength(1);
+    expect(page.total).toBe(57);
   });
 });

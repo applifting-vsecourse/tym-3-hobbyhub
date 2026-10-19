@@ -5,7 +5,11 @@ import {
   Event as PrismaEvent,
   Level as PrismaLevel,
 } from '@/generated/prisma/client';
-import { EVENT_LIST_LIMIT, EventListItem } from '@/modules/event/domain/event';
+import {
+  EventListItem,
+  EventListPage,
+  Page,
+} from '@/modules/event/domain/event';
 import { Injectable } from '@nestjs/common';
 
 const TAKEN_STATUSES: ParticipationStatus[] = [
@@ -59,18 +63,26 @@ export class EventRepository {
 
   // The same set the map shows: public, published, not hidden by a moderator
   // and not over yet. Soonest first.
-  async getUpcomingPublicEvents(now: Date): Promise<EventListItem[]> {
-    const events = await this.prisma.event.findMany({
-      where: {
-        status: 'PUBLISHED',
-        visibility: 'PUBLIC',
-        isHidden: false,
-        endAt: { gt: now },
-      },
-      orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
-      take: EVENT_LIST_LIMIT,
-      include,
-    });
-    return events.map(mapPrismaEventToListItem);
+  async getUpcomingPublicEvents(
+    now: Date,
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    const where = {
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      isHidden: false,
+      endAt: { gt: now },
+    } as const;
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+        include,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return { items: events.map(mapPrismaEventToListItem), total };
   }
 }

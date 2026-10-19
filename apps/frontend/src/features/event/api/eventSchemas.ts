@@ -20,6 +20,10 @@ export const eventListItemSchema = z.object({
   takenCount: z.number(),
 })
 
-export const eventListSchema = z.array(eventListItemSchema)
+export const eventListSchema = z.object({
+  items: z.array(eventListItemSchema),
+  /** All upcoming public events, not just this page. */
+  total: z.number(),
+})
 
 export type EventListItem = z.infer<typeof eventListItemSchema>

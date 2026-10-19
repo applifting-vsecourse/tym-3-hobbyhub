@@ -98,6 +98,7 @@
       "count_other": "{{count}} events",
       "empty": "There are no upcoming events yet. Check back later, or create one yourself.",
       "loadError": "Could not load events",
+      "loadMore": "Load more",
       "loading": "Loading events…",
       "reload": "Reload",
       "seoTitle": "Events",

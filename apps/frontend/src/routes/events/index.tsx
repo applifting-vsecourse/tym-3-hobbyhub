@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/events/")({
 function EventsPage() {
   const { t } = useTranslation()
   const [view, setView] = useState<EventsView>("list")
-  const eventsQuery = useQuery(eventsQueryOptions())
+  const eventsQuery = useInfiniteQuery(eventsQueryOptions())
 
   return (
     <>
@@ -38,11 +38,15 @@ function EventsPage() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-8">
           <div className={view === "list" ? undefined : "max-lg:hidden"}>
             <EventList
-              events={eventsQuery.data ?? []}
+              events={eventsQuery.data?.pages.flatMap((page) => page.items) ?? []}
+              total={eventsQuery.data?.pages[0]?.total ?? 0}
               activityLabel={(activity) => activityName(t, activity)}
               isLoading={eventsQuery.isPending}
               error={eventsQuery.error}
               onReload={() => void eventsQuery.refetch()}
+              hasMore={eventsQuery.hasNextPage}
+              isLoadingMore={eventsQuery.isFetchingNextPage}
+              onLoadMore={() => void eventsQuery.fetchNextPage()}
             />
           </div>
           <div className={view === "map" ? undefined : "max-lg:hidden"}>

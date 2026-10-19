@@ -1,5 +1,5 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
-import { EventListItem } from '@/modules/event/domain/event';
+import { EventListItem, EventListPage } from '@/modules/event/domain/event';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class EventListItemResponseDto {
@@ -67,6 +67,23 @@ export class EventListItemResponseDto {
       minParticipants: event.minParticipants,
       maxParticipants: event.maxParticipants,
       takenCount: event.takenCount,
+    };
+  }
+}
+
+export class EventListResponseDto {
+  @ApiProperty({ type: [EventListItemResponseDto] })
+  items!: EventListItemResponseDto[];
+
+  @ApiProperty({
+    description: 'All upcoming public events, not just this page',
+  })
+  total!: number;
+
+  static fromDomain(page: EventListPage): EventListResponseDto {
+    return {
+      items: page.items.map(EventListItemResponseDto.fromDomain),
+      total: page.total,
     };
   }
 }

@@ -1,19 +1,37 @@
 import { EventsService } from '@/modules/event/services/events.service';
-import { Controller, Get } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { EventListItemResponseDto } from './dto/event-list-item.response.dto';
+import { EventListResponseDto } from './dto/event-list-item.response.dto';
+import { ListEventsQuery } from './dto/list-events.query';
 
-// Public: browsing events does not need an account (E2).
+// Public: browsing events needs no account (E2).
 @ApiTags('events')
 @Controller('events')
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }),
+)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Get()
   @ApiOperation({ summary: 'List upcoming public events, soonest first' })
-  @ApiResponse({ status: 200, type: [EventListItemResponseDto] })
-  async list(): Promise<EventListItemResponseDto[]> {
-    const events = await this.eventsService.getUpcomingPublicEvents();
-    return events.map(EventListItemResponseDto.fromDomain);
+  @ApiResponse({ status: 200, type: EventListResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid limit or offset' })
+  async list(@Query() query: ListEventsQuery): Promise<EventListResponseDto> {
+    const page = await this.eventsService.getUpcomingPublicEvents({
+      limit: query.limit,
+      offset: query.offset,
+    });
+    return EventListResponseDto.fromDomain(page);
   }
 }

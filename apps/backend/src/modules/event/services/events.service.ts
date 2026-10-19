@@ -1,4 +1,4 @@
-import { EventListItem } from '@/modules/event/domain/event';
+import { EventListPage, Page } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { Injectable } from '@nestjs/common';
 
@@ -6,7 +6,10 @@ import { Injectable } from '@nestjs/common';
 export class EventsService {
   constructor(private readonly eventRepository: EventRepository) {}
 
-  getUpcomingPublicEvents(now: Date = new Date()): Promise<EventListItem[]> {
-    return this.eventRepository.getUpcomingPublicEvents(now);
+  getUpcomingPublicEvents(
+    page: Page,
+    now: Date = new Date(),
+  ): Promise<EventListPage> {
+    return this.eventRepository.getUpcomingPublicEvents(now, page);
   }
 }
