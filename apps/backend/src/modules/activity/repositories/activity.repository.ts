@@ -7,6 +7,8 @@ const mapPrismaActivityToDomain = (activity: PrismaActivity): Activity => ({
   id: activity.id,
   name: activity.name,
   icon: activity.icon,
+  defaultMinParticipants: activity.defaultMinParticipants,
+  defaultMaxParticipants: activity.defaultMaxParticipants,
 });
 
 @Injectable()
