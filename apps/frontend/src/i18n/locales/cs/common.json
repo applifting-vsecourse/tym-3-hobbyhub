@@ -286,6 +286,10 @@
       "turistika": "Turistika",
       "volejbal": "Volejbal"
     },
+    "activityCombobox": {
+      "noMatch": "Žádná aktivita neodpovídá",
+      "search": "Hledat aktivitu…"
+    },
     "avatars": {
       "basketbalista": "Basketbalista",
       "bezec": "Běžec",

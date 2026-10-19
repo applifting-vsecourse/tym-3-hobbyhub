@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { ChevronDown, Plus } from "lucide-react"
 import { toast } from "sonner"
 
+import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { PhotoPicker } from "@/components/hobbyhub/PhotoPicker"
@@ -42,6 +43,30 @@ const BUTTON_TYPES = [
 ] as const
 
 const FILTERS = ["Chybí lidé", "Vítáni nováčci", "Tento týden"]
+
+const ACTIVITY_OPTIONS = [
+  { id: "florbal", label: "Florbal", icon: "florbal" },
+  { id: "sachy", label: "Šachy", icon: "sachy" },
+  { id: "volejbal", label: "Volejbal", icon: "volejbal" },
+  { id: "deskove-hry", label: "Deskové hry", icon: "deskove-hry" },
+]
+
+function ActivityComboboxExample() {
+  const [activity, setActivity] = useState("")
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="ds-activity">Aktivita</Label>
+      <ActivityCombobox
+        id="ds-activity"
+        options={ACTIVITY_OPTIONS}
+        value={activity}
+        onValueChange={setActivity}
+        placeholder="Vyberte aktivitu"
+      />
+    </div>
+  )
+}
 
 function FilterExample() {
   const [active, setActive] = useState<string[]>(["Chybí lidé"])
@@ -208,6 +233,7 @@ export function ControlSections() {
               placeholder="Přijď se podívat, nikdo tě nebude zkoušet z úrovně."
             />
           </div>
+          <ActivityComboboxExample />
           <PhotoPickerExample />
           <Counter
             label="Minimum"

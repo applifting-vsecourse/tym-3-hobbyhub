@@ -278,6 +278,10 @@
       "turistika": "Hiking",
       "volejbal": "Volleyball"
     },
+    "activityCombobox": {
+      "noMatch": "No activity matches",
+      "search": "Search activities…"
+    },
     "avatars": {
       "basketbalista": "Basketball player",
       "bezec": "Runner",
