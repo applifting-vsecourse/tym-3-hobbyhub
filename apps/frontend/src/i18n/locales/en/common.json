@@ -83,6 +83,21 @@
       "title": "Page not found"
     }
   },
+  "events": {
+    "list": {
+      "empty": "There are no upcoming events yet. Check back later, or create one yourself.",
+      "loadError": "Could not load events",
+      "loading": "Loading events…",
+      "reload": "Reload",
+      "seoTitle": "Events",
+      "title": "Events"
+    },
+    "online": "Online",
+    "when": {
+      "today": "Today {{time}}",
+      "tomorrow": "Tomorrow {{time}}"
+    }
+  },
   "groups": {
     "back": "Back",
     "detail": {

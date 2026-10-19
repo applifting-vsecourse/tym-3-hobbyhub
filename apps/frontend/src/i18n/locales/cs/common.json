@@ -83,6 +83,21 @@
       "title": "Stránka nenalezena"
     }
   },
+  "events": {
+    "list": {
+      "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
+      "loadError": "Akce se nepodařilo načíst",
+      "loading": "Načítáme akce…",
+      "reload": "Načíst znovu",
+      "seoTitle": "Akce",
+      "title": "Akce"
+    },
+    "online": "Online",
+    "when": {
+      "today": "Dnes {{time}}",
+      "tomorrow": "Zítra {{time}}"
+    }
+  },
   "groups": {
     "back": "Zpět",
     "detail": {
