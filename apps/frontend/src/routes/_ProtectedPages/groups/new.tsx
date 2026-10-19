@@ -5,12 +5,12 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { ROUTES } from "@/app/routes"
+import { BackLink } from "@/components/BackLink"
 import { Seo } from "@/components/Seo"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import type { CreateGroupInput } from "@/features/group/api/groupSchemas"
-import { BackLink } from "@/features/group/components/BackLink"
 import { GroupForm } from "@/features/group/components/GroupForm"
 import { useCreateGroup } from "@/features/group/hooks/useCreateGroup"
 
@@ -47,7 +47,10 @@ function NewGroupPage() {
     <>
       <Seo title={t("groups.form.title")} />
       <section className="mx-auto w-full max-w-2xl px-4 py-6 md:py-12">
-        <BackLink to={ROUTES.groups} />
+        <BackLink
+          to={ROUTES.groups}
+          label={t("groups.back")}
+        />
         <h1 className="typo-h1 text-foreground">{t("groups.form.title")}</h1>
         <div className="mt-6 md:mt-8">
           <GroupForm

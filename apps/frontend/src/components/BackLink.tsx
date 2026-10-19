@@ -1,17 +1,16 @@
 import { Link, type LinkProps } from "@tanstack/react-router"
 import { ChevronLeft } from "lucide-react"
-import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 
 type BackLinkProps = {
   readonly to: LinkProps["to"]
+  /** Accessible name of the icon-only button, e.g. t("groups.back"). */
+  readonly label: string
 }
 
 /** The round back button of the phone wireframes; desktop has the header nav. */
-export function BackLink({ to }: BackLinkProps) {
-  const { t } = useTranslation()
-
+export function BackLink({ to, label }: BackLinkProps) {
   return (
     <Button
       asChild
@@ -21,7 +20,7 @@ export function BackLink({ to }: BackLinkProps) {
     >
       <Link
         to={to}
-        aria-label={t("groups.back")}
+        aria-label={label}
       >
         <ChevronLeft aria-hidden />
       </Link>
