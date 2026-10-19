@@ -1,6 +1,6 @@
-import { EventListPage, Page } from '@/modules/event/domain/event';
+import { EventDetail, EventListPage, Page } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class EventsService {
@@ -11,5 +11,11 @@ export class EventsService {
     now: Date = new Date(),
   ): Promise<EventListPage> {
     return this.eventRepository.getUpcomingPublicEvents(now, page);
+  }
+
+  async getEvent(id: string): Promise<EventDetail> {
+    const event = await this.eventRepository.getPublicEventById(id);
+    if (!event) throw new NotFoundException('Event not found');
+    return event;
   }
 }

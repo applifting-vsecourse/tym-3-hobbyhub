@@ -6,10 +6,12 @@ import {
   Level as PrismaLevel,
 } from '@/generated/prisma/client';
 import {
+  EventDetail,
   EventListItem,
   EventListPage,
   Page,
 } from '@/modules/event/domain/event';
+import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
 import { Injectable } from '@nestjs/common';
 
 const TAKEN_STATUSES: ParticipationStatus[] = [
@@ -84,5 +86,52 @@ export class EventRepository {
       this.prisma.event.count({ where }),
     ]);
     return { items: events.map(mapPrismaEventToListItem), total };
+  }
+
+  // Public detail: the list's visibility rules, but an event that was cancelled
+  // or is over stays reachable, so a shared link still explains what happened.
+  async getPublicEventById(id: string): Promise<EventDetail | null> {
+    const event = await this.prisma.event.findFirst({
+      where: {
+        id,
+        status: { in: ['PUBLISHED', 'CANCELLED', 'FINISHED', 'NOT_HELD'] },
+        visibility: 'PUBLIC',
+        isHidden: false,
+      },
+      include: {
+        activity: true,
+        level: true,
+        organizer: { select: { name: true } },
+        participations: {
+          where: { status: { in: TAKEN_STATUSES } },
+          select: { user: { select: { birthDate: true, gender: true } } },
+        },
+      },
+    });
+    if (!event) return null;
+
+    const participants = event.participations.map(({ user }) => user);
+    const listItem = mapPrismaEventToListItem({
+      ...event,
+      _count: { participations: participants.length },
+    });
+
+    return {
+      ...listItem,
+      description: event.description,
+      equipment: event.equipment,
+      contributionAmount:
+        event.contributionAmount === null
+          ? null
+          : Number(event.contributionAmount),
+      status: event.status as EventDetail['status'],
+      approvalMode: event.approvalMode,
+      organizerName: event.organizer.name,
+      stats: computeParticipantStats(
+        participants,
+        event.startAt,
+        listItem.takenCount,
+      ),
+    };
   }
 }

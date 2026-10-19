@@ -1,7 +1,10 @@
 import { EventsService } from '@/modules/event/services/events.service';
-import { Controller, Get, Query, UsePipes } from '@nestjs/common';
+import { Controller, Get, Param, Query, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { EventListResponseDto } from './dto/event-list-item.response.dto';
+import {
+  EventDetailResponseDto,
+  EventListResponseDto,
+} from './dto/event-list-item.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
 import { eventsValidationPipe } from './events-validation.pipe';
 
@@ -22,5 +25,14 @@ export class EventsController {
       offset: query.offset,
     });
     return EventListResponseDto.fromDomain(page);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a public event' })
+  @ApiResponse({ status: 200, type: EventDetailResponseDto })
+  @ApiResponse({ status: 404, description: 'Event not found or not public' })
+  async detail(@Param('id') id: string): Promise<EventDetailResponseDto> {
+    const event = await this.eventsService.getEvent(id);
+    return EventDetailResponseDto.fromDomainDetail(event);
   }
 }

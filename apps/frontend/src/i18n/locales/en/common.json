@@ -89,8 +89,40 @@
       "tomorrow": "Tomorrow"
     },
     "detail": {
+      "address": {
+        "online": "Link after approval",
+        "private": "Exact address after approval"
+      },
+      "approvalAutomatic": "You get the seat as soon as you sign in.",
+      "approvalManual": "The organizer approves requests by hand.",
       "back": "Back to events",
-      "placeholder": "The event detail will be here.",
+      "contribution": "Contribution",
+      "equipment": "Equipment",
+      "hasAccount": "Already have an account?",
+      "join": "Take a seat",
+      "loadError": "Could not load the event",
+      "loading": "Loading the event…",
+      "missingToMin": "{{count}} missing to the minimum",
+      "organizer": "Organized by {{name}}",
+      "roster": "Roster",
+      "seats": "{{taken}} of {{total}} seats",
+      "signIn": "Sign in",
+      "state": {
+        "cancelled": "Cancelled",
+        "cancelledText": "This event was cancelled, you can no longer ask to join.",
+        "finished": "Finished",
+        "finishedText": "This event is over, you cannot ask to join.",
+        "full": "Full",
+        "fullText": "This event is full, you cannot ask to join."
+      },
+      "stats": {
+        "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
+        "gender": "Men {{male}} · Women {{female}}",
+        "hidden": "The mix shows once at least {{count}} people have joined.",
+        "medianAge_one": "Median age: {{count}} year",
+        "medianAge_other": "Median age: {{count}} years",
+        "title": "Who is coming"
+      },
       "title": "Event detail"
     },
     "list": {

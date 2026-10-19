@@ -30,3 +30,31 @@ export type EventListItem = {
   // Approved and attended people plus those the organizer brought along.
   takenCount: number;
 };
+
+// Statistics are hidden below this many included participants, so nobody can
+// be picked out of them (F-06.7).
+export const MIN_STATS_PARTICIPANTS = 3;
+
+export type EventStatus = 'PUBLISHED' | 'CANCELLED' | 'FINISHED' | 'NOT_HELD';
+export type ApprovalMode = 'MANUAL' | 'AUTOMATIC';
+export type Gender = 'MALE' | 'FEMALE';
+
+// Anonymized composition of the approved registered participants. People taken
+// along from outside the app are not counted, hence `included` out of `total`.
+export type ParticipantStats = {
+  included: number;
+  total: number;
+  medianAge: number | null;
+  gender: { male: number; female: number } | null;
+};
+
+export type EventDetail = EventListItem & {
+  description: string;
+  equipment: string | null;
+  // Information only; nothing is paid in the app.
+  contributionAmount: number | null;
+  status: EventStatus;
+  approvalMode: ApprovalMode;
+  organizerName: string;
+  stats: ParticipantStats | null;
+};

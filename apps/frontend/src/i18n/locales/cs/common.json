@@ -89,8 +89,41 @@
       "tomorrow": "Zítra"
     },
     "detail": {
+      "address": {
+        "online": "Odkaz po schválení",
+        "private": "Přesná adresa po schválení"
+      },
+      "approvalAutomatic": "Místo získáš hned po přihlášení.",
+      "approvalManual": "Organizátor žádost schvaluje ručně.",
       "back": "Zpět na akce",
-      "placeholder": "Detail akce tu bude.",
+      "contribution": "Příspěvek",
+      "equipment": "Vybavení",
+      "hasAccount": "Už máš účet?",
+      "join": "Obsadit místo",
+      "loadError": "Akci se nepodařilo načíst",
+      "loading": "Načítáme akci…",
+      "missingToMin": "chybí {{count}} do minima",
+      "organizer": "Pořádá {{name}}",
+      "roster": "Soupiska",
+      "seats": "{{taken}} z {{total}} míst",
+      "signIn": "Přihlásit se",
+      "state": {
+        "cancelled": "Zrušeno",
+        "cancelledText": "Akce byla zrušena, o účast už se nedá žádat.",
+        "finished": "Proběhlo",
+        "finishedText": "Akce už proběhla, o účast se nedá žádat.",
+        "full": "Naplněno",
+        "fullText": "Akce je plná, o účast se nedá žádat."
+      },
+      "stats": {
+        "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
+        "gender": "Muži {{male}} · Ženy {{female}}",
+        "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
+        "medianAge_few": "Medián věku: {{count}} roky",
+        "medianAge_one": "Medián věku: {{count}} rok",
+        "medianAge_other": "Medián věku: {{count}} let",
+        "title": "Složení účastníků"
+      },
       "title": "Detail akce"
     },
     "list": {
