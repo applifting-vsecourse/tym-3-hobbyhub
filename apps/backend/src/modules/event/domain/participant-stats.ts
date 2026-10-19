@@ -47,29 +47,30 @@ const median = (values: number[]): number => {
 };
 
 /**
- * Median age and gender split of the participants, or null when too few of
- * them are included to keep individuals anonymous. A figure that rests on
- * fewer than the minimum people (missing birth date or gender) is left out.
+ * Median age and gender split of the participants, or null when fewer than the
+ * minimum of them gave both a birth date and a gender. Both figures appear
+ * together and rest on the same people: showing them on different thresholds
+ * would let the change between two views single someone out.
  */
 export const computeParticipantStats = (
   participants: StatsParticipant[],
   eventStart: Date,
   total: number,
 ): ParticipantStats | null => {
-  if (participants.length < MIN_STATS_PARTICIPANTS) return null;
-
-  const ages = participants.flatMap(({ birthDate }) =>
-    birthDate ? [ageAt(birthDate, eventStart)] : [],
+  const complete = participants.flatMap(({ birthDate, gender }) =>
+    birthDate && gender ? [{ birthDate, gender }] : [],
   );
-  const male = participants.filter(({ gender }) => gender === 'MALE').length;
-  const female = participants.filter(
-    ({ gender }) => gender === 'FEMALE',
-  ).length;
+  if (complete.length < MIN_STATS_PARTICIPANTS) return null;
 
   return {
-    included: participants.length,
+    included: complete.length,
     total,
-    medianAge: ages.length >= MIN_STATS_PARTICIPANTS ? median(ages) : null,
-    gender: male + female >= MIN_STATS_PARTICIPANTS ? { male, female } : null,
+    medianAge: median(
+      complete.map(({ birthDate }) => ageAt(birthDate, eventStart)),
+    ),
+    gender: {
+      male: complete.filter(({ gender }) => gender === 'MALE').length,
+      female: complete.filter(({ gender }) => gender === 'FEMALE').length,
+    },
   };
 };

@@ -72,22 +72,38 @@ describe('computeParticipantStats', () => {
     expect(stats?.medianAge).toBe(33);
   });
 
-  it('leaves out a figure that too few people can support', () => {
+  it('counts only people who gave both a birth date and a gender', () => {
     const stats = computeParticipantStats(
       [
         person('1990-01-01', null),
-        person('1991-01-01', null),
+        person('1991-01-01', 'FEMALE'),
         person(null, 'MALE'),
+        person('1985-01-01', 'MALE'),
       ],
       EVENT_START,
-      3,
+      4,
     );
 
-    expect(stats).toEqual({
+    expect(stats).toBeNull();
+  });
+
+  it('shows age and gender together, resting on the same people', () => {
+    const stats = computeParticipantStats(
+      [
+        person('1990-01-01', 'MALE'),
+        person('1991-01-01', 'FEMALE'),
+        person(null, 'MALE'),
+        person('1985-01-01', 'MALE'),
+      ],
+      EVENT_START,
+      6,
+    );
+
+    expect(stats).toMatchObject({
       included: 3,
-      total: 3,
-      medianAge: null,
-      gender: null,
+      total: 6,
+      gender: { male: 2, female: 1 },
     });
+    expect(stats?.medianAge).toBe(36);
   });
 });
