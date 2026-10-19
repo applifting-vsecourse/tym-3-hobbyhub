@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
-import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,13 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 
@@ -158,38 +151,18 @@ export function GroupForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("groups.fields.activity")}</FormLabel>
-              <Select
-                name={field.name}
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={isActivitiesLoading || sortedActivities.length === 0}
-              >
-                <FormControl>
-                  <SelectTrigger
-                    ref={field.ref}
-                    onBlur={field.onBlur}
-                    className="w-full"
-                  >
-                    <SelectValue placeholder={activityPlaceholder} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {sortedActivities.map((activity) => (
-                    <SelectItem
-                      key={activity.id}
-                      value={activity.id}
-                    >
-                      {isActivityKey(activity.icon) ? (
-                        <ActivityIcon
-                          activity={activity.icon}
-                          className="size-5"
-                        />
-                      ) : null}
-                      {activity.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <ActivityCombobox
+                  ref={field.ref}
+                  name={field.name}
+                  options={sortedActivities}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder={activityPlaceholder}
+                  disabled={isActivitiesLoading || sortedActivities.length === 0}
+                />
+              </FormControl>
               {isActivitiesError ? (
                 <div className="flex items-center justify-between gap-3">
                   <p className="typo-small text-destructive-ink">

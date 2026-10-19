@@ -6,7 +6,7 @@ import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
-import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -20,13 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -506,41 +499,21 @@ function WhatFields({
         render={({ field }) => (
           <FormItem>
             <FormLabel>{t("events.fields.activity")}</FormLabel>
-            <Select
-              name={field.name}
-              value={field.value}
-              onValueChange={(value) => {
-                field.onChange(value)
-                prefillParticipants(value)
-              }}
-              disabled={isActivitiesLoading || activities.length === 0}
-            >
-              <FormControl>
-                <SelectTrigger
-                  ref={field.ref}
-                  onBlur={field.onBlur}
-                  className="w-full"
-                >
-                  <SelectValue placeholder={activityPlaceholder} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {activities.map((activity) => (
-                  <SelectItem
-                    key={activity.id}
-                    value={activity.id}
-                  >
-                    {isActivityKey(activity.icon) ? (
-                      <ActivityIcon
-                        activity={activity.icon}
-                        className="size-5"
-                      />
-                    ) : null}
-                    {activity.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <ActivityCombobox
+                ref={field.ref}
+                name={field.name}
+                options={activities}
+                value={field.value}
+                onValueChange={(value) => {
+                  field.onChange(value)
+                  prefillParticipants(value)
+                }}
+                onBlur={field.onBlur}
+                placeholder={activityPlaceholder}
+                disabled={isActivitiesLoading || activities.length === 0}
+              />
+            </FormControl>
             {isActivitiesError ? (
               <div className="flex items-center justify-between gap-3">
                 <p className="typo-small text-destructive-ink">{t("events.form.activityError")}</p>
