@@ -113,6 +113,26 @@ describe("EventList", () => {
     expect(onLoadMore).toHaveBeenCalled()
   })
 
+  it("keeps the loaded events when a later page fails", async () => {
+    const onLoadMore = vi.fn()
+    render(
+      <EventList
+        events={[event()]}
+        total={45}
+        hasMore
+        error={new Error("Network down")}
+        onLoadMore={onLoadMore}
+        activityLabel={(activity) => activity.name}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("heading", { name: "Čtvrteční florbal" })).toBeInTheDocument()
+    expect(screen.getByText("Network down")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Načíst znovu" }))
+    expect(onLoadMore).toHaveBeenCalled()
+  })
+
   it("explains an empty list", () => {
     render(
       <EventList

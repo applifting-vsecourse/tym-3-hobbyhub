@@ -26,6 +26,29 @@ type EventListProps = {
   now?: Date
 }
 
+function LoadError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
+  const { t } = useTranslation()
+
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{t("events.list.loadError")}</AlertTitle>
+      <AlertDescription className="flex items-center justify-between gap-3">
+        <span>{error.message}</span>
+        {onRetry ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRetry}
+          >
+            <RefreshCw className="size-4" />
+            {t("events.list.reload")}
+          </Button>
+        ) : null}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
 export function EventList({
   events,
   total,
@@ -51,24 +74,13 @@ export function EventList({
     )
   }
 
-  if (error) {
+  // Nothing to show yet: the error is the whole screen.
+  if (error && events.length === 0) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>{t("events.list.loadError")}</AlertTitle>
-        <AlertDescription className="flex items-center justify-between gap-3">
-          <span>{error.message}</span>
-          {onReload ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onReload}
-            >
-              <RefreshCw className="size-4" />
-              {t("events.list.reload")}
-            </Button>
-          ) : null}
-        </AlertDescription>
-      </Alert>
+      <LoadError
+        error={error}
+        onRetry={onReload}
+      />
     )
   }
 
@@ -116,7 +128,13 @@ export function EventList({
           </ul>
         </section>
       ))}
-      {hasMore && onLoadMore ? (
+      {error ? (
+        // A later page failed: keep what is loaded and retry just that page.
+        <LoadError
+          error={error}
+          onRetry={onLoadMore}
+        />
+      ) : hasMore && onLoadMore ? (
         <Button
           variant="outline"
           className="self-center"

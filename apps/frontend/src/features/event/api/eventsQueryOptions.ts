@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import { eventListSchema } from "@/features/event/api/eventSchemas"
 
-export const EVENTS_PAGE_SIZE = 20
+const EVENTS_PAGE_SIZE = 20
 
 // Offset paging: the list is sorted by start time, and a page starts after the
 // events already loaded.

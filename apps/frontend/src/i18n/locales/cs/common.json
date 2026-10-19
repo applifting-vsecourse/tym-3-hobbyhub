@@ -108,6 +108,10 @@
     "map": {
       "placeholder": "Tady bude mapa"
     },
+    "new": {
+      "placeholder": "Vypsání akce tu bude.",
+      "title": "Vypsat akci"
+    },
     "online": "Online"
   },
   "groups": {

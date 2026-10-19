@@ -17,6 +17,12 @@ export const Route = createFileRoute("/events/")({
   component: EventsPage,
 })
 
+// Pages are cut by offset, so an event that moved between two requests can come
+// back on the next page; keep its first appearance.
+const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
+  ...new Map(items.map((item) => [item.id, item])).values(),
+]
+
 // Public: browsing events needs no account. On phones one view at a time, from
 // `lg` the list and the map sit side by side.
 function EventsPage() {
@@ -38,7 +44,7 @@ function EventsPage() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-8">
           <div className={view === "list" ? undefined : "max-lg:hidden"}>
             <EventList
-              events={eventsQuery.data?.pages.flatMap((page) => page.items) ?? []}
+              events={uniqueById(eventsQuery.data?.pages.flatMap((page) => page.items) ?? [])}
               total={eventsQuery.data?.pages[0]?.total ?? 0}
               activityLabel={(activity) => activityName(t, activity)}
               isLoading={eventsQuery.isPending}

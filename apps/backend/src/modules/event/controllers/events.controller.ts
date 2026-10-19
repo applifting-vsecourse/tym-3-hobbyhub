@@ -1,25 +1,14 @@
 import { EventsService } from '@/modules/event/services/events.service';
-import {
-  Controller,
-  Get,
-  Query,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EventListResponseDto } from './dto/event-list-item.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
+import { eventsValidationPipe } from './events-validation.pipe';
 
 // Public: browsing events needs no account (E2).
 @ApiTags('events')
 @Controller('events')
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }),
-)
+@UsePipes(eventsValidationPipe)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 

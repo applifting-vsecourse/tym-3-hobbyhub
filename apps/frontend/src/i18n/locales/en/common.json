@@ -107,6 +107,10 @@
     "map": {
       "placeholder": "The map will be here"
     },
+    "new": {
+      "placeholder": "Creating an event will be here.",
+      "title": "Create an event"
+    },
     "online": "Online"
   },
   "groups": {
