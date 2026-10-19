@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
 import { SearchWithFilters } from "@/features/design-system/components/SheetDemos"
@@ -215,6 +216,13 @@ export function ControlSections() {
             min={2}
             max={30}
           />
+          <div className="flex min-h-11 items-center justify-between gap-3">
+            <Label htmlFor="ds-remember">Zůstat přihlášen</Label>
+            <Switch
+              id="ds-remember"
+              defaultChecked
+            />
+          </div>
         </div>
       </ShowcaseSection>
 

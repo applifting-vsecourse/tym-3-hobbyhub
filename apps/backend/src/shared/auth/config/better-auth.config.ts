@@ -43,5 +43,15 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
       },
     },
   },
+  // F-03.4: repeated failed sign-ins are cut off by the auth service itself.
+  // Kept in the database so the count survives restarts and is shared
+  // between instances; on in every environment, not only production.
+  rateLimit: {
+    enabled: true,
+    storage: 'database',
+    customRules: {
+      '/sign-in/email': { window: 15 * 60, max: 5 },
+    },
+  },
   plugins: [openAPI(), username()],
 };

@@ -39,10 +39,16 @@
     },
     "signIn": {
       "description": "Vítejte zpět v HobbyHubu.",
+      "lockoutNote": "Po opakovaných neúspěšných pokusech přihlášení na chvíli zablokujeme.",
       "noAccount": "Nemáte účet?",
+      "rememberMe": "Zůstat přihlášen",
       "signUpLink": "Zaregistrujte se",
       "submit": "Přihlásit se",
       "title": "Přihlášení"
+    },
+    "signOut": {
+      "failed": "Odhlášení se nezdařilo. Zkuste to prosím znovu.",
+      "success": "Byli jste odhlášeni."
     },
     "signUp": {
       "description": "Profil doplníte později.",
