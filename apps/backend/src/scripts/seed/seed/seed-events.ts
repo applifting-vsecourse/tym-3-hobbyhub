@@ -540,6 +540,59 @@ export async function seedEvents(
     },
   ];
 
+  // Enough further events that the list needs more than one page.
+  const fillerActivities = [
+    ['Běh', 'Večerní běh'],
+    ['Volejbal', 'Plážový volejbal'],
+    ['Tenis', 'Tenis na kurtech'],
+    ['Cyklistika', 'Výlet na kolech'],
+    ['Deskové hry', 'Deskovky v kavárně'],
+    ['Fotbal', 'Fotbálek po práci'],
+  ] as const;
+  const fillerPlaces: Place[] = [
+    {
+      city: 'Praha',
+      district: 'Praha 3',
+      street: 'Koněvova 1',
+      postalCode: '13000',
+      placeName: 'Hřiště Žižkov',
+      latitude: 50.0839,
+      longitude: 14.4547,
+    },
+    {
+      city: 'Praha',
+      district: 'Praha 4',
+      street: 'Budějovická 1',
+      postalCode: '14000',
+      placeName: 'Sportovní hala Krč',
+      latitude: 50.0442,
+      longitude: 14.4492,
+    },
+    {
+      city: 'Brno',
+      district: 'Brno-střed',
+      street: 'Údolní 1',
+      postalCode: '60200',
+      placeName: 'Sportcentrum Údolní',
+      latitude: 49.2021,
+      longitude: 16.5987,
+    },
+  ];
+  for (let index = 0; index < 12; index++) {
+    const [activity, title] = fillerActivities[index % fillerActivities.length];
+    examples.push({
+      title: `${title} ${index + 1}`,
+      description: 'Ukázková akce, aby měl seznam z čeho stránkovat.',
+      activity,
+      level: 'Všechny úrovně',
+      startAt: at(8 + index, 17 + (index % 3)),
+      min: 4,
+      max: 8,
+      place: fillerPlaces[index % fillerPlaces.length],
+      seats: approved(index % 4),
+    });
+  }
+
   const levels = new Map(
     (await prisma.level.findMany()).map((level) => [level.name, level.id]),
   );
