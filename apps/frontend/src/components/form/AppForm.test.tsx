@@ -30,14 +30,8 @@ function Harness({ onSubmit = () => Promise.resolve(), isGuarded }: HarnessProps
 }
 
 const renderHarness = async (props: HarnessProps = {}) => {
-  const { router } = await renderWithRouter(<Harness {...props} />)
-  return { router, user: userEvent.setup() }
-}
-
-// Navigation blocked by the guard resolves only after the dialog is answered,
-// so it must not be awaited here.
-const leave = (router: Awaited<ReturnType<typeof renderHarness>>["router"]) => {
-  void router.navigate({ to: AWAY_PATH })
+  const { router, navigateAway } = await renderWithRouter(<Harness {...props} />)
+  return { router, leave: navigateAway, user: userEvent.setup() }
 }
 
 const expectLocation = (
@@ -47,19 +41,19 @@ const expectLocation = (
 
 describe("AppForm unsaved-changes guard", () => {
   it("lets an untouched form go", async () => {
-    const { router } = await renderHarness()
+    const { router, leave } = await renderHarness()
 
-    leave(router)
+    leave()
 
     await expectLocation(router, AWAY_PATH)
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
   it("asks before leaving a dirty form and stays on 'Zůstat'", async () => {
-    const { router, user } = await renderHarness()
+    const { router, leave, user } = await renderHarness()
     await user.type(screen.getByLabelText("Název"), "Čtvrteční florbal")
 
-    leave(router)
+    leave()
 
     const dialog = await screen.findByRole("dialog", { name: "Opustit stránku?" })
     expect(dialog).toHaveTextContent("Máte rozpracované změny")
@@ -71,42 +65,42 @@ describe("AppForm unsaved-changes guard", () => {
   })
 
   it("leaves on 'Odejít'", async () => {
-    const { router, user } = await renderHarness()
+    const { router, leave, user } = await renderHarness()
     await user.type(screen.getByLabelText("Název"), "x")
 
-    leave(router)
+    leave()
     await user.click(await screen.findByRole("button", { name: "Odejít" }))
 
     await expectLocation(router, AWAY_PATH)
   })
 
   it("stops guarding once a submit succeeded", async () => {
-    const { router, user } = await renderHarness()
+    const { router, leave, user } = await renderHarness()
     await user.type(screen.getByLabelText("Název"), "x")
     await user.click(screen.getByRole("button", { name: "Odeslat" }))
 
-    leave(router)
+    leave()
 
     await expectLocation(router, AWAY_PATH)
   })
 
   it("keeps guarding when the submit failed", async () => {
-    const { router, user } = await renderHarness({
+    const { leave, user } = await renderHarness({
       onSubmit: () => Promise.reject(new Error("server down")),
     })
     await user.type(screen.getByLabelText("Název"), "x")
     await user.click(screen.getByRole("button", { name: "Odeslat" }))
 
-    leave(router)
+    leave()
 
     expect(await screen.findByRole("dialog", { name: "Opustit stránku?" })).toBeInTheDocument()
   })
 
   it("can be switched off where typed input costs nothing", async () => {
-    const { router, user } = await renderHarness({ isGuarded: false })
+    const { router, leave, user } = await renderHarness({ isGuarded: false })
     await user.type(screen.getByLabelText("Název"), "x")
 
-    leave(router)
+    leave()
 
     await expectLocation(router, AWAY_PATH)
   })

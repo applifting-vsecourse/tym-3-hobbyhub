@@ -47,5 +47,9 @@ export async function renderWithRouter(ui: ReactNode) {
   })
   await router.load()
   const result = render(<RouterProvider router={router} />)
-  return { ...result, router }
+  // Through the history, so the app's route types do not apply and a blocker
+  // (the unsaved-changes guard) still sees it. Not awaited: a blocked
+  // navigation resolves only once the dialog is answered.
+  const navigateAway = () => router.history.push(AWAY_PATH)
+  return { ...result, router, navigateAway }
 }
