@@ -88,6 +88,11 @@
       "today": "Today",
       "tomorrow": "Tomorrow"
     },
+    "detail": {
+      "back": "Back to events",
+      "placeholder": "The event detail will be here.",
+      "title": "Event detail"
+    },
     "list": {
       "count_one": "{{count}} event",
       "count_other": "{{count}} events",

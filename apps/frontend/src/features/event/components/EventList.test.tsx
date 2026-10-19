@@ -5,6 +5,26 @@ import { describe, expect, it, vi } from "vitest"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventList } from "@/features/event/components/EventList"
 
+// Rows link to the detail; the router itself is not under test here.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    params,
+    children,
+    ...props
+  }: {
+    params: { eventId: string }
+    children: React.ReactNode
+    className?: string
+  }) => (
+    <a
+      href={`/events/${params.eventId}`}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+}))
+
 const NOW = new Date(2026, 9, 22, 8, 0)
 
 const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
@@ -42,6 +62,21 @@ describe("EventList", () => {
     expect(screen.getByText("1 akce")).toBeInTheDocument()
     // Missing counts towards the minimum (8), not the capacity (10).
     expect(screen.getByText("chybí 1")).toBeInTheDocument()
+  })
+
+  it("links a row to the event detail", () => {
+    render(
+      <EventList
+        events={[event()]}
+        activityLabel={(activity) => activity.name}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("link", { name: /Čtvrteční florbal/ })).toHaveAttribute(
+      "href",
+      "/events/e1",
+    )
   })
 
   it("says full once the minimum is reached", () => {

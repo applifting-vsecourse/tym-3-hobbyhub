@@ -13,7 +13,7 @@ import { eventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { EventList } from "@/features/event/components/EventList"
 import { EventsMapPlaceholder } from "@/features/event/components/EventsMapPlaceholder"
 
-export const Route = createFileRoute("/events")({
+export const Route = createFileRoute("/events/")({
   component: EventsPage,
 })
 

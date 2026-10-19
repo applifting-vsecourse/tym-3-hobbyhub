@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router"
 import { RefreshCw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -89,14 +90,20 @@ export function EventList({
           <ul>
             {dayEvents.map((event) => (
               <li key={event.id}>
-                <ScheduleRow
-                  time={eventTime(event.startAt, i18n.language)}
-                  title={event.title}
-                  subtitle={eventMeta(t, event, activityLabel(event.activity))}
-                  taken={event.takenCount}
-                  min={event.minParticipants}
-                  max={event.maxParticipants}
-                />
+                <Link
+                  to="/events/$eventId"
+                  params={{ eventId: event.id }}
+                  className="block rounded-md transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <ScheduleRow
+                    time={eventTime(event.startAt, i18n.language)}
+                    title={event.title}
+                    subtitle={eventMeta(t, event, activityLabel(event.activity))}
+                    taken={event.takenCount}
+                    min={event.minParticipants}
+                    max={event.maxParticipants}
+                  />
+                </Link>
               </li>
             ))}
           </ul>

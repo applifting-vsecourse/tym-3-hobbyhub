@@ -88,6 +88,11 @@
       "today": "Dnes",
       "tomorrow": "Zítra"
     },
+    "detail": {
+      "back": "Zpět na akce",
+      "placeholder": "Detail akce tu bude.",
+      "title": "Detail akce"
+    },
     "list": {
       "count_few": "{{count}} akce",
       "count_one": "{{count}} akce",
