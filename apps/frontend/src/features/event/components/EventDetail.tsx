@@ -120,7 +120,9 @@ export function EventDetail({
             </p>
             <p className="typo-time text-foreground">{eventTime(event.startAt, locale)}</p>
             <p className="typo-small text-muted-foreground">
-              {t("hobbyhub.eventDetail.until", { time: eventEnd(event.startAt, event.endAt, locale) })}
+              {t("hobbyhub.eventDetail.until", {
+                time: eventEnd(event.startAt, event.endAt, locale),
+              })}
             </p>
           </div>
           <ul className="flex flex-col gap-1.5 pt-5 typo-body text-muted-foreground">
