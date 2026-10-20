@@ -227,8 +227,12 @@ export function GroupForm({
         )}
       />
 
-      {/* On phones the action sits at the bottom of the screen, as in the wireframe. */}
-      <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:mt-8 md:flex md:justify-end md:p-0">
+      {/*
+        On phones the action sits at the bottom of the screen, as in the
+        wireframe, above the BottomNav and under it (z-40) so its raised
+        "Přidat" stays on top.
+      */}
+      <div className="fixed inset-x-0 bottom-0 z-30 bg-background px-4 pt-3 pb-above-bottom-nav md:static md:z-auto md:mt-8 md:flex md:justify-end md:p-0">
         <Button
           type="submit"
           size="lg"
