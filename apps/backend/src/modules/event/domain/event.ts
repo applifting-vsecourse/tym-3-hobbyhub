@@ -184,7 +184,8 @@ export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
 // by distance, and similar spellings ("Brno" ~ "Brnoo") matched by similarity.
 // What the public list can be narrowed by (F-02.1). Nothing set means all.
 // `search` matches title, place, city, district and activity; `location` the
-// place, city and district. Both ignore case and diacritics.
+// place, city and district. Both ignore case and diacritics, and every word of
+// a text has to match (in any of those fields).
 export type EventListFilter = {
   activityIds: string[];
   search?: string;

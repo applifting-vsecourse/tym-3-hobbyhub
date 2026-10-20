@@ -243,16 +243,21 @@ export class EventRepository {
     { search, location }: EventListFilter,
     now: Date,
   ): Promise<string[] | null> {
-    const searchNeedle = foldForSearch(search ?? '');
-    const locationNeedle = foldForSearch(location ?? '');
+    // Every word has to match somewhere, so "volejbal praha" finds the activity
+    // in one column and the city in another.
+    const words = (text?: string): string[] =>
+      foldForSearch(text ?? '')
+        .split(/\s+/)
+        .filter(Boolean);
     const conditions = [
-      searchNeedle &&
+      ...words(search).map((word) =>
         containsInAny(
           [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
-          searchNeedle,
+          word,
         ),
-      locationNeedle && containsInAny(PLACE_COLUMNS, locationNeedle),
-    ].filter((condition): condition is Prisma.Sql => !!condition);
+      ),
+      ...words(location).map((word) => containsInAny(PLACE_COLUMNS, word)),
+    ];
     if (conditions.length === 0) return null;
 
     const rows = await this.prisma.$queryRaw<{ id: string }[]>`

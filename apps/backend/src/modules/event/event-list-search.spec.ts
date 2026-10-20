@@ -114,6 +114,23 @@ describeDb('public event list search', () => {
     );
   });
 
+  it('needs every word to match, each in any field', async () => {
+    await withEvents(
+      [{ locationCity: 'Praha' }, { locationCity: 'Brno' }],
+      async (repository, [praha, brno]) => {
+        // "sachy" is the activity, "praha" the city: two different columns.
+        const found = await search(repository, {
+          search: `sachy ${MARK} praha`,
+        });
+        expect(found).toContain(praha);
+        expect(found).not.toContain(brno);
+        expect(
+          await search(repository, { search: 'sachy zzzneexistuje' }),
+        ).toEqual([]);
+      },
+    );
+  });
+
   it('finds the activity by its name', async () => {
     await withEvents([{}], async (repository, [id]) => {
       expect(await search(repository, { search: 'sachy' })).toContain(id);
