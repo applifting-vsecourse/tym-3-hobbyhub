@@ -87,7 +87,7 @@ export function DomainSections() {
       <ShowcaseSection
         id="soupiska"
         title="Soupiska míst"
-        description="Každá akce je soupiska. Obsazená místa jsou avatary aktivit, volná místa přerušované kruhy s plusem. Velikosti sm, md, lg a xl, světlý a tmavý povrch."
+        description="Každá akce je soupiska. Obsazená místa jsou avatary aktivit, místa chybějící do minima přerušované kruhy s plusem, volná místa nad minimem prázdné kroužky. Velikosti sm, md, lg a xl, světlý a tmavý povrch."
       >
         <Example label="Světlý povrch — sm, md, lg">
           <div className="flex flex-col gap-4">
@@ -99,6 +99,7 @@ export function DomainSections() {
             <RosterSeats
               size="md"
               taken={4}
+              min={6}
               capacity={10}
             />
             <RosterSeats
@@ -113,7 +114,8 @@ export function DomainSections() {
             <RosterSeats
               size="lg"
               surface="dark"
-              taken={7}
+              taken={2}
+              min={3}
               capacity={10}
             />
           </div>

@@ -86,6 +86,7 @@ export function EventCard({
         <RosterSeats
           size="sm"
           taken={taken}
+          min={min}
           capacity={max}
           isAnimated={isAnimated}
         />

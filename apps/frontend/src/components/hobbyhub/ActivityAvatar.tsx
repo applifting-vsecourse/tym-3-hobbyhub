@@ -63,8 +63,11 @@ const freeBorder = {
 } as const
 
 type ActivityAvatarProps = VariantProps<typeof avatarVariants> & {
-  /** An illustrated person, or `"free"` for the dashed empty seat. */
-  avatar: AvatarKind | "free"
+  /**
+   * An illustrated person, `"free"` for the dashed empty seat that is missing
+   * to the minimum, or `"open"` for a plain ring: a seat above the minimum.
+   */
+  avatar: AvatarKind | "free" | "open"
   /** `inverse` draws the empty seat for the dark signal surface (hero). */
   tone?: "default" | "inverse"
   /** The person's name when the avatar stands alone; empty when a name sits next to it. */
@@ -76,7 +79,8 @@ type ActivityAvatarProps = VariantProps<typeof avatarVariants> & {
 
 /**
  * Illustrated avatar instead of a photo or initials. The face is always blank.
- * An empty seat is a dashed circle with a plus.
+ * An empty seat missing to the minimum is a dashed circle with a plus; a seat
+ * above the minimum is a plain ring, like `Seat` in the "free" state.
  */
 export function ActivityAvatar({
   avatar,
@@ -88,6 +92,23 @@ export function ActivityAvatar({
 }: ActivityAvatarProps) {
   const boxClass = isFluid ? avatarVariants({ size: null }) : avatarVariants({ size })
   const fluidClass = isFluid ? "aspect-square w-full" : undefined
+  if (avatar === "open") {
+    return (
+      <span
+        data-slot="activity-avatar"
+        className={cn(
+          boxClass,
+          fluidClass,
+          freeBorder[size ?? "md"],
+          tone === "inverse" ? "border-signal-soft/40" : "border-input",
+          className,
+        )}
+      >
+        {alt ? <span className="sr-only">{alt}</span> : null}
+      </span>
+    )
+  }
+
   if (avatar === "free") {
     return (
       <span
