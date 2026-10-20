@@ -23,12 +23,16 @@ WITH people AS (
 ), clock AS (
   SELECT
     (now() AT TIME ZONE 'UTC') AS utc_now,
-    ((date_trunc('day', now() AT TIME ZONE 'Europe/Prague') AT TIME ZONE 'Europe/Prague') AT TIME ZONE 'UTC') AS midnight
+    -- Local midnight in Prague, without a zone. The offset is added here, in
+    -- local time, and only the result is converted to UTC, so "19:00" stays
+    -- 19:00 on the other side of a daylight-saving change.
+    date_trunc('day', now() AT TIME ZONE 'Europe/Prague') AS local_midnight
 ), rows AS (
   SELECT
     v.*,
     c.utc_now,
-    c.midnight + make_interval(days => v.day_offset, hours => v.hour, mins => v.minute) AS start_at
+    ((c.local_midnight + make_interval(days => v.day_offset, hours => v.hour, mins => v.minute))
+      AT TIME ZONE 'Europe/Prague') AT TIME ZONE 'UTC' AS start_at
   FROM (VALUES
     (
       'demo-event-ctvrtecni-florbal', 'Čtvrteční florbal',
