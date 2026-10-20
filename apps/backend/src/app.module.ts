@@ -14,6 +14,7 @@ const imports = [
   WelcomeModule,
   QuackModule,
   ActivityModule,
+  EventModule,
   GroupModule,
   EventModule,
 ];

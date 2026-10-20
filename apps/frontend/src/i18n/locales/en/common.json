@@ -93,6 +93,10 @@
   },
   "events": {
     "back": "Back",
+    "day": {
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
     "defaults": {
       "country": "Czechia"
     },
@@ -159,6 +163,21 @@
       },
       "title": "New event"
     },
+    "list": {
+      "count_one": "{{count}} event",
+      "count_other": "{{count}} events",
+      "empty": "There are no upcoming events yet. Check back later, or create one yourself.",
+      "loadError": "Could not load events",
+      "loadMore": "Load more",
+      "loading": "Loading events…",
+      "reload": "Reload",
+      "seoTitle": "Events",
+      "title": "Events"
+    },
+    "map": {
+      "placeholder": "The map will be here"
+    },
+    "online": "Online",
     "placeholders": {
       "city": "E.g. Prague 8",
       "contributionAmount": "E.g. 80",

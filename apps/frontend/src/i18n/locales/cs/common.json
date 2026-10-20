@@ -93,6 +93,10 @@
   },
   "events": {
     "back": "Zpět",
+    "day": {
+      "today": "Dnes",
+      "tomorrow": "Zítra"
+    },
     "defaults": {
       "country": "Česko"
     },
@@ -162,6 +166,22 @@
       },
       "title": "Nová akce"
     },
+    "list": {
+      "count_few": "{{count}} akce",
+      "count_one": "{{count}} akce",
+      "count_other": "{{count}} akcí",
+      "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
+      "loadError": "Akce se nepodařilo načíst",
+      "loadMore": "Načíst další",
+      "loading": "Načítáme akce…",
+      "reload": "Načíst znovu",
+      "seoTitle": "Akce",
+      "title": "Akce"
+    },
+    "map": {
+      "placeholder": "Tady bude mapa"
+    },
+    "online": "Online",
     "placeholders": {
       "city": "Např. Praha 8",
       "contributionAmount": "Např. 80",

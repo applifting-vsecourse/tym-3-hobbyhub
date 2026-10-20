@@ -2,8 +2,10 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import {
   CreateEventData,
   Event,
+  EventListPage,
   EventRuleViolation,
   eventRuleViolations,
+  Page,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -54,5 +56,12 @@ export class EventsService {
     const event = await this.eventRepository.getEventById(id);
     if (!event) throw new NotFoundException('Event not found');
     return event;
+  }
+
+  getUpcomingPublicEvents(
+    page: Page,
+    now: Date = new Date(),
+  ): Promise<EventListPage> {
+    return this.eventRepository.getUpcomingPublicEvents(now, page);
   }
 }
