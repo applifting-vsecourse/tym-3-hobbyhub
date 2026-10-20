@@ -98,7 +98,9 @@ export function BottomNav({ active, hasNewRequests = false, className }: BottomN
         {SECTIONS.slice(0, 2).map(renderItem)}
         <Link
           to={ROUTES.newEvent}
-          className="group relative flex flex-1 flex-col items-center gap-0.5 py-2 typo-caption text-primary outline-none"
+          // The label is muted like the others: the raised button is the
+          // accent, and "Přidat" is never the current place.
+          className="group relative flex flex-1 flex-col items-center gap-0.5 py-2 typo-caption text-muted-foreground outline-none hover:text-foreground"
         >
           <span
             aria-hidden
