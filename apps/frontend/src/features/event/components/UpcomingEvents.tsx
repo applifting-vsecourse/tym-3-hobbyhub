@@ -72,7 +72,8 @@ export function UpcomingEvents({
               when={eventWhen(t, event.startAt, now, i18n.language)}
               meta={eventMeta(t, event, activityLabel(event.activity))}
               taken={event.takenCount}
-              capacity={event.maxParticipants}
+              min={event.minParticipants}
+              max={event.maxParticipants}
               // The title next to it says what the photo shows.
               photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
               activity={event.activity.icon}

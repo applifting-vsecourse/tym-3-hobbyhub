@@ -71,7 +71,20 @@ describe("UpcomingEvents", () => {
     expect(screen.getByText("Dnes 19:00")).toBeInTheDocument()
     expect(screen.getByText("Zítra 18:00")).toBeInTheDocument()
     expect(screen.getAllByText("Florbal · ZŠ Kobylisy, Praha 8 · Pokročilí")).toHaveLength(2)
-    expect(screen.getAllByText("chybí 3")).toHaveLength(2)
+    expect(screen.getAllByText("chybí 1")).toHaveLength(2)
+  })
+
+  it("counts the missing people towards the minimum, not the free seats", () => {
+    render(
+      <UpcomingEvents
+        activityLabel={(activity) => activity.name}
+        events={[event({ minParticipants: 4, maxParticipants: 15, takenCount: 4 })]}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.queryByText(/chybí/)).not.toBeInTheDocument()
+    expect(screen.getByText("naplněno")).toBeInTheDocument()
   })
 
   it("shows the photo only where there is one", () => {

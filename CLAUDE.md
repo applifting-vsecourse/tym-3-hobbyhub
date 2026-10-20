@@ -74,7 +74,7 @@ Build every form with `AppForm` from `src/components/form/AppForm.tsx`, never wi
 
 Assume the dev servers are up. If something is listening on the app's ports, that is this application: use it. Don't start a second instance, don't restart it, don't run `pnpm dev`.
 
-Don't reach for the browser to check your own work. Tests and type-checks are the evidence; open the running app when asked to, not on your own initiative.
+Don't reach for the browser to check your own work. Tests and type-checks are the evidence; open the running app when asked to, not on your own initiative. The exception is a change to how the UI looks or behaves on phones: check it in the iOS Simulator (its `localhost` is this machine). jsdom and a desktop browser don't show iOS zoom on focus, native date inputs, the on-screen keyboard or bars fixed to the bottom.
 
 ### Text lives in translations
 

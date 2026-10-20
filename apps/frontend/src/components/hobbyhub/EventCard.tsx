@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { missingCount } from "@/components/hobbyhub/capacity"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { cn } from "@/lib/utils"
@@ -12,7 +13,10 @@ type EventCardProps = {
   /** Place and level, e.g. "ZŠ Kobylisy · pokročilí". */
   meta: string
   taken: number
-  capacity: number
+  /** People needed for the event to happen; "chybí N" counts towards this. */
+  min: number
+  /** Seats on the roster. */
+  max: number
   /** Without a photo the card shows the activity's icon on a muted band. */
   photo?: { src: string; alt: string }
   /** Icon key of the activity (`ACTIVITIES`); unknown keys leave the band empty. */
@@ -32,14 +36,16 @@ export function EventCard({
   when,
   meta,
   taken,
-  capacity,
+  min,
+  max,
   photo,
   activity,
   isAnimated = false,
   className,
 }: EventCardProps) {
   const { t } = useTranslation()
-  const missing = Math.max(capacity - taken, 0)
+  // The same count as the event list and the detail: missing to the minimum.
+  const missing = missingCount({ taken, min })
 
   return (
     <article
@@ -80,7 +86,8 @@ export function EventCard({
         <RosterSeats
           size="sm"
           taken={taken}
-          capacity={capacity}
+          min={min}
+          capacity={max}
           isAnimated={isAnimated}
         />
         {missing > 0 ? (
