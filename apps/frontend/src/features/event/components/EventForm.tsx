@@ -409,7 +409,8 @@ export function EventForm({
             {step === "who" ? <MissingToMinimum /> : null}
             {step === "details" ? <PreviewFromForm activities={sortedActivities} /> : null}
           </div>
-          <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {/* Under the BottomNav (z-40), so its raised "Přidat" stays on top. */}
+          <div className="fixed inset-x-0 bottom-0 z-30 bg-background px-4 pt-3 pb-above-bottom-nav">
             {/*
               Distinct keys, so the two buttons never share a DOM node. The step
               changes while the click on "Pokračovat" is still being handled;
