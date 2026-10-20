@@ -238,6 +238,7 @@ export class EventRepository {
         event.contributionAmount === null
           ? null
           : Number(event.contributionAmount),
+      contributionNote: event.contributionNote,
       status: event.status as EventDetail['status'],
       approvalMode: event.approvalMode,
       organizerName: event.organizer.name,

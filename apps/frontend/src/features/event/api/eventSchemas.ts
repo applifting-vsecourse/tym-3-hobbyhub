@@ -123,6 +123,7 @@ export const eventDetailSchema = eventListItemSchema.extend({
   equipment: z.string().nullable(),
   /** In CZK, information only. */
   contributionAmount: z.number().nullable(),
+  contributionNote: z.string().nullable(),
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   approvalMode: z.enum(["MANUAL", "AUTOMATIC"]),
   organizerName: z.string(),

@@ -219,6 +219,7 @@
     "preview": {
       "noPlace": "Event place",
       "noTime": "--:--",
+      "occupied": "{{taken}} of {{total}} taken",
       "untitled": "Event title"
     },
     "validation": {

@@ -222,6 +222,7 @@ export type EventDetail = EventListItem & {
   equipment: string | null;
   // Information only; nothing is paid in the app.
   contributionAmount: number | null;
+  contributionNote: string | null;
   status: PublicEventStatus;
   approvalMode: ApprovalMode;
   organizerName: string;

@@ -137,6 +137,9 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   })
   contributionAmount!: number | null;
 
+  @ApiProperty({ type: String, nullable: true })
+  contributionNote!: string | null;
+
   @ApiProperty({ enum: ['PUBLISHED', 'CANCELLED', 'FINISHED', 'NOT_HELD'] })
   status!: EventDetail['status'];
 
@@ -164,6 +167,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       description: event.description,
       equipment: event.equipment,
       contributionAmount: event.contributionAmount,
+      contributionNote: event.contributionNote,
       status: event.status,
       approvalMode: event.approvalMode,
       organizerName: event.organizerName,

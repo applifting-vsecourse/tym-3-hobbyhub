@@ -221,6 +221,7 @@
     "preview": {
       "noPlace": "Místo akce",
       "noTime": "--:--",
+      "occupied": "Obsazeno {{taken}} z {{total}}",
       "untitled": "Název akce"
     },
     "validation": {

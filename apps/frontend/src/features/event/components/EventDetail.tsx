@@ -12,7 +12,8 @@ import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { cn } from "@/lib/utils"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
-import { eventDay, eventTime } from "@/features/event/lib/eventLabels"
+import { formatContribution } from "@/features/event/lib/eventDateTime"
+import { eventDay, eventEnd, eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 
 type EventDetailProps = {
   event: EventDetailData
@@ -56,18 +57,10 @@ export function EventDetail({
   const locale = i18n.language
   const state = eventState(event, now)
   const missing = missingCount({ taken: event.takenCount, min: event.minParticipants })
-  const money = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "CZK",
-    maximumFractionDigits: 0,
-  })
   const { stats } = event
   const day = eventDay(t, event.startAt, now, locale)
   const isToday = day === t("events.day.today")
-  const where =
-    event.venueType === "ONLINE"
-      ? t("events.online")
-      : [event.placeName, event.district ?? event.city].filter(Boolean).join(", ")
+  const where = eventPlace(t, event)
   // A public venue is named above; the others stay vague until approval.
   const addressNote =
     event.venueType === "ONLINE"
@@ -78,7 +71,12 @@ export function EventDetail({
   const practical = [
     addressNote,
     event.contributionAmount !== null
-      ? { label: t("events.detail.contribution"), value: money.format(event.contributionAmount) }
+      ? {
+          label: t("events.detail.contribution"),
+          value: [formatContribution(event.contributionAmount, locale), event.contributionNote]
+            .filter(Boolean)
+            .join(" · "),
+        }
       : null,
     event.equipment ? { label: t("events.detail.equipment"), value: event.equipment } : null,
   ].filter((row) => row !== null)
@@ -122,7 +120,7 @@ export function EventDetail({
             </p>
             <p className="typo-time text-foreground">{eventTime(event.startAt, locale)}</p>
             <p className="typo-small text-muted-foreground">
-              {t("hobbyhub.eventDetail.until", { time: eventTime(event.endAt, locale) })}
+              {t("hobbyhub.eventDetail.until", { time: eventEnd(event.startAt, event.endAt, locale) })}
             </p>
           </div>
           <ul className="flex flex-col gap-1.5 pt-5 typo-body text-muted-foreground">

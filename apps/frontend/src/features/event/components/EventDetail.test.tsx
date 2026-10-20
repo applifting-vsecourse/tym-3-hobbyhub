@@ -24,6 +24,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   description: "Přátelský zápas v tělocvičně.",
   equipment: "Hokejka a sálová obuv",
   contributionAmount: 80,
+  contributionNote: null,
   status: "PUBLISHED",
   approvalMode: "MANUAL",
   organizerName: "Jana Nováková",
@@ -59,6 +60,18 @@ describe("EventDetail", () => {
     expect(screen.getByText(/80\s*Kč/)).toBeInTheDocument()
     expect(screen.getByText("chybí 3 do minima")).toBeInTheDocument()
     expect(screen.getByText("5 z 10 míst")).toBeInTheDocument()
+  })
+
+  it("keeps the decimals and the note of the contribution", () => {
+    renderDetail({ contributionAmount: 80.5, contributionNote: "platí se na místě" })
+
+    expect(screen.getByText(/80,5\s*Kč · platí se na místě/)).toBeInTheDocument()
+  })
+
+  it("names the end date of an event that ends on another day", () => {
+    renderDetail({ endAt: new Date(2026, 9, 24, 20, 30) })
+
+    expect(screen.getByText(/do .*24.*20:30/)).toBeInTheDocument()
   })
 
   it("offers the seat while the event is open", () => {

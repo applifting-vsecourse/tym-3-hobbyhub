@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router"
-import { ChevronLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
+import { BackLink } from "@/components/BackLink"
 import { NotFound } from "@/components/Error/NotFound"
 import { Header } from "@/components/Header/Header"
 import { Loader } from "@/components/hobbyhub/Loader"
@@ -93,19 +93,10 @@ function EventDetailPage() {
       <Seo title={eventQuery.data?.title ?? t("events.detail.title")} />
       <Header userMenu={<HeaderMenu />} />
       <main className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
-        <Button
-          asChild
-          variant="outline"
-          size="icon"
-          className="mb-4 rounded-full md:hidden"
-        >
-          <Link
-            to={ROUTES.events}
-            aria-label={t("events.detail.back")}
-          >
-            <ChevronLeft aria-hidden />
-          </Link>
-        </Button>
+        <BackLink
+          to={ROUTES.events}
+          label={t("events.detail.back")}
+        />
         {eventQuery.isPending ? (
           <div className="flex justify-center py-16">
             <Loader
