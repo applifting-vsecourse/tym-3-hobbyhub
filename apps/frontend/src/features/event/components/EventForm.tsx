@@ -363,7 +363,9 @@ export function EventForm({
           </div>
         </div>
       ) : (
-        // Room for the action bar fixed to the bottom.
+        // Room for the action bar fixed to the bottom. A fixed value is enough:
+        // the bar grows by the BottomNav's height, and the sticky nav takes
+        // that same height in the flow below this content.
         <div className="pb-24">
           {stepIndex === 0 ? (
             backLink

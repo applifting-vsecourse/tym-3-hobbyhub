@@ -112,7 +112,9 @@ export function GroupForm({
     <AppForm
       form={form}
       onSubmit={(values) => onSubmit(toInput(values))}
-      // Room for the submit bar fixed to the bottom on phones.
+      // Room for the submit bar fixed to the bottom on phones. A fixed value is
+      // enough: the bar grows by the BottomNav's height, and the sticky nav
+      // takes that same height in the flow below the form.
       className="space-y-4 pb-24 md:pb-0"
     >
       {errorMessage ? (
