@@ -1,18 +1,37 @@
 import { useTranslation } from "react-i18next"
 
-import { ROUTES } from "@/app/routes"
 import { HeaderNavLink } from "@/components/Header/HeaderNavLink"
+import { NAV_TARGETS, type NavPlace, type NavSection } from "@/lib/navigation"
 
-// The logo already links home, so "Home" would be a duplicate.
-export function HeaderNav() {
+type HeaderNavProps = {
+  active: NavSection | null
+}
+
+const ITEMS: { section: NavPlace; labelKey: string }[] = [
+  { section: "discover", labelKey: "hobbyhub.nav.discover" },
+  { section: "my-events", labelKey: "hobbyhub.nav.myEvents" },
+  { section: "groups", labelKey: "hobbyhub.nav.groups" },
+]
+
+// Desktop only: on phones the same places are in the BottomNav. Profile is not
+// here either — the avatar menu has it. The logo already links home.
+export function HeaderNav({ active }: HeaderNavProps) {
   const { t } = useTranslation()
 
   return (
-    <nav className="flex min-w-0 [scrollbar-width:none] items-center gap-1 overflow-x-auto">
-      <HeaderNavLink to={ROUTES.events}>{t("header.nav.events")}</HeaderNavLink>
-      <HeaderNavLink to={ROUTES.groups}>{t("header.nav.groups")}</HeaderNavLink>
-      <HeaderNavLink to={ROUTES.quacks}>{t("header.nav.quacks")}</HeaderNavLink>
-      <HeaderNavLink to={ROUTES.designSystem}>{t("header.nav.designSystem")}</HeaderNavLink>
+    <nav
+      aria-label={t("hobbyhub.nav.label")}
+      className="hidden items-center gap-1 md:mr-2 md:flex"
+    >
+      {ITEMS.map(({ section, labelKey }) => (
+        <HeaderNavLink
+          key={section}
+          to={NAV_TARGETS[section]}
+          isActive={active === section}
+        >
+          {t(labelKey)}
+        </HeaderNavLink>
+      ))}
     </nav>
   )
 }
