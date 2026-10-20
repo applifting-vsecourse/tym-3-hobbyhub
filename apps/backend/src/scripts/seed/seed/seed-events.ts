@@ -103,6 +103,41 @@ export async function seedLookups(prisma: PrismaService): Promise<void> {
   }
 }
 
+// Example photos per activity, hotlinked from Wikimedia Commons (free licences:
+// CC BY, CC BY-SA, public domain; the author is on each file's Commons page,
+// named in the URL). Demo data only: a real event gets its own photo.
+const ACTIVITY_PHOTOS: Record<string, string> = {
+  Florbal:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/V%C3%A4xj%C3%B6_-_UHC_floorball_face-off.jpg?width=800',
+  Volejbal:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Volleyball_match_-_warming_up_2.jpg?width=800',
+  Tenis:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/141100_-_Wheelchair_tennis_David_Hall_serves_2_-_3b_-_2000_Sydney_match_photo.jpg?width=800',
+  Fotbal:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Amateur_football_match_between_Wales_and_England_at_Porthmadog_%281496762%29.jpg?width=800',
+  Basketbal:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Basketball_Game_Warmup_Isla_Mujeres_2022.jpg?width=800',
+  Badminton:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Badminton_players%2C_Y.M.C.A.%28I0009675%29.jpg?width=800',
+  'Stolní tenis':
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Table_tennis_at_the_2018_Summer_Youth_Olympics_%E2%80%93_Mixed_Bronze_Medal_Match_Women_021.jpg?width=800',
+  Běh: 'https://commons.wikimedia.org/wiki/Special:FilePath/Running_through_Millennium_Park_%2819584952503%29.jpg?width=800',
+  Cyklistika:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/2024_UCI_Para-cycling_Road_World_Championships_Zurich_Men_C1-2_R_14.jpg?width=800',
+  Plavání:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Swimming_Pool_lanes_and_starting_blocks.jpg?width=800',
+  Cvičení:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Outdoor_Yoga_At_the_Park.jpg?width=800',
+  Turistika:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Hiking_trail_on_N%C3%A1mafjall_Mountain%2C_Iceland%2C_20240716_1130_1346.jpg?width=800',
+  'Deskové hry':
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Huge_Settlers_of_Catan_game_in_Petah_Tikva_05.jpg?width=800',
+  Šachy:
+    'https://commons.wikimedia.org/wiki/Special:FilePath/The_Chess_Players_%28Dec_2022%29.jpg?width=800',
+  'LAN party':
+    'https://commons.wikimedia.org/wiki/Special:FilePath/LAN_party_in_France_in_2003.jpg?width=800',
+};
+
 type Seat = { user: User; status: ParticipationStatus };
 
 type Place = {
@@ -611,7 +646,18 @@ export async function seedEvents(
   let created = 0;
 
   for (const example of examples) {
-    if (await prisma.event.findFirst({ where: { title: example.title } })) {
+    const photo = ACTIVITY_PHOTOS[example.activity] ?? null;
+    const existing = await prisma.event.findFirst({
+      where: { title: example.title },
+    });
+    if (existing) {
+      // Events seeded before photos existed get theirs; a photo set on purpose stays.
+      if (!existing.imageUrl && photo) {
+        await prisma.event.update({
+          where: { id: existing.id },
+          data: { imageUrl: photo },
+        });
+      }
       continue;
     }
 
@@ -623,6 +669,7 @@ export async function seedEvents(
       data: {
         title: example.title,
         description: example.description,
+        imageUrl: photo,
         equipment: example.equipment,
         status,
         visibility: example.visibility ?? EventVisibility.PUBLIC,

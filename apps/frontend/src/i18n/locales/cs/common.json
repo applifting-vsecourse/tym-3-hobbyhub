@@ -101,20 +101,45 @@
       "country": "Česko"
     },
     "detail": {
-      "contribution": "Příspěvek {{amount}}",
-      "contributionInfo": "Jen informace pro zájemce, přes aplikaci se neplatí.",
+      "address": {
+        "online": "Odkaz po schválení",
+        "private": "Přesná adresa po schválení"
+      },
+      "addressLabel": "Adresa",
+      "approvalAutomatic": "Místo získáš hned po přihlášení.",
+      "approvalManual": "Organizátor žádost schvaluje ručně.",
+      "back": "Zpět na akce",
+      "contribution": "Příspěvek",
       "equipment": "Vybavení",
-      "free_few": "{{count}} volná místa",
-      "free_one": "{{count}} volné místo",
-      "free_other": "{{count}} volných míst",
-      "full": "plno",
+      "hasAccount": "Už máš účet?",
+      "join": "Obsadit místo",
+      "joinSoon": "Žádost o účast zatím nejde odeslat.",
+      "linkLabel": "Odkaz",
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
-      "missing_few": "chybí {{count}} do minima",
-      "missing_one": "chybí {{count}} do minima",
-      "missing_other": "chybí {{count}} do minima",
-      "occupied": "Obsazeno {{taken}} z {{total}}",
-      "published": "Zveřejněno"
+      "missingToMin": "chybí {{count}} do minima",
+      "organizer": "Pořádá {{name}}",
+      "roster": "Soupiska",
+      "seats": "{{taken}} z {{total}} míst",
+      "signIn": "Přihlásit se",
+      "state": {
+        "cancelled": "Zrušeno",
+        "cancelledText": "Akce byla zrušena, o účast už se nedá žádat.",
+        "finished": "Proběhlo",
+        "finishedText": "Akce už proběhla, o účast se nedá žádat.",
+        "full": "Naplněno",
+        "fullText": "Akce je plná, o účast se nedá žádat.",
+        "notHeld": "Neuskutečnilo se",
+        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat."
+      },
+      "stats": {
+        "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
+        "genderLabel": "Muži : ženy",
+        "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
+        "medianAgeLabel": "Medián věku",
+        "title": "Složení účastníků"
+      },
+      "title": "Detail akce"
     },
     "fields": {
       "activity": "Aktivita",
@@ -196,6 +221,7 @@
     "preview": {
       "noPlace": "Místo akce",
       "noTime": "--:--",
+      "occupied": "Obsazeno {{taken}} z {{total}}",
       "untitled": "Název akce"
     },
     "validation": {

@@ -197,3 +197,36 @@ export type EventListItem = {
 };
 
 export type EventListPage = { items: EventListItem[]; total: number };
+
+// Statistics are hidden below this many included participants, so nobody can
+// be picked out of them (F-06.7).
+export const MIN_STATS_PARTICIPANTS = 3;
+
+// A public detail also shows cancelled and over events, never drafts.
+export type PublicEventStatus =
+  'PUBLISHED' | 'CANCELLED' | 'FINISHED' | 'NOT_HELD';
+export type ApprovalMode = 'MANUAL' | 'AUTOMATIC';
+export type Gender = 'MALE' | 'FEMALE';
+
+// Anonymized composition of the approved registered participants. People taken
+// along from outside the app are not counted, hence `included` out of `total`.
+export type ParticipantStats = {
+  included: number;
+  total: number;
+  medianAge: number | null;
+  gender: { male: number; female: number } | null;
+};
+
+export type EventDetail = EventListItem & {
+  description: string;
+  equipment: string | null;
+  // Information only; nothing is paid in the app.
+  contributionAmount: number | null;
+  contributionNote: string | null;
+  status: PublicEventStatus;
+  approvalMode: ApprovalMode;
+  organizerName: string;
+  stats: ParticipantStats | null;
+  // How many included people the stats need, so the UI can say when they appear.
+  statsMinParticipants: number;
+};

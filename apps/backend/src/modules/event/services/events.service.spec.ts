@@ -126,4 +126,13 @@ describe('EventsService', () => {
       NotFoundException,
     );
   });
+
+  it('reports a public event that does not exist, or is not public, as not found', async () => {
+    const { repository, service } = setup();
+    repository.getPublicEventById.mockResolvedValue(null);
+
+    await expect(service.getPublicEvent('nope')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
 });

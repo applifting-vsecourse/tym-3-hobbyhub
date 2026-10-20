@@ -108,3 +108,29 @@ export const eventListSchema = z.object({
 })
 
 export type EventListItem = z.infer<typeof eventListItemSchema>
+
+export const participantStatsSchema = z.object({
+  /** Registered approved participants the figures rest on. */
+  included: z.number(),
+  /** All taken seats, including people outside the app. */
+  total: z.number(),
+  medianAge: z.number().nullable(),
+  gender: z.object({ male: z.number(), female: z.number() }).nullable(),
+})
+
+export const eventDetailSchema = eventListItemSchema.extend({
+  description: z.string(),
+  equipment: z.string().nullable(),
+  /** In CZK, information only. */
+  contributionAmount: z.number().nullable(),
+  contributionNote: z.string().nullable(),
+  status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
+  approvalMode: z.enum(["MANUAL", "AUTOMATIC"]),
+  organizerName: z.string(),
+  /** Hidden by the server until enough participants are included. */
+  stats: participantStatsSchema.nullable(),
+  /** Included participants needed before the server shows stats. */
+  statsMinParticipants: z.number(),
+})
+
+export type EventDetail = z.infer<typeof eventDetailSchema>

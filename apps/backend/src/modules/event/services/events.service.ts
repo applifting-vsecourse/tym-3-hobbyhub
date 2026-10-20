@@ -2,6 +2,7 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import {
   CreateEventData,
   Event,
+  EventDetail,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
@@ -63,5 +64,12 @@ export class EventsService {
     now: Date = new Date(),
   ): Promise<EventListPage> {
     return this.eventRepository.getUpcomingPublicEvents(now, page);
+  }
+
+  // Public: what a visitor may see, nothing of the organizer's private data.
+  async getPublicEvent(id: string): Promise<EventDetail> {
+    const event = await this.eventRepository.getPublicEventById(id);
+    if (!event) throw new NotFoundException('Event not found');
+    return event;
   }
 }
