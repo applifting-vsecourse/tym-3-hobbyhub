@@ -28,7 +28,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 
 - **Cards are for separable items in a list** — an event, a join request, a search result. They are not page sections and not layout tools.
 - **Never nest a card inside a card.** If content needs grouping inside a card, use spacing, a hairline divider or a tinted band (like the roster band on `EventCard`).
-- **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts, `max-w-6xl` for discovery screens like the landing page, where event cards sit three across; the header then takes the same width), not inside a floating panel. The `Hero` is the one coloured section surface, and a screen has at most one.
+- **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts, `max-w-6xl` for discovery screens like the landing page, where event cards sit three across), not inside a floating panel. The header is always `max-w-6xl`, whatever the column under it: its navigation sits on the right and must stay put between pages. The `Hero` is the one coloured section surface, and a screen has at most one.
 - **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands.
 - Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
 

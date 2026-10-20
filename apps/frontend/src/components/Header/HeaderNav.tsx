@@ -21,7 +21,7 @@ export function HeaderNav({ active }: HeaderNavProps) {
   return (
     <nav
       aria-label={t("hobbyhub.nav.label")}
-      className="hidden min-w-0 items-center gap-1 md:flex"
+      className="hidden items-center gap-1 md:mr-2 md:flex"
     >
       {ITEMS.map(({ section, labelKey }) => (
         <HeaderNavLink
