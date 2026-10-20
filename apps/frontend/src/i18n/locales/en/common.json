@@ -71,6 +71,14 @@
       "underage": "You must be at least 18 to register"
     }
   },
+  "common": {
+    "unsavedChanges": {
+      "description": "You have changes that were not submitted. Leaving loses them.",
+      "leave": "Leave",
+      "stay": "Stay",
+      "title": "Leave the page?"
+    }
+  },
   "errors": {
     "generic": {
       "description": "An unexpected error occurred.",
@@ -84,14 +92,76 @@
     }
   },
   "events": {
+    "back": "Back",
     "day": {
       "today": "Today",
       "tomorrow": "Tomorrow"
     },
+    "defaults": {
+      "country": "Czechia"
+    },
     "detail": {
-      "back": "Back to events",
-      "placeholder": "The event detail will be here.",
-      "title": "Event detail"
+      "contribution": "Contribution {{amount}}",
+      "contributionInfo": "Information only, nothing is paid through the app.",
+      "equipment": "Equipment",
+      "free_one": "{{count}} free seat",
+      "free_other": "{{count}} free seats",
+      "full": "full",
+      "loadError": "Could not load the event",
+      "loading": "Loading the event…",
+      "missing_one": "{{count}} missing to the minimum",
+      "missing_other": "{{count}} missing to the minimum",
+      "occupied": "{{taken}} of {{total}} taken",
+      "published": "Published"
+    },
+    "fields": {
+      "activity": "Activity",
+      "city": "City",
+      "contributionAmount": "Contribution per seat in CZK (optional)",
+      "contributionNote": "Note on the contribution (optional)",
+      "country": "Country",
+      "description": "Event description",
+      "endDate": "End date",
+      "endTime": "Until",
+      "equipment": "Equipment (optional)",
+      "externalOccupiedSpots": "Already taken outside the app",
+      "maxParticipants": "Maximum",
+      "minParticipants": "Minimum",
+      "placeName": "Place name (optional)",
+      "postalCode": "Postal code",
+      "startDate": "Date",
+      "startTime": "From",
+      "street": "Street and number",
+      "title": "Title",
+      "venueType": "Type of place"
+    },
+    "form": {
+      "activityEmpty": "There are no activities yet",
+      "activityError": "Could not load activities.",
+      "activityLoading": "Loading activities…",
+      "activityPlaceholder": "Choose an activity",
+      "address": "Place",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "contributionHint": "Information only, nothing is paid through the app.",
+      "createFailed": "Could not publish the event. Please try again.",
+      "created": "The event is published.",
+      "externalHint": "People from your crew without an account, you included. They count towards the occupancy.",
+      "minimumReached": "The minimum is reached",
+      "missingHint": "The number of missing people comes from the minimum and the taken seats.",
+      "missingToMinimum_one": "{{count}} missing to the minimum",
+      "missingToMinimum_other": "{{count}} missing to the minimum",
+      "previewTitle": "This is how others will see the event",
+      "previousStep": "Back to the previous step",
+      "publish": "Publish event",
+      "retry": "Try again",
+      "stepOf": "Step {{step}} of {{total}}",
+      "steps": {
+        "details": "Details and publishing",
+        "what": "What and when",
+        "who": "Who and how many"
+      },
+      "title": "New event"
     },
     "list": {
       "count_one": "{{count}} event",
@@ -107,11 +177,48 @@
     "map": {
       "placeholder": "The map will be here"
     },
-    "new": {
-      "placeholder": "Creating an event will be here.",
-      "title": "Create an event"
+    "online": "Online",
+    "placeholders": {
+      "city": "E.g. Prague 8",
+      "contributionAmount": "E.g. 80",
+      "contributionNote": "E.g. paid in cash on the spot",
+      "description": "E.g. a casual game for slightly advanced players…",
+      "equipment": "E.g. your own stick, indoor shoes",
+      "placeName": "E.g. Kobylisy school gym",
+      "postalCode": "E.g. 182 00",
+      "street": "E.g. Chabařovická 4",
+      "title": "E.g. Thursday floorball"
     },
-    "online": "Online"
+    "preview": {
+      "noPlace": "Event place",
+      "noTime": "--:--",
+      "untitled": "Event title"
+    },
+    "validation": {
+      "activityRequired": "Choose an activity",
+      "amountInvalid": "Enter an amount in crowns, with at most two decimals",
+      "amountRequiredForNote": "Add an amount to go with the note",
+      "cityRequired": "Enter a city",
+      "countryRequired": "Enter a country",
+      "dateRequired": "Enter a date",
+      "descriptionRequired": "Write a few words about the event",
+      "endBeforeStart": "The end must come after the start",
+      "maxBelowMin": "The maximum must be at least the minimum",
+      "occupiedAboveMax": "Taken seats cannot exceed the maximum",
+      "postalCodeRequired": "Enter a postal code",
+      "startInPast": "The start must be in the future",
+      "streetRequired": "Enter a street and number",
+      "timeRequired": "Enter a time",
+      "titleRequired": "Enter an event title",
+      "titleTooShort_one": "At least {{count}} character",
+      "titleTooShort_other": "At least {{count}} characters",
+      "tooLong_one": "Keep it under {{count}} character",
+      "tooLong_other": "Keep it under {{count}} characters"
+    },
+    "venueType": {
+      "PRIVATE_VENUE": "Private premises",
+      "PUBLIC_VENUE": "Public place"
+    }
   },
   "groups": {
     "back": "Back",
@@ -198,6 +305,10 @@
       "tenis": "Tennis",
       "turistika": "Hiking",
       "volejbal": "Volleyball"
+    },
+    "activityCombobox": {
+      "noMatch": "No activity matches",
+      "search": "Search activities…"
     },
     "avatars": {
       "basketbalista": "Basketball player",

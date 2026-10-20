@@ -6,16 +6,10 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
+import { AppForm } from "@/components/form/AppForm"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
@@ -56,89 +50,89 @@ export function SignInForm({ isLoading, errorMessage, onSubmit }: SignInFormProp
   useRevalidateOnLanguageChange(form)
 
   return (
-    <Form {...form}>
-      <form
-        noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
-        // Room for the submit bar fixed to the bottom on phones.
-        className="space-y-4 pb-24 md:pb-0"
-      >
-        {errorMessage ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
+    <AppForm
+      form={form}
+      onSubmit={onSubmit}
+      // Half-typed credentials are nothing to protect.
+      isGuarded={false}
+      // Room for the submit bar fixed to the bottom on phones.
+      className="space-y-4 pb-24 md:pb-0"
+    >
+      {errorMessage ? (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.email")}</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder={t("auth.placeholders.email")}
-                  autoComplete="email"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.email")}</FormLabel>
+            <FormControl>
+              <Input
+                type="email"
+                placeholder={t("auth.placeholders.email")}
+                autoComplete="email"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.password")}</FormLabel>
-              <FormControl>
-                <PasswordInput
-                  autoComplete="current-password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={form.control}
+        name="password"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.password")}</FormLabel>
+            <FormControl>
+              <PasswordInput
+                autoComplete="current-password"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="rememberMe"
-          render={({ field }) => (
-            <FormItem className="flex min-h-11 items-center justify-between gap-3">
-              <FormLabel>{t("auth.signIn.rememberMe")}</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={form.control}
+        name="rememberMe"
+        render={({ field }) => (
+          <FormItem className="flex min-h-11 items-center justify-between gap-3">
+            <FormLabel>{t("auth.signIn.rememberMe")}</FormLabel>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
 
-        <p className="typo-small text-muted-foreground">{t("auth.signIn.lockoutNote")}</p>
+      <p className="typo-small text-muted-foreground">{t("auth.signIn.lockoutNote")}</p>
 
-        {/* On phones the action sits at the bottom of the screen, as in the wireframe. */}
-        <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:mt-8 md:p-0">
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-            {t("auth.signIn.submit")}
-          </Button>
-        </div>
-      </form>
-    </Form>
+      {/* On phones the action sits at the bottom of the screen, as in the wireframe. */}
+      <div className="fixed inset-x-0 bottom-0 bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:mt-8 md:p-0">
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+          {t("auth.signIn.submit")}
+        </Button>
+      </div>
+    </AppForm>
   )
 }

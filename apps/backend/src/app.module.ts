@@ -16,6 +16,7 @@ const imports = [
   ActivityModule,
   EventModule,
   GroupModule,
+  EventModule,
 ];
 
 @Module({

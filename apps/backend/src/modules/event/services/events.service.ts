@@ -1,10 +1,62 @@
-import { EventListPage, Page } from '@/modules/event/domain/event';
+import { ActivitiesService } from '@/modules/activity/services/activities.service';
+import {
+  CreateEventData,
+  Event,
+  EventListPage,
+  EventRuleViolation,
+  eventRuleViolations,
+  Page,
+} from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
-import { Injectable } from '@nestjs/common';
+import { Identity } from '@/shared/auth/domain/identity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+const VIOLATION_MESSAGES: Record<EventRuleViolation, string> = {
+  START_NOT_IN_FUTURE: 'startAt must be in the future',
+  END_NOT_AFTER_START: 'endAt must be after startAt',
+  MIN_ABOVE_MAX: 'minParticipants must not exceed maxParticipants',
+  OCCUPIED_ABOVE_MAX: 'externalOccupiedSpots must not exceed maxParticipants',
+  NOTE_WITHOUT_AMOUNT: 'contributionNote requires contributionAmount',
+};
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly eventRepository: EventRepository) {}
+  constructor(
+    private readonly eventRepository: EventRepository,
+    private readonly activitiesService: ActivitiesService,
+  ) {}
+
+  async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
+    const now = new Date();
+    const violations = eventRuleViolations(data, now);
+    if (violations.length > 0) {
+      // Same shape as class-validator's errors, so the client reads both alike.
+      throw new BadRequestException(
+        violations.map((violation) => VIOLATION_MESSAGES[violation]),
+      );
+    }
+    if (!(await this.activitiesService.isAvailable(data.activityId))) {
+      throw new BadRequestException(
+        'Activity does not exist or is no longer offered',
+      );
+    }
+    return this.eventRepository.createPublishedEvent({
+      ...data,
+      // F-05.1: the organizer is whoever is signed in, never the request body.
+      organizerId: user.id,
+      publishedAt: now,
+    });
+  }
+
+  async getEvent(id: string): Promise<Event> {
+    const event = await this.eventRepository.getEventById(id);
+    if (!event) throw new NotFoundException('Event not found');
+    return event;
+  }
 
   getUpcomingPublicEvents(
     page: Page,

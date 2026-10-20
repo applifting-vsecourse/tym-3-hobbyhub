@@ -36,6 +36,70 @@ describe("Counter", () => {
     await user.click(screen.getByRole("button", { name: "Minimum: více" }))
     expect(onValueChange).toHaveBeenCalledWith(3)
   })
+
+  it("takes a typed number as soon as it is within the bounds", async () => {
+    const user = userEvent.setup()
+    const onValueChange = vi.fn()
+    render(
+      <Counter
+        label="Maximum"
+        value={12}
+        min={1}
+        max={500}
+        onValueChange={onValueChange}
+      />,
+    )
+
+    const field = screen.getByRole("textbox", { name: "Maximum" })
+    await user.clear(field)
+    await user.type(field, "100")
+
+    expect(onValueChange).toHaveBeenLastCalledWith(100)
+    expect(field).toHaveValue("100")
+  })
+
+  it("clamps to the bounds when the field is left, and restores an empty one", async () => {
+    const user = userEvent.setup()
+    const onValueChange = vi.fn()
+    render(
+      <Counter
+        label="Maximum"
+        value={12}
+        min={1}
+        max={30}
+        onValueChange={onValueChange}
+      />,
+    )
+    const field = screen.getByRole("textbox", { name: "Maximum" })
+
+    await user.clear(field)
+    await user.type(field, "500")
+    await user.tab()
+    expect(onValueChange).toHaveBeenLastCalledWith(30)
+
+    onValueChange.mockClear()
+    await user.clear(field)
+    await user.tab()
+    expect(onValueChange).not.toHaveBeenCalled()
+    expect(field).toHaveValue("12")
+  })
+
+  it("ignores letters", async () => {
+    const user = userEvent.setup()
+    const onValueChange = vi.fn()
+    render(
+      <Counter
+        label="Minimum"
+        value={2}
+        onValueChange={onValueChange}
+      />,
+    )
+
+    await user.type(screen.getByRole("textbox", { name: "Minimum" }), "a")
+
+    expect(onValueChange).toHaveBeenCalledWith(2)
+    expect(screen.getByRole("textbox", { name: "Minimum" })).toHaveValue("2")
+  })
 })
 
 describe("Loader", () => {
