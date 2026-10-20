@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState, type CSSProperties, type FormEvent } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -8,11 +9,14 @@ import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import { Header } from "@/components/Header/Header"
 import { EventCard } from "@/components/hobbyhub/EventCard"
+import { FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
+import { activityName } from "@/features/activity/activityName"
+import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
 
 export const Route = createFileRoute("/")({
@@ -61,23 +65,67 @@ const TONIGHT: TonightEvent[] = [
   },
 ]
 
+// An empty text is no filter, and keeps the address clean.
+const nonEmpty = (text = "") => (text.trim() === "" ? undefined : text.trim())
+
 const STEP_KEYS = ["step1", "step2", "step3"] as const
 
 function LandingPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [searchText, setSearchText] = useState("")
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const activities = useQuery(activitiesQueryOptions()).data ?? []
+
+  // Searching or filtering from the landing page opens the event list already filtered.
+  const openEvents = (filters: { activities?: string[]; location?: string } = {}) => {
+    void navigate({
+      to: "/events",
+      search: {
+        q: nonEmpty(searchText),
+        activity: filters.activities?.length ? filters.activities : undefined,
+        location: nonEmpty(filters.location),
+      },
+    })
+  }
+  const search = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    openEvents()
+  }
 
   return (
     <>
       <Seo title={t("landing.seoTitle")} />
       <Header
         search={
-          <SearchField
-            label={t("landing.search.label")}
-            placeholder={t("landing.search.placeholder")}
-          />
+          <form
+            role="search"
+            className="contents"
+            onSubmit={search}
+          >
+            <SearchField
+              name="q"
+              label={t("landing.search.label")}
+              placeholder={t("landing.search.placeholder")}
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              onOpenFilters={() => setIsFiltersOpen(true)}
+            />
+          </form>
         }
         userMenu={
           <>
+            <FiltersSheet
+              isOpen={isFiltersOpen}
+              onOpenChange={setIsFiltersOpen}
+              value={{ activities: [], when: null, location: "" }}
+              onApply={openEvents}
+              fields={["activity", "location"]}
+              activityOptions={activities.map((item) => ({
+                value: item.id,
+                label: activityName(t, item),
+              }))}
+            />
             <Button
               asChild
               size="sm"

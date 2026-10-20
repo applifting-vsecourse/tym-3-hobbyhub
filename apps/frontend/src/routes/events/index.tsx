@@ -1,21 +1,42 @@
-import { useState } from "react"
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useEffect, useState } from "react"
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { MapPin, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { z } from "zod"
 
 import { Header } from "@/components/Header/Header"
+import { FilterChip } from "@/components/hobbyhub/FilterChip"
+import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
+import { SearchField } from "@/components/hobbyhub/SearchField"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
 
 import { activityName } from "@/features/activity/activityName"
+import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
 import { eventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { EventList } from "@/features/event/components/EventList"
 import { EventsMapPlaceholder } from "@/features/event/components/EventsMapPlaceholder"
 
+// The filters live in the address, so a link or a reload shows the same events.
+const eventsSearchSchema = z.object({
+  activity: z.array(z.string()).optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
+  location: z.string().optional().catch(undefined),
+})
+
 export const Route = createFileRoute("/events/")({
   component: EventsPage,
+  validateSearch: eventsSearchSchema,
 })
+
+// TODO(F-02.1b #91): `location` and `q` are plain text matches. Similar
+// spellings, distance from a place and sorting by it need coordinates
+// (geocoding, F-12.3) and a backend that understands them.
+
+// Typing waits this long before it filters, so a word is not searched letter by letter.
+const SEARCH_DEBOUNCE_MS = 300
 
 // Pages are cut by offset, so an event that moved between two requests can come
 // back on the next page; keep its first appearance.
@@ -28,7 +49,56 @@ const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
 function EventsPage() {
   const { t } = useTranslation()
   const [view, setView] = useState<EventsView>("list")
-  const eventsQuery = useInfiniteQuery(eventsQueryOptions())
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const navigate = Route.useNavigate()
+  const { activity, q, location } = Route.useSearch()
+  const activityIds = activity ?? []
+  const filters = { activityIds, search: q ?? "", location: location ?? "" }
+  // The previous list stays on screen while the next one loads, so typing does not flash.
+  const eventsQuery = useInfiniteQuery({
+    ...eventsQueryOptions(filters),
+    placeholderData: keepPreviousData,
+  })
+  const activities = useQuery(activitiesQueryOptions()).data ?? []
+
+  // The field is what the user typed; the address follows after a pause.
+  const [searchText, setSearchText] = useState(filters.search)
+  const [lastAddressSearch, setLastAddressSearch] = useState(filters.search)
+  if (filters.search !== lastAddressSearch) {
+    // The address changed on its own (back button, a link): show it in the field.
+    setLastAddressSearch(filters.search)
+    setSearchText(filters.search)
+  }
+  useEffect(() => {
+    const next = searchText.trim()
+    if (next === filters.search) return
+    const timer = setTimeout(
+      () =>
+        void navigate({
+          search: (previous) => ({ ...previous, q: next || undefined }),
+          replace: true,
+        }),
+      SEARCH_DEBOUNCE_MS,
+    )
+    return () => clearTimeout(timer)
+  }, [searchText, filters.search, navigate])
+
+  const setFilters = (next: { activityIds?: string[]; location?: string }) =>
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        ...(next.activityIds && {
+          activity: next.activityIds.length > 0 ? next.activityIds : undefined,
+        }),
+        ...(next.location !== undefined && { location: next.location.trim() || undefined }),
+      }),
+    })
+  const clearFilters = () => {
+    setSearchText("")
+    void navigate({ search: {} })
+  }
+  const selectedActivities = activities.filter(({ id }) => activityIds.includes(id))
+  const isFiltered = activityIds.length > 0 || filters.search !== "" || filters.location !== ""
 
   return (
     <>
@@ -36,6 +106,67 @@ function EventsPage() {
       <Header userMenu={<HeaderMenu />} />
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10 lg:px-8">
         <h1 className="typo-h1 text-foreground">{t("events.list.title")}</h1>
+        <div className="flex flex-col gap-3">
+          <SearchField
+            label={t("hobbyhub.search.label")}
+            placeholder={t("events.list.searchPlaceholder")}
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            onOpenFilters={() => setIsFiltersOpen(true)}
+          />
+          <FiltersSheet
+            isOpen={isFiltersOpen}
+            onOpenChange={setIsFiltersOpen}
+            value={{ ...EMPTY_FILTERS, activities: activityIds, location: filters.location }}
+            onApply={(applied) =>
+              setFilters({ activityIds: applied.activities, location: applied.location })
+            }
+            fields={["activity", "location"]}
+            activityOptions={activities.map((item) => ({
+              value: item.id,
+              label: activityName(t, item),
+            }))}
+          />
+          {selectedActivities.length > 0 || filters.location ? (
+            <div
+              role="group"
+              aria-label={t("events.list.filters.selected")}
+              className="flex flex-wrap gap-2"
+            >
+              {selectedActivities.map((item) => (
+                <FilterChip
+                  key={item.id}
+                  pressed
+                  onPressedChange={() =>
+                    setFilters({ activityIds: activityIds.filter((id) => id !== item.id) })
+                  }
+                >
+                  {activityName(t, item)}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ))}
+              {filters.location ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => setFilters({ location: "" })}
+                >
+                  <MapPin
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                  {filters.location}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
         <ViewToggle
           value={view}
           onValueChange={setView}
@@ -46,13 +177,15 @@ function EventsPage() {
             <EventList
               events={uniqueById(eventsQuery.data?.pages.flatMap((page) => page.items) ?? [])}
               total={eventsQuery.data?.pages[0]?.total ?? 0}
-              activityLabel={(activity) => activityName(t, activity)}
+              activityLabel={(item) => activityName(t, item)}
               isLoading={eventsQuery.isPending}
               error={eventsQuery.error}
               onReload={() => void eventsQuery.refetch()}
               hasMore={eventsQuery.hasNextPage}
               isLoadingMore={eventsQuery.isFetchingNextPage}
               onLoadMore={() => void eventsQuery.fetchNextPage()}
+              isFiltered={isFiltered}
+              onClearFilters={clearFilters}
             />
           </div>
           <div className={view === "map" ? undefined : "max-lg:hidden"}>
