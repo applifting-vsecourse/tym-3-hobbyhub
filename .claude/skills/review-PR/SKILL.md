@@ -40,7 +40,7 @@ git fetch origin <base> <head>
 git merge-base --is-ancestor origin/<base> origin/<head> && echo "aktuální" || echo "ZAOSTÁVÁ za base"
 ```
 
-`mergeStateStatus` z GitHubu tu nestačí: `main` nemá branch protection, takže GitHub stav `BEHIND` nepočítá.
+`mergeStateStatus` z GitHubu je tu jen nápověda: `BEHIND` znamená totéž co lokální kontrola, `BLOCKED` typicky čeká na CI nebo review. Lokální `merge-base` je rozhodující, protože ukáže i to, o jaké commity větev zaostává (`git log --oneline origin/<head>..origin/<base>`). Repo vyžaduje aktuální větev i při merge: `gh pr merge` na zaostávající větvi selže s „the head branch is not up to date with the base branch“, proto má krok 5 aktualizaci větve.
 
 **Konflikty.** `mergeable` musí být `MERGEABLE`. `CONFLICTING` je blokující; `UNKNOWN` znamená, že GitHub ještě počítá — zopakuj `gh pr view` po chvíli.
 
@@ -80,7 +80,7 @@ Na co se dívat, v pořadí důležitosti:
 
 Rozděl nálezy na dvě hromádky:
 
-- **Blokující** — chyba v chování, bezpečnostní díra, porušení pravidla z CLAUDE.md/DESIGN.md, upravená zmrazená migrace, chybějící překlad (test na rozjeté překlady spadne), červené CI, větev za base, konflikt.
+- **Blokující** — chyba v chování, bezpečnostní díra, porušení pravidla z CLAUDE.md/DESIGN.md, upravená zmrazená migrace, chybějící překlad (test na rozjeté překlady spadne), červené CI, větev za base o commity, které se týkají kódu aplikace (zaostávání jen o skill nebo dokumentaci řeší aktualizace větve v kroku 5), konflikt.
 - **Neblokující** — styl, pojmenování, drobné zjednodušení, návrhy. Ty merge nebrzdí a autor je může přijmout nebo ne.
 
 Styl, který uživatel nebo tým výslovně neřeší, nevymýšlej. Review má být krátké a konkrétní: soubor, řádek, co je špatně, co s tím.
@@ -128,9 +128,19 @@ Blokující poznámky k jednomu konkrétnímu řádku jdou lépe jako inline kom
 
 ## 5. Nabídni merge
 
-Jen když platí všechno najednou: review bylo schválení (žádný blokující nález), CI zelené, větev aktuální vůči base, bez konfliktů, PR není draft. Jinak merge nenabízej a řekni, co chybí.
+Jen když platí všechno najednou: review bylo schválení (žádný blokující nález), CI zelené, větev aktuální vůči base (nebo zaostává jen o commity mimo kód aplikace, viz níže), bez konfliktů, PR není draft. Jinak merge nenabízej a řekni, co chybí.
 
-Zeptej se uživatele, jestli chce PR mergnout za autora. Tým merguje merge commitem (`Merge pull request #…`), proto:
+Zeptej se uživatele, jestli chce PR mergnout za autora.
+
+**Aktualizace větve.** Když větev zaostává za base jen o commity, které se kódu netýkají (třeba skill nebo dokumentace), a uživatel přesto chce mergnout, GitHub merge odmítne, dokud větev není aktuální. Aktualizuj ji přes GitHub API — je to totéž co tlačítko „Update branch“, vznikne merge commit base větve do větve autora a lokální pracovní strom zůstane nedotčený:
+
+```bash
+gh api -X PUT repos/{owner}/{repo}/pulls/<n>/update-branch
+```
+
+Je to zápis do cizí větve, proto jen po výslovném souhlasu uživatele — řekni mu, že do větve autora přibude commit a CI poběží znovu. Po aktualizaci počkej na zelené CI (`gh pr checks <n> --watch`) a ověř, že `mergeStateStatus` je `CLEAN`; schválení z kroku 4 aktualizací nezaniká. Když větev zaostává o commity, které se kódu týkají, nech merge na autorovi: review má ověřit kombinaci, kterou CI otestovalo, a to je po aktualizaci na tobě.
+
+Tým merguje merge commitem (`Merge pull request #…`), proto:
 
 ```bash
 gh pr merge <n> --merge
