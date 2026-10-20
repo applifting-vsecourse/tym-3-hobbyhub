@@ -353,6 +353,10 @@
       "until": "until {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "There are no activities yet.",
+      "activitiesError": "Could not load the activities",
+      "activitiesLoading": "Loading activities…",
+      "activitiesRetry": "Try again",
       "activity": "Activity",
       "clear": "Clear",
       "date": "Date…",

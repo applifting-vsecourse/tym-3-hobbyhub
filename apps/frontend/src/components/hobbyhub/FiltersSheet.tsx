@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +28,13 @@ export type FiltersSheetField = "activity" | "when" | "location"
 
 const DEMO_ACTIVITY_KEYS = ["florbal", "deskove-hry", "volejbal", "tenis"] as const
 
+/** State of the request the activity options come from. */
+export type FilterActivitiesState = {
+  isLoading: boolean
+  error: Error | null
+  onRetry: () => void
+}
+
 type FiltersSheetProps = {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
@@ -34,6 +42,8 @@ type FiltersSheetProps = {
   onApply: (filters: EventFilters) => void
   /** Activities offered as chips; the most common ones by default. */
   activityOptions?: FilterActivityOption[]
+  /** Loading and error of the activities request, so the panel can say why there are no chips. */
+  activitiesState?: FilterActivitiesState
   /** Which filters the panel shows. A page offers only the ones it applies. */
   fields?: FiltersSheetField[]
   /** How many events the current draft would show, for the button label. */
@@ -51,6 +61,7 @@ export function FiltersSheet({
   value,
   onApply,
   activityOptions,
+  activitiesState,
   fields = ["activity", "when", "location"],
   countResults,
   trigger,
@@ -121,21 +132,47 @@ export function FiltersSheet({
             >
               {t("hobbyhub.filters.activity")}
             </p>
-            <div
-              role="group"
-              aria-labelledby={activityLabelId}
-              className="flex flex-wrap gap-2"
-            >
-              {options.map(({ value: activity, label }) => (
-                <FilterChip
-                  key={activity}
-                  pressed={draft.activities.includes(activity)}
-                  onPressedChange={(isPressed) => toggleActivity(activity, isPressed)}
-                >
-                  {label}
-                </FilterChip>
-              ))}
-            </div>
+            {activitiesState?.isLoading ? (
+              <p
+                role="status"
+                className="typo-small text-muted-foreground"
+              >
+                {t("hobbyhub.filters.activitiesLoading")}
+              </p>
+            ) : activitiesState?.error && options.length === 0 ? (
+              <Alert variant="destructive">
+                <AlertDescription className="flex items-center justify-between gap-3">
+                  <span>{t("hobbyhub.filters.activitiesError")}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={activitiesState.onRetry}
+                  >
+                    {t("hobbyhub.filters.activitiesRetry")}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : options.length === 0 ? (
+              <p className="typo-small text-muted-foreground">
+                {t("hobbyhub.filters.activitiesEmpty")}
+              </p>
+            ) : (
+              <div
+                role="group"
+                aria-labelledby={activityLabelId}
+                className="flex flex-wrap gap-2"
+              >
+                {options.map(({ value: activity, label }) => (
+                  <FilterChip
+                    key={activity}
+                    pressed={draft.activities.includes(activity)}
+                    onPressedChange={(isPressed) => toggleActivity(activity, isPressed)}
+                  >
+                    {label}
+                  </FilterChip>
+                ))}
+              </div>
+            )}
           </>
         ) : null}
 

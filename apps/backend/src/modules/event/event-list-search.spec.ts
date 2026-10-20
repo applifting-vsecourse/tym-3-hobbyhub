@@ -25,9 +25,18 @@ describeDb('public event list search', () => {
 
   // Creates events from `overrides` in a transaction, runs `check` with a
   // repository on that transaction, then rolls everything back.
+  // `activity` picks one of the three activities created for the case; it is
+  // also handed to `check`, to filter by.
+  type EventOverride = Partial<Prisma.EventUncheckedCreateInput> & {
+    activity?: 0 | 1 | 2;
+  };
   const withEvents = async (
-    overrides: Partial<Prisma.EventUncheckedCreateInput>[],
-    check: (repository: EventRepository, ids: string[]) => Promise<void>,
+    overrides: EventOverride[],
+    check: (
+      repository: EventRepository,
+      ids: string[],
+      activityIds: string[],
+    ) => Promise<void>,
   ): Promise<void> => {
     try {
       await prisma.$transaction(async (tx) => {
@@ -45,17 +54,21 @@ describeDb('public event list search', () => {
         const category = await tx.activityCategory.create({
           data: { name: `cat-${suffix}` },
         });
-        const activity = await tx.activity.create({
-          data: {
-            name: `Šachy ${suffix}`,
-            icon: 'sachy',
-            categoryId: category.id,
-            defaultMinParticipants: 2,
-            defaultMaxParticipants: 10,
-          },
-        });
+        const activityIds: string[] = [];
+        for (const [index, name] of ['Šachy', 'Tenis', 'Florbal'].entries()) {
+          const activity = await tx.activity.create({
+            data: {
+              name: `${name} ${suffix}`,
+              icon: `icon-${index}`,
+              categoryId: category.id,
+              defaultMinParticipants: 2,
+              defaultMaxParticipants: 10,
+            },
+          });
+          activityIds.push(activity.id);
+        }
         const ids: string[] = [];
-        for (const [index, override] of overrides.entries()) {
+        for (const [index, { activity, ...override }] of overrides.entries()) {
           const start = new Date(`2030-01-0${index + 1}T18:00:00Z`);
           const event = await tx.event.create({
             data: {
@@ -72,14 +85,18 @@ describeDb('public event list search', () => {
               locationCity: 'Praha',
               locationPostalCode: '11000',
               locationCountry: 'Česko',
-              activityId: activity.id,
+              activityId: activityIds[activity ?? 0],
               organizerId: user.id,
               ...override,
             },
           });
           ids.push(event.id);
         }
-        await check(new EventRepository(tx as unknown as PrismaService), ids);
+        await check(
+          new EventRepository(tx as unknown as PrismaService),
+          ids,
+          activityIds,
+        );
         throw new Rollback();
       });
     } catch (error) {
@@ -89,13 +106,13 @@ describeDb('public event list search', () => {
 
   const search = (
     repository: EventRepository,
-    filter: { search?: string; location?: string },
+    filter: { search?: string; location?: string; activityIds?: string[] },
   ): Promise<string[]> =>
     repository
       .getUpcomingPublicEvents(
         NOW,
         { limit: 50, offset: 0 },
-        { activityIds: [], ...filter },
+        { ...filter, activityIds: filter.activityIds ?? [] },
       )
       .then((page) => page.items.map((item) => item.id));
 
@@ -187,16 +204,65 @@ describeDb('public event list search', () => {
     );
   });
 
-  it('combines the text with the activity and reports the matching total', async () => {
-    await withEvents([{}, {}], async (repository, [first, second]) => {
-      const page = await repository.getUpcomingPublicEvents(
-        NOW,
-        { limit: 1, offset: 0 },
-        { activityIds: [], search: MARK, location: 'prah' },
-      );
-      expect(page.total).toBe(2);
-      expect(page.items.map((item) => item.id)).toEqual([first]);
-      expect(second).toBeDefined();
-    });
+  it('combines the text and place with one or more activities', async () => {
+    await withEvents(
+      [
+        { activity: 0, locationCity: 'Praha' },
+        { activity: 1, locationCity: 'Praha' },
+        { activity: 2, locationCity: 'Praha' },
+        { activity: 0, locationCity: 'Brno' },
+        { activity: 1, locationCity: 'Brno', title: 'Jiný název' },
+      ],
+      async (
+        repository,
+        [chess, tennis, floorball, chessBrno, other],
+        [a, b],
+      ) => {
+        const text = { search: MARK };
+        // One activity leaves out the others, in every city.
+        expect(await search(repository, { ...text, activityIds: [a] })).toEqual(
+          [chess, chessBrno],
+        );
+        // Several activities are alternatives.
+        expect(
+          await search(repository, { ...text, activityIds: [a, b] }),
+        ).toEqual([chess, tennis, chessBrno]);
+        // Together with the place.
+        expect(
+          await search(repository, {
+            ...text,
+            location: 'prah',
+            activityIds: [a, b],
+          }),
+        ).toEqual([chess, tennis]);
+        expect(
+          await search(repository, {
+            ...text,
+            location: 'brn',
+            activityIds: [b],
+          }),
+        ).toEqual([]);
+        // Without the text only the activity and place decide; `other` has no MARK.
+        expect(
+          await search(repository, { location: 'brn', activityIds: [b] }),
+        ).toEqual([other]);
+        expect([floorball]).toHaveLength(1);
+      },
+    );
+  });
+
+  it('reports the total of the filtered list, not of the page', async () => {
+    await withEvents(
+      [{ activity: 0 }, { activity: 0 }, { activity: 1 }],
+      async (repository, [first], [a]) => {
+        const page = await repository.getUpcomingPublicEvents(
+          NOW,
+          { limit: 1, offset: 0 },
+          { activityIds: [a], search: MARK, location: 'prah' },
+        );
+        expect(page.total).toBe(2);
+        expect(page.items.map((item) => item.id)).toEqual([first]);
+      },
+    );
   });
 });

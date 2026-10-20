@@ -362,6 +362,10 @@
       "until": "do {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "Zatím tu nejsou žádné aktivity.",
+      "activitiesError": "Aktivity se nepodařilo načíst",
+      "activitiesLoading": "Načítáme aktivity…",
+      "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "clear": "Vymazat",
       "date": "Datum…",

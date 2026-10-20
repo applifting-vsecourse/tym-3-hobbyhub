@@ -98,10 +98,12 @@ function EventsPage() {
     void navigate({ search: {} })
   }
   // An id from the address that is no activity (retired, mistyped) still gets a
-  // chip once the activities are known, so the filter can always be seen and removed.
-  const selectedActivities = activitiesQuery.isSuccess
-    ? activityIds.map((id) => ({ id, activity: activities.find((item) => item.id === id) }))
-    : []
+  // chip, so the filter can always be seen and removed.
+  // They do not wait for the activities request: a failed one must not hide an active filter.
+  const selectedActivities = activityIds.map((id) => ({
+    id,
+    activity: activities.find((item) => item.id === id),
+  }))
   const isFiltered = activityIds.length > 0 || filters.search !== "" || filters.location !== ""
 
   return (
@@ -126,6 +128,11 @@ function EventsPage() {
               setFilters({ activityIds: applied.activities, location: applied.location })
             }
             fields={["activity", "location"]}
+            activitiesState={{
+              isLoading: activitiesQuery.isPending,
+              error: activitiesQuery.error,
+              onRetry: () => void activitiesQuery.refetch(),
+            }}
             activityOptions={activities.map((item) => ({
               value: item.id,
               label: activityName(t, item),
