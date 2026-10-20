@@ -478,9 +478,9 @@
       "find": "Find an event"
     },
     "hero": {
-      "join": "Take a seat",
-      "kicker": "Thursday floorball · today 19:00",
-      "text": "3 more needed to reach the minimum. One of them could be you.",
+      "join": "Find a free seat",
+      "kicker": "Sports and games near you",
+      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours.",
       "title": "Fill the missing players before the event is cancelled"
     },
     "how": {
