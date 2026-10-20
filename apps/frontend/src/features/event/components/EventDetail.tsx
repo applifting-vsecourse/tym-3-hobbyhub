@@ -21,6 +21,8 @@ type EventDetailProps = {
   activityLabel: string
   /** The button that takes a seat. Hidden for events nobody can ask to join. */
   joinAction: ReactNode
+  /** Link to the group that organizes the event; absent when none does. */
+  groupLink?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -51,6 +53,7 @@ export function EventDetail({
   event,
   activityLabel,
   joinAction,
+  groupLink,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -149,6 +152,7 @@ export function EventDetail({
         <p className="typo-small text-muted-foreground">
           {t("events.detail.organizer", { name: event.organizerName })}
         </p>
+        {groupLink}
       </header>
 
       <aside

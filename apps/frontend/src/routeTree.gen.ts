@@ -20,9 +20,9 @@ import { Route as ProtectedPagesProfileRouteImport } from './routes/_ProtectedPa
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
+import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as ProtectedPagesEventsNewRouteImport } from './routes/_ProtectedPages/events/new'
 import { Route as ProtectedPagesGroupsIndexRouteImport } from './routes/_ProtectedPages/groups/index'
-import { Route as ProtectedPagesGroupsGroupIdRouteImport } from './routes/_ProtectedPages/groups/$groupId'
 import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_ProtectedPages/groups/new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -79,6 +79,11 @@ const EventsEventIdRoute = EventsEventIdRouteImport.update({
   path: '/events/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
+  id: '/groups/$groupId',
+  path: '/groups/$groupId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtectedPagesEventsNewRoute = ProtectedPagesEventsNewRouteImport.update({
   id: '/events/new',
   path: '/events/new',
@@ -88,12 +93,6 @@ const ProtectedPagesGroupsIndexRoute =
   ProtectedPagesGroupsIndexRouteImport.update({
     id: '/groups/',
     path: '/groups/',
-    getParentRoute: () => ProtectedPagesRoute,
-  } as any)
-const ProtectedPagesGroupsGroupIdRoute =
-  ProtectedPagesGroupsGroupIdRouteImport.update({
-    id: '/groups/$groupId',
-    path: '/groups/$groupId',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
 const ProtectedPagesGroupsNewRoute = ProtectedPagesGroupsNewRouteImport.update({
@@ -112,9 +111,9 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProtectedPagesProfileRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
   '/events/': typeof EventsIndexRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
-  '/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/groups/': typeof ProtectedPagesGroupsIndexRoute
 }
@@ -128,9 +127,9 @@ export interface FileRoutesByTo {
   '/profile': typeof ProtectedPagesProfileRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
   '/events': typeof EventsIndexRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
-  '/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/groups': typeof ProtectedPagesGroupsIndexRoute
 }
@@ -146,9 +145,9 @@ export interface FileRoutesById {
   '/_ProtectedPages/profile': typeof ProtectedPagesProfileRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
   '/events/': typeof EventsIndexRoute
   '/_ProtectedPages/events/new': typeof ProtectedPagesEventsNewRoute
-  '/_ProtectedPages/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/_ProtectedPages/groups/': typeof ProtectedPagesGroupsIndexRoute
 }
@@ -164,9 +163,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quacks'
     | '/events/$eventId'
+    | '/groups/$groupId'
     | '/events/'
     | '/events/new'
-    | '/groups/$groupId'
     | '/groups/new'
     | '/groups/'
   fileRoutesByTo: FileRoutesByTo
@@ -180,9 +179,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quacks'
     | '/events/$eventId'
+    | '/groups/$groupId'
     | '/events'
     | '/events/new'
-    | '/groups/$groupId'
     | '/groups/new'
     | '/groups'
   id:
@@ -197,9 +196,9 @@ export interface FileRouteTypes {
     | '/_ProtectedPages/profile'
     | '/_ProtectedPages/quacks'
     | '/events/$eventId'
+    | '/groups/$groupId'
     | '/events/'
     | '/_ProtectedPages/events/new'
-    | '/_ProtectedPages/groups/$groupId'
     | '/_ProtectedPages/groups/new'
     | '/_ProtectedPages/groups/'
   fileRoutesById: FileRoutesById
@@ -212,6 +211,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
+  GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   EventsIndexRoute: typeof EventsIndexRoute
 }
 
@@ -294,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/groups/$groupId': {
+      id: '/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof GroupsGroupIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_ProtectedPages/events/new': {
       id: '/_ProtectedPages/events/new'
       path: '/events/new'
@@ -306,13 +313,6 @@ declare module '@tanstack/react-router' {
       path: '/groups'
       fullPath: '/groups/'
       preLoaderRoute: typeof ProtectedPagesGroupsIndexRouteImport
-      parentRoute: typeof ProtectedPagesRoute
-    }
-    '/_ProtectedPages/groups/$groupId': {
-      id: '/_ProtectedPages/groups/$groupId'
-      path: '/groups/$groupId'
-      fullPath: '/groups/$groupId'
-      preLoaderRoute: typeof ProtectedPagesGroupsGroupIdRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
     '/_ProtectedPages/groups/new': {
@@ -330,7 +330,6 @@ interface ProtectedPagesRouteChildren {
   ProtectedPagesProfileRoute: typeof ProtectedPagesProfileRoute
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
   ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
-  ProtectedPagesGroupsGroupIdRoute: typeof ProtectedPagesGroupsGroupIdRoute
   ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
   ProtectedPagesGroupsIndexRoute: typeof ProtectedPagesGroupsIndexRoute
 }
@@ -340,7 +339,6 @@ const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesProfileRoute: ProtectedPagesProfileRoute,
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
   ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,
-  ProtectedPagesGroupsGroupIdRoute: ProtectedPagesGroupsGroupIdRoute,
   ProtectedPagesGroupsNewRoute: ProtectedPagesGroupsNewRoute,
   ProtectedPagesGroupsIndexRoute: ProtectedPagesGroupsIndexRoute,
 }
@@ -357,6 +355,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   EventsEventIdRoute: EventsEventIdRoute,
+  GroupsGroupIdRoute: GroupsGroupIdRoute,
   EventsIndexRoute: EventsIndexRoute,
 }
 export const routeTree = rootRouteImport

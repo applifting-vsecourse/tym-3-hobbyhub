@@ -139,7 +139,8 @@
         "medianAgeLabel": "Medián věku",
         "title": "Složení účastníků"
       },
-      "title": "Detail akce"
+      "title": "Detail akce",
+      "organizedByGroup": "Pořádá skupina"
     },
     "fields": {
       "activity": "Aktivita",
@@ -270,7 +271,33 @@
       "loading": "Načítáme skupinu…",
       "members_few": "{{count}} členové",
       "members_one": "{{count}} člen",
-      "members_other": "{{count}} členů"
+      "members_other": "{{count}} členů",
+      "visibilityPublic": "Veřejná skupina",
+      "backToEvents": "Zpět na akce",
+      "upcoming": {
+        "title": "Nadcházející akce",
+        "inProgress": "Na této funkci právě pracujeme. Brzy tu uvidíte, co skupina plánuje."
+      },
+      "membership": {
+        "title": "Členství",
+        "request": "Požádat o členství",
+        "requestNote": "Žádost se zatím vyřizuje automaticky. Do té doby ji můžete odvolat.",
+        "sent": "Žádost odeslána",
+        "countdown_one": "Za {{count}} sekundu budete členem skupiny.",
+        "countdown_few": "Za {{count}} sekundy budete členem skupiny.",
+        "countdown_other": "Za {{count}} sekund budete členem skupiny.",
+        "cancel": "Odvolat žádost",
+        "isMember": "Jste členem",
+        "hasAccount": "Už máte účet?",
+        "signIn": "Přihlásit se",
+        "leave": "Odejít ze skupiny",
+        "leaveTitle": "Opravdu chcete odejít ze skupiny?",
+        "leaveText": "Přestanete být členem skupiny {{name}}. Znovu se můžete přidat pomocí žádosti o členství.",
+        "leaveStay": "Zůstat ve skupině",
+        "leaveConfirm": "Odejít",
+        "leaveFailed": "Ze skupiny se nepodařilo odejít. Zkuste to prosím znovu."
+      },
+      "title": "Detail skupiny"
     },
     "fields": {
       "activity": "Aktivita",
