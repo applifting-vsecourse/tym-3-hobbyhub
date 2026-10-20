@@ -8,6 +8,8 @@ export const ROUTES = {
   groups: "/groups",
   newGroup: "/groups/new",
   newEvent: "/events/new",
+  myEvents: "/my-events",
+  profile: "/profile",
   // Not built yet — a plain href until the route exists.
   events: "/events",
 } as const

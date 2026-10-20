@@ -1,17 +1,19 @@
 import type { ComponentType, SVGProps } from "react"
+import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { ROUTES } from "@/app/routes"
 import DiscoverIcon from "@/assets/ui-icons/nav-discover.svg?react"
 import GroupsIcon from "@/assets/ui-icons/nav-groups.svg?react"
 import MyEventsIcon from "@/assets/ui-icons/nav-my-events.svg?react"
 import ProfileIcon from "@/assets/ui-icons/nav-profile.svg?react"
 import { Logo } from "@/components/hobbyhub/Logo"
+import { NavLink } from "@/components/NavLink"
+import { NAV_TARGETS, type NavSection } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
-export type BottomNavSection = "discover" | "my-events" | "groups" | "profile"
-
 const SECTIONS: {
-  key: BottomNavSection
+  key: NavSection
   Icon: ComponentType<SVGProps<SVGSVGElement>>
 }[] = [
   { key: "discover", Icon: DiscoverIcon },
@@ -28,9 +30,8 @@ const NAV_LABELS = {
 } as const
 
 type BottomNavProps = {
-  readonly active: BottomNavSection
-  readonly onNavigate: (section: BottomNavSection) => void
-  readonly onAdd: () => void
+  /** The highlighted section; `null` on pages that belong to none (landing, new event). */
+  readonly active: NavSection | null
   readonly hasNewRequests?: boolean
   readonly className?: string
 }
@@ -39,20 +40,18 @@ type NavItemProps = {
   readonly section: (typeof SECTIONS)[number]
   readonly isActive: boolean
   readonly hasDot: boolean
-  readonly onNavigate: BottomNavProps["onNavigate"]
 }
 
-function NavItem({ section, isActive, hasDot, onNavigate }: NavItemProps) {
+function NavItem({ section, isActive, hasDot }: NavItemProps) {
   const { t } = useTranslation()
   const { key, Icon } = section
   const label = t(NAV_LABELS[key])
 
   return (
-    <button
-      type="button"
-      aria-current={isActive ? "page" : undefined}
+    <NavLink
+      target={NAV_TARGETS[key]}
+      isActive={isActive}
       aria-label={hasDot ? t("hobbyhub.nav.withNewRequests", { label }) : undefined}
-      onClick={() => onNavigate(key)}
       className={cn(
         "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
         isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
@@ -68,21 +67,16 @@ function NavItem({ section, isActive, hasDot, onNavigate }: NavItemProps) {
         ) : null}
       </span>
       {label}
-    </button>
+    </NavLink>
   )
 }
 
 /**
  * Spodní navigace (vzhled Soupiska) — four sections and a raised logo button
- * "Přidat" in the middle. Přihlášky and Pořádám are merged into Moje akce.
+ * "Přidat" in the middle that starts a new event. Přihlášky and Pořádám are
+ * merged into Moje akce. Positioning (sticky to the bottom) is the shell's job.
  */
-export function BottomNav({
-  active,
-  onNavigate,
-  onAdd,
-  hasNewRequests = false,
-  className,
-}: BottomNavProps) {
+export function BottomNav({ active, hasNewRequests = false, className }: BottomNavProps) {
   const { t } = useTranslation()
   const renderItem = (section: (typeof SECTIONS)[number]) => (
     <NavItem
@@ -90,20 +84,20 @@ export function BottomNav({
       section={section}
       isActive={active === section.key}
       hasDot={hasNewRequests && section.key === "my-events"}
-      onNavigate={onNavigate}
     />
   )
 
   return (
+    // The top padding only makes room for the raised button; clicks there
+    // must still reach the page underneath, so only the bar takes them.
     <nav
       aria-label={t("hobbyhub.nav.label")}
-      className={cn("w-full pt-9", className)}
+      className={cn("pointer-events-none w-full pt-9", className)}
     >
-      <div className="flex items-start border-t border-border bg-card pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto flex items-start border-t border-border bg-card pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {SECTIONS.slice(0, 2).map(renderItem)}
-        <button
-          type="button"
-          onClick={onAdd}
+        <Link
+          to={ROUTES.newEvent}
           className="group relative flex flex-1 flex-col items-center gap-0.5 py-2 typo-caption text-primary outline-none"
         >
           <span
@@ -117,7 +111,7 @@ export function BottomNav({
           </span>
           <span className="size-6" />
           {t("hobbyhub.nav.add")}
-        </button>
+        </Link>
         {SECTIONS.slice(2).map(renderItem)}
       </div>
     </nav>

@@ -15,6 +15,8 @@ import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ProtectedPagesMyEventsRouteImport } from './routes/_ProtectedPages/my-events'
+import { Route as ProtectedPagesProfileRouteImport } from './routes/_ProtectedPages/profile'
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
 import { Route as ProtectedPagesEventsEventIdRouteImport } from './routes/_ProtectedPages/events/$eventId'
 import { Route as ProtectedPagesEventsNewRouteImport } from './routes/_ProtectedPages/events/new'
@@ -50,6 +52,16 @@ const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedPagesMyEventsRoute = ProtectedPagesMyEventsRouteImport.update({
+  id: '/my-events',
+  path: '/my-events',
+  getParentRoute: () => ProtectedPagesRoute,
+} as any)
+const ProtectedPagesProfileRoute = ProtectedPagesProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ProtectedPagesRoute,
 } as any)
 const ProtectedPagesQuacksRoute = ProtectedPagesQuacksRouteImport.update({
   id: '/quacks',
@@ -91,6 +103,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/my-events': typeof ProtectedPagesMyEventsRoute
+  '/profile': typeof ProtectedPagesProfileRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof ProtectedPagesEventsEventIdRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
@@ -104,6 +118,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/my-events': typeof ProtectedPagesMyEventsRoute
+  '/profile': typeof ProtectedPagesProfileRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof ProtectedPagesEventsEventIdRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
@@ -119,6 +135,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/_ProtectedPages/my-events': typeof ProtectedPagesMyEventsRoute
+  '/_ProtectedPages/profile': typeof ProtectedPagesProfileRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
   '/_ProtectedPages/events/$eventId': typeof ProtectedPagesEventsEventIdRoute
   '/_ProtectedPages/events/new': typeof ProtectedPagesEventsNewRoute
@@ -134,6 +152,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/terms'
+    | '/my-events'
+    | '/profile'
     | '/quacks'
     | '/events/$eventId'
     | '/events/new'
@@ -147,6 +167,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/terms'
+    | '/my-events'
+    | '/profile'
     | '/quacks'
     | '/events/$eventId'
     | '/events/new'
@@ -161,6 +183,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/terms'
+    | '/_ProtectedPages/my-events'
+    | '/_ProtectedPages/profile'
     | '/_ProtectedPages/quacks'
     | '/_ProtectedPages/events/$eventId'
     | '/_ProtectedPages/events/new'
@@ -222,6 +246,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_ProtectedPages/my-events': {
+      id: '/_ProtectedPages/my-events'
+      path: '/my-events'
+      fullPath: '/my-events'
+      preLoaderRoute: typeof ProtectedPagesMyEventsRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
+    '/_ProtectedPages/profile': {
+      id: '/_ProtectedPages/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProtectedPagesProfileRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/quacks': {
       id: '/_ProtectedPages/quacks'
       path: '/quacks'
@@ -268,6 +306,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedPagesRouteChildren {
+  ProtectedPagesMyEventsRoute: typeof ProtectedPagesMyEventsRoute
+  ProtectedPagesProfileRoute: typeof ProtectedPagesProfileRoute
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
   ProtectedPagesEventsEventIdRoute: typeof ProtectedPagesEventsEventIdRoute
   ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
@@ -277,6 +317,8 @@ interface ProtectedPagesRouteChildren {
 }
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
+  ProtectedPagesMyEventsRoute: ProtectedPagesMyEventsRoute,
+  ProtectedPagesProfileRoute: ProtectedPagesProfileRoute,
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
   ProtectedPagesEventsEventIdRoute: ProtectedPagesEventsEventIdRoute,
   ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,

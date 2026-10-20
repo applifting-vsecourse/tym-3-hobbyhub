@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 
 import { HeaderLogo } from "@/components/Header/HeaderLogo"
-import { HeaderNav } from "@/components/Header/HeaderNav"
 import { LanguageSwitcher } from "@/components/Header/LanguageSwitcher"
 import { ThemeSwitcher } from "@/components/Header/ThemeSwitcher"
 import { cn } from "@/lib/utils"
@@ -10,12 +9,16 @@ type HeaderProps = {
   // Auth-aware menu (sign-in CTA / user dropdown). Passed as a slot so
   // `components/` doesn't have to import from `features/auth`.
   userMenu: ReactNode
-  // Discovery header: a location search replaces the nav (desktop only) and
+  // Main navigation (desktop) and the actions next to the switchers ("Přidat").
+  // Slots for the same reason: whether they show depends on the session.
+  nav?: ReactNode
+  actions?: ReactNode
+  // Discovery header: a location search next to the nav (wide screens only) and
   // the bar spans the full page width like the content under it.
   search?: ReactNode
 }
 
-export function Header({ userMenu, search }: HeaderProps) {
+export function Header({ userMenu, nav, actions, search }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
       <div
@@ -26,8 +29,10 @@ export function Header({ userMenu, search }: HeaderProps) {
         )}
       >
         <HeaderLogo />
-        {search ? <div className="hidden max-w-xl flex-1 md:block">{search}</div> : <HeaderNav />}
+        {search ? <div className="hidden max-w-xl flex-1 lg:block">{search}</div> : null}
+        {nav}
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          {actions}
           <LanguageSwitcher />
           <ThemeSwitcher />
           {userMenu}
