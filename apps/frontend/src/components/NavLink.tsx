@@ -1,10 +1,10 @@
 import type { ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 
-import type { NavTarget } from "@/lib/navigation"
+import type { NavRoute } from "@/lib/navigation"
 
 type NavLinkProps = {
-  target: NavTarget
+  to: NavRoute
   /** Decided by `navSectionForPath`, not by the router's own prefix match. */
   isActive: boolean
   className?: string
@@ -14,30 +14,17 @@ type NavLinkProps = {
 
 /**
  * A main-navigation link. Anything that changes the route is a link, so the
- * items of both navigations render through this, including the one page the
- * router does not know yet (a plain `href`).
+ * items of both navigations render through this.
  */
-export function NavLink({ target, isActive, children, ...rest }: NavLinkProps) {
-  const shared = { ...rest, "aria-current": isActive ? ("page" as const) : undefined }
-
-  if ("href" in target) {
-    return (
-      <a
-        href={target.href}
-        {...shared}
-      >
-        {children}
-      </a>
-    )
-  }
-
+export function NavLink({ to, isActive, children, ...rest }: NavLinkProps) {
   // Exact only: the router adds its own aria-current when the paths match
-  // exactly, which agrees with `isActive`; on sub-pages ours above applies.
+  // exactly, which agrees with `isActive`; on sub-pages ours applies.
   return (
     <Link
-      to={target.to}
+      to={to}
       activeOptions={{ exact: true }}
-      {...shared}
+      {...rest}
+      aria-current={isActive ? "page" : undefined}
     >
       {children}
     </Link>

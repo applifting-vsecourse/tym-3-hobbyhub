@@ -6,18 +6,15 @@ export type NavSection = "discover" | "my-events" | "add" | "groups" | "profile"
 /** The sections with a link of their own; "add" is the raised button. */
 export type NavPlace = Exclude<NavSection, "add">
 
-/**
- * Where a navigation item leads. `href` is for a page the router does not know
- * yet (the event list from F-02.3 #7); it becomes `to` once that route exists.
- */
-export type NavTarget =
-  { to: typeof ROUTES.myEvents | typeof ROUTES.groups | typeof ROUTES.profile } | { href: string }
+/** Where a navigation item leads. */
+export type NavRoute =
+  typeof ROUTES.events | typeof ROUTES.myEvents | typeof ROUTES.groups | typeof ROUTES.profile
 
-export const NAV_TARGETS: Record<NavPlace, NavTarget> = {
-  discover: { href: ROUTES.events },
-  "my-events": { to: ROUTES.myEvents },
-  groups: { to: ROUTES.groups },
-  profile: { to: ROUTES.profile },
+export const NAV_TARGETS: Record<NavPlace, NavRoute> = {
+  discover: ROUTES.events,
+  "my-events": ROUTES.myEvents,
+  groups: ROUTES.groups,
+  profile: ROUTES.profile,
 }
 
 const isUnder = (pathname: string, base: string) =>

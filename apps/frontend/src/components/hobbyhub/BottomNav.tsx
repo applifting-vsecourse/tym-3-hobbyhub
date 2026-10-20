@@ -49,7 +49,7 @@ function NavItem({ section, isActive, hasDot }: NavItemProps) {
 
   return (
     <NavLink
-      target={NAV_TARGETS[key]}
+      to={NAV_TARGETS[key]}
       isActive={isActive}
       aria-label={hasDot ? t("hobbyhub.nav.withNewRequests", { label }) : undefined}
       className={cn(

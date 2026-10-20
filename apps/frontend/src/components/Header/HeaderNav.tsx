@@ -26,7 +26,7 @@ export function HeaderNav({ active }: HeaderNavProps) {
       {ITEMS.map(({ section, labelKey }) => (
         <HeaderNavLink
           key={section}
-          target={NAV_TARGETS[section]}
+          to={NAV_TARGETS[section]}
           isActive={active === section}
         >
           {t(labelKey)}

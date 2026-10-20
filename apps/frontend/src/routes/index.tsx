@@ -88,7 +88,7 @@ function LandingPage() {
           capacity={10}
           action={
             <Button asChild>
-              <a href={ROUTES.events}>{t("landing.hero.join")}</a>
+              <Link to={ROUTES.events}>{t("landing.hero.join")}</Link>
             </Button>
           }
           secondaryAction={
@@ -115,9 +115,9 @@ function LandingPage() {
           {TONIGHT.length > 0 ? (
             <div className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
               {TONIGHT.map(({ id, ...event }) => (
-                <a
+                <Link
                   key={id}
-                  href={ROUTES.events}
+                  to={ROUTES.events}
                   className="group block rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5"
                 >
                   <EventCard
@@ -125,7 +125,7 @@ function LandingPage() {
                     className="h-full transition-colors duration-200 group-hover:border-primary group-focus-visible:border-primary"
                     {...event}
                   />
-                </a>
+                </Link>
               ))}
             </div>
           ) : (
@@ -160,7 +160,7 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.events}>{t("landing.actions.find")}</a>
+              <Link to={ROUTES.events}>{t("landing.actions.find")}</Link>
             </Button>
             <Button
               asChild
