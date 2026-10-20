@@ -74,7 +74,8 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - Every screen works at 375 px wide with no horizontal scroll. Layouts stack below `md` and go side by side from `md`.
 - Touch targets are at least 44 px on phones (buttons M and `icon`, filter chips `h-11 md:h-9`). The S sizes (`sm`, `icon-sm`) are for `md` and up, or must be made 44 px on phones the same way.
 - Secondary tasks that keep the page underneath — filters, sharing an event — open in `ResponsiveSheet`: a bottom drawer on phones, a dialog from `md`. Its one primary action sits at the bottom, full width. Use the ready-made `FiltersSheet` and `ShareEventSheet`.
-- Fixed bottom UI (`BottomNav`) respects the safe-area inset.
+- Fixed bottom UI (`BottomNav`) respects the safe-area inset. An action bar fixed to the bottom of a form (`fixed inset-x-0 bottom-0 z-30`) uses `pb-above-bottom-nav`, which puts its button above the `BottomNav` of a signed-in user.
+- Text you type into is at least 16 px on phones, or iOS Safari zooms the page in on focus and leaves it zoomed: fields use `typo-body-lg md:typo-body`. The kit's `Input`, `Textarea`, `CommandInput` and `SearchField` already do.
 
 ## Buttons and loaders
 
