@@ -42,7 +42,8 @@ export function UpcomingEvents({
     )
   }
 
-  if (error) {
+  // A failed refetch in the background keeps the data; show the cards, not the error.
+  if (error && events.length === 0) {
     return (
       <EventsLoadError
         error={error}

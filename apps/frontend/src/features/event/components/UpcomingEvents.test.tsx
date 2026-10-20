@@ -114,6 +114,20 @@ describe("UpcomingEvents", () => {
     expect(screen.queryByRole("link")).not.toBeInTheDocument()
   })
 
+  it("keeps the cards when a refetch in the background fails", () => {
+    render(
+      <UpcomingEvents
+        activityLabel={(activity) => activity.name}
+        events={[event()]}
+        error={new Error("Server je mimo")}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/events/e1")
+    expect(screen.queryByText("Server je mimo")).not.toBeInTheDocument()
+  })
+
   it("shows the error with a way to retry", async () => {
     const onReload = vi.fn()
     render(
