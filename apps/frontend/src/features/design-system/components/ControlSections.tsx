@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { ChevronDown, Plus } from "lucide-react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+import { AppForm } from "@/components/form/AppForm"
+import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { PhotoPicker } from "@/components/hobbyhub/PhotoPicker"
@@ -27,6 +30,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
 import { SearchWithFilters } from "@/features/design-system/components/SheetDemos"
@@ -41,6 +45,52 @@ const BUTTON_TYPES = [
 ] as const
 
 const FILTERS = ["Chybí lidé", "Vítáni nováčci", "Tento týden"]
+
+const ACTIVITY_OPTIONS = [
+  { id: "florbal", label: "Florbal", icon: "florbal" },
+  { id: "sachy", label: "Šachy", icon: "sachy" },
+  { id: "volejbal", label: "Volejbal", icon: "volejbal" },
+  { id: "deskove-hry", label: "Deskové hry", icon: "deskove-hry" },
+]
+
+function UnsavedChangesExample() {
+  const form = useForm({ defaultValues: { note: "" } })
+
+  return (
+    <AppForm
+      form={form}
+      onSubmit={() => form.reset()}
+      className="flex flex-col gap-1.5"
+    >
+      <Label htmlFor="ds-unsaved">Rozpracované změny</Label>
+      <Input
+        id="ds-unsaved"
+        placeholder="Napište něco a zkuste odejít na jinou stránku"
+        {...form.register("note")}
+      />
+      <p className="typo-small text-muted-foreground">
+        Každý formulář přes AppForm se před odchodem ze stránky zeptá, dokud změny nejsou odeslané.
+      </p>
+    </AppForm>
+  )
+}
+
+function ActivityComboboxExample() {
+  const [activity, setActivity] = useState("")
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="ds-activity">Aktivita</Label>
+      <ActivityCombobox
+        id="ds-activity"
+        options={ACTIVITY_OPTIONS}
+        value={activity}
+        onValueChange={setActivity}
+        placeholder="Vyberte aktivitu"
+      />
+    </div>
+  )
+}
 
 function FilterExample() {
   const [active, setActive] = useState<string[]>(["Chybí lidé"])
@@ -207,6 +257,8 @@ export function ControlSections() {
               placeholder="Přijď se podívat, nikdo tě nebude zkoušet z úrovně."
             />
           </div>
+          <ActivityComboboxExample />
+          <UnsavedChangesExample />
           <PhotoPickerExample />
           <Counter
             label="Minimum"
@@ -215,6 +267,13 @@ export function ControlSections() {
             min={2}
             max={30}
           />
+          <div className="flex min-h-11 items-center justify-between gap-3">
+            <Label htmlFor="ds-remember">Zůstat přihlášen</Label>
+            <Switch
+              id="ds-remember"
+              defaultChecked
+            />
+          </div>
         </div>
       </ShowcaseSection>
 

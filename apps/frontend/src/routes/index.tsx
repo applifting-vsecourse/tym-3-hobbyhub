@@ -1,19 +1,25 @@
-import type { CSSProperties } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { useState, type CSSProperties } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
 import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
-import { Header } from "@/components/Header/Header"
+import { AppForm } from "@/components/form/AppForm"
 import { EventCard } from "@/components/hobbyhub/EventCard"
+import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
-import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
+import { activityName } from "@/features/activity/activityName"
+import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { AppShell } from "@/features/auth/components/AppShell"
+import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -65,32 +71,69 @@ const STEP_KEYS = ["step1", "step2", "step3"] as const
 
 function LandingPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const searchForm = useForm({ defaultValues: { q: "" } })
+  const searchText = useWatch({ control: searchForm.control, name: "q" })
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const activitiesQuery = useQuery(activitiesQueryOptions())
+  const activities = activitiesQuery.data ?? []
+
+  // Searching or filtering from the landing page opens the event list already filtered.
+  const openEvents = (filters: { activities?: string[]; location?: string } = {}) => {
+    void navigate({
+      to: "/events",
+      search: {
+        q: nonEmpty(searchForm.getValues("q")),
+        activity: filters.activities?.length ? filters.activities : undefined,
+        location: nonEmpty(filters.location),
+      },
+    })
+  }
+  // The same field twice: in the header from `lg`, in the page below it. Both
+  // share one form, so what is typed in one shows in the other.
+  const searchField = (
+    <AppForm
+      form={searchForm}
+      isGuarded={false}
+      role="search"
+      className="contents"
+      onSubmit={() => openEvents()}
+    >
+      <SearchField
+        label={t("landing.search.label")}
+        placeholder={t("landing.search.placeholder")}
+        maxLength={EVENT_SEARCH_MAX_LENGTH}
+        value={searchText}
+        onChange={(event) => searchForm.setValue("q", event.target.value)}
+        onOpenFilters={() => setIsFiltersOpen(true)}
+      />
+    </AppForm>
+  )
 
   return (
     <>
       <Seo title={t("landing.seoTitle")} />
-      <Header
-        search={
-          <SearchField
-            label={t("landing.search.label")}
-            placeholder={t("landing.search.placeholder")}
-          />
-        }
-        userMenu={
-          <>
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="max-md:hidden"
-            >
-              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
-            </Button>
-            <HeaderMenu />
-          </>
-        }
-      />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8">
+      <AppShell
+        className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8"
+        search={searchField}
+      >
+        <FiltersSheet
+          isOpen={isFiltersOpen}
+          onOpenChange={setIsFiltersOpen}
+          value={EMPTY_FILTERS}
+          onApply={openEvents}
+          fields={["activity", "location"]}
+          activitiesState={{
+            isLoading: activitiesQuery.isPending,
+            error: activitiesQuery.error,
+            onRetry: () => void activitiesQuery.refetch(),
+          }}
+          activityOptions={activities.map((item) => ({
+            value: item.id,
+            label: activityName(t, item),
+          }))}
+        />
+        <div className="lg:hidden">{searchField}</div>
         <Hero
           className="enter [--seat-delay:400ms]"
           isAnimated
@@ -102,7 +145,7 @@ function LandingPage() {
           capacity={10}
           action={
             <Button asChild>
-              <a href={ROUTES.events}>{t("landing.hero.join")}</a>
+              <Link to={ROUTES.events}>{t("landing.hero.join")}</Link>
             </Button>
           }
           secondaryAction={
@@ -110,7 +153,7 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
             </Button>
           }
         />
@@ -129,9 +172,9 @@ function LandingPage() {
           {TONIGHT.length > 0 ? (
             <div className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
               {TONIGHT.map(({ id, ...event }) => (
-                <a
+                <Link
                   key={id}
-                  href={ROUTES.events}
+                  to={ROUTES.events}
                   className="group block rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5"
                 >
                   <EventCard
@@ -139,7 +182,7 @@ function LandingPage() {
                     className="h-full transition-colors duration-200 group-hover:border-primary group-focus-visible:border-primary"
                     {...event}
                   />
-                </a>
+                </Link>
               ))}
             </div>
           ) : (
@@ -174,17 +217,17 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.events}>{t("landing.actions.find")}</a>
+              <Link to={ROUTES.events}>{t("landing.actions.find")}</Link>
             </Button>
             <Button
               asChild
               variant="outline"
             >
-              <a href={ROUTES.newEvent}>{t("landing.actions.create")}</a>
+              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
             </Button>
           </div>
         </section>
-      </main>
+      </AppShell>
     </>
   )
 }

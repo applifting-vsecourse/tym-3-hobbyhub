@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router"
 import { LogOut } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { ROUTES } from "@/app/routes"
+import ProfileIcon from "@/assets/ui-icons/nav-profile.svg?react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,7 +31,7 @@ export function HeaderMenu() {
         // Outline at every width: the screen's one primary action is its own, not signing in.
         variant="outline"
       >
-        <Link to="/login">{t("header.signIn")}</Link>
+        <Link to={ROUTES.login}>{t("header.signIn")}</Link>
       </Button>
     )
   }
@@ -65,6 +67,16 @@ export function HeaderMenu() {
             <span className="mt-1 truncate text-xs text-muted-foreground">{user.email}</span>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to={ROUTES.profile}>
+            <ProfileIcon
+              aria-hidden
+              className="size-4"
+            />
+            {t("header.profile")}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => signOut.mutate()}

@@ -39,10 +39,16 @@
     },
     "signIn": {
       "description": "Vítejte zpět v HobbyHubu.",
+      "lockoutNote": "Po opakovaných neúspěšných pokusech přihlášení na chvíli zablokujeme.",
       "noAccount": "Nemáte účet?",
+      "rememberMe": "Zůstat přihlášen",
       "signUpLink": "Zaregistrujte se",
       "submit": "Přihlásit se",
       "title": "Přihlášení"
+    },
+    "signOut": {
+      "failed": "Odhlášení se nezdařilo. Zkuste to prosím znovu.",
+      "success": "Byli jste odhlášeni."
     },
     "signUp": {
       "description": "Profil doplníte později.",
@@ -65,6 +71,14 @@
       "underage": "Registrace je možná až od 18 let"
     }
   },
+  "common": {
+    "unsavedChanges": {
+      "description": "Máte rozpracované změny, které nejsou odeslané. Když odejdete, ztratí se.",
+      "leave": "Odejít",
+      "stay": "Zůstat",
+      "title": "Opustit stránku?"
+    }
+  },
   "errors": {
     "generic": {
       "description": "Došlo k neočekávané chybě.",
@@ -75,6 +89,178 @@
       "description": "Stránka, kterou hledáte, neexistuje nebo se přesunula.",
       "goHome": "Na úvodní stránku",
       "title": "Stránka nenalezena"
+    }
+  },
+  "events": {
+    "back": "Zpět",
+    "day": {
+      "today": "Dnes",
+      "tomorrow": "Zítra"
+    },
+    "defaults": {
+      "country": "Česko"
+    },
+    "detail": {
+      "address": {
+        "online": "Odkaz po schválení",
+        "private": "Přesná adresa po schválení"
+      },
+      "addressLabel": "Adresa",
+      "approvalAutomatic": "Místo získáš hned po přihlášení.",
+      "approvalManual": "Organizátor žádost schvaluje ručně.",
+      "back": "Zpět na akce",
+      "contribution": "Příspěvek",
+      "equipment": "Vybavení",
+      "hasAccount": "Už máš účet?",
+      "join": "Obsadit místo",
+      "joinSoon": "Žádost o účast zatím nejde odeslat.",
+      "linkLabel": "Odkaz",
+      "loadError": "Akci se nepodařilo načíst",
+      "loading": "Načítáme akci…",
+      "missingToMin": "chybí {{count}} do minima",
+      "organizer": "Pořádá {{name}}",
+      "roster": "Soupiska",
+      "seats": "{{taken}} z {{total}} míst",
+      "signIn": "Přihlásit se",
+      "state": {
+        "cancelled": "Zrušeno",
+        "cancelledText": "Akce byla zrušena, o účast už se nedá žádat.",
+        "finished": "Proběhlo",
+        "finishedText": "Akce už proběhla, o účast se nedá žádat.",
+        "full": "Naplněno",
+        "fullText": "Akce je plná, o účast se nedá žádat.",
+        "notHeld": "Neuskutečnilo se",
+        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat."
+      },
+      "stats": {
+        "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
+        "genderLabel": "Muži : ženy",
+        "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
+        "medianAgeLabel": "Medián věku",
+        "title": "Složení účastníků"
+      },
+      "title": "Detail akce"
+    },
+    "fields": {
+      "activity": "Aktivita",
+      "city": "Město",
+      "contributionAmount": "Příspěvek na místo v Kč (nepovinné)",
+      "contributionNote": "Poznámka k příspěvku (nepovinné)",
+      "country": "Země",
+      "description": "Popis akce",
+      "endDate": "Datum konce",
+      "endTime": "Čas do",
+      "equipment": "Vybavení (nepovinné)",
+      "externalOccupiedSpots": "Už obsazeno mimo aplikaci",
+      "maxParticipants": "Maximum",
+      "minParticipants": "Minimum",
+      "placeName": "Název místa (nepovinné)",
+      "postalCode": "PSČ",
+      "startDate": "Datum",
+      "startTime": "Čas od",
+      "street": "Ulice a číslo",
+      "title": "Název",
+      "venueType": "Typ místa"
+    },
+    "form": {
+      "activityEmpty": "Zatím tu nejsou žádné aktivity",
+      "activityError": "Aktivity se nepodařilo načíst.",
+      "activityLoading": "Načítáme aktivity…",
+      "activityPlaceholder": "Vyberte aktivitu",
+      "address": "Místo",
+      "cancel": "Zrušit",
+      "continue": "Pokračovat",
+      "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
+      "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
+      "created": "Akce je zveřejněná.",
+      "externalHint": "Lidé z vaší party bez účtu, včetně vás. Počítají se do obsazenosti.",
+      "minimumReached": "Minimum je naplněné",
+      "missingHint": "Počet chybějících lidí se počítá z minima a obsazených míst.",
+      "missingToMinimum_few": "Chybí {{count}} do minima",
+      "missingToMinimum_one": "Chybí {{count}} do minima",
+      "missingToMinimum_other": "Chybí {{count}} do minima",
+      "previewTitle": "Takto uvidí akci ostatní",
+      "previousStep": "Zpět na předchozí krok",
+      "publish": "Zveřejnit akci",
+      "retry": "Zkusit znovu",
+      "stepOf": "Krok {{step}} ze {{total}}",
+      "steps": {
+        "details": "Detaily a zveřejnění",
+        "what": "Co a kdy",
+        "who": "Kdo a kolik"
+      },
+      "title": "Nová akce"
+    },
+    "list": {
+      "count_few": "{{count}} akce",
+      "count_one": "{{count}} akce",
+      "count_other": "{{count}} akcí",
+      "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
+      "emptyFiltered": {
+        "clear": "Vymazat filtry",
+        "description": "Pro tenhle výběr zatím nic nehraje. Zkuste jiné hledání, lokalitu nebo aktivitu.",
+        "title": "Nic nenalezeno"
+      },
+      "filters": {
+        "open": "Filtry",
+        "selected": "Vybrané filtry",
+        "unknownActivity": "Neznámá aktivita"
+      },
+      "loadError": "Akce se nepodařilo načíst",
+      "loadMore": "Načíst další",
+      "loading": "Načítáme akce…",
+      "reload": "Načíst znovu",
+      "searchPlaceholder": "Název, místo nebo aktivita",
+      "seoTitle": "Akce",
+      "title": "Akce"
+    },
+    "map": {
+      "placeholder": "Tady bude mapa"
+    },
+    "online": "Online",
+    "placeholders": {
+      "city": "Např. Praha 8",
+      "contributionAmount": "Např. 80",
+      "contributionNote": "Např. platí se na místě hotově",
+      "description": "Např. rekreační hra pro mírně pokročilé…",
+      "equipment": "Např. vlastní hokejka, sálová obuv",
+      "placeName": "Např. ZŠ Kobylisy",
+      "postalCode": "Např. 182 00",
+      "street": "Např. Chabařovická 4",
+      "title": "Např. Čtvrteční florbal"
+    },
+    "preview": {
+      "noPlace": "Místo akce",
+      "noTime": "--:--",
+      "occupied": "Obsazeno {{taken}} z {{total}}",
+      "untitled": "Název akce"
+    },
+    "validation": {
+      "activityRequired": "Vyberte aktivitu",
+      "amountInvalid": "Zadejte částku v korunách, nejvýše na dvě desetinná místa",
+      "amountRequiredForNote": "K poznámce doplňte částku",
+      "cityRequired": "Zadejte město",
+      "countryRequired": "Zadejte zemi",
+      "dateRequired": "Zadejte datum",
+      "descriptionRequired": "Napište pár vět o akci",
+      "endBeforeStart": "Konec musí být po začátku",
+      "maxBelowMin": "Maximum musí být alespoň jako minimum",
+      "occupiedAboveMax": "Obsazených míst nemůže být víc než maximum",
+      "postalCodeRequired": "Zadejte PSČ",
+      "startInPast": "Začátek musí být v budoucnu",
+      "streetRequired": "Zadejte ulici a číslo",
+      "timeRequired": "Zadejte čas",
+      "titleRequired": "Zadejte název akce",
+      "titleTooShort_few": "Alespoň {{count}} znaky",
+      "titleTooShort_one": "Alespoň {{count}} znak",
+      "titleTooShort_other": "Alespoň {{count}} znaků",
+      "tooLong_few": "Maximálně {{count}} znaky",
+      "tooLong_one": "Maximálně {{count}} znak",
+      "tooLong_other": "Maximálně {{count}} znaků"
+    },
+    "venueType": {
+      "PRIVATE_VENUE": "Soukromé prostory",
+      "PUBLIC_VENUE": "Veřejné místo"
     }
   },
   "groups": {
@@ -154,11 +340,7 @@
     "language": {
       "label": "Jazyk"
     },
-    "nav": {
-      "designSystem": "Design systém",
-      "groups": "Skupiny",
-      "quacks": "Quacks"
-    },
+    "profile": "Můj profil",
     "signIn": "Přihlásit se",
     "signOut": "Odhlásit se",
     "theme": {
@@ -187,6 +369,10 @@
       "tenis": "Tenis",
       "turistika": "Turistika",
       "volejbal": "Volejbal"
+    },
+    "activityCombobox": {
+      "noMatch": "Žádná aktivita neodpovídá",
+      "search": "Hledat aktivitu…"
     },
     "avatars": {
       "basketbalista": "Basketbalista",
@@ -225,6 +411,10 @@
       "until": "do {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "Zatím tu nejsou žádné aktivity.",
+      "activitiesError": "Aktivity se nepodařilo načíst",
+      "activitiesLoading": "Načítáme aktivity…",
+      "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "clear": "Vymazat",
       "date": "Datum…",
@@ -332,14 +522,22 @@
       "title": "Jak to funguje"
     },
     "search": {
-      "label": "Lokalita",
-      "placeholder": "Lokalita: Praha 8"
+      "label": "Hledat akce",
+      "placeholder": "Název, místo nebo aktivita"
     },
     "seoTitle": "Úvodní stránka",
     "tonight": {
       "empty": "Na dnešní večer zatím nic nemáme. Hledejte na další dny, nebo akci vypište sami — až se objeví, najdete je tady.",
       "title": "Dnes večer"
     }
+  },
+  "myEvents": {
+    "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
+    "title": "Moje akce"
+  },
+  "profile": {
+    "placeholder": "Stránku profilu připravujeme.",
+    "title": "Profil"
   },
   "quacks": {
     "form": {

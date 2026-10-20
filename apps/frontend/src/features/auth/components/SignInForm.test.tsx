@@ -43,4 +43,45 @@ describe("SignInForm", () => {
     expect(await screen.findByText("Neplatný e-mail")).toBeInTheDocument()
     expect(screen.queryByText("Zadejte e-mail")).not.toBeInTheDocument()
   })
+
+  it("keeps the user signed in by default and lets them opt out", async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(
+      <SignInForm
+        isLoading={false}
+        onSubmit={onSubmit}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("E-mail"), "jana@example.cz")
+    await user.type(screen.getByLabelText("Heslo"), "tajneheslo")
+    await user.click(screen.getByRole("button", { name: "Přihlásit se" }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      { email: "jana@example.cz", password: "tajneheslo", rememberMe: true },
+      expect.anything(),
+    )
+
+    await user.click(screen.getByRole("switch", { name: "Zůstat přihlášen" }))
+    await user.click(screen.getByRole("button", { name: "Přihlásit se" }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ rememberMe: false }),
+      expect.anything(),
+    )
+  })
+
+  it("reveals the password on request", async () => {
+    const user = userEvent.setup()
+    render(
+      <SignInForm
+        isLoading={false}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const password = screen.getByLabelText("Heslo")
+    expect(password).toHaveAttribute("type", "password")
+    await user.click(screen.getByRole("button", { name: "Zobrazit heslo" }))
+    expect(password).toHaveAttribute("type", "text")
+  })
 })

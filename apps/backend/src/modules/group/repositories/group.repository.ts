@@ -38,6 +38,8 @@ const mapPrismaGroupToDomain = (
     id: group.activity.id,
     name: group.activity.name,
     icon: group.activity.icon,
+    defaultMinParticipants: group.activity.defaultMinParticipants,
+    defaultMaxParticipants: group.activity.defaultMaxParticipants,
   },
   memberCount: group._count.memberships,
 });

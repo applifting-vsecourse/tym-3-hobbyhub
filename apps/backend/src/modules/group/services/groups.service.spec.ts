@@ -19,7 +19,13 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
   visibility: 'PUBLIC',
   status: 'ACTIVE',
   createdAt: new Date('2026-01-01T12:00:00Z'),
-  activity: { id: 'a1', name: 'Florbal', icon: 'florbal' },
+  activity: {
+    id: 'a1',
+    name: 'Florbal',
+    icon: 'florbal',
+    defaultMinParticipants: 8,
+    defaultMaxParticipants: 12,
+  },
   memberCount: 1,
   ...overrides,
 });

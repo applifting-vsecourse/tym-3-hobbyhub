@@ -1,11 +1,10 @@
-import { useState } from "react"
 import { toast } from "sonner"
 
 import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
 import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import vyletPhoto from "@/assets/event-photos/vylet.jpg"
-import { BottomNav, type BottomNavSection } from "@/components/hobbyhub/BottomNav"
+import { BottomNav } from "@/components/hobbyhub/BottomNav"
 import { ChatShare } from "@/components/hobbyhub/ChatShare"
 import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
@@ -44,14 +43,10 @@ const LOADER_VARIANTS: { variant: LoaderVariant; usage: string }[] = [
 const notify = (message: string) => () => toast(message)
 
 function BottomNavExample() {
-  const [active, setActive] = useState<BottomNavSection>("discover")
-
   return (
     <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border bg-background">
       <BottomNav
-        active={active}
-        onNavigate={setActive}
-        onAdd={notify("Tady začne vypsání akce")}
+        active="discover"
         hasNewRequests
       />
     </div>
