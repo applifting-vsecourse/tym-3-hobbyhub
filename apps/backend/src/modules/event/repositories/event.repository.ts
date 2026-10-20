@@ -48,8 +48,9 @@ const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
 // the distance from a chosen point once events have coordinates: geocode the
 // address on save (F-12.3), then filter and sort by radius, e.g. with PostGIS.
 // The columns `locationLatitude` and `locationLongitude` exist but are empty.
-// The database folds the same way `foldForSearch` does, for the diacritics of
-// Czech and Slovak (no `unaccent` extension needed).
+// The database folds like `foldForSearch` does, but only for the diacritics of
+// Czech and Slovak (no `unaccent` extension needed); other accents, such as
+// "è", are not matched.
 const FOLD_FROM = 'áäčďéěíĺľňóôöŕřšťúůüýž';
 const FOLD_TO = 'aacdeeillnooorrstuuuyz';
 
@@ -212,7 +213,7 @@ export class EventRepository {
     filter: EventListFilter = { activityIds: [] },
   ): Promise<EventListPage> {
     const { activityIds } = filter;
-    const textMatches = await this.findIdsMatchingText(filter);
+    const textMatches = await this.findIdsMatchingText(filter, now);
     const where = {
       status: 'PUBLISHED',
       visibility: 'PUBLIC',
@@ -235,12 +236,13 @@ export class EventRepository {
   }
 
   // Text conditions need the folding above, which Prisma cannot express, so the
-  // matching ids come from SQL and the rest of the filter stays in Prisma.
-  // Null means there is no text to match.
-  private async findIdsMatchingText({
-    search,
-    location,
-  }: EventListFilter): Promise<string[] | null> {
+  // matching ids come from SQL and the rest of the filter stays in Prisma. The
+  // SQL repeats the conditions of the public list, so it never returns the ids
+  // of drafts, private or finished events. Null means there is no text to match.
+  private async findIdsMatchingText(
+    { search, location }: EventListFilter,
+    now: Date,
+  ): Promise<string[] | null> {
     const searchNeedle = foldForSearch(search ?? '');
     const locationNeedle = foldForSearch(location ?? '');
     const conditions = [
@@ -256,10 +258,12 @@ export class EventRepository {
     const rows = await this.prisma.$queryRaw<{ id: string }[]>`
       SELECT e."id" FROM "event" e
       JOIN "activity" a ON a."id" = e."activityId"
-      WHERE ${Prisma.join(
-        conditions.map((condition) => Prisma.sql`(${condition})`),
-        ' AND ',
-      )}`;
+      WHERE e."status" = 'PUBLISHED' AND e."visibility" = 'PUBLIC'
+        AND NOT e."isHidden" AND e."endAt" > ${now}
+        AND ${Prisma.join(
+          conditions.map((condition) => Prisma.sql`(${condition})`),
+          ' AND ',
+        )}`;
     return rows.map((row) => row.id);
   }
 }
