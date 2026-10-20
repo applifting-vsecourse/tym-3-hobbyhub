@@ -2,6 +2,7 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import {
   CreateEventData,
   Event,
+  EventListFilter,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
@@ -60,8 +61,9 @@ export class EventsService {
 
   getUpcomingPublicEvents(
     page: Page,
+    filter: EventListFilter = { activityIds: [] },
     now: Date = new Date(),
   ): Promise<EventListPage> {
-    return this.eventRepository.getUpcomingPublicEvents(now, page);
+    return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
   }
 }

@@ -118,6 +118,27 @@ describe('EventsService', () => {
     expect(repository.createPublishedEvent).not.toHaveBeenCalled();
   });
 
+  it('passes the page and the activity filter to the list', async () => {
+    const { repository, service } = setup();
+    const now = new Date();
+    repository.getUpcomingPublicEvents.mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+
+    await service.getUpcomingPublicEvents(
+      { limit: 20, offset: 0 },
+      { activityIds: ['a1'] },
+      now,
+    );
+
+    expect(repository.getUpcomingPublicEvents).toHaveBeenCalledWith(
+      now,
+      { limit: 20, offset: 0 },
+      { activityIds: ['a1'] },
+    );
+  });
+
   it('reports a missing event as not found', async () => {
     const { repository, service } = setup();
     repository.getEventById.mockResolvedValue(null);

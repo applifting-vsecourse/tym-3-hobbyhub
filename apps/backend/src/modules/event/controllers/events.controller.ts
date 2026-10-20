@@ -36,12 +36,19 @@ export class EventsController {
   @Get()
   @ApiOperation({ summary: 'List upcoming public events, soonest first' })
   @ApiResponse({ status: 200, type: EventListResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid limit or offset' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid limit, offset or filter',
+  })
   async list(@Query() query: ListEventsQuery): Promise<EventListResponseDto> {
-    const page = await this.eventsService.getUpcomingPublicEvents({
-      limit: query.limit,
-      offset: query.offset,
-    });
+    const page = await this.eventsService.getUpcomingPublicEvents(
+      { limit: query.limit, offset: query.offset },
+      {
+        activityIds: query.activityIds,
+        search: query.search,
+        location: query.location,
+      },
+    );
     return EventListResponseDto.fromDomain(page);
   }
 

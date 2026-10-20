@@ -2,6 +2,7 @@ import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,
   ParticipationStatus,
+  Prisma,
   Activity as PrismaActivity,
   Event as PrismaEvent,
   Level as PrismaLevel,
@@ -9,9 +10,11 @@ import {
 import {
   CreateEventData,
   Event,
+  EventListFilter,
   EventListItem,
   EventListPage,
   EventLocation,
+  foldForSearch,
   occupancyOf,
   Page,
 } from '@/modules/event/domain/event';
@@ -37,6 +40,35 @@ type PrismaEventWithRelations = PrismaEvent & {
 const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
   ParticipationStatus.APPROVED,
   ParticipationStatus.ATTENDED,
+];
+
+// TODO(F-02.1b #91): this is an exact "contains" match, so "Brno" misses a
+// typo like "Brnoo" and knows nothing about places near Brno. Similarity search
+// (e.g. pg_trgm `similarity`, ranked by closeness) belongs here, and so does
+// the distance from a chosen point once events have coordinates: geocode the
+// address on save (F-12.3), then filter and sort by radius, e.g. with PostGIS.
+// The columns `locationLatitude` and `locationLongitude` exist but are empty.
+// The database folds the same way `foldForSearch` does, for the diacritics of
+// Czech and Slovak (no `unaccent` extension needed).
+const FOLD_FROM = 'áäčďéěíĺľňóôöŕřšťúůüýž';
+const FOLD_TO = 'aacdeeillnooorrstuuuyz';
+
+// True when `needle` is part of any of the columns, ignoring case and diacritics.
+const containsInAny = (columns: Prisma.Sql[], needle: string): Prisma.Sql =>
+  Prisma.join(
+    columns.map(
+      (column) =>
+        Prisma.sql`strpos(translate(lower(coalesce(${column}, '')), ${FOLD_FROM}, ${FOLD_TO}), ${needle}) > 0`,
+    ),
+    ' OR ',
+  );
+
+// A private venue is someone's home: its name is never matched, like it is
+// never shown.
+const PLACE_COLUMNS = [
+  Prisma.sql`CASE WHEN e."venueType" = 'PUBLIC_VENUE' THEN e."locationPlaceName" END`,
+  Prisma.sql`e."locationCity"`,
+  Prisma.sql`e."locationDistrict"`,
 ];
 
 const listInclude = {
@@ -173,16 +205,21 @@ export class EventRepository {
   }
 
   // The same set the map shows: public, published, not hidden by a moderator
-  // and not over yet. Soonest first.
+  // and not over yet. Soonest first. Several activities match any of them.
   async getUpcomingPublicEvents(
     now: Date,
     { limit, offset }: Page,
+    filter: EventListFilter = { activityIds: [] },
   ): Promise<EventListPage> {
+    const { activityIds } = filter;
+    const textMatches = await this.findIdsMatchingText(filter);
     const where = {
       status: 'PUBLISHED',
       visibility: 'PUBLIC',
       isHidden: false,
       endAt: { gt: now },
+      ...(activityIds.length > 0 && { activityId: { in: activityIds } }),
+      ...(textMatches && { id: { in: textMatches } }),
     } as const;
     const [events, total] = await Promise.all([
       this.prisma.event.findMany({
@@ -195,5 +232,34 @@ export class EventRepository {
       this.prisma.event.count({ where }),
     ]);
     return { items: events.map(mapPrismaEventToListItem), total };
+  }
+
+  // Text conditions need the folding above, which Prisma cannot express, so the
+  // matching ids come from SQL and the rest of the filter stays in Prisma.
+  // Null means there is no text to match.
+  private async findIdsMatchingText({
+    search,
+    location,
+  }: EventListFilter): Promise<string[] | null> {
+    const searchNeedle = foldForSearch(search ?? '');
+    const locationNeedle = foldForSearch(location ?? '');
+    const conditions = [
+      searchNeedle &&
+        containsInAny(
+          [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
+          searchNeedle,
+        ),
+      locationNeedle && containsInAny(PLACE_COLUMNS, locationNeedle),
+    ].filter((condition): condition is Prisma.Sql => !!condition);
+    if (conditions.length === 0) return null;
+
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT e."id" FROM "event" e
+      JOIN "activity" a ON a."id" = e."activityId"
+      WHERE ${Prisma.join(
+        conditions.map((condition) => Prisma.sql`(${condition})`),
+        ' AND ',
+      )}`;
+    return rows.map((row) => row.id);
   }
 }
