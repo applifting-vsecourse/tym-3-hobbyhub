@@ -86,7 +86,7 @@ function EventDetailPage() {
       <Seo title={event.title} />
       <section className="mx-auto w-full max-w-2xl px-4 py-6 md:py-12">
         <BackLink
-          to={ROUTES.home}
+          to={ROUTES.events}
           label={t("events.back")}
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
