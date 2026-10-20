@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { AppShell } from "@/features/auth/components/AppShell"
+import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -64,9 +65,6 @@ const TONIGHT: TonightEvent[] = [
   },
 ]
 
-// An empty text is no filter, and keeps the address clean.
-const nonEmpty = (text = "") => (text.trim() === "" ? undefined : text.trim())
-
 const STEP_KEYS = ["step1", "step2", "step3"] as const
 
 function LandingPage() {
@@ -107,6 +105,7 @@ function LandingPage() {
               name="q"
               label={t("landing.search.label")}
               placeholder={t("landing.search.placeholder")}
+              maxLength={EVENT_SEARCH_MAX_LENGTH}
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
               onOpenFilters={() => setIsFiltersOpen(true)}

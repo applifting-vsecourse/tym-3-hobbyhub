@@ -19,6 +19,9 @@ export const EMPTY_FILTERS: EventFilters = { activities: [], when: null, locatio
 
 const WHEN_OPTIONS = ["week", "weekend", "date"] as const
 
+/** The longest text the location field takes; the server refuses more. */
+export const FILTER_TEXT_MAX_LENGTH = 100
+
 export type FilterActivityOption = { value: string; label: string }
 export type FiltersSheetField = "activity" | "when" | "location"
 
@@ -178,7 +181,7 @@ export function FiltersSheet({
             <Label htmlFor={locationId}>{t("hobbyhub.filters.location")}</Label>
             <Input
               id={locationId}
-              maxLength={100}
+              maxLength={FILTER_TEXT_MAX_LENGTH}
               placeholder={t("hobbyhub.filters.locationPlaceholder")}
               value={draft.location}
               onChange={(event) =>

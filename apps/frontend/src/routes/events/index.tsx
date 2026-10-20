@@ -3,7 +3,6 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-qu
 import { createFileRoute } from "@tanstack/react-router"
 import { MapPin, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { z } from "zod"
 
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
@@ -18,13 +17,11 @@ import { AppShell } from "@/features/auth/components/AppShell"
 import { eventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { EventList } from "@/features/event/components/EventList"
 import { EventsMapPlaceholder } from "@/features/event/components/EventsMapPlaceholder"
-
-// The filters live in the address, so a link or a reload shows the same events.
-const eventsSearchSchema = z.object({
-  activity: z.array(z.string()).optional().catch(undefined),
-  q: z.string().optional().catch(undefined),
-  location: z.string().optional().catch(undefined),
-})
+import {
+  EVENT_SEARCH_MAX_LENGTH,
+  eventsSearchSchema,
+  nonEmpty,
+} from "@/features/event/lib/eventsSearch"
 
 export const Route = createFileRoute("/events/")({
   component: EventsPage,
@@ -34,9 +31,6 @@ export const Route = createFileRoute("/events/")({
 // TODO(F-02.1b #91): `location` and `q` are plain text matches. Similar
 // spellings, distance from a place and sorting by it need coordinates
 // (geocoding, F-12.3) and a backend that understands them.
-
-// The server refuses longer texts.
-const SEARCH_MAX_LENGTH = 100
 
 // Typing waits this long before it filters, so a word is not searched letter by letter.
 const SEARCH_DEBOUNCE_MS = 300
@@ -82,7 +76,7 @@ function EventsPage() {
     const timer = setTimeout(() => {
       lastSentSearch.current = next
       void navigate({
-        search: (previous) => ({ ...previous, q: next || undefined }),
+        search: (previous) => ({ ...previous, q: nonEmpty(next) }),
         replace: true,
       })
     }, SEARCH_DEBOUNCE_MS)
@@ -96,7 +90,7 @@ function EventsPage() {
         ...(next.activityIds && {
           activity: next.activityIds.length > 0 ? next.activityIds : undefined,
         }),
-        ...(next.location !== undefined && { location: next.location.trim() || undefined }),
+        ...(next.location !== undefined && { location: nonEmpty(next.location) }),
       }),
     })
   const clearFilters = () => {
@@ -106,7 +100,7 @@ function EventsPage() {
   // An id from the address that is no activity (retired, mistyped) still gets a
   // chip once the activities are known, so the filter can always be seen and removed.
   const selectedActivities = activitiesQuery.isSuccess
-    ? activityIds.map((id) => activities.find((item) => item.id === id) ?? { id })
+    ? activityIds.map((id) => ({ id, activity: activities.find((item) => item.id === id) }))
     : []
   const isFiltered = activityIds.length > 0 || filters.search !== "" || filters.location !== ""
 
@@ -119,7 +113,7 @@ function EventsPage() {
           <SearchField
             label={t("hobbyhub.search.label")}
             placeholder={t("events.list.searchPlaceholder")}
-            maxLength={SEARCH_MAX_LENGTH}
+            maxLength={EVENT_SEARCH_MAX_LENGTH}
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             onOpenFilters={() => setIsFiltersOpen(true)}
@@ -151,8 +145,8 @@ function EventsPage() {
                     setFilters({ activityIds: activityIds.filter((id) => id !== item.id) })
                   }
                 >
-                  {"icon" in item
-                    ? activityName(t, item)
+                  {item.activity
+                    ? activityName(t, item.activity)
                     : t("events.list.filters.unknownActivity")}
                   <X
                     aria-hidden
