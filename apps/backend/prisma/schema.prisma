@@ -254,12 +254,15 @@ model Event {
   // People already coming who are not on the app (friends, a whole team).
   externalOccupiedSpots Int @default(0)
 
-  // F-05.1 fill deadline: X hours before the start.
-  fillDeadlineHours             Int
+  // Fill deadline: X hours before the start. Empty until the deadline feature
+  // arrives (out of scope of F-05.1).
+  fillDeadlineHours             Int?
   freeCancellationHours         Int?
   confirmationRequestDaysBefore Int?
-  // F-05.1 contribution per seat, information only.
+  // F-05.1 contribution per seat, information only: an amount in CZK and a
+  // note such as "platí se na místě".
   contributionAmount            Decimal? @db.Decimal(10, 2)
+  contributionNote              String?  @db.VarChar(200)
 
   // F-05.2 / F-05.4 private event via an invitation link.
   inviteToken     String? @unique @db.VarChar(100)
@@ -270,8 +273,10 @@ model Event {
   // F-11.3, F-11.4 hidden by an administrator.
   isHidden        Boolean @default(false)
 
-  // Model datatype `Location`, stored as columns. All-or-nothing (see the
-  // CHECK constraints in the migration); an ONLINE event has none.
+  // Model datatype `Location`, stored as columns. The address is all-or-nothing
+  // (see the CHECK constraints in the migration); an ONLINE event has none.
+  // Coordinates are optional until geocoding exists (F-12.3): F-05.1 takes a
+  // structured address without a map.
   locationStreet     String?  @db.VarChar(200)
   locationCity       String?  @db.VarChar(100)
   locationPostalCode String?  @db.VarChar(20)
