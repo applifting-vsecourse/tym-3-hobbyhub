@@ -174,6 +174,28 @@ export const EVENT_LIST_MAX_LIMIT = 50;
 
 export type Page = { limit: number; offset: number };
 
+export const EVENT_LIST_MAX_ACTIVITY_FILTERS = 50;
+
+export const EVENT_LIST_SEARCH_MAX_LENGTH = 100;
+export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
+
+// TODO(F-02.1b #91): `location` is plain text for now. A real place filter needs
+// proper coordinates (geocoding, F-12.3): a point plus a radius, results sorted
+// by distance, and similar spellings ("Brno" ~ "Brnoo") matched by similarity.
+// What the public list can be narrowed by (F-02.1). Nothing set means all.
+// `search` matches title, place, city, district and activity; `location` the
+// place, city and district. Both ignore case and diacritics, and every word of
+// a text has to match (in any of those fields).
+export type EventListFilter = {
+  activityIds: string[];
+  search?: string;
+  location?: string;
+};
+
+// The form a text is compared in: lower case, no diacritics, no outer spaces.
+export const foldForSearch = (text: string): string =>
+  text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+
 // What a row in the event list needs. The address is deliberately only
 // approximate: street and coordinates never leave the server here, and the
 // name of a private venue (someone's home) is dropped too.

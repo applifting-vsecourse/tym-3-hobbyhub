@@ -194,10 +194,21 @@
       "count_one": "{{count}} event",
       "count_other": "{{count}} events",
       "empty": "There are no upcoming events yet. Check back later, or create one yourself.",
+      "emptyFiltered": {
+        "clear": "Clear filters",
+        "description": "Nothing matches this selection yet. Try a different search, location or activity.",
+        "title": "Nothing found"
+      },
+      "filters": {
+        "open": "Filters",
+        "selected": "Selected filters",
+        "unknownActivity": "Unknown activity"
+      },
       "loadError": "Could not load events",
       "loadMore": "Load more",
       "loading": "Loading events…",
       "reload": "Reload",
+      "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
       "title": "Events"
     },
@@ -370,6 +381,10 @@
       "until": "until {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "There are no activities yet.",
+      "activitiesError": "Could not load the activities",
+      "activitiesLoading": "Loading activities…",
+      "activitiesRetry": "Try again",
       "activity": "Activity",
       "clear": "Clear",
       "date": "Date…",
@@ -475,8 +490,8 @@
       "title": "How it works"
     },
     "search": {
-      "label": "Location",
-      "placeholder": "Location: Prague 8"
+      "label": "Search events",
+      "placeholder": "Title, place or activity"
     },
     "seoTitle": "Home",
     "tonight": {

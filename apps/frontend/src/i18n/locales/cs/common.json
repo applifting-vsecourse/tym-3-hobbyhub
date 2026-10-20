@@ -196,10 +196,21 @@
       "count_one": "{{count}} akce",
       "count_other": "{{count}} akcí",
       "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
+      "emptyFiltered": {
+        "clear": "Vymazat filtry",
+        "description": "Pro tenhle výběr zatím nic nehraje. Zkuste jiné hledání, lokalitu nebo aktivitu.",
+        "title": "Nic nenalezeno"
+      },
+      "filters": {
+        "open": "Filtry",
+        "selected": "Vybrané filtry",
+        "unknownActivity": "Neznámá aktivita"
+      },
       "loadError": "Akce se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loading": "Načítáme akce…",
       "reload": "Načíst znovu",
+      "searchPlaceholder": "Název, místo nebo aktivita",
       "seoTitle": "Akce",
       "title": "Akce"
     },
@@ -377,6 +388,10 @@
       "until": "do {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "Zatím tu nejsou žádné aktivity.",
+      "activitiesError": "Aktivity se nepodařilo načíst",
+      "activitiesLoading": "Načítáme aktivity…",
+      "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "clear": "Vymazat",
       "date": "Datum…",
@@ -484,8 +499,8 @@
       "title": "Jak to funguje"
     },
     "search": {
-      "label": "Lokalita",
-      "placeholder": "Lokalita: Praha 8"
+      "label": "Hledat akce",
+      "placeholder": "Název, místo nebo aktivita"
     },
     "seoTitle": "Úvodní stránka",
     "tonight": {
