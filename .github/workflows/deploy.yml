@@ -14,12 +14,20 @@ jobs:
       COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+      # The slug names the Coolify app, its domain and the images it pulls from the
+      # registry. It comes from the DEPLOY_SLUG repository variable (Settings →
+      # Secrets and variables → Actions → Variables) and is deliberately NOT derived
+      # from the repository name: renaming the repo must not silently retarget the deploy.
       - name: Determine slug
         id: slug
+        env:
+          DEPLOY_SLUG: ${{ vars.DEPLOY_SLUG }}
         run: |
-          REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          if [ "$REPO_NAME" = "edu-template" ]; then SLUG="$OWNER"; else SLUG="${REPO_NAME,,}"; fi
+          if [ -z "$DEPLOY_SLUG" ]; then
+            echo "::error::Repository variable DEPLOY_SLUG is not set. Set it to the team slug (e.g. team-2) in repository settings."
+            exit 1
+          fi
+          SLUG="${DEPLOY_SLUG,,}"
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
           echo "url=https://$SLUG.$COURSE_DOMAIN" >> "$GITHUB_OUTPUT"
       - name: Login to registry
