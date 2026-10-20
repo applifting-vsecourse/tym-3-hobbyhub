@@ -15,7 +15,8 @@ vi.mock("@/features/group/api/leaveGroup", () => ({ leaveGroup }))
 vi.mock("@/features/group/api/groupMembershipQueryOptions", () => ({
   groupMembershipQueryOptions: (id: string) => ({
     queryKey: ["groups", "detail", id, "membership"],
-    queryFn: () => Promise.resolve({ isMember: mockMembership.role !== null, role: mockMembership.role }),
+    queryFn: () =>
+      Promise.resolve({ isMember: mockMembership.role !== null, role: mockMembership.role }),
   }),
 }))
 
@@ -47,7 +48,9 @@ function Page({ isSignedIn }: { isSignedIn: boolean }) {
 
 const renderDetail = (isSignedIn: boolean) =>
   renderWithRouter(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <Page isSignedIn={isSignedIn} />
     </QueryClientProvider>,
   )
@@ -170,7 +173,9 @@ describe("GroupDetail", () => {
         await openLeaveDialog()
         fireEvent.click(screen.getByRole("button", { name: "Odejít" }))
 
-        expect(await screen.findByRole("alert")).toHaveTextContent("Ze skupiny se nepodařilo odejít")
+        expect(await screen.findByRole("alert")).toHaveTextContent(
+          "Ze skupiny se nepodařilo odejít",
+        )
         expect(screen.getByRole("dialog")).toBeVisible()
       })
 

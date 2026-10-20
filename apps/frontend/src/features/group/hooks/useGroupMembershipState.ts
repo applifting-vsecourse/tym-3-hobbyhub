@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { leaveGroup } from "@/features/group/api/leaveGroup"
 import { groupKeys } from "@/features/group/api/groupKeys"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
+import { leaveGroup } from "@/features/group/api/leaveGroup"
 import { useJoinRequest } from "@/features/group/hooks/useJoinRequest"
 
 /** What the membership panel of a group shows. */
