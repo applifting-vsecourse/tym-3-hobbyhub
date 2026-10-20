@@ -25,11 +25,23 @@ export function eventDay(t: TFunction, startAt: Date, now: Date, locale: string)
   )
 }
 
+/** End of an event: just "20:30" on the start day, with the date when it ends on another. */
+export function eventEnd(startAt: Date, endAt: Date, locale: string): string {
+  if (isSameDay(startAt, endAt)) return eventTime(endAt, locale)
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(endAt)
+}
+
+/** Approximate place: "Online", or "ZŠ Kobylisy, Praha 8". Private venues stay vague. */
+export function eventPlace(
+  t: TFunction,
+  event: Pick<EventListItem, "venueType" | "placeName" | "district" | "city">,
+): string {
+  return event.venueType === "ONLINE"
+    ? t("events.online")
+    : [event.placeName, event.district ?? event.city].filter(Boolean).join(", ")
+}
+
 /** Activity, approximate place and level: "Florbal · ZŠ Kobylisy, Praha 8 · Pokročilí". */
 export function eventMeta(t: TFunction, event: EventListItem, activityLabel: string): string {
-  const place =
-    event.venueType === "ONLINE"
-      ? t("events.online")
-      : [event.placeName, event.district ?? event.city].filter(Boolean).join(", ")
-  return [activityLabel, place, event.level].filter(Boolean).join(" · ")
+  return [activityLabel, eventPlace(t, event), event.level].filter(Boolean).join(" · ")
 }

@@ -1,5 +1,10 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
-import { EventListItem, EventListPage } from '@/modules/event/domain/event';
+import {
+  EventDetail,
+  EventListItem,
+  EventListPage,
+  ParticipantStats,
+} from '@/modules/event/domain/event';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class EventListItemResponseDto {
@@ -84,6 +89,92 @@ export class EventListResponseDto {
     return {
       items: page.items.map(EventListItemResponseDto.fromDomain),
       total: page.total,
+    };
+  }
+}
+
+class GenderSplitDto {
+  @ApiProperty()
+  male!: number;
+
+  @ApiProperty()
+  female!: number;
+}
+
+export class ParticipantStatsResponseDto {
+  @ApiProperty({
+    description: 'Registered approved participants the figures rest on',
+  })
+  included!: number;
+
+  @ApiProperty({
+    description: 'All taken seats, including people outside the app',
+  })
+  total!: number;
+
+  @ApiProperty({ type: Number, nullable: true })
+  medianAge!: number | null;
+
+  @ApiProperty({ type: GenderSplitDto, nullable: true })
+  gender!: GenderSplitDto | null;
+
+  static fromDomain(stats: ParticipantStats): ParticipantStatsResponseDto {
+    return { ...stats };
+  }
+}
+
+export class EventDetailResponseDto extends EventListItemResponseDto {
+  @ApiProperty()
+  description!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  equipment!: string | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Contribution per seat in CZK, information only',
+  })
+  contributionAmount!: number | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  contributionNote!: string | null;
+
+  @ApiProperty({ enum: ['PUBLISHED', 'CANCELLED', 'FINISHED', 'NOT_HELD'] })
+  status!: EventDetail['status'];
+
+  @ApiProperty({ enum: ['MANUAL', 'AUTOMATIC'] })
+  approvalMode!: EventDetail['approvalMode'];
+
+  @ApiProperty()
+  organizerName!: string;
+
+  @ApiProperty({
+    type: ParticipantStatsResponseDto,
+    nullable: true,
+    description: 'Hidden until enough participants are included',
+  })
+  stats!: ParticipantStatsResponseDto | null;
+
+  @ApiProperty({
+    description: 'Included participants needed before stats are shown',
+  })
+  statsMinParticipants!: number;
+
+  static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
+    return {
+      ...EventListItemResponseDto.fromDomain(event),
+      description: event.description,
+      equipment: event.equipment,
+      contributionAmount: event.contributionAmount,
+      contributionNote: event.contributionNote,
+      status: event.status,
+      approvalMode: event.approvalMode,
+      organizerName: event.organizerName,
+      stats: event.stats
+        ? ParticipantStatsResponseDto.fromDomain(event.stats)
+        : null,
+      statsMinParticipants: event.statsMinParticipants,
     };
   }
 }

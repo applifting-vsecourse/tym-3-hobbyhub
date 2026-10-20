@@ -21,7 +21,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateEventDto } from './dto/create-event.dto';
-import { EventListResponseDto } from './dto/event-list-item.response.dto';
+import {
+  EventDetailResponseDto,
+  EventListResponseDto,
+} from './dto/event-list-item.response.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
 import { eventsValidationPipe } from './events-validation.pipe';
@@ -93,18 +96,14 @@ export class EventsController {
     return EventResponseDto.fromDomain(event);
   }
 
+  // Public detail (F-02.4): approximate place only; the exact address and the
+  // online link of an event stay with approved participants (F-10.4).
   @Get(':id')
-  @UseGuards(AuthenticatedUserGuard)
-  @ApiCookieAuth()
-  @ApiOperation({ summary: 'Get an event' })
-  @ApiResponse({ status: 200, type: EventResponseDto })
-  @ApiResponse({ status: 401, description: 'Not signed in' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
-  // TODO(F-02.4 #8): the public detail decides who sees what (private venue
-  // address only after approval, F-10.4). Until then any signed-in user gets
-  // the whole event, which F-05.1 needs only for the organizer's own landing.
-  async detail(@Param('id') id: string): Promise<EventResponseDto> {
-    const event = await this.eventsService.getEvent(id);
-    return EventResponseDto.fromDomain(event);
+  @ApiOperation({ summary: 'Get a public event' })
+  @ApiResponse({ status: 200, type: EventDetailResponseDto })
+  @ApiResponse({ status: 404, description: 'Event not found or not public' })
+  async detail(@Param('id') id: string): Promise<EventDetailResponseDto> {
+    const event = await this.eventsService.getPublicEvent(id);
+    return EventDetailResponseDto.fromDomainDetail(event);
   }
 }

@@ -101,18 +101,45 @@
       "country": "Czechia"
     },
     "detail": {
-      "contribution": "Contribution {{amount}}",
-      "contributionInfo": "Information only, nothing is paid through the app.",
+      "address": {
+        "online": "Link after approval",
+        "private": "Exact address after approval"
+      },
+      "addressLabel": "Address",
+      "approvalAutomatic": "You get the seat as soon as you sign in.",
+      "approvalManual": "The organizer approves requests by hand.",
+      "back": "Back to events",
+      "contribution": "Contribution",
       "equipment": "Equipment",
-      "free_one": "{{count}} free seat",
-      "free_other": "{{count}} free seats",
-      "full": "full",
+      "hasAccount": "Already have an account?",
+      "join": "Take a seat",
+      "joinSoon": "Requests to join are not available yet.",
+      "linkLabel": "Link",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
-      "missing_one": "{{count}} missing to the minimum",
-      "missing_other": "{{count}} missing to the minimum",
-      "occupied": "{{taken}} of {{total}} taken",
-      "published": "Published"
+      "missingToMin": "{{count}} missing to the minimum",
+      "organizer": "Organized by {{name}}",
+      "roster": "Roster",
+      "seats": "{{taken}} of {{total}} seats",
+      "signIn": "Sign in",
+      "state": {
+        "cancelled": "Cancelled",
+        "cancelledText": "This event was cancelled, you can no longer ask to join.",
+        "finished": "Finished",
+        "finishedText": "This event is over, you cannot ask to join.",
+        "full": "Full",
+        "fullText": "This event is full, you cannot ask to join.",
+        "notHeld": "Not held",
+        "notHeldText": "This event did not take place, you cannot ask to join."
+      },
+      "stats": {
+        "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
+        "genderLabel": "Men : women",
+        "hidden": "The mix shows once at least {{count}} people have joined.",
+        "medianAgeLabel": "Median age",
+        "title": "Who is coming"
+      },
+      "title": "Event detail"
     },
     "fields": {
       "activity": "Activity",
@@ -203,6 +230,7 @@
     "preview": {
       "noPlace": "Event place",
       "noTime": "--:--",
+      "occupied": "{{taken}} of {{total}} taken",
       "untitled": "Event title"
     },
     "validation": {

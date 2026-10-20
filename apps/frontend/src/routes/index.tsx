@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -73,6 +73,7 @@ function LandingPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const searchForm = useForm({ defaultValues: { q: "" } })
+  const searchText = useWatch({ control: searchForm.control, name: "q" })
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const activitiesQuery = useQuery(activitiesQueryOptions())
   const activities = activitiesQuery.data ?? []
@@ -102,7 +103,7 @@ function LandingPage() {
         label={t("landing.search.label")}
         placeholder={t("landing.search.placeholder")}
         maxLength={EVENT_SEARCH_MAX_LENGTH}
-        value={searchForm.watch("q")}
+        value={searchText}
         onChange={(event) => searchForm.setValue("q", event.target.value)}
         onOpenFilters={() => setIsFiltersOpen(true)}
       />

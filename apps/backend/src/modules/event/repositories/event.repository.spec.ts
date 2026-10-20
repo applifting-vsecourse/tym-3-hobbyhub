@@ -141,3 +141,54 @@ describe('EventRepository', () => {
     );
   });
 });
+
+describe('EventRepository.getPublicEventById', () => {
+  it('only looks at public, visible events that are not drafts', async () => {
+    const findFirst = jest.fn().mockResolvedValue(null);
+    const prisma = { event: { findFirst } } as unknown as PrismaService;
+
+    await expect(
+      new EventRepository(prisma).getPublicEventById('e1'),
+    ).resolves.toBeNull();
+
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'e1',
+          status: { not: 'DRAFT' },
+          visibility: 'PUBLIC',
+          isHidden: false,
+        },
+      }),
+    );
+  });
+
+  it('exposes the organizer by name and keeps contact and address details out', async () => {
+    const findFirst = jest.fn().mockResolvedValue({
+      ...anEvent(),
+      description: 'Popis',
+      equipment: 'Hokejka',
+      contributionAmount: '80.00',
+      status: 'PUBLISHED',
+      approvalMode: 'MANUAL',
+      organizer: { name: 'Jana Nováková' },
+      participations: [
+        { user: { birthDate: new Date('1990-01-01'), gender: 'MALE' } },
+      ],
+    });
+    const prisma = { event: { findFirst } } as unknown as PrismaService;
+
+    const detail = await new EventRepository(prisma).getPublicEventById('e1');
+
+    expect(detail).toMatchObject({
+      organizerName: 'Jana Nováková',
+      contributionAmount: 80,
+      takenCount: 3,
+      stats: null,
+    });
+    expect(detail).not.toHaveProperty('onlineUrl');
+    expect(detail).not.toHaveProperty('locationStreet');
+    expect(detail).not.toHaveProperty('locationLatitude');
+    expect(JSON.stringify(detail)).not.toContain('1990-01-01');
+  });
+});

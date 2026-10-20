@@ -70,7 +70,7 @@ export function EventPreview({
             />
           ) : (
             <span className="typo-small text-accent-foreground">
-              {t("events.detail.occupied", { taken, total: capacity.max })}
+              {t("events.preview.occupied", { taken, total: capacity.max })}
             </span>
           )}
           {missing > 0 ? (
