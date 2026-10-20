@@ -1,4 +1,4 @@
-import { infiniteQueryOptions } from "@tanstack/react-query"
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query"
 
 import { api } from "@/lib/api-client"
 
@@ -29,4 +29,14 @@ export const eventsQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
       const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
       return loaded < lastPage.total && lastPage.items.length > 0 ? loaded : undefined
     },
+  })
+
+// The first `limit` events of the unfiltered list: what the landing page shows.
+export const upcomingEventsQueryOptions = (limit: number) =>
+  queryOptions({
+    queryKey: eventKeys.upcoming(limit),
+    queryFn: async () =>
+      eventListSchema.parse(
+        await api.get("events", { searchParams: { limit: String(limit), offset: "0" } }).json(),
+      ),
   })

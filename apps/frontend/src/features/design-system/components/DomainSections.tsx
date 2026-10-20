@@ -159,6 +159,14 @@ export function DomainSections() {
               capacity={6}
               photo={{ src: deskovkyPhoto, alt: "Desková hra rozložená na stole" }}
             />
+            <EventCard
+              title="Šachy v kavárně (bez fotky)"
+              when="Zítra 16:00"
+              meta="Kavárna Šach, Brno-střed · pokročilí"
+              taken={1}
+              capacity={2}
+              activity="sachy"
+            />
           </div>
         </Example>
         <Example label="Řádek rozpisu">
