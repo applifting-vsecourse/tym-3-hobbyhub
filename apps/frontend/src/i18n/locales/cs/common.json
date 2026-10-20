@@ -503,9 +503,9 @@
       "placeholder": "Název, místo nebo aktivita"
     },
     "seoTitle": "Úvodní stránka",
-    "tonight": {
-      "empty": "Na dnešní večer zatím nic nemáme. Hledejte na další dny, nebo akci vypište sami — až se objeví, najdete je tady.",
-      "title": "Dnes večer"
+    "upcoming": {
+      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami — až se objeví, najdete ji tady.",
+      "title": "Nejbližší akce"
     }
   },
   "myEvents": {

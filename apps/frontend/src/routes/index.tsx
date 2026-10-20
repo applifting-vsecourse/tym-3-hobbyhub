@@ -5,11 +5,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
-import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
-import florbalPhoto from "@/assets/event-photos/florbal.jpg"
-import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import { AppForm } from "@/components/form/AppForm"
-import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { SearchField } from "@/components/hobbyhub/SearchField"
@@ -19,53 +15,16 @@ import { Button } from "@/components/ui/button"
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { AppShell } from "@/features/auth/components/AppShell"
+import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
+import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
 })
 
-type TonightEvent = {
-  id: string
-  title: string
-  when: string
-  meta: string
-  taken: number
-  capacity: number
-  photo: { src: string; alt: string }
-}
-
-// Static preview until the events API exists. Swap for a query then; the
-// empty state below already handles an empty list.
-const TONIGHT: TonightEvent[] = [
-  {
-    id: "florbal",
-    title: "Čtvrteční florbal",
-    when: "Dnes 19:00",
-    meta: "ZŠ Kobylisy · pokročilí",
-    taken: 7,
-    capacity: 10,
-    photo: { src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" },
-  },
-  {
-    id: "deskovky",
-    title: "Deskovky v herně",
-    when: "Dnes 18:00",
-    meta: "Herna Kostka · všechny úrovně",
-    taken: 3,
-    capacity: 5,
-    photo: { src: deskovkyPhoto, alt: "Desková hra rozložená na stole" },
-  },
-  {
-    id: "volejbal",
-    title: "Volejbal na hřišti",
-    when: "Zítra 10:00",
-    meta: "Hřiště Letná · začátečníci",
-    taken: 4,
-    capacity: 6,
-    photo: { src: volejbalPhoto, alt: "Volejbal na pláži ve městě" },
-  },
-]
+// Three cards: one row from `lg`, where the landing page is at its widest.
+const UPCOMING_EVENTS_COUNT = 3
 
 const STEP_KEYS = ["step1", "step2", "step3"] as const
 
@@ -77,6 +36,7 @@ function LandingPage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const activitiesQuery = useQuery(activitiesQueryOptions())
   const activities = activitiesQuery.data ?? []
+  const upcomingQuery = useQuery(upcomingEventsQueryOptions(UPCOMING_EVENTS_COUNT))
 
   // Searching or filtering from the landing page opens the event list already filtered.
   const openEvents = (filters: { activities?: string[]; location?: string } = {}) => {
@@ -159,35 +119,23 @@ function LandingPage() {
         />
 
         <section
-          aria-labelledby="tonight-heading"
+          aria-labelledby="upcoming-heading"
           className="flex enter flex-col gap-3"
           style={{ "--enter-index": 1 } as CSSProperties}
         >
           <h2
-            id="tonight-heading"
+            id="upcoming-heading"
             className="typo-h3"
           >
-            {t("landing.tonight.title")}
+            {t("landing.upcoming.title")}
           </h2>
-          {TONIGHT.length > 0 ? (
-            <div className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
-              {TONIGHT.map(({ id, ...event }) => (
-                <Link
-                  key={id}
-                  to={ROUTES.events}
-                  className="group block rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5"
-                >
-                  <EventCard
-                    isAnimated
-                    className="h-full transition-colors duration-200 group-hover:border-primary group-focus-visible:border-primary"
-                    {...event}
-                  />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="typo-body text-muted-foreground">{t("landing.tonight.empty")}</p>
-          )}
+          <UpcomingEvents
+            events={upcomingQuery.data?.items ?? []}
+            activityLabel={(item) => activityName(t, item)}
+            isLoading={upcomingQuery.isPending}
+            error={upcomingQuery.error}
+            onReload={() => void upcomingQuery.refetch()}
+          />
         </section>
 
         <section

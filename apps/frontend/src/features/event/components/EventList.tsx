@@ -1,14 +1,13 @@
 import { Link } from "@tanstack/react-router"
-import { RefreshCw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import SearchIcon from "@/assets/ui-icons/search.svg?react"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
+import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
 type EventListProps = {
@@ -28,29 +27,6 @@ type EventListProps = {
   onClearFilters?: () => void
   /** Injectable so "today" is stable in tests. */
   now?: Date
-}
-
-function LoadError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
-  const { t } = useTranslation()
-
-  return (
-    <Alert variant="destructive">
-      <AlertTitle>{t("events.list.loadError")}</AlertTitle>
-      <AlertDescription className="flex items-center justify-between gap-3">
-        <span>{error.message}</span>
-        {onRetry ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRetry}
-          >
-            <RefreshCw className="size-4" />
-            {t("events.list.reload")}
-          </Button>
-        ) : null}
-      </AlertDescription>
-    </Alert>
-  )
 }
 
 export function EventList({
@@ -83,7 +59,7 @@ export function EventList({
   // Nothing to show yet: the error is the whole screen.
   if (error && events.length === 0) {
     return (
-      <LoadError
+      <EventsLoadError
         error={error}
         onRetry={onReload}
       />
@@ -165,7 +141,7 @@ export function EventList({
       ))}
       {error ? (
         // A later page failed: keep what is loaded and retry just that page.
-        <LoadError
+        <EventsLoadError
           error={error}
           onRetry={onLoadMore}
         />

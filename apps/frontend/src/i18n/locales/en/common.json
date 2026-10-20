@@ -494,9 +494,9 @@
       "placeholder": "Title, place or activity"
     },
     "seoTitle": "Home",
-    "tonight": {
-      "empty": "Nothing planned for tonight yet. Look at other days, or create an event yourself — it will show up here.",
-      "title": "Tonight"
+    "upcoming": {
+      "empty": "No upcoming events yet. Create one yourself — it will show up here.",
+      "title": "Upcoming events"
     }
   },
   "myEvents": {
