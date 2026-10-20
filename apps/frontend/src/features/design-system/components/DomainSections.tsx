@@ -148,7 +148,8 @@ export function DomainSections() {
               when="Dnes 19:00"
               meta="ZŠ Kobylisy · pokročilí"
               taken={7}
-              capacity={10}
+              min={8}
+              max={10}
               photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
             />
             <EventCard
@@ -156,7 +157,8 @@ export function DomainSections() {
               when="Pá 18:30"
               meta="Herna Dobrá Kostka · začátečníci"
               taken={6}
-              capacity={6}
+              min={4}
+              max={6}
               photo={{ src: deskovkyPhoto, alt: "Desková hra rozložená na stole" }}
             />
             <EventCard
@@ -164,7 +166,8 @@ export function DomainSections() {
               when="Zítra 16:00"
               meta="Kavárna Šach, Brno-střed · pokročilí"
               taken={1}
-              capacity={2}
+              min={2}
+              max={2}
               activity="sachy"
             />
           </div>
