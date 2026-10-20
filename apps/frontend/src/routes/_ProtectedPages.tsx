@@ -1,11 +1,10 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 
 import { ROUTES } from "@/app/routes"
-import { Header } from "@/components/Header/Header"
 import { Seo } from "@/components/Seo"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
-import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
+import { AppShell } from "@/features/auth/components/AppShell"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 
 export const Route = createFileRoute("/_ProtectedPages")({
@@ -25,10 +24,9 @@ function Layout() {
   return (
     <>
       <Seo />
-      <Header userMenu={<HeaderMenu />} />
-      <main className="min-h-svh">
+      <AppShell>
         <Outlet />
-      </main>
+      </AppShell>
     </>
   )
 }

@@ -5,7 +5,6 @@ import { MapPin, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
-import { Header } from "@/components/Header/Header"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
@@ -15,7 +14,7 @@ import { cn } from "@/lib/utils"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
-import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
+import { AppShell } from "@/features/auth/components/AppShell"
 import { eventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { EventList } from "@/features/event/components/EventList"
 import { EventsMapPlaceholder } from "@/features/event/components/EventsMapPlaceholder"
@@ -114,8 +113,7 @@ function EventsPage() {
   return (
     <>
       <Seo title={t("events.list.seoTitle")} />
-      <Header userMenu={<HeaderMenu />} />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10 lg:px-8">
+      <AppShell className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10 lg:px-8">
         <h1 className="typo-h1 text-foreground">{t("events.list.title")}</h1>
         <div className="flex flex-col gap-3">
           <SearchField
@@ -213,7 +211,7 @@ function EventsPage() {
             <EventsMapPlaceholder />
           </div>
         </div>
-      </main>
+      </AppShell>
     </>
   )
 }

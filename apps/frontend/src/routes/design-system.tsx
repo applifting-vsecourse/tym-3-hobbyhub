@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { Header } from "@/components/Header/Header"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { Seo } from "@/components/Seo"
 
-import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
+import { AppShell } from "@/features/auth/components/AppShell"
 import { BrandSections } from "@/features/design-system/components/BrandSections"
 import { ControlSections } from "@/features/design-system/components/ControlSections"
 import { DomainSections } from "@/features/design-system/components/DomainSections"
@@ -48,8 +47,7 @@ function DesignSystemPage() {
   return (
     <>
       <Seo title="Design system" />
-      <Header userMenu={<HeaderMenu />} />
-      <main className="min-h-svh">
+      <AppShell>
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-4 py-12">
           <header className="flex flex-col gap-4">
             <Logo className="h-10 self-start" />
@@ -81,7 +79,7 @@ function DesignSystemPage() {
           <SheetSection />
           <DomainSections />
         </div>
-      </main>
+      </AppShell>
     </>
   )
 }
