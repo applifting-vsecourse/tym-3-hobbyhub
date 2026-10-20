@@ -178,6 +178,7 @@ export function FiltersSheet({
             <Label htmlFor={locationId}>{t("hobbyhub.filters.location")}</Label>
             <Input
               id={locationId}
+              maxLength={100}
               placeholder={t("hobbyhub.filters.locationPlaceholder")}
               value={draft.location}
               onChange={(event) =>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { MapPin, X } from "lucide-react"
@@ -11,6 +11,7 @@ import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
+import { cn } from "@/lib/utils"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
@@ -34,6 +35,9 @@ export const Route = createFileRoute("/events/")({
 // TODO(F-02.1b #91): `location` and `q` are plain text matches. Similar
 // spellings, distance from a place and sorting by it need coordinates
 // (geocoding, F-12.3) and a backend that understands them.
+
+// The server refuses longer texts.
+const SEARCH_MAX_LENGTH = 100
 
 // Typing waits this long before it filters, so a word is not searched letter by letter.
 const SEARCH_DEBOUNCE_MS = 300
@@ -59,27 +63,30 @@ function EventsPage() {
     ...eventsQueryOptions(filters),
     placeholderData: keepPreviousData,
   })
-  const activities = useQuery(activitiesQueryOptions()).data ?? []
+  const activitiesQuery = useQuery(activitiesQueryOptions())
+  const activities = activitiesQuery.data ?? []
 
-  // The field is what the user typed; the address follows after a pause.
+  // The field is what the user typed; the address follows after a pause. The
+  // last text this page put in the address is remembered, so the address
+  // catching up never overwrites what was typed in the meantime.
   const [searchText, setSearchText] = useState(filters.search)
-  const [lastAddressSearch, setLastAddressSearch] = useState(filters.search)
-  if (filters.search !== lastAddressSearch) {
+  const lastSentSearch = useRef(filters.search)
+  useEffect(() => {
     // The address changed on its own (back button, a link): show it in the field.
-    setLastAddressSearch(filters.search)
+    if (filters.search === lastSentSearch.current) return
+    lastSentSearch.current = filters.search
     setSearchText(filters.search)
-  }
+  }, [filters.search])
   useEffect(() => {
     const next = searchText.trim()
     if (next === filters.search) return
-    const timer = setTimeout(
-      () =>
-        void navigate({
-          search: (previous) => ({ ...previous, q: next || undefined }),
-          replace: true,
-        }),
-      SEARCH_DEBOUNCE_MS,
-    )
+    const timer = setTimeout(() => {
+      lastSentSearch.current = next
+      void navigate({
+        search: (previous) => ({ ...previous, q: next || undefined }),
+        replace: true,
+      })
+    }, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [searchText, filters.search, navigate])
 
@@ -97,7 +104,11 @@ function EventsPage() {
     setSearchText("")
     void navigate({ search: {} })
   }
-  const selectedActivities = activities.filter(({ id }) => activityIds.includes(id))
+  // An id from the address that is no activity (retired, mistyped) still gets a
+  // chip once the activities are known, so the filter can always be seen and removed.
+  const selectedActivities = activitiesQuery.isSuccess
+    ? activityIds.map((id) => activities.find((item) => item.id === id) ?? { id })
+    : []
   const isFiltered = activityIds.length > 0 || filters.search !== "" || filters.location !== ""
 
   return (
@@ -110,6 +121,7 @@ function EventsPage() {
           <SearchField
             label={t("hobbyhub.search.label")}
             placeholder={t("events.list.searchPlaceholder")}
+            maxLength={SEARCH_MAX_LENGTH}
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             onOpenFilters={() => setIsFiltersOpen(true)}
@@ -141,7 +153,9 @@ function EventsPage() {
                     setFilters({ activityIds: activityIds.filter((id) => id !== item.id) })
                   }
                 >
-                  {activityName(t, item)}
+                  {"icon" in item
+                    ? activityName(t, item)
+                    : t("events.list.filters.unknownActivity")}
                   <X
                     aria-hidden
                     className="size-4 text-muted-foreground"
@@ -173,7 +187,14 @@ function EventsPage() {
           className="w-full lg:hidden"
         />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-8">
-          <div className={view === "list" ? undefined : "max-lg:hidden"}>
+          <div
+            aria-busy={eventsQuery.isPlaceholderData}
+            className={cn(
+              view === "list" ? undefined : "max-lg:hidden",
+              // The previous list stays until the new one arrives; show that it is stale.
+              eventsQuery.isPlaceholderData && "opacity-60 transition-opacity",
+            )}
+          >
             <EventList
               events={uniqueById(eventsQuery.data?.pages.flatMap((page) => page.items) ?? [])}
               total={eventsQuery.data?.pages[0]?.total ?? 0}
@@ -181,7 +202,7 @@ function EventsPage() {
               isLoading={eventsQuery.isPending}
               error={eventsQuery.error}
               onReload={() => void eventsQuery.refetch()}
-              hasMore={eventsQuery.hasNextPage}
+              hasMore={eventsQuery.hasNextPage && !eventsQuery.isPlaceholderData}
               isLoadingMore={eventsQuery.isFetchingNextPage}
               onLoadMore={() => void eventsQuery.fetchNextPage()}
               isFiltered={isFiltered}

@@ -174,7 +174,8 @@
       },
       "filters": {
         "open": "Filters",
-        "selected": "Selected filters"
+        "selected": "Selected filters",
+        "unknownActivity": "Unknown activity"
       },
       "loadError": "Could not load events",
       "loadMore": "Load more",

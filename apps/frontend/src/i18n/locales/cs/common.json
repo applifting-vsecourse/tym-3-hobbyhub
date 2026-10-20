@@ -178,7 +178,8 @@
       },
       "filters": {
         "open": "Filtry",
-        "selected": "Vybrané filtry"
+        "selected": "Vybrané filtry",
+        "unknownActivity": "Neznámá aktivita"
       },
       "loadError": "Akce se nepodařilo načíst",
       "loadMore": "Načíst další",
