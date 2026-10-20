@@ -6,14 +6,13 @@ import { ROUTES } from "@/app/routes"
 import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
 import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
-import { Header } from "@/components/Header/Header"
 import { EventCard } from "@/components/hobbyhub/EventCard"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
-import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
+import { AppShell } from "@/features/auth/components/AppShell"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -69,28 +68,15 @@ function LandingPage() {
   return (
     <>
       <Seo title={t("landing.seoTitle")} />
-      <Header
+      <AppShell
+        className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8"
         search={
           <SearchField
             label={t("landing.search.label")}
             placeholder={t("landing.search.placeholder")}
           />
         }
-        userMenu={
-          <>
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="max-md:hidden"
-            >
-              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
-            </Button>
-            <HeaderMenu />
-          </>
-        }
-      />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8">
+      >
         <Hero
           className="enter [--seat-delay:400ms]"
           isAnimated
@@ -102,7 +88,7 @@ function LandingPage() {
           capacity={10}
           action={
             <Button asChild>
-              <a href={ROUTES.events}>{t("landing.hero.join")}</a>
+              <Link to={ROUTES.events}>{t("landing.hero.join")}</Link>
             </Button>
           }
           secondaryAction={
@@ -129,9 +115,9 @@ function LandingPage() {
           {TONIGHT.length > 0 ? (
             <div className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
               {TONIGHT.map(({ id, ...event }) => (
-                <a
+                <Link
                   key={id}
-                  href={ROUTES.events}
+                  to={ROUTES.events}
                   className="group block rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5"
                 >
                   <EventCard
@@ -139,7 +125,7 @@ function LandingPage() {
                     className="h-full transition-colors duration-200 group-hover:border-primary group-focus-visible:border-primary"
                     {...event}
                   />
-                </a>
+                </Link>
               ))}
             </div>
           ) : (
@@ -174,7 +160,7 @@ function LandingPage() {
               asChild
               variant="secondary"
             >
-              <a href={ROUTES.events}>{t("landing.actions.find")}</a>
+              <Link to={ROUTES.events}>{t("landing.actions.find")}</Link>
             </Button>
             <Button
               asChild
@@ -184,7 +170,7 @@ function LandingPage() {
             </Button>
           </div>
         </section>
-      </main>
+      </AppShell>
     </>
   )
 }

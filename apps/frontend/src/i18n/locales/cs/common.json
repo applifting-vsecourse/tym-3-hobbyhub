@@ -305,12 +305,7 @@
     "language": {
       "label": "Jazyk"
     },
-    "nav": {
-      "designSystem": "Design systém",
-      "events": "Akce",
-      "groups": "Skupiny",
-      "quacks": "Quacks"
-    },
+    "profile": "Můj profil",
     "signIn": "Přihlásit se",
     "signOut": "Odhlásit se",
     "theme": {
@@ -496,6 +491,14 @@
       "empty": "Na dnešní večer zatím nic nemáme. Hledejte na další dny, nebo akci vypište sami — až se objeví, najdete je tady.",
       "title": "Dnes večer"
     }
+  },
+  "myEvents": {
+    "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
+    "title": "Moje akce"
+  },
+  "profile": {
+    "placeholder": "Stránku profilu připravujeme.",
+    "title": "Profil"
   },
   "quacks": {
     "form": {

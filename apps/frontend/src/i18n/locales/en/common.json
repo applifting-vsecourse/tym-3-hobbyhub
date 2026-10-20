@@ -298,12 +298,7 @@
     "language": {
       "label": "Language"
     },
-    "nav": {
-      "designSystem": "Design system",
-      "events": "Events",
-      "groups": "Groups",
-      "quacks": "Quacks"
-    },
+    "profile": "My profile",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "theme": {
@@ -487,6 +482,14 @@
       "empty": "Nothing planned for tonight yet. Look at other days, or create an event yourself — it will show up here.",
       "title": "Tonight"
     }
+  },
+  "myEvents": {
+    "placeholder": "An overview of your requests and the events you host is on its way.",
+    "title": "My events"
+  },
+  "profile": {
+    "placeholder": "The profile page is on its way.",
+    "title": "Profile"
   },
   "quacks": {
     "form": {

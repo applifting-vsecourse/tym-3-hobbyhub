@@ -1,27 +1,28 @@
 import type { ReactNode } from "react"
-import { Link, type LinkProps } from "@tanstack/react-router"
 
+import { NavLink } from "@/components/NavLink"
+import type { NavRoute } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
-type HeaderNavLinkProps = LinkProps & {
+type HeaderNavLinkProps = {
+  to: NavRoute
+  isActive: boolean
   children: ReactNode
   className?: string
 }
 
-export function HeaderNavLink({ children, className, ...props }: HeaderNavLinkProps) {
+export function HeaderNavLink({ to, isActive, children, className }: HeaderNavLinkProps) {
   return (
-    <Link
-      {...props}
-      // Active styling uses the router's data-status attribute rather than
-      // `activeProps`: those classes would collide with the base ones and
-      // Tailwind resolves such conflicts by stylesheet order, not by class order.
+    <NavLink
+      to={to}
+      isActive={isActive}
       className={cn(
-        "rounded-md px-2 py-1 typo-label whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground",
-        "data-[status=active]:font-medium data-[status=active]:text-foreground",
+        "rounded-md px-2 py-1 typo-label whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        isActive ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
         className,
       )}
     >
       {children}
-    </Link>
+    </NavLink>
   )
 }
