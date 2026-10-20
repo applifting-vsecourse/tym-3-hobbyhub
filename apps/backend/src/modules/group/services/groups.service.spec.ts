@@ -72,8 +72,74 @@ describe('GroupsService', () => {
     const { repository, service } = setup();
     repository.getGroupById.mockResolvedValue(null);
 
-    await expect(service.getGroup('nope')).rejects.toBeInstanceOf(
+    await expect(service.getPublicGroup('nope')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('shows a public active group', async () => {
+    const { repository, service } = setup();
+    const group = aGroup();
+    repository.getGroupById.mockResolvedValue(group);
+
+    await expect(service.getPublicGroup('g1')).resolves.toBe(group);
+  });
+
+  it.each([
+    ['private', { visibility: 'PRIVATE' as const }],
+    ['cancelled', { status: 'CANCELLED' as const }],
+  ])('hides a %s group as not found', async (_name, overrides) => {
+    const { repository, service } = setup();
+    repository.getGroupById.mockResolvedValue(aGroup(overrides));
+
+    await expect(service.getPublicGroup('g1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('reports the role of a member, or none', async () => {
+    const { repository, service } = setup();
+    repository.getMemberRole.mockResolvedValue('MEMBER');
+
+    await expect(service.getMemberRole('g1', 'u1')).resolves.toBe('MEMBER');
+    expect(repository.getMemberRole).toHaveBeenCalledWith('g1', 'u1');
+  });
+
+  it('lets a member leave', async () => {
+    const { repository, service } = setup();
+    repository.getMemberRole.mockResolvedValue('MEMBER');
+
+    await service.leaveGroup('g1', 'u1');
+
+    expect(repository.removeMember).toHaveBeenCalledWith('g1', 'u1');
+  });
+
+  it('lets an admin leave too', async () => {
+    const { repository, service } = setup();
+    repository.getMemberRole.mockResolvedValue('ADMIN');
+
+    await service.leaveGroup('g1', 'u1');
+
+    expect(repository.removeMember).toHaveBeenCalledWith('g1', 'u1');
+  });
+
+  it('keeps the owner in the group', async () => {
+    const { repository, service } = setup();
+    repository.getMemberRole.mockResolvedValue('OWNER');
+
+    await expect(service.leaveGroup('g1', 'u1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(repository.removeMember).not.toHaveBeenCalled();
+  });
+
+  it('refuses to remove someone who is not a member', async () => {
+    const { repository, service } = setup();
+    repository.getMemberRole.mockResolvedValue(null);
+
+    await expect(service.leaveGroup('g1', 'u1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(repository.removeMember).not.toHaveBeenCalled();
   });
 });
