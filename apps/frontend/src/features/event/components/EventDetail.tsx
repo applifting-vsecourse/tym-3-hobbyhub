@@ -5,6 +5,7 @@ import LevelIcon from "@/assets/ui-icons/level.svg?react"
 import MapPinIcon from "@/assets/ui-icons/map-pin.svg?react"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { missingCount } from "@/components/hobbyhub/capacity"
+import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
@@ -85,6 +86,15 @@ export function EventDetail({
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8">
       <header className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
+        {event.imageUrl ? (
+          // Decorative: the title below says what the event is.
+          <EventPhoto
+            src={event.imageUrl}
+            alt=""
+            rounding="xl"
+            className="h-48 md:h-72"
+          />
+        ) : null}
         <div className="flex flex-col gap-2">
           <p className="flex items-center gap-2 typo-label text-muted-foreground">
             {isActivityKey(event.activity.icon) ? (
