@@ -66,112 +66,78 @@ describe('mapPrismaEventToListItem', () => {
 });
 
 describe('EventRepository', () => {
-  it('asks only for upcoming, public, published, visible events, soonest first', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
-    const count = jest.fn().mockResolvedValue(0);
-    const prisma = { event: { findMany, count } } as unknown as PrismaService;
-    const now = new Date('2026-10-20T10:00:00Z');
-    const where = {
-      status: 'PUBLISHED',
-      visibility: 'PUBLIC',
-      isHidden: false,
-      endAt: { gt: now },
-    };
+  // The conditions themselves are SQL and are covered against a real database
+  // in event-list-search.spec.ts; here the repository's own work is checked.
+  const setup = (
+    pageIds: string[],
+    total: number,
+    events: Parameters<typeof mapPrismaEventToListItem>[0][] = [],
+  ): {
+    queryRaw: jest.Mock;
+    findMany: jest.Mock;
+    repository: EventRepository;
+  } => {
+    const queryRaw = jest
+      .fn()
+      .mockResolvedValueOnce(pageIds.map((id) => ({ id })))
+      .mockResolvedValueOnce([{ total: BigInt(total) }]);
+    const findMany = jest.fn().mockResolvedValue(events);
+    const prisma = {
+      event: { findMany },
+      $queryRaw: queryRaw,
+    } as unknown as PrismaService;
+    return { queryRaw, findMany, repository: new EventRepository(prisma) };
+  };
 
-    await new EventRepository(prisma).getUpcomingPublicEvents(now, {
+  const sqlValues = (call: unknown[]): unknown[] =>
+    call.slice(1).flatMap((value) => {
+      const nested = (value as { values?: unknown[] } | null)?.values;
+      return nested ? sqlValues([null, ...nested]) : [value];
+    });
+
+  it('returns the events in the order of the page, with the total of all matches', async () => {
+    const { repository } = setup(['e2', 'e1'], 57, [
+      anEvent({ id: 'e1' }),
+      anEvent({ id: 'e2' }),
+    ]);
+
+    const page = await repository.getUpcomingPublicEvents(new Date(), {
       limit: 20,
-      offset: 40,
+      offset: 0,
     });
 
-    expect(findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where,
-        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
-        skip: 40,
-        take: 20,
-      }),
-    );
-    expect(count).toHaveBeenCalledWith({ where });
-  });
-
-  it('narrows to the chosen activities, any of them', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
-    const count = jest.fn().mockResolvedValue(0);
-    const prisma = { event: { findMany, count } } as unknown as PrismaService;
-
-    await new EventRepository(prisma).getUpcomingPublicEvents(
-      new Date(),
-      { limit: 20, offset: 0 },
-      { activityIds: ['a1', 'a2'] },
-    );
-
-    const where = expect.objectContaining({
-      activityId: { in: ['a1', 'a2'] },
-    });
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
-    expect(count).toHaveBeenCalledWith({ where });
-  });
-
-  it('limits the list to events whose text matches the search and location', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
-    const count = jest.fn().mockResolvedValue(0);
-    const queryRaw = jest.fn().mockResolvedValue([{ id: 'e1' }, { id: 'e2' }]);
-    const prisma = {
-      event: { findMany, count },
-      $queryRaw: queryRaw,
-    } as unknown as PrismaService;
-
-    await new EventRepository(prisma).getUpcomingPublicEvents(
-      new Date(),
-      { limit: 20, offset: 0 },
-      { activityIds: [], search: ' Šachy ', location: 'Brno' },
-    );
-
-    expect(queryRaw).toHaveBeenCalledTimes(1);
-    // The needles are bound parameters, folded: never part of the SQL text.
-    expect(
-      (queryRaw.mock.calls[0] as unknown[])
-        .slice(1)
-        .flatMap((v: unknown) => (v as { values?: unknown[] })?.values ?? [v]),
-    ).toEqual(expect.arrayContaining(['sachy', 'brno']));
-    const where = expect.objectContaining({ id: { in: ['e1', 'e2'] } });
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
-    expect(count).toHaveBeenCalledWith({ where });
-  });
-
-  it('does not touch the text search when there is no text', async () => {
-    const queryRaw = jest.fn();
-    const prisma = {
-      event: {
-        findMany: jest.fn().mockResolvedValue([]),
-        count: jest.fn().mockResolvedValue(0),
-      },
-      $queryRaw: queryRaw,
-    } as unknown as PrismaService;
-
-    await new EventRepository(prisma).getUpcomingPublicEvents(
-      new Date(),
-      { limit: 20, offset: 0 },
-      { activityIds: [], search: '  ', location: '' },
-    );
-
-    expect(queryRaw).not.toHaveBeenCalled();
-  });
-
-  it('returns the total of all matching events next to the page', async () => {
-    const prisma = {
-      event: {
-        findMany: jest.fn().mockResolvedValue([anEvent()]),
-        count: jest.fn().mockResolvedValue(57),
-      },
-    } as unknown as PrismaService;
-
-    const page = await new EventRepository(prisma).getUpcomingPublicEvents(
-      new Date(),
-      { limit: 20, offset: 0 },
-    );
-
-    expect(page.items).toHaveLength(1);
+    expect(page.items.map((item) => item.id)).toEqual(['e2', 'e1']);
     expect(page.total).toBe(57);
+  });
+
+  it('loads only the events of the page, and none for an empty page', async () => {
+    const { repository, findMany } = setup([], 0);
+
+    const page = await repository.getUpcomingPublicEvents(new Date(), {
+      limit: 20,
+      offset: 100,
+    });
+
+    expect(page).toEqual({ items: [], total: 0 });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: [] } } }),
+    );
+  });
+
+  it('passes the page, the activities and the folded words as bound values', async () => {
+    const { repository, queryRaw } = setup([], 0);
+
+    await repository.getUpcomingPublicEvents(
+      new Date(),
+      { limit: 20, offset: 40 },
+      { activityIds: ['a1', 'a2'], search: ' Šachy Brno ', location: 'Žabo' },
+    );
+
+    // The page query and the count share one condition.
+    expect(queryRaw).toHaveBeenCalledTimes(2);
+    const values = sqlValues(queryRaw.mock.calls[0] as unknown[]);
+    expect(values).toEqual(
+      expect.arrayContaining(['a1', 'a2', 'sachy', 'brno', 'zabo', 20, 40]),
+    );
   });
 });

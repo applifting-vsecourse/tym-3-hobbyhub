@@ -72,6 +72,39 @@ const PLACE_COLUMNS = [
   Prisma.sql`e."locationDistrict"`,
 ];
 
+// The condition of the public event list, with the alias `e` for the event and
+// `a` for its activity. Every word of a text has to match somewhere, so
+// "volejbal praha" finds the activity in one column and the city in another.
+const listCondition = (
+  now: Date,
+  { activityIds, search, location }: EventListFilter,
+): Prisma.Sql => {
+  const words = (text?: string): string[] =>
+    foldForSearch(text ?? '')
+      .split(/\s+/)
+      .filter(Boolean);
+  const conditions = [
+    Prisma.sql`e."status" = 'PUBLISHED'`,
+    Prisma.sql`e."visibility" = 'PUBLIC'`,
+    Prisma.sql`NOT e."isHidden"`,
+    Prisma.sql`e."endAt" > ${now}`,
+    ...(activityIds.length > 0
+      ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
+      : []),
+    ...words(search).map(
+      (word) =>
+        Prisma.sql`(${containsInAny(
+          [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
+          word,
+        )})`,
+    ),
+    ...words(location).map(
+      (word) => Prisma.sql`(${containsInAny(PLACE_COLUMNS, word)})`,
+    ),
+  ];
+  return Prisma.join(conditions, ' AND ');
+};
+
 const listInclude = {
   activity: true,
   level: true,
@@ -207,68 +240,41 @@ export class EventRepository {
 
   // The same set the map shows: public, published, not hidden by a moderator
   // and not over yet. Soonest first. Several activities match any of them.
+  //
+  // The text conditions need the folding above, which Prisma cannot express, so
+  // the whole filter is one SQL condition: it picks the ids of the page and
+  // counts the total, and Prisma only loads those few events with their
+  // relations. The rule of what is public is written once, here.
   async getUpcomingPublicEvents(
     now: Date,
     { limit, offset }: Page,
     filter: EventListFilter = { activityIds: [] },
   ): Promise<EventListPage> {
-    const { activityIds } = filter;
-    const textMatches = await this.findIdsMatchingText(filter, now);
-    const where = {
-      status: 'PUBLISHED',
-      visibility: 'PUBLIC',
-      isHidden: false,
-      endAt: { gt: now },
-      ...(activityIds.length > 0 && { activityId: { in: activityIds } }),
-      ...(textMatches && { id: { in: textMatches } }),
-    } as const;
-    const [events, total] = await Promise.all([
-      this.prisma.event.findMany({
-        where,
-        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
-        skip: offset,
-        take: limit,
-        include: listInclude,
-      }),
-      this.prisma.event.count({ where }),
+    const where = listCondition(now, filter);
+    const [pageRows, totalRows] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT e."id" FROM "event" e
+        JOIN "activity" a ON a."id" = e."activityId"
+        WHERE ${where}
+        ORDER BY e."startAt" ASC, e."id" ASC
+        LIMIT ${limit} OFFSET ${offset}`,
+      this.prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT count(*) AS "total" FROM "event" e
+        JOIN "activity" a ON a."id" = e."activityId"
+        WHERE ${where}`,
     ]);
-    return { items: events.map(mapPrismaEventToListItem), total };
-  }
-
-  // Text conditions need the folding above, which Prisma cannot express, so the
-  // matching ids come from SQL and the rest of the filter stays in Prisma. The
-  // SQL repeats the conditions of the public list, so it never returns the ids
-  // of drafts, private or finished events. Null means there is no text to match.
-  private async findIdsMatchingText(
-    { search, location }: EventListFilter,
-    now: Date,
-  ): Promise<string[] | null> {
-    // Every word has to match somewhere, so "volejbal praha" finds the activity
-    // in one column and the city in another.
-    const words = (text?: string): string[] =>
-      foldForSearch(text ?? '')
-        .split(/\s+/)
-        .filter(Boolean);
-    const conditions = [
-      ...words(search).map((word) =>
-        containsInAny(
-          [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
-          word,
-        ),
-      ),
-      ...words(location).map((word) => containsInAny(PLACE_COLUMNS, word)),
-    ];
-    if (conditions.length === 0) return null;
-
-    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
-      SELECT e."id" FROM "event" e
-      JOIN "activity" a ON a."id" = e."activityId"
-      WHERE e."status" = 'PUBLISHED' AND e."visibility" = 'PUBLIC'
-        AND NOT e."isHidden" AND e."endAt" > ${now}
-        AND ${Prisma.join(
-          conditions.map((condition) => Prisma.sql`(${condition})`),
-          ' AND ',
-        )}`;
-    return rows.map((row) => row.id);
+    const ids = pageRows.map((row) => row.id);
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      include: listInclude,
+    });
+    const byId = new Map(events.map((event) => [event.id, event]));
+    return {
+      items: ids.flatMap((id) => {
+        const event = byId.get(id);
+        return event ? [mapPrismaEventToListItem(event)] : [];
+      }),
+      total: Number(totalRows[0]?.total ?? 0),
+    };
   }
 }
