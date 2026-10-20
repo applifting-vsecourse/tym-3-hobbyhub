@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -20,18 +21,33 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateEventDto } from './dto/create-event.dto';
+import { EventListResponseDto } from './dto/event-list-item.response.dto';
 import { EventResponseDto } from './dto/event.response.dto';
+import { ListEventsQuery } from './dto/list-events.query';
 import { eventsValidationPipe } from './events-validation.pipe';
 
 @ApiTags('events')
 @Controller('events')
-@UseGuards(AuthenticatedUserGuard)
-@ApiCookieAuth()
 @UsePipes(eventsValidationPipe)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
+  // Public: browsing events needs no account (E2).
+  @Get()
+  @ApiOperation({ summary: 'List upcoming public events, soonest first' })
+  @ApiResponse({ status: 200, type: EventListResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid limit or offset' })
+  async list(@Query() query: ListEventsQuery): Promise<EventListResponseDto> {
+    const page = await this.eventsService.getUpcomingPublicEvents({
+      limit: query.limit,
+      offset: query.offset,
+    });
+    return EventListResponseDto.fromDomain(page);
+  }
+
   @Post()
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create and publish an event organized by the signed-in user',
@@ -71,6 +87,8 @@ export class EventsController {
   }
 
   @Get(':id')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
   @ApiOperation({ summary: 'Get an event' })
   @ApiResponse({ status: 200, type: EventResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in' })
