@@ -2,8 +2,8 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import {
   CreateEventData,
   Event,
-  EventListFilter,
   EventDetail,
+  EventListFilter,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
