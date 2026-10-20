@@ -4,6 +4,7 @@ describe("navSectionForPath", () => {
   it.each([
     ["/events", "discover"],
     ["/events/abc-123", "discover"],
+    ["/events/new", "add"],
     ["/groups", "groups"],
     ["/groups/new", "groups"],
     ["/groups/abc-123", "groups"],
@@ -13,10 +14,7 @@ describe("navSectionForPath", () => {
     expect(navSectionForPath(pathname)).toBe(section)
   })
 
-  it.each(["/", "/events/new", "/terms", "/login", "/eventsy"])(
-    "%s highlights nothing",
-    (pathname) => {
-      expect(navSectionForPath(pathname)).toBeNull()
-    },
-  )
+  it.each(["/", "/terms", "/login", "/eventsy"])("%s highlights nothing", (pathname) => {
+    expect(navSectionForPath(pathname)).toBeNull()
+  })
 })

@@ -9,11 +9,11 @@ import MyEventsIcon from "@/assets/ui-icons/nav-my-events.svg?react"
 import ProfileIcon from "@/assets/ui-icons/nav-profile.svg?react"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { NavLink } from "@/components/NavLink"
-import { NAV_TARGETS, type NavSection } from "@/lib/navigation"
+import { NAV_TARGETS, type NavPlace, type NavSection } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 const SECTIONS: {
-  key: NavSection
+  key: NavPlace
   Icon: ComponentType<SVGProps<SVGSVGElement>>
 }[] = [
   { key: "discover", Icon: DiscoverIcon },
@@ -30,7 +30,7 @@ const NAV_LABELS = {
 } as const
 
 type BottomNavProps = {
-  /** The highlighted section; `null` on pages that belong to none (landing, new event). */
+  /** The highlighted section; `null` on pages that belong to none (the landing page). */
   readonly active: NavSection | null
   readonly hasNewRequests?: boolean
   readonly className?: string
@@ -98,9 +98,13 @@ export function BottomNav({ active, hasNewRequests = false, className }: BottomN
         {SECTIONS.slice(0, 2).map(renderItem)}
         <Link
           to={ROUTES.newEvent}
-          // The label is muted like the others: the raised button is the
-          // accent, and "Přidat" is never the current place.
-          className="group relative flex flex-1 flex-col items-center gap-0.5 py-2 typo-caption text-muted-foreground outline-none hover:text-foreground"
+          aria-current={active === "add" ? "page" : undefined}
+          // The label follows the same rule as the others; the raised button
+          // itself is always primary.
+          className={cn(
+            "group relative flex flex-1 flex-col items-center gap-0.5 py-2 typo-caption outline-none",
+            active === "add" ? "text-primary" : "text-muted-foreground hover:text-foreground",
+          )}
         >
           <span
             aria-hidden

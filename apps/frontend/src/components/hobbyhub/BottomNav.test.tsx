@@ -16,6 +16,13 @@ describe("BottomNav", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0)
   })
 
+  it("marks Přidat on the new-event form", async () => {
+    await renderWithRouter(<BottomNav active="add" />)
+
+    expect(screen.getByRole("link", { name: "Přidat" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("link", { name: "Objevovat" })).not.toHaveAttribute("aria-current")
+  })
+
   it("highlights nothing on pages outside the sections", async () => {
     await renderWithRouter(<BottomNav active={null} />)
 

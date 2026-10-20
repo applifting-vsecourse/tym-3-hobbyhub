@@ -1,13 +1,13 @@
 import { useTranslation } from "react-i18next"
 
 import { HeaderNavLink } from "@/components/Header/HeaderNavLink"
-import { NAV_TARGETS, type NavSection } from "@/lib/navigation"
+import { NAV_TARGETS, type NavPlace, type NavSection } from "@/lib/navigation"
 
 type HeaderNavProps = {
   active: NavSection | null
 }
 
-const ITEMS: { section: NavSection; labelKey: string }[] = [
+const ITEMS: { section: NavPlace; labelKey: string }[] = [
   { section: "discover", labelKey: "hobbyhub.nav.discover" },
   { section: "my-events", labelKey: "hobbyhub.nav.myEvents" },
   { section: "groups", labelKey: "hobbyhub.nav.groups" },
