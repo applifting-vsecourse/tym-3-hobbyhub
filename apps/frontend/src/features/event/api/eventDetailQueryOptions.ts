@@ -7,6 +7,6 @@ import { eventDetailSchema } from "@/features/event/api/eventSchemas"
 
 export const eventDetailQueryOptions = (id: string) =>
   queryOptions({
-    queryKey: eventKeys.detail(id),
+    queryKey: eventKeys.publicDetail(id),
     queryFn: async () => eventDetailSchema.parse(await api.get(`events/${id}`).json()),
   })

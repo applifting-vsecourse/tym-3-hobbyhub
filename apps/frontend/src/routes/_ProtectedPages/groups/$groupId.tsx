@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
+import { BackLink } from "@/components/BackLink"
 import { NotFound } from "@/components/Error/NotFound"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { Loader } from "@/components/hobbyhub/Loader"
@@ -13,7 +14,6 @@ import { HTTPError } from "@/lib/api-client"
 
 import { activityName } from "@/features/activity/activityName"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
-import { BackLink } from "@/features/group/components/BackLink"
 
 export const Route = createFileRoute("/_ProtectedPages/groups/$groupId")({
   component: GroupDetailPage,
@@ -70,7 +70,10 @@ function GroupDetailPage() {
     <>
       <Seo title={group.name} />
       <section className="mx-auto w-full max-w-2xl px-4 py-6 md:py-12">
-        <BackLink to={ROUTES.groups} />
+        <BackLink
+          to={ROUTES.groups}
+          label={t("groups.back")}
+        />
         <p className="flex items-center gap-2 typo-label text-muted-foreground">
           {isActivityKey(group.activity.icon) ? (
             <ActivityIcon

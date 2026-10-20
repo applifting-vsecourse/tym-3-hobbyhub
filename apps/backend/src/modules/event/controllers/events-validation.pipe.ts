@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 
-// Its own file so a DTO spec can validate exactly what the endpoint does.
+// Its own file so the DTO spec validates exactly what the endpoints do,
+// without loading the controller and its auth dependencies.
 export const eventsValidationPipe = new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,

@@ -18,7 +18,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
-import { Route as EventsNewRouteImport } from './routes/events/new'
+import { Route as ProtectedPagesEventsNewRouteImport } from './routes/_ProtectedPages/events/new'
 import { Route as ProtectedPagesGroupsIndexRouteImport } from './routes/_ProtectedPages/groups/index'
 import { Route as ProtectedPagesGroupsGroupIdRouteImport } from './routes/_ProtectedPages/groups/$groupId'
 import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_ProtectedPages/groups/new'
@@ -67,10 +67,10 @@ const EventsEventIdRoute = EventsEventIdRouteImport.update({
   path: '/events/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EventsNewRoute = EventsNewRouteImport.update({
+const ProtectedPagesEventsNewRoute = ProtectedPagesEventsNewRouteImport.update({
   id: '/events/new',
   path: '/events/new',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ProtectedPagesRoute,
 } as any)
 const ProtectedPagesGroupsIndexRoute =
   ProtectedPagesGroupsIndexRouteImport.update({
@@ -98,8 +98,8 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
-  '/events/new': typeof EventsNewRoute
   '/events/': typeof EventsIndexRoute
+  '/events/new': typeof ProtectedPagesEventsNewRoute
   '/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/groups/': typeof ProtectedPagesGroupsIndexRoute
@@ -112,8 +112,8 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
-  '/events/new': typeof EventsNewRoute
   '/events': typeof EventsIndexRoute
+  '/events/new': typeof ProtectedPagesEventsNewRoute
   '/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/groups': typeof ProtectedPagesGroupsIndexRoute
@@ -128,8 +128,8 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
-  '/events/new': typeof EventsNewRoute
   '/events/': typeof EventsIndexRoute
+  '/_ProtectedPages/events/new': typeof ProtectedPagesEventsNewRoute
   '/_ProtectedPages/groups/$groupId': typeof ProtectedPagesGroupsGroupIdRoute
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/_ProtectedPages/groups/': typeof ProtectedPagesGroupsIndexRoute
@@ -144,8 +144,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/quacks'
     | '/events/$eventId'
-    | '/events/new'
     | '/events/'
+    | '/events/new'
     | '/groups/$groupId'
     | '/groups/new'
     | '/groups/'
@@ -158,8 +158,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/quacks'
     | '/events/$eventId'
-    | '/events/new'
     | '/events'
+    | '/events/new'
     | '/groups/$groupId'
     | '/groups/new'
     | '/groups'
@@ -173,8 +173,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_ProtectedPages/quacks'
     | '/events/$eventId'
-    | '/events/new'
     | '/events/'
+    | '/_ProtectedPages/events/new'
     | '/_ProtectedPages/groups/$groupId'
     | '/_ProtectedPages/groups/new'
     | '/_ProtectedPages/groups/'
@@ -188,7 +188,6 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
-  EventsNewRoute: typeof EventsNewRoute
   EventsIndexRoute: typeof EventsIndexRoute
 }
 
@@ -257,12 +256,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/events/new': {
-      id: '/events/new'
+    '/_ProtectedPages/events/new': {
+      id: '/_ProtectedPages/events/new'
       path: '/events/new'
       fullPath: '/events/new'
-      preLoaderRoute: typeof EventsNewRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ProtectedPagesEventsNewRouteImport
+      parentRoute: typeof ProtectedPagesRoute
     }
     '/_ProtectedPages/groups/': {
       id: '/_ProtectedPages/groups/'
@@ -290,6 +289,7 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedPagesRouteChildren {
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
+  ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
   ProtectedPagesGroupsGroupIdRoute: typeof ProtectedPagesGroupsGroupIdRoute
   ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
   ProtectedPagesGroupsIndexRoute: typeof ProtectedPagesGroupsIndexRoute
@@ -297,6 +297,7 @@ interface ProtectedPagesRouteChildren {
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
+  ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,
   ProtectedPagesGroupsGroupIdRoute: ProtectedPagesGroupsGroupIdRoute,
   ProtectedPagesGroupsNewRoute: ProtectedPagesGroupsNewRoute,
   ProtectedPagesGroupsIndexRoute: ProtectedPagesGroupsIndexRoute,
@@ -314,7 +315,6 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   EventsEventIdRoute: EventsEventIdRoute,
-  EventsNewRoute: EventsNewRoute,
   EventsIndexRoute: EventsIndexRoute,
 }
 export const routeTree = rootRouteImport

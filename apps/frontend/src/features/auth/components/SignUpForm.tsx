@@ -8,11 +8,11 @@ import { Trans, useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
+import { AppForm } from "@/components/form/AppForm"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -86,29 +86,81 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
   useRevalidateOnLanguageChange(form)
 
   return (
-    <Form {...form}>
-      <form
-        noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-4"
-      >
-        {errorMessage ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
+    <AppForm
+      form={form}
+      onSubmit={onSubmit}
+      // Nothing is lost by leaving a sign-up half-way.
+      isGuarded={false}
+      className="flex flex-col gap-4"
+    >
+      {errorMessage ? (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
 
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.name")}</FormLabel>
+            <FormControl>
+              <Input
+                autoComplete="nickname"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.email")}</FormLabel>
+            <FormControl>
+              <Input
+                type="email"
+                placeholder={t("auth.placeholders.email")}
+                autoComplete="email"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="password"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.password")}</FormLabel>
+            <FormControl>
+              <PasswordInput
+                autoComplete="new-password"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-2 items-start gap-3">
         <FormField
           control={form.control}
-          name="name"
+          name="birthDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("auth.fields.name")}</FormLabel>
+              <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
               <FormControl>
-                <Input
-                  autoComplete="nickname"
-                  {...field}
-                />
+                <BirthDatePicker {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -117,138 +169,86 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
 
         <FormField
           control={form.control}
-          name="email"
+          name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("auth.fields.email")}</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder={t("auth.placeholders.email")}
-                  autoComplete="email"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.password")}</FormLabel>
-              <FormControl>
-                <PasswordInput
-                  autoComplete="new-password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 items-start gap-3">
-          <FormField
-            control={form.control}
-            name="birthDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
+              <FormLabel>{t("auth.fields.gender")}</FormLabel>
+              <Select
+                name={field.name}
+                value={field.value ?? ""}
+                onValueChange={field.onChange}
+              >
                 <FormControl>
-                  <BirthDatePicker {...field} />
+                  <SelectTrigger
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    className="w-full"
+                  >
+                    <SelectValue placeholder={t("auth.placeholders.gender")} />
+                  </SelectTrigger>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("auth.fields.gender")}</FormLabel>
-                <Select
-                  name={field.name}
-                  value={field.value ?? ""}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger
-                      ref={field.ref}
-                      onBlur={field.onBlur}
-                      className="w-full"
+                <SelectContent>
+                  {GENDERS.map((gender) => (
+                    <SelectItem
+                      key={gender}
+                      value={gender}
                     >
-                      <SelectValue placeholder={t("auth.placeholders.gender")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {GENDERS.map((gender) => (
-                      <SelectItem
-                        key={gender}
-                        value={gender}
-                      >
-                        {t(GENDER_LABELS[gender])}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="termsAccepted"
-          render={({ field }) => (
-            <FormItem className="flex items-start gap-3">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={(checked) => field.onChange(checked === true)}
-                />
-              </FormControl>
-              <div className="grid gap-1">
-                <FormLabel className="block typo-small text-muted-foreground">
-                  <Trans
-                    i18nKey="auth.signUp.terms"
-                    components={{
-                      // Not <link>: that is a void HTML element, so it would drop the text.
-                      terms: (
-                        // A new tab, so the half-filled form stays where it is.
-                        <Link
-                          to={ROUTES.terms}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-foreground underline underline-offset-4"
-                        />
-                      ),
-                    }}
-                  />
-                </FormLabel>
-                <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
-                <FormMessage />
-              </div>
+                      {t(GENDER_LABELS[gender])}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
             </FormItem>
           )}
         />
+      </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          className="mt-8 w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-          {t("auth.signUp.submit")}
-        </Button>
-      </form>
-    </Form>
+      <FormField
+        control={form.control}
+        name="termsAccepted"
+        render={({ field }) => (
+          <FormItem className="flex items-start gap-3">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+              />
+            </FormControl>
+            <div className="grid gap-1">
+              <FormLabel className="block typo-small text-muted-foreground">
+                <Trans
+                  i18nKey="auth.signUp.terms"
+                  components={{
+                    // Not <link>: that is a void HTML element, so it would drop the text.
+                    terms: (
+                      // A new tab, so the half-filled form stays where it is.
+                      <Link
+                        to={ROUTES.terms}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-foreground underline underline-offset-4"
+                      />
+                    ),
+                  }}
+                />
+              </FormLabel>
+              <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
+              <FormMessage />
+            </div>
+          </FormItem>
+        )}
+      />
+
+      <Button
+        type="submit"
+        size="lg"
+        className="mt-8 w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+        {t("auth.signUp.submit")}
+      </Button>
+    </AppForm>
   )
 }

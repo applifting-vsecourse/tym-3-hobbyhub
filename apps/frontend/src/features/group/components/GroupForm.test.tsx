@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+
+import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { GroupForm, type ActivityOption } from "@/features/group/components/GroupForm"
 
@@ -9,9 +11,9 @@ const ACTIVITIES: ActivityOption[] = [
   { id: "a-florbal", label: "Florbal", icon: "florbal" },
 ]
 
-const renderForm = (props: Partial<Parameters<typeof GroupForm>[0]> = {}) => {
+const renderForm = async (props: Partial<Parameters<typeof GroupForm>[0]> = {}) => {
   const onSubmit = vi.fn()
-  render(
+  await renderWithRouter(
     <GroupForm
       activities={ACTIVITIES}
       isActivitiesLoading={false}
@@ -27,7 +29,7 @@ const renderForm = (props: Partial<Parameters<typeof GroupForm>[0]> = {}) => {
 
 describe("GroupForm", () => {
   it("tells which required fields are missing", async () => {
-    const { onSubmit, user } = renderForm()
+    const { onSubmit, user } = await renderForm()
 
     await user.click(screen.getByRole("button", { name: "Vytvořit skupinu" }))
 
@@ -38,7 +40,7 @@ describe("GroupForm", () => {
   })
 
   it("rejects a name shorter than three characters", async () => {
-    const { user } = renderForm()
+    const { user } = await renderForm()
 
     await user.type(screen.getByLabelText("Název skupiny"), "  ab  ")
     await user.click(screen.getByRole("button", { name: "Vytvořit skupinu" }))
@@ -47,7 +49,7 @@ describe("GroupForm", () => {
   })
 
   it("counts an emoji as one character, as the server does", async () => {
-    const { user } = renderForm()
+    const { user } = await renderForm()
 
     await user.type(screen.getByLabelText("Název skupiny"), "🏀🏀")
     await user.click(screen.getByRole("button", { name: "Vytvořit skupinu" }))
@@ -56,7 +58,7 @@ describe("GroupForm", () => {
   })
 
   it("sends trimmed values and leaves out empty optional fields", async () => {
-    const { onSubmit, user } = renderForm()
+    const { onSubmit, user } = await renderForm()
 
     await user.type(screen.getByLabelText("Název skupiny"), "  Čtvrteční florbalisté ")
     await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
@@ -77,7 +79,7 @@ describe("GroupForm", () => {
 
   it("offers a retry when activities fail to load", async () => {
     const onRetryActivities = vi.fn()
-    const { user } = renderForm({
+    const { user } = await renderForm({
       activities: [],
       isActivitiesError: true,
       onRetryActivities,
