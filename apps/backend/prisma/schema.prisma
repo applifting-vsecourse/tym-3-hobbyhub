@@ -461,9 +461,6 @@ model User {
   // F-04.8: how many wizard steps (activities, location, profile) are done or
   // skipped, so an interrupted wizard resumes at the first open one.
   onboardingStepsDone   Int                @default(0)
-  // True when the wizard ended while the profile was not set up (no activities
-  // or no location); drives the prompt to finish setting it up.
-  onboardingSkipped     Boolean            @default(false)
   // F-04.8: the city and street as typed in the onboarding. Not a Location (it
   // has no postal code, country or coordinates, which user_home_location_all_or_nothing
   // demands), so it lives apart until the address lookup (F-12.3 #79, F-02.2b

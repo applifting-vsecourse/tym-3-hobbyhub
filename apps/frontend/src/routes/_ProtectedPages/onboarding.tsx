@@ -39,7 +39,9 @@ function OnboardingPage() {
   const navigate = useNavigate()
   const activities = useQuery(activitiesQueryOptions())
   // Where to go afterwards: the page the visitor came from, if it is one of ours.
-  const target = redirectTarget(from, ROUTES.events)
+  // Never the onboarding itself: a sign-in that was sent here carries it as `from`.
+  const requested = redirectTarget(from, ROUTES.events)
+  const target = requested.startsWith(ROUTES.onboarding) ? ROUTES.events : requested
   // A stable function, so the picker's list of options is not rebuilt on every render.
   const activityLabel = useCallback(
     (activity: { name: string; icon: string }) => activityName(t, activity),

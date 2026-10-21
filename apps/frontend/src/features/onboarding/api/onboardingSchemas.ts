@@ -19,7 +19,7 @@ export const interestSchema = z.object({
 export const onboardingSchema = z.object({
   /** Steps done or skipped, 0 to 3. */
   stepsDone: z.number(),
-  /** A step or the whole wizard was skipped. */
+  /** The wizard ended but there are no activities or no location yet. */
   skipped: z.boolean(),
   /** Set once the wizard ended, finished or skipped. */
   completedAt: z.coerce.date().nullable(),

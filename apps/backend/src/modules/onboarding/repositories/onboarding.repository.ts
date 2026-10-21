@@ -7,6 +7,7 @@ import {
 } from '@/generated/prisma/client';
 import {
   InterestInput,
+  isProfileSetUp,
   Onboarding,
 } from '@/modules/onboarding/domain/onboarding';
 import { Injectable } from '@nestjs/common';
@@ -24,11 +25,8 @@ type UserRow = PrismaUser & {
   interests: (PrismaUserActivity & { activity: PrismaActivity })[];
 };
 
-const mapUserToOnboarding = (user: UserRow): Onboarding => ({
-  stepsDone: user.onboardingStepsDone,
-  skipped: user.onboardingSkipped,
-  completedAt: user.onboardingCompletedAt,
-  interests: user.interests.map((interest) => ({
+const mapUserToOnboarding = (user: UserRow): Onboarding => {
+  const interests = user.interests.map((interest) => ({
     level: interest.level,
     activity: {
       id: interest.activity.id,
@@ -37,13 +35,24 @@ const mapUserToOnboarding = (user: UserRow): Onboarding => ({
       defaultMinParticipants: interest.activity.defaultMinParticipants,
       defaultMaxParticipants: interest.activity.defaultMaxParticipants,
     },
-  })),
+  }));
   // A full home address, once there is one, outranks what was typed here.
-  city: user.homeCity ?? user.declaredCity,
-  street: user.homeStreet ?? user.declaredStreet,
-  travelRadiusKm: user.travelRadiusKm,
-  bio: user.bio,
-});
+  const city = user.homeCity ?? user.declaredCity;
+  return {
+    stepsDone: user.onboardingStepsDone,
+    // Worked out from what is saved now, so it stays right when the profile
+    // changes after the wizard ended.
+    skipped:
+      user.onboardingCompletedAt !== null &&
+      !isProfileSetUp({ interests, city }),
+    completedAt: user.onboardingCompletedAt,
+    interests,
+    city,
+    street: user.homeStreet ?? user.declaredStreet,
+    travelRadiusKm: user.travelRadiusKm,
+    bio: user.bio,
+  };
+};
 
 // Trusts the layers above: it validates nothing, it only reads and writes.
 @Injectable()
@@ -123,23 +132,12 @@ export class OnboardingRepository {
     });
   }
 
-  // `skipped` keeps the profile prompt on while the profile is not set up. The
-  // first time the wizard ended stays the time it ended: ending it again only
-  // refreshes the prompt.
-  async complete(
-    userId: string,
-    options: { skipped: boolean },
-    now: Date,
-  ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
-        data: { onboardingSkipped: options.skipped },
-      });
-      await tx.user.updateMany({
-        where: { id: userId, onboardingCompletedAt: null },
-        data: { onboardingCompletedAt: now },
-      });
+  // The first time the wizard ended stays the time it ended: ending it again
+  // changes nothing.
+  async complete(userId: string, now: Date): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { id: userId, onboardingCompletedAt: null },
+      data: { onboardingCompletedAt: now },
     });
   }
 }

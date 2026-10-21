@@ -2,7 +2,6 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import {
   InterestInput,
   interestViolations,
-  isProfileSetUp,
   Onboarding,
   ONBOARDING_STEP_COUNT,
   OnboardingStep,
@@ -29,6 +28,18 @@ export class OnboardingService {
     return onboarding;
   }
 
+  // Steps go in order: one can be saved or skipped only once the ones before
+  // it are done or skipped (a step already done can be done again).
+  private async assertReachable(
+    user: Identity,
+    step: OnboardingStep,
+  ): Promise<void> {
+    const { stepsDone } = await this.getOnboarding(user);
+    if (stepNumber(step) > stepsDone + 1) {
+      throw new BadRequestException('Finish or skip the earlier steps first');
+    }
+  }
+
   async saveActivities(
     user: Identity,
     items: readonly InterestInput[],
@@ -43,6 +54,7 @@ export class OnboardingService {
         'Activity does not exist or is no longer offered',
       );
     }
+    await this.assertReachable(user, 'ACTIVITIES');
     await this.onboardingRepository.saveInterests(
       user.id,
       items,
@@ -55,6 +67,7 @@ export class OnboardingService {
     user: Identity,
     data: { city: string; street: string | null; travelRadiusKm: number },
   ): Promise<Onboarding> {
+    await this.assertReachable(user, 'LOCATION');
     await this.onboardingRepository.saveLocation(
       user.id,
       data,
@@ -67,6 +80,7 @@ export class OnboardingService {
     user: Identity,
     data: { bio: string | null },
   ): Promise<Onboarding> {
+    await this.assertReachable(user, 'PROFILE');
     await this.onboardingRepository.saveBio(
       user.id,
       data.bio,
@@ -75,40 +89,26 @@ export class OnboardingService {
     return this.getOnboarding(user);
   }
 
-  // Steps are passed in order: a step can be skipped only once the ones before
-  // it are done or skipped.
   async skipStep(user: Identity, step: OnboardingStep): Promise<Onboarding> {
-    const { stepsDone } = await this.getOnboarding(user);
-    if (stepNumber(step) > stepsDone + 1) {
-      throw new BadRequestException('Finish or skip the earlier steps first');
-    }
+    await this.assertReachable(user, step);
     await this.onboardingRepository.skipStep(user.id, stepNumber(step));
     return this.getOnboarding(user);
   }
 
-  // The last step's "Dokončit": only once every step was saved or skipped. The
-  // profile prompt stays while the activities or the location are missing.
+  // The last step's "Dokončit": only once every step was saved or skipped.
   async finish(user: Identity, now = new Date()): Promise<Onboarding> {
-    const onboarding = await this.getOnboarding(user);
-    if (onboarding.stepsDone < ONBOARDING_STEP_COUNT) {
+    const { stepsDone } = await this.getOnboarding(user);
+    if (stepsDone < ONBOARDING_STEP_COUNT) {
       throw new BadRequestException('Finish or skip every step first');
     }
-    await this.onboardingRepository.complete(
-      user.id,
-      { skipped: !isProfileSetUp(onboarding) },
-      now,
-    );
+    await this.onboardingRepository.complete(user.id, now);
     return this.getOnboarding(user);
   }
 
   // "Přeskočit vše": ends the wizard from any step, keeping what is saved.
   async skipAll(user: Identity, now = new Date()): Promise<Onboarding> {
-    const onboarding = await this.getOnboarding(user);
-    await this.onboardingRepository.complete(
-      user.id,
-      { skipped: !isProfileSetUp(onboarding) },
-      now,
-    );
+    await this.getOnboarding(user);
+    await this.onboardingRepository.complete(user.id, now);
     return this.getOnboarding(user);
   }
 }

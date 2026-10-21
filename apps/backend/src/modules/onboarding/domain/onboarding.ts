@@ -32,8 +32,8 @@ export type Onboarding = {
   // How many steps are done or skipped. An interrupted wizard resumes at the
   // step after the last one done.
   stepsDone: number;
-  // The wizard ended while the profile was not set up (see isProfileSetUp), so
-  // the profile still asks to be finished.
+  // The wizard ended but the profile is not set up (see isProfileSetUp), so the
+  // profile still asks to be finished. Worked out when read, never stored.
   skipped: boolean;
   // Set when the wizard ended, finished or skipped (ADR-0011).
   completedAt: Date | null;

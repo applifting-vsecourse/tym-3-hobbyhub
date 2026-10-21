@@ -4,7 +4,6 @@ CREATE TYPE "skill_level" AS ENUM ('BEGINNER', 'ADVANCED', 'EXPERT');
 -- AlterTable
 ALTER TABLE "user" ADD COLUMN     "declaredCity" VARCHAR(100),
 ADD COLUMN     "declaredStreet" VARCHAR(200),
-ADD COLUMN     "onboardingSkipped" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN     "onboardingStepsDone" INTEGER NOT NULL DEFAULT 0;
 
 -- CreateTable

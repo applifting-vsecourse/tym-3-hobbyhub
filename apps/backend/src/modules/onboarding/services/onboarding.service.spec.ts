@@ -100,39 +100,46 @@ describe('OnboardingService', () => {
     });
   });
 
+  describe('steps in order', () => {
+    it.each([
+      [
+        'location',
+        (service: OnboardingService): Promise<Onboarding> =>
+          service.saveLocation(user, {
+            city: 'Praha',
+            street: null,
+            travelRadiusKm: 25,
+          }),
+      ],
+      [
+        'profile',
+        (service: OnboardingService): Promise<Onboarding> =>
+          service.saveProfile(user, { bio: 'Hraju rok' }),
+      ],
+    ])(
+      'refuses to save the %s step before the ones ahead of it',
+      async (_name, save) => {
+        const { repository, service } = setup(anOnboarding({ stepsDone: 0 }));
+        await expect(save(service)).rejects.toBeInstanceOf(BadRequestException);
+        expect(repository.saveLocation).not.toHaveBeenCalled();
+        expect(repository.saveBio).not.toHaveBeenCalled();
+      },
+    );
+
+    it('lets a step that is already done be saved again', async () => {
+      const { repository, service } = setup(anOnboarding({ stepsDone: 3 }));
+      await service.saveProfile(user, { bio: 'Nové bio' });
+      expect(repository.saveBio).toHaveBeenCalledWith('u1', 'Nové bio', 3);
+    });
+  });
+
   describe('finish', () => {
     const now = new Date('2026-10-20T12:00:00Z');
-    const interest = {
-      activity: {
-        id: 'a1',
-        name: 'Florbal',
-        icon: 'florbal',
-        defaultMinParticipants: 8,
-        defaultMaxParticipants: 12,
-      },
-      level: null,
-    };
 
-    it('ends the wizard once every step is done and the profile is set up', async () => {
-      const { repository, service } = setup(
-        anOnboarding({ stepsDone: 3, interests: [interest], city: 'Praha 8' }),
-      );
-      await service.finish(user, now);
-      expect(repository.complete).toHaveBeenCalledWith(
-        'u1',
-        { skipped: false },
-        now,
-      );
-    });
-
-    it('keeps the profile prompt when the activities or the location were skipped', async () => {
+    it('ends the wizard once every step is done or skipped', async () => {
       const { repository, service } = setup(anOnboarding({ stepsDone: 3 }));
       await service.finish(user, now);
-      expect(repository.complete).toHaveBeenCalledWith(
-        'u1',
-        { skipped: true },
-        now,
-      );
+      expect(repository.complete).toHaveBeenCalledWith('u1', now);
     });
 
     it('refuses while a step is still open', async () => {
@@ -144,44 +151,10 @@ describe('OnboardingService', () => {
     });
   });
 
-  describe('skipAll', () => {
+  it('skipping everything ends the wizard from any step', async () => {
+    const { repository, service } = setup(anOnboarding({ stepsDone: 0 }));
     const now = new Date('2026-10-20T12:00:00Z');
-
-    it('ends the wizard and keeps the prompt while the profile is not set up', async () => {
-      const { repository, service } = setup(anOnboarding({ stepsDone: 0 }));
-      await service.skipAll(user, now);
-      expect(repository.complete).toHaveBeenCalledWith(
-        'u1',
-        { skipped: true },
-        now,
-      );
-    });
-
-    it('drops the prompt when the activities and the location were saved before', async () => {
-      const { repository, service } = setup(
-        anOnboarding({
-          stepsDone: 2,
-          city: 'Praha 8',
-          interests: [
-            {
-              activity: {
-                id: 'a1',
-                name: 'Florbal',
-                icon: 'florbal',
-                defaultMinParticipants: 8,
-                defaultMaxParticipants: 12,
-              },
-              level: null,
-            },
-          ],
-        }),
-      );
-      await service.skipAll(user, now);
-      expect(repository.complete).toHaveBeenCalledWith(
-        'u1',
-        { skipped: false },
-        now,
-      );
-    });
+    await service.skipAll(user, now);
+    expect(repository.complete).toHaveBeenCalledWith('u1', now);
   });
 });

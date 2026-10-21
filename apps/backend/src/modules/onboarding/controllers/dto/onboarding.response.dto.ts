@@ -18,7 +18,10 @@ export class OnboardingResponseDto {
   @ApiProperty({ description: 'Steps done or skipped, 0 to 3' })
   stepsDone!: number;
 
-  @ApiProperty({ description: 'A step or the whole wizard was skipped' })
+  @ApiProperty({
+    description:
+      'The wizard ended but the profile has no activities or no location yet',
+  })
   skipped!: boolean;
 
   @ApiProperty({
