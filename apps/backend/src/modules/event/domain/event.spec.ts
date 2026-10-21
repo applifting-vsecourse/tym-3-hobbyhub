@@ -1,4 +1,8 @@
-import { eventRuleViolations, occupancyOf } from '@/modules/event/domain/event';
+import {
+  eventRuleViolations,
+  foldForSearch,
+  occupancyOf,
+} from '@/modules/event/domain/event';
 
 describe('occupancyOf', () => {
   it('adds seats taken outside the app to the approved participants', () => {
@@ -74,5 +78,12 @@ describe('eventRuleViolations', () => {
         now,
       ),
     ).toEqual(['MIN_ABOVE_MAX', 'OCCUPIED_ABOVE_MAX']);
+  });
+});
+
+describe('foldForSearch', () => {
+  it('ignores case, diacritics and outer spaces', () => {
+    expect(foldForSearch('  Čtvrteční FLORBAL ')).toBe('ctvrtecni florbal');
+    expect(foldForSearch('Brno-Žabovřesky')).toBe('brno-zabovresky');
   });
 });

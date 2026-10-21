@@ -196,10 +196,21 @@
       "count_one": "{{count}} akce",
       "count_other": "{{count}} akcí",
       "empty": "Zatím tu nejsou žádné nadcházející akce. Zkuste to později, nebo akci vypište sami.",
+      "emptyFiltered": {
+        "clear": "Vymazat filtry",
+        "description": "Pro tenhle výběr zatím nic nehraje. Zkuste jiné hledání, lokalitu nebo aktivitu.",
+        "title": "Nic nenalezeno"
+      },
+      "filters": {
+        "open": "Filtry",
+        "selected": "Vybrané filtry",
+        "unknownActivity": "Neznámá aktivita"
+      },
       "loadError": "Akce se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loading": "Načítáme akce…",
       "reload": "Načíst znovu",
+      "searchPlaceholder": "Název, místo nebo aktivita",
       "seoTitle": "Akce",
       "title": "Akce"
     },
@@ -377,6 +388,10 @@
       "until": "do {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "Zatím tu nejsou žádné aktivity.",
+      "activitiesError": "Aktivity se nepodařilo načíst",
+      "activitiesLoading": "Načítáme aktivity…",
+      "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "clear": "Vymazat",
       "date": "Datum…",
@@ -485,9 +500,9 @@
       "find": "Najít akci"
     },
     "hero": {
-      "join": "Obsadit místo",
-      "kicker": "Čtvrteční florbal · dnes 19:00",
-      "text": "Chybí 3 do minima. Jedno z nich může být tvoje.",
+      "join": "Najít volné místo",
+      "kicker": "Sport a hry ve vašem okolí",
+      "text": "Organizátoři ukážou, kolik lidí jim chybí do minima. Jedno z volných míst může být vaše.",
       "title": "Doplňte chybějící hráče dřív, než se akce zruší"
     },
     "how": {
@@ -497,13 +512,13 @@
       "title": "Jak to funguje"
     },
     "search": {
-      "label": "Lokalita",
-      "placeholder": "Lokalita: Praha 8"
+      "label": "Hledat akce",
+      "placeholder": "Název, místo nebo aktivita"
     },
     "seoTitle": "Úvodní stránka",
-    "tonight": {
-      "empty": "Na dnešní večer zatím nic nemáme. Hledejte na další dny, nebo akci vypište sami — až se objeví, najdete je tady.",
-      "title": "Dnes večer"
+    "upcoming": {
+      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami — až se objeví, najdete ji tady.",
+      "title": "Nejbližší akce"
     }
   },
   "myEvents": {

@@ -145,6 +145,24 @@ describe("EventList", () => {
     expect(screen.getByText(/nejsou žádné nadcházející akce/)).toBeInTheDocument()
   })
 
+  it("says nothing matches when a filter is on, and lets the filters go", async () => {
+    const onClearFilters = vi.fn()
+    render(
+      <EventList
+        events={[]}
+        total={0}
+        activityLabel={(activity) => activity.name}
+        isFiltered
+        onClearFilters={onClearFilters}
+      />,
+    )
+
+    expect(screen.getByRole("heading", { name: "Nic nenalezeno" })).toBeInTheDocument()
+    expect(screen.queryByText(/nejsou žádné nadcházející akce/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Vymazat filtry" }))
+    expect(onClearFilters).toHaveBeenCalled()
+  })
+
   it("offers a reload when loading fails", async () => {
     const onReload = vi.fn()
     render(

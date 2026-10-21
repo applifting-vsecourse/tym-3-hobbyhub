@@ -3,6 +3,7 @@ import {
   CreateEventData,
   Event,
   EventDetail,
+  EventListFilter,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
@@ -61,9 +62,10 @@ export class EventsService {
 
   getUpcomingPublicEvents(
     page: Page,
+    filter: EventListFilter = { activityIds: [] },
     now: Date = new Date(),
   ): Promise<EventListPage> {
-    return this.eventRepository.getUpcomingPublicEvents(now, page);
+    return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
   }
 
   // Public: what a visitor may see, nothing of the organizer's private data.
