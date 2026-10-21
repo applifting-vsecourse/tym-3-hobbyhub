@@ -10,11 +10,18 @@ const activities = [
   { id: "a2", name: "Deskovky", icon: "deskove-hry" },
 ]
 
+const levels = [
+  { id: "l1", name: "Začátečníci" },
+  { id: "l2", name: "Mírně pokročilí" },
+  { id: "l3", name: "Pokročilí" },
+]
+
 const renderStep = (onSubmit = vi.fn().mockResolvedValue(undefined), overrides = {}) => {
   render(
     <ActivitiesStep
       activities={activities}
       activityLabel={(activity) => activity.name}
+      levels={levels}
       isLoadingActivities={false}
       activitiesError={null}
       onReloadActivities={vi.fn()}
@@ -59,7 +66,7 @@ describe("ActivitiesStep", () => {
     await addActivity("Florbal")
     await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
 
-    expect(onSubmit).toHaveBeenCalledWith({ items: [{ activityId: "a1", level: null }] })
+    expect(onSubmit).toHaveBeenCalledWith({ items: [{ activityId: "a1", levelId: null }] })
   })
 
   it("sends the picked activities with the levels that were chosen", async () => {
@@ -67,13 +74,13 @@ describe("ActivitiesStep", () => {
 
     await addActivity("Florbal")
     await addActivity("Deskovky")
-    await chooseLevel("Florbal", "Pokročilý")
+    await chooseLevel("Florbal", "Pokročilí")
     await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
 
     expect(onSubmit).toHaveBeenCalledWith({
       items: [
-        { activityId: "a1", level: "ADVANCED" },
-        { activityId: "a2", level: null },
+        { activityId: "a1", levelId: "l3" },
+        { activityId: "a2", levelId: null },
       ],
     })
   })
@@ -82,11 +89,11 @@ describe("ActivitiesStep", () => {
     const onSubmit = renderStep()
 
     await addActivity("Florbal")
-    await chooseLevel("Florbal", "Expert")
+    await chooseLevel("Florbal", "Mírně pokročilí")
     await chooseLevel("Florbal", "Bez úrovně")
     await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
 
-    expect(onSubmit).toHaveBeenCalledWith({ items: [{ activityId: "a1", level: null }] })
+    expect(onSubmit).toHaveBeenCalledWith({ items: [{ activityId: "a1", levelId: null }] })
   })
 
   it("lists nothing until an activity is added", async () => {
@@ -202,5 +209,24 @@ describe("ActivitiesStep", () => {
 
     expect(await screen.findByText("Vyberte aspoň jednu aktivitu.")).toBeInTheDocument()
     expect(onSkip).not.toHaveBeenCalled()
+  })
+
+  it("offers the levels from the catalogue, and nothing else", async () => {
+    renderStep()
+
+    await addActivity("Florbal")
+    await userEvent.click(screen.getByRole("combobox", { name: "Florbal" }))
+
+    expect(await screen.findByRole("option", { name: "Začátečníci" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Mírně pokročilí" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Pokročilí" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Všechny úrovně" })).not.toBeInTheDocument()
+  })
+
+  it("shows the level that was saved before", () => {
+    const initial = [{ activity: activities[0]!, level: levels[2]! }]
+    renderStep(undefined, { initial })
+
+    expect(screen.getByRole("combobox", { name: "Florbal" })).toHaveTextContent("Pokročilí")
   })
 })

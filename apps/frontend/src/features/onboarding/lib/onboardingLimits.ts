@@ -9,9 +9,6 @@ export const TRAVEL_RADIUS_MAX_KM = 100
 export const TRAVEL_RADIUS_DEFAULT_KM = 25
 export const TRAVEL_RADIUS_STEP_KM = 5
 
-export const SKILL_LEVELS = ["BEGINNER", "ADVANCED", "EXPERT"] as const
-export type SkillLevel = (typeof SKILL_LEVELS)[number]
-
 /** The three saving steps; the summary after them is a fourth screen. */
 export const ONBOARDING_STEPS = ["ACTIVITIES", "LOCATION", "PROFILE"] as const
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]

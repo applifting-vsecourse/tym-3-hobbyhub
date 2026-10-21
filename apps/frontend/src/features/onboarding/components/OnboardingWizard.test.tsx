@@ -42,6 +42,7 @@ const renderWizard = (state: Onboarding) => {
         activitiesError={null}
         onReloadActivities={vi.fn()}
         activityLabel={(activity) => activity.name}
+        levels={[]}
         isReturningToEvent={false}
         onLeave={onLeave}
       />

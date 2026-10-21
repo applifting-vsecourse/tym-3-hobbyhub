@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ActivityModule } from './modules/activity/activity.module';
 import { EventModule } from './modules/event/event.module';
 import { GroupModule } from './modules/group/group.module';
+import { LevelModule } from './modules/level/level.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { QuackModule } from './modules/quack/quack.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
@@ -17,6 +18,7 @@ const imports = [
   ActivityModule,
   EventModule,
   GroupModule,
+  LevelModule,
   OnboardingModule,
   EventModule,
 ];

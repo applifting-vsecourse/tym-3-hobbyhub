@@ -538,9 +538,6 @@
     "finish": "Finish",
     "finishReturn": "Finish and return to the event",
     "levels": {
-      "ADVANCED": "Advanced",
-      "BEGINNER": "Beginner",
-      "EXPERT": "Expert",
       "NONE": "No level"
     },
     "loadError": "The setup could not be loaded.",

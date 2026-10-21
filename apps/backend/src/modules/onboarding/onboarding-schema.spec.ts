@@ -77,4 +77,31 @@ describeDb('onboarding schema constraints', () => {
       inRolledBackTransaction((tx) => createUser(tx, extra)),
     ).rejects.toThrow();
   });
+
+  it('keeps a level on an activity only if it is in the catalogue', async () => {
+    await expect(
+      inRolledBackTransaction(async (tx) => {
+        const user = await createUser(tx, {});
+        const category = await tx.activityCategory.create({
+          data: { name: `cat-${Math.random().toString(36).slice(2)}` },
+        });
+        const activity = await tx.activity.create({
+          data: {
+            name: `act-${Math.random().toString(36).slice(2)}`,
+            icon: 'florbal',
+            categoryId: category.id,
+            defaultMinParticipants: 2,
+            defaultMaxParticipants: 10,
+          },
+        });
+        await tx.userActivity.create({
+          data: {
+            userId: user.id,
+            activityId: activity.id,
+            levelId: 'no-such-level',
+          },
+        });
+      }),
+    ).rejects.toThrow();
+  });
 });

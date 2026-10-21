@@ -547,9 +547,6 @@
     "finish": "Dokončit",
     "finishReturn": "Dokončit a vrátit se k akci",
     "levels": {
-      "ADVANCED": "Pokročilý",
-      "BEGINNER": "Začátečník",
-      "EXPERT": "Expert",
       "NONE": "Bez úrovně"
     },
     "loadError": "Průvodce se nepodařilo načíst.",

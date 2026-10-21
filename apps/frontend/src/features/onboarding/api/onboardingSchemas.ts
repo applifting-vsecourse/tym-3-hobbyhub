@@ -1,7 +1,5 @@
 import { z } from "zod"
 
-import { SKILL_LEVELS } from "@/features/onboarding/lib/onboardingLimits"
-
 // What the wizard needs of an activity; the activity feature owns the full one.
 export const activityOptionSchema = z.object({
   id: z.string(),
@@ -11,9 +9,14 @@ export const activityOptionSchema = z.object({
 
 export type ActivityOption = z.infer<typeof activityOptionSchema>
 
+// What the wizard needs of a level; the level feature owns the full one.
+export const levelOptionSchema = z.object({ id: z.string(), name: z.string() })
+
+export type LevelOption = z.infer<typeof levelOptionSchema>
+
 export const interestSchema = z.object({
   activity: activityOptionSchema,
-  level: z.enum(SKILL_LEVELS).nullable(),
+  level: levelOptionSchema.nullable(),
 })
 
 export const onboardingSchema = z.object({
@@ -33,7 +36,7 @@ export const onboardingSchema = z.object({
 export type Onboarding = z.infer<typeof onboardingSchema>
 
 export type SaveActivitiesInput = {
-  items: { activityId: string; level: (typeof SKILL_LEVELS)[number] | null }[]
+  items: { activityId: string; levelId: string | null }[]
 }
 export type SaveLocationInput = { city: string; street?: string; travelRadiusKm: number }
 export type SaveProfileInput = { bio?: string }

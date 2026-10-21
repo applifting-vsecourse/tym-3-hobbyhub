@@ -1,4 +1,5 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
+import { LevelsService } from '@/modules/level/services/levels.service';
 import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingRepository } from '@/modules/onboarding/repositories/onboarding.repository';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -24,6 +25,7 @@ describe('OnboardingService', () => {
   const setup = (
     state: Onboarding | null = anOnboarding(),
     isActivityAvailable = true,
+    areLevelsValid = true,
   ): {
     repository: MockProxy<OnboardingRepository>;
     service: OnboardingService;
@@ -32,9 +34,11 @@ describe('OnboardingService', () => {
     repository.getOnboarding.mockResolvedValue(state);
     const activities = mock<ActivitiesService>();
     activities.areAllAvailable.mockResolvedValue(isActivityAvailable);
+    const levels = mock<LevelsService>();
+    levels.areAllSkillLevels.mockResolvedValue(areLevelsValid);
     return {
       repository,
-      service: new OnboardingService(repository, activities),
+      service: new OnboardingService(repository, activities, levels),
     };
   };
 
@@ -46,7 +50,7 @@ describe('OnboardingService', () => {
   });
 
   describe('saveActivities', () => {
-    const items = [{ activityId: 'a1', level: 'ADVANCED' as const }];
+    const items = [{ activityId: 'a1', levelId: 'l3' }];
 
     it('saves the activities for the signed-in user and counts step 1 done', async () => {
       const { repository, service } = setup();
@@ -57,6 +61,14 @@ describe('OnboardingService', () => {
     it('refuses an empty selection', async () => {
       const { repository, service } = setup();
       await expect(service.saveActivities(user, [])).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.saveInterests).not.toHaveBeenCalled();
+    });
+
+    it('refuses a level that a person cannot name', async () => {
+      const { repository, service } = setup(anOnboarding(), true, false);
+      await expect(service.saveActivities(user, items)).rejects.toBeInstanceOf(
         BadRequestException,
       );
       expect(repository.saveInterests).not.toHaveBeenCalled();

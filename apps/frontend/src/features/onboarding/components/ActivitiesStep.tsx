@@ -15,6 +15,7 @@ import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageCh
 
 import type {
   ActivityOption,
+  LevelOption,
   Onboarding,
   SaveActivitiesInput,
 } from "@/features/onboarding/api/onboardingSchemas"
@@ -24,13 +25,12 @@ import {
   SaveError,
   StepActions,
 } from "@/features/onboarding/components/OnboardingStepLayout"
-import { SKILL_LEVELS } from "@/features/onboarding/lib/onboardingLimits"
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
   z.object({
     selection: z
-      .array(z.object({ activityId: z.string(), level: z.enum(SKILL_LEVELS).nullable() }))
+      .array(z.object({ activityId: z.string(), levelId: z.string().nullable() }))
       .min(1, t("onboarding.activities.validation.none")),
   })
 
@@ -40,6 +40,7 @@ type ActivitiesStepProps = {
   activities: ActivityOption[]
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: ActivityOption) => string
+  levels: LevelOption[]
   isLoadingActivities: boolean
   activitiesError: Error | null
   onReloadActivities: () => void
@@ -58,6 +59,7 @@ type ActivitiesStepProps = {
 export function ActivitiesStep({
   activities,
   activityLabel,
+  levels,
   isLoadingActivities,
   activitiesError,
   onReloadActivities,
@@ -79,7 +81,7 @@ export function ActivitiesStep({
     defaultValues: {
       selection: initial.map((interest) => ({
         activityId: interest.activity.id,
-        level: interest.level,
+        levelId: interest.level?.id ?? null,
       })),
     },
   })
@@ -92,7 +94,7 @@ export function ActivitiesStep({
     onSubmit({
       items: selection.map((item) => ({
         activityId: item.activityId,
-        level: item.level,
+        levelId: item.levelId,
       })),
     })
 
@@ -148,6 +150,7 @@ export function ActivitiesStep({
                 <ActivityPicker
                   activities={activities}
                   activityLabel={activityLabel}
+                  levels={levels}
                   value={field.value}
                   onChange={field.onChange}
                 />

@@ -71,7 +71,7 @@ export class OnboardingController {
         user,
         body.items.map((item) => ({
           activityId: item.activityId,
-          level: item.level ?? null,
+          levelId: item.levelId ?? null,
         })),
       ),
     );

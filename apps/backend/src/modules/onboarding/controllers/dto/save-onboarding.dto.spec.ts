@@ -19,7 +19,7 @@ const validate = <T>(
 describe('SaveActivitiesDto', () => {
   it.each([
     ['no level', { activityId: 'a1' }],
-    ['a null level', { activityId: 'a1', level: null }],
+    ['a null level', { activityId: 'a1', levelId: null }],
   ])('accepts %s, the level is optional', async (_name, item) => {
     await expect(
       validate(SaveActivitiesDto, { items: [item] }),
@@ -29,14 +29,18 @@ describe('SaveActivitiesDto', () => {
   it('accepts activities with a level', async () => {
     await expect(
       validate(SaveActivitiesDto, {
-        items: [{ activityId: 'a1', level: 'ADVANCED' }],
+        items: [{ activityId: 'a1', levelId: 'l3' }],
       }),
     ).resolves.toBeDefined();
   });
 
   it.each([
-    ['an unknown level', { items: [{ activityId: 'a1', level: 'GOD' }] }],
-    ['an empty activity id', { items: [{ activityId: '', level: 'EXPERT' }] }],
+    ['an empty level id', { items: [{ activityId: 'a1', levelId: '' }] }],
+    [
+      'a level that is not a text',
+      { items: [{ activityId: 'a1', levelId: 3 }] },
+    ],
+    ['an empty activity id', { items: [{ activityId: '', levelId: 'l1' }] }],
     ['no list', {}],
   ])('refuses %s', async (_name, body) => {
     await expect(validate(SaveActivitiesDto, body)).rejects.toBeInstanceOf(

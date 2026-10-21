@@ -1,4 +1,5 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
+import { LevelsService } from '@/modules/level/services/levels.service';
 import {
   InterestInput,
   interestViolations,
@@ -20,6 +21,7 @@ export class OnboardingService {
   constructor(
     private readonly onboardingRepository: OnboardingRepository,
     private readonly activitiesService: ActivitiesService,
+    private readonly levelsService: LevelsService,
   ) {}
 
   async getOnboarding(user: Identity): Promise<Onboarding> {
@@ -53,6 +55,12 @@ export class OnboardingService {
       throw new BadRequestException(
         'Activity does not exist or is no longer offered',
       );
+    }
+    const levelIds = items.flatMap((item) =>
+      item.levelId === null ? [] : [item.levelId],
+    );
+    if (!(await this.levelsService.areAllSkillLevels(levelIds))) {
+      throw new BadRequestException('Level does not exist or is not offered');
     }
     await this.assertReachable(user, 'ACTIVITIES');
     await this.onboardingRepository.saveInterests(

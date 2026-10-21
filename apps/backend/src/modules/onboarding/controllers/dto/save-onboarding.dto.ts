@@ -3,8 +3,6 @@ import {
   ONBOARDING_BIO_MAX_LENGTH,
   ONBOARDING_CITY_MAX_LENGTH,
   ONBOARDING_STREET_MAX_LENGTH,
-  SKILL_LEVELS,
-  SkillLevel,
   TRAVEL_RADIUS_DEFAULT_KM,
   TRAVEL_RADIUS_MAX_KM,
   TRAVEL_RADIUS_MIN_KM,
@@ -14,7 +12,6 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
-  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -41,13 +38,14 @@ export class InterestDto {
   activityId!: string;
 
   @ApiPropertyOptional({
-    enum: SKILL_LEVELS,
     nullable: true,
-    description: 'How well the user plays it; optional',
+    description:
+      'Id from GET /api/levels; how well the user plays it, optional',
   })
   @IsOptional()
-  @IsIn(SKILL_LEVELS)
-  level?: SkillLevel | null;
+  @IsString()
+  @IsNotEmpty()
+  levelId?: string | null;
 }
 
 export class SaveActivitiesDto {

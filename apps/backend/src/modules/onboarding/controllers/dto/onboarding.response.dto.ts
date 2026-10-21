@@ -1,17 +1,14 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
-import {
-  Interest,
-  Onboarding,
-  SKILL_LEVELS,
-} from '@/modules/onboarding/domain/onboarding';
+import { LevelResponseDto } from '@/modules/level/controllers/dto/level.response.dto';
+import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class InterestResponseDto {
   @ApiProperty({ type: ActivityResponseDto })
   activity!: ActivityResponseDto;
 
-  @ApiProperty({ enum: SKILL_LEVELS, nullable: true })
-  level!: Interest['level'];
+  @ApiProperty({ type: LevelResponseDto, nullable: true })
+  level!: LevelResponseDto | null;
 }
 
 export class OnboardingResponseDto {
@@ -54,7 +51,9 @@ export class OnboardingResponseDto {
       completedAt: onboarding.completedAt,
       interests: onboarding.interests.map((interest) => ({
         activity: ActivityResponseDto.fromDomain(interest.activity),
-        level: interest.level,
+        level: interest.level
+          ? LevelResponseDto.fromDomain(interest.level)
+          : null,
       })),
       city: onboarding.city,
       street: onboarding.street,

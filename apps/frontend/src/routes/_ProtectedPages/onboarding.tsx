@@ -10,6 +10,7 @@ import { Seo } from "@/components/Seo"
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { redirectTarget } from "@/features/auth/lib/redirect"
+import { levelsQueryOptions } from "@/features/level/api/levelsQueryOptions"
 import { onboardingQueryOptions } from "@/features/onboarding/api/onboardingQueryOptions"
 import { OnboardingWizard } from "@/features/onboarding/components/OnboardingWizard"
 
@@ -38,6 +39,8 @@ function OnboardingPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const activities = useQuery(activitiesQueryOptions())
+  // A level is optional: if the list cannot be loaded the wizard still works.
+  const levels = useQuery(levelsQueryOptions())
   // Where to go afterwards: the page the visitor came from, if it is one of ours.
   // Never the onboarding itself: a sign-in that was sent here carries it as `from`.
   const requested = redirectTarget(from, ROUTES.events)
@@ -58,6 +61,7 @@ function OnboardingPage() {
           activitiesError={activities.error}
           onReloadActivities={() => void activities.refetch()}
           activityLabel={activityLabel}
+          levels={levels.data ?? []}
           isReturningToEvent={target !== ROUTES.events}
           onLeave={() => navigate({ to: target })}
         />

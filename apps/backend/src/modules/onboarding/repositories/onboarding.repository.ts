@@ -2,6 +2,7 @@ import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   Prisma,
   Activity as PrismaActivity,
+  Level as PrismaLevel,
   User as PrismaUser,
   UserActivity as PrismaUserActivity,
 } from '@/generated/prisma/client';
@@ -16,18 +17,23 @@ const include = {
   interests: {
     // A retired activity is no longer offered, so it is not shown or sent back.
     where: { activity: { isActive: true } },
-    include: { activity: true },
+    include: { activity: true, level: true },
     orderBy: { activity: { name: 'asc' } },
   },
 } as const;
 
 type UserRow = PrismaUser & {
-  interests: (PrismaUserActivity & { activity: PrismaActivity })[];
+  interests: (PrismaUserActivity & {
+    activity: PrismaActivity;
+    level: PrismaLevel | null;
+  })[];
 };
 
 const mapUserToOnboarding = (user: UserRow): Onboarding => {
   const interests = user.interests.map((interest) => ({
-    level: interest.level,
+    level: interest.level
+      ? { id: interest.level.id, name: interest.level.name }
+      : null,
     activity: {
       id: interest.activity.id,
       name: interest.activity.name,

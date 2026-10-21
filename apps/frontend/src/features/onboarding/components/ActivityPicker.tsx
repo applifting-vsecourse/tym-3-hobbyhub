@@ -13,13 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import type { ActivityOption } from "@/features/onboarding/api/onboardingSchemas"
-import { SKILL_LEVELS, type SkillLevel } from "@/features/onboarding/lib/onboardingLimits"
+import type { ActivityOption, LevelOption } from "@/features/onboarding/api/onboardingSchemas"
 
 // A Radix item needs a non-empty value; this one takes the level back.
 const NO_LEVEL = "NONE"
 
-export type PickedActivity = { activityId: string; level: SkillLevel | null }
+export type PickedActivity = { activityId: string; levelId: string | null }
 
 function ActivityName({ activity, label }: { activity: ActivityOption; label: string }) {
   return (
@@ -39,6 +38,8 @@ type ActivityPickerProps = {
   activities: ActivityOption[]
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: ActivityOption) => string
+  /** The levels a person can name, from the catalogue, easiest first. */
+  levels: LevelOption[]
   value: PickedActivity[]
   onChange: (value: PickedActivity[]) => void
 }
@@ -51,6 +52,7 @@ type ActivityPickerProps = {
 export function ActivityPicker({
   activities,
   activityLabel,
+  levels,
   value,
   onChange,
 }: ActivityPickerProps) {
@@ -72,17 +74,17 @@ export function ActivityPicker({
   // the activity was added.
   const [announcement, setAnnouncement] = useState("")
   const add = (id: string) => {
-    onChange([...value, { activityId: id, level: null }])
+    onChange([...value, { activityId: id, levelId: null }])
     const added = activities.find((activity) => activity.id === id)
     if (added) setAnnouncement(t("onboarding.activities.added", { activity: activityLabel(added) }))
   }
   const remove = (id: string) => onChange(value.filter((item) => item.activityId !== id))
-  const setLevel = (id: string, level: SkillLevel | null) =>
-    onChange(value.map((item) => (item.activityId === id ? { ...item, level } : item)))
+  const setLevel = (id: string, levelId: string | null) =>
+    onChange(value.map((item) => (item.activityId === id ? { ...item, levelId } : item)))
 
   const picked = value.flatMap((item) => {
     const activity = activities.find((candidate) => candidate.id === item.activityId)
-    return activity ? [{ activity, level: item.level }] : []
+    return activity ? [{ activity, levelId: item.levelId }] : []
   })
 
   return (
@@ -127,7 +129,7 @@ export function ActivityPicker({
             {t("onboarding.activities.pickedTitle")}
           </h2>
           <ul className="flex flex-col divide-y divide-border">
-            {picked.map(({ activity, level }) => {
+            {picked.map(({ activity, levelId }) => {
               const name = activityLabel(activity)
               return (
                 <li
@@ -145,10 +147,8 @@ export function ActivityPicker({
                   </p>
                   <Select
                     // "" shows the placeholder: no level is not a value to read.
-                    value={level ?? ""}
-                    onValueChange={(next) =>
-                      setLevel(activity.id, next === NO_LEVEL ? null : (next as SkillLevel))
-                    }
+                    value={levelId ?? ""}
+                    onValueChange={(next) => setLevel(activity.id, next === NO_LEVEL ? null : next)}
                   >
                     <SelectTrigger
                       aria-labelledby={`level-${activity.id}`}
@@ -157,15 +157,15 @@ export function ActivityPicker({
                       <SelectValue placeholder={t("onboarding.activities.levelPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {SKILL_LEVELS.map((option) => (
+                      {levels.map((level) => (
                         <SelectItem
-                          key={option}
-                          value={option}
+                          key={level.id}
+                          value={level.id}
                         >
-                          {t(`onboarding.levels.${option}`)}
+                          {level.name}
                         </SelectItem>
                       ))}
-                      {level ? (
+                      {levelId ? (
                         <SelectItem value={NO_LEVEL}>{t("onboarding.levels.NONE")}</SelectItem>
                       ) : null}
                     </SelectContent>

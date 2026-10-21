@@ -22,7 +22,9 @@ const aUserRow = (
   declaredStreet: null,
   travelRadiusKm: 25,
   bio: null,
-  interests: [{ activityId: 'a1', userId: 'u1', level: null, activity }],
+  interests: [
+    { activityId: 'a1', userId: 'u1', levelId: null, level: null, activity },
+  ],
   ...overrides,
 });
 

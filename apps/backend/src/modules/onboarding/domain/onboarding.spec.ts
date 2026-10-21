@@ -4,8 +4,8 @@ describe('interestViolations', () => {
   it('accepts one or more different activities', () => {
     expect(
       interestViolations([
-        { activityId: 'a', level: 'BEGINNER' },
-        { activityId: 'b', level: 'EXPERT' },
+        { activityId: 'a', levelId: 'l1' },
+        { activityId: 'b', levelId: 'l2' },
       ]),
     ).toEqual([]);
   });
@@ -17,8 +17,8 @@ describe('interestViolations', () => {
   it('refuses the same activity twice', () => {
     expect(
       interestViolations([
-        { activityId: 'a', level: 'BEGINNER' },
-        { activityId: 'a', level: 'EXPERT' },
+        { activityId: 'a', levelId: 'l1' },
+        { activityId: 'a', levelId: 'l2' },
       ]),
     ).toEqual(['DUPLICATE_ACTIVITY']);
   });

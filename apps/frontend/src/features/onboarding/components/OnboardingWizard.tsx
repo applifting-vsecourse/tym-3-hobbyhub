@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { onboardingQueryOptions } from "@/features/onboarding/api/onboardingQueryOptions"
-import type { ActivityOption } from "@/features/onboarding/api/onboardingSchemas"
+import type { ActivityOption, LevelOption } from "@/features/onboarding/api/onboardingSchemas"
 import { ActivitiesStep } from "@/features/onboarding/components/ActivitiesStep"
 import { LocationStep } from "@/features/onboarding/components/LocationStep"
 import { ProfileStep } from "@/features/onboarding/components/ProfileStep"
@@ -29,6 +29,8 @@ type OnboardingWizardProps = {
   onReloadActivities: () => void
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: ActivityOption) => string
+  /** The levels a person can name for an activity, from the catalogue. */
+  levels: LevelOption[]
   /** The wizard was opened from a page to return to, e.g. an event. */
   isReturningToEvent: boolean
   /** Leaves the wizard, finished or skipped: to the page `from` or the list. */
@@ -46,6 +48,7 @@ export function OnboardingWizard({
   activitiesError,
   onReloadActivities,
   activityLabel,
+  levels,
   isReturningToEvent,
   onLeave,
 }: OnboardingWizardProps) {
@@ -153,6 +156,7 @@ export function OnboardingWizard({
         {...stepProps}
         activities={activities}
         activityLabel={activityLabel}
+        levels={levels}
         isLoadingActivities={isLoadingActivities}
         activitiesError={activitiesError}
         onReloadActivities={onReloadActivities}

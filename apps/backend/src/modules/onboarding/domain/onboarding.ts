@@ -1,4 +1,5 @@
 import { Activity } from '@/modules/activity/domain/activity';
+import { Level } from '@/modules/level/domain/level';
 
 export const ONBOARDING_BIO_MAX_LENGTH = 300;
 export const ONBOARDING_CITY_MAX_LENGTH = 100;
@@ -7,9 +8,6 @@ export const ONBOARDING_STREET_MAX_LENGTH = 200;
 export const TRAVEL_RADIUS_MIN_KM = 5;
 export const TRAVEL_RADIUS_MAX_KM = 100;
 export const TRAVEL_RADIUS_DEFAULT_KM = 25;
-
-export const SKILL_LEVELS = ['BEGINNER', 'ADVANCED', 'EXPERT'] as const;
-export type SkillLevel = (typeof SKILL_LEVELS)[number];
 
 // The steps the user can save or skip, in order. The summary that follows is
 // not a step: it saves nothing.
@@ -20,12 +18,12 @@ export const ONBOARDING_STEP_COUNT = ONBOARDING_STEPS.length;
 
 export type Interest = {
   activity: Activity;
-  level: SkillLevel | null;
+  level: Level | null;
 };
 
 export type InterestInput = {
   activityId: string;
-  level: SkillLevel | null;
+  levelId: string | null;
 };
 
 export type Onboarding = {
