@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next"
 
+import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { missingCount } from "@/components/hobbyhub/capacity"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { cn } from "@/lib/utils"
@@ -11,8 +13,14 @@ type EventCardProps = {
   /** Place and level, e.g. "ZŠ Kobylisy · pokročilí". */
   meta: string
   taken: number
-  capacity: number
-  photo: { src: string; alt: string }
+  /** People needed for the event to happen; "chybí N" counts towards this. */
+  min: number
+  /** Seats on the roster. */
+  max: number
+  /** Without a photo the card shows the activity's icon on a muted band. */
+  photo?: { src: string; alt: string }
+  /** Icon key of the activity (`ACTIVITIES`); unknown keys leave the band empty. */
+  activity?: string
   /** Seats pop in one by one on first render. */
   isAnimated?: boolean
   className?: string
@@ -28,13 +36,16 @@ export function EventCard({
   when,
   meta,
   taken,
-  capacity,
+  min,
+  max,
   photo,
+  activity,
   isAnimated = false,
   className,
 }: EventCardProps) {
   const { t } = useTranslation()
-  const missing = Math.max(capacity - taken, 0)
+  // The same count as the event list and the detail: missing to the minimum.
+  const missing = missingCount({ taken, min })
 
   return (
     <article
@@ -43,11 +54,25 @@ export function EventCard({
         className,
       )}
     >
-      <img
-        src={photo.src}
-        alt={photo.alt}
-        className="h-24 w-full object-cover"
-      />
+      {photo ? (
+        <img
+          src={photo.src}
+          alt={photo.alt}
+          className="h-24 w-full object-cover"
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="flex h-24 w-full items-center justify-center bg-muted text-muted-foreground"
+        >
+          {activity && isActivityKey(activity) ? (
+            <ActivityIcon
+              activity={activity}
+              className="size-8"
+            />
+          ) : null}
+        </div>
+      )}
       <div className="flex flex-col gap-1 px-3.5 py-3">
         <div className="flex items-center justify-between gap-3">
           <h3 className="min-w-0 truncate typo-title text-foreground">{title}</h3>
@@ -61,7 +86,8 @@ export function EventCard({
         <RosterSeats
           size="sm"
           taken={taken}
-          capacity={capacity}
+          min={min}
+          capacity={max}
           isAnimated={isAnimated}
         />
         {missing > 0 ? (

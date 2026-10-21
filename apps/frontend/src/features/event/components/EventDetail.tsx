@@ -176,6 +176,7 @@ export function EventDetail({
           size="lg"
           surface="dark"
           taken={event.takenCount}
+          min={event.minParticipants}
           capacity={event.maxParticipants}
         />
         <p className="typo-small text-signal-soft">
