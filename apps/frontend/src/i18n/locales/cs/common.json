@@ -429,6 +429,19 @@
       "label": "Fotka nebo ilustrace (nepovinné)",
       "upload": "Nahrát fotku"
     },
+    "profilePicture": {
+      "change": "Změnit obrázek",
+      "choose": "Vybrat obrázek",
+      "chosenPhoto": "Vaše nahraná fotka",
+      "errorSize": "Fotka může mít nejvýše 5 MB.",
+      "errorType": "Fotka musí být JPG nebo PNG.",
+      "label": "Profilový obrázek",
+      "none": "Zatím žádný obrázek",
+      "remove": "Odebrat obrázek",
+      "sheetDescription": "Vyberte si ilustraci, nebo nahrajte vlastní fotku (JPG nebo PNG, nejvýš 5 MB).",
+      "sheetTitle": "Vyberte si obrázek",
+      "upload": "Nahrát vlastní fotku"
+    },
     "roster": {
       "free": "Volné místo",
       "missingToMinimum": "Chybí do minima"
@@ -496,6 +509,73 @@
   "myEvents": {
     "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
     "title": "Moje akce"
+  },
+  "onboarding": {
+    "activities": {
+      "addLabel": "Přidat aktivitu",
+      "addPlaceholder": "Vyberte aktivitu",
+      "added": "Přidáno: {{activity}}",
+      "allPicked": "Už jste přidali všechny aktivity.",
+      "description": "Podle toho vám ukážeme akce, které vám sednou.",
+      "empty": "Zatím nejsou k dispozici žádné aktivity.",
+      "levelPlaceholder": "Přidat úroveň",
+      "loadError": "Aktivity se nepodařilo načíst.",
+      "loading": "Načítáme aktivity",
+      "pickedTitle": "Vaše aktivity",
+      "remove": "Odebrat {{activity}}",
+      "title": "Co rádi hrajete?",
+      "validation": {
+        "none": "Vyberte aspoň jednu aktivitu."
+      }
+    },
+    "back": "Zpět",
+    "finish": "Dokončit",
+    "finishReturn": "Dokončit a vrátit se k akci",
+    "levels": {
+      "ADVANCED": "Pokročilý",
+      "BEGINNER": "Začátečník",
+      "EXPERT": "Expert",
+      "NONE": "Bez úrovně"
+    },
+    "loadError": "Průvodce se nepodařilo načíst.",
+    "loading": "Načítáme váš profil",
+    "location": {
+      "city": "Město",
+      "cityPlaceholder": "Např. Praha 8",
+      "description": "Ukážeme vám akce poblíž. Poloha je neveřejná.",
+      "radius": "Jak daleko pojedete?",
+      "radiusValue": "{{km}} km",
+      "street": "Ulice a číslo (nepovinné)",
+      "streetPlaceholder": "Např. Sokolovská 12",
+      "title": "Kde hrajete?",
+      "validation": {
+        "cityRequired": "Zadejte město.",
+        "cityTooLong": "Město může mít nejvýše {{max}} znaků.",
+        "streetTooLong": "Ulice může mít nejvýše {{max}} znaků."
+      }
+    },
+    "next": "Pokračovat",
+    "profile": {
+      "bio": "Krátké bio (nepovinné)",
+      "bioCount": "{{length}} / {{max}} znaků",
+      "bioPlaceholder": "Např. hraju rok, rád zkusím nové aktivity…",
+      "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
+      "description": "Ať ostatní vědí, s kým budou hrát.",
+      "pictureHint": "Zatím se neukládá, doplníme to.",
+      "pictureLabel": "Profilový obrázek (nepovinné)",
+      "title": "Ukažte se ostatním"
+    },
+    "progress": "Krok {{current}} ze {{total}}",
+    "progressLabel": "Průběh nastavení profilu",
+    "prompt": {
+      "action": "Dokončit nastavení profilu",
+      "description": "Část nastavení jste přeskočili. Doplňte aktivity, lokalitu a bio a ukážeme vám akce, které vám sednou.",
+      "title": "Dokončete nastavení profilu"
+    },
+    "reload": "Zkusit znovu",
+    "saveError": "Uložení se nepodařilo. Zkuste to znovu.",
+    "seoTitle": "Nastavení profilu",
+    "skipAll": "Přeskočit vše"
   },
   "profile": {
     "placeholder": "Stránku profilu připravujeme.",

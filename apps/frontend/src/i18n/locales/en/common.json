@@ -420,6 +420,19 @@
       "label": "Photo or illustration (optional)",
       "upload": "Upload photo"
     },
+    "profilePicture": {
+      "change": "Change picture",
+      "choose": "Choose a picture",
+      "chosenPhoto": "Your uploaded photo",
+      "errorSize": "The photo can be at most 5 MB.",
+      "errorType": "The photo must be a JPG or PNG.",
+      "label": "Profile picture",
+      "none": "No picture yet",
+      "remove": "Remove picture",
+      "sheetDescription": "Pick an illustration or upload your own photo (JPG or PNG, up to 5 MB).",
+      "sheetTitle": "Choose a picture",
+      "upload": "Upload your own photo"
+    },
     "roster": {
       "free": "Free seat",
       "missingToMinimum": "Needed to reach the minimum"
@@ -487,6 +500,73 @@
   "myEvents": {
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
+  },
+  "onboarding": {
+    "activities": {
+      "addLabel": "Add an activity",
+      "addPlaceholder": "Choose an activity",
+      "added": "Added: {{activity}}",
+      "allPicked": "You have added every activity.",
+      "description": "We will use it to show events that suit you.",
+      "empty": "No activities are available yet.",
+      "levelPlaceholder": "Add level",
+      "loadError": "The activities could not be loaded.",
+      "loading": "Loading activities",
+      "pickedTitle": "Your activities",
+      "remove": "Remove {{activity}}",
+      "title": "What do you like to play?",
+      "validation": {
+        "none": "Pick at least one activity."
+      }
+    },
+    "back": "Back",
+    "finish": "Finish",
+    "finishReturn": "Finish and return to the event",
+    "levels": {
+      "ADVANCED": "Advanced",
+      "BEGINNER": "Beginner",
+      "EXPERT": "Expert",
+      "NONE": "No level"
+    },
+    "loadError": "The setup could not be loaded.",
+    "loading": "Loading your profile",
+    "location": {
+      "city": "City",
+      "cityPlaceholder": "E.g. Praha 8",
+      "description": "We will show you events nearby. Your location is private.",
+      "radius": "How far will you travel?",
+      "radiusValue": "{{km}} km",
+      "street": "Street and number (optional)",
+      "streetPlaceholder": "E.g. Sokolovská 12",
+      "title": "Where do you play?",
+      "validation": {
+        "cityRequired": "Enter a city.",
+        "cityTooLong": "The city can have at most {{max}} characters.",
+        "streetTooLong": "The street can have at most {{max}} characters."
+      }
+    },
+    "next": "Continue",
+    "profile": {
+      "bio": "Short bio (optional)",
+      "bioCount": "{{length}} / {{max}} characters",
+      "bioPlaceholder": "E.g. I have played for a year and like to try new activities…",
+      "bioTooLong": "The bio can have at most {{max}} characters.",
+      "description": "So others know who they will be playing with.",
+      "pictureHint": "Not saved yet, we will add that.",
+      "pictureLabel": "Profile picture (optional)",
+      "title": "Show yourself to others"
+    },
+    "progress": "Step {{current}} of {{total}}",
+    "progressLabel": "Profile setup progress",
+    "prompt": {
+      "action": "Finish profile setup",
+      "description": "You skipped part of the setup. Add activities, location and bio and we will show you events that suit you.",
+      "title": "Finish setting up your profile"
+    },
+    "reload": "Try again",
+    "saveError": "Saving failed. Please try again.",
+    "seoTitle": "Profile setup",
+    "skipAll": "Skip all"
   },
   "profile": {
     "placeholder": "The profile page is on its way.",

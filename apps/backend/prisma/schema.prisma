@@ -160,9 +160,32 @@ model Activity {
   isActive               Boolean          @default(true)
   events                 Event[]
   groups                 Group[]
+  interests              UserActivity[]
 
   @@index([categoryId])
   @@map("activity")
+}
+
+enum SkillLevel {
+  BEGINNER
+  ADVANCED
+  EXPERT
+
+  @@map("skill_level")
+}
+
+// An activity the user likes to play and how well (F-04.1, F-04.8).
+model UserActivity {
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  activity   Activity   @relation(fields: [activityId], references: [id])
+  activityId String
+  // Optional: nobody has to rate themselves to say what they play.
+  level      SkillLevel?
+
+  @@id([userId, activityId])
+  @@index([activityId])
+  @@map("user_activity")
 }
 
 model Level {
@@ -435,6 +458,18 @@ model User {
   status                UserStatus         @default(ACTIVE)
   travelRadiusKm        Int?
   onboardingCompletedAt DateTime?
+  // F-04.8: how many wizard steps (activities, location, profile) are done or
+  // skipped, so an interrupted wizard resumes at the first open one.
+  onboardingStepsDone   Int                @default(0)
+  // True when the wizard ended while the profile was not set up (no activities
+  // or no location); drives the prompt to finish setting it up.
+  onboardingSkipped     Boolean            @default(false)
+  // F-04.8: the city and street as typed in the onboarding. Not a Location (it
+  // has no postal code, country or coordinates, which user_home_location_all_or_nothing
+  // demands), so it lives apart until the address lookup (F-12.3 #79, F-02.2b
+  // #92) can turn it into the home* address.
+  declaredCity          String?            @db.VarChar(100)
+  declaredStreet        String?            @db.VarChar(200)
   termsAcceptedAt       DateTime?
   termsVersion          String?            @db.VarChar(20)
   disabledNotifications NotificationType[] @default([])
@@ -459,6 +494,8 @@ model User {
   temporaryLatitude           Decimal?  @db.Decimal(9, 6)
   temporaryLongitude          Decimal?  @db.Decimal(9, 6)
   temporaryLocationValidUntil DateTime?
+
+  interests UserActivity[]
 
   blockedUsers User[] @relation("UserBlocks")
   blockedBy    User[] @relation("UserBlocks")
