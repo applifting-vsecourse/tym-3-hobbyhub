@@ -14,6 +14,7 @@ import {
   IsArray,
   IsInt,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   Max,
@@ -52,6 +53,9 @@ export class SaveActivitiesDto {
   @ApiProperty({ type: [InterestDto], description: 'At least one activity' })
   @IsArray()
   @ArrayMaxSize(MAX_ACTIVITIES)
+  // Without this a nested array or a string is not an item to validate, and
+  // ValidateNested lets it through.
+  @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => InterestDto)
   items!: InterestDto[];

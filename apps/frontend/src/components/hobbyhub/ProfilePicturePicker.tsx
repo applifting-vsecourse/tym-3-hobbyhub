@@ -114,98 +114,99 @@ export function ProfilePicturePicker({
           </span>
         )}
         <div className="flex flex-col items-start gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            className="max-md:h-11"
-            onClick={() => setIsOpen(true)}
+          <ResponsiveSheet
+            isOpen={isOpen}
+            onOpenChange={setIsOpen}
+            // The sheet's own trigger, so focus returns to it when the sheet closes.
+            trigger={
+              <Button
+                type="button"
+                variant="outline"
+                className="max-md:h-11"
+              >
+                {value ? t("hobbyhub.profilePicture.change") : t("hobbyhub.profilePicture.choose")}
+              </Button>
+            }
+            title={t("hobbyhub.profilePicture.sheetTitle")}
+            description={t("hobbyhub.profilePicture.sheetDescription")}
+            footer={
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="max-md:h-11"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="size-4" />
+                  {t("hobbyhub.profilePicture.upload")}
+                </Button>
+                {value ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="max-md:h-11"
+                    onClick={() => choose(null)}
+                  >
+                    {t("hobbyhub.profilePicture.remove")}
+                  </Button>
+                ) : null}
+              </div>
+            }
           >
-            {value ? t("hobbyhub.profilePicture.change") : t("hobbyhub.profilePicture.choose")}
-          </Button>
+            <div className="flex flex-col gap-3 pb-2">
+              <ul className="grid grid-cols-3 gap-3 md:grid-cols-4">
+                {AVATAR_KINDS.map((avatar) => {
+                  const isSelected = value?.kind === "avatar" && value.avatar === avatar
+                  return (
+                    <li key={avatar}>
+                      <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => choose({ kind: "avatar", avatar })}
+                        className={cn(
+                          "flex w-full flex-col items-center gap-1 rounded-lg border p-2 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                          isSelected
+                            ? "border-ring bg-accent text-accent-foreground"
+                            : "border-input bg-card text-foreground hover:bg-accent",
+                        )}
+                      >
+                        <ActivityAvatar
+                          avatar={avatar}
+                          size="2xl"
+                        />
+                        <span className="typo-caption">{t(`hobbyhub.avatars.${avatar}`)}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={PROFILE_PHOTO_TYPES.join(",")}
+                className="sr-only"
+                tabIndex={-1}
+                aria-label={t("hobbyhub.profilePicture.upload")}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file) chooseFile(file)
+                  // The same file can be chosen again after a refusal.
+                  event.target.value = ""
+                }}
+              />
+              {problem ? (
+                <p
+                  role="alert"
+                  className="typo-small text-destructive"
+                >
+                  {t(PROBLEM_KEYS[problem])}
+                </p>
+              ) : null}
+            </div>
+          </ResponsiveSheet>
           {hint ? <p className="typo-small text-muted-foreground">{hint}</p> : null}
         </div>
       </div>
-
-      <ResponsiveSheet
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        title={t("hobbyhub.profilePicture.sheetTitle")}
-        description={t("hobbyhub.profilePicture.sheetDescription")}
-        footer={
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="max-md:h-11"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="size-4" />
-              {t("hobbyhub.profilePicture.upload")}
-            </Button>
-            {value ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="max-md:h-11"
-                onClick={() => choose(null)}
-              >
-                {t("hobbyhub.profilePicture.remove")}
-              </Button>
-            ) : null}
-          </div>
-        }
-      >
-        <div className="flex flex-col gap-3 pb-2">
-          <ul className="grid grid-cols-3 gap-3 md:grid-cols-4">
-            {AVATAR_KINDS.map((avatar) => {
-              const isSelected = value?.kind === "avatar" && value.avatar === avatar
-              return (
-                <li key={avatar}>
-                  <button
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => choose({ kind: "avatar", avatar })}
-                    className={cn(
-                      "flex w-full flex-col items-center gap-1 rounded-lg border p-2 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                      isSelected
-                        ? "border-ring bg-accent text-accent-foreground"
-                        : "border-input bg-card text-foreground hover:bg-accent",
-                    )}
-                  >
-                    <ActivityAvatar
-                      avatar={avatar}
-                      size="2xl"
-                    />
-                    <span className="typo-caption">{t(`hobbyhub.avatars.${avatar}`)}</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={PROFILE_PHOTO_TYPES.join(",")}
-            className="sr-only"
-            tabIndex={-1}
-            aria-label={t("hobbyhub.profilePicture.upload")}
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (file) chooseFile(file)
-              // The same file can be chosen again after a refusal.
-              event.target.value = ""
-            }}
-          />
-          {problem ? (
-            <p
-              role="alert"
-              className="typo-small text-destructive"
-            >
-              {t(PROBLEM_KEYS[problem])}
-            </p>
-          ) : null}
-        </div>
-      </ResponsiveSheet>
     </div>
   )
 }

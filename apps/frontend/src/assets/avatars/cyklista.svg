@@ -1,16 +1,81 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Frame" clip-path="url(#clip0_0_6)">
-<path id="Vector" d="M40 0H0V40H40V0Z" fill="#EDE7FB"/>
-<path id="Vector_2" d="M2.5 41.25C2.5 33.125 8.125 29.375 14.375 28.75L20 31.25L25.625 28.75C31.875 29.375 37.5 33.125 37.5 41.25H2.5Z" fill="#1F1A29" stroke="#1F1A29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_3" d="M15 29.375L20 34.375L25 29.375" stroke="#1F1A29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_4" d="M16.875 23.75V29.375L20 31.875L23.125 29.375V23.75H16.875Z" fill="white" stroke="#1F1A29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_5" d="M20 25C23.797 25 26.875 21.922 26.875 18.125C26.875 14.328 23.797 11.25 20 11.25C16.203 11.25 13.125 14.328 13.125 18.125C13.125 21.922 16.203 25 20 25Z" fill="white" stroke="#1F1A29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_6" d="M12.5 18.125C12.5 11.875 15.625 8.75 20 8.75C24.375 8.75 27.5 11.875 27.5 18.125H12.5Z" fill="#6D28D9" stroke="#1F1A29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_7" d="M17.5 9.6875C16.5625 12.1875 16.5625 14.6875 17.5 17.5M22.5 9.6875C23.4375 12.1875 23.4375 14.6875 22.5 17.5" stroke="#1F1A29" stroke-width="1.6" stroke-linecap="round"/>
-</g>
-<defs>
-<clipPath id="clip0_0_6">
-<rect width="40" height="40" fill="white"/>
-</clipPath>
-</defs>
+<svg
+  preserveAspectRatio="none"
+  overflow="visible"
+  style="display: block"
+  width="40"
+  height="40"
+  viewBox="0 0 40 40"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g
+    id="Frame"
+    clip-path="url(#clip0_0_6)"
+  >
+    <path
+      id="Vector"
+      d="M40 0H0V40H40V0Z"
+      fill="#EDE7FB"
+    />
+    <path
+      id="Vector_2"
+      d="M2.5 41.25C2.5 33.125 8.125 29.375 14.375 28.75L20 31.25L25.625 28.75C31.875 29.375 37.5 33.125 37.5 41.25H2.5Z"
+      fill="#1F1A29"
+      stroke="#1F1A29"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_3"
+      d="M15 29.375L20 34.375L25 29.375"
+      stroke="#1F1A29"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_4"
+      d="M16.875 23.75V29.375L20 31.875L23.125 29.375V23.75H16.875Z"
+      fill="white"
+      stroke="#1F1A29"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_5"
+      d="M20 25C23.797 25 26.875 21.922 26.875 18.125C26.875 14.328 23.797 11.25 20 11.25C16.203 11.25 13.125 14.328 13.125 18.125C13.125 21.922 16.203 25 20 25Z"
+      fill="white"
+      stroke="#1F1A29"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_6"
+      d="M12.5 18.125C12.5 11.875 15.625 8.75 20 8.75C24.375 8.75 27.5 11.875 27.5 18.125H12.5Z"
+      fill="#6D28D9"
+      stroke="#1F1A29"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_7"
+      d="M17.5 9.6875C16.5625 12.1875 16.5625 14.6875 17.5 17.5M22.5 9.6875C23.4375 12.1875 23.4375 14.6875 22.5 17.5"
+      stroke="#1F1A29"
+      stroke-width="1.6"
+      stroke-linecap="round"
+    />
+  </g>
+  <defs>
+    <clipPath id="clip0_0_6">
+      <rect
+        width="40"
+        height="40"
+        fill="white"
+      />
+    </clipPath>
+  </defs>
 </svg>

@@ -42,6 +42,8 @@ describe('SaveActivitiesDto', () => {
     ],
     ['an empty activity id', { items: [{ activityId: '', levelId: 'l1' }] }],
     ['no list', {}],
+    ['a nested array instead of an item', { items: [[]] }],
+    ['a plain string instead of an item', { items: ['a1'] }],
   ])('refuses %s', async (_name, body) => {
     await expect(validate(SaveActivitiesDto, body)).rejects.toBeInstanceOf(
       BadRequestException,

@@ -1,5 +1,18 @@
-<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="R&#195;&#161;m">
-<path id="Vector" d="M45 40L37.5 21.5H24L15 40M24 21.5L31.5 40M20 16H27.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
+<svg
+  width="60"
+  height="60"
+  viewBox="0 0 60 60"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g id="R&#195;&#161;m">
+    <path
+      id="Vector"
+      d="M45 40L37.5 21.5H24L15 40M24 21.5L31.5 40M20 16H27.5"
+      stroke="currentColor"
+      stroke-width="1.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
 </svg>

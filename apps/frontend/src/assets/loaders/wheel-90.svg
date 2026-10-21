@@ -1,6 +1,24 @@
-<svg width="22.5" height="22.5" viewBox="0 0 22.5 22.5" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Kolo L">
-<path id="Vector" d="M11.25 20.25C16.2206 20.25 20.25 16.2206 20.25 11.25C20.25 6.27944 16.2206 2.25 11.25 2.25C6.27944 2.25 2.25 6.27944 2.25 11.25C2.25 16.2206 6.27944 20.25 11.25 20.25Z" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"/>
-<path id="Vector_2" d="M11.25 2.25V20.25M2.25 11.25H20.25" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"/>
-</g>
+<svg
+  width="22.5"
+  height="22.5"
+  viewBox="0 0 22.5 22.5"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g id="Kolo L">
+    <path
+      id="Vector"
+      d="M11.25 20.25C16.2206 20.25 20.25 16.2206 20.25 11.25C20.25 6.27944 16.2206 2.25 11.25 2.25C6.27944 2.25 2.25 6.27944 2.25 11.25C2.25 16.2206 6.27944 20.25 11.25 20.25Z"
+      stroke="currentColor"
+      stroke-width="0.5"
+      stroke-linecap="round"
+    />
+    <path
+      id="Vector_2"
+      d="M11.25 2.25V20.25M2.25 11.25H20.25"
+      stroke="currentColor"
+      stroke-width="0.5"
+      stroke-linecap="round"
+    />
+  </g>
 </svg>

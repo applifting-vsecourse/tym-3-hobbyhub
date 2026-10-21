@@ -9,7 +9,7 @@ import { Seo } from "@/components/Seo"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
-import { redirectTarget } from "@/features/auth/lib/redirect"
+import { redirectTargetOutside } from "@/features/auth/lib/redirect"
 import { levelsQueryOptions } from "@/features/level/api/levelsQueryOptions"
 import { onboardingQueryOptions } from "@/features/onboarding/api/onboardingQueryOptions"
 import { OnboardingWizard } from "@/features/onboarding/components/OnboardingWizard"
@@ -41,10 +41,9 @@ function OnboardingPage() {
   const activities = useQuery(activitiesQueryOptions())
   // A level is optional: if the list cannot be loaded the wizard still works.
   const levels = useQuery(levelsQueryOptions())
-  // Where to go afterwards: the page the visitor came from, if it is one of ours.
-  // Never the onboarding itself: a sign-in that was sent here carries it as `from`.
-  const requested = redirectTarget(from, ROUTES.events)
-  const target = requested.startsWith(ROUTES.onboarding) ? ROUTES.events : requested
+  // Where to go afterwards: the page the visitor came from, if it is one of ours
+  // and not the onboarding itself (a sign-in that was sent here wraps it in `from`).
+  const target = redirectTargetOutside(from, ROUTES.events, ROUTES.onboarding)
   // A stable function, so the picker's list of options is not rebuilt on every render.
   const activityLabel = useCallback(
     (activity: { name: string; icon: string }) => activityName(t, activity),
@@ -54,7 +53,8 @@ function OnboardingPage() {
   return (
     <>
       <Seo title={t("onboarding.seoTitle")} />
-      <section className="mx-auto w-full max-w-xl px-4 py-6 md:py-12">
+      {/* On a phone the actions are fixed to the bottom; pb-24 is the room they take. */}
+      <section className="mx-auto w-full max-w-xl px-4 py-6 max-md:pb-24 md:py-12">
         <OnboardingWizard
           activities={activities.data ?? []}
           isLoadingActivities={activities.isPending}

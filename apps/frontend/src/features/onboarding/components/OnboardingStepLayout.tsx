@@ -127,9 +127,11 @@ export function StepActions({
   if (isLast) label = t(isReturningToEvent ? "onboarding.finishReturn" : "onboarding.finish")
 
   return (
-    // On a phone pinned to the bottom and padded clear of the navigation, so the
-    // way on never scrolls out of reach however long the step grows.
-    <div className="flex gap-2 pt-3 max-md:sticky max-md:bottom-0 max-md:z-30 max-md:-mx-4 max-md:border-t max-md:border-border max-md:bg-background max-md:px-4 max-md:pb-above-bottom-nav md:pb-3">
+    // On a phone fixed to the bottom, under the BottomNav (z-40) so its raised
+    // "Přidat" stays on top, and padded clear of it: the way on stays at the
+    // bottom of the screen for a short step as for a long one. The page keeps
+    // room for it (see the onboarding route).
+    <div className="flex gap-2 pt-3 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:border-t max-md:border-border max-md:bg-background max-md:px-4 max-md:pb-above-bottom-nav md:pb-3">
       {onBack ? (
         <Button
           type="button"

@@ -141,4 +141,23 @@ describe("ProfilePicturePicker", () => {
 
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:preview")
   })
+
+  it("gives focus back to the button when the sheet is closed with Escape", async () => {
+    render(<Harness />)
+
+    await openSheet()
+    await userEvent.keyboard("{Escape}")
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Vybrat obrázek" })).toHaveFocus()
+  })
+
+  it("gives focus back to the button after an avatar was chosen", async () => {
+    render(<Harness />)
+
+    const dialog = await openSheet()
+    await userEvent.click(within(dialog).getByRole("button", { name: "Florbalista" }))
+
+    expect(screen.getByRole("button", { name: "Změnit obrázek" })).toHaveFocus()
+  })
 })

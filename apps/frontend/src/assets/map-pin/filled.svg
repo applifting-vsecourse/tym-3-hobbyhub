@@ -1,9 +1,32 @@
-<svg width="36" height="41" viewBox="0 0 36 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Pin">
-<circle id="Ellipse" cx="18" cy="18" r="18" style="fill:var(--success)"/>
-<path id="Vector" d="M12 34H24L18 41L12 34Z" style="fill:var(--success)"/>
-<g id="Frame">
-<path id="Vector_2" d="M24 13.5L15.75 21.75L12 18" style="stroke:var(--success-foreground)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-</g>
+<svg
+  width="36"
+  height="41"
+  viewBox="0 0 36 41"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g id="Pin">
+    <circle
+      id="Ellipse"
+      cx="18"
+      cy="18"
+      r="18"
+      style="fill: var(--success)"
+    />
+    <path
+      id="Vector"
+      d="M12 34H24L18 41L12 34Z"
+      style="fill: var(--success)"
+    />
+    <g id="Frame">
+      <path
+        id="Vector_2"
+        d="M24 13.5L15.75 21.75L12 18"
+        style="stroke: var(--success-foreground)"
+        stroke-width="1.65"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+  </g>
 </svg>
