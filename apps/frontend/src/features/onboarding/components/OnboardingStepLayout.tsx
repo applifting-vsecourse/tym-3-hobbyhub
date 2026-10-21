@@ -127,9 +127,9 @@ export function StepActions({
   if (isLast) label = t(isReturningToEvent ? "onboarding.finishReturn" : "onboarding.finish")
 
   return (
-    // On a phone pinned to the bottom, above the navigation, so the way on never
-    // scrolls out of reach however long the step grows.
-    <div className="flex gap-2 py-3 max-md:sticky max-md:bottom-(--bottom-nav-height) max-md:z-30 max-md:-mx-4 max-md:border-t max-md:border-border max-md:bg-background max-md:px-4">
+    // On a phone pinned to the bottom and padded clear of the navigation, so the
+    // way on never scrolls out of reach however long the step grows.
+    <div className="flex gap-2 pt-3 max-md:sticky max-md:bottom-0 max-md:z-30 max-md:-mx-4 max-md:border-t max-md:border-border max-md:bg-background max-md:px-4 max-md:pb-above-bottom-nav md:pb-3">
       {onBack ? (
         <Button
           type="button"

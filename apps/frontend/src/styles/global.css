@@ -82,15 +82,6 @@
   --drop-shadow-float: var(--drop-shadow-float);
 }
 
-/*
- * Visible height of the phone's BottomNav: its icon row plus the bottom padding,
- * which is 1.5rem or the safe-area inset when that is bigger. Fixed bars that
- * sit above it, such as the onboarding's actions, offset themselves by it.
- */
-:root {
-  --bottom-nav-height: calc(3.625rem + max(1.5rem, env(safe-area-inset-bottom)));
-}
-
 /* Loader motion. Every loader is wrapped in motion-safe, so it stands still
    under prefers-reduced-motion. */
 @theme {
