@@ -362,6 +362,21 @@
 }
 
 /*
+ * Bottom padding of an action bar fixed to the bottom of a phone screen. Under
+ * a signed-in user's BottomNav it clears the whole nav, raised "Přidat" button
+ * included (AppShell measures it into --bottom-nav-height), so the bar's own
+ * background runs on behind the nav. Without the nav it only clears the home
+ * indicator.
+ */
+@utility pb-above-bottom-nav {
+  padding-bottom: max(
+    1rem,
+    env(safe-area-inset-bottom),
+    calc(var(--bottom-nav-height, 0px) + 0.75rem)
+  );
+}
+
+/*
  * Staged entrance for a view's first load: opacity, 4px blur and 12px rise
  * over 300ms, chunks staggered 100ms via --enter-index. Reduced motion keeps
  * a plain cross-fade.

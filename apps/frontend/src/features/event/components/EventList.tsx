@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router"
-import { RefreshCw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import SearchIcon from "@/assets/ui-icons/search.svg?react"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
+import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
 type EventListProps = {
@@ -22,31 +22,11 @@ type EventListProps = {
   hasMore?: boolean
   isLoadingMore?: boolean
   onLoadMore?: () => void
+  /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
+  isFiltered?: boolean
+  onClearFilters?: () => void
   /** Injectable so "today" is stable in tests. */
   now?: Date
-}
-
-function LoadError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
-  const { t } = useTranslation()
-
-  return (
-    <Alert variant="destructive">
-      <AlertTitle>{t("events.list.loadError")}</AlertTitle>
-      <AlertDescription className="flex items-center justify-between gap-3">
-        <span>{error.message}</span>
-        {onRetry ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRetry}
-          >
-            <RefreshCw className="size-4" />
-            {t("events.list.reload")}
-          </Button>
-        ) : null}
-      </AlertDescription>
-    </Alert>
-  )
 }
 
 export function EventList({
@@ -59,6 +39,8 @@ export function EventList({
   hasMore,
   isLoadingMore,
   onLoadMore,
+  isFiltered,
+  onClearFilters,
   now = new Date(),
 }: EventListProps) {
   const { t, i18n } = useTranslation()
@@ -77,10 +59,39 @@ export function EventList({
   // Nothing to show yet: the error is the whole screen.
   if (error && events.length === 0) {
     return (
-      <LoadError
+      <EventsLoadError
         error={error}
         onRetry={onReload}
       />
+    )
+  }
+
+  if (events.length === 0 && isFiltered) {
+    return (
+      <div
+        role="status"
+        className="flex flex-col items-center gap-3 py-12 text-center"
+      >
+        <div
+          aria-hidden
+          className="flex size-20 items-center justify-center rounded-full bg-accent text-accent-foreground"
+        >
+          <SearchIcon className="size-8" />
+        </div>
+        <h2 className="typo-h3 text-foreground">{t("events.list.emptyFiltered.title")}</h2>
+        <p className="typo-body text-muted-foreground">
+          {t("events.list.emptyFiltered.description")}
+        </p>
+        {onClearFilters ? (
+          <Button
+            variant="outline"
+            className="mt-3 w-full sm:w-auto"
+            onClick={onClearFilters}
+          >
+            {t("events.list.emptyFiltered.clear")}
+          </Button>
+        ) : null}
+      </div>
     )
   }
 
@@ -130,7 +141,7 @@ export function EventList({
       ))}
       {error ? (
         // A later page failed: keep what is loaded and retry just that page.
-        <LoadError
+        <EventsLoadError
           error={error}
           onRetry={onLoadMore}
         />

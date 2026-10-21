@@ -194,10 +194,21 @@
       "count_one": "{{count}} event",
       "count_other": "{{count}} events",
       "empty": "There are no upcoming events yet. Check back later, or create one yourself.",
+      "emptyFiltered": {
+        "clear": "Clear filters",
+        "description": "Nothing matches this selection yet. Try a different search, location or activity.",
+        "title": "Nothing found"
+      },
+      "filters": {
+        "open": "Filters",
+        "selected": "Selected filters",
+        "unknownActivity": "Unknown activity"
+      },
       "loadError": "Could not load events",
       "loadMore": "Load more",
       "loading": "Loading events…",
       "reload": "Reload",
+      "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
       "title": "Events"
     },
@@ -370,6 +381,10 @@
       "until": "until {{time}}"
     },
     "filters": {
+      "activitiesEmpty": "There are no activities yet.",
+      "activitiesError": "Could not load the activities",
+      "activitiesLoading": "Loading activities…",
+      "activitiesRetry": "Try again",
       "activity": "Activity",
       "clear": "Clear",
       "date": "Date…",
@@ -476,9 +491,9 @@
       "find": "Find an event"
     },
     "hero": {
-      "join": "Take a seat",
-      "kicker": "Thursday floorball · today 19:00",
-      "text": "3 more needed to reach the minimum. One of them could be you.",
+      "join": "Find a free seat",
+      "kicker": "Sports and games near you",
+      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours.",
       "title": "Fill the missing players before the event is cancelled"
     },
     "how": {
@@ -488,13 +503,13 @@
       "title": "How it works"
     },
     "search": {
-      "label": "Location",
-      "placeholder": "Location: Prague 8"
+      "label": "Search events",
+      "placeholder": "Title, place or activity"
     },
     "seoTitle": "Home",
-    "tonight": {
-      "empty": "Nothing planned for tonight yet. Look at other days, or create an event yourself — it will show up here.",
-      "title": "Tonight"
+    "upcoming": {
+      "empty": "No upcoming events yet. Create one yourself — it will show up here.",
+      "title": "Upcoming events"
     }
   },
   "myEvents": {
