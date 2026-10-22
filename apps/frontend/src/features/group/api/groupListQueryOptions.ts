@@ -22,9 +22,9 @@ export const nearbyGroupsQueryOptions = () =>
     queryFn: async () => nearbyGroupsSchema.parse(await api.get("groups/nearby").json()),
   })
 
-export const discoverGroupsQueryOptions = () =>
+export const discoverGroupsQueryOptions = (viewerId: string | null) =>
   infiniteQueryOptions({
-    queryKey: groupKeys.discover(),
+    queryKey: groupKeys.discover(viewerId),
     queryFn: async ({ pageParam }) =>
       groupPageSchema.parse(
         await api

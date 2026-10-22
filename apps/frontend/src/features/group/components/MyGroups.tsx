@@ -88,11 +88,9 @@ export function MyGroups({ activityLabel }: { activityLabel: ActivityLabel }) {
               <Trans
                 i18nKey="groups.list.nearbyNoCity"
                 components={{
-                  // The profile page does not exist yet; a plain link until it does.
                   profile: (
-                    // eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans fills it
-                    <a
-                      href={ROUTES.profile}
+                    <Link
+                      to={ROUTES.profile}
                       className={linkClassName}
                     />
                   ),

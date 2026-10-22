@@ -7,10 +7,16 @@ import { discoverGroupsQueryOptions } from "@/features/group/api/groupListQueryO
 import { GroupCard, type ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupGrid } from "@/features/group/components/GroupGrid"
 
+type DiscoverGroupsProps = {
+  /** The signed-in user, or null for a visitor, who sees every public group. */
+  viewerId: string | null
+  activityLabel: ActivityLabel
+}
+
 /** "Objevit" tab: public groups the viewer is not in, a page at a time. */
-export function DiscoverGroups({ activityLabel }: { activityLabel: ActivityLabel }) {
+export function DiscoverGroups({ viewerId, activityLabel }: DiscoverGroupsProps) {
   const { t } = useTranslation()
-  const discover = useInfiniteQuery(discoverGroupsQueryOptions())
+  const discover = useInfiniteQuery(discoverGroupsQueryOptions(viewerId))
   const groups = discover.data?.pages.flatMap((page) => page.items)
 
   return (
@@ -37,7 +43,7 @@ export function DiscoverGroups({ activityLabel }: { activityLabel: ActivityLabel
             activityLabel={activityLabel}
           />
         )}
-        empty={t("groups.list.discoverEmpty")}
+        empty={viewerId ? t("groups.list.discoverEmpty") : t("groups.list.discoverEmptyVisitor")}
       />
       {discover.hasNextPage ? (
         <div className="flex flex-col items-center gap-2">

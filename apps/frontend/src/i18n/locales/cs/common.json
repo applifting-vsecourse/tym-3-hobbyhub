@@ -293,6 +293,7 @@
     "list": {
       "create": "Nová skupina",
       "discoverEmpty": "Tady uvidíte veřejné skupiny, ve kterých ještě nejste. Zatím žádná není.",
+      "discoverEmptyVisitor": "Zatím tu není žádná veřejná skupina.",
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",

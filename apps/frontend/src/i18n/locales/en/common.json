@@ -288,6 +288,7 @@
     "list": {
       "create": "New group",
       "discoverEmpty": "Public groups you are not in yet will appear here. There are none so far.",
+      "discoverEmptyVisitor": "There are no public groups yet.",
       "loadError": "Could not load groups",
       "loadMore": "Load more",
       "loadMoreError": "Could not load more groups. Please try again.",

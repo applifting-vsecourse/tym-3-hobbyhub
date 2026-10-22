@@ -43,8 +43,7 @@ export function GroupGrid<T>({
     return (
       <Alert variant="destructive">
         <AlertTitle>{t("groups.list.loadError")}</AlertTitle>
-        <AlertDescription className="flex items-center justify-between gap-3">
-          <span>{error.message}</span>
+        <AlertDescription className="flex items-center justify-end gap-3">
           <Button
             variant="outline"
             size="sm"
