@@ -1,42 +1,8 @@
-<svg
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <g id="Frame">
-    <path
-      id="Vector"
-      d="M16.5 8.1C17.5493 8.1 18.4 7.24934 18.4 6.2C18.4 5.15066 17.5493 4.3 16.5 4.3C15.4507 4.3 14.6 5.15066 14.6 6.2C14.6 7.24934 15.4507 8.1 16.5 8.1Z"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      id="Vector_2"
-      d="M4 12.4L8.6 9.4L12.8 11.8L15.2 10.2"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      id="Vector_3"
-      d="M2.5 16C4 17.4 5.5 17.4 7 16C8.5 14.6 10 14.6 11.5 16C13 17.4 14.5 17.4 16 16C17.5 14.6 19 14.6 20.5 16"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      id="Vector_4"
-      d="M2.5 20C4 21.4 5.5 21.4 7 20C8.5 18.6 10 18.6 11.5 20C13 21.4 14.5 21.4 16 20C17.5 18.6 19 18.6 20.5 20"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </g>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame">
+<path id="Vector" d="M16.5 8.1C17.5493 8.1 18.4 7.24934 18.4 6.2C18.4 5.15066 17.5493 4.3 16.5 4.3C15.4507 4.3 14.6 5.15066 14.6 6.2C14.6 7.24934 15.4507 8.1 16.5 8.1Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M4 12.4L8.6 9.4L12.8 11.8L15.2 10.2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M2.5 16C4 17.4 5.5 17.4 7 16C8.5 14.6 10 14.6 11.5 16C13 17.4 14.5 17.4 16 16C17.5 14.6 19 14.6 20.5 16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M2.5 20C4 21.4 5.5 21.4 7 20C8.5 18.6 10 18.6 11.5 20C13 21.4 14.5 21.4 16 20C17.5 18.6 19 18.6 20.5 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
 </svg>
