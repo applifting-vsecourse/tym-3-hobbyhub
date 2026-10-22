@@ -11,6 +11,8 @@ export const eventKeys = {
   all: () => ["events"] as const,
   lists: () => [...eventKeys.all(), "list"] as const,
   list: (filters: EventListFilters) => [...eventKeys.lists(), filters] as const,
+  // The few soonest events on the landing page.
+  upcoming: (limit: number) => [...eventKeys.lists(), "upcoming", limit] as const,
   // Public detail (F-02.4).
   publicDetails: () => [...eventKeys.all(), "public-detail"] as const,
   publicDetail: (id: string) => [...eventKeys.publicDetails(), id] as const,

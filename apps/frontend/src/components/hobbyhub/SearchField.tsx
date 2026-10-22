@@ -41,7 +41,7 @@ export function SearchField({ label, onOpenFilters, className, ...props }: Searc
       <input
         id={id}
         type="search"
-        className="min-w-0 flex-1 bg-transparent typo-body text-foreground outline-none placeholder:text-muted-foreground"
+        className="min-w-0 flex-1 bg-transparent typo-body-lg text-foreground outline-none placeholder:text-muted-foreground md:typo-body"
         {...props}
       />
       {onOpenFilters ? (

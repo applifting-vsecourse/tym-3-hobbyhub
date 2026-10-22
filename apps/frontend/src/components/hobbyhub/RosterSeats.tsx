@@ -3,7 +3,7 @@ import { cva } from "class-variance-authority"
 import { useTranslation } from "react-i18next"
 
 import { ActivityAvatar, AVATAR_KINDS } from "@/components/hobbyhub/ActivityAvatar"
-import { capacityLabel } from "@/components/hobbyhub/capacity"
+import { capacityLabel, seatStates } from "@/components/hobbyhub/capacity"
 import { cn } from "@/lib/utils"
 
 const rosterVariants = cva("w-fit", {
@@ -22,8 +22,14 @@ const avatarSize = { sm: "xs", md: "sm", lg: "lg", xl: "2xl" } as const
 type RosterSeatsProps = {
   /** People already on the roster. */
   taken: number
-  /** Seats on the roster; the rest are drawn as dashed empty seats. */
+  /** Seats on the roster. */
   capacity: number
+  /**
+   * People needed for the event to happen. Empty seats up to it are drawn
+   * dashed (missing), the ones above it as plain rings. Defaults to
+   * `capacity`: every empty seat is missing.
+   */
+  min?: number
   size?: keyof typeof avatarSize
   /** `dark` for the signal surface (hero, roster band in e-mails). */
   surface?: "light" | "dark"
@@ -34,11 +40,13 @@ type RosterSeatsProps = {
 
 /**
  * Soupiska míst — every event is a roster. Taken seats are activity avatars,
- * empty seats are dashed circles with a plus.
+ * seats missing to the minimum are dashed circles with a plus, seats above
+ * the minimum plain rings.
  */
 export function RosterSeats({
   taken,
   capacity,
+  min = capacity,
   size = "md",
   surface = "light",
   isAnimated = false,
@@ -46,18 +54,25 @@ export function RosterSeats({
 }: RosterSeatsProps) {
   const { t } = useTranslation()
   const filled = Math.min(Math.max(taken, 0), capacity)
+  const seats = seatStates({ taken: filled, min: Math.min(min, capacity), max: capacity })
 
   return (
     <div
       role="img"
-      aria-label={capacityLabel(t, { taken: filled, min: capacity })}
+      aria-label={capacityLabel(t, { taken: filled, min: Math.min(min, capacity), max: capacity })}
       className={cn(rosterVariants({ size }), className)}
     >
-      {Array.from({ length: capacity }, (_, index) => {
+      {seats.map((state, index) => {
         const seat = (
           <ActivityAvatar
             size={avatarSize[size]}
-            avatar={index < filled ? (AVATAR_KINDS[index % AVATAR_KINDS.length] ?? "free") : "free"}
+            avatar={
+              state === "taken"
+                ? (AVATAR_KINDS[index % AVATAR_KINDS.length] ?? "free")
+                : state === "missing"
+                  ? "free"
+                  : "open"
+            }
             tone={surface === "dark" ? "inverse" : "default"}
             // In the 5-column grids each seat fills its column, so the roster shrinks on small phones.
             isFluid={size === "lg" || size === "xl"}

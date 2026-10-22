@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { useLayoutEffect, useRef, type ReactNode } from "react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -32,9 +32,33 @@ export function AppShell({ children, className, search }: AppShellProps) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const active = navSectionForPath(pathname)
   const isSignedIn = user !== null
+  const shellRef = useRef<HTMLDivElement>(null)
+  const bottomNavRef = useRef<HTMLDivElement>(null)
+
+  // Action bars fixed to the bottom of a phone screen (form submits) sit above
+  // the BottomNav through `pb-above-bottom-nav`, which reads its height here.
+  // From `md` the nav is hidden, its height drops to 0 and the bars sit low.
+  useLayoutEffect(() => {
+    const shell = shellRef.current
+    const bottomNav = bottomNavRef.current
+    if (!shell || !bottomNav) return
+    const publishHeight = () => {
+      shell.style.setProperty("--bottom-nav-height", `${bottomNav.offsetHeight}px`)
+    }
+    publishHeight()
+    const observer = new ResizeObserver(publishHeight)
+    observer.observe(bottomNav)
+    return () => {
+      observer.disconnect()
+      shell.style.removeProperty("--bottom-nav-height")
+    }
+  }, [isSignedIn])
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div
+      ref={shellRef}
+      className="flex min-h-svh flex-col"
+    >
       <Header
         search={search}
         nav={isSignedIn ? <HeaderNav active={active} /> : null}
@@ -54,10 +78,14 @@ export function AppShell({ children, className, search }: AppShellProps) {
       />
       <main className={cn("flex-1", className)}>{children}</main>
       {isSignedIn ? (
-        <BottomNav
-          active={active}
-          className="sticky bottom-0 z-40 md:hidden"
-        />
+        // The nav's raised-button padding lets clicks through to the page;
+        // the wrapper that is measured must not catch them either.
+        <div
+          ref={bottomNavRef}
+          className="pointer-events-none sticky bottom-0 z-40 md:hidden"
+        >
+          <BottomNav active={active} />
+        </div>
       ) : null}
     </div>
   )
