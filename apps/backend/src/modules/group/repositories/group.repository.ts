@@ -51,10 +51,11 @@ const orderBy = [
 ] satisfies Prisma.GroupOrderByWithRelationInput[];
 
 // Groups a stranger may find: public, not cancelled, and not ones they are in.
-const discoverableBy = (userId: string): Prisma.GroupWhereInput => ({
+// A visitor (no userId) is in none, so they find every such group.
+const discoverableBy = (userId?: string): Prisma.GroupWhereInput => ({
   visibility: GroupVisibility.PUBLIC,
   status: GroupStatus.ACTIVE,
-  memberships: { none: { userId } },
+  ...(userId ? { memberships: { none: { userId } } } : {}),
 });
 
 @Injectable()
@@ -102,6 +103,8 @@ export class GroupRepository {
   }
 
   // Free-text match until groups have coordinates: "Praha" finds "Praha 8".
+  // TODO(F-02.6 #10): it also finds "Mostiště" for "Most" and "Brno-venkov"
+  // for "Brno"; match by distance once groups and users have coordinates.
   async listGroupsInCity(
     userId: string,
     city: string,
@@ -120,7 +123,7 @@ export class GroupRepository {
   }
 
   async listDiscoverableGroups(
-    userId: string,
+    userId: string | undefined,
     pageSize: number,
     cursor?: string,
   ): Promise<GroupPage> {
@@ -149,10 +152,12 @@ export class GroupRepository {
       },
     });
     if (!user) return null;
-    // A temporary place always has its end date (CHECK in the migration).
+    // A temporary place always has its end date (CHECK in the migration),
+    // but not always a city; without one the home city still applies.
     const isTemporaryValid =
       user.temporaryLocationValidUntil !== null &&
-      user.temporaryLocationValidUntil > now;
+      user.temporaryLocationValidUntil > now &&
+      Boolean(user.temporaryCity?.trim());
     return isTemporaryValid ? user.temporaryCity : user.homeCity;
   }
 }

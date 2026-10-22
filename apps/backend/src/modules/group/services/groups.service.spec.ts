@@ -132,4 +132,19 @@ describe('GroupsService', () => {
       'g0',
     );
   });
+
+  it('pages every discoverable group for a visitor', async () => {
+    const { repository, service } = setup();
+    repository.listDiscoverableGroups.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+    });
+
+    await service.discoverGroups(undefined);
+    expect(repository.listDiscoverableGroups).toHaveBeenCalledWith(
+      undefined,
+      DISCOVER_PAGE_SIZE,
+      undefined,
+    );
+  });
 });

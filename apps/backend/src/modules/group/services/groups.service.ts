@@ -61,9 +61,13 @@ export class GroupsService {
     return { city, groups };
   }
 
-  async discoverGroups(user: Identity, cursor?: string): Promise<GroupPage> {
+  // A visitor (no user) sees every public group.
+  async discoverGroups(
+    user: Identity | undefined,
+    cursor?: string,
+  ): Promise<GroupPage> {
     return this.groupRepository.listDiscoverableGroups(
-      user.id,
+      user?.id,
       DISCOVER_PAGE_SIZE,
       cursor,
     );

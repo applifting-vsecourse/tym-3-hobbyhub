@@ -1,7 +1,8 @@
 import { GroupsService } from '@/modules/group/services/groups.service';
-import { User } from '@/shared/auth/decorators/user.decorator';
+import { OptionalUser, User } from '@/shared/auth/decorators/user.decorator';
 import { Identity } from '@/shared/auth/domain/identity';
 import { AuthenticatedUserGuard } from '@/shared/auth/guards/authenticated-user.guard';
+import { OptionalUserGuard } from '@/shared/auth/guards/optional-user.guard';
 import {
   Body,
   Controller,
@@ -30,13 +31,13 @@ import { groupsValidationPipe } from './groups-validation.pipe';
 
 @ApiTags('groups')
 @Controller('groups')
-@UseGuards(AuthenticatedUserGuard)
 @ApiCookieAuth()
 @UsePipes(groupsValidationPipe)
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
+  @UseGuards(AuthenticatedUserGuard)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a group owned by the signed-in user' })
   @ApiResponse({ status: 201, type: GroupResponseDto })
@@ -58,6 +59,7 @@ export class GroupsController {
 
   // The list routes come before `:id`, which would otherwise match them.
   @Get('mine')
+  @UseGuards(AuthenticatedUserGuard)
   @ApiOperation({ summary: 'List active groups the signed-in user is in' })
   @ApiResponse({ status: 200, type: [MyGroupResponseDto] })
   @ApiResponse({ status: 401, description: 'Not signed in' })
@@ -67,6 +69,7 @@ export class GroupsController {
   }
 
   @Get('nearby')
+  @UseGuards(AuthenticatedUserGuard)
   @ApiOperation({
     summary: "List a few public groups in the signed-in user's city",
   })
@@ -78,14 +81,17 @@ export class GroupsController {
     );
   }
 
+  // F-07.8: open to visitors too; a signed-in user does not see their own
+  // groups here.
   @Get('discover')
+  @UseGuards(OptionalUserGuard)
   @ApiOperation({
-    summary: 'Page through public groups the signed-in user is not in',
+    summary:
+      'Page through public groups; for a signed-in user, those they are not in',
   })
   @ApiResponse({ status: 200, type: GroupPageResponseDto })
-  @ApiResponse({ status: 401, description: 'Not signed in' })
   async discover(
-    @User() user: Identity,
+    @OptionalUser() user: Identity | undefined,
     @Query() query: DiscoverGroupsQueryDto,
   ): Promise<GroupPageResponseDto> {
     return GroupPageResponseDto.fromDomain(
@@ -94,6 +100,7 @@ export class GroupsController {
   }
 
   @Get(':id')
+  @UseGuards(AuthenticatedUserGuard)
   @ApiOperation({ summary: 'Get a group' })
   @ApiResponse({ status: 200, type: GroupResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in' })
