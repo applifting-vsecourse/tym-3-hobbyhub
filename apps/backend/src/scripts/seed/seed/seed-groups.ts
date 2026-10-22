@@ -123,18 +123,15 @@ const EXAMPLE_GROUPS: ExampleGroup[] = [
 ];
 
 /**
- * Example groups with members, so the group list has something to show. Only
- * runs on a database without groups: it never duplicates them. Expects the
- * activities from seedLookups.
+ * Example groups with members, so the group list has something to show. Skips
+ * each one whose name is already taken, so it never duplicates them and still
+ * runs next to the demo groups from the `testovaci_data` migration. Expects
+ * the activities from seedLookups.
  */
 export async function seedGroups(
   prisma: PrismaService,
   users: User[],
 ): Promise<void> {
-  if ((await prisma.group.count()) > 0) {
-    console.log('Groups already exist — skipping example groups.');
-    return;
-  }
   if (users.length === 0) {
     console.log('No users — skipping example groups.');
     return;
@@ -145,6 +142,9 @@ export async function seedGroups(
   const user = (index: number): User => users[index % users.length];
 
   for (const example of EXAMPLE_GROUPS) {
+    if (await prisma.group.findFirst({ where: { name: example.name } })) {
+      continue;
+    }
     const owner = user(example.owner);
     const roles = new Map<string, GroupRole>([[owner.id, GroupRole.OWNER]]);
     for (const index of example.admins ?? []) {
