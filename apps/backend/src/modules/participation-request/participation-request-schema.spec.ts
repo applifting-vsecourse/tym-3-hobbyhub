@@ -6,11 +6,7 @@
 // Every case runs in a transaction that is rolled back.
 import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
-import {
-  Prisma,
-  RequestStatus,
-  VenueType,
-} from '@/generated/prisma/client';
+import { Prisma, RequestStatus, VenueType } from '@/generated/prisma/client';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
@@ -127,10 +123,7 @@ describeDb('participation request schema constraints', () => {
 
   it.each([
     ['participation_request_message_not_blank', { message: '   ' }],
-    [
-      'participation_request_decided_at_with_status',
-      { decidedAt: new Date() },
-    ],
+    ['participation_request_decided_at_with_status', { decidedAt: new Date() }],
     [
       'participation_request_decided_at_with_status',
       { status: RequestStatus.REJECTED },

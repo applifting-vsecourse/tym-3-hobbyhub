@@ -99,6 +99,18 @@ export type Event = Occupancy & {
   organizerId: string;
 };
 
+// What deciding a request to join (F-06.1) needs to know about a public event
+// and one person: who runs it, the seats left, and whether they have a seat.
+export type EventSeatFacts = {
+  id: string;
+  status: EventStatus;
+  startAt: Date;
+  // The organizer and the co-organizers.
+  organizerIds: string[];
+  freeSpots: number;
+  hasSeat: boolean;
+};
+
 export type CreateEventData = {
   title: string;
   activityId: string;
