@@ -132,7 +132,8 @@ export type EventRuleViolation =
   | 'END_NOT_AFTER_START'
   | 'MIN_ABOVE_MAX'
   | 'OCCUPIED_ABOVE_MAX'
-  | 'NOTE_WITHOUT_AMOUNT';
+  | 'NOTE_WITHOUT_AMOUNT'
+  | 'POSITION_INCOMPLETE';
 
 // Rules between fields that a single-field check cannot see. The form checks
 // the same ones before sending; the server is the one that counts.
@@ -146,7 +147,9 @@ export const eventRuleViolations = (
     | 'externalOccupiedSpots'
     | 'contributionAmount'
     | 'contributionNote'
-  >,
+  > & {
+    location?: Pick<CreateEventData['location'], 'latitude' | 'longitude'>;
+  },
   now: Date,
 ): EventRuleViolation[] => {
   const violations: EventRuleViolation[] = [];
@@ -167,6 +170,13 @@ export const eventRuleViolations = (
     data.contributionAmount === undefined
   ) {
     violations.push('NOTE_WITHOUT_AMOUNT');
+  }
+  // A position is a latitude and a longitude together: one alone says nothing.
+  if (
+    (data.location?.latitude === undefined) !==
+    (data.location?.longitude === undefined)
+  ) {
+    violations.push('POSITION_INCOMPLETE');
   }
   return violations;
 };

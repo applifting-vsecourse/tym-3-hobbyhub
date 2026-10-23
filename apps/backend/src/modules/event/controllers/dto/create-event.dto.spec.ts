@@ -71,9 +71,17 @@ describe('CreateEventDto', () => {
       expect(dto.location.longitude).toBeUndefined();
     });
 
+    it('takes a blank position as none, not as the point 0,0', async () => {
+      const dto = await validate({
+        ...validBody,
+        location: { ...validBody.location, latitude: '', longitude: '' },
+      });
+
+      expect(dto.location.latitude).toBeUndefined();
+      expect(dto.location.longitude).toBeUndefined();
+    });
+
     it.each([
-      ['a latitude without a longitude', { latitude: 50.1 }],
-      ['a longitude without a latitude', { longitude: 14.4 }],
       ['a latitude off the globe', { latitude: 91, longitude: 14.4 }],
       ['a longitude off the globe', { latitude: 50.1, longitude: 181 }],
       [
@@ -115,10 +123,6 @@ describe('CreateEventDto', () => {
       [
         'an address without a city',
         { location: { ...validBody.location, city: ' ' } },
-      ],
-      [
-        'coordinates, which geocoding will set',
-        { location: { ...validBody.location, latitude: 50.1 } },
       ],
     ])('refuses %s', async (_, override) => {
       await expect(

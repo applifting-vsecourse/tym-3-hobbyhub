@@ -77,4 +77,10 @@ describe('ListEventsQuery', () => {
       BadRequestException,
     );
   });
+
+  it('takes a blank position as none, not as the point 0,0', async () => {
+    const query = await validate({ lat: '', lng: '' });
+    expect(query.lat).toBeUndefined();
+    expect(query.lng).toBeUndefined();
+  });
 });

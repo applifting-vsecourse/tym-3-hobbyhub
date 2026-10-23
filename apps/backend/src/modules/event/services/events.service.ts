@@ -23,6 +23,8 @@ const VIOLATION_MESSAGES: Record<EventRuleViolation, string> = {
   MIN_ABOVE_MAX: 'minParticipants must not exceed maxParticipants',
   OCCUPIED_ABOVE_MAX: 'externalOccupiedSpots must not exceed maxParticipants',
   NOTE_WITHOUT_AMOUNT: 'contributionNote requires contributionAmount',
+  POSITION_INCOMPLETE:
+    'location.latitude and location.longitude must be sent together',
 };
 
 @Injectable()

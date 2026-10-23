@@ -5,10 +5,14 @@ import SearchIcon from "@/assets/ui-icons/search.svg?react"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
+
+/** Id of a row, so the page can scroll to the event that was opened on the map. */
+export const eventRowId = (eventId: string) => `event-row-${eventId}`
 
 type EventListProps = {
   events: EventListItem[]
@@ -25,6 +29,8 @@ type EventListProps = {
   /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
   isFiltered?: boolean
   onClearFilters?: () => void
+  /** The event open on the map: its row is highlighted. */
+  selectedId?: string | null
   /** Injectable so "today" is stable in tests. */
   now?: Date
 }
@@ -41,6 +47,7 @@ export function EventList({
   onLoadMore,
   isFiltered,
   onClearFilters,
+  selectedId,
   now = new Date(),
 }: EventListProps) {
   const { t, i18n } = useTranslation()
@@ -99,9 +106,17 @@ export function EventList({
     return <p className="typo-body text-muted-foreground">{t("events.list.empty")}</p>
   }
 
+  // Sorted by distance, the days are mixed: one list, each row says its day.
+  const isByDistance = events.some((event) => event.distanceKm !== null)
+  const distance = new Intl.NumberFormat(i18n.language, {
+    style: "unit",
+    unit: "kilometer",
+    maximumFractionDigits: 1,
+  })
+
   // Events arrive soonest first, so a day's events are next to each other.
-  const days: { day: string; events: EventListItem[] }[] = []
-  for (const event of events) {
+  const days: { day: string; events: EventListItem[] }[] = isByDistance ? [{ day: "", events }] : []
+  for (const event of isByDistance ? [] : events) {
     const day = eventDay(t, event.startAt, now, i18n.language)
     const last = days[days.length - 1]
     if (last?.day === day) last.events.push(event)
@@ -116,19 +131,31 @@ export function EventList({
           key={day}
           className="flex flex-col gap-1"
         >
-          <h2 className="typo-h3">{day}</h2>
+          {day ? <h2 className="typo-h3">{day}</h2> : null}
           <ul>
             {dayEvents.map((event) => (
               <li key={event.id}>
                 <Link
                   to="/events/$eventId"
                   params={{ eventId: event.id }}
-                  className="-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  id={eventRowId(event.id)}
+                  aria-current={event.id === selectedId ? "true" : undefined}
+                  className={cn(
+                    "-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                    event.id === selectedId && "bg-muted",
+                  )}
                 >
                   <ScheduleRow
                     time={eventTime(event.startAt, i18n.language)}
                     title={event.title}
-                    subtitle={eventMeta(t, event, activityLabel(event.activity))}
+                    subtitle={[
+                      // The day headings are gone, so each row names its own day.
+                      isByDistance ? eventDay(t, event.startAt, now, i18n.language) : null,
+                      eventMeta(t, event, activityLabel(event.activity)),
+                      event.distanceKm !== null ? distance.format(event.distanceKm) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                     taken={event.takenCount}
                     min={event.minParticipants}
                     max={event.maxParticipants}

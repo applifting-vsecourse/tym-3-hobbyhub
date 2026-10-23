@@ -9,6 +9,7 @@ import { ChatShare } from "@/components/hobbyhub/ChatShare"
 import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
+import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
 import { Loader, type LoaderVariant } from "@/components/hobbyhub/Loader"
@@ -317,7 +318,7 @@ export function DomainSections() {
       <ShowcaseSection
         id="mapa"
         title="Pin na mapě"
-        description="Číslo je počet chybějících lidí. Naplněná akce má fajfku, shluk spojuje blízké akce, vybraný pin je kruh bez špičky s plným prstencem."
+        description="Akce na mapě je špendlík-pilulka s ikonou sportu a názvem: grafitová, když lidé chybí, zelená, když je akce naplněná, černá s prstencem, když je vybraná. Za názvem je vždy napsáno, kolik lidí chybí. Shluk je neutrální pilulka „9 akcí“ a spojuje blízké akce. Starší kruhové piny níže zůstávají ve Figmě."
       >
         <Example
           label="Chybí, naplněno, shluk, vybraný"
@@ -336,6 +337,29 @@ export function DomainSections() {
             variant="selected"
             count={1}
           />
+        </Example>
+        <Example
+          label="Špendlík akce: chybí lidé, naplněno, vybraný, shluk"
+          className="items-end gap-6"
+        >
+          <EventPin
+            activity="florbal"
+            title="Čtvrteční florbal"
+            missingLabel="chybí 2"
+            state="missing"
+          />
+          <EventPin
+            activity="tenis"
+            title="Tenis na Letné"
+            state="full"
+          />
+          <EventPin
+            activity="volejbal"
+            title="Plážový volejbal"
+            missingLabel="chybí 1"
+            state="selected"
+          />
+          <EventClusterPin label="9 akcí" />
         </Example>
       </ShowcaseSection>
 

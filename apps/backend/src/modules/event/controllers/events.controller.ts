@@ -93,8 +93,9 @@ export class EventsController {
         postalCode: body.location.postalCode,
         country: body.location.country,
         placeName: body.location.placeName,
-        latitude: body.location.latitude,
-        longitude: body.location.longitude,
+        // An explicit null (a client that sends "no position") means none.
+        latitude: body.location.latitude ?? undefined,
+        longitude: body.location.longitude ?? undefined,
       },
       minParticipants: body.minParticipants,
       maxParticipants: body.maxParticipants,
