@@ -43,21 +43,30 @@ const GENDER_LABELS = {
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
-  z.object({
-    name: z.string().trim().min(1, t("auth.validation.nameRequired")),
-    email: z
-      .string()
-      .trim()
-      .min(1, t("auth.validation.emailRequired"))
-      .pipe(z.email(t("auth.validation.emailInvalid"))),
-    password: z.string().trim().min(8, t("auth.validation.passwordMin")),
-    gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
-    birthDate: z
-      .string()
-      .min(1, t("auth.validation.birthDateRequired"))
-      .refine((value) => isAdult(value, new Date()), t("auth.validation.underage")),
-    termsAccepted: z.boolean().refine(Boolean, t("auth.validation.termsRequired")),
-  })
+  z
+    .object({
+      name: z.string().trim().min(1, t("auth.validation.nameRequired")),
+      email: z
+        .string()
+        .trim()
+        .min(1, t("auth.validation.emailRequired"))
+        .pipe(z.email(t("auth.validation.emailInvalid"))),
+      password: z.string().min(8, t("auth.validation.passwordMin")),
+      confirmPassword: z.string().min(1, t("auth.validation.confirmPasswordRequired")),
+      gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
+      birthDate: z
+        .string()
+        .min(1, t("auth.validation.birthDateRequired"))
+        .refine((value) => isAdult(value, new Date()), t("auth.validation.underage")),
+      termsAccepted: z.boolean().refine(Boolean, t("auth.validation.termsRequired")),
+    })
+    .refine((values) => values.password === values.confirmPassword, {
+      path: ["confirmPassword"],
+      message: t("auth.validation.passwordsMismatch"),
+      // Runs even while other fields are invalid, so a typo shows up at once.
+      when: ({ value }) =>
+        z.object({ password: z.string(), confirmPassword: z.string() }).safeParse(value).success,
+    })
 
 export type SignUpFormValues = z.infer<ReturnType<typeof createSchema>>
 
@@ -66,6 +75,7 @@ const defaultValues: DefaultValues<SignUpFormValues> = {
   name: "",
   email: "",
   password: "",
+  confirmPassword: "",
   birthDate: "",
   termsAccepted: false,
 }
@@ -82,6 +92,8 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
+    // Password rules and the match show up while typing, not after submit.
+    mode: "onChange",
   })
   useRevalidateOnLanguageChange(form)
 
@@ -138,9 +150,27 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
       <FormField
         control={form.control}
         name="password"
+        rules={{ deps: "confirmPassword" }}
         render={({ field }) => (
           <FormItem>
             <FormLabel>{t("auth.fields.password")}</FormLabel>
+            <FormControl>
+              <PasswordInput
+                autoComplete="new-password"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="confirmPassword"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.confirmPassword")}</FormLabel>
             <FormControl>
               <PasswordInput
                 autoComplete="new-password"

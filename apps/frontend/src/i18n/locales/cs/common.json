@@ -17,6 +17,7 @@
     },
     "fields": {
       "birthDate": "Datum narození",
+      "confirmPassword": "Zopakujte heslo",
       "email": "E-mail",
       "gender": "Pohlaví",
       "name": "Jméno / přezdívka",
@@ -61,12 +62,14 @@
     },
     "validation": {
       "birthDateRequired": "Vyberte datum narození",
+      "confirmPasswordRequired": "Zopakujte heslo",
       "emailInvalid": "Neplatný e-mail",
       "emailRequired": "Zadejte e-mail",
       "genderRequired": "Vyberte pohlaví",
       "nameRequired": "Zadejte jméno nebo přezdívku",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
       "passwordRequired": "Zadejte heslo",
+      "passwordsMismatch": "Hesla se neshodují",
       "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",
       "underage": "Registrace je možná až od 18 let"
     }
