@@ -99,6 +99,12 @@ class GenderSplitDto {
 
   @ApiProperty()
   female!: number;
+
+  @ApiProperty({
+    description:
+      'Taken seats without a known gender, people outside the app included',
+  })
+  unknown!: number;
 }
 
 export class ParticipantStatsResponseDto {
