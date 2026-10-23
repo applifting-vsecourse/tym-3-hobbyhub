@@ -336,6 +336,8 @@ export function ParticipationRequestSheet({
       title={shown.title}
       footer={shown.footer}
       hasCloseButton
+      // The form has the message field; its buttons must not cover it.
+      isFooterScrolling={shownStep === "form"}
     >
       {shown.body}
     </ResponsiveSheet>

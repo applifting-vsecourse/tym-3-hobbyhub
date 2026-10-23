@@ -38,6 +38,12 @@ type ResponsiveSheetProps = {
   footer?: ReactNode
   /** A close button on the phone drawer too; the desktop dialog always has one. */
   hasCloseButton?: boolean
+  /**
+   * On phones, put the footer at the end of the content instead of pinning it.
+   * For sheets with a text field: the on-screen keyboard leaves the drawer so
+   * little room that a pinned footer covers the field.
+   */
+  isFooterScrolling?: boolean
   children: ReactNode
 }
 
@@ -54,6 +60,7 @@ export function ResponsiveSheet({
   headerAction,
   footer,
   hasCloseButton = false,
+  isFooterScrolling = false,
   children,
 }: ResponsiveSheetProps) {
   const { t } = useTranslation()
@@ -110,8 +117,13 @@ export function ResponsiveSheet({
           )}
           {description ? <DrawerDescription>{description}</DrawerDescription> : null}
         </DrawerHeader>
-        <div className={cn("overflow-y-auto px-5 pt-3", !footer && "pb-6")}>{children}</div>
-        {footer ? <DrawerFooter>{footer}</DrawerFooter> : null}
+        <div className={cn("overflow-y-auto px-5 pt-3", (!footer || isFooterScrolling) && "pb-6")}>
+          {children}
+          {footer && isFooterScrolling ? (
+            <div className="flex flex-col gap-2 pt-4">{footer}</div>
+          ) : null}
+        </div>
+        {footer && !isFooterScrolling ? <DrawerFooter>{footer}</DrawerFooter> : null}
       </DrawerContent>
     </Drawer>
   )
