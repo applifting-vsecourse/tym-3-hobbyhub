@@ -19,14 +19,15 @@ type EventPinProps = {
 const STATE_CLASSES: Record<EventPinState, string> = {
   missing: "bg-signal text-signal-foreground",
   full: "bg-success text-success-foreground",
-  selected: "bg-foreground text-background ring-4 ring-foreground/20",
+  // Light with a dark outline: the other two are solid, so it cannot be mistaken for one.
+  selected: "bg-background text-foreground ring-[3px] ring-foreground",
 }
 
 /**
  * Špendlík akce na mapě — a pill with the sport icon, the event's name and how
  * many people are missing, so a pin says what it is without being opened.
  * Colour says whether people are missing (graphite), the event is full (green)
- * or it is the selected one (black, with a ring). Wrap it in a button to make
+ * or it is the selected one (light, with a dark outline). Wrap it in a button to make
  * it interactive.
  */
 export function EventPin({

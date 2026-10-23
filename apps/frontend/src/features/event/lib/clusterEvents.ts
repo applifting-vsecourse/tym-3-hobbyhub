@@ -49,17 +49,23 @@ export function clusterEvents<T extends Locatable>(
     else clusters.push({ members: [event], ...point })
   }
   // A group's middle moves as it grows, which can bring two groups closer than
-  // `cellSize`: merge those until none is.
-  for (let hasMerged = true; hasMerged;) {
+  // `cellSize`: merge those until none is. A sweep merges as it goes instead of
+  // starting over after each merge; the few repeat sweeps settle what it moved.
+  let hasMerged = true
+  while (hasMerged) {
     hasMerged = false
-    for (let a = 0; a < clusters.length && !hasMerged; a += 1) {
-      for (let b = a + 1; b < clusters.length && !hasMerged; b += 1) {
-        const first = clusters[a]
+    for (let a = 0; a < clusters.length; a += 1) {
+      const first = clusters[a]
+      if (!first) continue
+      for (let b = a + 1; b < clusters.length;) {
         const second = clusters[b]
-        if (!first || !second || !isNear(first, second)) continue
-        join(first, second.members, second.x, second.y, second.members.length)
-        clusters.splice(b, 1)
-        hasMerged = true
+        if (second && isNear(first, second)) {
+          join(first, second.members, second.x, second.y, second.members.length)
+          clusters.splice(b, 1)
+          hasMerged = true
+        } else {
+          b += 1
+        }
       }
     }
   }
@@ -108,3 +114,12 @@ export const isInBounds = (
   latitude <= bounds.north &&
   longitude >= bounds.west &&
   longitude <= bounds.east
+
+/**
+ * The events inside the visible map area, or null while there is no area (the
+ * map shows everything): the list then shows its own page of events.
+ */
+export const eventsInBounds = <T extends { latitude: number | null; longitude: number | null }>(
+  events: T[],
+  bounds: MapBounds | null,
+): T[] | null => (bounds ? events.filter((event) => isInBounds(event, bounds)) : null)

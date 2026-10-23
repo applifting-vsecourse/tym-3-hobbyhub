@@ -3,7 +3,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query"
 import { api } from "@/lib/api-client"
 
 import { eventKeys, type EventListFilters } from "@/features/event/api/eventKeys"
-import { eventListSchema, type EventListItem } from "@/features/event/api/eventSchemas"
+import { eventListSchema } from "@/features/event/api/eventSchemas"
 
 const EVENTS_PAGE_SIZE = 20
 // The most the server returns at once, and how many requests the map makes at
@@ -39,17 +39,17 @@ export const eventsQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
     },
   })
 
-// The map shows every event of the filter, not one page of the list: it asks
-// page after page until it has them all (or hit the cap).
+// The map shows every event of the filter, not one page of the list. The first
+// page says how many there are; the other pages (up to the cap) are asked for
+// together instead of one after another.
 export const eventsMapQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
   queryOptions({
     queryKey: eventKeys.map(filters),
     queryFn: async () => {
-      const items: EventListItem[] = []
-      for (let page = 0; page < MAP_MAX_PAGES; page += 1) {
+      const fetchPage = async (offset: number) => {
         const searchParams = new URLSearchParams({
           limit: String(MAP_PAGE_SIZE),
-          offset: String(items.length),
+          offset: String(offset),
         })
         for (const id of filters.activityIds) searchParams.append("activityIds", id)
         if (filters.search) searchParams.set("search", filters.search)
@@ -58,11 +58,16 @@ export const eventsMapQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
           searchParams.set("lat", String(filters.near.latitude))
           searchParams.set("lng", String(filters.near.longitude))
         }
-        const result = eventListSchema.parse(await api.get("events", { searchParams }).json())
-        items.push(...result.items)
-        if (items.length >= result.total || result.items.length === 0) break
+        return eventListSchema.parse(await api.get("events", { searchParams }).json())
       }
-      return items
+      const first = await fetchPage(0)
+      const pages = Math.min(MAP_MAX_PAGES, Math.ceil(first.total / MAP_PAGE_SIZE))
+      const rest = await Promise.all(
+        Array.from({ length: Math.max(pages - 1, 0) }, (_, index) =>
+          fetchPage((index + 1) * MAP_PAGE_SIZE),
+        ),
+      )
+      return [first, ...rest].flatMap((page) => page.items)
     },
   })
 

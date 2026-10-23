@@ -259,11 +259,18 @@ export function EventsMap({
     }
   }, [])
 
-  // New events (a filter changed): fit them, unless the map is on the visitor.
+  // New events (a filter changed): fit them. On the visitor ("nearest first") the
+  // map stays put, but the list stops following the old area. "Show all" always
+  // fits, wherever the map is.
   const signature = located.map((event) => event.id).join(",")
   const hasUserPosition = userPosition !== null
+  const lastFitKey = useRef(fitKey)
   useEffect(() => {
-    if (!map || hasUserPosition || located.length === 0) return
+    const isAskedFor = lastFitKey.current !== fitKey
+    lastFitKey.current = fitKey
+    if (!map) return
+    if (hasUserPosition && !isAskedFor) return onBoundsChangeRef.current(null)
+    if (located.length === 0) return
     const bounds = new mapboxgl.LngLatBounds()
     for (const event of located) bounds.extend([event.longitude, event.latitude])
     map.fitBounds(bounds, { padding: fitPadding(map), maxZoom: FIT_MAX_ZOOM, duration: 0 }, AUTO)

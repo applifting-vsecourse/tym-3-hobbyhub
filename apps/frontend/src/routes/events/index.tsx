@@ -20,7 +20,7 @@ import { eventsMapQueryOptions, eventsQueryOptions } from "@/features/event/api/
 import { EventList } from "@/features/event/components/EventList"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import { useNearMe } from "@/features/event/hooks/useNearMe"
-import { isInBounds, type MapBounds } from "@/features/event/lib/clusterEvents"
+import { eventsInBounds, type MapBounds } from "@/features/event/lib/clusterEvents"
 import {
   EVENT_SEARCH_MAX_LENGTH,
   eventsSearchSchema,
@@ -89,7 +89,7 @@ function EventsPage() {
   })
   const mapEvents = mapQuery.data ?? []
   // Once the map is moved the list is what is on screen; the map query holds every event.
-  const eventsOnMap = mapBounds ? mapEvents.filter((event) => isInBounds(event, mapBounds)) : null
+  const eventsOnMap = eventsInBounds(mapEvents, mapBounds)
   const selectedEvent = mapEvents.find((event) => event.id === selectedId) ?? null
   const showWholeMap = () => {
     setMapBounds(null)
@@ -151,12 +151,13 @@ function EventsPage() {
       <Seo title={t("events.list.seoTitle")} />
       {/* The page is exactly one screen wherever a map is shown, so dragging the map never
           scrolls the page: beside the map (from `lg`) the list scrolls on its own, and on a
-          phone the map view fills what is left below the filters. */}
+          phone the map view fills what is left below the filters. The shell is as tall as the
+          screen and the page takes what the header and the navigation leave. */}
       <AppShell
+        shellClassName={cn("lg:h-svh", view === "map" && "max-lg:h-dvh")}
         className={cn(
-          "mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10 lg:h-[calc(100svh-4.0625rem)] lg:flex-none lg:px-8 lg:py-6",
-          view === "map" &&
-            "max-lg:h-[calc(100dvh-4.0625rem-var(--bottom-nav-height,0px))] max-lg:flex-none max-lg:overflow-hidden max-lg:py-4",
+          "mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10 lg:min-h-0 lg:overflow-hidden lg:px-8 lg:py-6",
+          view === "map" && "max-lg:min-h-0 max-lg:overflow-hidden max-lg:py-4",
         )}
       >
         <div

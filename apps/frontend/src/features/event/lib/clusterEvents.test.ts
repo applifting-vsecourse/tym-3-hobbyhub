@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { clusterEvents, isInBounds, worldPixel } from "@/features/event/lib/clusterEvents"
+import {
+  clusterEvents,
+  eventsInBounds,
+  isInBounds,
+  worldPixel,
+} from "@/features/event/lib/clusterEvents"
 
 // One degree is one pixel, so the cells are easy to count by hand.
 const project = ({ latitude, longitude }: { latitude: number; longitude: number }) => ({
@@ -82,5 +87,37 @@ describe("isInBounds", () => {
 
   it("leaves out events with no place", () => {
     expect(isInBounds({ latitude: null, longitude: null }, bounds)).toBe(false)
+  })
+})
+
+describe("eventsInBounds", () => {
+  const bounds = { west: 14, south: 50, east: 15, north: 51 }
+  const events = [
+    { id: "in", latitude: 50.5, longitude: 14.5 },
+    { id: "out", latitude: 52, longitude: 14.5 },
+    { id: "online", latitude: null, longitude: null },
+  ]
+
+  it("keeps the events inside the area, in order, and drops those with no place", () => {
+    expect(eventsInBounds(events, bounds)?.map((event) => event.id)).toEqual(["in"])
+  })
+
+  it("is null with no area, so the list keeps its own page", () => {
+    expect(eventsInBounds(events, null)).toBeNull()
+  })
+})
+
+describe("clusterEvents with many events", () => {
+  it("groups hundreds of events at once without slowing down", () => {
+    // 500 events on a 25 x 20 grid, 3 px apart: they all end up in one or a few groups.
+    const many = Array.from({ length: 500 }, (_, index) =>
+      at(`e${index}`, Math.floor(index / 25) * 3, (index % 25) * 3),
+    )
+    const start = performance.now()
+
+    const groups = clusterEvents(many, project, { width: 48, height: 44 })
+
+    expect(performance.now() - start).toBeLessThan(500)
+    expect(groups.reduce((sum, group) => sum + group.events.length, 0)).toBe(500)
   })
 })
