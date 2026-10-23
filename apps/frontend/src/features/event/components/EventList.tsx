@@ -132,6 +132,9 @@ export function EventList({
                     taken={event.takenCount}
                     min={event.minParticipants}
                     max={event.maxParticipants}
+                    // The title next to it says what the photo shows.
+                    photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
+                    activity={event.activity.icon}
                   />
                 </Link>
               </li>
