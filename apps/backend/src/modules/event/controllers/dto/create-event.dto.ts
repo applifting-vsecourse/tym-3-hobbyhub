@@ -22,6 +22,8 @@ import {
   IsDefined,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsNotEmptyObject,
   IsNumber,
@@ -29,6 +31,7 @@ import {
   IsString,
   Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -80,6 +83,28 @@ export class CreateEventLocationDto {
   @IsString()
   @CharLength(0, EVENT_PLACE_NAME_MAX_LENGTH)
   placeName?: string;
+
+  @ApiPropertyOptional({
+    example: 50.1297,
+    minimum: -90,
+    maximum: 90,
+    description:
+      'Position of the address, from the address suggestions; sent with `longitude` or not at all',
+  })
+  @ValidateIf(
+    (location: CreateEventLocationDto) => location.longitude !== undefined,
+  )
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: 14.4421, minimum: -180, maximum: 180 })
+  @ValidateIf(
+    (location: CreateEventLocationDto) => location.latitude !== undefined,
+  )
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
 }
 
 export class CreateEventDto {

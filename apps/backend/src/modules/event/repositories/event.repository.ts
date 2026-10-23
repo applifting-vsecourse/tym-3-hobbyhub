@@ -16,6 +16,7 @@ import {
   EventListPage,
   EventLocation,
   foldForSearch,
+  GeoPoint,
   MIN_STATS_PARTICIPANTS,
   occupancyOf,
   Page,
@@ -46,11 +47,9 @@ const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
 ];
 
 // TODO(F-02.1b #91): this is an exact "contains" match, so "Brno" misses a
-// typo like "Brnoo" and knows nothing about places near Brno. Similarity search
-// (e.g. pg_trgm `similarity`, ranked by closeness) belongs here, and so does
-// the distance from a chosen point once events have coordinates: geocode the
-// address on save (F-12.3), then filter and sort by radius, e.g. with PostGIS.
-// The columns `locationLatitude` and `locationLongitude` exist but are empty.
+// typo like "Brnoo". Similarity search (e.g. pg_trgm `similarity`, ranked by
+// closeness) belongs here, and so does a radius filter once every event has
+// coordinates (geocoding on save, F-12.3).
 // The database folds like `foldForSearch` does, but only for the diacritics of
 // Czech and Slovak (no `unaccent` extension needed); other accents, such as
 // "è", are not matched.
@@ -74,6 +73,18 @@ const PLACE_COLUMNS = [
   Prisma.sql`e."locationCity"`,
   Prisma.sql`e."locationDistrict"`,
 ];
+
+// Great-circle distance in km (haversine) from `near` to the event, with the
+// alias `e`. Null for a private venue, which is never located, and for an event
+// without coordinates; those sort last.
+const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
+  Prisma.sql`CASE WHEN e."venueType" = 'PUBLIC_VENUE'
+      AND e."locationLatitude" IS NOT NULL AND e."locationLongitude" IS NOT NULL
+    THEN 2 * 6371 * asin(sqrt(least(1, 
+      power(sin(radians(e."locationLatitude"::float8 - ${latitude}::float8) / 2), 2)
+      + cos(radians(${latitude}::float8)) * cos(radians(e."locationLatitude"::float8))
+        * power(sin(radians(e."locationLongitude"::float8 - ${longitude}::float8) / 2), 2))))
+    END`;
 
 // The condition of the public event list, with the alias `e` for the event and
 // `a` for its activity. Every word of a text has to match somewhere, so
@@ -132,6 +143,7 @@ export const mapPrismaEventToListItem = (
     level: PrismaLevel | null;
     _count: { participations: number };
   },
+  distanceKm: number | null = null,
 ): EventListItem => ({
   id: event.id,
   title: event.title,
@@ -144,6 +156,16 @@ export const mapPrismaEventToListItem = (
   district: event.locationDistrict,
   city: event.locationCity,
   level: event.level?.name ?? null,
+  // A private venue is someone's home: it is never put on a map.
+  latitude:
+    event.venueType === 'PUBLIC_VENUE'
+      ? (event.locationLatitude?.toNumber() ?? null)
+      : null,
+  longitude:
+    event.venueType === 'PUBLIC_VENUE'
+      ? (event.locationLongitude?.toNumber() ?? null)
+      : null,
+  distanceKm,
   activity: {
     id: event.activity.id,
     name: event.activity.name,
@@ -169,6 +191,8 @@ const mapLocation = (event: PrismaEvent): EventLocation | null =>
         postalCode: event.locationPostalCode,
         country: event.locationCountry,
         placeName: event.locationPlaceName,
+        latitude: event.locationLatitude?.toNumber() ?? null,
+        longitude: event.locationLongitude?.toNumber() ?? null,
       }
     : null;
 
@@ -233,6 +257,8 @@ export class EventRepository {
         locationPostalCode: data.location.postalCode,
         locationCountry: data.location.country,
         locationPlaceName: data.location.placeName ?? null,
+        locationLatitude: data.location.latitude ?? null,
+        locationLongitude: data.location.longitude ?? null,
         activity: { connect: { id: data.activityId } },
         organizer: { connect: { id: data.organizerId } },
       },
@@ -262,12 +288,18 @@ export class EventRepository {
     filter: EventListFilter = { activityIds: [] },
   ): Promise<EventListPage> {
     const where = listCondition(now, filter);
+    const distance = filter.near
+      ? distanceKmSql(filter.near)
+      : Prisma.sql`NULL::float8`;
+    const orderBy = filter.near
+      ? Prisma.sql`"distanceKm" ASC NULLS LAST, e."startAt" ASC, e."id" ASC`
+      : Prisma.sql`e."startAt" ASC, e."id" ASC`;
     const [pageRows, totalRows] = await Promise.all([
-      this.prisma.$queryRaw<{ id: string }[]>`
-        SELECT e."id" FROM "event" e
+      this.prisma.$queryRaw<{ id: string; distanceKm: number | null }[]>`
+        SELECT e."id", ${distance} AS "distanceKm" FROM "event" e
         JOIN "activity" a ON a."id" = e."activityId"
         WHERE ${where}
-        ORDER BY e."startAt" ASC, e."id" ASC
+        ORDER BY ${orderBy}
         LIMIT ${limit} OFFSET ${offset}`,
       this.prisma.$queryRaw<{ total: bigint }[]>`
         SELECT count(*) AS "total" FROM "event" e
@@ -275,6 +307,7 @@ export class EventRepository {
         WHERE ${where}`,
     ]);
     const ids = pageRows.map((row) => row.id);
+    const distances = new Map(pageRows.map((row) => [row.id, row.distanceKm]));
     const events = await this.prisma.event.findMany({
       where: { id: { in: ids } },
       include: listInclude,
@@ -283,7 +316,9 @@ export class EventRepository {
     return {
       items: ids.flatMap((id) => {
         const event = byId.get(id);
-        return event ? [mapPrismaEventToListItem(event)] : [];
+        return event
+          ? [mapPrismaEventToListItem(event, distances.get(id) ?? null)]
+          : [];
       }),
       total: Number(totalRows[0]?.total ?? 0),
     };

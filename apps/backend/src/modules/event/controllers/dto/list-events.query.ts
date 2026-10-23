@@ -11,12 +11,15 @@ import {
   ArrayMaxSize,
   IsArray,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsOptional,
   IsString,
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class ListEventsQuery {
@@ -76,4 +79,25 @@ export class ListEventsQuery {
   @IsString()
   @MaxLength(EVENT_LIST_LOCATION_MAX_LENGTH)
   location?: string;
+
+  @ApiPropertyOptional({
+    minimum: -90,
+    maximum: 90,
+    description:
+      'Latitude of the visitor; with `lng` sorts by distance, nearest first',
+  })
+  @ValidateIf((query: ListEventsQuery) => query.lng !== undefined)
+  @Type(() => Number)
+  @IsLatitude()
+  lat?: number;
+
+  @ApiPropertyOptional({
+    minimum: -180,
+    maximum: 180,
+    description: 'Longitude of the visitor; always sent together with `lat`',
+  })
+  @ValidateIf((query: ListEventsQuery) => query.lat !== undefined)
+  @Type(() => Number)
+  @IsLongitude()
+  lng?: number;
 }

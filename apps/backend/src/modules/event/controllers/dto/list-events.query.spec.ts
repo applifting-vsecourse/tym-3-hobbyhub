@@ -47,4 +47,34 @@ describe('ListEventsQuery', () => {
       BadRequestException,
     );
   });
+
+  it('takes a position given as numbers in the query string', async () => {
+    const query = await validate({ lat: '50.08', lng: '14.42' });
+    expect(query.lat).toBe(50.08);
+    expect(query.lng).toBe(14.42);
+  });
+
+  it('works without a position', async () => {
+    const query = await validate({});
+    expect(query.lat).toBeUndefined();
+    expect(query.lng).toBeUndefined();
+  });
+
+  it('refuses a latitude without a longitude, and the other way round', async () => {
+    await expect(validate({ lat: '50' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(validate({ lng: '14' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('refuses a position outside the globe', async () => {
+    await expect(validate({ lat: '91', lng: '14' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(validate({ lat: '50', lng: '181' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
 });

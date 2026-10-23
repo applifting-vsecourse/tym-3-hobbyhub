@@ -42,6 +42,24 @@ export class EventListItemResponseDto {
   @ApiProperty({ type: String, nullable: true, example: 'Pokročilí' })
   level!: string | null;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'Only for public venues that have coordinates; private ones are not located',
+  })
+  latitude!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  longitude!: number | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Km from the visitor (lat and lng sent); otherwise null',
+  })
+  distanceKm!: number | null;
+
   @ApiProperty({ type: ActivityResponseDto })
   activity!: ActivityResponseDto;
 
@@ -68,6 +86,9 @@ export class EventListItemResponseDto {
       district: event.district,
       city: event.city,
       level: event.level,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      distanceKm: event.distanceKm,
       activity: ActivityResponseDto.fromDomain(event.activity),
       minParticipants: event.minParticipants,
       maxParticipants: event.maxParticipants,

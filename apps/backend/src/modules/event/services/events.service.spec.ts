@@ -30,6 +30,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
     postalCode: '18200',
     country: 'Česko',
     placeName: 'ZŠ Kobylisy',
+    latitude: 50.1297,
+    longitude: 14.4421,
   },
   activity: {
     id: 'a1',
