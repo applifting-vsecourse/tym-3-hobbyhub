@@ -183,13 +183,15 @@ export function DomainSections() {
               subtitle="Hala ZŠ Dolní, pokročilí"
               taken={7}
               min={10}
+              photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
             />
             <ScheduleRow
               time="20:30"
-              title="Volejbal pod lampami"
+              title="Volejbal pod lampami (bez fotky)"
               subtitle="Stromovka, mírně pokročilí"
               taken={5}
               min={5}
+              activity="volejbal"
             />
           </div>
         </Example>
