@@ -113,7 +113,6 @@
       "equipment": "Equipment",
       "hasAccount": "Already have an account?",
       "join": "Take a seat",
-      "joinSoon": "Requests to join are not available yet.",
       "linkLabel": "Link",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
@@ -130,7 +129,9 @@
         "full": "Full",
         "fullText": "This event is full, you cannot ask to join.",
         "notHeld": "Not held",
-        "notHeldText": "This event did not take place, you cannot ask to join."
+        "notHeldText": "This event did not take place, you cannot ask to join.",
+        "started": "In progress",
+        "startedText": "This event has already started, you cannot ask to join."
       },
       "stats": {
         "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
@@ -502,6 +503,44 @@
   "myEvents": {
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
+  },
+  "participationRequests": {
+    "approved": {
+      "description": "The organizer approved your participation."
+    },
+    "form": {
+      "counter": "{{length}} / {{max}}",
+      "description": "The organizer approves or rejects your request. The seat is yours once approved.",
+      "messageLabel": "Message to the organizer (optional)",
+      "messagePlaceholder": "E.g. I have played for three years and will bring my own ball.",
+      "messageTooLong": "The message can have at most {{count}} characters.",
+      "sendFailed": "Your request could not be sent. Please try again.",
+      "sent": "Request sent",
+      "submit": "Send request",
+      "title": "Request to join"
+    },
+    "pending": {
+      "confirmKeep": "Keep it",
+      "confirmText": "The organizer will no longer see it. You can ask again later.",
+      "confirmTitle": "Withdraw your request to join?",
+      "confirmWithdraw": "Withdraw request",
+      "description": "The organizer has not decided yet. While it is pending, you can withdraw it.",
+      "withdraw": "Withdraw request",
+      "withdrawFailed": "Your request could not be withdrawn. Please try again.",
+      "withdrawn": "Request withdrawn"
+    },
+    "refused": {
+      "ALREADY_REQUESTED": "You have already asked to join this event.",
+      "EVENT_CANCELLED": "This event was cancelled, you can no longer ask to join.",
+      "EVENT_FULL": "This event is full, you cannot ask to join.",
+      "EVENT_STARTED": "This event has already started, you cannot ask to join.",
+      "HAS_SEAT": "You already have a seat at this event.",
+      "IS_ORGANIZER": "You are organizing this event.",
+      "REJECTED_BEFORE": "The organizer rejected your request, you cannot send a new one."
+    },
+    "rejected": {
+      "description": "The organizer rejected your request, you cannot send a new one for this event."
+    }
   },
   "profile": {
     "placeholder": "The profile page is on its way.",

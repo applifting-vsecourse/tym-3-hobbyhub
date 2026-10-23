@@ -122,6 +122,12 @@ describe("EventDetail", () => {
       "Akce se neuskutečnila, o účast se nedá žádat.",
     ],
     [
+      "an event that has started",
+      { startAt: new Date(2026, 9, 22, 7, 30) },
+      "Probíhá",
+      "Akce už začala, o účast se nedá žádat.",
+    ],
+    [
       "an event that ended but was not closed yet",
       { endAt: new Date(2026, 9, 21, 20, 0) },
       "Proběhlo",
@@ -132,6 +138,21 @@ describe("EventDetail", () => {
 
     expect(screen.getByText(badge)).toBeInTheDocument()
     expect(screen.getByText(text)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
+  })
+
+  it("shows the person's own request instead of the seat, even on a full event", () => {
+    render(
+      <EventDetail
+        event={event({ takenCount: 10 })}
+        activityLabel="Florbal"
+        joinAction={<button type="button">Obsadit místo</button>}
+        ownRequest={<p>Moje žádost čeká</p>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("Moje žádost čeká")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
   })
 

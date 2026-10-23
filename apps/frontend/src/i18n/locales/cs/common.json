@@ -113,7 +113,6 @@
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
       "join": "Obsadit místo",
-      "joinSoon": "Žádost o účast zatím nejde odeslat.",
       "linkLabel": "Odkaz",
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
@@ -130,7 +129,9 @@
         "full": "Naplněno",
         "fullText": "Akce je plná, o účast se nedá žádat.",
         "notHeld": "Neuskutečnilo se",
-        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat."
+        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat.",
+        "started": "Probíhá",
+        "startedText": "Akce už začala, o účast se nedá žádat."
       },
       "stats": {
         "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
@@ -511,6 +512,44 @@
   "myEvents": {
     "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
     "title": "Moje akce"
+  },
+  "participationRequests": {
+    "approved": {
+      "description": "Organizátor tvou účast schválil."
+    },
+    "form": {
+      "counter": "{{length}} / {{max}}",
+      "description": "Organizátor tvou žádost schválí, nebo zamítne. Místo ti patří až po schválení.",
+      "messageLabel": "Zpráva organizátorovi (nepovinné)",
+      "messagePlaceholder": "Např. hraju třetím rokem, vezmu si vlastní míč.",
+      "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+      "sendFailed": "Žádost se nepodařilo odeslat. Zkus to znovu.",
+      "sent": "Žádost odeslána",
+      "submit": "Odeslat žádost",
+      "title": "Žádost o účast"
+    },
+    "pending": {
+      "confirmKeep": "Ponechat",
+      "confirmText": "Organizátor ji přestane vidět. Později můžeš požádat znovu.",
+      "confirmTitle": "Zrušit žádost o účast?",
+      "confirmWithdraw": "Zrušit žádost",
+      "description": "Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
+      "withdraw": "Zrušit žádost",
+      "withdrawFailed": "Žádost se nepodařilo zrušit. Zkus to znovu.",
+      "withdrawn": "Žádost zrušena"
+    },
+    "refused": {
+      "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
+      "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
+      "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",
+      "EVENT_STARTED": "Akce už začala, o účast se nedá žádat.",
+      "HAS_SEAT": "Na akci už máš místo.",
+      "IS_ORGANIZER": "Tuto akci pořádáš.",
+      "REJECTED_BEFORE": "Organizátor tvou žádost zamítl, novou poslat nemůžeš."
+    },
+    "rejected": {
+      "description": "Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."
+    }
   },
   "profile": {
     "placeholder": "Stránku profilu připravujeme.",
