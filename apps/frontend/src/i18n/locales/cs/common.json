@@ -118,6 +118,7 @@
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
+      "organizedByGroup": "Pořádá skupina",
       "organizer": "Pořádá {{name}}",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
@@ -266,11 +267,37 @@
   "groups": {
     "back": "Zpět",
     "detail": {
+      "backToEvents": "Zpět na akce",
       "loadError": "Skupinu se nepodařilo načíst",
       "loading": "Načítáme skupinu…",
       "members_few": "{{count}} členové",
       "members_one": "{{count}} člen",
-      "members_other": "{{count}} členů"
+      "members_other": "{{count}} členů",
+      "membership": {
+        "cancel": "Odvolat žádost",
+        "countdown_few": "Za {{count}} sekundy budete členem skupiny.",
+        "countdown_one": "Za {{count}} sekundu budete členem skupiny.",
+        "countdown_other": "Za {{count}} sekund budete členem skupiny.",
+        "hasAccount": "Už máte účet?",
+        "isMember": "Jste členem",
+        "leave": "Odejít ze skupiny",
+        "leaveConfirm": "Odejít",
+        "leaveFailed": "Ze skupiny se nepodařilo odejít. Zkuste to prosím znovu.",
+        "leaveStay": "Zůstat ve skupině",
+        "leaveText": "Přestanete být členem skupiny {{name}}. Znovu se můžete přidat pomocí žádosti o členství.",
+        "leaveTitle": "Opravdu chcete odejít ze skupiny?",
+        "request": "Požádat o členství",
+        "requestNote": "Žádost se zatím vyřizuje automaticky. Do té doby ji můžete odvolat.",
+        "sent": "Žádost odeslána",
+        "signIn": "Přihlásit se",
+        "title": "Členství"
+      },
+      "title": "Detail skupiny",
+      "upcoming": {
+        "inProgress": "Na této funkci právě pracujeme. Brzy tu uvidíte, co skupina plánuje.",
+        "title": "Nadcházející akce"
+      },
+      "visibilityPublic": "Veřejná skupina"
     },
     "fields": {
       "activity": "Aktivita",

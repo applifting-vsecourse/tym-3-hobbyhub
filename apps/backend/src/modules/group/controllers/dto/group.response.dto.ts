@@ -1,5 +1,5 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
-import { Group } from '@/modules/group/domain/group';
+import { Group, GroupRole } from '@/modules/group/domain/group';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GroupResponseDto {
@@ -47,4 +47,12 @@ export class GroupResponseDto {
       memberCount: group.memberCount,
     };
   }
+}
+
+export class GroupMembershipResponseDto {
+  @ApiProperty()
+  isMember!: boolean;
+
+  @ApiProperty({ enum: ['OWNER', 'ADMIN', 'MEMBER'], nullable: true })
+  role!: GroupRole | null;
 }

@@ -4,7 +4,11 @@ import {
   Activity as PrismaActivity,
   Group as PrismaGroup,
 } from '@/generated/prisma/client';
-import { CreateGroupData, Group } from '@/modules/group/domain/group';
+import {
+  CreateGroupData,
+  GroupRole as DomainGroupRole,
+  Group,
+} from '@/modules/group/domain/group';
 import { Injectable } from '@nestjs/common';
 
 const include = {
@@ -66,5 +70,22 @@ export class GroupRepository {
       include,
     });
     return group ? mapPrismaGroupToDomain(group) : null;
+  }
+
+  async getMemberRole(
+    groupId: string,
+    userId: string,
+  ): Promise<DomainGroupRole | null> {
+    const membership = await this.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+      select: { role: true },
+    });
+    return membership?.role ?? null;
+  }
+
+  async removeMember(groupId: string, userId: string): Promise<void> {
+    await this.prisma.groupMembership.deleteMany({
+      where: { groupId, userId },
+    });
   }
 }

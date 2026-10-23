@@ -298,6 +298,9 @@ export class EventRepository {
         activity: true,
         level: true,
         organizer: { select: { name: true } },
+        group: {
+          select: { id: true, name: true, visibility: true, status: true },
+        },
         participations: {
           where: { status: { in: LIST_TAKEN_STATUSES } },
           select: { user: { select: { birthDate: true, gender: true } } },
@@ -324,6 +327,11 @@ export class EventRepository {
       status: event.status as EventDetail['status'],
       approvalMode: event.approvalMode,
       organizerName: event.organizer.name,
+      // A private or cancelled group has no public page to link to.
+      group:
+        event.group?.visibility === 'PUBLIC' && event.group.status === 'ACTIVE'
+          ? { id: event.group.id, name: event.group.name }
+          : null,
       stats: computeParticipantStats(
         participants,
         event.startAt,

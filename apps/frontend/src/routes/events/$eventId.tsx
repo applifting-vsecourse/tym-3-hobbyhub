@@ -121,6 +121,20 @@ function EventDetailPage() {
             event={eventQuery.data}
             activityLabel={activityName(t, eventQuery.data.activity)}
             joinAction={joinAction}
+            groupLink={
+              eventQuery.data.group ? (
+                <p className="typo-small text-muted-foreground">
+                  {t("events.detail.organizedByGroup")}{" "}
+                  <Link
+                    to="/groups/$groupId"
+                    params={{ groupId: eventQuery.data.group.id }}
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    {eventQuery.data.group.name}
+                  </Link>
+                </p>
+              ) : null
+            }
           />
         )}
       </AppShell>
