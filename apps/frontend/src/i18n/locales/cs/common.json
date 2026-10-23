@@ -133,11 +133,13 @@
         "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat."
       },
       "stats": {
-        "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
-        "genderLabel": "Muži : ženy",
+        "coverage": "Věk a pohlaví známe u {{included}} z {{total}} přihlášených.",
+        "female": "Ženy",
         "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
+        "male": "Muži",
         "medianAgeLabel": "Medián věku",
-        "title": "Složení účastníků"
+        "title": "Složení účastníků",
+        "unknown": "Neuvedeno"
       },
       "title": "Detail akce"
     },
