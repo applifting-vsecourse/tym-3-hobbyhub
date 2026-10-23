@@ -133,11 +133,13 @@
         "notHeldText": "This event did not take place, you cannot ask to join."
       },
       "stats": {
-        "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
-        "genderLabel": "Men : women",
+        "coverage": "Age and gender are known for {{included}} of {{total}} people.",
+        "female": "Women",
         "hidden": "The mix shows once at least {{count}} people have joined.",
+        "male": "Men",
         "medianAgeLabel": "Median age",
-        "title": "Who is coming"
+        "title": "Who is coming",
+        "unknown": "Not stated"
       },
       "title": "Event detail"
     },
