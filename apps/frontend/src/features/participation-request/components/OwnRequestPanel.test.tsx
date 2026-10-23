@@ -35,6 +35,11 @@ describe("OwnRequestPanel", () => {
     renderPanel("pending", onChange)
 
     expect(screen.getByText("Čeká na schválení")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
+      ),
+    ).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Zrušit žádost" }))
     const dialog = await screen.findByRole("alertdialog", { name: "Zrušit žádost o účast?" })
     expect(withdrawRequest).not.toHaveBeenCalled()

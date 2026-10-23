@@ -46,6 +46,7 @@ const renderAction = (state: MyRequestState | undefined, onChange = vi.fn()) => 
     withProviders(
       <JoinRequestAction
         eventId="e1"
+        label="Požádat o účast"
         state={state}
         isLoading={false}
         onChange={onChange}
@@ -55,7 +56,7 @@ const renderAction = (state: MyRequestState | undefined, onChange = vi.fn()) => 
 }
 
 const openSheet = async () => {
-  await userEvent.click(screen.getByRole("button", { name: "Obsadit místo" }))
+  await userEvent.click(screen.getByRole("button", { name: "Požádat o účast" }))
   return screen.findByRole("dialog", { name: "Žádost o účast" })
 }
 
@@ -141,8 +142,8 @@ describe("JoinRequestAction", () => {
   it("explains a refusal next to an inactive button", async () => {
     await renderAction({ request: null, violations: ["EVENT_STARTED"] })
 
-    expect(screen.getByRole("button", { name: "Obsadit místo" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Obsadit místo" })).toHaveAccessibleDescription(
+    expect(screen.getByRole("button", { name: "Požádat o účast" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Požádat o účast" })).toHaveAccessibleDescription(
       "Akce už začala, o účast se nedá žádat.",
     )
   })
@@ -150,6 +151,6 @@ describe("JoinRequestAction", () => {
   it("lets the person try when their state could not be loaded", async () => {
     await renderAction(undefined)
 
-    expect(screen.getByRole("button", { name: "Obsadit místo" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Požádat o účast" })).toBeEnabled()
   })
 })

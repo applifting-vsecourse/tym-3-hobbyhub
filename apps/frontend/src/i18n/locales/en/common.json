@@ -118,6 +118,7 @@
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
       "organizer": "Organized by {{name}}",
+      "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
       "signIn": "Sign in",
@@ -524,7 +525,7 @@
       "confirmText": "The organizer will no longer see it. You can ask again later.",
       "confirmTitle": "Withdraw your request to join?",
       "confirmWithdraw": "Withdraw request",
-      "description": "The organizer has not decided yet. While it is pending, you can withdraw it.",
+      "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
       "withdraw": "Withdraw request",
       "withdrawFailed": "Your request could not be withdrawn. Please try again.",
       "withdrawn": "Request withdrawn"

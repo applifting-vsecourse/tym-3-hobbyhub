@@ -48,15 +48,23 @@ function EventDetailPage() {
 
   const ownView = myRequestQuery.data ? ownSeatView(myRequestQuery.data) : null
   const from = encodeRedirectUri(location)
+  // Asking is not taking: with manual approval the seat comes only once the
+  // organizer says yes.
+  const joinLabel = t(
+    eventQuery.data?.approvalMode === "AUTOMATIC"
+      ? "events.detail.join"
+      : "events.detail.requestToJoin",
+  )
   const joinAction = user ? (
     <JoinRequestAction
       eventId={eventId}
+      label={joinLabel}
       state={myRequestQuery.data}
       isLoading={myRequestQuery.isPending}
       onChange={refreshEvent}
     />
   ) : isSessionPending ? (
-    <Button disabled>{t("events.detail.join")}</Button>
+    <Button disabled>{joinLabel}</Button>
   ) : (
     <>
       <Button asChild>
@@ -64,7 +72,7 @@ function EventDetailPage() {
           to={ROUTES.signup}
           search={{ from }}
         >
-          {t("events.detail.join")}
+          {joinLabel}
         </Link>
       </Button>
       <p className="text-center typo-small text-accent-foreground">

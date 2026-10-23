@@ -9,6 +9,8 @@ import { refusalOf } from "@/features/participation-request/lib/joinPanel"
 
 type JoinRequestActionProps = {
   eventId: string
+  /** "Požádat o účast" when the organizer approves, "Obsadit místo" when the seat is taken at once. */
+  label: string
   /** Undefined while loading, or when it failed: then the server decides on send. */
   state: MyRequestState | undefined
   isLoading: boolean
@@ -17,13 +19,19 @@ type JoinRequestActionProps = {
 }
 
 /** The free seat's button for a signed-in person: ask to join, or why not. */
-export function JoinRequestAction({ eventId, state, isLoading, onChange }: JoinRequestActionProps) {
+export function JoinRequestAction({
+  eventId,
+  label,
+  state,
+  isLoading,
+  onChange,
+}: JoinRequestActionProps) {
   const { t } = useTranslation()
   const reasonId = useId()
   const refusal = state ? refusalOf(state.violations) : null
 
   if (isLoading) {
-    return <Button disabled>{t("events.detail.join")}</Button>
+    return <Button disabled>{label}</Button>
   }
 
   if (refusal) {
@@ -33,7 +41,7 @@ export function JoinRequestAction({ eventId, state, isLoading, onChange }: JoinR
           disabled
           aria-describedby={reasonId}
         >
-          {t("events.detail.join")}
+          {label}
         </Button>
         <p
           id={reasonId}
@@ -49,7 +57,7 @@ export function JoinRequestAction({ eventId, state, isLoading, onChange }: JoinR
     <RequestToJoinSheet
       eventId={eventId}
       onChange={onChange}
-      trigger={<Button>{t("events.detail.join")}</Button>}
+      trigger={<Button>{label}</Button>}
     />
   )
 }

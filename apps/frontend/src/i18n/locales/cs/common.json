@@ -118,6 +118,7 @@
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
       "organizer": "Pořádá {{name}}",
+      "requestToJoin": "Požádat o účast",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
       "signIn": "Přihlásit se",
@@ -533,7 +534,7 @@
       "confirmText": "Organizátor ji přestane vidět. Později můžeš požádat znovu.",
       "confirmTitle": "Zrušit žádost o účast?",
       "confirmWithdraw": "Zrušit žádost",
-      "description": "Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
+      "description": "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
       "withdraw": "Zrušit žádost",
       "withdrawFailed": "Žádost se nepodařilo zrušit. Zkus to znovu.",
       "withdrawn": "Žádost zrušena"
