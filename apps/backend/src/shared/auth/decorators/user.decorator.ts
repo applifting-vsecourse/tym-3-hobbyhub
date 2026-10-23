@@ -16,3 +16,20 @@ export const User = createParamDecorator(
     );
   },
 );
+
+// The signed-in user, or undefined for a visitor. Pair it with
+// `OptionalUserGuard`, which loads the session without requiring one.
+export const OptionalUser = createParamDecorator(
+  async (
+    data: unknown,
+    context: ExecutionContext,
+  ): Promise<Identity | undefined> => {
+    if (context.getType() === 'http') {
+      const request = context.switchToHttp().getRequest();
+      return request.session?.user;
+    }
+    throw new NotImplementedException(
+      `Cannot retrieve user from ${context.getType()} context`,
+    );
+  },
+);
