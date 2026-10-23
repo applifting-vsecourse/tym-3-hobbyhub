@@ -38,6 +38,15 @@ describe("useSignUp", () => {
     signUpEmail.mockResolvedValue({ data: {}, error: null })
   })
 
+  it("sends the verification link to a page of the app", async () => {
+    getSession.mockResolvedValue({ data: null, error: null })
+    await signUp(new QueryClient())
+
+    expect(signUpEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ callbackURL: `${window.location.origin}/events` }),
+    )
+  })
+
   it("refreshes the session that only the page loaders read", async () => {
     const queryClient = new QueryClient()
     // The sign-up page's loader reads the session; no component on it does.
