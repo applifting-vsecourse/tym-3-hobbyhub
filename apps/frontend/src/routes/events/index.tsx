@@ -134,8 +134,9 @@ function EventsPage() {
               onRetry: () => void activitiesQuery.refetch(),
             }}
             activityOptions={activities.map((item) => ({
-              value: item.id,
+              id: item.id,
               label: activityName(t, item),
+              icon: item.icon,
             }))}
           />
           {selectedActivities.length > 0 || filters.location ? (

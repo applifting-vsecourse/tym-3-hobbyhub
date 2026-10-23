@@ -1,7 +1,10 @@
 import { useId, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
-import { FilterChip } from "@/components/hobbyhub/FilterChip"
+import {
+  ActivityCombobox,
+  type ActivityComboboxOption,
+} from "@/components/hobbyhub/ActivityCombobox"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -10,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 export type EventFilters = {
-  /** Activity ids (or the demo keys below) of the pressed chips. */
+  /** Activity ids (or the demo keys below) chosen in the combobox. */
   activities: string[]
   when: "week" | "weekend" | "date" | null
   location: string
@@ -23,7 +26,6 @@ const WHEN_OPTIONS = ["week", "weekend", "date"] as const
 /** The longest text the location field takes; the server refuses more. */
 export const FILTER_TEXT_MAX_LENGTH = 100
 
-export type FilterActivityOption = { value: string; label: string }
 export type FiltersSheetField = "activity" | "when" | "location"
 
 const DEMO_ACTIVITY_KEYS = ["florbal", "deskove-hry", "volejbal", "tenis"] as const
@@ -40,9 +42,9 @@ type FiltersSheetProps = {
   onOpenChange: (open: boolean) => void
   value: EventFilters
   onApply: (filters: EventFilters) => void
-  /** Activities offered as chips; the most common ones by default. */
-  activityOptions?: FilterActivityOption[]
-  /** Loading and error of the activities request, so the panel can say why there are no chips. */
+  /** Activities offered in the combobox; a few sample ones by default. */
+  activityOptions?: ActivityComboboxOption[]
+  /** Loading and error of the activities request, so the panel can say why there is no combobox. */
   activitiesState?: FilterActivitiesState
   /** Which filters the panel shows. A page offers only the ones it applies. */
   fields?: FiltersSheetField[]
@@ -67,12 +69,18 @@ export function FiltersSheet({
   trigger,
 }: FiltersSheetProps) {
   const { t } = useTranslation()
-  const options =
-    activityOptions ??
-    DEMO_ACTIVITY_KEYS.map((key) => ({ value: key, label: t(`hobbyhub.activities.${key}`) }))
+  // Alphabetical, as in the event form: with dozens of activities the list is scanned by name.
+  const options = [
+    ...(activityOptions ??
+      DEMO_ACTIVITY_KEYS.map((key) => ({
+        id: key,
+        label: t(`hobbyhub.activities.${key}`),
+        icon: key,
+      }))),
+  ].sort((a, b) => a.label.localeCompare(b.label))
   const [draft, setDraft] = useState(value)
   const locationId = useId()
-  const activityLabelId = useId()
+  const activityId = useId()
   const whenLabelId = useId()
 
   // Every opening starts from the filters that are actually applied, whether
@@ -82,14 +90,6 @@ export function FiltersSheet({
     setIsPreviouslyOpen(isOpen)
     if (isOpen) setDraft(value)
   }
-
-  const toggleActivity = (activity: string, isPressed: boolean) =>
-    setDraft((current) => ({
-      ...current,
-      activities: isPressed
-        ? [...current.activities, activity]
-        : current.activities.filter((item) => item !== activity),
-    }))
 
   const resultLabel = countResults
     ? t("hobbyhub.filters.results", { count: countResults(draft) })
@@ -125,13 +125,8 @@ export function FiltersSheet({
     >
       <div className="flex flex-col gap-3">
         {fields.includes("activity") ? (
-          <>
-            <p
-              id={activityLabelId}
-              className="typo-label-lg text-foreground"
-            >
-              {t("hobbyhub.filters.activity")}
-            </p>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={activityId}>{t("hobbyhub.filters.activity")}</Label>
             {activitiesState?.isLoading ? (
               <p
                 role="status"
@@ -157,23 +152,16 @@ export function FiltersSheet({
                 {t("hobbyhub.filters.activitiesEmpty")}
               </p>
             ) : (
-              <div
-                role="group"
-                aria-labelledby={activityLabelId}
-                className="flex flex-wrap gap-2"
-              >
-                {options.map(({ value: activity, label }) => (
-                  <FilterChip
-                    key={activity}
-                    pressed={draft.activities.includes(activity)}
-                    onPressedChange={(isPressed) => toggleActivity(activity, isPressed)}
-                  >
-                    {label}
-                  </FilterChip>
-                ))}
-              </div>
+              <ActivityCombobox
+                id={activityId}
+                isMultiple
+                options={options}
+                value={draft.activities}
+                onValueChange={(activities) => setDraft((current) => ({ ...current, activities }))}
+                placeholder={t("hobbyhub.filters.activityPlaceholder")}
+              />
             )}
-          </>
+          </div>
         ) : null}
 
         {fields.includes("when") ? (

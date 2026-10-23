@@ -67,3 +67,40 @@ describe("ActivityCombobox", () => {
     expect(screen.queryByRole("option", { name: "Volejbal" })).not.toBeInTheDocument()
   })
 })
+
+function MultipleHarness() {
+  const [value, setValue] = useState<string[]>([])
+  return (
+    <ActivityCombobox
+      aria-label="Aktivity"
+      isMultiple
+      options={OPTIONS}
+      value={value}
+      onValueChange={setValue}
+      placeholder="Všechny aktivity"
+    />
+  )
+}
+
+describe("ActivityCombobox isMultiple", () => {
+  it("stays open while picking several, and a second pick removes one", async () => {
+    const user = userEvent.setup()
+    render(<MultipleHarness />)
+    const combobox = screen.getByRole("combobox", { name: "Aktivity" })
+
+    await user.click(combobox)
+    await user.click(await screen.findByRole("option", { name: "Florbal" }))
+    await user.click(screen.getByRole("option", { name: "Volejbal" }))
+
+    expect(screen.getByRole("option", { name: "Florbal" })).toHaveAttribute("aria-checked", "true")
+    expect(screen.getByRole("option", { name: "Šachy" })).toHaveAttribute("aria-checked", "false")
+    expect(combobox).toHaveTextContent("Florbal, Volejbal")
+
+    await user.click(screen.getByRole("option", { name: "Florbal" }))
+    expect(combobox).toHaveTextContent("Volejbal")
+    expect(combobox).not.toHaveTextContent("Florbal")
+
+    await user.click(screen.getByRole("option", { name: "Volejbal" }))
+    expect(combobox).toHaveTextContent("Všechny aktivity")
+  })
+})

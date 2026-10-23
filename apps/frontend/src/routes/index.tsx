@@ -89,8 +89,9 @@ function LandingPage() {
             onRetry: () => void activitiesQuery.refetch(),
           }}
           activityOptions={activities.map((item) => ({
-            value: item.id,
+            id: item.id,
             label: activityName(t, item),
+            icon: item.icon,
           }))}
         />
         <div className="lg:hidden">{searchField}</div>

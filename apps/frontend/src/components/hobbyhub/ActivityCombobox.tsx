@@ -28,20 +28,32 @@ const matches = (value: string, search: string) => (fold(value).includes(fold(se
 
 type ActivityComboboxProps = Omit<ComponentProps<"button">, "value" | "onChange"> & {
   options: ActivityComboboxOption[]
-  /** Id of the chosen option, or "" for none. */
-  value: string
-  onValueChange: (id: string) => void
   /** Shown on the trigger while nothing is chosen. */
   placeholder: string
-}
+} & (
+    | {
+        isMultiple?: false
+        /** Id of the chosen option, or "" for none. */
+        value: string
+        onValueChange: (id: string) => void
+      }
+    | {
+        /** Several may be chosen: the list stays open and a second pick removes one. */
+        isMultiple: true
+        /** Ids of the chosen options; [] for none. */
+        value: string[]
+        onValueChange: (ids: string[]) => void
+      }
+  )
 
 /**
  * Výběr aktivity — a combobox over the activity lookup: the trigger looks like
  * a select, the list filters as you type. Filtering is client-side; the whole
- * lookup is already loaded.
+ * lookup is already loaded. Forms pick one activity, filters (`isMultiple`) any.
  */
 export function ActivityCombobox({
   options,
+  isMultiple,
   value,
   onValueChange,
   placeholder,
@@ -51,10 +63,24 @@ export function ActivityCombobox({
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const listId = useId()
-  const selected = options.find((option) => option.id === value)
+  const isChosen = (id: string) => (isMultiple ? value.includes(id) : value === id)
+  const selected = options.filter((option) => isChosen(option.id))
+  const [onlySelected] = selected.length === 1 ? selected : []
+
+  const choose = (id: string) => {
+    if (isMultiple) {
+      onValueChange(isChosen(id) ? value.filter((chosen) => chosen !== id) : [...value, id])
+      return
+    }
+    onValueChange(id)
+    setIsOpen(false)
+  }
 
   return (
+    // Modal, so the list scrolls inside a dialog or drawer: their scroll lock
+    // swallows wheel and touch events in a non-modal popover's portal.
     <Popover
+      modal
       open={isOpen}
       onOpenChange={setIsOpen}
     >
@@ -72,17 +98,21 @@ export function ActivityCombobox({
         >
           <span
             className={cn(
-              "flex min-w-0 items-center gap-2 truncate",
-              !selected && "text-muted-foreground",
+              "flex min-w-0 items-center gap-2",
+              selected.length === 0 && "text-muted-foreground",
             )}
           >
-            {selected && isActivityKey(selected.icon) ? (
+            {onlySelected && isActivityKey(onlySelected.icon) ? (
               <ActivityIcon
-                activity={selected.icon}
+                activity={onlySelected.icon}
                 className="size-5 shrink-0"
               />
             ) : null}
-            {selected?.label ?? placeholder}
+            <span className="truncate">
+              {selected.length > 0
+                ? selected.map((option) => option.label).join(", ")
+                : placeholder}
+            </span>
           </span>
           <ChevronDownIcon
             aria-hidden
@@ -103,10 +133,9 @@ export function ActivityCombobox({
                 <CommandItem
                   key={option.id}
                   value={option.label}
-                  onSelect={() => {
-                    onValueChange(option.id)
-                    setIsOpen(false)
-                  }}
+                  // cmdk uses `aria-selected` for the highlighted row; the chosen ones carry `aria-checked`.
+                  aria-checked={isChosen(option.id)}
+                  onSelect={() => choose(option.id)}
                 >
                   {isActivityKey(option.icon) ? (
                     <ActivityIcon
@@ -119,7 +148,7 @@ export function ActivityCombobox({
                     aria-hidden
                     className={cn(
                       "ml-auto size-4",
-                      option.id === value ? "opacity-100" : "opacity-0",
+                      isChosen(option.id) ? "opacity-100" : "opacity-0",
                     )}
                   />
                 </CommandItem>

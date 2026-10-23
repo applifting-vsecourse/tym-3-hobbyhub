@@ -28,7 +28,9 @@ describe("FiltersSheet", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "Volejbal" }))
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+    await user.click(await screen.findByRole("option", { name: "Volejbal" }))
+    await user.keyboard("{Escape}")
     await user.click(screen.getByRole("radio", { name: "Víkend" }))
     expect(onApply).not.toHaveBeenCalled()
 
@@ -52,17 +54,30 @@ describe("FiltersSheet", () => {
         onApply={onApply}
         fields={["activity"]}
         activityOptions={[
-          { value: "a1", label: "Florbal" },
-          { value: "a2", label: "Šachy" },
+          { id: "a3", label: "Volejbal", icon: "volejbal" },
+          { id: "a1", label: "Florbal", icon: "florbal" },
+          { id: "a2", label: "Šachy", icon: "sachy" },
         ]}
       />,
     )
 
     expect(screen.queryByText("Kdy")).not.toBeInTheDocument()
     expect(screen.queryByLabelText("Lokalita")).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Florbal" })).toHaveAttribute("aria-pressed", "true")
+    const combobox = screen.getByRole("combobox", { name: "Aktivita" })
+    expect(combobox).toHaveTextContent("Florbal")
 
-    await user.click(screen.getByRole("button", { name: "Šachy" }))
+    await user.click(combobox)
+    expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual([
+      "Florbal",
+      "Šachy",
+      "Volejbal",
+    ])
+    expect(screen.getByRole("option", { name: "Florbal" })).toHaveAttribute("aria-checked", "true")
+
+    await user.click(screen.getByRole("option", { name: "Šachy" }))
+    await user.keyboard("{Escape}")
+    expect(combobox).toHaveTextContent("Florbal, Šachy")
+
     await user.click(screen.getByRole("button", { name: "Zobrazit výsledky" }))
     expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ activities: ["a1", "a2"] }))
   })
