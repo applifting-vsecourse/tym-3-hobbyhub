@@ -50,7 +50,8 @@ const median = (values: number[]): number => {
  * Median age and gender split of the participants, or null when fewer than the
  * minimum of them gave both a birth date and a gender. Both figures appear
  * together and rest on the same people: showing them on different thresholds
- * would let the change between two views single someone out.
+ * would let the change between two views single someone out. Everyone else
+ * among the taken seats counts as unknown, so the split adds up to the seats.
  */
 export const computeParticipantStats = (
   participants: StatsParticipant[],
@@ -71,6 +72,7 @@ export const computeParticipantStats = (
     gender: {
       male: complete.filter(({ gender }) => gender === 'MALE').length,
       female: complete.filter(({ gender }) => gender === 'FEMALE').length,
+      unknown: total - complete.length,
     },
   };
 };
