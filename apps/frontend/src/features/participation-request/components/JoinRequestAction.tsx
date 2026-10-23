@@ -4,28 +4,20 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 
 import type { MyRequestState } from "@/features/participation-request/api/participationRequestSchemas"
-import { RequestToJoinSheet } from "@/features/participation-request/components/RequestToJoinSheet"
 import { refusalOf } from "@/features/participation-request/lib/joinPanel"
 
 type JoinRequestActionProps = {
-  eventId: string
   /** "Požádat o účast" when the organizer approves, "Obsadit místo" when the seat is taken at once. */
   label: string
   /** Undefined while loading, or when it failed: then the server decides on send. */
   state: MyRequestState | undefined
   isLoading: boolean
-  /** Refreshes the page around the request once it is sent or refused. */
-  onChange?: () => Promise<unknown>
+  /** Opens the request sheet, which the page owns. */
+  onRequest: () => void
 }
 
 /** The free seat's button for a signed-in person: ask to join, or why not. */
-export function JoinRequestAction({
-  eventId,
-  label,
-  state,
-  isLoading,
-  onChange,
-}: JoinRequestActionProps) {
+export function JoinRequestAction({ label, state, isLoading, onRequest }: JoinRequestActionProps) {
   const { t } = useTranslation()
   const reasonId = useId()
   const refusal = state ? refusalOf(state.violations) : null
@@ -53,11 +45,5 @@ export function JoinRequestAction({
     )
   }
 
-  return (
-    <RequestToJoinSheet
-      eventId={eventId}
-      onChange={onChange}
-      trigger={<Button>{label}</Button>}
-    />
-  )
+  return <Button onClick={onRequest}>{label}</Button>
 }

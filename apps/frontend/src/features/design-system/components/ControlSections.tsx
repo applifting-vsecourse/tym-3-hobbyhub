@@ -11,17 +11,6 @@ import { PhotoPicker } from "@/components/hobbyhub/PhotoPicker"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -324,24 +313,6 @@ export function ControlSections() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          {/* A confirmation that only asks yes or no: it closes only through its buttons. */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline">Zrušit žádost…</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Zrušit žádost o účast?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Organizátor ji přestane vidět. Později můžeš požádat znovu.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Ponechat</AlertDialogCancel>
-                <AlertDialogAction variant="destructive">Zrušit žádost</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">

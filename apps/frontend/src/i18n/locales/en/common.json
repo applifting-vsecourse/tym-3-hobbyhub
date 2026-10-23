@@ -72,6 +72,7 @@
     }
   },
   "common": {
+    "close": "Close",
     "unsavedChanges": {
       "description": "You have changes that were not submitted. Leaving loses them.",
       "leave": "Leave",
@@ -510,25 +511,22 @@
       "description": "The organizer approved your participation."
     },
     "form": {
-      "counter": "{{length}} / {{max}}",
-      "description": "The organizer approves or rejects your request. The seat is yours once approved.",
+      "cancel": "Cancel",
+      "hiddenDetails": "Your contact details and location stay hidden.",
       "messageLabel": "Message to the organizer (optional)",
-      "messagePlaceholder": "E.g. I have played for three years and will bring my own ball.",
+      "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
       "messageTooLong": "The message can have at most {{count}} characters.",
+      "note": "The organizer approves requests by hand. You can withdraw it until they decide.",
+      "organizerSees": "The organizer will see",
+      "profileBasic": "Basic profile",
+      "profileVerified": "E-mail verified · basic profile",
       "sendFailed": "Your request could not be sent. Please try again.",
-      "sent": "Request sent",
       "submit": "Send request",
-      "title": "Request to join"
+      "title": "Ask to join"
     },
     "pending": {
-      "confirmKeep": "Keep it",
-      "confirmText": "The organizer will no longer see it. You can ask again later.",
-      "confirmTitle": "Withdraw your request to join?",
-      "confirmWithdraw": "Withdraw request",
       "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
-      "withdraw": "Withdraw request",
-      "withdrawFailed": "Your request could not be withdrawn. Please try again.",
-      "withdrawn": "Request withdrawn"
+      "withdraw": "Withdraw request"
     },
     "refused": {
       "ALREADY_REQUESTED": "You have already asked to join this event.",
@@ -541,6 +539,20 @@
     },
     "rejected": {
       "description": "The organizer rejected your request, you cannot send a new one for this event."
+    },
+    "sent": {
+      "findMore": "Find more events",
+      "text": "The organizer will approve or reject it.",
+      "title": "Your request is sent",
+      "withdraw": "Withdraw request"
+    },
+    "withdraw": {
+      "confirm": "Withdraw request",
+      "done": "Request withdrawn",
+      "failed": "Your request could not be withdrawn. Please try again.",
+      "keep": "Keep request",
+      "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
+      "title": "Withdraw your request to join?"
     }
   },
   "profile": {

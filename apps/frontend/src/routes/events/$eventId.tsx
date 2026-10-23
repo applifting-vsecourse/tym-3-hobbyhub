@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
@@ -18,9 +19,14 @@ import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import { EventDetail } from "@/features/event/components/EventDetail"
+import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
 import { OwnRequestPanel } from "@/features/participation-request/components/OwnRequestPanel"
+import {
+  ParticipationRequestSheet,
+  type RequestSheetStep,
+} from "@/features/participation-request/components/ParticipationRequestSheet"
 import { ownSeatView } from "@/features/participation-request/lib/joinPanel"
 
 export const Route = createFileRoute("/events/$eventId")({
@@ -31,7 +37,7 @@ export const Route = createFileRoute("/events/$eventId")({
 // a signed-in user asks to join right on the page (F-06.1).
 function EventDetailPage() {
   const { eventId } = Route.useParams()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const location = useLocation()
   const { user, isPending: isSessionPending } = useSession()
   const eventQuery = useQuery(eventDetailQueryOptions(eventId))
@@ -45,6 +51,9 @@ function EventDetailPage() {
   // filled up or started meanwhile, so the page shows the latest state.
   const refreshEvent = () =>
     queryClient.invalidateQueries({ queryKey: eventKeys.publicDetail(eventId) })
+  // The sheet lives here, not in the seat panel: sending a request swaps the
+  // free seat for the pending request, and the sheet has to survive that.
+  const [sheetStep, setSheetStep] = useState<RequestSheetStep | null>(null)
 
   const ownView = myRequestQuery.data ? ownSeatView(myRequestQuery.data) : null
   const from = encodeRedirectUri(location)
@@ -57,11 +66,10 @@ function EventDetailPage() {
   )
   const joinAction = user ? (
     <JoinRequestAction
-      eventId={eventId}
       label={joinLabel}
       state={myRequestQuery.data}
       isLoading={myRequestQuery.isPending}
-      onChange={refreshEvent}
+      onRequest={() => setSheetStep("form")}
     />
   ) : isSessionPending ? (
     <Button disabled>{joinLabel}</Button>
@@ -139,14 +147,32 @@ function EventDetailPage() {
             ownRequest={
               ownView ? (
                 <OwnRequestPanel
-                  eventId={eventId}
                   view={ownView}
-                  onChange={refreshEvent}
+                  onWithdraw={() => setSheetStep("withdraw")}
                 />
               ) : undefined
             }
           />
         )}
+        {user && eventQuery.data ? (
+          <ParticipationRequestSheet
+            eventId={eventId}
+            event={{
+              title: eventQuery.data.title,
+              time: eventTime(eventQuery.data.startAt, i18n.language),
+              place: [eventPlace(t, eventQuery.data), eventQuery.data.level]
+                .filter(Boolean)
+                .join(", "),
+              taken: eventQuery.data.takenCount,
+              min: eventQuery.data.minParticipants,
+              max: eventQuery.data.maxParticipants,
+            }}
+            applicant={{ name: user.name, isEmailVerified: user.emailVerified }}
+            step={sheetStep}
+            onStepChange={setSheetStep}
+            onChange={refreshEvent}
+          />
+        ) : null}
       </AppShell>
     </>
   )

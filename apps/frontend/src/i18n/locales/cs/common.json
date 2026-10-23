@@ -72,6 +72,7 @@
     }
   },
   "common": {
+    "close": "Zavřít",
     "unsavedChanges": {
       "description": "Máte rozpracované změny, které nejsou odeslané. Když odejdete, ztratí se.",
       "leave": "Odejít",
@@ -519,25 +520,22 @@
       "description": "Organizátor tvou účast schválil."
     },
     "form": {
-      "counter": "{{length}} / {{max}}",
-      "description": "Organizátor tvou žádost schválí, nebo zamítne. Místo ti patří až po schválení.",
+      "cancel": "Zrušit",
+      "hiddenDetails": "Kontakt a poloha zůstávají skryté.",
       "messageLabel": "Zpráva organizátorovi (nepovinné)",
-      "messagePlaceholder": "Např. hraju třetím rokem, vezmu si vlastní míč.",
+      "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
       "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+      "note": "Organizátor žádost schválí ručně. Zrušit ji můžeš, dokud ji nevyřídí.",
+      "organizerSees": "Organizátor uvidí",
+      "profileBasic": "Základní profil",
+      "profileVerified": "E-mail ověřen · základní profil",
       "sendFailed": "Žádost se nepodařilo odeslat. Zkus to znovu.",
-      "sent": "Žádost odeslána",
       "submit": "Odeslat žádost",
-      "title": "Žádost o účast"
+      "title": "Požádat o účast"
     },
     "pending": {
-      "confirmKeep": "Ponechat",
-      "confirmText": "Organizátor ji přestane vidět. Později můžeš požádat znovu.",
-      "confirmTitle": "Zrušit žádost o účast?",
-      "confirmWithdraw": "Zrušit žádost",
       "description": "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
-      "withdraw": "Zrušit žádost",
-      "withdrawFailed": "Žádost se nepodařilo zrušit. Zkus to znovu.",
-      "withdrawn": "Žádost zrušena"
+      "withdraw": "Zrušit žádost"
     },
     "refused": {
       "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
@@ -550,6 +548,20 @@
     },
     "rejected": {
       "description": "Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."
+    },
+    "sent": {
+      "findMore": "Najít další akce",
+      "text": "Organizátor ji schválí, nebo zamítne.",
+      "title": "Žádost je odeslaná",
+      "withdraw": "Zrušit žádost"
+    },
+    "withdraw": {
+      "confirm": "Zrušit žádost",
+      "done": "Žádost zrušena",
+      "failed": "Žádost se nepodařilo zrušit. Zkus to znovu.",
+      "keep": "Nechat žádost",
+      "text": "Žádost můžeš zrušit, dokud ji organizátor nevyřídí. Přestane ji vidět a o účast můžeš později požádat znovu.",
+      "title": "Zrušit žádost o účast?"
     }
   },
   "profile": {
