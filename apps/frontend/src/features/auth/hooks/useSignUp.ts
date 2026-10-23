@@ -28,7 +28,11 @@ export function useSignUp() {
       if (error) throw new AuthError(error.code, error.message, error.status)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: authKeys.session() })
+      // Nothing on the sign-up page uses the session; see useSignIn.
+      await queryClient.invalidateQueries({
+        queryKey: authKeys.session(),
+        refetchType: "all",
+      })
     },
   })
 }
