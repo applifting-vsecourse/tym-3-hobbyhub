@@ -5,6 +5,7 @@ import { Config } from '@/shared/config/config.service';
 import { createQuack } from './create-quack';
 import { createUser } from './create-user';
 import { seedEvents, seedLookups } from './seed-events';
+import { seedGroups } from './seed-groups';
 
 const MINUTE_IN_MS = 60 * 1000;
 
@@ -23,24 +24,23 @@ export const seedDatabase = async (
       `Database already has ${existingUsers} user(s) — not touching users and quacks. ` +
         'Run `pnpm backend db:reset` to wipe and start over.',
     );
-    // Lookups and example events are additive, so an existing database gets
-    // them too (they skip themselves when already there).
+    // Lookups, example events and groups are additive, so an existing database
+    // gets them too (they skip themselves when already there).
     await seedLookups(prisma);
     // Administrators run the platform, they do not take part in events.
-    await seedEvents(
-      prisma,
-      await prisma.user.findMany({
-        where: { role: 'user' },
-        orderBy: { createdAt: 'asc' },
-      }),
-    );
+    const users = await prisma.user.findMany({
+      where: { role: 'user' },
+      orderBy: { createdAt: 'asc' },
+    });
+    await seedEvents(prisma, users);
+    await seedGroups(prisma, users);
     return;
   }
 
   // Drop existing database data from all tables
   try {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE "participation", "event", "activity", "activity_category", "level", "cancellation_reason", "quack", "session", "account", "verification", "user" RESTART IDENTITY CASCADE;',
+      'TRUNCATE TABLE "group_membership", "group", "participation", "event", "activity", "activity_category", "level", "cancellation_reason", "quack", "session", "account", "verification", "user" RESTART IDENTITY CASCADE;',
     );
   } catch (error) {
     console.error('Error truncating tables:', error);
@@ -187,11 +187,16 @@ Please stop tagging me.`,
   console.log('Creating activities and example events');
 
   await seedLookups(prisma);
-  await seedEvents(prisma, [
+  const exampleUsers = [
     caffeinatedDuck,
     deepDuckThoughts,
     breadCritic,
     migrationSeason,
     pondAdmin,
-  ]);
+  ];
+  await seedEvents(prisma, exampleUsers);
+
+  console.log('Creating example groups');
+
+  await seedGroups(prisma, exampleUsers);
 };

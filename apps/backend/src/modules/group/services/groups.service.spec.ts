@@ -1,5 +1,9 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
-import { Group } from '@/modules/group/domain/group';
+import {
+  DISCOVER_PAGE_SIZE,
+  Group,
+  NEARBY_GROUPS_LIMIT,
+} from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -74,6 +78,73 @@ describe('GroupsService', () => {
 
     await expect(service.getGroup('nope')).rejects.toBeInstanceOf(
       NotFoundException,
+    );
+  });
+
+  describe('nearby groups', () => {
+    const user = { id: 'u1' } as Identity;
+    const now = new Date('2026-10-18T10:00:00Z');
+
+    it('searches the city of the signed-in user', async () => {
+      const { repository, service } = setup();
+      const nearby = [aGroup()];
+      repository.getUserCity.mockResolvedValue(' Praha ');
+      repository.listGroupsInCity.mockResolvedValue(nearby);
+
+      await expect(service.listNearbyGroups(user, now)).resolves.toEqual({
+        city: 'Praha',
+        groups: nearby,
+      });
+      expect(repository.getUserCity).toHaveBeenCalledWith('u1', now);
+      expect(repository.listGroupsInCity).toHaveBeenCalledWith(
+        'u1',
+        'Praha',
+        NEARBY_GROUPS_LIMIT,
+      );
+    });
+
+    it.each([null, '', '   '])(
+      'does not search without a city (%p)',
+      async (city) => {
+        const { repository, service } = setup();
+        repository.getUserCity.mockResolvedValue(city);
+
+        await expect(service.listNearbyGroups(user, now)).resolves.toEqual({
+          city: null,
+          groups: [],
+        });
+        expect(repository.listGroupsInCity).not.toHaveBeenCalled();
+      },
+    );
+  });
+
+  it('pages discoverable groups for the signed-in user', async () => {
+    const { repository, service } = setup();
+    const page = { items: [aGroup()], nextCursor: null };
+    repository.listDiscoverableGroups.mockResolvedValue(page);
+
+    await expect(
+      service.discoverGroups({ id: 'u1' } as Identity, 'g0'),
+    ).resolves.toEqual(page);
+    expect(repository.listDiscoverableGroups).toHaveBeenCalledWith(
+      'u1',
+      DISCOVER_PAGE_SIZE,
+      'g0',
+    );
+  });
+
+  it('pages every discoverable group for a visitor', async () => {
+    const { repository, service } = setup();
+    repository.listDiscoverableGroups.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+    });
+
+    await service.discoverGroups(undefined);
+    expect(repository.listDiscoverableGroups).toHaveBeenCalledWith(
+      undefined,
+      DISCOVER_PAGE_SIZE,
+      undefined,
     );
   });
 });
