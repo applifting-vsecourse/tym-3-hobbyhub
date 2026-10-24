@@ -1,10 +1,14 @@
-import { EventSeatFacts } from '@/modules/event/domain/event';
+import { EventSeatFacts, Page } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import {
+  ApplicantProfile,
   currentRequestOf,
+  DecisionRuleViolation,
+  decisionRuleViolations,
   JoinRuleViolation,
   joinRuleViolations,
   ParticipationRequest,
+  PendingRequestPage,
 } from '@/modules/participation-request/domain/participation-request';
 import { ParticipationRequestRepository } from '@/modules/participation-request/repositories/participation-request.repository';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -14,7 +18,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-const VIOLATION_MESSAGES: Record<JoinRuleViolation, string> = {
+const VIOLATION_MESSAGES: Record<
+  JoinRuleViolation | DecisionRuleViolation,
+  string
+> = {
   EVENT_CANCELLED: 'The event was cancelled',
   EVENT_NOT_HELD: 'The event did not take place',
   EVENT_FINISHED: 'The event is over',
@@ -24,11 +31,13 @@ const VIOLATION_MESSAGES: Record<JoinRuleViolation, string> = {
   HAS_SEAT: 'You already have a seat at this event',
   ALREADY_REQUESTED: 'You have already asked to join this event',
   REJECTED_BEFORE: 'Your request to join this event was rejected',
+  NOT_PENDING: 'The request no longer waits for a decision',
+  APPLICANT_HAS_SEAT: 'The applicant already has a seat at this event',
 };
 
 // Event messages plus the codes, so the client can say why in its language.
 const violationsError = (
-  violations: JoinRuleViolation[],
+  violations: (JoinRuleViolation | DecisionRuleViolation)[],
 ): BadRequestException =>
   new BadRequestException({
     statusCode: 400,
@@ -42,6 +51,8 @@ export type MyRequestState = {
   request: ParticipationRequest | null;
   // Empty when they may ask to join now.
   violations: JoinRuleViolation[];
+  // What the organizer sees of them (F-05.7), so the request form can show it.
+  applicant: ApplicantProfile;
 };
 
 @Injectable()
@@ -57,10 +68,14 @@ export class ParticipationRequestsService {
     now: Date = new Date(),
   ): Promise<MyRequestState> {
     const event = await this.getEvent(eventId, user);
-    const requests = await this.repository.getRequestsOf(eventId, user.id);
+    const [requests, applicant] = await Promise.all([
+      this.repository.getRequestsOf(eventId, user.id),
+      this.repository.getApplicantProfile(user.id),
+    ]);
     return {
       request: currentRequestOf(requests),
       violations: joinRuleViolations(event, user.id, requests, now),
+      applicant,
     };
   }
 
@@ -113,6 +128,92 @@ export class ParticipationRequestsService {
     );
     if (!withdrawn)
       throw new NotFoundException('No pending request to withdraw');
+  }
+
+  // F-05.7: the requests waiting on the event, for its organizers.
+  async getPendingRequests(
+    user: Identity,
+    eventId: string,
+    page: Page,
+  ): Promise<PendingRequestPage> {
+    await this.getOrganizedEvent(eventId, user);
+    return this.repository.getPendingRequests(eventId, page);
+  }
+
+  // F-05.7. Approval takes a seat, so the repository checks the seats again
+  // under a lock: the read here cannot see another organizer approving at the
+  // same moment.
+  async approveRequest(
+    user: Identity,
+    eventId: string,
+    requestId: string,
+    now: Date = new Date(),
+  ): Promise<ParticipationRequest> {
+    const { event, request } = await this.getDecidable(
+      user,
+      eventId,
+      requestId,
+    );
+    const violations = decisionRuleViolations(event, request, 'APPROVE', now);
+    if (violations.length > 0) throw violationsError(violations);
+
+    const approved = await this.repository.approvePending({
+      eventId,
+      requestId,
+      at: now,
+    });
+    if (typeof approved === 'string') throw violationsError([approved]);
+    return approved;
+  }
+
+  // F-05.7. Final for the event (ADR-0013); the reason is kept, not shown.
+  async rejectRequest(
+    user: Identity,
+    eventId: string,
+    requestId: string,
+    reason?: string,
+    now: Date = new Date(),
+  ): Promise<ParticipationRequest> {
+    const { event, request } = await this.getDecidable(
+      user,
+      eventId,
+      requestId,
+    );
+    const violations = decisionRuleViolations(event, request, 'REJECT', now);
+    if (violations.length > 0) throw violationsError(violations);
+
+    const rejected = await this.repository.rejectPending({
+      eventId,
+      requestId,
+      reason,
+      at: now,
+    });
+    if (!rejected) throw violationsError(['NOT_PENDING']);
+    return rejected;
+  }
+
+  // To anyone but its organizers the event has no requests to see: they get
+  // the same 404 as for a missing event, so nobody learns who asked to join.
+  private async getOrganizedEvent(
+    eventId: string,
+    user: Identity,
+  ): Promise<EventSeatFacts> {
+    const event = await this.getEvent(eventId, user);
+    if (!event.organizerIds.includes(user.id)) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
+  }
+
+  private async getDecidable(
+    user: Identity,
+    eventId: string,
+    requestId: string,
+  ): Promise<{ event: EventSeatFacts; request: ParticipationRequest }> {
+    const event = await this.getOrganizedEvent(eventId, user);
+    const request = await this.repository.getRequest(eventId, requestId);
+    if (!request) throw new NotFoundException('Request not found');
+    return { event, request };
   }
 
   private async getEvent(

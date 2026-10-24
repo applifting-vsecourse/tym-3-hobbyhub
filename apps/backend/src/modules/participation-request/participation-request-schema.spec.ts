@@ -173,4 +173,83 @@ describeDb('participation request schema constraints', () => {
       }),
     ).rejects.toThrow(constraint);
   });
+
+  it('accepts a rejection with and without a reason', async () => {
+    await inRolledBackTransaction(async (tx) => {
+      const ids = await eventAndApplicant(tx);
+      await tx.participationRequest.create({
+        data: {
+          ...ids,
+          status: RequestStatus.REJECTED,
+          decidedAt: new Date(),
+          rejectionReason: 'Hledáme spíš začátečníky.',
+        },
+      });
+      const other = await eventAndApplicant(tx);
+      await tx.participationRequest.create({
+        data: {
+          ...other,
+          status: RequestStatus.REJECTED,
+          decidedAt: new Date(),
+        },
+      });
+    });
+  });
+
+  it.each([RequestStatus.PENDING, RequestStatus.APPROVED])(
+    'rejects a reason on a %s request',
+    async (status) => {
+      await expect(
+        inRolledBackTransaction(async (tx) => {
+          const ids = await eventAndApplicant(tx);
+          await tx.participationRequest.create({
+            data: {
+              ...ids,
+              status,
+              decidedAt: status === RequestStatus.PENDING ? null : new Date(),
+              rejectionReason: 'Plno',
+            },
+          });
+        }),
+      ).rejects.toThrow('participation_request_rejection_reason_only_rejected');
+    },
+  );
+
+  it.each([
+    ['spaces', '   '],
+    ['line breaks and tabs', '\n\t\r\n'],
+    ['non-breaking and ideographic spaces', '\u00a0\u3000\u2009'],
+  ])('rejects a reason of only %s, as trim() does', async (_, reason) => {
+    expect(reason.trim()).toBe('');
+    await expect(
+      inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participationRequest.create({
+          data: {
+            ...ids,
+            status: RequestStatus.REJECTED,
+            decidedAt: new Date(),
+            rejectionReason: reason,
+          },
+        });
+      }),
+    ).rejects.toThrow('participation_request_rejection_reason_not_blank');
+  });
+
+  it('accepts a reason of 500 characters and rejects a longer one', async () => {
+    const rejected = (rejectionReason: string) =>
+      inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participationRequest.create({
+          data: {
+            ...ids,
+            status: RequestStatus.REJECTED,
+            decidedAt: new Date(),
+            rejectionReason,
+          },
+        });
+      });
+    await rejected('🏐'.repeat(500));
+    await expect(rejected(`${'🏐'.repeat(500)}x`)).rejects.toThrow();
+  });
 });

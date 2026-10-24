@@ -1,7 +1,13 @@
 import { EventSeatFacts } from '@/modules/event/domain/event';
 
-// Same limit as the column `participation_request.message`.
+// Same limits as the columns `participation_request.message` and
+// `participation_request.rejectionReason`.
 export const PARTICIPATION_REQUEST_MESSAGE_MAX_LENGTH = 500;
+export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH = 500;
+
+// The organizer's list of waiting requests (F-05.7) pages like the event list.
+export const PENDING_REQUESTS_DEFAULT_LIMIT = 20;
+export const PENDING_REQUESTS_MAX_LIMIT = 50;
 
 // ADR-0003, ADR-0008. PENDING waits for the organizer (F-05.7); APPROVED holds
 // a seat, approved by the organizer or at once on an event with automatic
@@ -19,7 +25,24 @@ export type ParticipationRequest = {
   requestedAt: Date;
   // When it stopped being PENDING, by anyone's hand.
   decidedAt: Date | null;
+  // Optional, only on a rejection (ADR-0008). Nobody sees it in the app yet.
+  rejectionReason: string | null;
 };
+
+// What the organizer sees of the person asking (F-05.7): no birth date,
+// gender, contact or place. The request form shows the applicant exactly this.
+export type ApplicantProfile = {
+  name: string;
+  image: string | null;
+  bio: string | null;
+  hasVerifiedEmail: boolean;
+};
+
+export type PendingRequest = ParticipationRequest & {
+  applicant: ApplicantProfile;
+};
+
+export type PendingRequestPage = { items: PendingRequest[]; total: number };
 
 // Why a person cannot ask to join an event now. The client shows the same
 // reasons before sending; the server is the one that counts.
@@ -33,6 +56,31 @@ export type JoinRuleViolation =
   | 'HAS_SEAT'
   | 'ALREADY_REQUESTED'
   | 'REJECTED_BEFORE';
+
+type EventStateViolation =
+  'EVENT_CANCELLED' | 'EVENT_NOT_HELD' | 'EVENT_FINISHED' | 'EVENT_STARTED';
+
+// Why the organizer cannot decide a request now (F-05.7). APPLICANT_HAS_SEAT
+// shows only once the seat is taken, so the repository reports it.
+export type DecisionRuleViolation =
+  EventStateViolation | 'EVENT_FULL' | 'NOT_PENDING' | 'APPLICANT_HAS_SEAT';
+
+export type Decision = 'APPROVE' | 'REJECT';
+
+// The states the event detail tells apart, decided the same way. Null while
+// the event is still ahead.
+const eventStateViolation = (
+  event: Pick<EventSeatFacts, 'status' | 'startAt' | 'endAt'>,
+  now: Date,
+): EventStateViolation | null => {
+  if (event.status === 'CANCELLED') return 'EVENT_CANCELLED';
+  if (event.status === 'NOT_HELD') return 'EVENT_NOT_HELD';
+  if (event.status !== 'PUBLISHED' || event.endAt.getTime() < now.getTime()) {
+    return 'EVENT_FINISHED';
+  }
+  if (event.startAt.getTime() <= now.getTime()) return 'EVENT_STARTED';
+  return null;
+};
 
 // The request a person sees on an event: the one still waiting, otherwise the
 // last decision. Withdrawn and closed requests are history and leave the person
@@ -65,18 +113,9 @@ export const joinRuleViolations = (
   now: Date,
 ): JoinRuleViolation[] => {
   const violations: JoinRuleViolation[] = [];
-  // The states the event detail tells apart, decided the same way.
-  if (event.status === 'CANCELLED') {
-    violations.push('EVENT_CANCELLED');
-  } else if (event.status === 'NOT_HELD') {
-    violations.push('EVENT_NOT_HELD');
-  } else if (
-    event.status !== 'PUBLISHED' ||
-    event.endAt.getTime() < now.getTime()
-  ) {
-    violations.push('EVENT_FINISHED');
-  } else if (event.startAt.getTime() <= now.getTime()) {
-    violations.push('EVENT_STARTED');
+  const state = eventStateViolation(event, now);
+  if (state) {
+    violations.push(state);
   }
   if (event.organizerIds.includes(applicantId)) {
     violations.push('IS_ORGANIZER');
@@ -91,6 +130,29 @@ export const joinRuleViolations = (
     violations.push('REJECTED_BEFORE');
   }
   if (event.freeSpots <= 0) {
+    violations.push('EVENT_FULL');
+  }
+  return violations;
+};
+
+// F-05.7: whether the organizer may decide the request now. Requests are
+// decided until the event starts, the boundary of asking too. Approval takes a
+// seat, so a full event can only reject.
+export const decisionRuleViolations = (
+  event: Pick<EventSeatFacts, 'status' | 'startAt' | 'endAt' | 'freeSpots'>,
+  request: Pick<ParticipationRequest, 'status'>,
+  decision: Decision,
+  now: Date,
+): DecisionRuleViolation[] => {
+  const violations: DecisionRuleViolation[] = [];
+  const state = eventStateViolation(event, now);
+  if (state) {
+    violations.push(state);
+  }
+  if (request.status !== 'PENDING') {
+    violations.push('NOT_PENDING');
+  }
+  if (decision === 'APPROVE' && event.freeSpots <= 0) {
     violations.push('EVENT_FULL');
   }
   return violations;
