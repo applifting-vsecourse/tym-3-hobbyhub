@@ -375,7 +375,11 @@
     },
     "activityCombobox": {
       "noMatch": "Žádná aktivita neodpovídá",
-      "search": "Hledat aktivitu…"
+      "search": "Hledat aktivitu…",
+      "selected_few": "{{count}} aktivity",
+      "selected_one": "{{count}} aktivita",
+      "selected_other": "{{count}} aktivit",
+      "unknown": "Neznámá aktivita"
     },
     "avatars": {
       "basketbalista": "Basketbalista",
@@ -419,6 +423,7 @@
       "activitiesLoading": "Načítáme aktivity…",
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
+      "activityPlaceholder": "Všechny aktivity",
       "clear": "Vymazat",
       "date": "Datum…",
       "location": "Lokalita",
