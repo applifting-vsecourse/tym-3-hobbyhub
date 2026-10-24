@@ -3,11 +3,13 @@ import {
   CreateEventData,
   Event,
   EventDetail,
+  EventFacts,
   EventListFilter,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
   EventSeatFacts,
+  isOrganizerOf,
   Page,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
@@ -82,5 +84,20 @@ export class EventsService {
     userId: string,
   ): Promise<EventSeatFacts | null> {
     return this.eventRepository.getPublicEventSeatFacts(id, userId);
+  }
+
+  // The event for its organizers' own tools (requests F-05.7, participants
+  // F-05.6, editing F-05.10, attendance F-05.11, waitlist F-05.9). To anyone
+  // else it does not exist: the same 404 as a missing event, never a 403, so
+  // nobody learns that the event, or what it holds, is there.
+  async getOrganizedEvent(
+    eventId: string,
+    user: Identity,
+  ): Promise<EventFacts> {
+    const event = await this.eventRepository.getEventFacts(eventId);
+    if (!event || !isOrganizerOf(event, user.id)) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
   }
 }

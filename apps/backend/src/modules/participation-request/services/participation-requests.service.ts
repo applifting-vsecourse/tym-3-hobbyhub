@@ -1,4 +1,4 @@
-import { EventSeatFacts, Page } from '@/modules/event/domain/event';
+import { EventFacts, EventSeatFacts, Page } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import {
   ApplicantProfile,
@@ -136,7 +136,7 @@ export class ParticipationRequestsService {
     eventId: string,
     page: Page,
   ): Promise<PendingRequestPage> {
-    await this.getOrganizedEvent(eventId, user);
+    await this.eventsService.getOrganizedEvent(eventId, user);
     return this.repository.getPendingRequests(eventId, page);
   }
 
@@ -192,25 +192,13 @@ export class ParticipationRequestsService {
     return rejected;
   }
 
-  // To anyone but its organizers the event has no requests to see: they get
-  // the same 404 as for a missing event, so nobody learns who asked to join.
-  private async getOrganizedEvent(
-    eventId: string,
-    user: Identity,
-  ): Promise<EventSeatFacts> {
-    const event = await this.getEvent(eventId, user);
-    if (!event.organizerIds.includes(user.id)) {
-      throw new NotFoundException('Event not found');
-    }
-    return event;
-  }
-
   private async getDecidable(
     user: Identity,
     eventId: string,
     requestId: string,
-  ): Promise<{ event: EventSeatFacts; request: ParticipationRequest }> {
-    const event = await this.getOrganizedEvent(eventId, user);
+  ): Promise<{ event: EventFacts; request: ParticipationRequest }> {
+    // The event module decides who organizes it, and answers 404 to the rest.
+    const event = await this.eventsService.getOrganizedEvent(eventId, user);
     const request = await this.repository.getRequest(eventId, requestId);
     if (!request) throw new NotFoundException('Request not found');
     return { event, request };

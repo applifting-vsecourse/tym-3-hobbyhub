@@ -1,4 +1,8 @@
-import { EventSeatFacts } from '@/modules/event/domain/event';
+import {
+  EventFacts,
+  EventSeatFacts,
+  isOrganizerOf,
+} from '@/modules/event/domain/event';
 
 // Same limits as the columns `participation_request.message` and
 // `participation_request.rejectionReason`.
@@ -70,7 +74,7 @@ export type Decision = 'APPROVE' | 'REJECT';
 // The states the event detail tells apart, decided the same way. Null while
 // the event is still ahead.
 const eventStateViolation = (
-  event: Pick<EventSeatFacts, 'status' | 'startAt' | 'endAt'>,
+  event: Pick<EventFacts, 'status' | 'startAt' | 'endAt'>,
   now: Date,
 ): EventStateViolation | null => {
   if (event.status === 'CANCELLED') return 'EVENT_CANCELLED';
@@ -117,7 +121,7 @@ export const joinRuleViolations = (
   if (state) {
     violations.push(state);
   }
-  if (event.organizerIds.includes(applicantId)) {
+  if (isOrganizerOf(event, applicantId)) {
     violations.push('IS_ORGANIZER');
   }
   if (event.hasSeat) {
@@ -139,7 +143,7 @@ export const joinRuleViolations = (
 // decided until the event starts, the boundary of asking too. Approval takes a
 // seat, so a full event can only reject.
 export const decisionRuleViolations = (
-  event: Pick<EventSeatFacts, 'status' | 'startAt' | 'endAt' | 'freeSpots'>,
+  event: Pick<EventFacts, 'status' | 'startAt' | 'endAt' | 'freeSpots'>,
   request: Pick<ParticipationRequest, 'status'>,
   decision: Decision,
   now: Date,

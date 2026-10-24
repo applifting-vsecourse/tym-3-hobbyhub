@@ -1,4 +1,4 @@
-import { EventSeatFacts } from '@/modules/event/domain/event';
+import { EventSeatFacts, isOrganizerOf } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import {
   ApplicantProfile,
@@ -73,6 +73,12 @@ describe('ParticipationRequestsService', () => {
     const repository = mock<ParticipationRequestRepository>();
     const events = mock<EventsService>();
     events.getPublicEventSeatFacts.mockResolvedValue(event);
+    // As the event module answers: the event to its organizers, 404 to the rest.
+    events.getOrganizedEvent.mockImplementation((_eventId, who) =>
+      event && isOrganizerOf(event, who.id)
+        ? Promise.resolve(event)
+        : Promise.reject(new NotFoundException('Event not found')),
+    );
     repository.getRequestsOf.mockResolvedValue(requests);
     repository.getApplicantProfile.mockResolvedValue(profile);
     return {
@@ -241,7 +247,7 @@ describe('ParticipationRequestsService', () => {
 
     describe('getPendingRequests', () => {
       it('lists the waiting requests of the event', async () => {
-        const { repository, service } = setup();
+        const { repository, events, service } = setup();
         const pending: PendingRequestPage = {
           items: [{ ...aRequest(), applicant: profile }],
           total: 1,
@@ -251,6 +257,7 @@ describe('ParticipationRequestsService', () => {
         await expect(
           service.getPendingRequests(organizer, 'e1', page),
         ).resolves.toEqual(pending);
+        expect(events.getOrganizedEvent).toHaveBeenCalledWith('e1', organizer);
         expect(repository.getPendingRequests).toHaveBeenCalledWith('e1', page);
       });
 
@@ -278,7 +285,7 @@ describe('ParticipationRequestsService', () => {
         expect(repository.getPendingRequests).not.toHaveBeenCalled();
       });
 
-      it('answers 404 for an event that is not public', async () => {
+      it('answers 404 for an event that does not exist', async () => {
         const { service } = setup(null);
 
         await expect(
