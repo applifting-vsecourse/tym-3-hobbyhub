@@ -93,6 +93,14 @@
     }
   },
   "events": {
+    "approvalMode": {
+      "AUTOMATIC": "Automaticky",
+      "MANUAL": "Ručně"
+    },
+    "approvalModeHint": {
+      "AUTOMATIC": "Kdo se přihlásí, dostane volné místo hned, bez vašeho schválení.",
+      "MANUAL": "Každou žádost o účast schválíte, nebo zamítnete sami."
+    },
     "back": "Zpět",
     "day": {
       "today": "Dnes",
@@ -146,6 +154,7 @@
     },
     "fields": {
       "activity": "Aktivita",
+      "approvalMode": "Schvalování účasti",
       "city": "Město",
       "contributionAmount": "Příspěvek na místo v Kč (nepovinné)",
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
@@ -541,7 +550,8 @@
   },
   "participationRequests": {
     "approved": {
-      "description": "Organizátor tvou účast schválil."
+      "description": "Organizátor tvou účast schválil.",
+      "descriptionAutomatic": "Na akci máš místo."
     },
     "form": {
       "cancel": "Zrušit",
@@ -550,12 +560,21 @@
       "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
       "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
       "note": "Organizátor žádost schválí ručně. Zrušit ji můžeš, dokud ji nevyřídí.",
+      "noteAutomatic": "Místo získáš hned, organizátor ho nemusí schvalovat.",
       "organizerSees": "Organizátor uvidí",
       "profileBasic": "Základní profil",
       "profileVerified": "E-mail ověřen · základní profil",
       "sendFailed": "Žádost se nepodařilo odeslat. Zkus to znovu.",
+      "sendFailedAutomatic": "Místo se nepodařilo obsadit. Zkus to znovu.",
       "submit": "Odeslat žádost",
-      "title": "Požádat o účast"
+      "submitAutomatic": "Obsadit místo",
+      "title": "Požádat o účast",
+      "titleAutomatic": "Obsadit místo"
+    },
+    "joined": {
+      "close": "Zavřít",
+      "text": "Organizátor uvidí, že jdeš.",
+      "title": "Máš místo"
     },
     "pending": {
       "description": "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
@@ -564,7 +583,9 @@
     "refused": {
       "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
       "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
+      "EVENT_FINISHED": "Akce už proběhla, o účast se nedá žádat.",
       "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",
+      "EVENT_NOT_HELD": "Akce se neuskutečnila, o účast se nedá žádat.",
       "EVENT_STARTED": "Akce už začala, o účast se nedá žádat.",
       "HAS_SEAT": "Na akci už máš místo.",
       "IS_ORGANIZER": "Tuto akci pořádáš.",

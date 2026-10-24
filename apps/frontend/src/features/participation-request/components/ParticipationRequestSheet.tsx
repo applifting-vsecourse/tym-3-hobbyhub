@@ -20,7 +20,10 @@ import { Button } from "@/components/ui/button"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
-import { PARTICIPATION_REQUEST_MESSAGE_MAX } from "@/features/participation-request/api/participationRequestSchemas"
+import {
+  PARTICIPATION_REQUEST_MESSAGE_MAX,
+  type ApprovalMode,
+} from "@/features/participation-request/api/participationRequestSchemas"
 import { JoinRefusedError } from "@/features/participation-request/api/requestToJoin"
 import { useRequestToJoin } from "@/features/participation-request/hooks/useRequestToJoin"
 import { useWithdrawRequest } from "@/features/participation-request/hooks/useWithdrawRequest"
@@ -44,8 +47,12 @@ export type Applicant = {
   isEmailVerified: boolean
 }
 
-/** `form` asks, `sent` confirms the request, `withdraw` confirms taking it back. */
-export type RequestSheetStep = "form" | "sent" | "withdraw"
+/**
+ * `form` asks, `sent` confirms a request waiting for the organizer, `joined`
+ * confirms a seat taken at once (automatic approval), `withdraw` confirms
+ * taking a waiting request back.
+ */
+export type RequestSheetStep = "form" | "sent" | "joined" | "withdraw"
 
 function EventRow({ event }: { event: RequestedEvent }) {
   return (
@@ -61,13 +68,17 @@ function EventRow({ event }: { event: RequestedEvent }) {
   )
 }
 
+// Characters as the server and the database count them: code points, so an
+// emoji is one, and a line break is one too. `trim()` is the server's as well.
+const charCount = (value: string) => [...value].length
+
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
   z.object({
     message: z
       .string()
       .trim()
-      .refine((message) => [...message].length <= PARTICIPATION_REQUEST_MESSAGE_MAX, {
+      .refine((message) => charCount(message) <= PARTICIPATION_REQUEST_MESSAGE_MAX, {
         message: t("participationRequests.form.messageTooLong", {
           count: PARTICIPATION_REQUEST_MESSAGE_MAX,
         }),
@@ -80,6 +91,7 @@ type RequestFormProps = {
   formId: string
   event: RequestedEvent
   applicant: Applicant
+  approvalMode: ApprovalMode
   isPending: boolean
   errorMessage: string | null
   onSubmit: (message: string | undefined) => Promise<void>
@@ -89,6 +101,7 @@ function RequestForm({
   formId,
   event,
   applicant,
+  approvalMode,
   isPending,
   errorMessage,
   onSubmit,
@@ -160,15 +173,28 @@ function RequestForm({
             </FormItem>
           )}
         />
-        <p className="typo-small text-muted-foreground">{t("participationRequests.form.note")}</p>
+        <p className="typo-small text-muted-foreground">
+          {t(
+            approvalMode === "AUTOMATIC"
+              ? "participationRequests.form.noteAutomatic"
+              : "participationRequests.form.note",
+          )}
+        </p>
       </AppForm>
     </div>
   )
 }
 
-function SentView({ event }: { event: RequestedEvent }) {
-  const { t } = useTranslation()
-
+/** The confirmation after sending: the roster, what happens next and the request's state. */
+function SentView({
+  event,
+  text,
+  status,
+}: {
+  event: RequestedEvent
+  text: string
+  status: "pending" | "approved"
+}) {
   return (
     <div className="flex flex-col items-center gap-4 pb-1 text-center">
       <RosterSeats
@@ -177,9 +203,9 @@ function SentView({ event }: { event: RequestedEvent }) {
         min={event.min}
         capacity={event.max}
       />
-      <p className="typo-body text-muted-foreground">{t("participationRequests.sent.text")}</p>
+      <p className="typo-body text-muted-foreground">{text}</p>
       <div className="flex w-full flex-col items-start rounded-lg border border-border px-4 pt-3 text-left">
-        <StatusBadge status="pending" />
+        <StatusBadge status={status} />
         <EventRow event={event} />
       </div>
     </div>
@@ -190,6 +216,8 @@ type ParticipationRequestSheetProps = {
   eventId: string
   event: RequestedEvent
   applicant: Applicant
+  /** AUTOMATIC takes the seat on sending (F-05.5); MANUAL waits for the organizer. */
+  approvalMode: ApprovalMode
   /** Which step is open; null when the sheet is closed. */
   step: RequestSheetStep | null
   onStepChange: (step: RequestSheetStep | null) => void
@@ -199,13 +227,15 @@ type ParticipationRequestSheetProps = {
 
 /**
  * Žádost o účast (F-06.1): ask with an optional message, see it sent, and
- * confirm withdrawing it. The page owns the sheet, so it stays open while the
- * seat panel under it switches to the pending request.
+ * confirm withdrawing it. With automatic approval the same form takes the seat
+ * at once (F-05.5). The page owns the sheet, so it stays open while the seat
+ * panel under it switches to the pending request or the seat.
  */
 export function ParticipationRequestSheet({
   eventId,
   event,
   applicant,
+  approvalMode,
   step,
   onStepChange,
   onChange,
@@ -226,9 +256,12 @@ export function ParticipationRequestSheet({
 
   const close = () => onStepChange(null)
 
+  const isAutomatic = approvalMode === "AUTOMATIC"
+
+  // The server says which it was: approved means the seat is taken.
   const send = async (message: string | undefined) => {
-    await requestToJoin.mutateAsync({ eventId, message })
-    onStepChange("sent")
+    const request = await requestToJoin.mutateAsync({ eventId, message })
+    onStepChange(request.status === "APPROVED" ? "joined" : "sent")
   }
 
   const confirmWithdraw = async () => {
@@ -246,17 +279,26 @@ export function ParticipationRequestSheet({
   const errorMessage = error
     ? refusal
       ? t(`participationRequests.refused.${refusal}`)
-      : t("participationRequests.form.sendFailed")
+      : t(
+          isAutomatic
+            ? "participationRequests.form.sendFailedAutomatic"
+            : "participationRequests.form.sendFailed",
+        )
     : null
 
   const steps: Record<RequestSheetStep, { title: string; body: ReactNode; footer: ReactNode }> = {
     form: {
-      title: t("participationRequests.form.title"),
+      title: t(
+        isAutomatic
+          ? "participationRequests.form.titleAutomatic"
+          : "participationRequests.form.title",
+      ),
       body: (
         <RequestForm
           formId={formId}
           event={event}
           applicant={applicant}
+          approvalMode={approvalMode}
           isPending={requestToJoin.isPending}
           errorMessage={errorMessage}
           onSubmit={send}
@@ -270,7 +312,11 @@ export function ParticipationRequestSheet({
             disabled={requestToJoin.isPending}
           >
             {requestToJoin.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {t("participationRequests.form.submit")}
+            {t(
+              isAutomatic
+                ? "participationRequests.form.submitAutomatic"
+                : "participationRequests.form.submit",
+            )}
           </Button>
           <Button
             variant="ghost"
@@ -283,7 +329,13 @@ export function ParticipationRequestSheet({
     },
     sent: {
       title: t("participationRequests.sent.title"),
-      body: <SentView event={event} />,
+      body: (
+        <SentView
+          event={event}
+          text={t("participationRequests.sent.text")}
+          status="pending"
+        />
+      ),
       footer: (
         <>
           <Button asChild>
@@ -294,6 +346,29 @@ export function ParticipationRequestSheet({
             onClick={() => onStepChange("withdraw")}
           >
             {t("participationRequests.sent.withdraw")}
+          </Button>
+        </>
+      ),
+    },
+    joined: {
+      title: t("participationRequests.joined.title"),
+      body: (
+        <SentView
+          event={event}
+          text={t("participationRequests.joined.text")}
+          status="approved"
+        />
+      ),
+      footer: (
+        <>
+          <Button asChild>
+            <Link to={ROUTES.events}>{t("participationRequests.sent.findMore")}</Link>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={close}
+          >
+            {t("participationRequests.joined.close")}
           </Button>
         </>
       ),

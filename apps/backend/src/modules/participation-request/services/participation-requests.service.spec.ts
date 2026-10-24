@@ -14,6 +14,8 @@ const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   id: 'e1',
   status: 'PUBLISHED',
   startAt: new Date('2030-01-01T18:00:00Z'),
+  endAt: new Date('2030-01-01T20:00:00Z'),
+  approvalMode: 'MANUAL',
   organizerIds: ['organizer'],
   freeSpots: 2,
   hasSeat: false,
@@ -53,6 +55,7 @@ describe('ParticipationRequestsService', () => {
     requests: ParticipationRequest[] = [],
   ): {
     repository: MockProxy<ParticipationRequestRepository>;
+    events: MockProxy<EventsService>;
     service: ParticipationRequestsService;
   } => {
     const repository = mock<ParticipationRequestRepository>();
@@ -61,6 +64,7 @@ describe('ParticipationRequestsService', () => {
     repository.getRequestsOf.mockResolvedValue(requests);
     return {
       repository,
+      events,
       service: new ParticipationRequestsService(repository, events),
     };
   };
@@ -117,6 +121,50 @@ describe('ParticipationRequestsService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(repository.createPending).not.toHaveBeenCalled();
     });
+
+    describe('with automatic approval', () => {
+      const automatic = anEvent({ approvalMode: 'AUTOMATIC' });
+
+      it('approves the request at once and takes the seat', async () => {
+        const { repository, service } = setup(automatic);
+        const approved = aRequest({ status: 'APPROVED', decidedAt: now });
+        repository.createApproved.mockResolvedValue(approved);
+
+        await expect(
+          service.requestToJoin(user, 'e1', 'Ahoj', now),
+        ).resolves.toEqual(approved);
+        expect(repository.createApproved).toHaveBeenCalledWith({
+          eventId: 'e1',
+          userId: 'u1',
+          message: 'Ahoj',
+          at: now,
+        });
+        expect(repository.createPending).not.toHaveBeenCalled();
+      });
+
+      it('runs the same rules first', async () => {
+        const { repository, service } = setup({ ...automatic, freeSpots: 0 });
+
+        await expect(
+          violationsOf(service.requestToJoin(user, 'e1', undefined, now)),
+        ).resolves.toEqual(['EVENT_FULL']);
+        expect(repository.createApproved).not.toHaveBeenCalled();
+      });
+
+      // The last seat taken by someone else, or by the same person in another
+      // window, between the read and the write.
+      it.each(['EVENT_FULL', 'HAS_SEAT'] as const)(
+        'refuses with %s when the seat went meanwhile',
+        async (violation) => {
+          const { repository, service } = setup(automatic);
+          repository.createApproved.mockResolvedValue(violation);
+
+          await expect(
+            violationsOf(service.requestToJoin(user, 'e1', undefined, now)),
+          ).resolves.toEqual([violation]);
+        },
+      );
+    });
   });
 
   describe('getMyRequestState', () => {
@@ -148,6 +196,16 @@ describe('ParticipationRequestsService', () => {
 
       await service.withdrawMyRequest(user, 'e1', now);
       expect(repository.withdrawPending).toHaveBeenCalledWith('e1', 'u1', now);
+    });
+
+    it('withdraws it even once the event is no longer public', async () => {
+      const { repository, events, service } = setup(null);
+      repository.withdrawPending.mockResolvedValue(true);
+
+      await expect(
+        service.withdrawMyRequest(user, 'e1', now),
+      ).resolves.toBeUndefined();
+      expect(events.getPublicEventSeatFacts).not.toHaveBeenCalled();
     });
 
     it('answers 404 when nothing is pending', async () => {

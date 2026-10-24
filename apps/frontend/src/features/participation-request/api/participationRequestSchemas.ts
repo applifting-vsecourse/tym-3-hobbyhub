@@ -14,6 +14,8 @@ export const requestStatusSchema = z.enum([
 // Why the server refuses a new request; the same rules the panel explains.
 export const joinRuleViolationSchema = z.enum([
   "EVENT_CANCELLED",
+  "EVENT_NOT_HELD",
+  "EVENT_FINISHED",
   "EVENT_STARTED",
   "EVENT_FULL",
   "IS_ORGANIZER",
@@ -45,3 +47,4 @@ export type JoinRuleViolation = z.infer<typeof joinRuleViolationSchema>
 export type ParticipationRequest = z.infer<typeof participationRequestSchema>
 export type MyRequestState = z.infer<typeof myRequestStateSchema>
 export type RequestToJoinInput = { eventId: string; message?: string }
+export type ApprovalMode = "MANUAL" | "AUTOMATIC"

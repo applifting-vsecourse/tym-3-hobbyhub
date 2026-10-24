@@ -3,9 +3,10 @@ import { EventSeatFacts } from '@/modules/event/domain/event';
 // Same limit as the column `participation_request.message`.
 export const PARTICIPATION_REQUEST_MESSAGE_MAX_LENGTH = 500;
 
-// ADR-0003, ADR-0008. PENDING waits for the organizer (F-05.7); WITHDRAWN was
-// cancelled by the applicant; CLOSED ended without a decision because the
-// event was cancelled.
+// ADR-0003, ADR-0008. PENDING waits for the organizer (F-05.7); APPROVED holds
+// a seat, approved by the organizer or at once on an event with automatic
+// approval (F-05.5); WITHDRAWN was cancelled by the applicant; CLOSED ended
+// without a decision because the event was cancelled.
 export type RequestStatus =
   'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'CLOSED';
 
@@ -24,6 +25,8 @@ export type ParticipationRequest = {
 // reasons before sending; the server is the one that counts.
 export type JoinRuleViolation =
   | 'EVENT_CANCELLED'
+  | 'EVENT_NOT_HELD'
+  | 'EVENT_FINISHED'
   | 'EVENT_STARTED'
   | 'EVENT_FULL'
   | 'IS_ORGANIZER'
@@ -53,7 +56,8 @@ export const currentRequestOf = (
 
 // F-06.1: who may ask to join, given the event and the applicant's own
 // requests on it. A pending request takes no seat, so a full event refuses new
-// requests but keeps the ones already waiting.
+// requests but keeps the ones already waiting. A rejection is final for the
+// event (ADR-0013).
 export const joinRuleViolations = (
   event: EventSeatFacts,
   applicantId: string,
@@ -61,12 +65,17 @@ export const joinRuleViolations = (
   now: Date,
 ): JoinRuleViolation[] => {
   const violations: JoinRuleViolation[] = [];
+  // The states the event detail tells apart, decided the same way.
   if (event.status === 'CANCELLED') {
     violations.push('EVENT_CANCELLED');
+  } else if (event.status === 'NOT_HELD') {
+    violations.push('EVENT_NOT_HELD');
   } else if (
     event.status !== 'PUBLISHED' ||
-    event.startAt.getTime() <= now.getTime()
+    event.endAt.getTime() < now.getTime()
   ) {
+    violations.push('EVENT_FINISHED');
+  } else if (event.startAt.getTime() <= now.getTime()) {
     violations.push('EVENT_STARTED');
   }
   if (event.organizerIds.includes(applicantId)) {

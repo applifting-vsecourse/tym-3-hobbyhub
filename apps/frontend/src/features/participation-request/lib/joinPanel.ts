@@ -17,6 +17,8 @@ export function ownSeatView({ request, violations }: MyRequestState): OwnSeatVie
 // The event's own reasons first: they hold for everyone, so they explain best.
 const REFUSAL_ORDER: JoinRuleViolation[] = [
   "EVENT_CANCELLED",
+  "EVENT_NOT_HELD",
+  "EVENT_FINISHED",
   "EVENT_STARTED",
   "EVENT_FULL",
   "IS_ORGANIZER",

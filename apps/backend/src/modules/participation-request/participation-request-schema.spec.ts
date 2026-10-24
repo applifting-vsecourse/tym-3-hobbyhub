@@ -121,8 +121,45 @@ describeDb('participation request schema constraints', () => {
     });
   });
 
+  // The API trims with `String.prototype.trim()` and counts code points; the
+  // database has to agree on both, or a message the API accepts breaks it.
   it.each([
-    ['participation_request_message_not_blank', { message: '   ' }],
+    ['500 emoji', '🏐'.repeat(500)],
+    ['line breaks inside', 'Ahoj,\n\nhraju třetím rokem.'],
+    ['an emoji with a skin tone', '👍🏽'.repeat(250)],
+  ])('accepts a message of %s', async (_, message) => {
+    await inRolledBackTransaction(async (tx) => {
+      const ids = await eventAndApplicant(tx);
+      await tx.participationRequest.create({ data: { ...ids, message } });
+    });
+  });
+
+  it('rejects a message over 500 characters', async () => {
+    await expect(
+      inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participationRequest.create({
+          data: { ...ids, message: `${'🏐'.repeat(500)}x` },
+        });
+      }),
+    ).rejects.toThrow();
+  });
+
+  it.each([
+    ['spaces', '   '],
+    ['line breaks and tabs', '\n\t\r\n'],
+    ['non-breaking and ideographic spaces', '\u00a0\u3000\u2009'],
+  ])('rejects a message of only %s, as trim() does', async (_, message) => {
+    expect(message.trim()).toBe('');
+    await expect(
+      inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participationRequest.create({ data: { ...ids, message } });
+      }),
+    ).rejects.toThrow('participation_request_message_not_blank');
+  });
+
+  it.each([
     ['participation_request_decided_at_with_status', { decidedAt: new Date() }],
     [
       'participation_request_decided_at_with_status',

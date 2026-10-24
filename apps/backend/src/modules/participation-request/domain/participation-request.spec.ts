@@ -12,6 +12,8 @@ const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   id: 'e1',
   status: 'PUBLISHED',
   startAt: new Date('2030-01-01T18:00:00Z'),
+  endAt: new Date('2030-01-01T20:00:00Z'),
+  approvalMode: 'MANUAL',
   organizerIds: ['organizer', 'co-organizer'],
   freeSpots: 3,
   hasSeat: false,
@@ -39,8 +41,16 @@ describe('joinRuleViolations', () => {
   it.each([
     ['a cancelled event', { status: 'CANCELLED' }, 'EVENT_CANCELLED'],
     ['an event that has started', { startAt: now }, 'EVENT_STARTED'],
-    ['an event that is over', { status: 'FINISHED' }, 'EVENT_STARTED'],
-    ['an event that did not happen', { status: 'NOT_HELD' }, 'EVENT_STARTED'],
+    ['an event that is over', { status: 'FINISHED' }, 'EVENT_FINISHED'],
+    [
+      'a published event past its end',
+      {
+        startAt: new Date('2030-01-01T09:00:00Z'),
+        endAt: new Date('2030-01-01T11:00:00Z'),
+      },
+      'EVENT_FINISHED',
+    ],
+    ['an event that did not happen', { status: 'NOT_HELD' }, 'EVENT_NOT_HELD'],
     ['a full event', { freeSpots: 0 }, 'EVENT_FULL'],
     ['someone with a seat', { hasSeat: true }, 'HAS_SEAT'],
   ] as const)('refuses %s', (_, override, violation) => {
@@ -61,6 +71,7 @@ describe('joinRuleViolations', () => {
     ).toEqual(['ALREADY_REQUESTED']);
   });
 
+  // ADR-0013: a rejection is final, so the organizer is not asked again.
   it('refuses someone the organizer has rejected', () => {
     expect(
       joinRuleViolations(anEvent(), 'u1', [aRequest('REJECTED')], now),

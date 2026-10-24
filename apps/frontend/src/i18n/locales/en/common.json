@@ -93,6 +93,14 @@
     }
   },
   "events": {
+    "approvalMode": {
+      "AUTOMATIC": "Automatically",
+      "MANUAL": "By hand"
+    },
+    "approvalModeHint": {
+      "AUTOMATIC": "Whoever joins gets a free seat at once, without your approval.",
+      "MANUAL": "You approve or reject every request to join yourself."
+    },
     "back": "Back",
     "day": {
       "today": "Today",
@@ -146,6 +154,7 @@
     },
     "fields": {
       "activity": "Activity",
+      "approvalMode": "Approving participants",
       "city": "City",
       "contributionAmount": "Contribution per seat in CZK (optional)",
       "contributionNote": "Note on the contribution (optional)",
@@ -532,7 +541,8 @@
   },
   "participationRequests": {
     "approved": {
-      "description": "The organizer approved your participation."
+      "description": "The organizer approved your participation.",
+      "descriptionAutomatic": "You have a seat at this event."
     },
     "form": {
       "cancel": "Cancel",
@@ -541,12 +551,21 @@
       "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
       "messageTooLong": "The message can have at most {{count}} characters.",
       "note": "The organizer approves requests by hand. You can withdraw it until they decide.",
+      "noteAutomatic": "You get the seat at once, the organizer does not need to approve it.",
       "organizerSees": "The organizer will see",
       "profileBasic": "Basic profile",
       "profileVerified": "E-mail verified · basic profile",
       "sendFailed": "Your request could not be sent. Please try again.",
+      "sendFailedAutomatic": "The seat could not be taken. Please try again.",
       "submit": "Send request",
-      "title": "Ask to join"
+      "submitAutomatic": "Take a seat",
+      "title": "Ask to join",
+      "titleAutomatic": "Take a seat"
+    },
+    "joined": {
+      "close": "Close",
+      "text": "The organizer will see that you are coming.",
+      "title": "You have a seat"
     },
     "pending": {
       "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
@@ -555,7 +574,9 @@
     "refused": {
       "ALREADY_REQUESTED": "You have already asked to join this event.",
       "EVENT_CANCELLED": "This event was cancelled, you can no longer ask to join.",
+      "EVENT_FINISHED": "This event is over, you cannot ask to join.",
       "EVENT_FULL": "This event is full, you cannot ask to join.",
+      "EVENT_NOT_HELD": "This event did not take place, you cannot ask to join.",
       "EVENT_STARTED": "This event has already started, you cannot ask to join.",
       "HAS_SEAT": "You already have a seat at this event.",
       "IS_ORGANIZER": "You are organizing this event.",

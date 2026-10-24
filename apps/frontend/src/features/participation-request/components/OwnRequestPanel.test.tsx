@@ -2,13 +2,19 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
+import type { ApprovalMode } from "@/features/participation-request/api/participationRequestSchemas"
 import { OwnRequestPanel } from "@/features/participation-request/components/OwnRequestPanel"
 import type { OwnSeatView } from "@/features/participation-request/lib/joinPanel"
 
-const renderPanel = (view: OwnSeatView, onWithdraw = vi.fn()) =>
+const renderPanel = (
+  view: OwnSeatView,
+  onWithdraw = vi.fn(),
+  approvalMode: ApprovalMode = "MANUAL",
+) =>
   render(
     <OwnRequestPanel
       view={view}
+      approvalMode={approvalMode}
       onWithdraw={onWithdraw}
     />,
   )
@@ -36,6 +42,17 @@ describe("OwnRequestPanel", () => {
     expect(
       screen.getByText("Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."),
     ).toBeInTheDocument()
+    expect(screen.queryByRole("button")).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ["MANUAL", "Organizátor tvou účast schválil."],
+    ["AUTOMATIC", "Na akci máš místo."],
+  ] as const)("shows a seat on an event approved %s", (approvalMode, text) => {
+    renderPanel("approved", vi.fn(), approvalMode)
+
+    expect(screen.getByText("Schváleno")).toBeInTheDocument()
+    expect(screen.getByText(text)).toBeInTheDocument()
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
   })
 

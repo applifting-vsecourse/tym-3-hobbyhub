@@ -47,8 +47,9 @@ function EventDetailPage() {
   })
 
   const queryClient = useQueryClient()
-  // A request changes nothing on the event itself, but a refusal may mean it
-  // filled up or started meanwhile, so the page shows the latest state.
+  // A seat taken at once (automatic approval) changes the roster; a request
+  // waiting for the organizer does not, but a refusal may mean the event filled
+  // up or started meanwhile. Either way the page shows the latest state.
   const refreshEvent = () =>
     queryClient.invalidateQueries({ queryKey: eventKeys.publicDetail(eventId) })
   // The sheet lives here, not in the seat panel: sending a request swaps the
@@ -58,7 +59,7 @@ function EventDetailPage() {
   const ownView = myRequestQuery.data ? ownSeatView(myRequestQuery.data) : null
   const from = encodeRedirectUri(location)
   // Asking is not taking: with manual approval the seat comes only once the
-  // organizer says yes.
+  // organizer says yes; with automatic approval the server takes it at once.
   const joinLabel = t(
     eventQuery.data?.approvalMode === "AUTOMATIC"
       ? "events.detail.join"
@@ -148,6 +149,7 @@ function EventDetailPage() {
               ownView ? (
                 <OwnRequestPanel
                   view={ownView}
+                  approvalMode={eventQuery.data.approvalMode}
                   onWithdraw={() => setSheetStep("withdraw")}
                 />
               ) : undefined
@@ -168,6 +170,7 @@ function EventDetailPage() {
               max: eventQuery.data.maxParticipants,
             }}
             applicant={{ name: user.name, isEmailVerified: user.emailVerified }}
+            approvalMode={eventQuery.data.approvalMode}
             step={sheetStep}
             onStepChange={setSheetStep}
             onChange={refreshEvent}

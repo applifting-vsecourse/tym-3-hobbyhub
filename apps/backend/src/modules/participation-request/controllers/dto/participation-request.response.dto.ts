@@ -16,6 +16,8 @@ const REQUEST_STATUSES: RequestStatus[] = [
 
 const JOIN_RULE_VIOLATIONS: JoinRuleViolation[] = [
   'EVENT_CANCELLED',
+  'EVENT_NOT_HELD',
+  'EVENT_FINISHED',
   'EVENT_STARTED',
   'EVENT_FULL',
   'IS_ORGANIZER',

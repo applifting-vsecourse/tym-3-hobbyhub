@@ -28,7 +28,7 @@ import {
 import { participationRequestsValidationPipe } from './participation-requests-validation.pipe';
 
 // F-06.1 requests to join, seen by the applicant. The organizer's side
-// (listing and deciding them) is F-05.7.
+// (listing and deciding them) is F-05.7; automatic approval is F-05.5.
 @ApiTags('participation-requests')
 @Controller('events/:eventId/requests')
 @UseGuards(AuthenticatedUserGuard)
@@ -42,7 +42,12 @@ export class ParticipationRequestsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Ask to join the event as the signed-in user' })
-  @ApiResponse({ status: 201, type: ParticipationRequestResponseDto })
+  @ApiResponse({
+    status: 201,
+    type: ParticipationRequestResponseDto,
+    description:
+      'PENDING for the organizer to decide, or APPROVED with the seat taken when the event approves automatically',
+  })
   @ApiResponse({
     status: 400,
     description:
@@ -79,6 +84,7 @@ export class ParticipationRequestsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Withdraw the signed-in user's pending request" })
   @ApiResponse({ status: 204, description: 'Withdrawn' })
+  @ApiResponse({ status: 404, description: 'No pending request to withdraw' })
   async withdraw(
     @User() user: Identity,
     @Param('eventId') eventId: string,

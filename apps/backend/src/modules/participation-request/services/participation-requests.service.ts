@@ -16,6 +16,8 @@ import {
 
 const VIOLATION_MESSAGES: Record<JoinRuleViolation, string> = {
   EVENT_CANCELLED: 'The event was cancelled',
+  EVENT_NOT_HELD: 'The event did not take place',
+  EVENT_FINISHED: 'The event is over',
   EVENT_STARTED: 'The event has already started',
   EVENT_FULL: 'The event is full',
   IS_ORGANIZER: 'The organizer cannot ask to join their own event',
@@ -62,8 +64,9 @@ export class ParticipationRequestsService {
     };
   }
 
-  // F-06.1. A new request waits for the organizer (F-05.7); automatic
-  // approval (F-05.5) and the waitlist (F-05.9) come later.
+  // F-06.1. With manual approval a new request waits for the organizer
+  // (F-05.7); with automatic approval (F-05.5) it is approved at once and takes
+  // the seat. The waitlist (F-05.9) comes later.
   async requestToJoin(
     user: Identity,
     eventId: string,
@@ -77,6 +80,16 @@ export class ParticipationRequestsService {
     if (violations.length > 0) throw violationsError(violations);
 
     // The applicant comes from the session, never from the request body.
+    if (event.approvalMode === 'AUTOMATIC') {
+      const approved = await this.repository.createApproved({
+        eventId,
+        userId: user.id,
+        message,
+        at: now,
+      });
+      if (typeof approved === 'string') throw violationsError([approved]);
+      return approved;
+    }
     const request = await this.repository.createPending({
       eventId,
       userId: user.id,
@@ -86,12 +99,13 @@ export class ParticipationRequestsService {
     return request;
   }
 
+  // Needs no look at the event: a pending request can be taken back even once
+  // the event stops being public.
   async withdrawMyRequest(
     user: Identity,
     eventId: string,
     now: Date = new Date(),
   ): Promise<void> {
-    await this.getEvent(eventId, user);
     const withdrawn = await this.repository.withdrawPending(
       eventId,
       user.id,

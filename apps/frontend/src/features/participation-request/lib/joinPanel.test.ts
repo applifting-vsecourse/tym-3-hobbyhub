@@ -45,5 +45,7 @@ describe("refusalOf", () => {
 
   it("explains the event's own reason first", () => {
     expect(refusalOf(["REJECTED_BEFORE", "EVENT_FULL"])).toBe("EVENT_FULL")
+    expect(refusalOf(["HAS_SEAT", "EVENT_NOT_HELD"])).toBe("EVENT_NOT_HELD")
+    expect(refusalOf(["IS_ORGANIZER", "EVENT_FINISHED"])).toBe("EVENT_FINISHED")
   })
 })

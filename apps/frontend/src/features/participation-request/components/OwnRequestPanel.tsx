@@ -3,10 +3,13 @@ import { useTranslation } from "react-i18next"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
 
+import type { ApprovalMode } from "@/features/participation-request/api/participationRequestSchemas"
 import type { OwnSeatView } from "@/features/participation-request/lib/joinPanel"
 
 type OwnRequestPanelProps = {
   view: OwnSeatView
+  /** With automatic approval nobody approved the seat; it was simply taken. */
+  approvalMode: ApprovalMode
   /** Opens the confirmation to withdraw a pending request, which the page owns. */
   onWithdraw: () => void
 }
@@ -18,7 +21,7 @@ const BADGES = {
 } as const
 
 /** The signed-in person's own place in the event, shown instead of the free seat. */
-export function OwnRequestPanel({ view, onWithdraw }: OwnRequestPanelProps) {
+export function OwnRequestPanel({ view, approvalMode, onWithdraw }: OwnRequestPanelProps) {
   const { t } = useTranslation()
 
   if (view === "organizer") {
@@ -35,7 +38,11 @@ export function OwnRequestPanel({ view, onWithdraw }: OwnRequestPanelProps) {
         status={BADGES[view]}
         className="self-start"
       />
-      <p className="typo-small">{t(`participationRequests.${view}.description`)}</p>
+      <p className="typo-small">
+        {view === "approved" && approvalMode === "AUTOMATIC"
+          ? t("participationRequests.approved.descriptionAutomatic")
+          : t(`participationRequests.${view}.description`)}
+      </p>
       {view === "pending" ? (
         <Button
           variant="outline"
