@@ -21,6 +21,8 @@ type EventDetailProps = {
   activityLabel: string
   /** The button that takes a seat. Hidden for events nobody can ask to join. */
   joinAction: ReactNode
+  /** Edit and cancel, for the organizer of an event that has not started. */
+  organizerActions?: ReactNode
   /**
    * The signed-in person's own place (their request, their seat, their event).
    * Shown instead of the free seat, whatever state the event is in, so a
@@ -60,6 +62,7 @@ export function EventDetail({
   event,
   activityLabel,
   joinAction,
+  organizerActions,
   ownRequest,
   now = new Date(),
 }: EventDetailProps) {
@@ -137,6 +140,16 @@ export function EventDetail({
           {state !== "open" ? (
             <p className="typo-body text-foreground">{t(`events.detail.state.${state}Text`)}</p>
           ) : null}
+          {state === "cancelled" && event.cancellationReason ? (
+            <p className="typo-body text-muted-foreground">
+              {[
+                t("events.detail.cancellationReason", { reason: event.cancellationReason }),
+                event.cancellationNote,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          ) : null}
         </div>
 
         {/* When and where: the time is the main fact, so it is the one big thing. */}
@@ -176,6 +189,7 @@ export function EventDetail({
         <p className="typo-small text-muted-foreground">
           {t("events.detail.organizer", { name: event.organizerName })}
         </p>
+        {organizerActions}
       </header>
 
       <aside

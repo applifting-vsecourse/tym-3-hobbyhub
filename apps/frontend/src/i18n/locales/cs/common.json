@@ -102,6 +102,27 @@
       "MANUAL": "Každou žádost o účast schválíte, nebo zamítnete sami."
     },
     "back": "Zpět",
+    "cancel": {
+      "back": "Zpět",
+      "description": "Akci už nepůjde upravit ani znovu otevřít. Přihlášky účastníků zůstanou, jak jsou.",
+      "done": "Akce je zrušená.",
+      "failed": "Akci se nepodařilo zrušit. Zkuste to prosím znovu.",
+      "note": "Poznámka (nepovinné)",
+      "notePlaceholder": "Například co se stalo nebo kdy akci uspořádáte znovu",
+      "reason": "Důvod zrušení",
+      "reasonPlaceholder": "Vyberte důvod",
+      "reasonRequired": "Vyberte důvod zrušení",
+      "submit": "Zrušit akci",
+      "title": "Zrušit akci?"
+    },
+    "changeWarning": {
+      "back": "Zpět k úpravám",
+      "confirm": "Uložit změnu",
+      "description_few": "Na akci jsou {{count}} schválení účastníci. Informace o změně jim zatím nikdo automaticky neposílá, dejte jim vědět sami.",
+      "description_one": "Na akci je {{count}} schválený účastník. Informace o změně mu zatím nikdo automaticky neposílá, dejte mu vědět sami.",
+      "description_other": "Na akci je {{count}} schválených účastníků. Informace o změně jim zatím nikdo automaticky neposílá, dejte jim vědět sami.",
+      "title": "Změnit čas nebo místo?"
+    },
     "day": {
       "today": "Dnes",
       "tomorrow": "Zítra"
@@ -118,6 +139,7 @@
       "approvalAutomatic": "Místo získáš hned po přihlášení.",
       "approvalManual": "Organizátor žádost schvaluje ručně.",
       "back": "Zpět na akce",
+      "cancellationReason": "Důvod: {{reason}}",
       "contribution": "Příspěvek",
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
@@ -156,6 +178,10 @@
       },
       "title": "Detail akce"
     },
+    "edit": {
+      "locked": "Akce už začala nebo je zrušená, proto se nedá měnit.",
+      "lockedTitle": "Akci už nejde upravit"
+    },
     "fields": {
       "activity": "Aktivita",
       "approvalMode": "Schvalování účasti",
@@ -189,6 +215,7 @@
       "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
       "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
       "created": "Akce je zveřejněná.",
+      "editTitle": "Upravit akci",
       "externalHint": "Lidé z vaší party bez účtu, včetně vás. Počítají se do obsazenosti.",
       "minimumReached": "Minimum je naplněné",
       "missingHint": "Počet chybějících lidí se počítá z minima a obsazených míst.",
@@ -199,13 +226,16 @@
       "previousStep": "Zpět na předchozí krok",
       "publish": "Zveřejnit akci",
       "retry": "Zkusit znovu",
+      "save": "Uložit změny",
+      "saved": "Změny jsou uložené.",
       "stepOf": "Krok {{step}} ze {{total}}",
       "steps": {
         "details": "Detaily a zveřejnění",
         "what": "Co a kdy",
         "who": "Kdo a kolik"
       },
-      "title": "Nová akce"
+      "title": "Nová akce",
+      "updateFailed": "Změny se nepodařilo uložit. Zkuste to prosím znovu."
     },
     "list": {
       "count_few": "{{count}} akce",
@@ -229,6 +259,10 @@
       "searchPlaceholder": "Název, místo nebo aktivita",
       "seoTitle": "Akce",
       "title": "Akce"
+    },
+    "manage": {
+      "cancel": "Zrušit akci",
+      "edit": "Upravit akci"
     },
     "map": {
       "placeholder": "Tady bude mapa"
@@ -261,6 +295,7 @@
       "descriptionRequired": "Napište pár vět o akci",
       "endBeforeStart": "Konec musí být po začátku",
       "maxBelowMin": "Maximum musí být alespoň jako minimum",
+      "maxBelowOccupied": "Maximum nemůže být menší než obsazená místa ({{count}})",
       "occupiedAboveMax": "Obsazených míst nemůže být víc než maximum",
       "postalCodeRequired": "Zadejte PSČ",
       "startInPast": "Začátek musí být v budoucnu",

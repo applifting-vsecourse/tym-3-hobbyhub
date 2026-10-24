@@ -156,6 +156,17 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   organizerName!: string;
 
   @ApiProperty({
+    description: 'Lets the client offer editing to the organizer',
+  })
+  organizerId!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  cancellationReason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  cancellationNote!: string | null;
+
+  @ApiProperty({
     type: ParticipantStatsResponseDto,
     nullable: true,
     description: 'Hidden until enough participants are included',
@@ -177,6 +188,9 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       status: event.status,
       approvalMode: event.approvalMode,
       organizerName: event.organizerName,
+      organizerId: event.organizerId,
+      cancellationReason: event.cancellationReason,
+      cancellationNote: event.cancellationNote,
       stats: event.stats
         ? ParticipantStatsResponseDto.fromDomain(event.stats)
         : null,

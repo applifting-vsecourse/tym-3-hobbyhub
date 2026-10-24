@@ -41,6 +41,7 @@ export const eventSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   visibility: z.enum(["PUBLIC", "GROUP_ONLY", "PRIVATE"]),
   venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
+  approvalMode: z.enum(APPROVAL_MODES),
   startAt: z.coerce.date(),
   endAt: z.coerce.date(),
   publishedAt: z.coerce.date().nullable(),
@@ -58,7 +59,20 @@ export const eventSchema = z.object({
   location: eventLocationSchema.nullable(),
   activity: z.object({ id: z.string(), name: z.string(), icon: z.string() }),
   organizerId: z.string(),
+  cancellationReason: z.string().nullable(),
+  cancellationNote: z.string().nullable(),
 })
+
+export const CANCELLATION_NOTE_MAX = 500
+
+export const cancellationReasonSchema = z.object({ id: z.string(), name: z.string() })
+export const cancellationReasonsSchema = z.array(cancellationReasonSchema)
+export type CancellationReason = z.infer<typeof cancellationReasonSchema>
+
+export type CancelEventInput = {
+  cancellationReasonId: string
+  cancellationNote?: string
+}
 
 export type Event = z.infer<typeof eventSchema>
 export type EventLocation = z.infer<typeof eventLocationSchema>
@@ -68,12 +82,14 @@ export type CreateEventInput = {
   activityId: string
   description: string
   equipment?: string
-  venueType: CreatableVenueType
+  /** An online event cannot be created yet, but one that exists can be edited. */
+  venueType: Event["venueType"]
   approvalMode: ApprovalMode
   /** ISO date-time strings. */
   startAt: string
   endAt: string
-  location: {
+  /** Left out for an online event. */
+  location?: {
     street: string
     city: string
     postalCode: string
@@ -133,7 +149,11 @@ export const eventDetailSchema = eventListItemSchema.extend({
   contributionNote: z.string().nullable(),
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   approvalMode: z.enum(APPROVAL_MODES),
+  /** Lets the page offer editing to the organizer. */
+  organizerId: z.string(),
   organizerName: z.string(),
+  cancellationReason: z.string().nullable(),
+  cancellationNote: z.string().nullable(),
   /** Hidden by the server until enough participants are included. */
   stats: participantStatsSchema.nullable(),
   /** Included participants needed before the server shows stats. */

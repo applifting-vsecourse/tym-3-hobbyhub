@@ -102,6 +102,26 @@
       "MANUAL": "You approve or reject every request to join yourself."
     },
     "back": "Back",
+    "cancel": {
+      "back": "Back",
+      "description": "The event can no longer be edited or reopened. Participants’ requests stay as they are.",
+      "done": "The event is cancelled.",
+      "failed": "Could not cancel the event. Please try again.",
+      "note": "Note (optional)",
+      "notePlaceholder": "For example what happened or when you will hold it again",
+      "reason": "Reason for cancelling",
+      "reasonPlaceholder": "Choose a reason",
+      "reasonRequired": "Choose a reason for cancelling",
+      "submit": "Cancel event",
+      "title": "Cancel the event?"
+    },
+    "changeWarning": {
+      "back": "Back to editing",
+      "confirm": "Save change",
+      "description_one": "{{count}} participant is approved for this event. Nobody tells them about the change automatically yet, so let them know yourself.",
+      "description_other": "{{count}} participants are approved for this event. Nobody tells them about the change automatically yet, so let them know yourself.",
+      "title": "Change the time or place?"
+    },
     "day": {
       "today": "Today",
       "tomorrow": "Tomorrow"
@@ -118,6 +138,7 @@
       "approvalAutomatic": "You get the seat as soon as you sign in.",
       "approvalManual": "The organizer approves requests by hand.",
       "back": "Back to events",
+      "cancellationReason": "Reason: {{reason}}",
       "contribution": "Contribution",
       "equipment": "Equipment",
       "hasAccount": "Already have an account?",
@@ -155,6 +176,10 @@
       },
       "title": "Event detail"
     },
+    "edit": {
+      "locked": "The event has started or was cancelled, so it cannot be changed.",
+      "lockedTitle": "This event can no longer be edited"
+    },
     "fields": {
       "activity": "Activity",
       "approvalMode": "Approving participants",
@@ -188,6 +213,7 @@
       "contributionHint": "Information only, nothing is paid through the app.",
       "createFailed": "Could not publish the event. Please try again.",
       "created": "The event is published.",
+      "editTitle": "Edit event",
       "externalHint": "People from your crew without an account, you included. They count towards the occupancy.",
       "minimumReached": "The minimum is reached",
       "missingHint": "The number of missing people comes from the minimum and the taken seats.",
@@ -197,13 +223,16 @@
       "previousStep": "Back to the previous step",
       "publish": "Publish event",
       "retry": "Try again",
+      "save": "Save changes",
+      "saved": "Changes saved.",
       "stepOf": "Step {{step}} of {{total}}",
       "steps": {
         "details": "Details and publishing",
         "what": "What and when",
         "who": "Who and how many"
       },
-      "title": "New event"
+      "title": "New event",
+      "updateFailed": "Could not save the changes. Please try again."
     },
     "list": {
       "count_one": "{{count}} event",
@@ -226,6 +255,10 @@
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
       "title": "Events"
+    },
+    "manage": {
+      "cancel": "Cancel event",
+      "edit": "Edit event"
     },
     "map": {
       "placeholder": "The map will be here"
@@ -258,6 +291,7 @@
       "descriptionRequired": "Write a few words about the event",
       "endBeforeStart": "The end must come after the start",
       "maxBelowMin": "The maximum must be at least the minimum",
+      "maxBelowOccupied": "The maximum cannot be below the taken seats ({{count}})",
       "occupiedAboveMax": "Taken seats cannot exceed the maximum",
       "postalCodeRequired": "Enter a postal code",
       "startInPast": "The start must be in the future",

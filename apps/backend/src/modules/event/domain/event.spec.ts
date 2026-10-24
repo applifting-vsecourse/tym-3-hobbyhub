@@ -1,4 +1,5 @@
 import {
+  eventChangeViolations,
   eventRuleViolations,
   foldForSearch,
   occupancyOf,
@@ -85,5 +86,166 @@ describe('foldForSearch', () => {
   it('ignores case, diacritics and outer spaces', () => {
     expect(foldForSearch('  Čtvrteční FLORBAL ')).toBe('ctvrtecni florbal');
     expect(foldForSearch('Brno-Žabovřesky')).toBe('brno-zabovresky');
+  });
+});
+
+describe('eventChangeViolations', () => {
+  const now = new Date('2026-10-23T12:00:00Z');
+  const later = new Date('2026-10-24T12:00:00Z');
+  const event = {
+    status: 'PUBLISHED' as const,
+    venueType: 'PUBLIC_VENUE' as const,
+    startAt: later,
+    externalOccupiedSpots: 4,
+    approvedCount: 3,
+  };
+
+  it('lets a future event be edited', () => {
+    expect(
+      eventChangeViolations(
+        event,
+        {
+          kind: 'update',
+          maxParticipants: 7,
+          externalOccupiedSpots: 4,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: true,
+        },
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it('lets a draft be edited', () => {
+    expect(
+      eventChangeViolations(
+        { ...event, status: 'DRAFT' },
+        {
+          kind: 'update',
+          maxParticipants: 12,
+          externalOccupiedSpots: 4,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: true,
+        },
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it('refuses a capacity below the occupied seats', () => {
+    expect(
+      eventChangeViolations(
+        event,
+        {
+          kind: 'update',
+          maxParticipants: 6,
+          externalOccupiedSpots: 4,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: true,
+        },
+        now,
+      ),
+    ).toEqual(['MAX_BELOW_OCCUPIED']);
+  });
+
+  it('counts the outside seats of the edit itself', () => {
+    expect(
+      eventChangeViolations(
+        event,
+        {
+          kind: 'update',
+          maxParticipants: 6,
+          externalOccupiedSpots: 3,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: true,
+        },
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ['has started', { startAt: now }],
+    ['is cancelled', { status: 'CANCELLED' as const }],
+    ['is finished', { status: 'FINISHED' as const }],
+  ])('refuses editing an event that %s', (_, override) => {
+    expect(
+      eventChangeViolations(
+        { ...event, ...override },
+        {
+          kind: 'update',
+          maxParticipants: 12,
+          externalOccupiedSpots: 4,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: true,
+        },
+        now,
+      ),
+    ).toEqual(['EVENT_NOT_CHANGEABLE']);
+  });
+
+  it('lets an online event be edited without an address', () => {
+    expect(
+      eventChangeViolations(
+        { ...event, venueType: 'ONLINE' },
+        {
+          kind: 'update',
+          maxParticipants: 12,
+          externalOccupiedSpots: 4,
+          venueType: 'ONLINE',
+          hasLocation: false,
+        },
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ['an online event to a place', 'ONLINE' as const, 'PUBLIC_VENUE' as const],
+    ['a place to online', 'PUBLIC_VENUE' as const, 'ONLINE' as const],
+  ])('refuses turning %s', (_, from, to) => {
+    expect(
+      eventChangeViolations(
+        { ...event, venueType: from },
+        {
+          kind: 'update',
+          maxParticipants: 12,
+          externalOccupiedSpots: 4,
+          venueType: to,
+          hasLocation: to !== 'ONLINE',
+        },
+        now,
+      ),
+    ).toEqual(['VENUE_KIND_CHANGED']);
+  });
+
+  it('requires an address for an event at a place', () => {
+    expect(
+      eventChangeViolations(
+        event,
+        {
+          kind: 'update',
+          maxParticipants: 12,
+          externalOccupiedSpots: 4,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: false,
+        },
+        now,
+      ),
+    ).toEqual(['LOCATION_REQUIRED']);
+  });
+
+  it('lets a published future event be cancelled', () => {
+    expect(eventChangeViolations(event, { kind: 'cancel' }, now)).toEqual([]);
+  });
+
+  it.each([
+    ['has started', { startAt: now }],
+    ['is a draft', { status: 'DRAFT' as const }],
+    ['is already cancelled', { status: 'CANCELLED' as const }],
+  ])('refuses cancelling an event that %s', (_, override) => {
+    expect(
+      eventChangeViolations({ ...event, ...override }, { kind: 'cancel' }, now),
+    ).toEqual(['EVENT_NOT_CANCELLABLE']);
   });
 });

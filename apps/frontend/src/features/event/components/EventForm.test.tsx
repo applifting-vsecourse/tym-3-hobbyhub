@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
 
+import type { Event } from "@/features/event/api/eventSchemas"
 import { EventForm, type ActivityOption } from "@/features/event/components/EventForm"
 
 const ACTIVITIES: ActivityOption[] = [
@@ -287,5 +288,98 @@ describe("EventForm on a desktop", () => {
     expect(await screen.findByText("Zadejte název akce")).toBeInTheDocument()
     expect(screen.getByText("Napište pár vět o akci")).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+})
+
+const EXISTING: Event = {
+  id: "e1",
+  title: "Čtvrteční florbal",
+  description: "Přátelský zápas.",
+  equipment: null,
+  status: "PUBLISHED",
+  visibility: "PUBLIC",
+  venueType: "PUBLIC_VENUE",
+  approvalMode: "MANUAL",
+  startAt: new Date(2030, 0, 15, 19, 0),
+  endAt: new Date(2030, 0, 15, 20, 30),
+  publishedAt: new Date(),
+  createdAt: new Date(),
+  minParticipants: 8,
+  maxParticipants: 12,
+  externalOccupiedSpots: 4,
+  approvedCount: 6,
+  occupiedSpots: 10,
+  missingToMinimum: 0,
+  freeSpots: 2,
+  fillState: "MINIMUM_REACHED",
+  contributionAmount: 80,
+  contributionNote: null,
+  location: {
+    street: "Chabařovická 4",
+    city: "Praha 8",
+    postalCode: "182 00",
+    country: "Česko",
+    placeName: "ZŠ Kobylisy",
+  },
+  activity: { id: "a-florbal", name: "Florbal", icon: "florbal" },
+  organizerId: "u1",
+  cancellationReason: null,
+  cancellationNote: null,
+}
+
+describe("EventForm editing an event", () => {
+  it("starts with the values of the event", async () => {
+    await renderForm({ event: EXISTING })
+
+    expect(screen.getByRole("heading", { level: 1, name: "Upravit akci" })).toBeInTheDocument()
+    expect(screen.getByLabelText("Název")).toHaveValue("Čtvrteční florbal")
+    expect(screen.getByLabelText("Datum")).toHaveValue("2030-01-15")
+    expect(screen.getByLabelText("Čas od")).toHaveValue("19:00")
+    expect(screen.getByLabelText("Ulice a číslo")).toHaveValue("Chabařovická 4")
+  })
+
+  it("saves the changed values", async () => {
+    const { onSubmit, user } = await renderForm({ event: EXISTING })
+
+    await user.clear(screen.getByLabelText("Název"))
+    await user.type(screen.getByLabelText("Název"), "Páteční florbal")
+    await continueToNextStep(user)
+    await continueToNextStep(user)
+    await user.click(screen.getByRole("button", { name: "Uložit změny" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Páteční florbal", activityId: "a-florbal" }),
+    )
+  })
+
+  it("refuses a maximum below the seats already taken", async () => {
+    const { onSubmit, user } = await renderForm({ event: EXISTING })
+
+    await continueToNextStep(user)
+    await user.click(counterButton("Maximum", "méně"))
+    await user.click(counterButton("Maximum", "méně"))
+    await user.click(counterButton("Maximum", "méně"))
+    await continueToNextStep(user)
+
+    expect(
+      await screen.findByText("Maximum nemůže být menší než obsazená místa (10)"),
+    ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("edits an online event without asking for an address", async () => {
+    const online: Event = { ...EXISTING, venueType: "ONLINE", location: null }
+    const { onSubmit, user } = await renderForm({ event: online })
+
+    expect(screen.queryByLabelText("Ulice a číslo")).not.toBeInTheDocument()
+
+    await continueToNextStep(user)
+    await continueToNextStep(user)
+    expect(screen.queryByText("Typ místa")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Uložit změny" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ venueType: "ONLINE", location: undefined }),
+    )
   })
 })
