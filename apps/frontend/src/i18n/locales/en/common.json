@@ -146,7 +146,8 @@
       "stats": {
         "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
         "genderLabel": "Men : women",
-        "hidden": "The mix shows once at least {{count}} people have joined.",
+        "hidden_one": "We show the mix once at least {{count}} person who joined through the app has filled in their age and gender. People from outside the app do not count, we know nothing about them.",
+        "hidden_other": "We show the mix once at least {{count}} people who joined through the app have filled in their age and gender. People from outside the app do not count, we know nothing about them.",
         "medianAgeLabel": "Median age",
         "title": "Who is coming"
       },

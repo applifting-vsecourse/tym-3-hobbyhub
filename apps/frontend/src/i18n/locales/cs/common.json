@@ -146,7 +146,9 @@
       "stats": {
         "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
         "genderLabel": "Muži : ženy",
-        "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
+        "hidden_few": "Složení ukážeme, až budou na akci aspoň {{count}} účastníci z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
+        "hidden_one": "Složení ukážeme, až bude na akci aspoň {{count}} účastník z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
+        "hidden_other": "Složení ukážeme, až bude na akci aspoň {{count}} účastníků z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
         "medianAgeLabel": "Medián věku",
         "title": "Složení účastníků"
       },
