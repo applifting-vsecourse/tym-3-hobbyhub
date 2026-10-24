@@ -319,8 +319,32 @@
     },
     "list": {
       "create": "New group",
-      "empty": "An overview of your groups and groups near you is coming soon. In the meantime, you can start a new one.",
-      "title": "Groups"
+      "discoverEmpty": "Public groups you are not in yet will appear here. There are none so far.",
+      "discoverEmptyVisitor": "There are no public groups yet.",
+      "loadError": "Could not load groups",
+      "loadMore": "Load more",
+      "loadMoreError": "Could not load more groups. Please try again.",
+      "loading": "Loading groups…",
+      "loadingMore": "Loading…",
+      "mineEmpty": "You are not in any group yet. Find one under <discover>Discover</discover>.",
+      "nearbyEmpty": "There are no groups near you yet.",
+      "nearbyNoCity": "<profile>Set your city in your profile</profile> and we will show you groups near you.",
+      "nearbyTitle": "Groups near you",
+      "role": {
+        "ADMIN": "Admin",
+        "MEMBER": "Member",
+        "OWNER": "Organiser"
+      },
+      "tabs": {
+        "discover": "Discover",
+        "mine": "My groups"
+      },
+      "tabsLabel": "Show groups",
+      "title": "Groups",
+      "visibility": {
+        "PRIVATE": "Private",
+        "PUBLIC": "Public"
+      }
     },
     "placeholders": {
       "description": "E.g. We play every Thursday in the school gym, newcomers welcome.",
@@ -374,7 +398,10 @@
     },
     "activityCombobox": {
       "noMatch": "No activity matches",
-      "search": "Search activities…"
+      "search": "Search activities…",
+      "selected_one": "{{count}} activity",
+      "selected_other": "{{count}} activities",
+      "unknown": "Unknown activity"
     },
     "avatars": {
       "basketbalista": "Basketball player",
@@ -418,6 +445,7 @@
       "activitiesLoading": "Loading activities…",
       "activitiesRetry": "Try again",
       "activity": "Activity",
+      "activityPlaceholder": "All activities",
       "clear": "Clear",
       "date": "Date…",
       "location": "Location",

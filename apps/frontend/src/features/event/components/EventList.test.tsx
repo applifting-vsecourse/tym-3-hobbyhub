@@ -129,6 +129,35 @@ describe("EventList", () => {
     )
   })
 
+  it("shows the event's photo in its row", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[event({ imageUrl: "https://example.com/florbal.jpg" })]}
+        total={1}
+        now={NOW}
+      />,
+    )
+
+    const row = screen.getByRole("link", { name: /Čtvrteční florbal/ })
+    expect(row.querySelectorAll('img[src="https://example.com/florbal.jpg"]')).toHaveLength(1)
+  })
+
+  it("shows the activity's icon in place of a missing photo", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[event({ imageUrl: null })]}
+        total={1}
+        now={NOW}
+      />,
+    )
+
+    const row = screen.getByRole("link", { name: /Čtvrteční florbal/ })
+    expect(row.querySelector("img")).toBeNull()
+    expect(row.querySelector("svg")).not.toBeNull()
+  })
+
   it("says full once the minimum is reached", () => {
     render(
       <EventList

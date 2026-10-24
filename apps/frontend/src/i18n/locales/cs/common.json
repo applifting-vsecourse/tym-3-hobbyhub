@@ -326,8 +326,32 @@
     },
     "list": {
       "create": "Nová skupina",
-      "empty": "Přehled vašich skupin a skupin ve vašem okolí brzy přibude. Mezitím můžete založit novou.",
-      "title": "Skupiny"
+      "discoverEmpty": "Tady uvidíte veřejné skupiny, ve kterých ještě nejste. Zatím žádná není.",
+      "discoverEmptyVisitor": "Zatím tu není žádná veřejná skupina.",
+      "loadError": "Skupiny se nepodařilo načíst",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",
+      "loading": "Načítáme skupiny…",
+      "loadingMore": "Načítáme…",
+      "mineEmpty": "Zatím nejste v žádné skupině. Najděte si nějakou v záložce <discover>Objevit</discover>.",
+      "nearbyEmpty": "Ve vašem okolí zatím žádná skupina není.",
+      "nearbyNoCity": "<profile>Nastavte si město v profilu</profile> a ukážeme vám skupiny ve vašem okolí.",
+      "nearbyTitle": "Skupiny ve vašem okolí",
+      "role": {
+        "ADMIN": "Správce",
+        "MEMBER": "Člen",
+        "OWNER": "Organizátor"
+      },
+      "tabs": {
+        "discover": "Objevit",
+        "mine": "Moje skupiny"
+      },
+      "tabsLabel": "Zobrazit skupiny",
+      "title": "Skupiny",
+      "visibility": {
+        "PRIVATE": "Soukromá",
+        "PUBLIC": "Veřejná"
+      }
     },
     "placeholders": {
       "description": "Např. Hrajeme každý čtvrtek v hale ZŠ Kobylisy, nováčci vítáni.",
@@ -383,7 +407,11 @@
     },
     "activityCombobox": {
       "noMatch": "Žádná aktivita neodpovídá",
-      "search": "Hledat aktivitu…"
+      "search": "Hledat aktivitu…",
+      "selected_few": "{{count}} aktivity",
+      "selected_one": "{{count}} aktivita",
+      "selected_other": "{{count}} aktivit",
+      "unknown": "Neznámá aktivita"
     },
     "avatars": {
       "basketbalista": "Basketbalista",
@@ -427,6 +455,7 @@
       "activitiesLoading": "Načítáme aktivity…",
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
+      "activityPlaceholder": "Všechny aktivity",
       "clear": "Vymazat",
       "date": "Datum…",
       "location": "Lokalita",

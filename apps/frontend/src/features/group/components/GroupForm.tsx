@@ -97,14 +97,9 @@ export function GroupForm({
   })
   useRevalidateOnLanguageChange(form)
 
-  const sortedActivities = useMemo(
-    () => [...activities].sort((a, b) => a.label.localeCompare(b.label)),
-    [activities],
-  )
-
   const activityPlaceholder = isActivitiesLoading
     ? t("groups.form.activityLoading")
-    : sortedActivities.length === 0 && !isActivitiesError
+    : activities.length === 0 && !isActivitiesError
       ? t("groups.form.activityEmpty")
       : t("groups.form.activityPlaceholder")
 
@@ -150,12 +145,12 @@ export function GroupForm({
               <ActivityCombobox
                 ref={field.ref}
                 name={field.name}
-                options={sortedActivities}
+                options={activities}
                 value={field.value}
                 onValueChange={field.onChange}
                 onBlur={field.onBlur}
                 placeholder={activityPlaceholder}
-                disabled={isActivitiesLoading || sortedActivities.length === 0}
+                disabled={isActivitiesLoading || activities.length === 0}
               />
             </FormControl>
             {isActivitiesError ? (

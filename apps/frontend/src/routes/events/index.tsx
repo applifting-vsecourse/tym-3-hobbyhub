@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react"
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { LocateFixed, MapPin, X } from "lucide-react"
@@ -97,6 +97,15 @@ function EventsPage() {
   }
   const activitiesQuery = useQuery(activitiesQueryOptions())
   const activities = activitiesQuery.data ?? []
+  const activityOptions = useMemo(
+    () =>
+      (activitiesQuery.data ?? []).map((item) => ({
+        id: item.id,
+        label: activityName(t, item),
+        icon: item.icon,
+      })),
+    [activitiesQuery.data, t],
+  )
 
   // The field is what the user typed; the address follows after a pause. The
   // last text this page put in the address is remembered, so the address
@@ -190,10 +199,7 @@ function EventsPage() {
                   error: activitiesQuery.error,
                   onRetry: () => void activitiesQuery.refetch(),
                 }}
-                activityOptions={activities.map((item) => ({
-                  value: item.id,
-                  label: activityName(t, item),
-                }))}
+                activityOptions={activityOptions}
               />
               <div className="flex flex-wrap items-center gap-2">
                 <FilterChip
