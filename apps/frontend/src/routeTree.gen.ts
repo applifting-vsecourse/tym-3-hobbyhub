@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ProtectedPagesMyEventsRouteImport } from './routes/_ProtectedPages/my-events'
+import { Route as ProtectedPagesOnboardingRouteImport } from './routes/_ProtectedPages/onboarding'
 import { Route as ProtectedPagesProfileRouteImport } from './routes/_ProtectedPages/profile'
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
@@ -59,6 +60,12 @@ const ProtectedPagesMyEventsRoute = ProtectedPagesMyEventsRouteImport.update({
   path: '/my-events',
   getParentRoute: () => ProtectedPagesRoute,
 } as any)
+const ProtectedPagesOnboardingRoute =
+  ProtectedPagesOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 const ProtectedPagesProfileRoute = ProtectedPagesProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -108,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
+  '/onboarding': typeof ProtectedPagesOnboardingRoute
   '/profile': typeof ProtectedPagesProfileRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -124,6 +132,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
+  '/onboarding': typeof ProtectedPagesOnboardingRoute
   '/profile': typeof ProtectedPagesProfileRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_ProtectedPages/my-events': typeof ProtectedPagesMyEventsRoute
+  '/_ProtectedPages/onboarding': typeof ProtectedPagesOnboardingRoute
   '/_ProtectedPages/profile': typeof ProtectedPagesProfileRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/my-events'
+    | '/onboarding'
     | '/profile'
     | '/quacks'
     | '/events/$eventId'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/my-events'
+    | '/onboarding'
     | '/profile'
     | '/quacks'
     | '/events/$eventId'
@@ -193,6 +205,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/_ProtectedPages/my-events'
+    | '/_ProtectedPages/onboarding'
     | '/_ProtectedPages/profile'
     | '/_ProtectedPages/quacks'
     | '/events/$eventId'
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesMyEventsRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/onboarding': {
+      id: '/_ProtectedPages/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof ProtectedPagesOnboardingRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/profile': {
       id: '/_ProtectedPages/profile'
       path: '/profile'
@@ -327,6 +347,7 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedPagesRouteChildren {
   ProtectedPagesMyEventsRoute: typeof ProtectedPagesMyEventsRoute
+  ProtectedPagesOnboardingRoute: typeof ProtectedPagesOnboardingRoute
   ProtectedPagesProfileRoute: typeof ProtectedPagesProfileRoute
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
   ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
@@ -336,6 +357,7 @@ interface ProtectedPagesRouteChildren {
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesMyEventsRoute: ProtectedPagesMyEventsRoute,
+  ProtectedPagesOnboardingRoute: ProtectedPagesOnboardingRoute,
   ProtectedPagesProfileRoute: ProtectedPagesProfileRoute,
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
   ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,

@@ -173,16 +173,37 @@ model Activity {
   isActive               Boolean          @default(true)
   events                 Event[]
   groups                 Group[]
+  interests              UserActivity[]
 
   @@index([categoryId])
   @@map("activity")
 }
 
+// An activity the user likes to play and how well (F-04.1, F-04.8).
+model UserActivity {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  activity   Activity @relation(fields: [activityId], references: [id])
+  activityId String
+  // Optional: nobody has to rate themselves to say what they play. From the
+  // Level catalogue (ADR-0002), the ones flagged isSkillLevel.
+  level      Level?   @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  levelId    String?
+
+  @@id([userId, activityId])
+  @@index([activityId])
+  @@index([levelId])
+  @@map("user_activity")
+}
+
 model Level {
-  id     String  @id @default(cuid())
-  name   String  @unique @db.VarChar(100)
-  order  Int     @unique
-  events Event[]
+  id             String         @id @default(cuid())
+  name           String         @unique @db.VarChar(100)
+  order          Int            @unique
+  // False for "Všechny úrovně": it describes an event, not how well a person plays.
+  isSkillLevel   Boolean        @default(true)
+  events         Event[]
+  userActivities UserActivity[]
 
   @@map("level")
 }
@@ -471,6 +492,15 @@ model User {
   status                UserStatus         @default(ACTIVE)
   travelRadiusKm        Int?
   onboardingCompletedAt DateTime?
+  // F-04.8: how many wizard steps (activities, location, profile) are done or
+  // skipped, so an interrupted wizard resumes at the first open one.
+  onboardingStepsDone   Int                @default(0)
+  // F-04.8: the city and street as typed in the onboarding. Not a Location (it
+  // has no postal code, country or coordinates, which user_home_location_all_or_nothing
+  // demands), so it lives apart until the address lookup (F-12.3 #79, F-02.2b
+  // #92) can turn it into the home* address.
+  declaredCity          String?            @db.VarChar(100)
+  declaredStreet        String?            @db.VarChar(200)
   termsAcceptedAt       DateTime?
   termsVersion          String?            @db.VarChar(20)
   disabledNotifications NotificationType[] @default([])
@@ -495,6 +525,8 @@ model User {
   temporaryLatitude           Decimal?  @db.Decimal(9, 6)
   temporaryLongitude          Decimal?  @db.Decimal(9, 6)
   temporaryLocationValidUntil DateTime?
+
+  interests UserActivity[]
 
   blockedUsers User[] @relation("UserBlocks")
   blockedBy    User[] @relation("UserBlocks")

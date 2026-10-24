@@ -21,6 +21,9 @@ export function useSignOut() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authKeys.session() })
+      // Everything else in the cache is the previous person's (onboarding,
+      // events they organise…): the next one must not be shown it.
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== authKeys.all()[0] })
       await navigate({ to: ROUTES.home })
       toast.success(t("auth.signOut.success"))
     },
