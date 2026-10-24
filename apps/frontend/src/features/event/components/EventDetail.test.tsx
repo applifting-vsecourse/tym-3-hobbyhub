@@ -27,7 +27,10 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   contributionNote: null,
   status: "PUBLISHED",
   approvalMode: "MANUAL",
+  organizerId: "u1",
   organizerName: "Jana Nováková",
+  cancellationReason: null,
+  cancellationNote: null,
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1 } },
   statsMinParticipants: 3,
   ...overrides,
@@ -147,5 +150,29 @@ describe("EventDetail", () => {
 
     expect(screen.getByText("Odkaz po schválení")).toBeInTheDocument()
     expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
+  })
+
+  it("gives the reason and the note of a cancelled event", () => {
+    renderDetail({
+      status: "CANCELLED",
+      cancellationReason: "Nepříznivé počasí",
+      cancellationNote: "Hrajeme příští týden",
+    })
+
+    expect(screen.getByText("Důvod: Nepříznivé počasí · Hrajeme příští týden")).toBeInTheDocument()
+  })
+
+  it("shows what the page gives the organizer", () => {
+    render(
+      <EventDetail
+        event={event()}
+        activityLabel="Florbal"
+        joinAction={null}
+        organizerActions={<button type="button">Upravit akci</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Upravit akci" })).toBeInTheDocument()
   })
 })

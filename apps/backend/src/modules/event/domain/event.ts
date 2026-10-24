@@ -6,6 +6,7 @@ export const EVENT_TITLE_MAX_LENGTH = 80;
 export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
 export const EVENT_EQUIPMENT_MAX_LENGTH = 500;
 export const EVENT_CONTRIBUTION_NOTE_MAX_LENGTH = 200;
+export const EVENT_CANCELLATION_NOTE_MAX_LENGTH = 500;
 // Decimal(10, 2)
 export const EVENT_CONTRIBUTION_MAX_AMOUNT = 99_999_999.99;
 export const EVENT_STREET_MAX_LENGTH = 200;
@@ -97,6 +98,8 @@ export type Event = Occupancy & {
   location: EventLocation | null;
   activity: Activity;
   organizerId: string;
+  cancellationReason: string | null;
+  cancellationNote: string | null;
 };
 
 export type CreateEventData = {
@@ -164,6 +167,80 @@ export const eventRuleViolations = (
   }
   return violations;
 };
+
+// An edit keeps the kind of event: an online event stays online and has no
+// address, the others always have one.
+export type UpdateEventData = Omit<
+  CreateEventData,
+  'venueType' | 'location'
+> & {
+  venueType: VenueType;
+  location?: CreateEventData['location'];
+};
+
+export type CancelEventData = {
+  cancellationReasonId: string;
+  cancellationNote?: string;
+};
+
+export type EventChangeViolation =
+  | 'EVENT_NOT_CHANGEABLE'
+  | 'EVENT_NOT_CANCELLABLE'
+  | 'MAX_BELOW_OCCUPIED'
+  | 'VENUE_KIND_CHANGED'
+  | 'LOCATION_REQUIRED';
+
+const hasStarted = (event: Pick<Event, 'startAt'>, now: Date): boolean =>
+  event.startAt.getTime() <= now.getTime();
+
+// F-05.10: a draft or published event can be edited until it starts; only a
+// published one can be cancelled, and not once it has started either.
+export const eventChangeViolations = (
+  event: Pick<Event, 'status' | 'startAt' | 'approvedCount' | 'venueType'>,
+  change:
+    | {
+        kind: 'update';
+        maxParticipants: number;
+        externalOccupiedSpots: number;
+        venueType: VenueType;
+        hasLocation: boolean;
+      }
+    | { kind: 'cancel' },
+  now: Date,
+): EventChangeViolation[] => {
+  if (change.kind === 'cancel') {
+    return event.status === 'PUBLISHED' && !hasStarted(event, now)
+      ? []
+      : ['EVENT_NOT_CANCELLABLE'];
+  }
+  const changeable =
+    (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
+    !hasStarted(event, now);
+  if (!changeable) return ['EVENT_NOT_CHANGEABLE'];
+  const violations: EventChangeViolation[] = [];
+  // Pending requests take no seat, so only approved and outside people count;
+  // the outside seats are the ones in this very edit.
+  if (
+    change.maxParticipants <
+    change.externalOccupiedSpots + event.approvedCount
+  ) {
+    violations.push('MAX_BELOW_OCCUPIED');
+  }
+  // ONLINE is not offered for new events (ADR-0006), so it cannot be switched
+  // to or from; an online event is edited as it is.
+  if ((change.venueType === 'ONLINE') !== (event.venueType === 'ONLINE')) {
+    violations.push('VENUE_KIND_CHANGED');
+  }
+  if (change.venueType !== 'ONLINE' && !change.hasLocation) {
+    violations.push('LOCATION_REQUIRED');
+  }
+  return violations;
+};
+
+// What a guarded write reports: the changed event, or the rule that no longer
+// held when the write was made.
+export type EventChangeResult =
+  { ok: true; event: Event } | { ok: false; violation: EventChangeViolation };
 
 // ---------------------------------------------------------------------------
 // Public event list (F-02.3)
@@ -247,7 +324,10 @@ export type EventDetail = EventListItem & {
   contributionNote: string | null;
   status: PublicEventStatus;
   approvalMode: ApprovalMode;
+  organizerId: string;
   organizerName: string;
+  cancellationReason: string | null;
+  cancellationNote: string | null;
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;

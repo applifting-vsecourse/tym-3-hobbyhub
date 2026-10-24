@@ -108,6 +108,12 @@ export class EventResponseDto {
   @ApiProperty()
   organizerId!: string;
 
+  @ApiProperty({ type: String, nullable: true })
+  cancellationReason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  cancellationNote!: string | null;
+
   static fromDomain(event: Event): EventResponseDto {
     return {
       id: event.id,
@@ -136,6 +142,8 @@ export class EventResponseDto {
         : null,
       activity: ActivityResponseDto.fromDomain(event.activity),
       organizerId: event.organizerId,
+      cancellationReason: event.cancellationReason,
+      cancellationNote: event.cancellationNote,
     };
   }
 }

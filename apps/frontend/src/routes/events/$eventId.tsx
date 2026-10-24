@@ -17,6 +17,7 @@ import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { EventDetail } from "@/features/event/components/EventDetail"
+import { OrganizerActions } from "@/features/event/components/OrganizerActions"
 
 export const Route = createFileRoute("/events/$eventId")({
   component: EventDetailPage,
@@ -121,6 +122,14 @@ function EventDetailPage() {
             event={eventQuery.data}
             activityLabel={activityName(t, eventQuery.data.activity)}
             joinAction={joinAction}
+            organizerActions={
+              // F-05.10: only the organizer, and only until the event starts.
+              user?.id === eventQuery.data.organizerId &&
+              eventQuery.data.status === "PUBLISHED" &&
+              eventQuery.data.startAt > new Date() ? (
+                <OrganizerActions event={eventQuery.data} />
+              ) : null
+            }
           />
         )}
       </AppShell>
