@@ -297,12 +297,10 @@ export function DomainSections() {
           <JoinRequestCard
             className="max-w-sm"
             name="Honza_K"
-            avatar="florbalista"
             hasVerifiedEmail
-            activityLine="Florbal, pokročilí"
-            historyLine="Registrován v březnu, 6 akcí"
+            bio="Florbal hraju od školy, poslední roky za firemní tým."
             message="Hraju třetí rok za firemní tým. V Praze jsem nový a hledám pravidelnou čtvrteční skupinu."
-            outcome="Po schválení bude 8/10, chybět budou 2."
+            outcome="Po schválení bude minimum splněno (8 z 8)."
             onApprove={notify("Žádost schválena")}
             onReject={notify("Žádost zamítnuta")}
           />

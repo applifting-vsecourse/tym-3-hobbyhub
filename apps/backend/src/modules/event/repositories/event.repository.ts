@@ -11,6 +11,7 @@ import {
   CreateEventData,
   Event,
   EventDetail,
+  EventFacts,
   EventListFilter,
   EventListItem,
   EventListPage,
@@ -116,6 +117,50 @@ const PUBLIC_EVENT = {
   visibility: 'PUBLIC',
   isHidden: false,
 } as const;
+
+// What the rules about seats read of an event (`EventFacts`). The approved
+// people come along, so a caller can find one of them without a second query.
+const eventFactsSelect = {
+  id: true,
+  status: true,
+  startAt: true,
+  endAt: true,
+  approvalMode: true,
+  minParticipants: true,
+  maxParticipants: true,
+  externalOccupiedSpots: true,
+  organizerId: true,
+  coOrganizers: { select: { id: true } },
+  participations: {
+    where: { status: ParticipationStatus.APPROVED },
+    select: { userId: true },
+  },
+} as const satisfies Prisma.EventSelect;
+
+type EventFactsRow = Prisma.EventGetPayload<{
+  select: typeof eventFactsSelect;
+}>;
+
+const mapEventFacts = (event: EventFactsRow): EventFacts => {
+  const { freeSpots } = occupancyOf({
+    minParticipants: event.minParticipants,
+    maxParticipants: event.maxParticipants,
+    externalOccupiedSpots: event.externalOccupiedSpots,
+    approvedCount: event.participations.length,
+  });
+  return {
+    id: event.id,
+    status: event.status,
+    startAt: event.startAt,
+    endAt: event.endAt,
+    approvalMode: event.approvalMode,
+    organizerIds: [
+      event.organizerId,
+      ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
+    ],
+    freeSpots,
+  };
+};
 
 const listInclude = {
   activity: true,
@@ -342,44 +387,25 @@ export class EventRepository {
   ): Promise<EventSeatFacts | null> {
     const event = await this.prisma.event.findFirst({
       where: { id, ...PUBLIC_EVENT },
-      select: {
-        id: true,
-        status: true,
-        startAt: true,
-        endAt: true,
-        approvalMode: true,
-        minParticipants: true,
-        maxParticipants: true,
-        externalOccupiedSpots: true,
-        organizerId: true,
-        coOrganizers: { select: { id: true } },
-        participations: {
-          where: { status: ParticipationStatus.APPROVED },
-          select: { userId: true },
-        },
-      },
+      select: eventFactsSelect,
     });
     if (!event) return null;
-    const { freeSpots } = occupancyOf({
-      minParticipants: event.minParticipants,
-      maxParticipants: event.maxParticipants,
-      externalOccupiedSpots: event.externalOccupiedSpots,
-      approvedCount: event.participations.length,
-    });
     return {
-      id: event.id,
-      status: event.status,
-      startAt: event.startAt,
-      endAt: event.endAt,
-      approvalMode: event.approvalMode,
-      organizerIds: [
-        event.organizerId,
-        ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
-      ],
-      freeSpots,
+      ...mapEventFacts(event),
       hasSeat: event.participations.some(
         (participation) => participation.userId === userId,
       ),
     };
+  }
+
+  // F-05.7: any event, public or not, for its organizers' own tools. Who may
+  // see it is the service's to decide (`isOrganizerOf`): the organizer runs a
+  // hidden or private event as well (F-05.2).
+  async getEventFacts(id: string): Promise<EventFacts | null> {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      select: eventFactsSelect,
+    });
+    return event ? mapEventFacts(event) : null;
   }
 }
