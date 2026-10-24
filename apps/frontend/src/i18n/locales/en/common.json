@@ -144,12 +144,14 @@
         "startedText": "This event has already started, you cannot ask to join."
       },
       "stats": {
-        "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
-        "genderLabel": "Men : women",
+        "coverage": "Age and gender are known for {{included}} of {{total}} people.",
+        "female": "Women",
         "hidden_one": "We show the mix once at least {{count}} person who joined through the app has filled in their age and gender. People from outside the app do not count, we know nothing about them.",
         "hidden_other": "We show the mix once at least {{count}} people who joined through the app have filled in their age and gender. People from outside the app do not count, we know nothing about them.",
+        "male": "Men",
         "medianAgeLabel": "Median age",
-        "title": "Who is coming"
+        "title": "Who is coming",
+        "unknown": "Not stated"
       },
       "title": "Event detail"
     },
@@ -379,7 +381,10 @@
     },
     "activityCombobox": {
       "noMatch": "No activity matches",
-      "search": "Search activities…"
+      "search": "Search activities…",
+      "selected_one": "{{count}} activity",
+      "selected_other": "{{count}} activities",
+      "unknown": "Unknown activity"
     },
     "avatars": {
       "basketbalista": "Basketball player",
@@ -423,6 +428,7 @@
       "activitiesLoading": "Loading activities…",
       "activitiesRetry": "Try again",
       "activity": "Activity",
+      "activityPlaceholder": "All activities",
       "clear": "Clear",
       "date": "Date…",
       "location": "Location",

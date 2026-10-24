@@ -28,7 +28,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   status: "PUBLISHED",
   approvalMode: "MANUAL",
   organizerName: "Jana Nováková",
-  stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1 } },
+  stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1, unknown: 1 } },
   statsMinParticipants: 3,
   ...overrides,
 })
@@ -81,16 +81,27 @@ describe("EventDetail", () => {
     expect(screen.getByText("Organizátor žádost schvaluje ručně.")).toBeInTheDocument()
   })
 
-  it("shows the mix of participants with its coverage", () => {
-    renderDetail()
+  it("shows the mix of participants adding up to the taken seats", () => {
+    renderDetail({
+      takenCount: 7,
+      stats: { included: 5, total: 7, medianAge: 36, gender: { male: 5, female: 0, unknown: 2 } },
+    })
 
-    expect(screen.getByText("Medián věku")).toBeInTheDocument()
-    expect(screen.getByText("36")).toBeInTheDocument()
-    expect(screen.getByText("Muži : ženy")).toBeInTheDocument()
-    expect(screen.getByText("3 : 1")).toBeInTheDocument()
-    expect(
-      screen.getByText("Počítáno z 4 registrovaných účastníků, obsazených míst je 5."),
-    ).toBeInTheDocument()
+    const figure = (label: string) => screen.getByText(label).nextElementSibling?.textContent
+    expect(figure("Medián věku")).toBe("36")
+    expect(figure("Muži")).toBe("5")
+    expect(figure("Ženy")).toBe("0")
+    expect(figure("Neuvedeno")).toBe("2")
+    expect(screen.getByText("Věk a pohlaví známe u 5 z 7 přihlášených.")).toBeInTheDocument()
+  })
+
+  it("leaves out the unknown figure when everyone is counted", () => {
+    renderDetail({
+      stats: { included: 5, total: 5, medianAge: 36, gender: { male: 3, female: 2, unknown: 0 } },
+    })
+
+    expect(screen.queryByText("Neuvedeno")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Věk a pohlaví známe/)).not.toBeInTheDocument()
   })
 
   // Three seats taken, but two by people outside the app: the seats are not

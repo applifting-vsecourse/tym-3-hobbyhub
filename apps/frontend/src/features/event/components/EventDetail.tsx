@@ -90,6 +90,23 @@ export function EventDetail({
       : null,
     event.equipment ? { label: t("events.detail.equipment"), value: event.equipment } : null,
   ].filter((row) => row !== null)
+  // The gender figures add up to the taken seats, so they match the count above.
+  const statFigures = stats
+    ? [
+        stats.medianAge !== null
+          ? { label: t("events.detail.stats.medianAgeLabel"), value: stats.medianAge }
+          : null,
+        ...(stats.gender
+          ? [
+              { label: t("events.detail.stats.male"), value: stats.gender.male },
+              { label: t("events.detail.stats.female"), value: stats.gender.female },
+              stats.gender.unknown > 0
+                ? { label: t("events.detail.stats.unknown"), value: stats.gender.unknown }
+                : null,
+            ]
+          : []),
+      ].filter((figure) => figure !== null)
+    : []
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8">
@@ -226,31 +243,24 @@ export function EventDetail({
           {stats ? (
             <>
               <dl className="flex flex-wrap gap-x-10 gap-y-3">
-                {stats.medianAge !== null ? (
-                  <div className="flex flex-col-reverse">
-                    <dt className="typo-small text-muted-foreground">
-                      {t("events.detail.stats.medianAgeLabel")}
-                    </dt>
-                    <dd className="typo-numeral text-foreground">{stats.medianAge}</dd>
+                {statFigures.map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="flex flex-col-reverse"
+                  >
+                    <dt className="typo-small text-muted-foreground">{label}</dt>
+                    <dd className="typo-numeral text-foreground">{value}</dd>
                   </div>
-                ) : null}
-                {stats.gender ? (
-                  <div className="flex flex-col-reverse">
-                    <dt className="typo-small text-muted-foreground">
-                      {t("events.detail.stats.genderLabel")}
-                    </dt>
-                    <dd className="typo-numeral text-foreground">
-                      {stats.gender.male} : {stats.gender.female}
-                    </dd>
-                  </div>
-                ) : null}
+                ))}
               </dl>
-              <p className="typo-small text-muted-foreground">
-                {t("events.detail.stats.coverage", {
-                  included: stats.included,
-                  total: stats.total,
-                })}
-              </p>
+              {stats.included < stats.total ? (
+                <p className="typo-small text-muted-foreground">
+                  {t("events.detail.stats.coverage", {
+                    included: stats.included,
+                    total: stats.total,
+                  })}
+                </p>
+              ) : null}
             </>
           ) : (
             <p className="typo-small text-muted-foreground">

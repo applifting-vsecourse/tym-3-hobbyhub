@@ -250,12 +250,13 @@ export type PublicEventStatus =
 export type Gender = 'MALE' | 'FEMALE';
 
 // Anonymized composition of the approved registered participants. People taken
-// along from outside the app are not counted, hence `included` out of `total`.
+// along from outside the app are not counted, hence `included` out of `total`;
+// the gender split counts them as `unknown`, so it adds up to `total`.
 export type ParticipantStats = {
   included: number;
   total: number;
   medianAge: number | null;
-  gender: { male: number; female: number } | null;
+  gender: { male: number; female: number; unknown: number } | null;
 };
 
 export type EventDetail = EventListItem & {

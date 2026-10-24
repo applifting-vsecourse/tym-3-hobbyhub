@@ -68,6 +68,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - The submit button shows a pending state and is disabled while submitting.
 - Never disable a submit button just because the form is untouched — let the user try and show them what's wrong.
 - Numbers of people are entered with `Counter`, photos with `PhotoPicker`.
+- **Activities are always picked with `ActivityCombobox`** — in forms and in filters alike (`isMultiple` where several may be chosen). Never as a row of chips or pills: the lookup grows to dozens of activities, and chips do not scale. The chosen ones may show as removable chips outside the picker, as on the event list.
 
 ## Phones first
 

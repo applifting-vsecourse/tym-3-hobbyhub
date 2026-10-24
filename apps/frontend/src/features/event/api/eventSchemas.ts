@@ -121,7 +121,8 @@ export const participantStatsSchema = z.object({
   /** All taken seats, including people outside the app. */
   total: z.number(),
   medianAge: z.number().nullable(),
-  gender: z.object({ male: z.number(), female: z.number() }).nullable(),
+  /** Adds up to `total`: people without a known gender count as unknown. */
+  gender: z.object({ male: z.number(), female: z.number(), unknown: z.number() }).nullable(),
 })
 
 export const eventDetailSchema = eventListItemSchema.extend({

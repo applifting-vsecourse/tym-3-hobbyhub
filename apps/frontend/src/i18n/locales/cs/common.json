@@ -144,13 +144,15 @@
         "startedText": "Akce už začala, o účast se nedá žádat."
       },
       "stats": {
-        "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
-        "genderLabel": "Muži : ženy",
+        "coverage": "Věk a pohlaví známe u {{included}} z {{total}} přihlášených.",
+        "female": "Ženy",
         "hidden_few": "Složení ukážeme, až budou na akci aspoň {{count}} účastníci z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
         "hidden_one": "Složení ukážeme, až bude na akci aspoň {{count}} účastník z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
         "hidden_other": "Složení ukážeme, až bude na akci aspoň {{count}} účastníků z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
+        "male": "Muži",
         "medianAgeLabel": "Medián věku",
-        "title": "Složení účastníků"
+        "title": "Složení účastníků",
+        "unknown": "Neuvedeno"
       },
       "title": "Detail akce"
     },
@@ -387,7 +389,11 @@
     },
     "activityCombobox": {
       "noMatch": "Žádná aktivita neodpovídá",
-      "search": "Hledat aktivitu…"
+      "search": "Hledat aktivitu…",
+      "selected_few": "{{count}} aktivity",
+      "selected_one": "{{count}} aktivita",
+      "selected_other": "{{count}} aktivit",
+      "unknown": "Neznámá aktivita"
     },
     "avatars": {
       "basketbalista": "Basketbalista",
@@ -431,6 +437,7 @@
       "activitiesLoading": "Načítáme aktivity…",
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
+      "activityPlaceholder": "Všechny aktivity",
       "clear": "Vymazat",
       "date": "Datum…",
       "location": "Lokalita",

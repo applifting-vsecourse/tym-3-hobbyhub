@@ -275,11 +275,6 @@ export function EventForm({
   const step = STEPS[stepIndex] ?? "what"
   const isLastStep = stepIndex === STEPS.length - 1
 
-  const sortedActivities = useMemo(
-    () => [...activities].sort((a, b) => a.label.localeCompare(b.label)),
-    [activities],
-  )
-
   const goToStep = (index: number) => {
     setStepIndex(index)
     window.scrollTo({ top: 0 })
@@ -300,7 +295,7 @@ export function EventForm({
   }
 
   const activityProps = {
-    activities: sortedActivities,
+    activities,
     isActivitiesLoading,
     isActivitiesError,
     onRetryActivities,
@@ -352,7 +347,7 @@ export function EventForm({
               ))}
             </div>
             <aside className="space-y-4 md:sticky md:top-20">
-              <PreviewFromForm activities={sortedActivities} />
+              <PreviewFromForm activities={activities} />
               <MissingToMinimum />
               <Button
                 type="submit"
@@ -414,7 +409,7 @@ export function EventForm({
               {...activityProps}
             />
             {step === "who" ? <MissingToMinimum /> : null}
-            {step === "details" ? <PreviewFromForm activities={sortedActivities} /> : null}
+            {step === "details" ? <PreviewFromForm activities={activities} /> : null}
           </div>
           {/* Under the BottomNav (z-40), so its raised "Přidat" stays on top. */}
           <div className="fixed inset-x-0 bottom-0 z-30 bg-background px-4 pt-3 pb-above-bottom-nav">
