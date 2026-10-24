@@ -75,6 +75,7 @@
     }
   },
   "common": {
+    "close": "Zavřít",
     "unsavedChanges": {
       "description": "Máte rozpracované změny, které nejsou odeslané. Když odejdete, ztratí se.",
       "leave": "Odejít",
@@ -95,6 +96,14 @@
     }
   },
   "events": {
+    "approvalMode": {
+      "AUTOMATIC": "Automaticky",
+      "MANUAL": "Ručně"
+    },
+    "approvalModeHint": {
+      "AUTOMATIC": "Kdo se přihlásí, dostane volné místo hned, bez vašeho schválení.",
+      "MANUAL": "Každou žádost o účast schválíte, nebo zamítnete sami."
+    },
     "back": "Zpět",
     "day": {
       "today": "Dnes",
@@ -116,12 +125,12 @@
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
       "join": "Obsadit místo",
-      "joinSoon": "Žádost o účast zatím nejde odeslat.",
       "linkLabel": "Odkaz",
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
       "organizer": "Pořádá {{name}}",
+      "requestToJoin": "Požádat o účast",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
       "signIn": "Přihlásit se",
@@ -133,19 +142,26 @@
         "full": "Naplněno",
         "fullText": "Akce je plná, o účast se nedá žádat.",
         "notHeld": "Neuskutečnilo se",
-        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat."
+        "notHeldText": "Akce se neuskutečnila, o účast se nedá žádat.",
+        "started": "Probíhá",
+        "startedText": "Akce už začala, o účast se nedá žádat."
       },
       "stats": {
-        "coverage": "Počítáno z {{included}} registrovaných účastníků, obsazených míst je {{total}}.",
-        "genderLabel": "Muži : ženy",
-        "hidden": "Složení se ukáže, až bude na akci aspoň {{count}} přihlášených.",
+        "coverage": "Věk a pohlaví známe u {{included}} z {{total}} přihlášených.",
+        "female": "Ženy",
+        "hidden_few": "Složení ukážeme, až budou na akci aspoň {{count}} účastníci z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
+        "hidden_one": "Složení ukážeme, až bude na akci aspoň {{count}} účastník z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
+        "hidden_other": "Složení ukážeme, až bude na akci aspoň {{count}} účastníků z aplikace s vyplněným věkem a pohlavím. Lidi mimo aplikaci nepočítáme, nic o nich nevíme.",
+        "male": "Muži",
         "medianAgeLabel": "Medián věku",
-        "title": "Složení účastníků"
+        "title": "Složení účastníků",
+        "unknown": "Neuvedeno"
       },
       "title": "Detail akce"
     },
     "fields": {
       "activity": "Aktivita",
+      "approvalMode": "Schvalování účasti",
       "city": "Město",
       "contributionAmount": "Příspěvek na místo v Kč (nepovinné)",
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
@@ -376,7 +392,11 @@
     },
     "activityCombobox": {
       "noMatch": "Žádná aktivita neodpovídá",
-      "search": "Hledat aktivitu…"
+      "search": "Hledat aktivitu…",
+      "selected_few": "{{count}} aktivity",
+      "selected_one": "{{count}} aktivita",
+      "selected_other": "{{count}} aktivit",
+      "unknown": "Neznámá aktivita"
     },
     "avatars": {
       "basketbalista": "Basketbalista",
@@ -420,6 +440,7 @@
       "activitiesLoading": "Načítáme aktivity…",
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
+      "activityPlaceholder": "Všechny aktivity",
       "clear": "Vymazat",
       "date": "Datum…",
       "location": "Lokalita",
@@ -538,6 +559,67 @@
   "myEvents": {
     "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
     "title": "Moje akce"
+  },
+  "participationRequests": {
+    "approved": {
+      "description": "Organizátor tvou účast schválil.",
+      "descriptionAutomatic": "Na akci máš místo."
+    },
+    "form": {
+      "cancel": "Zrušit",
+      "hiddenDetails": "Kontakt a poloha zůstávají skryté.",
+      "messageLabel": "Zpráva organizátorovi (nepovinné)",
+      "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
+      "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+      "note": "Organizátor žádost schválí ručně. Zrušit ji můžeš, dokud ji nevyřídí.",
+      "noteAutomatic": "Místo získáš hned, organizátor ho nemusí schvalovat.",
+      "organizerSees": "Organizátor uvidí",
+      "profileBasic": "Základní profil",
+      "profileVerified": "E-mail ověřen · základní profil",
+      "sendFailed": "Žádost se nepodařilo odeslat. Zkus to znovu.",
+      "sendFailedAutomatic": "Místo se nepodařilo obsadit. Zkus to znovu.",
+      "submit": "Odeslat žádost",
+      "submitAutomatic": "Obsadit místo",
+      "title": "Požádat o účast",
+      "titleAutomatic": "Obsadit místo"
+    },
+    "joined": {
+      "close": "Zavřít",
+      "text": "Organizátor uvidí, že jdeš.",
+      "title": "Máš místo"
+    },
+    "pending": {
+      "description": "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
+      "withdraw": "Zrušit žádost"
+    },
+    "refused": {
+      "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
+      "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
+      "EVENT_FINISHED": "Akce už proběhla, o účast se nedá žádat.",
+      "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",
+      "EVENT_NOT_HELD": "Akce se neuskutečnila, o účast se nedá žádat.",
+      "EVENT_STARTED": "Akce už začala, o účast se nedá žádat.",
+      "HAS_SEAT": "Na akci už máš místo.",
+      "IS_ORGANIZER": "Tuto akci pořádáš.",
+      "REJECTED_BEFORE": "Organizátor tvou žádost zamítl, novou poslat nemůžeš."
+    },
+    "rejected": {
+      "description": "Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."
+    },
+    "sent": {
+      "findMore": "Najít další akce",
+      "text": "Organizátor ji schválí, nebo zamítne.",
+      "title": "Žádost je odeslaná",
+      "withdraw": "Zrušit žádost"
+    },
+    "withdraw": {
+      "confirm": "Zrušit žádost",
+      "done": "Žádost zrušena",
+      "failed": "Žádost se nepodařilo zrušit. Zkus to znovu.",
+      "keep": "Nechat žádost",
+      "text": "Žádost můžeš zrušit, dokud ji organizátor nevyřídí. Přestane ji vidět a o účast můžeš později požádat znovu.",
+      "title": "Zrušit žádost o účast?"
+    }
   },
   "profile": {
     "placeholder": "Stránku profilu připravujeme.",

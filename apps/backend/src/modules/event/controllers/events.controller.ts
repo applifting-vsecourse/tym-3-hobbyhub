@@ -78,6 +78,7 @@ export class EventsController {
       description: body.description,
       equipment: body.equipment,
       venueType: body.venueType,
+      approvalMode: body.approvalMode,
       startAt: body.startAt,
       endAt: body.endAt,
       location: {

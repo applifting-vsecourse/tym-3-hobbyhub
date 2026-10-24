@@ -21,6 +21,11 @@ export type EventStatus =
 export type EventVisibility = 'PUBLIC' | 'GROUP_ONLY' | 'PRIVATE';
 export type VenueType = 'PUBLIC_VENUE' | 'PRIVATE_VENUE' | 'ONLINE';
 
+// MANUAL: the organizer decides every request to join (F-05.7). AUTOMATIC: a
+// request takes a free seat at once (F-05.5).
+export const APPROVAL_MODES = ['MANUAL', 'AUTOMATIC'] as const;
+export type ApprovalMode = (typeof APPROVAL_MODES)[number];
+
 // F-05.1 creates events at a place. ONLINE waits for the PO's decision on
 // ADR-0006 and is refused by the API until then.
 export const CREATABLE_VENUE_TYPES = [
@@ -99,12 +104,27 @@ export type Event = Occupancy & {
   organizerId: string;
 };
 
+// What deciding a request to join (F-06.1) needs to know about a public event
+// and one person: who runs it, the seats left, and whether they have a seat.
+export type EventSeatFacts = {
+  id: string;
+  status: EventStatus;
+  startAt: Date;
+  endAt: Date;
+  approvalMode: ApprovalMode;
+  // The organizer and the co-organizers.
+  organizerIds: string[];
+  freeSpots: number;
+  hasSeat: boolean;
+};
+
 export type CreateEventData = {
   title: string;
   activityId: string;
   description: string;
   equipment?: string;
   venueType: CreatableVenueType;
+  approvalMode: ApprovalMode;
   startAt: Date;
   endAt: Date;
   location: {
@@ -227,16 +247,16 @@ export const MIN_STATS_PARTICIPANTS = 3;
 // A public detail also shows cancelled and over events, never drafts.
 export type PublicEventStatus =
   'PUBLISHED' | 'CANCELLED' | 'FINISHED' | 'NOT_HELD';
-export type ApprovalMode = 'MANUAL' | 'AUTOMATIC';
 export type Gender = 'MALE' | 'FEMALE';
 
 // Anonymized composition of the approved registered participants. People taken
-// along from outside the app are not counted, hence `included` out of `total`.
+// along from outside the app are not counted, hence `included` out of `total`;
+// the gender split counts them as `unknown`, so it adds up to `total`.
 export type ParticipantStats = {
   included: number;
   total: number;
   medianAge: number | null;
-  gender: { male: number; female: number } | null;
+  gender: { male: number; female: number; unknown: number } | null;
 };
 
 export type EventDetail = EventListItem & {

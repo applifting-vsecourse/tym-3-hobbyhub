@@ -53,8 +53,24 @@ describe('computeParticipantStats', () => {
       included: 3,
       total: 5,
       medianAge: 40,
-      gender: { male: 2, female: 1 },
+      gender: { male: 2, female: 1, unknown: 2 },
     });
+  });
+
+  it('counts people taken along from outside the app as unknown gender', () => {
+    const stats = computeParticipantStats(
+      [
+        person('1990-01-01', 'MALE'),
+        person('1985-01-01', 'MALE'),
+        person('1980-01-01', 'MALE'),
+        person('1995-01-01', 'MALE'),
+        person('1988-01-01', 'MALE'),
+      ],
+      EVENT_START,
+      7,
+    );
+
+    expect(stats?.gender).toEqual({ male: 5, female: 0, unknown: 2 });
   });
 
   it('rounds the median of an even number of ages', () => {
@@ -102,7 +118,7 @@ describe('computeParticipantStats', () => {
     expect(stats).toMatchObject({
       included: 3,
       total: 6,
-      gender: { male: 2, female: 1 },
+      gender: { male: 2, female: 1, unknown: 3 },
     });
     expect(stats?.medianAge).toBe(36);
   });

@@ -192,3 +192,60 @@ describe('EventRepository.getPublicEventById', () => {
     expect(JSON.stringify(detail)).not.toContain('1990-01-01');
   });
 });
+
+describe('EventRepository.getPublicEventSeatFacts', () => {
+  const row = {
+    id: 'e1',
+    status: 'PUBLISHED',
+    startAt: new Date('2030-01-01T18:00:00Z'),
+    endAt: new Date('2030-01-01T20:00:00Z'),
+    approvalMode: 'AUTOMATIC',
+    minParticipants: 4,
+    maxParticipants: 5,
+    externalOccupiedSpots: 2,
+    organizerId: 'organizer',
+    coOrganizers: [{ id: 'co-organizer' }],
+    participations: [{ userId: 'u1' }, { userId: 'u2' }],
+  };
+
+  it('uses the visibility of the public detail', async () => {
+    const findFirst = jest.fn().mockResolvedValue(null);
+    const prisma = { event: { findFirst } } as unknown as PrismaService;
+
+    await expect(
+      new EventRepository(prisma).getPublicEventSeatFacts('e1', 'u1'),
+    ).resolves.toBeNull();
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'e1',
+          status: { not: 'DRAFT' },
+          visibility: 'PUBLIC',
+          isHidden: false,
+        },
+      }),
+    );
+  });
+
+  it('counts free seats like the occupancy and finds the person among the approved', async () => {
+    const findFirst = jest.fn().mockResolvedValue(row);
+    const prisma = { event: { findFirst } } as unknown as PrismaService;
+    const repository = new EventRepository(prisma);
+
+    await expect(
+      repository.getPublicEventSeatFacts('e1', 'u1'),
+    ).resolves.toEqual({
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: row.startAt,
+      endAt: row.endAt,
+      approvalMode: 'AUTOMATIC',
+      organizerIds: ['organizer', 'co-organizer'],
+      freeSpots: 1,
+      hasSeat: true,
+    });
+    await expect(
+      repository.getPublicEventSeatFacts('e1', 'u3'),
+    ).resolves.toMatchObject({ hasSeat: false });
+  });
+});
