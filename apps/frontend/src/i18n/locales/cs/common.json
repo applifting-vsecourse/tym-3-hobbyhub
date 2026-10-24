@@ -597,6 +597,7 @@
         "EVENT_NOT_HELD": "Akce se neuskutečnila, žádosti už nejde vyřídit.",
         "EVENT_STARTED": "Akce už začala, žádosti už nejde vyřídit."
       },
+      "missingToMin": "Chybí {{count}} do minima",
       "more_few": "{{count}} další žádosti",
       "more_one": "{{count}} další žádost",
       "more_other": "{{count}} dalších žádostí",

@@ -44,7 +44,9 @@ export function EventParticipants({ event, onChange, now }: EventParticipantsPro
         />
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           {missing > 0 ? (
-            <span className="typo-h3">{t("events.detail.missingToMin", { count: missing })}</span>
+            <span className="typo-h3">
+              {t("participationRequests.manage.missingToMin", { count: missing })}
+            </span>
           ) : null}
           <span className="typo-small text-signal-soft">
             {t("events.detail.seats", { taken: event.taken, total: event.max })}

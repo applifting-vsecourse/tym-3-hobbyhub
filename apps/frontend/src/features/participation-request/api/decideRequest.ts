@@ -21,13 +21,10 @@ async function decide(path: string, body?: { reason?: string }): Promise<Partici
   try {
     return participationRequestSchema.parse(await api.post(path, { json: body ?? {} }).json())
   } catch (error) {
+    // ky has already read the body into `error.data`; the response itself can
+    // no longer be read.
     if (error instanceof HTTPError && error.response.status === 400) {
-      const refusal = decisionRefusalSchema.safeParse(
-        await error.response
-          .clone()
-          .json()
-          .catch(() => null),
-      )
+      const refusal = decisionRefusalSchema.safeParse(error.data)
       if (refusal.success) throw new DecisionRefusedError(refusal.data.violations)
     }
     throw error

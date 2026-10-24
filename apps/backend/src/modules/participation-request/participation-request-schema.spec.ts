@@ -237,7 +237,7 @@ describeDb('participation request schema constraints', () => {
   });
 
   it('accepts a reason of 500 characters and rejects a longer one', async () => {
-    const rejected = (rejectionReason: string) =>
+    const rejected = (rejectionReason: string): Promise<void> =>
       inRolledBackTransaction(async (tx) => {
         const ids = await eventAndApplicant(tx);
         await tx.participationRequest.create({

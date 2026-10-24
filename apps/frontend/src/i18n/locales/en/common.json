@@ -586,6 +586,7 @@
         "EVENT_NOT_HELD": "The event did not take place, requests can no longer be decided.",
         "EVENT_STARTED": "The event has started, requests can no longer be decided."
       },
+      "missingToMin": "{{count}} missing to the minimum",
       "more_one": "{{count}} more request",
       "more_other": "{{count}} more requests",
       "outcome": {
