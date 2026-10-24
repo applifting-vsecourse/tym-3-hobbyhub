@@ -114,6 +114,19 @@ enum ParticipationStatus {
   @@map("participation_status")
 }
 
+// ADR-0003, ADR-0008: a request has its own life cycle, decided by the
+// organizer. WITHDRAWN: the applicant cancelled it while it was pending.
+// CLOSED: closed without a decision because the event was cancelled.
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  CLOSED
+
+  @@map("request_status")
+}
+
 enum GroupVisibility {
   PUBLIC
   PRIVATE
@@ -307,22 +320,23 @@ model Event {
   locationLatitude   Decimal? @db.Decimal(9, 6)
   locationLongitude  Decimal? @db.Decimal(9, 6)
 
-  activity             Activity            @relation(fields: [activityId], references: [id])
-  activityId           String
-  level                Level?              @relation(fields: [levelId], references: [id])
-  levelId              String?
+  activity              Activity               @relation(fields: [activityId], references: [id])
+  activityId            String
+  level                 Level?                 @relation(fields: [levelId], references: [id])
+  levelId               String?
   // ON DELETE RESTRICT (default): a user who organized an event cannot be
   // hard-deleted. Account deletion is soft (`UserStatus.DELETED`); participations
   // and co-organizing cascade, organizing does not.
-  organizer            User                @relation("EventOrganizer", fields: [organizerId], references: [id])
-  organizerId          String
-  coOrganizers         User[]              @relation("EventCoOrganizers")
-  copiedFrom           Event?              @relation("EventCopies", fields: [copiedFromId], references: [id], onDelete: SetNull)
-  copiedFromId         String?
-  copies               Event[]             @relation("EventCopies")
-  cancellationReason   CancellationReason? @relation(fields: [cancellationReasonId], references: [id])
-  cancellationReasonId String?
-  participations       Participation[]
+  organizer             User                   @relation("EventOrganizer", fields: [organizerId], references: [id])
+  organizerId           String
+  coOrganizers          User[]                 @relation("EventCoOrganizers")
+  copiedFrom            Event?                 @relation("EventCopies", fields: [copiedFromId], references: [id], onDelete: SetNull)
+  copiedFromId          String?
+  copies                Event[]                @relation("EventCopies")
+  cancellationReason    CancellationReason?    @relation(fields: [cancellationReasonId], references: [id])
+  cancellationReasonId  String?
+  participations        Participation[]
+  participationRequests ParticipationRequest[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -355,6 +369,28 @@ model Participation {
   @@index([userId])
   @@index([eventId, status])
   @@map("participation")
+}
+
+// F-06.1 request to join an event (ADR-0003). It takes no seat; the
+// participation that does comes from approving it (F-05.7).
+// At most one PENDING request per person and event: a partial unique index in
+// the migration. `decidedAt` is set exactly when the status is not PENDING.
+model ParticipationRequest {
+  id String @id @default(cuid())
+
+  status      RequestStatus @default(PENDING)
+  message     String?       @db.VarChar(500)
+  requestedAt DateTime      @default(now())
+  decidedAt   DateTime?
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  @@index([eventId, status])
+  @@index([userId])
+  @@map("participation_request")
 }
 
 model Quack {
@@ -495,10 +531,11 @@ model User {
   blockedUsers User[] @relation("UserBlocks")
   blockedBy    User[] @relation("UserBlocks")
 
-  organizedEvents   Event[]           @relation("EventOrganizer")
-  coOrganizedEvents Event[]           @relation("EventCoOrganizers")
-  participations    Participation[]
-  groupMemberships  GroupMembership[]
+  organizedEvents       Event[]                @relation("EventOrganizer")
+  coOrganizedEvents     Event[]                @relation("EventCoOrganizers")
+  participations        Participation[]
+  participationRequests ParticipationRequest[]
+  groupMemberships      GroupMembership[]
 
   @@unique([email])
   @@unique([username])
