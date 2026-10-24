@@ -53,7 +53,8 @@
     "signUp": {
       "description": "You can complete your profile later.",
       "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
-      "privacyNote": "We check you are 18+ from your date of birth. Date of birth and gender are not public.",
+      "privacyNote": "Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
+      "genderNote": "Private, nobody else sees it. Used only for combined event statistics.",
       "signInLink": "I already have an account · Sign in",
       "submit": "Create account and continue",
       "terms": "I agree to the <terms>terms and privacy policy</terms>.",
