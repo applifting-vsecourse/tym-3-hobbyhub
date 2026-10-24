@@ -21,16 +21,24 @@ type EventDetailProps = {
   activityLabel: string
   /** The button that takes a seat. Hidden for events nobody can ask to join. */
   joinAction: ReactNode
+  /**
+   * The signed-in person's own place (their request, their seat, their event).
+   * Shown instead of the free seat, whatever state the event is in, so a
+   * pending request can still be withdrawn once the event fills up.
+   */
+  ownRequest?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
 
-type EventState = "open" | "full" | "cancelled" | "finished" | "notHeld"
+type EventState = "open" | "full" | "started" | "cancelled" | "finished" | "notHeld"
 
 function eventState(event: EventDetailData, now: Date): EventState {
   if (event.status === "CANCELLED") return "cancelled"
   if (event.status === "NOT_HELD") return "notHeld"
   if (event.status !== "PUBLISHED" || event.endAt < now) return "finished"
+  // F-06.1: asking to join ends when the event starts.
+  if (event.startAt <= now) return "started"
   if (event.takenCount >= event.maxParticipants) return "full"
   return "open"
 }
@@ -41,6 +49,7 @@ function StateBadge({ state }: { state: Exclude<EventState, "open"> }) {
     cancelled: "rejected",
     finished: "neutral",
     notHeld: "neutral",
+    started: "neutral",
     full: "approved",
   } as const
 
@@ -51,6 +60,7 @@ export function EventDetail({
   event,
   activityLabel,
   joinAction,
+  ownRequest,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -195,17 +205,18 @@ export function EventDetail({
         <p className="typo-small text-signal-soft">
           {t("events.detail.seats", { taken: event.takenCount, total: event.maxParticipants })}
         </p>
-        {state === "open" ? (
-          <YourSeat
-            surface="dark"
-            description={t(
-              event.approvalMode === "MANUAL"
-                ? "events.detail.approvalManual"
-                : "events.detail.approvalAutomatic",
-            )}
-            action={joinAction}
-          />
-        ) : null}
+        {ownRequest ??
+          (state === "open" ? (
+            <YourSeat
+              surface="dark"
+              description={t(
+                event.approvalMode === "MANUAL"
+                  ? "events.detail.approvalManual"
+                  : "events.detail.approvalAutomatic",
+              )}
+              action={joinAction}
+            />
+          ) : null)}
       </aside>
 
       <div className="flex flex-col gap-8 lg:col-start-1 lg:row-start-2">

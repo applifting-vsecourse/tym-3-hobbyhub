@@ -28,6 +28,7 @@ import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageCh
 import { cn } from "@/lib/utils"
 
 import {
+  APPROVAL_MODES,
   CREATABLE_VENUE_TYPES,
   EVENT_LIMITS,
   type CreateEventInput,
@@ -89,6 +90,7 @@ const createSchema = (t: TFunction, now: () => Date) => {
         ),
         equipment: text(EVENT_LIMITS.equipmentMax),
         venueType: z.enum(CREATABLE_VENUE_TYPES),
+        approvalMode: z.enum(APPROVAL_MODES),
       })
       // Rules between fields. Each lands on the field the organizer has to change.
       .superRefine((values, ctx) => {
@@ -156,6 +158,7 @@ const defaultValues = (t: TFunction): FormValues => ({
   description: "",
   equipment: "",
   venueType: "PUBLIC_VENUE",
+  approvalMode: "MANUAL",
 })
 
 // Optional fields left empty are not sent at all. Dates are validated by then.
@@ -170,6 +173,7 @@ const toInput = (values: FormValues): CreateEventInput => {
     description: values.description.trim(),
     equipment: values.equipment.trim() || undefined,
     venueType: values.venueType,
+    approvalMode: values.approvalMode,
     startAt: start.toISOString(),
     endAt: end.toISOString(),
     location: {
@@ -212,6 +216,7 @@ const STEP_FIELDS: Record<Step, (keyof FormValues)[]> = {
     "minParticipants",
     "maxParticipants",
     "externalOccupiedSpots",
+    "approvalMode",
     "contributionAmount",
     "contributionNote",
   ],
@@ -617,7 +622,10 @@ function WhatFields({
 function WhoFields() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
-  const maxParticipants = useWatch({ control: form.control, name: "maxParticipants" })
+  const [maxParticipants, approvalMode] = useWatch({
+    control: form.control,
+    name: ["maxParticipants", "approvalMode"],
+  })
 
   return (
     <>
@@ -638,6 +646,13 @@ function WhoFields() {
         // Lowering the maximum afterwards is caught by validation instead.
         max={Math.max(maxParticipants, 0)}
         description={t("events.form.externalHint")}
+      />
+      <ChipChoiceField
+        name="approvalMode"
+        label={t("events.fields.approvalMode")}
+        options={APPROVAL_MODES}
+        optionLabel={(mode) => t(`events.approvalMode.${mode}`)}
+        description={t(`events.approvalModeHint.${approvalMode}`)}
       />
       <TextField
         name="contributionAmount"
@@ -661,7 +676,6 @@ function WhoFields() {
 function DetailsFields() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
-  const venueTypeLabelId = useId()
 
   return (
     <>
@@ -687,42 +701,11 @@ function DetailsFields() {
         label={t("events.fields.equipment")}
         placeholder={t("events.placeholders.equipment")}
       />
-      <FormField
-        control={form.control}
+      <ChipChoiceField
         name="venueType"
-        render={({ field }) => (
-          <FormItem>
-            <p
-              id={venueTypeLabelId}
-              className="typo-label-lg text-foreground"
-            >
-              {t("events.fields.venueType")}
-            </p>
-            <ToggleGroup
-              type="single"
-              variant="chip"
-              spacing={2}
-              aria-labelledby={venueTypeLabelId}
-              value={field.value}
-              // Radix clears the value on a second tap; one type is always chosen.
-              onValueChange={(value) => {
-                if (value) field.onChange(value)
-              }}
-              className="flex-wrap"
-            >
-              {CREATABLE_VENUE_TYPES.map((venueType) => (
-                <ToggleGroupItem
-                  key={venueType}
-                  value={venueType}
-                  className="h-11 px-4 md:h-9"
-                >
-                  {t(`events.venueType.${venueType}`)}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            <FormMessage />
-          </FormItem>
-        )}
+        label={t("events.fields.venueType")}
+        options={CREATABLE_VENUE_TYPES}
+        optionLabel={(venueType) => t(`events.venueType.${venueType}`)}
       />
     </>
   )
@@ -816,6 +799,67 @@ function TextField({ name, label, description, ...inputProps }: TextFieldProps) 
               {...field}
             />
           </FormControl>
+          {description ? <FormDescription>{description}</FormDescription> : null}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}
+
+type ChipChoiceFieldProps<Option extends string> = {
+  readonly name: "venueType" | "approvalMode"
+  readonly label: string
+  readonly options: readonly Option[]
+  readonly optionLabel: (option: Option) => string
+  readonly description?: string
+}
+
+/** One of a few options as chips; one is always chosen. */
+function ChipChoiceField<Option extends string>({
+  name,
+  label,
+  options,
+  optionLabel,
+  description,
+}: ChipChoiceFieldProps<Option>) {
+  const { control } = useFormContext<FormValues>()
+  const labelId = useId()
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <p
+            id={labelId}
+            className="typo-label-lg text-foreground"
+          >
+            {label}
+          </p>
+          <ToggleGroup
+            type="single"
+            variant="chip"
+            spacing={2}
+            aria-labelledby={labelId}
+            value={field.value}
+            // Radix clears the value on a second tap; one option is always chosen.
+            onValueChange={(value) => {
+              if (value) field.onChange(value)
+            }}
+            className="flex-wrap"
+          >
+            {options.map((option) => (
+              <ToggleGroupItem
+                key={option}
+                value={option}
+                className="h-11 px-4 md:h-9"
+              >
+                {optionLabel(option)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
           {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />
         </FormItem>

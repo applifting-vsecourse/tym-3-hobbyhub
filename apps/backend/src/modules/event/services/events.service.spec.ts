@@ -53,6 +53,7 @@ const input = (): CreateEventData => ({
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
   venueType: 'PUBLIC_VENUE',
+  approvalMode: 'AUTOMATIC',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
   location: {

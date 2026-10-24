@@ -104,11 +104,23 @@ describe("EventDetail", () => {
     expect(screen.queryByText(/Věk a pohlaví známe/)).not.toBeInTheDocument()
   })
 
-  it("explains why the mix is missing when there are too few people", () => {
-    renderDetail({ stats: null })
+  // Three seats taken, but two by people outside the app: the seats are not
+  // what the threshold counts, so the text says what is.
+  it.each([
+    [1, "aspoň 1 účastník z aplikace"],
+    [3, "aspoň 3 účastníci z aplikace"],
+    [5, "aspoň 5 účastníků z aplikace"],
+  ])("explains who the mix waits for when %i are needed", (statsMinParticipants, needed) => {
+    renderDetail({ stats: null, takenCount: 3, statsMinParticipants })
 
+    expect(screen.getByText("3 z 10 míst")).toBeInTheDocument()
     expect(
-      screen.getByText("Složení se ukáže, až bude na akci aspoň 3 přihlášených."),
+      screen.getByText(
+        (text) =>
+          text.includes(needed) &&
+          text.includes("s vyplněným věkem a pohlavím") &&
+          text.includes("Lidi mimo aplikaci nepočítáme"),
+      ),
     ).toBeInTheDocument()
   })
 
@@ -133,6 +145,12 @@ describe("EventDetail", () => {
       "Akce se neuskutečnila, o účast se nedá žádat.",
     ],
     [
+      "an event that has started",
+      { startAt: new Date(2026, 9, 22, 7, 30) },
+      "Probíhá",
+      "Akce už začala, o účast se nedá žádat.",
+    ],
+    [
       "an event that ended but was not closed yet",
       { endAt: new Date(2026, 9, 21, 20, 0) },
       "Proběhlo",
@@ -143,6 +161,21 @@ describe("EventDetail", () => {
 
     expect(screen.getByText(badge)).toBeInTheDocument()
     expect(screen.getByText(text)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
+  })
+
+  it("shows the person's own request instead of the seat, even on a full event", () => {
+    render(
+      <EventDetail
+        event={event({ takenCount: 10 })}
+        activityLabel="Florbal"
+        joinAction={<button type="button">Obsadit místo</button>}
+        ownRequest={<p>Moje žádost čeká</p>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("Moje žádost čeká")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
   })
 
