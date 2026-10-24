@@ -341,6 +341,8 @@ function EventsPage() {
                 activityLabel={(item) => activityName(t, item)}
                 userPosition={nearMe.position}
                 isLoading={mapQuery.isPending}
+                error={mapQuery.error}
+                onRetry={() => void mapQuery.refetch()}
               />
             </Suspense>
           </div>

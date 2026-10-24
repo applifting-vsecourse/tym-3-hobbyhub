@@ -1,9 +1,11 @@
+import { useState } from "react"
 import { toast } from "sonner"
 
 import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
 import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import vyletPhoto from "@/assets/event-photos/vylet.jpg"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { BottomNav } from "@/components/hobbyhub/BottomNav"
 import { ChatShare } from "@/components/hobbyhub/ChatShare"
 import { EventCard } from "@/components/hobbyhub/EventCard"
@@ -42,6 +44,19 @@ const LOADER_VARIANTS: { variant: LoaderVariant; usage: string }[] = [
 ]
 
 const notify = (message: string) => () => toast(message)
+
+function AddressSearchExample() {
+  const [address, setAddress] = useState("")
+  return (
+    <div className="w-full max-w-sm">
+      <AddressSearch
+        value={address}
+        onSelect={(picked) => setAddress(picked.label)}
+        placeholder="Najít adresu"
+      />
+    </div>
+  )
+}
 
 function BottomNavExample() {
   return (
@@ -362,6 +377,9 @@ export function DomainSections() {
             state="selected"
           />
           <EventClusterPin label="9 akcí" />
+        </Example>
+        <Example label="Hledání adresy: našeptávač s polohou (potřebuje VITE_MAPBOX_TOKEN)">
+          <AddressSearchExample />
         </Example>
       </ShowcaseSection>
 

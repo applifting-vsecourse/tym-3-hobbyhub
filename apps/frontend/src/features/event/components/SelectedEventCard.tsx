@@ -59,7 +59,7 @@ export function SelectedEventCard({
       <Button
         variant="secondary"
         size="icon-sm"
-        className="absolute top-2 right-2 shadow-float"
+        className="absolute top-2 right-2 size-11 shadow-float md:size-9"
         aria-label={t("events.map.closePreview")}
         onClick={onClose}
       >

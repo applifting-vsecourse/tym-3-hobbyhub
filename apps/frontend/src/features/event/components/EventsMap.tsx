@@ -9,6 +9,7 @@ import { env } from "@/config/env"
 
 import type { NearPoint } from "@/features/event/api/eventKeys"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
+import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import {
   clusterEvents,
@@ -99,6 +100,9 @@ type EventsMapProps = {
   /** Where the visitor is, when they asked for the nearest events. */
   userPosition: NearPoint | null
   isLoading?: boolean
+  /** Why the events could not be loaded; shown instead of "no events", with a way to retry. */
+  error?: Error | null
+  onRetry?: () => void
   /**
    * The part of the map the visitor has moved or zoomed to, so the list can show
    * the same events; null while the map shows everything (after a fit).
@@ -113,6 +117,9 @@ type EventsMapProps = {
 
 // Moves the map makes itself carry this, to tell them from the visitor's.
 const AUTO = { auto: true }
+// A move the visitor asked for through a control of ours (a cluster), which has no
+// DOM event of its own the way a drag, the wheel or the zoom buttons do.
+const ASKED = { asked: true }
 
 /**
  * Mapbox map of the events with a position: one pin per event (the number is
@@ -124,6 +131,8 @@ export function EventsMap({
   activityLabel,
   userPosition,
   isLoading,
+  error,
+  onRetry,
   onBoundsChange,
   fitKey,
   selectedId,
@@ -133,6 +142,8 @@ export function EventsMap({
   const containerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<mapboxgl.Map | null>(null)
   const [zoom, setZoom] = useState(FALLBACK_ZOOM)
+  // No WebGL, or Mapbox refused the token: the map cannot be drawn.
+  const [isBroken, setIsBroken] = useState(false)
   // The map's own handlers are set up once and must call the latest callbacks.
   const onBoundsChangeRef = useRef(onBoundsChange)
   const onSelectRef = useRef(onSelect)
@@ -210,22 +221,43 @@ export function EventsMap({
     const container = containerRef.current
     if (!token || !container) return
     mapboxgl.accessToken = token
-    const created = new mapboxgl.Map({
-      container,
-      style: isDark() ? DARK_STYLE : LIGHT_STYLE,
-      center: FALLBACK_CENTER,
-      zoom: FALLBACK_ZOOM,
-      attributionControl: false,
+    let created: mapboxgl.Map
+    try {
+      created = new mapboxgl.Map({
+        container,
+        style: isDark() ? DARK_STYLE : LIGHT_STYLE,
+        center: FALLBACK_CENTER,
+        zoom: FALLBACK_ZOOM,
+        attributionControl: false,
+      })
+    } catch {
+      // Throws "Failed to initialize WebGL" where it is switched off or unsupported;
+      // the list beside the map must carry on.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to the failed external system
+      setIsBroken(true)
+      return
+    }
+    let isLoaded = false
+    // An error before the style is there means the map will stay grey (a bad token,
+    // no network); later ones are single tiles failing, which the map shrugs off.
+    created.on("error", () => {
+      if (!isLoaded) setIsBroken(true)
     })
     created.addControl(new mapboxgl.AttributionControl({ compact: true }))
     created.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right")
     created.on("load", () => {
+      isLoaded = true
       setZoom(created.getZoom())
       setMap(created)
     })
     created.on("zoomend", () => setZoom(created.getZoom()))
     created.on("moveend", (event) => {
-      if ((event as { auto?: boolean }).auto) return onBoundsChangeRef.current(null)
+      const moved = event as { auto?: boolean; asked?: boolean }
+      if (moved.auto) return onBoundsChangeRef.current(null)
+      // Only the visitor's own gesture narrows the list. Mapbox also ends a move
+      // when the container is resized (the map appears on a phone, the window
+      // changes), and that must not turn into a filter.
+      if (!event.originalEvent && !moved.asked) return
       const bounds = created.getBounds()
       if (!bounds) return
       onBoundsChangeRef.current({
@@ -270,7 +302,7 @@ export function EventsMap({
     lastFitKey.current = fitKey
     if (!map) return
     if (hasUserPosition && !isAskedFor) return onBoundsChangeRef.current(null)
-    if (located.length === 0) return
+    if (located.length === 0) return onBoundsChangeRef.current(null)
     const bounds = new mapboxgl.LngLatBounds()
     for (const event of located) bounds.extend([event.longitude, event.latitude])
     map.fitBounds(bounds, { padding: fitPadding(map), maxZoom: FIT_MAX_ZOOM, duration: 0 }, AUTO)
@@ -294,12 +326,12 @@ export function EventsMap({
     if (!map) return
     const bounds = new mapboxgl.LngLatBounds()
     for (const event of group.events) bounds.extend([event.longitude, event.latitude])
-    map.fitBounds(bounds, { padding: fitPadding(map), maxZoom: FIT_MAX_ZOOM + 2 })
+    map.fitBounds(bounds, { padding: fitPadding(map), maxZoom: FIT_MAX_ZOOM + 2 }, ASKED)
   }
 
   return (
     <div className="relative h-full min-h-72 overflow-hidden rounded-xl bg-muted">
-      {env.VITE_MAPBOX_TOKEN ? (
+      {env.VITE_MAPBOX_TOKEN && !isBroken ? (
         // Mapbox's stylesheet makes its container `position: relative`, so the
         // filling is done by this wrapper, not by the container.
         <div className="absolute inset-0">
@@ -382,7 +414,15 @@ export function EventsMap({
           />
         </MapMarker>
       ) : null}
-      {env.VITE_MAPBOX_TOKEN && map && !isLoading && located.length === 0 ? (
+      {error ? (
+        <div className="absolute inset-x-3 top-3 shadow-float">
+          <EventsLoadError
+            error={error}
+            onRetry={onRetry}
+          />
+        </div>
+      ) : null}
+      {map && !isLoading && !error && located.length === 0 ? (
         <p
           role="status"
           className="absolute inset-x-3 top-3 rounded-lg border border-border bg-popover p-3 text-center typo-small text-popover-foreground shadow-float"

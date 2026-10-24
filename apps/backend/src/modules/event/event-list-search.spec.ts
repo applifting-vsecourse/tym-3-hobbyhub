@@ -290,6 +290,7 @@ describeDb('public event list search', () => {
         minParticipants: 2,
         maxParticipants: 4,
         externalOccupiedSpots: 0,
+        approvalMode: 'MANUAL',
         organizerId: seed.organizerId,
         publishedAt: NOW,
       });
