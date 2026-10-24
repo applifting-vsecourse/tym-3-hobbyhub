@@ -21,6 +21,7 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   status: 'PUBLISHED',
   visibility: 'PUBLIC',
   venueType: 'PUBLIC_VENUE',
+  approvalMode: 'MANUAL',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
   publishedAt: new Date(),
@@ -60,6 +61,7 @@ const input = (): CreateEventData => ({
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
   venueType: 'PUBLIC_VENUE',
+  approvalMode: 'AUTOMATIC',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
   location: {

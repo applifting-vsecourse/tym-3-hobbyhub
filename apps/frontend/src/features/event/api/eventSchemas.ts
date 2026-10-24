@@ -16,6 +16,11 @@ export const EVENT_LIMITS = {
   participantsLimit: 500,
 } as const
 
+// MANUAL: the organizer decides every request to join. AUTOMATIC: a request
+// takes a free seat at once.
+export const APPROVAL_MODES = ["MANUAL", "AUTOMATIC"] as const
+export type ApprovalMode = (typeof APPROVAL_MODES)[number]
+
 // F-05.1 creates events at a place; ONLINE waits for a PO decision (ADR-0006).
 export const CREATABLE_VENUE_TYPES = ["PUBLIC_VENUE", "PRIVATE_VENUE"] as const
 export type CreatableVenueType = (typeof CREATABLE_VENUE_TYPES)[number]
@@ -36,6 +41,7 @@ export const eventSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   visibility: z.enum(["PUBLIC", "GROUP_ONLY", "PRIVATE"]),
   venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
+  approvalMode: z.enum(APPROVAL_MODES),
   startAt: z.coerce.date(),
   endAt: z.coerce.date(),
   publishedAt: z.coerce.date().nullable(),
@@ -78,6 +84,7 @@ export type CreateEventInput = {
   equipment?: string
   /** An online event cannot be created yet, but one that exists can be edited. */
   venueType: Event["venueType"]
+  approvalMode: ApprovalMode
   /** ISO date-time strings. */
   startAt: string
   endAt: string
@@ -130,7 +137,8 @@ export const participantStatsSchema = z.object({
   /** All taken seats, including people outside the app. */
   total: z.number(),
   medianAge: z.number().nullable(),
-  gender: z.object({ male: z.number(), female: z.number() }).nullable(),
+  /** Adds up to `total`: people without a known gender count as unknown. */
+  gender: z.object({ male: z.number(), female: z.number(), unknown: z.number() }).nullable(),
 })
 
 export const eventDetailSchema = eventListItemSchema.extend({
@@ -140,7 +148,7 @@ export const eventDetailSchema = eventListItemSchema.extend({
   contributionAmount: z.number().nullable(),
   contributionNote: z.string().nullable(),
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
-  approvalMode: z.enum(["MANUAL", "AUTOMATIC"]),
+  approvalMode: z.enum(APPROVAL_MODES),
   /** Lets the page offer editing to the organizer. */
   organizerId: z.string(),
   organizerName: z.string(),

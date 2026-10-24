@@ -105,6 +105,9 @@ export class EventResponseDto {
   @ApiProperty({ type: ActivityResponseDto })
   activity!: ActivityResponseDto;
 
+  @ApiProperty({ enum: ['MANUAL', 'AUTOMATIC'] })
+  approvalMode!: Event['approvalMode'];
+
   @ApiProperty()
   organizerId!: string;
 
@@ -141,6 +144,7 @@ export class EventResponseDto {
         ? EventLocationResponseDto.fromDomain(event.location)
         : null,
       activity: ActivityResponseDto.fromDomain(event.activity),
+      approvalMode: event.approvalMode,
       organizerId: event.organizerId,
       cancellationReason: event.cancellationReason,
       cancellationNote: event.cancellationNote,

@@ -23,16 +23,24 @@ type EventDetailProps = {
   joinAction: ReactNode
   /** Edit and cancel, for the organizer of an event that has not started. */
   organizerActions?: ReactNode
+  /**
+   * The signed-in person's own place (their request, their seat, their event).
+   * Shown instead of the free seat, whatever state the event is in, so a
+   * pending request can still be withdrawn once the event fills up.
+   */
+  ownRequest?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
 
-type EventState = "open" | "full" | "cancelled" | "finished" | "notHeld"
+type EventState = "open" | "full" | "started" | "cancelled" | "finished" | "notHeld"
 
 function eventState(event: EventDetailData, now: Date): EventState {
   if (event.status === "CANCELLED") return "cancelled"
   if (event.status === "NOT_HELD") return "notHeld"
   if (event.status !== "PUBLISHED" || event.endAt < now) return "finished"
+  // F-06.1: asking to join ends when the event starts.
+  if (event.startAt <= now) return "started"
   if (event.takenCount >= event.maxParticipants) return "full"
   return "open"
 }
@@ -43,6 +51,7 @@ function StateBadge({ state }: { state: Exclude<EventState, "open"> }) {
     cancelled: "rejected",
     finished: "neutral",
     notHeld: "neutral",
+    started: "neutral",
     full: "approved",
   } as const
 
@@ -54,6 +63,7 @@ export function EventDetail({
   activityLabel,
   joinAction,
   organizerActions,
+  ownRequest,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -83,6 +93,23 @@ export function EventDetail({
       : null,
     event.equipment ? { label: t("events.detail.equipment"), value: event.equipment } : null,
   ].filter((row) => row !== null)
+  // The gender figures add up to the taken seats, so they match the count above.
+  const statFigures = stats
+    ? [
+        stats.medianAge !== null
+          ? { label: t("events.detail.stats.medianAgeLabel"), value: stats.medianAge }
+          : null,
+        ...(stats.gender
+          ? [
+              { label: t("events.detail.stats.male"), value: stats.gender.male },
+              { label: t("events.detail.stats.female"), value: stats.gender.female },
+              stats.gender.unknown > 0
+                ? { label: t("events.detail.stats.unknown"), value: stats.gender.unknown }
+                : null,
+            ]
+          : []),
+      ].filter((figure) => figure !== null)
+    : []
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8">
@@ -192,17 +219,18 @@ export function EventDetail({
         <p className="typo-small text-signal-soft">
           {t("events.detail.seats", { taken: event.takenCount, total: event.maxParticipants })}
         </p>
-        {state === "open" ? (
-          <YourSeat
-            surface="dark"
-            description={t(
-              event.approvalMode === "MANUAL"
-                ? "events.detail.approvalManual"
-                : "events.detail.approvalAutomatic",
-            )}
-            action={joinAction}
-          />
-        ) : null}
+        {ownRequest ??
+          (state === "open" ? (
+            <YourSeat
+              surface="dark"
+              description={t(
+                event.approvalMode === "MANUAL"
+                  ? "events.detail.approvalManual"
+                  : "events.detail.approvalAutomatic",
+              )}
+              action={joinAction}
+            />
+          ) : null)}
       </aside>
 
       <div className="flex flex-col gap-8 lg:col-start-1 lg:row-start-2">
@@ -229,31 +257,24 @@ export function EventDetail({
           {stats ? (
             <>
               <dl className="flex flex-wrap gap-x-10 gap-y-3">
-                {stats.medianAge !== null ? (
-                  <div className="flex flex-col-reverse">
-                    <dt className="typo-small text-muted-foreground">
-                      {t("events.detail.stats.medianAgeLabel")}
-                    </dt>
-                    <dd className="typo-numeral text-foreground">{stats.medianAge}</dd>
+                {statFigures.map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="flex flex-col-reverse"
+                  >
+                    <dt className="typo-small text-muted-foreground">{label}</dt>
+                    <dd className="typo-numeral text-foreground">{value}</dd>
                   </div>
-                ) : null}
-                {stats.gender ? (
-                  <div className="flex flex-col-reverse">
-                    <dt className="typo-small text-muted-foreground">
-                      {t("events.detail.stats.genderLabel")}
-                    </dt>
-                    <dd className="typo-numeral text-foreground">
-                      {stats.gender.male} : {stats.gender.female}
-                    </dd>
-                  </div>
-                ) : null}
+                ))}
               </dl>
-              <p className="typo-small text-muted-foreground">
-                {t("events.detail.stats.coverage", {
-                  included: stats.included,
-                  total: stats.total,
-                })}
-              </p>
+              {stats.included < stats.total ? (
+                <p className="typo-small text-muted-foreground">
+                  {t("events.detail.stats.coverage", {
+                    included: stats.included,
+                    total: stats.total,
+                  })}
+                </p>
+              ) : null}
             </>
           ) : (
             <p className="typo-small text-muted-foreground">

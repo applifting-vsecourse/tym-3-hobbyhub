@@ -213,6 +213,14 @@ describe("EventForm on a phone", () => {
     }
     await user.type(screen.getByLabelText("Příspěvek na místo v Kč (nepovinné)"), "80")
     await user.type(screen.getByLabelText("Poznámka k příspěvku (nepovinné)"), " na místě ")
+    expect(screen.getByRole("radio", { name: "Ručně" })).toBeChecked()
+    expect(
+      screen.getByText("Každou žádost o účast schválíte, nebo zamítnete sami."),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole("radio", { name: "Automaticky" }))
+    expect(
+      screen.getByText("Kdo se přihlásí, dostane volné místo hned, bez vašeho schválení."),
+    ).toBeInTheDocument()
     await continueToNextStep(user)
 
     expect(await screen.findByText("Krok 3 ze 3 · Detaily a zveřejnění")).toBeInTheDocument()
@@ -235,6 +243,7 @@ describe("EventForm on a phone", () => {
       description: "Rekreační hra.",
       equipment: undefined,
       venueType: "PRIVATE_VENUE",
+      approvalMode: "AUTOMATIC",
       startAt: new Date("2030-01-15T19:00:00").toISOString(),
       endAt: new Date("2030-01-15T20:30:00").toISOString(),
       location: {
@@ -290,6 +299,7 @@ const EXISTING: Event = {
   status: "PUBLISHED",
   visibility: "PUBLIC",
   venueType: "PUBLIC_VENUE",
+  approvalMode: "MANUAL",
   startAt: new Date(2030, 0, 15, 19, 0),
   endAt: new Date(2030, 0, 15, 20, 30),
   publishedAt: new Date(),

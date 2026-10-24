@@ -72,6 +72,7 @@
     }
   },
   "common": {
+    "close": "Close",
     "unsavedChanges": {
       "description": "You have changes that were not submitted. Leaving loses them.",
       "leave": "Leave",
@@ -92,6 +93,14 @@
     }
   },
   "events": {
+    "approvalMode": {
+      "AUTOMATIC": "Automatically",
+      "MANUAL": "By hand"
+    },
+    "approvalModeHint": {
+      "AUTOMATIC": "Whoever joins gets a free seat at once, without your approval.",
+      "MANUAL": "You approve or reject every request to join yourself."
+    },
     "back": "Back",
     "cancel": {
       "back": "Back",
@@ -134,12 +143,12 @@
       "equipment": "Equipment",
       "hasAccount": "Already have an account?",
       "join": "Take a seat",
-      "joinSoon": "Requests to join are not available yet.",
       "linkLabel": "Link",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
       "organizer": "Organized by {{name}}",
+      "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
       "signIn": "Sign in",
@@ -151,14 +160,19 @@
         "full": "Full",
         "fullText": "This event is full, you cannot ask to join.",
         "notHeld": "Not held",
-        "notHeldText": "This event did not take place, you cannot ask to join."
+        "notHeldText": "This event did not take place, you cannot ask to join.",
+        "started": "In progress",
+        "startedText": "This event has already started, you cannot ask to join."
       },
       "stats": {
-        "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
-        "genderLabel": "Men : women",
-        "hidden": "The mix shows once at least {{count}} people have joined.",
+        "coverage": "Age and gender are known for {{included}} of {{total}} people.",
+        "female": "Women",
+        "hidden_one": "We show the mix once at least {{count}} person who joined through the app has filled in their age and gender. People from outside the app do not count, we know nothing about them.",
+        "hidden_other": "We show the mix once at least {{count}} people who joined through the app have filled in their age and gender. People from outside the app do not count, we know nothing about them.",
+        "male": "Men",
         "medianAgeLabel": "Median age",
-        "title": "Who is coming"
+        "title": "Who is coming",
+        "unknown": "Not stated"
       },
       "title": "Event detail"
     },
@@ -168,6 +182,7 @@
     },
     "fields": {
       "activity": "Activity",
+      "approvalMode": "Approving participants",
       "city": "City",
       "contributionAmount": "Contribution per seat in CZK (optional)",
       "contributionNote": "Note on the contribution (optional)",
@@ -400,7 +415,10 @@
     },
     "activityCombobox": {
       "noMatch": "No activity matches",
-      "search": "Search activities…"
+      "search": "Search activities…",
+      "selected_one": "{{count}} activity",
+      "selected_other": "{{count}} activities",
+      "unknown": "Unknown activity"
     },
     "avatars": {
       "basketbalista": "Basketball player",
@@ -444,6 +462,7 @@
       "activitiesLoading": "Loading activities…",
       "activitiesRetry": "Try again",
       "activity": "Activity",
+      "activityPlaceholder": "All activities",
       "clear": "Clear",
       "date": "Date…",
       "location": "Location",
@@ -560,6 +579,67 @@
   "myEvents": {
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
+  },
+  "participationRequests": {
+    "approved": {
+      "description": "The organizer approved your participation.",
+      "descriptionAutomatic": "You have a seat at this event."
+    },
+    "form": {
+      "cancel": "Cancel",
+      "hiddenDetails": "Your contact details and location stay hidden.",
+      "messageLabel": "Message to the organizer (optional)",
+      "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
+      "messageTooLong": "The message can have at most {{count}} characters.",
+      "note": "The organizer approves requests by hand. You can withdraw it until they decide.",
+      "noteAutomatic": "You get the seat at once, the organizer does not need to approve it.",
+      "organizerSees": "The organizer will see",
+      "profileBasic": "Basic profile",
+      "profileVerified": "E-mail verified · basic profile",
+      "sendFailed": "Your request could not be sent. Please try again.",
+      "sendFailedAutomatic": "The seat could not be taken. Please try again.",
+      "submit": "Send request",
+      "submitAutomatic": "Take a seat",
+      "title": "Ask to join",
+      "titleAutomatic": "Take a seat"
+    },
+    "joined": {
+      "close": "Close",
+      "text": "The organizer will see that you are coming.",
+      "title": "You have a seat"
+    },
+    "pending": {
+      "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
+      "withdraw": "Withdraw request"
+    },
+    "refused": {
+      "ALREADY_REQUESTED": "You have already asked to join this event.",
+      "EVENT_CANCELLED": "This event was cancelled, you can no longer ask to join.",
+      "EVENT_FINISHED": "This event is over, you cannot ask to join.",
+      "EVENT_FULL": "This event is full, you cannot ask to join.",
+      "EVENT_NOT_HELD": "This event did not take place, you cannot ask to join.",
+      "EVENT_STARTED": "This event has already started, you cannot ask to join.",
+      "HAS_SEAT": "You already have a seat at this event.",
+      "IS_ORGANIZER": "You are organizing this event.",
+      "REJECTED_BEFORE": "The organizer rejected your request, you cannot send a new one."
+    },
+    "rejected": {
+      "description": "The organizer rejected your request, you cannot send a new one for this event."
+    },
+    "sent": {
+      "findMore": "Find more events",
+      "text": "The organizer will approve or reject it.",
+      "title": "Your request is sent",
+      "withdraw": "Withdraw request"
+    },
+    "withdraw": {
+      "confirm": "Withdraw request",
+      "done": "Request withdrawn",
+      "failed": "Your request could not be withdrawn. Please try again.",
+      "keep": "Keep request",
+      "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
+      "title": "Withdraw your request to join?"
+    }
   },
   "profile": {
     "placeholder": "The profile page is on its way.",

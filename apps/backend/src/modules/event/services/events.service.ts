@@ -11,6 +11,7 @@ import {
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
+  EventSeatFacts,
   Page,
   UpdateEventData,
 } from '@/modules/event/domain/event';
@@ -169,5 +170,13 @@ export class EventsService {
     const event = await this.eventRepository.getPublicEventById(id);
     if (!event) throw new NotFoundException('Event not found');
     return event;
+  }
+
+  // F-06.1: null when there is no such public event.
+  getPublicEventSeatFacts(
+    id: string,
+    userId: string,
+  ): Promise<EventSeatFacts | null> {
+    return this.eventRepository.getPublicEventSeatFacts(id, userId);
   }
 }

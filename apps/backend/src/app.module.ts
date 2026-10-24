@@ -4,6 +4,7 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { CancellationReasonModule } from './modules/cancellation-reason/cancellation-reason.module';
 import { EventModule } from './modules/event/event.module';
 import { GroupModule } from './modules/group/group.module';
+import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { QuackModule } from './modules/quack/quack.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
 import { AuthModule } from './shared/auth/auth.module';
@@ -19,6 +20,7 @@ const imports = [
   EventModule,
   GroupModule,
   EventModule,
+  ParticipationRequestModule,
 ];
 
 @Module({

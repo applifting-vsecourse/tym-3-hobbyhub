@@ -11,5 +11,6 @@ import { EventsService } from './services/events.service';
   imports: [AuthModule, PrismaModule, ActivityModule, CancellationReasonModule],
   controllers: [EventsController],
   providers: [EventsService, EventRepository],
+  exports: [EventsService],
 })
 export class EventModule {}
