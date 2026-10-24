@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react"
+import { useId, useMemo, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -69,15 +69,16 @@ export function FiltersSheet({
   trigger,
 }: FiltersSheetProps) {
   const { t } = useTranslation()
-  // Alphabetical, as in the event form: with dozens of activities the list is scanned by name.
-  const options = [
-    ...(activityOptions ??
+  const options = useMemo(
+    () =>
+      activityOptions ??
       DEMO_ACTIVITY_KEYS.map((key) => ({
         id: key,
         label: t(`hobbyhub.activities.${key}`),
         icon: key,
-      }))),
-  ].sort((a, b) => a.label.localeCompare(b.label))
+      })),
+    [activityOptions, t],
+  )
   const [draft, setDraft] = useState(value)
   const locationId = useId()
   const activityId = useId()

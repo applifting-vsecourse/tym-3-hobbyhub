@@ -366,7 +366,10 @@
     },
     "activityCombobox": {
       "noMatch": "No activity matches",
-      "search": "Search activities…"
+      "search": "Search activities…",
+      "selected_one": "{{count}} activity",
+      "selected_other": "{{count}} activities",
+      "unknown": "Unknown activity"
     },
     "avatars": {
       "basketbalista": "Basketball player",

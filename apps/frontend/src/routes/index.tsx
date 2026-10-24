@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react"
+import { useMemo, useState, type CSSProperties } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useForm, useWatch } from "react-hook-form"
@@ -35,7 +35,15 @@ function LandingPage() {
   const searchText = useWatch({ control: searchForm.control, name: "q" })
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const activitiesQuery = useQuery(activitiesQueryOptions())
-  const activities = activitiesQuery.data ?? []
+  const activityOptions = useMemo(
+    () =>
+      (activitiesQuery.data ?? []).map((item) => ({
+        id: item.id,
+        label: activityName(t, item),
+        icon: item.icon,
+      })),
+    [activitiesQuery.data, t],
+  )
   const upcomingQuery = useQuery(upcomingEventsQueryOptions(UPCOMING_EVENTS_COUNT))
 
   // Searching or filtering from the landing page opens the event list already filtered.
@@ -88,11 +96,7 @@ function LandingPage() {
             error: activitiesQuery.error,
             onRetry: () => void activitiesQuery.refetch(),
           }}
-          activityOptions={activities.map((item) => ({
-            id: item.id,
-            label: activityName(t, item),
-            icon: item.icon,
-          }))}
+          activityOptions={activityOptions}
         />
         <div className="lg:hidden">{searchField}</div>
         <Hero

@@ -76,7 +76,7 @@ describe("FiltersSheet", () => {
 
     await user.click(screen.getByRole("option", { name: "Šachy" }))
     await user.keyboard("{Escape}")
-    expect(combobox).toHaveTextContent("Florbal, Šachy")
+    expect(combobox).toHaveTextContent("2 aktivity")
 
     await user.click(screen.getByRole("button", { name: "Zobrazit výsledky" }))
     expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ activities: ["a1", "a2"] }))
