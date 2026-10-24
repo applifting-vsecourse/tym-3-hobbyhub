@@ -7,6 +7,7 @@ const validBody = {
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
   venueType: 'PUBLIC_VENUE',
+  approvalMode: 'MANUAL',
   startAt: '2030-01-15T18:00:00.000Z',
   endAt: '2030-01-15T19:30:00.000Z',
   location: {
@@ -111,6 +112,24 @@ describe('CreateEventDto', () => {
         validate({ ...validBody, venueType: 'ONLINE' }),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
+
+    it.each(['AUTOMATIC', 'MANUAL'])(
+      'takes the approval mode %s',
+      async (approvalMode) => {
+        await expect(
+          validate({ ...validBody, approvalMode }),
+        ).resolves.toMatchObject({ approvalMode });
+      },
+    );
+
+    it.each([undefined, 'INSTANT'])(
+      'refuses the approval mode %s',
+      async (approvalMode) => {
+        await expect(
+          validate({ ...validBody, approvalMode }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      },
+    );
 
     it('refuses a date that is not a date', async () => {
       await expect(

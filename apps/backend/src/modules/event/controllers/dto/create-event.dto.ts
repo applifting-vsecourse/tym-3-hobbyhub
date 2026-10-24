@@ -1,5 +1,7 @@
 import { CharLength } from '@/core/validation/char-length.decorator';
 import {
+  APPROVAL_MODES,
+  ApprovalMode,
   CREATABLE_VENUE_TYPES,
   CreatableVenueType,
   EVENT_CITY_MAX_LENGTH,
@@ -162,6 +164,14 @@ export class CreateEventDto {
   })
   @IsIn(CREATABLE_VENUE_TYPES)
   venueType!: CreatableVenueType;
+
+  @ApiProperty({
+    enum: APPROVAL_MODES,
+    description:
+      'MANUAL: the organizer decides each request; AUTOMATIC: a request takes a free seat at once',
+  })
+  @IsIn(APPROVAL_MODES)
+  approvalMode!: ApprovalMode;
 
   @ApiProperty({ type: String, format: 'date-time' })
   @Type(() => Date)

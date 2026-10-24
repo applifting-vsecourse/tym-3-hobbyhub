@@ -15,6 +15,7 @@ import {
   EventListItem,
   EventListPage,
   EventLocation,
+  EventSeatFacts,
   foldForSearch,
   GeoPoint,
   MIN_STATS_PARTICIPANTS,
@@ -245,6 +246,7 @@ export class EventRepository {
         status: EventStatus.PUBLISHED,
         publishedAt: data.publishedAt,
         venueType: data.venueType,
+        approvalMode: data.approvalMode,
         startAt: data.startAt,
         endAt: data.endAt,
         minParticipants: data.minParticipants,
@@ -365,6 +367,54 @@ export class EventRepository {
         listItem.takenCount,
       ),
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
+    };
+  }
+
+  // F-06.1: the same visibility as the public detail, seen by one person.
+  async getPublicEventSeatFacts(
+    id: string,
+    userId: string,
+  ): Promise<EventSeatFacts | null> {
+    const event = await this.prisma.event.findFirst({
+      where: { id, ...PUBLIC_EVENT },
+      select: {
+        id: true,
+        status: true,
+        startAt: true,
+        endAt: true,
+        approvalMode: true,
+        minParticipants: true,
+        maxParticipants: true,
+        externalOccupiedSpots: true,
+        organizerId: true,
+        coOrganizers: { select: { id: true } },
+        participations: {
+          where: { status: ParticipationStatus.APPROVED },
+          select: { userId: true },
+        },
+      },
+    });
+    if (!event) return null;
+    const { freeSpots } = occupancyOf({
+      minParticipants: event.minParticipants,
+      maxParticipants: event.maxParticipants,
+      externalOccupiedSpots: event.externalOccupiedSpots,
+      approvedCount: event.participations.length,
+    });
+    return {
+      id: event.id,
+      status: event.status,
+      startAt: event.startAt,
+      endAt: event.endAt,
+      approvalMode: event.approvalMode,
+      organizerIds: [
+        event.organizerId,
+        ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
+      ],
+      freeSpots,
+      hasSeat: event.participations.some(
+        (participation) => participation.userId === userId,
+      ),
     };
   }
 }

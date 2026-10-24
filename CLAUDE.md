@@ -23,6 +23,13 @@ Prisma migrations live in `apps/backend/prisma/migrations/`. Production runs `pr
 - **Never edit a migration that is already on `main`.** It is frozen and CI enforces it (`Check migrations on base branch are unchanged`). Editing its SQL changes nothing in production and forces a database reset for everyone locally. Need to fix or extend it? Write a new migration with `pnpm backend prisma:migrations:run`.
 - **A migration added in a PR must sort after every migration on `main`.** CI enforces this (`Check migrations order`). When it fails, or after merging `main` into a branch that adds migrations, run `scripts/rebase-migrations.sh <name>` (agents: the `rebase-migrations` skill): it deletes the branch-only migrations and lets Prisma regenerate one from `main`'s schema. Renaming the folder is only safe when `main`'s newer migrations touch unrelated tables; two migrations generated from different schema states can merge cleanly and still fail on deploy.
 
+## Architecture decisions (ADR)
+
+Decisions about the domain model and architecture live in `docs/adr/`, one file per decision, from [`_adr-template.md`](docs/adr/_adr-template.md).
+
+- **The author approves an ADR and vouches for it.** Only the person named as **Autor** moves it from „Navrženo ❓“ to „Přijato ✅“. Nobody approves an ADR on someone else's behalf; taking one over means putting your own name in **Autor** first.
+- **Approve before code depends on it.** A migration built on a proposed ADR is frozen once it reaches `main`, so the ADR is accepted in the same PR at the latest, where the review sees both.
+
 ## Git Commits
 
 - **Format**: `type(scope): short description` - single line, no body
