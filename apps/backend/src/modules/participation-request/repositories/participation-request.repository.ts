@@ -13,6 +13,23 @@ import {
 } from '@/modules/participation-request/domain/participation-request';
 import { Injectable } from '@nestjs/common';
 
+// What a new request depends on, read under the event's lock.
+const lockedEventSelect = {
+  status: true,
+  startAt: true,
+  endAt: true,
+  minParticipants: true,
+  maxParticipants: true,
+  externalOccupiedSpots: true,
+  _count: {
+    select: {
+      participations: { where: { status: ParticipationStatus.APPROVED } },
+    },
+  },
+} satisfies Prisma.EventSelect;
+
+type LockedEvent = Prisma.EventGetPayload<{ select: typeof lockedEventSelect }>;
+
 const mapToDomain = (
   request: PrismaParticipationRequest,
 ): ParticipationRequest => ({
@@ -41,6 +58,25 @@ export class ParticipationRequestRepository {
     return requests.map(mapToDomain);
   }
 
+  // Locks the event row and reads what a new request depends on. The service
+  // read the event before the lock, so it may have been cancelled or started
+  // since: `closed` says so, decided by the same rule as the service's.
+  private async lockEvent(
+    tx: Prisma.TransactionClient,
+    eventId: string,
+    at: Date,
+  ): Promise<{
+    event: LockedEvent;
+    closed: ReturnType<typeof eventClosedViolation>;
+  }> {
+    await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${eventId} FOR UPDATE`;
+    const event = await tx.event.findUniqueOrThrow({
+      where: { id: eventId },
+      select: lockedEventSelect,
+    });
+    return { event, closed: eventClosedViolation(event, at) };
+  }
+
   // Null when the person already has a pending request on the event: the
   // partial unique index `participation_request_one_pending_key` settles two
   // requests sent at the same moment, which a read before the write cannot.
@@ -65,12 +101,7 @@ export class ParticipationRequestRepository {
   > {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${data.eventId} FOR UPDATE`;
-        const event = await tx.event.findUniqueOrThrow({
-          where: { id: data.eventId },
-          select: { status: true, startAt: true, endAt: true },
-        });
-        const closed = eventClosedViolation(event, data.at);
+        const { closed } = await this.lockEvent(tx, data.eventId, data.at);
         if (closed) return closed;
         const request = await tx.participationRequest.create({
           data: {
@@ -117,28 +148,7 @@ export class ParticipationRequestRepository {
       >
   > {
     return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${data.eventId} FOR UPDATE`;
-      const event = await tx.event.findUniqueOrThrow({
-        where: { id: data.eventId },
-        select: {
-          status: true,
-          startAt: true,
-          endAt: true,
-          minParticipants: true,
-          maxParticipants: true,
-          externalOccupiedSpots: true,
-          _count: {
-            select: {
-              participations: {
-                where: { status: ParticipationStatus.APPROVED },
-              },
-            },
-          },
-        },
-      });
-      // The service read the event before the lock; it may have been
-      // cancelled since.
-      const closed = eventClosedViolation(event, data.at);
+      const { event, closed } = await this.lockEvent(tx, data.eventId, data.at);
       if (closed) return closed;
       const seat = await tx.participation.findUnique({
         where: {
