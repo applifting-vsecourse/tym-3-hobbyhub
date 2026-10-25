@@ -107,9 +107,9 @@ export type Event = Occupancy & {
   organizerId: string;
 };
 
-// What deciding a request to join (F-06.1) needs to know about a public event
-// and one person: who runs it, the seats left, and whether they have a seat.
-export type EventSeatFacts = {
+// What the rules about an event's seats need to know: who runs it, when and in
+// what state, and the seats left.
+export type EventFacts = {
   id: string;
   status: EventStatus;
   startAt: Date;
@@ -118,8 +118,20 @@ export type EventSeatFacts = {
   // The organizer and the co-organizers.
   organizerIds: string[];
   freeSpots: number;
+};
+
+// What deciding a request to join (F-06.1) needs to know about a public event
+// and one person: the event's facts, and whether they have a seat.
+export type EventSeatFacts = EventFacts & {
   hasSeat: boolean;
 };
+
+// The one rule for who may run an event: its organizer or a co-organizer.
+// Every organizer-only feature asks this, never `organizerId` alone.
+export const isOrganizerOf = (
+  event: Pick<EventFacts, 'organizerIds'>,
+  userId: string,
+): boolean => event.organizerIds.includes(userId);
 
 export type CreateEventData = {
   title: string;

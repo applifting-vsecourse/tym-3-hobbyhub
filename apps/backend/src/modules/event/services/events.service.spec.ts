@@ -1,5 +1,9 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
-import { CreateEventData, Event } from '@/modules/event/domain/event';
+import {
+  CreateEventData,
+  Event,
+  EventFacts,
+} from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -166,5 +170,49 @@ describe('EventsService', () => {
     await expect(service.getPublicEvent('nope')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  describe('getOrganizedEvent', () => {
+    const facts: EventFacts = {
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: inAnHour(),
+      endAt: new Date(inAnHour().getTime() + 3600 * 1000),
+      approvalMode: 'MANUAL',
+      organizerIds: ['organizer', 'co-organizer'],
+      freeSpots: 3,
+    };
+
+    it.each(['organizer', 'co-organizer'])(
+      'gives the event to its %s',
+      async (id) => {
+        const { repository, service } = setup();
+        repository.getEventFacts.mockResolvedValue(facts);
+
+        await expect(
+          service.getOrganizedEvent('e1', { id } as Identity),
+        ).resolves.toEqual(facts);
+        expect(repository.getEventFacts).toHaveBeenCalledWith('e1');
+      },
+    );
+
+    // 404, not 403: a stranger must not learn the event is there.
+    it('answers 404 to someone who does not organize it', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+
+      await expect(
+        service.getOrganizedEvent('e1', { id: 'stranger' } as Identity),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('answers 404 for an event that does not exist', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(null);
+
+      await expect(
+        service.getOrganizedEvent('e1', { id: 'organizer' } as Identity),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 });
