@@ -1,6 +1,7 @@
 import { EventSeatFacts } from '@/modules/event/domain/event';
 import {
   currentRequestOf,
+  eventClosedViolation,
   joinRuleViolations,
   ParticipationRequest,
   RequestStatus,
@@ -104,5 +105,21 @@ describe('currentRequestOf', () => {
   it('shows the rejection when nothing is pending', () => {
     const rejected = aRequest('REJECTED');
     expect(currentRequestOf([rejected, aRequest('WITHDRAWN')])).toBe(rejected);
+  });
+});
+
+describe('eventClosedViolation', () => {
+  it('lets an open event through', () => {
+    expect(eventClosedViolation(anEvent(), now)).toBeNull();
+  });
+
+  it.each([
+    ['EVENT_CANCELLED', { status: 'CANCELLED' as const }],
+    ['EVENT_NOT_HELD', { status: 'NOT_HELD' as const }],
+    ['EVENT_FINISHED', { status: 'FINISHED' as const }],
+    ['EVENT_FINISHED', { endAt: new Date('2030-01-01T11:00:00Z') }],
+    ['EVENT_STARTED', { startAt: new Date('2030-01-01T12:00:00Z') }],
+  ])('reports %s', (violation, override) => {
+    expect(eventClosedViolation(anEvent(override), now)).toBe(violation);
   });
 });

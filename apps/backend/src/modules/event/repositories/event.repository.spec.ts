@@ -252,6 +252,12 @@ describe('EventRepository.getPublicEventSeatFacts', () => {
 
 describe('EventRepository: guarded writes', () => {
   const now = new Date('2029-12-31T10:00:00Z');
+  // Where the fake transaction ends: after the write, which is all these tests look at.
+  const STOP = 'transaction ended after the write';
+  const edit = {
+    maxParticipants: 8,
+    externalOccupiedSpots: 0,
+  } as Parameters<EventRepository['updateEvent']>[1];
 
   // A transaction whose calls are recorded in order.
   const setup = (
@@ -274,7 +280,7 @@ describe('EventRepository: guarded writes', () => {
           calls.push('write');
           return Promise.resolve({ count });
         }),
-        findUniqueOrThrow: jest.fn(() => Promise.reject(new Error('stop'))),
+        findUniqueOrThrow: jest.fn(() => Promise.reject(new Error(STOP))),
       },
     };
     const prisma = {
@@ -286,13 +292,7 @@ describe('EventRepository: guarded writes', () => {
   it('locks the event before counting seats and writing an edit', async () => {
     const { calls, repository } = setup(1);
 
-    await repository
-      .updateEvent(
-        'e1',
-        { maxParticipants: 8, externalOccupiedSpots: 0 } as never,
-        now,
-      )
-      .catch(() => undefined);
+    await expect(repository.updateEvent('e1', edit, now)).rejects.toThrow(STOP);
 
     expect(calls).toEqual(['lock', 'count', 'write']);
   });
@@ -300,9 +300,9 @@ describe('EventRepository: guarded writes', () => {
   it('locks the event before writing a cancellation', async () => {
     const { calls, repository } = setup(1);
 
-    await repository
-      .cancelEvent('e1', { cancellationReasonId: 'r1' }, now)
-      .catch(() => undefined);
+    await expect(
+      repository.cancelEvent('e1', { cancellationReasonId: 'r1' }, now),
+    ).rejects.toThrow(STOP);
 
     expect(calls).toEqual(['lock', 'write']);
   });

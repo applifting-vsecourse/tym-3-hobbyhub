@@ -7,6 +7,7 @@ import {
 } from '@/generated/prisma/client';
 import { occupancyOf } from '@/modules/event/domain/event';
 import {
+  eventClosedViolation,
   JoinRuleViolation,
   ParticipationRequest,
 } from '@/modules/participation-request/domain/participation-request';
@@ -43,21 +44,44 @@ export class ParticipationRequestRepository {
   // Null when the person already has a pending request on the event: the
   // partial unique index `participation_request_one_pending_key` settles two
   // requests sent at the same moment, which a read before the write cannot.
+  // The event row is locked first, like in createApproved, so a request cannot
+  // slip in after the event was cancelled or started; the reason comes back
+  // instead of a request then.
   async createPending(data: {
     eventId: string;
     userId: string;
     message?: string;
-  }): Promise<ParticipationRequest | null> {
+    at: Date;
+  }): Promise<
+    | ParticipationRequest
+    | null
+    | Extract<
+        JoinRuleViolation,
+        | 'EVENT_CANCELLED'
+        | 'EVENT_NOT_HELD'
+        | 'EVENT_FINISHED'
+        | 'EVENT_STARTED'
+      >
+  > {
     try {
-      const request = await this.prisma.participationRequest.create({
-        data: {
-          eventId: data.eventId,
-          userId: data.userId,
-          message: data.message ?? null,
-          status: RequestStatus.PENDING,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${data.eventId} FOR UPDATE`;
+        const event = await tx.event.findUniqueOrThrow({
+          where: { id: data.eventId },
+          select: { status: true, startAt: true, endAt: true },
+        });
+        const closed = eventClosedViolation(event, data.at);
+        if (closed) return closed;
+        const request = await tx.participationRequest.create({
+          data: {
+            eventId: data.eventId,
+            userId: data.userId,
+            message: data.message ?? null,
+            status: RequestStatus.PENDING,
+          },
+        });
+        return mapToDomain(request);
       });
-      return mapToDomain(request);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -73,8 +97,8 @@ export class ParticipationRequestRepository {
   // The event row is locked first, so two people taking the last seat at the
   // same moment queue up and the second one finds it gone, which the service's
   // read before the write cannot settle. Returns the reason instead of a
-  // request when the seat went meanwhile, or the person got one in another
-  // window.
+  // request when the seat went meanwhile, the person got one in another
+  // window, or the event closed (cancelled, started) since the service read it.
   async createApproved(data: {
     eventId: string;
     userId: string;
@@ -84,7 +108,12 @@ export class ParticipationRequestRepository {
     | ParticipationRequest
     | Extract<
         JoinRuleViolation,
-        'EVENT_FULL' | 'HAS_SEAT' | 'EVENT_CANCELLED' | 'EVENT_NOT_HELD'
+        | 'EVENT_FULL'
+        | 'HAS_SEAT'
+        | 'EVENT_CANCELLED'
+        | 'EVENT_NOT_HELD'
+        | 'EVENT_FINISHED'
+        | 'EVENT_STARTED'
       >
   > {
     return this.prisma.$transaction(async (tx) => {
@@ -93,6 +122,8 @@ export class ParticipationRequestRepository {
         where: { id: data.eventId },
         select: {
           status: true,
+          startAt: true,
+          endAt: true,
           minParticipants: true,
           maxParticipants: true,
           externalOccupiedSpots: true,
@@ -107,8 +138,8 @@ export class ParticipationRequestRepository {
       });
       // The service read the event before the lock; it may have been
       // cancelled since.
-      if (event.status === 'CANCELLED') return 'EVENT_CANCELLED';
-      if (event.status === 'NOT_HELD') return 'EVENT_NOT_HELD';
+      const closed = eventClosedViolation(event, data.at);
+      if (closed) return closed;
       const seat = await tx.participation.findUnique({
         where: {
           eventId_userId: { eventId: data.eventId, userId: data.userId },

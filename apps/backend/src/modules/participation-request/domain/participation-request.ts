@@ -54,6 +54,26 @@ export const currentRequestOf = (
   );
 };
 
+// Why an event takes no new people now, or null while it is open. The service
+// checks it on a copy read earlier and the repository again under the event's
+// lock, so both decide the same way.
+export const eventClosedViolation = (
+  event: Pick<EventSeatFacts, 'status' | 'startAt' | 'endAt'>,
+  now: Date,
+): Extract<
+  JoinRuleViolation,
+  'EVENT_CANCELLED' | 'EVENT_NOT_HELD' | 'EVENT_FINISHED' | 'EVENT_STARTED'
+> | null => {
+  // The states the event detail tells apart, decided the same way.
+  if (event.status === 'CANCELLED') return 'EVENT_CANCELLED';
+  if (event.status === 'NOT_HELD') return 'EVENT_NOT_HELD';
+  if (event.status !== 'PUBLISHED' || event.endAt.getTime() < now.getTime()) {
+    return 'EVENT_FINISHED';
+  }
+  if (event.startAt.getTime() <= now.getTime()) return 'EVENT_STARTED';
+  return null;
+};
+
 // F-06.1: who may ask to join, given the event and the applicant's own
 // requests on it. A pending request takes no seat, so a full event refuses new
 // requests but keeps the ones already waiting. A rejection is final for the
@@ -65,19 +85,8 @@ export const joinRuleViolations = (
   now: Date,
 ): JoinRuleViolation[] => {
   const violations: JoinRuleViolation[] = [];
-  // The states the event detail tells apart, decided the same way.
-  if (event.status === 'CANCELLED') {
-    violations.push('EVENT_CANCELLED');
-  } else if (event.status === 'NOT_HELD') {
-    violations.push('EVENT_NOT_HELD');
-  } else if (
-    event.status !== 'PUBLISHED' ||
-    event.endAt.getTime() < now.getTime()
-  ) {
-    violations.push('EVENT_FINISHED');
-  } else if (event.startAt.getTime() <= now.getTime()) {
-    violations.push('EVENT_STARTED');
-  }
+  const closed = eventClosedViolation(event, now);
+  if (closed) violations.push(closed);
   if (event.organizerIds.includes(applicantId)) {
     violations.push('IS_ORGANIZER');
   }

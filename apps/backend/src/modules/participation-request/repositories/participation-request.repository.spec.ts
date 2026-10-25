@@ -151,6 +151,24 @@ describeDb('ParticipationRequestRepository.createApproved', () => {
     ).resolves.toBe(0);
   });
 
+  it.each([
+    ['cancelled', { status: 'CANCELLED' as const }, 'EVENT_CANCELLED'],
+    ['started', { startAt: new Date('2029-12-31T09:00:00Z') }, 'EVENT_STARTED'],
+  ])(
+    'refuses a pending request on an event that was %s after the service read it',
+    async (_, change, violation) => {
+      const { eventId, userIds } = await eventWith(2, 1);
+      await prisma.event.update({ where: { id: eventId }, data: change });
+
+      await expect(
+        repository.createPending({ eventId, userId: userIds[0], at }),
+      ).resolves.toBe(violation);
+      await expect(
+        prisma.participationRequest.count({ where: { eventId } }),
+      ).resolves.toBe(0);
+    },
+  );
+
   it('gives the last seat to only one of two people taking it at once', async () => {
     const { eventId, userIds } = await eventWith(1, 2);
 
