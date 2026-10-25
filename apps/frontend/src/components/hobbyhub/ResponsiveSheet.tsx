@@ -81,7 +81,12 @@ export function ResponsiveSheet({
         onOpenChange={onOpenChange}
       >
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <DialogContent className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
+        <DialogContent
+          className={cn(
+            "max-h-[85vh] sm:max-w-lg",
+            children ? "grid-rows-[auto_minmax(0,1fr)_auto]" : "grid-rows-[auto_auto]",
+          )}
+        >
           <DialogHeader className="pr-8">
             {titleRow(DialogTitle)}
             {description ? <DialogDescription>{description}</DialogDescription> : null}

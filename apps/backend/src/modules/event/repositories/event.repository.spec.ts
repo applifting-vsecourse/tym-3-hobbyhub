@@ -249,3 +249,69 @@ describe('EventRepository.getPublicEventSeatFacts', () => {
     ).resolves.toMatchObject({ hasSeat: false });
   });
 });
+
+describe('EventRepository: guarded writes', () => {
+  const now = new Date('2029-12-31T10:00:00Z');
+
+  // A transaction whose calls are recorded in order.
+  const setup = (
+    count: number,
+  ): { calls: string[]; repository: EventRepository } => {
+    const calls: string[] = [];
+    const tx = {
+      $queryRaw: jest.fn(() => {
+        calls.push('lock');
+        return Promise.resolve([]);
+      }),
+      participation: {
+        count: jest.fn(() => {
+          calls.push('count');
+          return Promise.resolve(0);
+        }),
+      },
+      event: {
+        updateMany: jest.fn(() => {
+          calls.push('write');
+          return Promise.resolve({ count });
+        }),
+        findUniqueOrThrow: jest.fn(() => Promise.reject(new Error('stop'))),
+      },
+    };
+    const prisma = {
+      $transaction: (work: (tx: unknown) => Promise<unknown>) => work(tx),
+    } as unknown as PrismaService;
+    return { calls, repository: new EventRepository(prisma) };
+  };
+
+  it('locks the event before counting seats and writing an edit', async () => {
+    const { calls, repository } = setup(1);
+
+    await repository
+      .updateEvent(
+        'e1',
+        { maxParticipants: 8, externalOccupiedSpots: 0 } as never,
+        now,
+      )
+      .catch(() => undefined);
+
+    expect(calls).toEqual(['lock', 'count', 'write']);
+  });
+
+  it('locks the event before writing a cancellation', async () => {
+    const { calls, repository } = setup(1);
+
+    await repository
+      .cancelEvent('e1', { cancellationReasonId: 'r1' }, now)
+      .catch(() => undefined);
+
+    expect(calls).toEqual(['lock', 'write']);
+  });
+
+  it('reports a cancellation that matched no event', async () => {
+    const { repository } = setup(0);
+
+    await expect(
+      repository.cancelEvent('e1', { cancellationReasonId: 'r1' }, now),
+    ).resolves.toEqual({ ok: false, violation: 'EVENT_NOT_CANCELLABLE' });
+  });
+});

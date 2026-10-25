@@ -81,13 +81,18 @@ export class ParticipationRequestRepository {
     message?: string;
     at: Date;
   }): Promise<
-    ParticipationRequest | Extract<JoinRuleViolation, 'EVENT_FULL' | 'HAS_SEAT'>
+    | ParticipationRequest
+    | Extract<
+        JoinRuleViolation,
+        'EVENT_FULL' | 'HAS_SEAT' | 'EVENT_CANCELLED' | 'EVENT_NOT_HELD'
+      >
   > {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${data.eventId} FOR UPDATE`;
       const event = await tx.event.findUniqueOrThrow({
         where: { id: data.eventId },
         select: {
+          status: true,
           minParticipants: true,
           maxParticipants: true,
           externalOccupiedSpots: true,
@@ -100,6 +105,10 @@ export class ParticipationRequestRepository {
           },
         },
       });
+      // The service read the event before the lock; it may have been
+      // cancelled since.
+      if (event.status === 'CANCELLED') return 'EVENT_CANCELLED';
+      if (event.status === 'NOT_HELD') return 'EVENT_NOT_HELD';
       const seat = await tx.participation.findUnique({
         where: {
           eventId_userId: { eventId: data.eventId, userId: data.userId },
