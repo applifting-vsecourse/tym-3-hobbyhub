@@ -2,7 +2,7 @@
 
 **Status:** Navrženo ❓ | Přijato ✅ | Zastaralé ❌ | Nahrazeno [ADR-XXXX](ADR-XXXX) ♻️<br>
 **Datum:** DD-MM-YYYY <br>
-**Rozhodující:** <names>
+**Autor:** <jméno – kdo ADR schvaluje a ručí za něj>
 
 ## Kontext
 

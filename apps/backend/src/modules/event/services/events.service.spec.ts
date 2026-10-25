@@ -30,6 +30,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
     postalCode: '18200',
     country: 'Česko',
     placeName: 'ZŠ Kobylisy',
+    latitude: 50.1297,
+    longitude: 14.4421,
   },
   activity: {
     id: 'a1',
@@ -53,6 +55,7 @@ const input = (): CreateEventData => ({
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
   venueType: 'PUBLIC_VENUE',
+  approvalMode: 'AUTOMATIC',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
   location: {
@@ -97,6 +100,14 @@ describe('EventsService', () => {
     ['an end before the start', { endAt: new Date(Date.now() + 1000) }],
     ['a minimum above the maximum', { minParticipants: 13 }],
     ['more occupied seats than the maximum', { externalOccupiedSpots: 13 }],
+    [
+      'a latitude without a longitude',
+      { location: { ...input().location, latitude: 50.1 } },
+    ],
+    [
+      'a longitude without a latitude',
+      { location: { ...input().location, longitude: 14.4 } },
+    ],
   ])('refuses %s', async (_, override) => {
     const { repository, service } = setup();
 

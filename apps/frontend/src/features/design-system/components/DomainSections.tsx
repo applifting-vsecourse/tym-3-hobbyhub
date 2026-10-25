@@ -1,14 +1,17 @@
+import { useState } from "react"
 import { toast } from "sonner"
 
 import deskovkyPhoto from "@/assets/event-photos/deskovky.jpg"
 import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import vyletPhoto from "@/assets/event-photos/vylet.jpg"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { BottomNav } from "@/components/hobbyhub/BottomNav"
 import { ChatShare } from "@/components/hobbyhub/ChatShare"
 import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
+import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
 import { Loader, type LoaderVariant } from "@/components/hobbyhub/Loader"
@@ -41,6 +44,19 @@ const LOADER_VARIANTS: { variant: LoaderVariant; usage: string }[] = [
 ]
 
 const notify = (message: string) => () => toast(message)
+
+function AddressSearchExample() {
+  const [address, setAddress] = useState("")
+  return (
+    <div className="w-full max-w-sm">
+      <AddressSearch
+        value={address}
+        onSelect={(picked) => setAddress(picked.label)}
+        placeholder="Najít adresu"
+      />
+    </div>
+  )
+}
 
 function BottomNavExample() {
   return (
@@ -182,13 +198,15 @@ export function DomainSections() {
               subtitle="Hala ZŠ Dolní, pokročilí"
               taken={7}
               min={10}
+              photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
             />
             <ScheduleRow
               time="20:30"
-              title="Volejbal pod lampami"
+              title="Volejbal pod lampami (bez fotky)"
               subtitle="Stromovka, mírně pokročilí"
               taken={5}
               min={5}
+              activity="volejbal"
             />
           </div>
         </Example>
@@ -317,7 +335,7 @@ export function DomainSections() {
       <ShowcaseSection
         id="mapa"
         title="Pin na mapě"
-        description="Číslo je počet chybějících lidí. Naplněná akce má fajfku, shluk spojuje blízké akce, vybraný pin je kruh bez špičky s plným prstencem."
+        description="Akce na mapě je špendlík-pilulka s ikonou sportu a názvem: grafitová, když lidé chybí, zelená, když je akce naplněná, černá s prstencem, když je vybraná. Za názvem je vždy napsáno, kolik lidí chybí. Shluk je neutrální pilulka „9 akcí“ a spojuje blízké akce. Starší kruhové piny níže zůstávají ve Figmě."
       >
         <Example
           label="Chybí, naplněno, shluk, vybraný"
@@ -336,6 +354,32 @@ export function DomainSections() {
             variant="selected"
             count={1}
           />
+        </Example>
+        <Example
+          label="Špendlík akce: chybí lidé, naplněno, vybraný, shluk"
+          className="items-end gap-6"
+        >
+          <EventPin
+            activity="florbal"
+            title="Čtvrteční florbal"
+            missingLabel="chybí 2"
+            state="missing"
+          />
+          <EventPin
+            activity="tenis"
+            title="Tenis na Letné"
+            state="full"
+          />
+          <EventPin
+            activity="volejbal"
+            title="Plážový volejbal"
+            missingLabel="chybí 1"
+            state="selected"
+          />
+          <EventClusterPin label="9 akcí" />
+        </Example>
+        <Example label="Hledání adresy: našeptávač s polohou (potřebuje VITE_MAPBOX_TOKEN)">
+          <AddressSearchExample />
         </Example>
       </ShowcaseSection>
 

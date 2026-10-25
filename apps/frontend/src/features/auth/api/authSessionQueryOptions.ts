@@ -8,6 +8,8 @@ export type SessionUser = {
   id: string
   email: string
   name: string
+  // The organizer sees it next to a request to join (F-06.1).
+  emailVerified: boolean
   role?: string
 }
 
@@ -32,6 +34,7 @@ export const authSessionQueryOptions = () =>
           id: user.id,
           email: user.email,
           name: user.name,
+          emailVerified: user.emailVerified,
           role: user.role ?? undefined,
         },
       }

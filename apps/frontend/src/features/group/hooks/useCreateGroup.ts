@@ -11,6 +11,7 @@ export function useCreateGroup() {
     onSuccess: (group) => {
       // The detail page opens next; give it the group without a second request.
       queryClient.setQueryData(groupKeys.detail(group.id), group)
+      void queryClient.invalidateQueries({ queryKey: groupKeys.lists() })
     },
   })
 }

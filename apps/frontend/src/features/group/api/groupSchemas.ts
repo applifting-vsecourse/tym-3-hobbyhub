@@ -29,6 +29,24 @@ export const groupMembershipSchema = z.object({
   role: z.enum(["OWNER", "ADMIN", "MEMBER"]).nullable(),
 })
 
+export const myGroupSchema = groupSchema.extend({
+  myRole: z.enum(["OWNER", "ADMIN", "MEMBER"]),
+})
+
+export type MyGroup = z.infer<typeof myGroupSchema>
+export type GroupRole = MyGroup["myRole"]
+
+export const nearbyGroupsSchema = z.object({
+  // Null when the user has no city in their profile.
+  city: z.string().nullable(),
+  groups: z.array(groupSchema),
+})
+
+export const groupPageSchema = z.object({
+  items: z.array(groupSchema),
+  nextCursor: z.string().nullable(),
+})
+
 export type CreateGroupInput = {
   name: string
   activityId: string

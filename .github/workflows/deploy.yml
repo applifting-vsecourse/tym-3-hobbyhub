@@ -52,6 +52,7 @@ jobs:
           build-args: |
             VITE_API_URL=${{ steps.slug.outputs.url }}/api
             VITE_BETTER_AUTH_URL=${{ steps.slug.outputs.url }}
+            VITE_MAPBOX_TOKEN=${{ vars.VITE_MAPBOX_TOKEN }}
           tags: ${{ env.REGISTRY }}/${{ steps.slug.outputs.slug }}-frontend:latest
       - name: Trigger Coolify deploy
         if: env.COOLIFY_WEBHOOK != ''

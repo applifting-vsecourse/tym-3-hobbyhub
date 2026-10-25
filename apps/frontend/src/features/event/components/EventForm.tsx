@@ -1,13 +1,14 @@
 import { useId, useMemo, useState, type ComponentProps, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
-import { ChevronLeft, Loader2 } from "lucide-react"
+import { ChevronLeft, Loader2, MapPin } from "lucide-react"
 import { useForm, useFormContext, useWatch, type FieldErrors } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -20,14 +21,17 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { hasAddressSuggestions } from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 import {
+  APPROVAL_MODES,
   CREATABLE_VENUE_TYPES,
   EVENT_LIMITS,
   type CreateEventInput,
@@ -72,6 +76,11 @@ const createSchema = (t: TFunction, now: () => Date) => {
         postalCode: required(EVENT_LIMITS.postalCodeMax, t("events.validation.postalCodeRequired")),
         country: required(EVENT_LIMITS.countryMax, t("events.validation.countryRequired")),
         placeName: text(EVENT_LIMITS.placeNameMax),
+        // The position of the address picked from the suggestions; `addressKey`
+        // says which address it belongs to, so a hand-edited one drops it.
+        latitude: z.number().nullable(),
+        longitude: z.number().nullable(),
+        positionOf: z.string(),
         minParticipants: people.min(1),
         maxParticipants: people.min(1),
         externalOccupiedSpots: people,
@@ -89,6 +98,7 @@ const createSchema = (t: TFunction, now: () => Date) => {
         ),
         equipment: text(EVENT_LIMITS.equipmentMax),
         venueType: z.enum(CREATABLE_VENUE_TYPES),
+        approvalMode: z.enum(APPROVAL_MODES),
       })
       // Rules between fields. Each lands on the field the organizer has to change.
       .superRefine((values, ctx) => {
@@ -148,6 +158,9 @@ const defaultValues = (t: TFunction): FormValues => ({
   postalCode: "",
   country: t("events.defaults.country"),
   placeName: "",
+  latitude: null,
+  longitude: null,
+  positionOf: "",
   minParticipants: 2,
   maxParticipants: 4,
   externalOccupiedSpots: 0,
@@ -156,7 +169,12 @@ const defaultValues = (t: TFunction): FormValues => ({
   description: "",
   equipment: "",
   venueType: "PUBLIC_VENUE",
+  approvalMode: "MANUAL",
 })
+
+// The address a position was found for. Editing any part of it makes the position stale.
+const addressKey = (values: Pick<FormValues, "street" | "city" | "postalCode">) =>
+  [values.street, values.city, values.postalCode].map((part) => part.trim()).join("|")
 
 // Optional fields left empty are not sent at all. Dates are validated by then.
 const toInput = (values: FormValues): CreateEventInput => {
@@ -170,6 +188,7 @@ const toInput = (values: FormValues): CreateEventInput => {
     description: values.description.trim(),
     equipment: values.equipment.trim() || undefined,
     venueType: values.venueType,
+    approvalMode: values.approvalMode,
     startAt: start.toISOString(),
     endAt: end.toISOString(),
     location: {
@@ -178,6 +197,12 @@ const toInput = (values: FormValues): CreateEventInput => {
       postalCode: values.postalCode.trim(),
       country: values.country.trim(),
       placeName: values.placeName.trim() || undefined,
+      ...(values.latitude !== null &&
+        values.longitude !== null &&
+        values.positionOf === addressKey(values) && {
+          latitude: values.latitude,
+          longitude: values.longitude,
+        }),
     },
     minParticipants: values.minParticipants,
     maxParticipants: values.maxParticipants,
@@ -212,6 +237,7 @@ const STEP_FIELDS: Record<Step, (keyof FormValues)[]> = {
     "minParticipants",
     "maxParticipants",
     "externalOccupiedSpots",
+    "approvalMode",
     "contributionAmount",
     "contributionNote",
   ],
@@ -270,11 +296,6 @@ export function EventForm({
   const step = STEPS[stepIndex] ?? "what"
   const isLastStep = stepIndex === STEPS.length - 1
 
-  const sortedActivities = useMemo(
-    () => [...activities].sort((a, b) => a.label.localeCompare(b.label)),
-    [activities],
-  )
-
   const goToStep = (index: number) => {
     setStepIndex(index)
     window.scrollTo({ top: 0 })
@@ -295,7 +316,7 @@ export function EventForm({
   }
 
   const activityProps = {
-    activities: sortedActivities,
+    activities,
     isActivitiesLoading,
     isActivitiesError,
     onRetryActivities,
@@ -347,7 +368,7 @@ export function EventForm({
               ))}
             </div>
             <aside className="space-y-4 md:sticky md:top-20">
-              <PreviewFromForm activities={sortedActivities} />
+              <PreviewFromForm activities={activities} />
               <MissingToMinimum />
               <Button
                 type="submit"
@@ -409,7 +430,7 @@ export function EventForm({
               {...activityProps}
             />
             {step === "who" ? <MissingToMinimum /> : null}
-            {step === "details" ? <PreviewFromForm activities={sortedActivities} /> : null}
+            {step === "details" ? <PreviewFromForm activities={activities} /> : null}
           </div>
           {/* Under the BottomNav (z-40), so its raised "Přidat" stays on top. */}
           <div className="fixed inset-x-0 bottom-0 z-30 bg-background px-4 pt-3 pb-above-bottom-nav">
@@ -584,6 +605,7 @@ function WhatFields({
 
       <fieldset className="space-y-4">
         <legend className="mb-3 typo-label-lg text-foreground">{t("events.form.address")}</legend>
+        <AddressPicker />
         <TextField
           name="street"
           label={t("events.fields.street")}
@@ -619,10 +641,67 @@ function WhatFields({
   )
 }
 
+/**
+ * Fills the address fields from a suggested address and keeps its position, so
+ * the event can be put on the map. Without suggestions (no map token) the fields
+ * are typed by hand and the event has no position.
+ */
+function AddressPicker() {
+  const { t } = useTranslation()
+  const form = useFormContext<FormValues>()
+  const [pickedLabel, setPickedLabel] = useState("")
+  const [street, city, postalCode, latitude, positionOf] = useWatch({
+    control: form.control,
+    name: ["street", "city", "postalCode", "latitude", "positionOf"],
+  })
+  if (!hasAddressSuggestions()) return null
+
+  const isLocated = latitude !== null && positionOf === addressKey({ street, city, postalCode })
+  const options = { shouldDirty: true, shouldTouch: true, shouldValidate: true }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="event-address-search">{t("events.fields.addressSearch")}</Label>
+      <AddressSearch
+        id="event-address-search"
+        value={isLocated ? pickedLabel : ""}
+        placeholder={t("events.placeholders.addressSearch")}
+        onSelect={(address) => {
+          const key = addressKey(address)
+          setPickedLabel(address.label)
+          form.setValue("street", address.street, options)
+          form.setValue("city", address.city, options)
+          form.setValue("postalCode", address.postalCode, options)
+          if (address.country) form.setValue("country", address.country, options)
+          form.setValue("latitude", address.latitude, options)
+          form.setValue("longitude", address.longitude, options)
+          form.setValue("positionOf", key, options)
+        }}
+      />
+      <p className="flex items-center gap-1.5 typo-small text-muted-foreground">
+        {isLocated ? (
+          <>
+            <MapPin
+              aria-hidden
+              className="size-4 text-success-ink"
+            />
+            {t("events.form.addressLocated")}
+          </>
+        ) : (
+          t("events.form.addressHint")
+        )}
+      </p>
+    </div>
+  )
+}
+
 function WhoFields() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
-  const maxParticipants = useWatch({ control: form.control, name: "maxParticipants" })
+  const [maxParticipants, approvalMode] = useWatch({
+    control: form.control,
+    name: ["maxParticipants", "approvalMode"],
+  })
 
   return (
     <>
@@ -643,6 +722,13 @@ function WhoFields() {
         // Lowering the maximum afterwards is caught by validation instead.
         max={Math.max(maxParticipants, 0)}
         description={t("events.form.externalHint")}
+      />
+      <ChipChoiceField
+        name="approvalMode"
+        label={t("events.fields.approvalMode")}
+        options={APPROVAL_MODES}
+        optionLabel={(mode) => t(`events.approvalMode.${mode}`)}
+        description={t(`events.approvalModeHint.${approvalMode}`)}
       />
       <TextField
         name="contributionAmount"
@@ -666,7 +752,6 @@ function WhoFields() {
 function DetailsFields() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
-  const venueTypeLabelId = useId()
 
   return (
     <>
@@ -692,42 +777,11 @@ function DetailsFields() {
         label={t("events.fields.equipment")}
         placeholder={t("events.placeholders.equipment")}
       />
-      <FormField
-        control={form.control}
+      <ChipChoiceField
         name="venueType"
-        render={({ field }) => (
-          <FormItem>
-            <p
-              id={venueTypeLabelId}
-              className="typo-label-lg text-foreground"
-            >
-              {t("events.fields.venueType")}
-            </p>
-            <ToggleGroup
-              type="single"
-              variant="chip"
-              spacing={2}
-              aria-labelledby={venueTypeLabelId}
-              value={field.value}
-              // Radix clears the value on a second tap; one type is always chosen.
-              onValueChange={(value) => {
-                if (value) field.onChange(value)
-              }}
-              className="flex-wrap"
-            >
-              {CREATABLE_VENUE_TYPES.map((venueType) => (
-                <ToggleGroupItem
-                  key={venueType}
-                  value={venueType}
-                  className="h-11 px-4 md:h-9"
-                >
-                  {t(`events.venueType.${venueType}`)}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            <FormMessage />
-          </FormItem>
-        )}
+        label={t("events.fields.venueType")}
+        options={CREATABLE_VENUE_TYPES}
+        optionLabel={(venueType) => t(`events.venueType.${venueType}`)}
       />
     </>
   )
@@ -800,7 +854,8 @@ function PreviewFromForm({ activities }: { readonly activities: ActivityOption[]
 }
 
 type TextFieldProps = Omit<ComponentProps<typeof Input>, "name"> & {
-  readonly name: keyof FormValues
+  // The position is no text: it comes from the suggested address.
+  readonly name: Exclude<keyof FormValues, "latitude" | "longitude">
   readonly label: string
   readonly description?: string
 }
@@ -821,6 +876,67 @@ function TextField({ name, label, description, ...inputProps }: TextFieldProps) 
               {...field}
             />
           </FormControl>
+          {description ? <FormDescription>{description}</FormDescription> : null}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}
+
+type ChipChoiceFieldProps<Option extends string> = {
+  readonly name: "venueType" | "approvalMode"
+  readonly label: string
+  readonly options: readonly Option[]
+  readonly optionLabel: (option: Option) => string
+  readonly description?: string
+}
+
+/** One of a few options as chips; one is always chosen. */
+function ChipChoiceField<Option extends string>({
+  name,
+  label,
+  options,
+  optionLabel,
+  description,
+}: ChipChoiceFieldProps<Option>) {
+  const { control } = useFormContext<FormValues>()
+  const labelId = useId()
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <p
+            id={labelId}
+            className="typo-label-lg text-foreground"
+          >
+            {label}
+          </p>
+          <ToggleGroup
+            type="single"
+            variant="chip"
+            spacing={2}
+            aria-labelledby={labelId}
+            value={field.value}
+            // Radix clears the value on a second tap; one option is always chosen.
+            onValueChange={(value) => {
+              if (value) field.onChange(value)
+            }}
+            className="flex-wrap"
+          >
+            {options.map((option) => (
+              <ToggleGroupItem
+                key={option}
+                value={option}
+                className="h-11 px-4 md:h-9"
+              >
+                {optionLabel(option)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
           {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />
         </FormItem>

@@ -1,5 +1,8 @@
 import type { ReactNode } from "react"
+import { XIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -32,6 +36,14 @@ type ResponsiveSheetProps = {
   headerAction?: ReactNode
   /** Sticky bottom area, usually the one primary action. */
   footer?: ReactNode
+  /** A close button on the phone drawer too; the desktop dialog always has one. */
+  hasCloseButton?: boolean
+  /**
+   * On phones, put the footer at the end of the content instead of pinning it.
+   * For sheets with a text field: the on-screen keyboard leaves the drawer so
+   * little room that a pinned footer covers the field.
+   */
+  isFooterScrolling?: boolean
   children: ReactNode
 }
 
@@ -47,14 +59,17 @@ export function ResponsiveSheet({
   description,
   headerAction,
   footer,
+  hasCloseButton = false,
+  isFooterScrolling = false,
   children,
 }: ResponsiveSheetProps) {
+  const { t } = useTranslation()
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
 
-  const titleRow = (Title: typeof DialogTitle | typeof DrawerTitle) => (
+  const titleRow = (Title: typeof DialogTitle | typeof DrawerTitle, action = headerAction) => (
     <div className="flex items-center justify-between gap-3">
       <Title>{title}</Title>
-      {headerAction}
+      {action}
     </div>
   )
 
@@ -85,11 +100,30 @@ export function ResponsiveSheet({
       {trigger ? <DrawerTrigger asChild>{trigger}</DrawerTrigger> : null}
       <DrawerContent>
         <DrawerHeader>
-          {titleRow(DrawerTitle)}
+          {titleRow(
+            DrawerTitle,
+            headerAction ??
+              (hasCloseButton ? (
+                <DrawerClose asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    aria-label={t("common.close")}
+                  >
+                    <XIcon />
+                  </Button>
+                </DrawerClose>
+              ) : null),
+          )}
           {description ? <DrawerDescription>{description}</DrawerDescription> : null}
         </DrawerHeader>
-        <div className={cn("overflow-y-auto px-5 pt-3", !footer && "pb-6")}>{children}</div>
-        {footer ? <DrawerFooter>{footer}</DrawerFooter> : null}
+        <div className={cn("overflow-y-auto px-5 pt-3", (!footer || isFooterScrolling) && "pb-6")}>
+          {children}
+          {footer && isFooterScrolling ? (
+            <div className="flex flex-col gap-2 pt-4">{footer}</div>
+          ) : null}
+        </div>
+        {footer && !isFooterScrolling ? <DrawerFooter>{footer}</DrawerFooter> : null}
       </DrawerContent>
     </Drawer>
   )

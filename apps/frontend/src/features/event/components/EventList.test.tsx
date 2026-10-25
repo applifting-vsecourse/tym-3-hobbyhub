@@ -38,6 +38,9 @@ const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
   district: "Praha 8",
   city: "Praha",
   level: "Pokročilí",
+  latitude: 50.1297,
+  longitude: 14.4421,
+  distanceKm: null,
   activity: { id: "a1", name: "Florbal", icon: "florbal" },
   minParticipants: 8,
   maxParticipants: 10,
@@ -65,6 +68,51 @@ describe("EventList", () => {
     expect(screen.getByText("chybí 1")).toBeInTheDocument()
   })
 
+  it("lists events nearest first with their distance and day, without day headings", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[
+          event({ id: "near", title: "Blízká akce", distanceKm: 2.34 }),
+          event({
+            id: "far",
+            title: "Daleká akce",
+            distanceKm: 186,
+            startAt: new Date(2026, 9, 23, 18, 0),
+          }),
+        ]}
+        total={2}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.queryByRole("heading", { name: "Dnes" })).not.toBeInTheDocument()
+    expect(
+      screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent),
+    ).toEqual(["Blízká akce", "Daleká akce"])
+    expect(screen.getByText(/^Dnes · .* · 2,3 km$/)).toBeInTheDocument()
+    expect(screen.getByText(/^Zítra · .* · 186 km$/)).toBeInTheDocument()
+    expect(screen.getByText("19:00")).toBeInTheDocument()
+    expect(screen.getByText("18:00")).toBeInTheDocument()
+  })
+
+  it("highlights the row of the event that is open on the map", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[event({ id: "e1" }), event({ id: "e2", title: "Jiná akce" })]}
+        total={2}
+        selectedId="e2"
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("link", { name: /Jiná akce/ })).toHaveAttribute("aria-current", "true")
+    expect(screen.getByRole("link", { name: /Čtvrteční florbal/ })).not.toHaveAttribute(
+      "aria-current",
+    )
+  })
+
   it("links a row to the event detail", () => {
     render(
       <EventList
@@ -79,6 +127,35 @@ describe("EventList", () => {
       "href",
       "/events/e1",
     )
+  })
+
+  it("shows the event's photo in its row", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[event({ imageUrl: "https://example.com/florbal.jpg" })]}
+        total={1}
+        now={NOW}
+      />,
+    )
+
+    const row = screen.getByRole("link", { name: /Čtvrteční florbal/ })
+    expect(row.querySelectorAll('img[src="https://example.com/florbal.jpg"]')).toHaveLength(1)
+  })
+
+  it("shows the activity's icon in place of a missing photo", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[event({ imageUrl: null })]}
+        total={1}
+        now={NOW}
+      />,
+    )
+
+    const row = screen.getByRole("link", { name: /Čtvrteční florbal/ })
+    expect(row.querySelector("img")).toBeNull()
+    expect(row.querySelector("svg")).not.toBeNull()
   })
 
   it("says full once the minimum is reached", () => {

@@ -7,6 +7,7 @@ import {
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
+  EventSeatFacts,
   Page,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
@@ -23,6 +24,8 @@ const VIOLATION_MESSAGES: Record<EventRuleViolation, string> = {
   MIN_ABOVE_MAX: 'minParticipants must not exceed maxParticipants',
   OCCUPIED_ABOVE_MAX: 'externalOccupiedSpots must not exceed maxParticipants',
   NOTE_WITHOUT_AMOUNT: 'contributionNote requires contributionAmount',
+  POSITION_INCOMPLETE:
+    'location.latitude and location.longitude must be sent together',
 };
 
 @Injectable()
@@ -73,5 +76,13 @@ export class EventsService {
     const event = await this.eventRepository.getPublicEventById(id);
     if (!event) throw new NotFoundException('Event not found');
     return event;
+  }
+
+  // F-06.1: null when there is no such public event.
+  getPublicEventSeatFacts(
+    id: string,
+    userId: string,
+  ): Promise<EventSeatFacts | null> {
+    return this.eventRepository.getPublicEventSeatFacts(id, userId);
   }
 }

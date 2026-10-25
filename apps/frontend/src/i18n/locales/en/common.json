@@ -53,7 +53,8 @@
     "signUp": {
       "description": "You can complete your profile later.",
       "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
-      "privacyNote": "We check you are 18+ from your date of birth. Date of birth and gender are not public.",
+      "genderNote": "Private, nobody else sees it. Used only for combined event statistics.",
+      "privacyNote": "Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
       "signInLink": "I already have an account · Sign in",
       "submit": "Create account and continue",
       "terms": "I agree to the <terms>terms and privacy policy</terms>.",
@@ -72,6 +73,7 @@
     }
   },
   "common": {
+    "close": "Close",
     "unsavedChanges": {
       "description": "You have changes that were not submitted. Leaving loses them.",
       "leave": "Leave",
@@ -92,6 +94,14 @@
     }
   },
   "events": {
+    "approvalMode": {
+      "AUTOMATIC": "Automatically",
+      "MANUAL": "By hand"
+    },
+    "approvalModeHint": {
+      "AUTOMATIC": "Whoever joins gets a free seat at once, without your approval.",
+      "MANUAL": "You approve or reject every request to join yourself."
+    },
     "back": "Back",
     "day": {
       "today": "Today",
@@ -113,13 +123,13 @@
       "equipment": "Equipment",
       "hasAccount": "Already have an account?",
       "join": "Take a seat",
-      "joinSoon": "Requests to join are not available yet.",
       "linkLabel": "Link",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by {{name}}",
+      "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
       "signIn": "Sign in",
@@ -131,19 +141,26 @@
         "full": "Full",
         "fullText": "This event is full, you cannot ask to join.",
         "notHeld": "Not held",
-        "notHeldText": "This event did not take place, you cannot ask to join."
+        "notHeldText": "This event did not take place, you cannot ask to join.",
+        "started": "In progress",
+        "startedText": "This event has already started, you cannot ask to join."
       },
       "stats": {
-        "coverage": "Based on {{included}} registered people out of {{total}} taken seats.",
-        "genderLabel": "Men : women",
-        "hidden": "The mix shows once at least {{count}} people have joined.",
+        "coverage": "Age and gender are known for {{included}} of {{total}} people.",
+        "female": "Women",
+        "hidden_one": "We show the mix once at least {{count}} person who joined through the app has filled in their age and gender. People from outside the app do not count, we know nothing about them.",
+        "hidden_other": "We show the mix once at least {{count}} people who joined through the app have filled in their age and gender. People from outside the app do not count, we know nothing about them.",
+        "male": "Men",
         "medianAgeLabel": "Median age",
-        "title": "Who is coming"
+        "title": "Who is coming",
+        "unknown": "Not stated"
       },
       "title": "Event detail"
     },
     "fields": {
       "activity": "Activity",
+      "addressSearch": "Find the address",
+      "approvalMode": "Approving participants",
       "city": "City",
       "contributionAmount": "Contribution per seat in CZK (optional)",
       "contributionNote": "Note on the contribution (optional)",
@@ -169,6 +186,8 @@
       "activityLoading": "Loading activities…",
       "activityPlaceholder": "Choose an activity",
       "address": "Place",
+      "addressHint": "Pick the address from the suggestions so the event shows on the map. The fields below fill in by themselves.",
+      "addressLocated": "The address position is saved, the event will show on the map.",
       "cancel": "Cancel",
       "continue": "Continue",
       "contributionHint": "Information only, nothing is paid through the app.",
@@ -205,19 +224,38 @@
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
+      "inMapArea": "Events in the map area",
       "loadError": "Could not load events",
       "loadMore": "Load more",
       "loading": "Loading events…",
+      "nearMe": {
+        "denied": "Location access is blocked. Allow it in your browser and try again.",
+        "label": "Nearest to me",
+        "unavailable": "We couldn't find your location. Please try again."
+      },
       "reload": "Reload",
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
+      "showAll": "Show all",
       "title": "Events"
     },
     "map": {
-      "placeholder": "The map will be here"
+      "closePreview": "Close preview",
+      "cluster_one": "{{count}} event",
+      "cluster_other": "{{count}} events",
+      "detailOf": "Details of {{title}}",
+      "empty": "No event with a place on the map.",
+      "label": "Events map",
+      "loading": "Loading the map…",
+      "missing": "{{count}} missing",
+      "pinFull": "{{title}}, full",
+      "pinMissing": "{{title}}, {{count}} missing",
+      "unavailable": "The map isn't available right now.",
+      "you": "Your location"
     },
     "online": "Online",
     "placeholders": {
+      "addressSearch": "Start typing a street and town",
       "city": "E.g. Prague 8",
       "contributionAmount": "E.g. 80",
       "contributionNote": "E.g. paid in cash on the spot",
@@ -258,6 +296,16 @@
     "venueType": {
       "PRIVATE_VENUE": "Private premises",
       "PUBLIC_VENUE": "Public place"
+    }
+  },
+  "geo": {
+    "address": {
+      "error": "Couldn't load addresses. Please try again.",
+      "loading": "Looking for addresses…",
+      "minLength_one": "Type at least {{count}} character of the address",
+      "minLength_other": "Type at least {{count}} characters of the address",
+      "noMatch": "No such address found",
+      "search": "Street and number, town"
     }
   },
   "groups": {
@@ -313,8 +361,32 @@
     },
     "list": {
       "create": "New group",
-      "empty": "An overview of your groups and groups near you is coming soon. In the meantime, you can start a new one.",
-      "title": "Groups"
+      "discoverEmpty": "Public groups you are not in yet will appear here. There are none so far.",
+      "discoverEmptyVisitor": "There are no public groups yet.",
+      "loadError": "Could not load groups",
+      "loadMore": "Load more",
+      "loadMoreError": "Could not load more groups. Please try again.",
+      "loading": "Loading groups…",
+      "loadingMore": "Loading…",
+      "mineEmpty": "You are not in any group yet. Find one under <discover>Discover</discover>.",
+      "nearbyEmpty": "There are no groups near you yet.",
+      "nearbyNoCity": "<profile>Set your city in your profile</profile> and we will show you groups near you.",
+      "nearbyTitle": "Groups near you",
+      "role": {
+        "ADMIN": "Admin",
+        "MEMBER": "Member",
+        "OWNER": "Organiser"
+      },
+      "tabs": {
+        "discover": "Discover",
+        "mine": "My groups"
+      },
+      "tabsLabel": "Show groups",
+      "title": "Groups",
+      "visibility": {
+        "PRIVATE": "Private",
+        "PUBLIC": "Public"
+      }
     },
     "placeholders": {
       "description": "E.g. We play every Thursday in the school gym, newcomers welcome.",
@@ -368,7 +440,10 @@
     },
     "activityCombobox": {
       "noMatch": "No activity matches",
-      "search": "Search activities…"
+      "search": "Search activities…",
+      "selected_one": "{{count}} activity",
+      "selected_other": "{{count}} activities",
+      "unknown": "Unknown activity"
     },
     "avatars": {
       "basketbalista": "Basketball player",
@@ -412,6 +487,7 @@
       "activitiesLoading": "Loading activities…",
       "activitiesRetry": "Try again",
       "activity": "Activity",
+      "activityPlaceholder": "All activities",
       "clear": "Clear",
       "date": "Date…",
       "location": "Location",
@@ -528,6 +604,67 @@
   "myEvents": {
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
+  },
+  "participationRequests": {
+    "approved": {
+      "description": "The organizer approved your participation.",
+      "descriptionAutomatic": "You have a seat at this event."
+    },
+    "form": {
+      "cancel": "Cancel",
+      "hiddenDetails": "Your contact details and location stay hidden.",
+      "messageLabel": "Message to the organizer (optional)",
+      "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
+      "messageTooLong": "The message can have at most {{count}} characters.",
+      "note": "The organizer approves requests by hand. You can withdraw it until they decide.",
+      "noteAutomatic": "You get the seat at once, the organizer does not need to approve it.",
+      "organizerSees": "The organizer will see",
+      "profileBasic": "Basic profile",
+      "profileVerified": "E-mail verified · basic profile",
+      "sendFailed": "Your request could not be sent. Please try again.",
+      "sendFailedAutomatic": "The seat could not be taken. Please try again.",
+      "submit": "Send request",
+      "submitAutomatic": "Take a seat",
+      "title": "Ask to join",
+      "titleAutomatic": "Take a seat"
+    },
+    "joined": {
+      "close": "Close",
+      "text": "The organizer will see that you are coming.",
+      "title": "You have a seat"
+    },
+    "pending": {
+      "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
+      "withdraw": "Withdraw request"
+    },
+    "refused": {
+      "ALREADY_REQUESTED": "You have already asked to join this event.",
+      "EVENT_CANCELLED": "This event was cancelled, you can no longer ask to join.",
+      "EVENT_FINISHED": "This event is over, you cannot ask to join.",
+      "EVENT_FULL": "This event is full, you cannot ask to join.",
+      "EVENT_NOT_HELD": "This event did not take place, you cannot ask to join.",
+      "EVENT_STARTED": "This event has already started, you cannot ask to join.",
+      "HAS_SEAT": "You already have a seat at this event.",
+      "IS_ORGANIZER": "You are organizing this event.",
+      "REJECTED_BEFORE": "The organizer rejected your request, you cannot send a new one."
+    },
+    "rejected": {
+      "description": "The organizer rejected your request, you cannot send a new one for this event."
+    },
+    "sent": {
+      "findMore": "Find more events",
+      "text": "The organizer will approve or reject it.",
+      "title": "Your request is sent",
+      "withdraw": "Withdraw request"
+    },
+    "withdraw": {
+      "confirm": "Withdraw request",
+      "done": "Request withdrawn",
+      "failed": "Your request could not be withdrawn. Please try again.",
+      "keep": "Keep request",
+      "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
+      "title": "Withdraw your request to join?"
+    }
   },
   "profile": {
     "placeholder": "The profile page is on its way.",

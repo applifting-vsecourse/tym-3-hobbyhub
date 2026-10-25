@@ -37,3 +37,20 @@ export type CreateGroupData = {
   locationName?: string;
   usualSchedule?: string;
 };
+
+// A group seen by one of its members (F-07.8 "Moje skupiny").
+export type MyGroup = Group & { myRole: GroupRole };
+
+export const NEARBY_GROUPS_LIMIT = 6;
+export const DISCOVER_PAGE_SIZE = 20;
+
+export type NearbyGroups = {
+  // The place the search used; null when the user has not set one.
+  city: string | null;
+  groups: Group[];
+};
+
+export type GroupPage = {
+  items: Group[];
+  nextCursor: string | null;
+};

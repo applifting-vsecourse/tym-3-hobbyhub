@@ -16,6 +16,11 @@ export const EVENT_LIMITS = {
   participantsLimit: 500,
 } as const
 
+// MANUAL: the organizer decides every request to join. AUTOMATIC: a request
+// takes a free seat at once.
+export const APPROVAL_MODES = ["MANUAL", "AUTOMATIC"] as const
+export type ApprovalMode = (typeof APPROVAL_MODES)[number]
+
 // F-05.1 creates events at a place; ONLINE waits for a PO decision (ADR-0006).
 export const CREATABLE_VENUE_TYPES = ["PUBLIC_VENUE", "PRIVATE_VENUE"] as const
 export type CreatableVenueType = (typeof CREATABLE_VENUE_TYPES)[number]
@@ -64,6 +69,7 @@ export type CreateEventInput = {
   description: string
   equipment?: string
   venueType: CreatableVenueType
+  approvalMode: ApprovalMode
   /** ISO date-time strings. */
   startAt: string
   endAt: string
@@ -93,6 +99,11 @@ export const eventListItemSchema = z.object({
   district: z.string().nullable(),
   city: z.string().nullable(),
   level: z.string().nullable(),
+  // Public venues with a known position only; private venues are never located.
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  /** Straight-line km from the visitor; only when the list was asked for by position. */
+  distanceKm: z.number().nullable(),
   // Key of the icon in `ACTIVITIES`; unknown keys are possible.
   activity: z.object({ id: z.string(), name: z.string(), icon: z.string() }),
   /** People needed for the event to happen. */
@@ -115,7 +126,8 @@ export const participantStatsSchema = z.object({
   /** All taken seats, including people outside the app. */
   total: z.number(),
   medianAge: z.number().nullable(),
-  gender: z.object({ male: z.number(), female: z.number() }).nullable(),
+  /** Adds up to `total`: people without a known gender count as unknown. */
+  gender: z.object({ male: z.number(), female: z.number(), unknown: z.number() }).nullable(),
 })
 
 export const eventDetailSchema = eventListItemSchema.extend({
@@ -125,7 +137,7 @@ export const eventDetailSchema = eventListItemSchema.extend({
   contributionAmount: z.number().nullable(),
   contributionNote: z.string().nullable(),
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
-  approvalMode: z.enum(["MANUAL", "AUTOMATIC"]),
+  approvalMode: z.enum(APPROVAL_MODES),
   organizerName: z.string(),
   /** The public group that organizes the event, if any. */
   group: z.object({ id: z.string(), name: z.string() }).nullable(),

@@ -7,6 +7,7 @@ const validBody = {
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
   venueType: 'PUBLIC_VENUE',
+  approvalMode: 'MANUAL',
   startAt: '2030-01-15T18:00:00.000Z',
   endAt: '2030-01-15T19:30:00.000Z',
   location: {
@@ -50,6 +51,53 @@ describe('CreateEventDto', () => {
       expect(dto.endAt).toEqual(new Date(validBody.endAt));
     });
 
+    it('takes the position of an address picked from the suggestions', async () => {
+      const dto = await validate({
+        ...validBody,
+        location: {
+          ...validBody.location,
+          latitude: '50.1297',
+          longitude: 14.4421,
+        },
+      });
+
+      expect(dto.location.latitude).toBe(50.1297);
+      expect(dto.location.longitude).toBe(14.4421);
+    });
+
+    it('takes an address without a position', async () => {
+      const dto = await validate(validBody);
+
+      expect(dto.location.latitude).toBeUndefined();
+      expect(dto.location.longitude).toBeUndefined();
+    });
+
+    it('takes a blank position as none, not as the point 0,0', async () => {
+      const dto = await validate({
+        ...validBody,
+        location: { ...validBody.location, latitude: '', longitude: '' },
+      });
+
+      expect(dto.location.latitude).toBeUndefined();
+      expect(dto.location.longitude).toBeUndefined();
+    });
+
+    it.each([
+      ['a latitude off the globe', { latitude: 91, longitude: 14.4 }],
+      ['a longitude off the globe', { latitude: 50.1, longitude: 181 }],
+      [
+        'a position that is no number',
+        { latitude: 'sever', longitude: 'východ' },
+      ],
+    ])('refuses %s', async (_name, position) => {
+      await expect(
+        validate({
+          ...validBody,
+          location: { ...validBody.location, ...position },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
     it.each(['status', 'visibility', 'organizerId', 'publishedAt'])(
       'refuses %s, which the server decides',
       async (field) => {
@@ -65,6 +113,24 @@ describe('CreateEventDto', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
+    it.each(['AUTOMATIC', 'MANUAL'])(
+      'takes the approval mode %s',
+      async (approvalMode) => {
+        await expect(
+          validate({ ...validBody, approvalMode }),
+        ).resolves.toMatchObject({ approvalMode });
+      },
+    );
+
+    it.each([undefined, 'INSTANT'])(
+      'refuses the approval mode %s',
+      async (approvalMode) => {
+        await expect(
+          validate({ ...validBody, approvalMode }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      },
+    );
+
     it('refuses a date that is not a date', async () => {
       await expect(
         validate({ ...validBody, startAt: 'čtvrtek večer' }),
@@ -76,10 +142,6 @@ describe('CreateEventDto', () => {
       [
         'an address without a city',
         { location: { ...validBody.location, city: ' ' } },
-      ],
-      [
-        'coordinates, which geocoding will set',
-        { location: { ...validBody.location, latitude: 50.1 } },
       ],
     ])('refuses %s', async (_, override) => {
       await expect(

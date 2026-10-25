@@ -20,7 +20,13 @@ export function useSignIn() {
       if (error) throw new AuthError(error.code, error.message, error.status)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: authKeys.session() })
+      // Nothing on the sign-in page uses the session, so the default refetch
+      // (active queries only) would leave it "signed out" for the next page's
+      // loader, which sends the user back here.
+      await queryClient.invalidateQueries({
+        queryKey: authKeys.session(),
+        refetchType: "all",
+      })
     },
   })
 }

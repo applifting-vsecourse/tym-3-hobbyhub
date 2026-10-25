@@ -21,6 +21,11 @@ export type EventStatus =
 export type EventVisibility = 'PUBLIC' | 'GROUP_ONLY' | 'PRIVATE';
 export type VenueType = 'PUBLIC_VENUE' | 'PRIVATE_VENUE' | 'ONLINE';
 
+// MANUAL: the organizer decides every request to join (F-05.7). AUTOMATIC: a
+// request takes a free seat at once (F-05.5).
+export const APPROVAL_MODES = ['MANUAL', 'AUTOMATIC'] as const;
+export type ApprovalMode = (typeof APPROVAL_MODES)[number];
+
 // F-05.1 creates events at a place. ONLINE waits for the PO's decision on
 // ADR-0006 and is refused by the API until then.
 export const CREATABLE_VENUE_TYPES = [
@@ -29,14 +34,17 @@ export const CREATABLE_VENUE_TYPES = [
 ] as const satisfies readonly VenueType[];
 export type CreatableVenueType = (typeof CREATABLE_VENUE_TYPES)[number];
 
-// Model datatype `Location` (ADR-0001) without coordinates: F-05.1 takes a
-// structured address, geocoding comes with the map service (F-12.3).
+// Model datatype `Location` (ADR-0001). The coordinates come from the address
+// the organizer picked from the suggestions (F-02.2); an address typed by hand
+// has none until the server geocodes it (F-12.3).
 export type EventLocation = {
   street: string;
   city: string;
   postalCode: string;
   country: string;
   placeName: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export type FillState = 'BELOW_MINIMUM' | 'MINIMUM_REACHED' | 'FULL';
@@ -99,12 +107,27 @@ export type Event = Occupancy & {
   organizerId: string;
 };
 
+// What deciding a request to join (F-06.1) needs to know about a public event
+// and one person: who runs it, the seats left, and whether they have a seat.
+export type EventSeatFacts = {
+  id: string;
+  status: EventStatus;
+  startAt: Date;
+  endAt: Date;
+  approvalMode: ApprovalMode;
+  // The organizer and the co-organizers.
+  organizerIds: string[];
+  freeSpots: number;
+  hasSeat: boolean;
+};
+
 export type CreateEventData = {
   title: string;
   activityId: string;
   description: string;
   equipment?: string;
   venueType: CreatableVenueType;
+  approvalMode: ApprovalMode;
   startAt: Date;
   endAt: Date;
   location: {
@@ -113,6 +136,9 @@ export type CreateEventData = {
     postalCode: string;
     country: string;
     placeName?: string;
+    // Both or neither.
+    latitude?: number;
+    longitude?: number;
   };
   minParticipants: number;
   maxParticipants: number;
@@ -126,7 +152,8 @@ export type EventRuleViolation =
   | 'END_NOT_AFTER_START'
   | 'MIN_ABOVE_MAX'
   | 'OCCUPIED_ABOVE_MAX'
-  | 'NOTE_WITHOUT_AMOUNT';
+  | 'NOTE_WITHOUT_AMOUNT'
+  | 'POSITION_INCOMPLETE';
 
 // Rules between fields that a single-field check cannot see. The form checks
 // the same ones before sending; the server is the one that counts.
@@ -140,7 +167,9 @@ export const eventRuleViolations = (
     | 'externalOccupiedSpots'
     | 'contributionAmount'
     | 'contributionNote'
-  >,
+  > & {
+    location?: Pick<CreateEventData['location'], 'latitude' | 'longitude'>;
+  },
   now: Date,
 ): EventRuleViolation[] => {
   const violations: EventRuleViolation[] = [];
@@ -162,6 +191,13 @@ export const eventRuleViolations = (
   ) {
     violations.push('NOTE_WITHOUT_AMOUNT');
   }
+  // A position is a latitude and a longitude together: one alone says nothing.
+  if (
+    (data.location?.latitude === undefined) !==
+    (data.location?.longitude === undefined)
+  ) {
+    violations.push('POSITION_INCOMPLETE');
+  }
   return violations;
 };
 
@@ -179,17 +215,23 @@ export const EVENT_LIST_MAX_ACTIVITY_FILTERS = 50;
 export const EVENT_LIST_SEARCH_MAX_LENGTH = 100;
 export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
 
-// TODO(F-02.1b #91): `location` is plain text for now. A real place filter needs
-// proper coordinates (geocoding, F-12.3): a point plus a radius, results sorted
-// by distance, and similar spellings ("Brno" ~ "Brnoo") matched by similarity.
+// TODO(F-02.1b #91): `location` is plain text for now. A radius filter needs
+// every event to have coordinates (geocoding, F-12.3), and similar spellings
+// ("Brno" ~ "Brnoo") need matching by similarity.
 // What the public list can be narrowed by (F-02.1). Nothing set means all.
 // `search` matches title, place, city, district and activity; `location` the
 // place, city and district. Both ignore case and diacritics, and every word of
 // a text has to match (in any of those fields).
+//
+// `near` is the visitor's position (F-02.2): the list is then sorted by distance
+// from it instead of by start time.
+export type GeoPoint = { latitude: number; longitude: number };
+
 export type EventListFilter = {
   activityIds: string[];
   search?: string;
   location?: string;
+  near?: GeoPoint;
 };
 
 // The form a text is compared in: lower case, no diacritics, no outer spaces.
@@ -197,8 +239,8 @@ export const foldForSearch = (text: string): string =>
   text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 
 // What a row in the event list needs. The address is deliberately only
-// approximate: street and coordinates never leave the server here, and the
-// name of a private venue (someone's home) is dropped too.
+// approximate: the street never leaves the server here, and the name and the
+// coordinates of a private venue (someone's home) are dropped too.
 export type EventListItem = {
   id: string;
   title: string;
@@ -210,6 +252,12 @@ export type EventListItem = {
   district: string | null;
   city: string | null;
   level: string | null;
+  // Public venues only, for the map; null for private venues and when the
+  // event has no coordinates yet (geocoding, F-12.3).
+  latitude: number | null;
+  longitude: number | null;
+  // Straight-line distance from `EventListFilter.near`, in km; null without it.
+  distanceKm: number | null;
   activity: Activity;
   // Needed for the event to happen; "missing" always counts towards this.
   minParticipants: number;
@@ -227,16 +275,16 @@ export const MIN_STATS_PARTICIPANTS = 3;
 // A public detail also shows cancelled and over events, never drafts.
 export type PublicEventStatus =
   'PUBLISHED' | 'CANCELLED' | 'FINISHED' | 'NOT_HELD';
-export type ApprovalMode = 'MANUAL' | 'AUTOMATIC';
 export type Gender = 'MALE' | 'FEMALE';
 
 // Anonymized composition of the approved registered participants. People taken
-// along from outside the app are not counted, hence `included` out of `total`.
+// along from outside the app are not counted, hence `included` out of `total`;
+// the gender split counts them as `unknown`, so it adds up to `total`.
 export type ParticipantStats = {
   included: number;
   total: number;
   medianAge: number | null;
-  gender: { male: number; female: number } | null;
+  gender: { male: number; female: number; unknown: number } | null;
 };
 
 export type EventDetail = EventListItem & {
