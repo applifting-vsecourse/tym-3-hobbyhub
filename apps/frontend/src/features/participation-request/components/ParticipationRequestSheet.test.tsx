@@ -72,7 +72,12 @@ function Page({
           min: 8,
           max: 10,
         }}
-        applicant={{ name: "Deep Duck Thoughts", isEmailVerified: true }}
+        applicant={{
+          name: "Deep Duck Thoughts",
+          image: null,
+          bio: "Hraju florbal od školy.",
+          hasVerifiedEmail: true,
+        }}
         approvalMode={approvalMode}
         step={step}
         onStepChange={setStep}
@@ -104,7 +109,11 @@ describe("ParticipationRequestSheet", () => {
     expect(within(dialog).getByText("ZŠ Kobylisy, Praha 8, Pokročilí")).toBeInTheDocument()
     expect(within(dialog).getByText("Organizátor uvidí")).toBeInTheDocument()
     expect(within(dialog).getByText("Deep Duck Thoughts")).toBeInTheDocument()
-    expect(within(dialog).getByText("E-mail ověřen · základní profil")).toBeInTheDocument()
+    expect(within(dialog).getByText("Ověřený e-mail")).toBeInTheDocument()
+    expect(within(dialog).getByText("Hraju florbal od školy.")).toBeInTheDocument()
+    expect(
+      within(dialog).getByText("Kontakt, poloha, věk ani pohlaví organizátor neuvidí."),
+    ).toBeInTheDocument()
     expect(
       within(dialog).getByText(
         "Organizátor žádost schválí ručně. Zrušit ji můžeš, dokud ji nevyřídí.",

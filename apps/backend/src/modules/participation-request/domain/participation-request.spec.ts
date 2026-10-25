@@ -1,6 +1,7 @@
 import { EventSeatFacts } from '@/modules/event/domain/event';
 import {
   currentRequestOf,
+  decisionRuleViolations,
   joinRuleViolations,
   ParticipationRequest,
   RequestStatus,
@@ -31,6 +32,7 @@ const aRequest = (
   message: null,
   requestedAt,
   decidedAt: status === 'PENDING' ? null : requestedAt,
+  rejectionReason: null,
 });
 
 describe('joinRuleViolations', () => {
@@ -105,4 +107,53 @@ describe('currentRequestOf', () => {
     const rejected = aRequest('REJECTED');
     expect(currentRequestOf([rejected, aRequest('WITHDRAWN')])).toBe(rejected);
   });
+});
+
+describe('decisionRuleViolations', () => {
+  it.each(['APPROVE', 'REJECT'] as const)(
+    'lets the organizer %s a waiting request before the event starts',
+    (decision) => {
+      expect(
+        decisionRuleViolations(anEvent(), aRequest('PENDING'), decision, now),
+      ).toEqual([]);
+    },
+  );
+
+  it.each([
+    ['a cancelled event', { status: 'CANCELLED' }, 'EVENT_CANCELLED'],
+    ['an event that has started', { startAt: now }, 'EVENT_STARTED'],
+    ['an event that is over', { status: 'FINISHED' }, 'EVENT_FINISHED'],
+    ['an event that did not happen', { status: 'NOT_HELD' }, 'EVENT_NOT_HELD'],
+  ] as const)('refuses both decisions on %s', (_, override, violation) => {
+    for (const decision of ['APPROVE', 'REJECT'] as const) {
+      expect(
+        decisionRuleViolations(
+          anEvent(override),
+          aRequest('PENDING'),
+          decision,
+          now,
+        ),
+      ).toEqual([violation]);
+    }
+  });
+
+  // Approval takes a seat, rejection does not.
+  it('refuses to approve on a full event, but lets it reject', () => {
+    const full = anEvent({ freeSpots: 0 });
+    expect(
+      decisionRuleViolations(full, aRequest('PENDING'), 'APPROVE', now),
+    ).toEqual(['EVENT_FULL']);
+    expect(
+      decisionRuleViolations(full, aRequest('PENDING'), 'REJECT', now),
+    ).toEqual([]);
+  });
+
+  it.each(['APPROVED', 'REJECTED', 'WITHDRAWN', 'CLOSED'] as const)(
+    'refuses to decide a %s request again',
+    (status) => {
+      expect(
+        decisionRuleViolations(anEvent(), aRequest(status), 'REJECT', now),
+      ).toEqual(['NOT_PENDING']);
+    },
+  );
 });

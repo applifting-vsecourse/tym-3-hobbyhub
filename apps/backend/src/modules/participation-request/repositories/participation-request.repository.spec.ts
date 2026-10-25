@@ -1,6 +1,7 @@
-// Taking a seat with automatic approval (F-05.5) against a real PostgreSQL,
-// because what keeps two people off the last seat is a row lock. Like the
-// schema specs it only runs on request:
+// Taking a seat with automatic approval (F-05.5) and by the organizer's
+// approval (F-05.7) against a real PostgreSQL, because what keeps two people
+// off the last seat is a row lock. Like the schema specs it only runs on
+// request:
 //   DB_TESTS=1 pnpm backend test participation-request.repository
 //
 // Two transactions have to see each other's commits, so the cases write for
@@ -17,7 +18,7 @@ import { ParticipationRequestRepository } from './participation-request.reposito
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
-describeDb('ParticipationRequestRepository.createApproved', () => {
+describeDb('ParticipationRequestRepository', () => {
   const prisma = new PrismaService();
   const repository = new ParticipationRequestRepository(prisma);
   const at = new Date('2029-12-31T10:00:00Z');
@@ -49,8 +50,8 @@ describeDb('ParticipationRequestRepository.createApproved', () => {
 
   const random = (): string => Math.random().toString(36).slice(2);
 
-  // An event with automatic approval, `freeSpots` seats left out of four, and
-  // `applicants` people who do not organize it.
+  // An event with `freeSpots` seats left out of four, and `applicants` people
+  // who do not organize it.
   const eventWith = async (
     freeSpots: number,
     applicants: number,
@@ -109,95 +110,217 @@ describeDb('ParticipationRequestRepository.createApproved', () => {
     return { eventId: event.id, userIds };
   };
 
-  it('creates the approved request and the seat it takes', async () => {
-    const {
-      eventId,
-      userIds: [userId],
-    } = await eventWith(1, 1);
-
-    await expect(
-      repository.createApproved({
+  describe('createApproved', () => {
+    it('creates the approved request and the seat it takes', async () => {
+      const {
         eventId,
-        userId: userId!,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+
+      await expect(
+        repository.createApproved({
+          eventId,
+          userId: userId!,
+          message: 'Ahoj',
+          at,
+        }),
+      ).resolves.toMatchObject({
+        status: 'APPROVED',
         message: 'Ahoj',
-        at,
-      }),
-    ).resolves.toMatchObject({
-      status: 'APPROVED',
-      message: 'Ahoj',
-      requestedAt: at,
-      decidedAt: at,
+        requestedAt: at,
+        decidedAt: at,
+      });
+      await expect(
+        prisma.participation.findMany({
+          where: { eventId },
+          select: { userId: true, status: true },
+        }),
+      ).resolves.toEqual([{ userId, status: ParticipationStatus.APPROVED }]);
     });
-    await expect(
-      prisma.participation.findMany({
-        where: { eventId },
-        select: { userId: true, status: true },
-      }),
-    ).resolves.toEqual([{ userId, status: ParticipationStatus.APPROVED }]);
-  });
 
-  it('gives the last seat to only one of two people taking it at once', async () => {
-    const { eventId, userIds } = await eventWith(1, 2);
+    it('gives the last seat to only one of two people taking it at once', async () => {
+      const { eventId, userIds } = await eventWith(1, 2);
 
-    const results = await Promise.all(
-      userIds.map((userId) =>
-        repository.createApproved({ eventId, userId, at }),
-      ),
-    );
+      const results = await Promise.all(
+        userIds.map((userId) =>
+          repository.createApproved({ eventId, userId, at }),
+        ),
+      );
 
-    expect(results.filter((result) => result === 'EVENT_FULL')).toHaveLength(1);
-    await expect(
-      prisma.participation.count({
-        where: { eventId, status: ParticipationStatus.APPROVED },
-      }),
-    ).resolves.toBe(1);
-    await expect(
-      prisma.participationRequest.count({ where: { eventId } }),
-    ).resolves.toBe(1);
-  });
+      expect(results.filter((result) => result === 'EVENT_FULL')).toHaveLength(
+        1,
+      );
+      await expect(
+        prisma.participation.count({
+          where: { eventId, status: ParticipationStatus.APPROVED },
+        }),
+      ).resolves.toBe(1);
+      await expect(
+        prisma.participationRequest.count({ where: { eventId } }),
+      ).resolves.toBe(1);
+    });
 
-  it('gives one person one seat when two windows take it at once', async () => {
-    const {
-      eventId,
-      userIds: [userId],
-    } = await eventWith(2, 1);
-
-    const results = await Promise.all(
-      [1, 2].map(() =>
-        repository.createApproved({ eventId, userId: userId!, at }),
-      ),
-    );
-
-    expect(results).toContain('HAS_SEAT');
-    await expect(
-      prisma.participationRequest.count({ where: { eventId } }),
-    ).resolves.toBe(1);
-  });
-
-  it('turns an earlier waitlisted row into the seat', async () => {
-    const {
-      eventId,
-      userIds: [userId],
-    } = await eventWith(1, 1);
-    await prisma.participation.create({
-      data: {
+    it('gives one person one seat when two windows take it at once', async () => {
+      const {
         eventId,
-        userId: userId!,
-        status: ParticipationStatus.WAITLISTED,
-        waitlistPosition: 1,
-      },
+        userIds: [userId],
+      } = await eventWith(2, 1);
+
+      const results = await Promise.all(
+        [1, 2].map(() =>
+          repository.createApproved({ eventId, userId: userId!, at }),
+        ),
+      );
+
+      expect(results).toContain('HAS_SEAT');
+      await expect(
+        prisma.participationRequest.count({ where: { eventId } }),
+      ).resolves.toBe(1);
     });
 
-    await expect(
-      repository.createApproved({ eventId, userId: userId!, at }),
-    ).resolves.toMatchObject({ status: 'APPROVED' });
-    await expect(
-      prisma.participation.findUniqueOrThrow({
-        where: { eventId_userId: { eventId, userId: userId! } },
-      }),
-    ).resolves.toMatchObject({
-      status: ParticipationStatus.APPROVED,
-      waitlistPosition: null,
+    it('turns an earlier waitlisted row into the seat', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      await prisma.participation.create({
+        data: {
+          eventId,
+          userId: userId!,
+          status: ParticipationStatus.WAITLISTED,
+          waitlistPosition: 1,
+        },
+      });
+
+      await expect(
+        repository.createApproved({ eventId, userId: userId!, at }),
+      ).resolves.toMatchObject({ status: 'APPROVED' });
+      await expect(
+        prisma.participation.findUniqueOrThrow({
+          where: { eventId_userId: { eventId, userId: userId! } },
+        }),
+      ).resolves.toMatchObject({
+        status: ParticipationStatus.APPROVED,
+        waitlistPosition: null,
+      });
+    });
+  });
+
+  describe('approvePending', () => {
+    const pendingOf = async (
+      eventId: string,
+      userId: string,
+    ): Promise<string> =>
+      (
+        await prisma.participationRequest.create({
+          data: { eventId, userId, message: 'Ahoj' },
+        })
+      ).id;
+
+    it('approves the waiting request and takes the seat', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      const requestId = await pendingOf(eventId, userId!);
+
+      await expect(
+        repository.approvePending({ eventId, requestId, at }),
+      ).resolves.toMatchObject({
+        id: requestId,
+        status: 'APPROVED',
+        message: 'Ahoj',
+        decidedAt: at,
+      });
+      await expect(
+        prisma.participation.findMany({
+          where: { eventId },
+          select: { userId: true, status: true },
+        }),
+      ).resolves.toEqual([{ userId, status: ParticipationStatus.APPROVED }]);
+    });
+
+    it('gives the last seat to only one of two requests approved at once', async () => {
+      const { eventId, userIds } = await eventWith(1, 2);
+      const requestIds = await Promise.all(
+        userIds.map((userId) => pendingOf(eventId, userId)),
+      );
+
+      const results = await Promise.all(
+        requestIds.map((requestId) =>
+          repository.approvePending({ eventId, requestId, at }),
+        ),
+      );
+
+      expect(results.filter((result) => result === 'EVENT_FULL')).toHaveLength(
+        1,
+      );
+      await expect(
+        prisma.participation.count({
+          where: { eventId, status: ParticipationStatus.APPROVED },
+        }),
+      ).resolves.toBe(1);
+      await expect(
+        prisma.participationRequest.count({
+          where: { eventId, status: 'PENDING' },
+        }),
+      ).resolves.toBe(1);
+    });
+
+    it('approves one request once when two organizers approve it at once', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(2, 1);
+      const requestId = await pendingOf(eventId, userId!);
+
+      const results = await Promise.all(
+        [1, 2].map(() => repository.approvePending({ eventId, requestId, at })),
+      );
+
+      expect(results).toContain('NOT_PENDING');
+      await expect(
+        prisma.participation.count({ where: { eventId } }),
+      ).resolves.toBe(1);
+    });
+
+    it('leaves a withdrawn request as it is', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      const requestId = await pendingOf(eventId, userId!);
+      await repository.withdrawPending(eventId, userId!, at);
+
+      await expect(
+        repository.approvePending({ eventId, requestId, at }),
+      ).resolves.toBe('NOT_PENDING');
+      await expect(
+        prisma.participation.count({ where: { eventId } }),
+      ).resolves.toBe(0);
+    });
+  });
+
+  describe('rejectPending', () => {
+    it('rejects the waiting request once, with the reason', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      const { id: requestId } = await prisma.participationRequest.create({
+        data: { eventId, userId: userId! },
+      });
+
+      await expect(
+        repository.rejectPending({ eventId, requestId, reason: 'Plno', at }),
+      ).resolves.toMatchObject({
+        status: 'REJECTED',
+        decidedAt: at,
+        rejectionReason: 'Plno',
+      });
+      await expect(
+        repository.rejectPending({ eventId, requestId, at }),
+      ).resolves.toBeNull();
     });
   });
 });
