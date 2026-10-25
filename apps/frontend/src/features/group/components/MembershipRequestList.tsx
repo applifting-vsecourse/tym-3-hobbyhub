@@ -8,7 +8,6 @@ import { MembershipRefusedError } from "@/features/group/api/membershipRequestMu
 import type { PendingMembershipRequest } from "@/features/group/api/membershipRequestSchemas"
 import { RejectMembershipRequestSheet } from "@/features/group/components/RejectMembershipRequestSheet"
 import { useDecideMembershipRequest } from "@/features/group/hooks/useMembershipRequestMutations"
-import { memberAvatar } from "@/features/group/lib/memberAvatar"
 
 type MembershipRequestListProps = {
   groupId: string
@@ -70,14 +69,12 @@ export function MembershipRequestList({
       <ul className="flex flex-col gap-3">
         {requests.map((request) => (
           <li key={request.id}>
-            {/* TODO(#140): the reworked card shows the applicant's photo and bio. */}
             <JoinRequestCard
               name={request.applicant.name}
-              avatar={memberAvatar(request.id)}
+              photo={request.applicant.image}
               hasVerifiedEmail={request.applicant.hasVerifiedEmail}
-              activityLine={request.applicant.bio ?? ""}
-              historyLine=""
-              message={request.message ?? undefined}
+              bio={request.applicant.bio}
+              message={request.message}
               outcome={t("groups.manage.outcome", { count: memberCount + 1 })}
               onApprove={() => void approve(request)}
               onReject={() => setRejecting(request)}

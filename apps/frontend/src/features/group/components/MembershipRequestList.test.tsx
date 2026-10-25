@@ -38,7 +38,12 @@ const aRequest = (overrides: Partial<PendingMembershipRequest> = {}): PendingMem
   status: "PENDING",
   message: "Hraju třetí rok za firemní tým.",
   requestedAt: new Date(2026, 0, 2),
-  applicant: { name: "Honza K", image: null, bio: null, hasVerifiedEmail: true },
+  applicant: {
+    name: "Honza K",
+    image: null,
+    bio: "Florbal hraju od školy.",
+    hasVerifiedEmail: true,
+  },
   ...overrides,
 })
 
@@ -72,6 +77,9 @@ describe("MembershipRequestList", () => {
     expect(screen.getByRole("heading", { name: "Honza K" })).toBeVisible()
     expect(screen.getByText("Ověřený e-mail")).toBeVisible()
     expect(screen.getByText("Hraju třetí rok za firemní tým.")).toBeVisible()
+    expect(screen.getByText("Florbal hraju od školy.")).toBeVisible()
+    // Initials stand in until the applicant adds a photo.
+    expect(screen.getByText("HK")).toBeInTheDocument()
     expect(screen.getByText("Po schválení bude 15 členů.")).toBeVisible()
   })
 
