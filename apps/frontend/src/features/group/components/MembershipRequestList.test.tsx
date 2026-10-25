@@ -121,6 +121,25 @@ describe("MembershipRequestList", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 
+  it("keeps the reason when rejecting fails for another reason", async () => {
+    const user = userEvent.setup()
+    decideMembershipRequest.mockRejectedValue(new Error("offline"))
+    await renderList([aRequest()])
+
+    await user.click(screen.getByRole("button", { name: "Zamítnout" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.type(within(dialog).getByLabelText(/Důvod/), "Skupina je plná")
+    await user.click(within(dialog).getByRole("button", { name: "Zamítnout" }))
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      ),
+    )
+    expect(screen.getByRole("dialog")).toBeVisible()
+    expect(within(dialog).getByLabelText(/Důvod/)).toHaveValue("Skupina je plná")
+  })
+
   it("says what changed when another admin got there first", async () => {
     const user = userEvent.setup()
     decideMembershipRequest.mockRejectedValue(new MembershipRefusedError(["NOT_PENDING"]))

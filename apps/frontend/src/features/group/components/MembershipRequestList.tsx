@@ -55,7 +55,9 @@ export function MembershipRequestList({
       setRejecting(null)
       toast.success(t("groups.manage.rejected"))
     } catch (error) {
-      setRejecting(null)
+      // A refusal means the request is gone from the list, so the sheet goes
+      // too; after any other failure it stays, with the reason, to try again.
+      if (error instanceof MembershipRefusedError) setRejecting(null)
       reportFailure(error)
     }
   }
