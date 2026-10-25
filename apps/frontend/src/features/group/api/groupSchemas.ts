@@ -24,6 +24,11 @@ export const groupSchema = z.object({
 
 export type Group = z.infer<typeof groupSchema>
 
+export const groupMembershipSchema = z.object({
+  isMember: z.boolean(),
+  role: z.enum(["OWNER", "ADMIN", "MEMBER"]).nullable(),
+})
+
 export const myGroupSchema = groupSchema.extend({
   myRole: z.enum(["OWNER", "ADMIN", "MEMBER"]),
 })
