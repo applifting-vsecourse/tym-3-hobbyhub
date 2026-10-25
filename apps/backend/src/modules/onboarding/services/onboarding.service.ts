@@ -1,6 +1,7 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
 import { LevelsService } from '@/modules/level/services/levels.service';
 import {
+  HomeAddress,
   InterestInput,
   interestViolations,
   Onboarding,
@@ -73,7 +74,7 @@ export class OnboardingService {
 
   async saveLocation(
     user: Identity,
-    data: { city: string; street: string | null; travelRadiusKm: number },
+    data: { address: HomeAddress; travelRadiusKm: number },
   ): Promise<Onboarding> {
     await this.assertReachable(user, 'LOCATION');
     await this.onboardingRepository.saveLocation(

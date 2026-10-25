@@ -74,6 +74,12 @@ export function ProfileStep({
 
   useRevalidateOnLanguageChange(form)
 
+  // Whatever was half-done is dropped, so leaving does not ask about it.
+  const leaveWith = (action: () => void) => () => {
+    form.reset()
+    action()
+  }
+
   // Only held for now: the project has no image storage yet (F-04.1 #18), so
   // the choice is not sent.
   const [picture, setPicture] = useState<ProfilePicture | null>(null)
@@ -85,14 +91,13 @@ export function ProfileStep({
       screen={3}
       title={t("onboarding.profile.title")}
       description={t("onboarding.profile.description")}
-      onSkipAll={onSkipAll}
+      onSkipAll={leaveWith(onSkipAll)}
       isBusy={isSaving}
       shouldFocusHeading={shouldFocusHeading}
     >
       <AppForm
         form={form}
         onSubmit={submit}
-        isGuarded={false}
         className="flex flex-col gap-6"
       >
         <SaveError isVisible={hasSaveError} />
@@ -132,7 +137,7 @@ export function ProfileStep({
           isEmpty={isEmpty}
           isLast={isLast}
           isReturningToEvent={isReturningToEvent}
-          onSkip={onSkip}
+          onSkip={leaveWith(onSkip)}
           onBack={onBack}
         />
       </AppForm>

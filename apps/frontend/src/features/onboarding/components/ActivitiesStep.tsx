@@ -90,6 +90,12 @@ export function ActivitiesStep({
 
   useRevalidateOnLanguageChange(form)
 
+  // Whatever was half-done is dropped, so leaving does not ask about it.
+  const leaveWith = (action: () => void) => () => {
+    form.reset()
+    action()
+  }
+
   const submit = async ({ selection }: ActivitiesFormValues) =>
     onSubmit({
       items: selection.map((item) => ({
@@ -103,15 +109,13 @@ export function ActivitiesStep({
       screen={1}
       title={t("onboarding.activities.title")}
       description={t("onboarding.activities.description")}
-      onSkipAll={onSkipAll}
+      onSkipAll={leaveWith(onSkipAll)}
       isBusy={isSaving}
       shouldFocusHeading={shouldFocusHeading}
     >
       <AppForm
         form={form}
         onSubmit={submit}
-        // Each step is saved as it is confirmed; half-typed input costs nothing.
-        isGuarded={false}
         className="flex flex-col gap-6"
       >
         <SaveError isVisible={hasSaveError} />
@@ -165,7 +169,7 @@ export function ActivitiesStep({
           isEmpty={isEmpty}
           isLast={isLast}
           isReturningToEvent={isReturningToEvent}
-          onSkip={onSkip}
+          onSkip={leaveWith(onSkip)}
           onBack={onBack}
         />
       </AppForm>

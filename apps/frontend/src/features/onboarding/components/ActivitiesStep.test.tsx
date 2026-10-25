@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+
+import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { ActivitiesStep } from "@/features/onboarding/components/ActivitiesStep"
 
@@ -16,8 +18,8 @@ const levels = [
   { id: "l3", name: "Pokročilí" },
 ]
 
-const renderStep = (onSubmit = vi.fn().mockResolvedValue(undefined), overrides = {}) => {
-  render(
+const renderStep = async (onSubmit = vi.fn().mockResolvedValue(undefined), overrides = {}) => {
+  await renderWithRouter(
     <ActivitiesStep
       activities={activities}
       activityLabel={(activity) => activity.name}
@@ -52,7 +54,7 @@ const chooseLevel = async (activity: string, level: string) => {
 describe("ActivitiesStep", () => {
   it("skips the step when nothing is picked and the way on is pressed", async () => {
     const onSkip = vi.fn()
-    const onSubmit = renderStep(undefined, { onSkip })
+    const onSubmit = await renderStep(undefined, { onSkip })
 
     await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
 
@@ -61,7 +63,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("sends an activity without a level, the level is optional", async () => {
-    const onSubmit = renderStep()
+    const onSubmit = await renderStep()
 
     await addActivity("Florbal")
     await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
@@ -70,7 +72,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("sends the picked activities with the levels that were chosen", async () => {
-    const onSubmit = renderStep()
+    const onSubmit = await renderStep()
 
     await addActivity("Florbal")
     await addActivity("Deskovky")
@@ -86,7 +88,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("takes a level back with the no-level choice", async () => {
-    const onSubmit = renderStep()
+    const onSubmit = await renderStep()
 
     await addActivity("Florbal")
     await chooseLevel("Florbal", "Mírně pokročilí")
@@ -97,7 +99,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("lists nothing until an activity is added", async () => {
-    renderStep()
+    await renderStep()
 
     expect(screen.queryByRole("list")).not.toBeInTheDocument()
     await addActivity("Florbal")
@@ -105,7 +107,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("removes a picked activity from the list", async () => {
-    renderStep()
+    await renderStep()
 
     await addActivity("Florbal")
     await userEvent.click(screen.getByRole("button", { name: "Odebrat Florbal" }))
@@ -115,15 +117,15 @@ describe("ActivitiesStep", () => {
     expect(await screen.findByRole("option", { name: "Florbal" })).toBeInTheDocument()
   })
 
-  it("has no way back on the first step", () => {
-    renderStep()
+  it("has no way back on the first step", async () => {
+    await renderStep()
 
     expect(screen.queryByRole("button", { name: "Zpět" })).not.toBeInTheDocument()
   })
 
   it("goes back to the previous step without saving", async () => {
     const onBack = vi.fn()
-    const onSubmit = renderStep(undefined, { onBack })
+    const onSubmit = await renderStep(undefined, { onBack })
 
     await userEvent.click(screen.getByRole("button", { name: "Zpět" }))
 
@@ -132,7 +134,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("takes a picked activity out of the select", async () => {
-    renderStep()
+    await renderStep()
 
     await addActivity("Florbal")
     await userEvent.click(screen.getByRole("combobox", { name: "Přidat aktivitu" }))
@@ -142,7 +144,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("finds an activity by typing, without accents", async () => {
-    renderStep()
+    await renderStep()
 
     await userEvent.click(screen.getByRole("combobox", { name: "Přidat aktivitu" }))
     await userEvent.type(screen.getByPlaceholderText(/Hledat/i), "flor")
@@ -152,7 +154,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("says so when every activity is added", async () => {
-    renderStep(undefined, { activities: [activities[0]] })
+    await renderStep(undefined, { activities: [activities[0]] })
 
     await addActivity("Florbal")
 
@@ -161,29 +163,29 @@ describe("ActivitiesStep", () => {
   })
 
   it("shows a grey prompt, not a value, while there is no level", async () => {
-    renderStep()
+    await renderStep()
 
     await addActivity("Florbal")
 
     expect(screen.getByRole("combobox", { name: "Florbal" })).toHaveTextContent("Přidat úroveň")
   })
 
-  it("says nothing is available when there are no activities", () => {
-    renderStep(undefined, { activities: [] })
+  it("says nothing is available when there are no activities", async () => {
+    await renderStep(undefined, { activities: [] })
 
     expect(screen.getByText("Zatím nejsou k dispozici žádné aktivity.")).toBeInTheDocument()
   })
 
   it("offers a retry when the activities cannot be loaded", async () => {
     const onReloadActivities = vi.fn()
-    renderStep(undefined, { activitiesError: new Error("boom"), onReloadActivities })
+    await renderStep(undefined, { activitiesError: new Error("boom"), onReloadActivities })
 
     await userEvent.click(screen.getByRole("button", { name: "Zkusit znovu" }))
     expect(onReloadActivities).toHaveBeenCalledTimes(1)
   })
 
-  it("shows where you are with a progress bar", () => {
-    renderStep()
+  it("shows where you are with a progress bar", async () => {
+    await renderStep()
 
     expect(screen.getByRole("progressbar", { name: "Průběh nastavení profilu" })).toHaveAttribute(
       "aria-valuetext",
@@ -192,7 +194,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("announces an added activity to a screen reader", async () => {
-    renderStep()
+    await renderStep()
 
     await addActivity("Florbal")
 
@@ -202,7 +204,7 @@ describe("ActivitiesStep", () => {
   it("asks for an activity when the saved ones were all removed, rather than skipping", async () => {
     const onSkip = vi.fn()
     const initial = [{ activity: activities[0]!, level: null }]
-    renderStep(undefined, { initial, onSkip })
+    await renderStep(undefined, { initial, onSkip })
 
     await userEvent.click(screen.getByRole("button", { name: "Odebrat Florbal" }))
     await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
@@ -212,7 +214,7 @@ describe("ActivitiesStep", () => {
   })
 
   it("offers the levels from the catalogue, and nothing else", async () => {
-    renderStep()
+    await renderStep()
 
     await addActivity("Florbal")
     await userEvent.click(screen.getByRole("combobox", { name: "Florbal" }))
@@ -223,9 +225,9 @@ describe("ActivitiesStep", () => {
     expect(screen.queryByRole("option", { name: "Všechny úrovně" })).not.toBeInTheDocument()
   })
 
-  it("shows the level that was saved before", () => {
+  it("shows the level that was saved before", async () => {
     const initial = [{ activity: activities[0]!, level: levels[2]! }]
-    renderStep(undefined, { initial })
+    await renderStep(undefined, { initial })
 
     expect(screen.getByRole("combobox", { name: "Florbal" })).toHaveTextContent("Pokročilí")
   })

@@ -11,13 +11,33 @@ export class InterestResponseDto {
   level!: LevelResponseDto | null;
 }
 
+export class HomeAddressResponseDto {
+  @ApiProperty()
+  street!: string;
+
+  @ApiProperty()
+  city!: string;
+
+  @ApiProperty()
+  postalCode!: string;
+
+  @ApiProperty()
+  country!: string;
+
+  @ApiProperty()
+  latitude!: number;
+
+  @ApiProperty()
+  longitude!: number;
+}
+
 export class OnboardingResponseDto {
   @ApiProperty({ description: 'Steps done or skipped, 0 to 3' })
   stepsDone!: number;
 
   @ApiProperty({
     description:
-      'The wizard ended but the profile has no activities or no location yet',
+      'The wizard ended but the profile has no activities or no home address yet',
   })
   skipped!: boolean;
 
@@ -32,11 +52,8 @@ export class OnboardingResponseDto {
   @ApiProperty({ type: [InterestResponseDto] })
   interests!: InterestResponseDto[];
 
-  @ApiProperty({ type: String, nullable: true })
-  city!: string | null;
-
-  @ApiProperty({ type: String, nullable: true })
-  street!: string | null;
+  @ApiProperty({ type: HomeAddressResponseDto, nullable: true })
+  address!: HomeAddressResponseDto | null;
 
   @ApiProperty({ type: Number, nullable: true })
   travelRadiusKm!: number | null;
@@ -55,8 +72,7 @@ export class OnboardingResponseDto {
           ? LevelResponseDto.fromDomain(interest.level)
           : null,
       })),
-      city: onboarding.city,
-      street: onboarding.street,
+      address: onboarding.address ? { ...onboarding.address } : null,
       travelRadiusKm: onboarding.travelRadiusKm,
       bio: onboarding.bio,
     };

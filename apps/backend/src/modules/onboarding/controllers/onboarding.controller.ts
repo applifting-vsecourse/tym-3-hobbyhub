@@ -78,7 +78,7 @@ export class OnboardingController {
   }
 
   @Put('location')
-  @ApiOperation({ summary: 'Save the private location and range (step 2)' })
+  @ApiOperation({ summary: 'Save the private home address and range (step 2)' })
   @ApiResponse({ status: 200, type: OnboardingResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   async saveLocation(
@@ -87,8 +87,14 @@ export class OnboardingController {
   ): Promise<OnboardingResponseDto> {
     return OnboardingResponseDto.fromDomain(
       await this.onboardingService.saveLocation(user, {
-        city: body.city,
-        street: body.street ?? null,
+        address: {
+          street: body.street,
+          city: body.city,
+          postalCode: body.postalCode,
+          country: body.country,
+          latitude: body.latitude,
+          longitude: body.longitude,
+        },
         travelRadiusKm: body.travelRadiusKm,
       }),
     );

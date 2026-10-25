@@ -7,6 +7,7 @@ import {
   UserActivity as PrismaUserActivity,
 } from '@/generated/prisma/client';
 import {
+  HomeAddress,
   InterestInput,
   isProfileSetUp,
   Onboarding,
@@ -29,6 +30,24 @@ type UserRow = PrismaUser & {
   })[];
 };
 
+// All or nothing, as the database demands; the position is stored as decimals.
+const mapHomeAddress = (user: PrismaUser): HomeAddress | null =>
+  user.homeStreet !== null &&
+  user.homeCity !== null &&
+  user.homePostalCode !== null &&
+  user.homeCountry !== null &&
+  user.homeLatitude !== null &&
+  user.homeLongitude !== null
+    ? {
+        street: user.homeStreet,
+        city: user.homeCity,
+        postalCode: user.homePostalCode,
+        country: user.homeCountry,
+        latitude: user.homeLatitude.toNumber(),
+        longitude: user.homeLongitude.toNumber(),
+      }
+    : null;
+
 const mapUserToOnboarding = (user: UserRow): Onboarding => {
   const interests = user.interests.map((interest) => ({
     level: interest.level
@@ -42,19 +61,17 @@ const mapUserToOnboarding = (user: UserRow): Onboarding => {
       defaultMaxParticipants: interest.activity.defaultMaxParticipants,
     },
   }));
-  // A full home address, once there is one, outranks what was typed here.
-  const city = user.homeCity ?? user.declaredCity;
+  const address = mapHomeAddress(user);
   return {
     stepsDone: user.onboardingStepsDone,
     // Worked out from what is saved now, so it stays right when the profile
     // changes after the wizard ended.
     skipped:
       user.onboardingCompletedAt !== null &&
-      !isProfileSetUp({ interests, city }),
+      !isProfileSetUp({ interests, address }),
     completedAt: user.onboardingCompletedAt,
     interests,
-    city,
-    street: user.homeStreet ?? user.declaredStreet,
+    address,
     travelRadiusKm: user.travelRadiusKm,
     bio: user.bio,
   };
@@ -105,15 +122,23 @@ export class OnboardingRepository {
 
   async saveLocation(
     userId: string,
-    data: { city: string; street: string | null; travelRadiusKm: number },
+    data: { address: HomeAddress; travelRadiusKm: number },
     step: number,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: {
-          declaredCity: data.city,
-          declaredStreet: data.street,
+          homeStreet: data.address.street,
+          homeCity: data.address.city,
+          homePostalCode: data.address.postalCode,
+          homeCountry: data.address.country,
+          homeLatitude: data.address.latitude,
+          homeLongitude: data.address.longitude,
+          // A district or place name of an address saved before would not
+          // belong to this one.
+          homeDistrict: null,
+          homePlaceName: null,
           travelRadiusKm: data.travelRadiusKm,
         },
       });

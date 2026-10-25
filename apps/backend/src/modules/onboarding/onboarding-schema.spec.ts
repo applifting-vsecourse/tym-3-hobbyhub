@@ -50,10 +50,12 @@ describeDb('onboarding schema constraints', () => {
     });
   };
 
-  it('accepts a typed city without a full home address', async () => {
-    await inRolledBackTransaction(async (tx) => {
-      await createUser(tx, { declaredCity: 'Praha 8', declaredStreet: null });
-    });
+  it('refuses a home address without a position', async () => {
+    await expect(
+      inRolledBackTransaction((tx) =>
+        createUser(tx, { homeCity: 'Praha 8', homeStreet: 'Sokolovská 12' }),
+      ),
+    ).rejects.toThrow();
   });
 
   it('accepts the edges of the allowed ranges', async () => {

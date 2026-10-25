@@ -1,15 +1,17 @@
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
+import { renderWithRouter } from "@/test/renderWithRouter"
+
 import { ProfileStep } from "@/features/onboarding/components/ProfileStep"
 
-const renderStep = (
+const renderStep = async (
   onSubmit = vi.fn().mockResolvedValue(undefined),
   onSkip = vi.fn(),
   bio: string | null = null,
 ) => {
-  render(
+  await renderWithRouter(
     <ProfileStep
       initial={{ bio }}
       isLast={true}
@@ -36,7 +38,7 @@ describe("ProfileStep", () => {
   })
 
   it("counts the characters of the bio", async () => {
-    renderStep()
+    await renderStep()
 
     expect(screen.getByText("0 / 300 znaků")).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText("Krátké bio (nepovinné)"), "Hraju rok")
@@ -44,7 +46,7 @@ describe("ProfileStep", () => {
   })
 
   it("refuses a bio over 300 characters", async () => {
-    const onSubmit = renderStep()
+    const onSubmit = await renderStep()
 
     await userEvent.click(screen.getByLabelText("Krátké bio (nepovinné)"))
     await userEvent.paste("a".repeat(301))
@@ -56,7 +58,7 @@ describe("ProfileStep", () => {
 
   it("passes the step when the bio is empty and the way on is pressed", async () => {
     const onSkip = vi.fn()
-    const onSubmit = renderStep(undefined, onSkip)
+    const onSubmit = await renderStep(undefined, onSkip)
 
     await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
 
@@ -65,7 +67,7 @@ describe("ProfileStep", () => {
   })
 
   it("finishes with the bio that was written", async () => {
-    const onSubmit = renderStep()
+    const onSubmit = await renderStep()
 
     await userEvent.type(screen.getByLabelText("Krátké bio (nepovinné)"), "Hraju rok")
     await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
@@ -75,12 +77,53 @@ describe("ProfileStep", () => {
 
   it("saves an emptied bio that was saved before instead of skipping", async () => {
     const onSkip = vi.fn()
-    const onSubmit = renderStep(undefined, onSkip, "Hraju rok")
+    const onSubmit = await renderStep(undefined, onSkip, "Hraju rok")
 
     await userEvent.clear(screen.getByLabelText("Krátké bio (nepovinné)"))
     await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
 
     expect(onSubmit).toHaveBeenCalledWith({ bio: undefined })
     expect(onSkip).not.toHaveBeenCalled()
+  })
+
+  it("asks before the page is left with a bio that was not saved", async () => {
+    const { navigateAway } = await renderWithRouter(
+      <ProfileStep
+        initial={{ bio: null }}
+        isLast={true}
+        isReturningToEvent={false}
+        isSaving={false}
+        hasSaveError={false}
+        onSubmit={vi.fn().mockResolvedValue(undefined)}
+        onSkip={vi.fn()}
+        onSkipAll={vi.fn()}
+      />,
+    )
+
+    await userEvent.type(screen.getByLabelText("Krátké bio (nepovinné)"), "Hraju rok")
+    void navigateAway()
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument()
+  })
+
+  it("keeps guarding the bio when the save fails", async () => {
+    const { navigateAway } = await renderWithRouter(
+      <ProfileStep
+        initial={{ bio: null }}
+        isLast={true}
+        isReturningToEvent={false}
+        isSaving={false}
+        hasSaveError={false}
+        onSubmit={vi.fn().mockRejectedValue(new Error("down"))}
+        onSkip={vi.fn()}
+        onSkipAll={vi.fn()}
+      />,
+    )
+
+    await userEvent.type(screen.getByLabelText("Krátké bio (nepovinné)"), "Hraju rok")
+    await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
+    void navigateAway()
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument()
   })
 })

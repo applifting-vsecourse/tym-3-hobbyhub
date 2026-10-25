@@ -1,8 +1,6 @@
 // Limits of the onboarding fields, in step with the backend's
 // `modules/onboarding/domain/onboarding.ts`. The server is the one that counts.
 export const BIO_MAX_LENGTH = 300
-export const CITY_MAX_LENGTH = 100
-export const STREET_MAX_LENGTH = 200
 
 export const TRAVEL_RADIUS_MIN_KM = 5
 export const TRAVEL_RADIUS_MAX_KM = 100

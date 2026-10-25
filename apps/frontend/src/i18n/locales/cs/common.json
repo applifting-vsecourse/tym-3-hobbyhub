@@ -632,19 +632,14 @@
     "loadError": "Průvodce se nepodařilo načíst.",
     "loading": "Načítáme váš profil",
     "location": {
-      "city": "Město",
-      "cityPlaceholder": "Např. Praha 8",
+      "address": "Adresa",
+      "addressHint": "Vyberte adresu z nabídky. Bez ní tento krok přeskočíme.",
+      "addressPlaceholder": "Začněte psát ulici a město",
+      "addressUnavailable": "Hledání adres teď není dostupné. Tento krok můžete přeskočit.",
       "description": "Ukážeme vám akce poblíž. Poloha je neveřejná.",
       "radius": "Jak daleko pojedete?",
       "radiusValue": "{{km}} km",
-      "street": "Ulice a číslo (nepovinné)",
-      "streetPlaceholder": "Např. Sokolovská 12",
-      "title": "Kde hrajete?",
-      "validation": {
-        "cityRequired": "Zadejte město.",
-        "cityTooLong": "Město může mít nejvýše {{max}} znaků.",
-        "streetTooLong": "Ulice může mít nejvýše {{max}} znaků."
-      }
+      "title": "Kde hrajete?"
     },
     "next": "Pokračovat",
     "profile": {

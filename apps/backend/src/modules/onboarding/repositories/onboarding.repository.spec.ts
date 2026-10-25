@@ -1,4 +1,5 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
+import { Prisma } from '@/generated/prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { OnboardingRepository } from './onboarding.repository';
 
@@ -16,10 +17,12 @@ const aUserRow = (
   id: 'u1',
   onboardingStepsDone: 3,
   onboardingCompletedAt: new Date('2026-10-20T12:00:00Z'),
-  homeCity: null,
-  homeStreet: null,
-  declaredCity: 'Praha 8',
-  declaredStreet: null,
+  homeStreet: 'Sokolovská 12',
+  homeCity: 'Praha 8',
+  homePostalCode: '186 00',
+  homeCountry: 'Česko',
+  homeLatitude: new Prisma.Decimal('50.0942'),
+  homeLongitude: new Prisma.Decimal('14.4421'),
   travelRadiusKm: 25,
   bio: null,
   interests: [
@@ -55,13 +58,31 @@ describe('OnboardingRepository', () => {
     );
   });
 
-  it('prefers a full home address over the typed city', async () => {
-    const { repository } = setup(
-      aUserRow({ homeCity: 'Brno', homeStreet: 'Cejl 1' }),
-    );
+  it('reads the home address with its position', async () => {
+    const { repository } = setup(aUserRow());
     const onboarding = await repository.getOnboarding('u1');
-    expect(onboarding?.city).toBe('Brno');
-    expect(onboarding?.street).toBe('Cejl 1');
+    expect(onboarding?.address).toEqual({
+      street: 'Sokolovská 12',
+      city: 'Praha 8',
+      postalCode: '186 00',
+      country: 'Česko',
+      latitude: 50.0942,
+      longitude: 14.4421,
+    });
+  });
+
+  it('has no address while the home address is empty', async () => {
+    const { repository } = setup(
+      aUserRow({
+        homeStreet: null,
+        homeCity: null,
+        homePostalCode: null,
+        homeCountry: null,
+        homeLatitude: null,
+        homeLongitude: null,
+      }),
+    );
+    expect((await repository.getOnboarding('u1'))?.address).toBeNull();
   });
 
   it('answers null for a user that does not exist', async () => {

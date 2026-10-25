@@ -495,12 +495,6 @@ model User {
   // F-04.8: how many wizard steps (activities, location, profile) are done or
   // skipped, so an interrupted wizard resumes at the first open one.
   onboardingStepsDone   Int                @default(0)
-  // F-04.8: the city and street as typed in the onboarding. Not a Location (it
-  // has no postal code, country or coordinates, which user_home_location_all_or_nothing
-  // demands), so it lives apart until the address lookup (F-12.3 #79, F-02.2b
-  // #92) can turn it into the home* address.
-  declaredCity          String?            @db.VarChar(100)
-  declaredStreet        String?            @db.VarChar(200)
   termsAcceptedAt       DateTime?
   termsVersion          String?            @db.VarChar(20)
   disabledNotifications NotificationType[] @default([])

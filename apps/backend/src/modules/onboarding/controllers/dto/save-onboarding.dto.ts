@@ -2,6 +2,8 @@ import { CharLength } from '@/core/validation/char-length.decorator';
 import {
   ONBOARDING_BIO_MAX_LENGTH,
   ONBOARDING_CITY_MAX_LENGTH,
+  ONBOARDING_COUNTRY_MAX_LENGTH,
+  ONBOARDING_POSTAL_CODE_MAX_LENGTH,
   ONBOARDING_STREET_MAX_LENGTH,
   TRAVEL_RADIUS_DEFAULT_KM,
   TRAVEL_RADIUS_MAX_KM,
@@ -13,6 +15,8 @@ import {
   ArrayMaxSize,
   IsArray,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -62,6 +66,16 @@ export class SaveActivitiesDto {
 }
 
 export class SaveLocationDto {
+  @ApiProperty({
+    example: 'Sokolovská 12',
+    maxLength: ONBOARDING_STREET_MAX_LENGTH,
+  })
+  @Transform(trim)
+  @IsString()
+  @IsNotEmpty()
+  @CharLength(1, ONBOARDING_STREET_MAX_LENGTH)
+  street!: string;
+
   @ApiProperty({ example: 'Praha 8', maxLength: ONBOARDING_CITY_MAX_LENGTH })
   @Transform(trim)
   @IsString()
@@ -69,15 +83,32 @@ export class SaveLocationDto {
   @CharLength(1, ONBOARDING_CITY_MAX_LENGTH)
   city!: string;
 
-  @ApiPropertyOptional({
-    example: 'Sokolovská 12',
-    maxLength: ONBOARDING_STREET_MAX_LENGTH,
+  @ApiProperty({
+    example: '186 00',
+    maxLength: ONBOARDING_POSTAL_CODE_MAX_LENGTH,
   })
-  @Transform(trimToUndefined)
-  @IsOptional()
+  @Transform(trim)
   @IsString()
-  @CharLength(0, ONBOARDING_STREET_MAX_LENGTH)
-  street?: string;
+  @IsNotEmpty()
+  @CharLength(1, ONBOARDING_POSTAL_CODE_MAX_LENGTH)
+  postalCode!: string;
+
+  @ApiProperty({ example: 'Česko', maxLength: ONBOARDING_COUNTRY_MAX_LENGTH })
+  @Transform(trim)
+  @IsString()
+  @IsNotEmpty()
+  @CharLength(1, ONBOARDING_COUNTRY_MAX_LENGTH)
+  country!: string;
+
+  @ApiProperty({ example: 50.0942, minimum: -90, maximum: 90 })
+  @Type(() => Number)
+  @IsLatitude()
+  latitude!: number;
+
+  @ApiProperty({ example: 14.4421, minimum: -180, maximum: 180 })
+  @Type(() => Number)
+  @IsLongitude()
+  longitude!: number;
 
   @ApiProperty({
     minimum: TRAVEL_RADIUS_MIN_KM,

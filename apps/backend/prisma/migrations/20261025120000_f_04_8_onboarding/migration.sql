@@ -1,7 +1,9 @@
 -- AlterTable
-ALTER TABLE "user" ADD COLUMN     "declaredCity" VARCHAR(100),
-ADD COLUMN     "declaredStreet" VARCHAR(200),
-ADD COLUMN     "onboardingStepsDone" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "user" ADD COLUMN     "onboardingStepsDone" INTEGER NOT NULL DEFAULT 0;
+
+-- Whoever signed up before the wizard existed is not sent into it at the next
+-- sign-in; the profile still asks them to set up activities and a location.
+UPDATE "user" SET "onboardingCompletedAt" = now() WHERE "onboardingCompletedAt" IS NULL;
 
 -- AlterTable
 ALTER TABLE "level" ADD COLUMN     "isSkillLevel" BOOLEAN NOT NULL DEFAULT true;

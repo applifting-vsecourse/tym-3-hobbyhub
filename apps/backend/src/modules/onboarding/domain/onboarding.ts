@@ -2,8 +2,10 @@ import { Activity } from '@/modules/activity/domain/activity';
 import { Level } from '@/modules/level/domain/level';
 
 export const ONBOARDING_BIO_MAX_LENGTH = 300;
-export const ONBOARDING_CITY_MAX_LENGTH = 100;
 export const ONBOARDING_STREET_MAX_LENGTH = 200;
+export const ONBOARDING_CITY_MAX_LENGTH = 100;
+export const ONBOARDING_POSTAL_CODE_MAX_LENGTH = 20;
+export const ONBOARDING_COUNTRY_MAX_LENGTH = 100;
 
 export const TRAVEL_RADIUS_MIN_KM = 5;
 export const TRAVEL_RADIUS_MAX_KM = 100;
@@ -26,6 +28,17 @@ export type InterestInput = {
   levelId: string | null;
 };
 
+// The home address as picked from the address suggestions: all of it, with the
+// position (user_home_location_all_or_nothing).
+export type HomeAddress = {
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+};
+
 export type Onboarding = {
   // How many steps are done or skipped. An interrupted wizard resumes at the
   // step after the last one done.
@@ -36,8 +49,7 @@ export type Onboarding = {
   // Set when the wizard ended, finished or skipped (ADR-0011).
   completedAt: Date | null;
   interests: Interest[];
-  city: string | null;
-  street: string | null;
+  address: HomeAddress | null;
   travelRadiusKm: number | null;
   bio: string | null;
 };
@@ -65,5 +77,5 @@ export const stepNumber = (step: OnboardingStep): number =>
  * location; the bio and the photo are optional.
  */
 export const isProfileSetUp = (
-  onboarding: Pick<Onboarding, 'interests' | 'city'>,
-): boolean => onboarding.interests.length > 0 && onboarding.city !== null;
+  onboarding: Pick<Onboarding, 'interests' | 'address'>,
+): boolean => onboarding.interests.length > 0 && onboarding.address !== null;

@@ -1,15 +1,13 @@
-import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { TFunction } from "i18next"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
-import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { hasAddressSuggestions, type AddressSuggestion } from "@/lib/addressSuggestions"
 
 import type { Onboarding, SaveLocationInput } from "@/features/onboarding/api/onboardingSchemas"
 import {
@@ -18,39 +16,39 @@ import {
   StepActions,
 } from "@/features/onboarding/components/OnboardingStepLayout"
 import {
-  CITY_MAX_LENGTH,
-  STREET_MAX_LENGTH,
   TRAVEL_RADIUS_DEFAULT_KM,
   TRAVEL_RADIUS_MAX_KM,
   TRAVEL_RADIUS_MIN_KM,
   TRAVEL_RADIUS_STEP_KM,
 } from "@/features/onboarding/lib/onboardingLimits"
 
-// Built per render so validation messages follow the current language.
-const createSchema = (t: TFunction) =>
-  z.object({
-    city: z
-      .string()
-      .trim()
-      .min(1, t("onboarding.location.validation.cityRequired"))
-      .max(
-        CITY_MAX_LENGTH,
-        t("onboarding.location.validation.cityTooLong", { max: CITY_MAX_LENGTH }),
-      ),
-    street: z
-      .string()
-      .trim()
-      .max(
-        STREET_MAX_LENGTH,
-        t("onboarding.location.validation.streetTooLong", { max: STREET_MAX_LENGTH }),
-      ),
-    travelRadiusKm: z.number().min(TRAVEL_RADIUS_MIN_KM).max(TRAVEL_RADIUS_MAX_KM),
-  })
+const schema = z.object({
+  // Picked from the suggestions; nothing picked means the step is skipped.
+  address: z
+    .object({
+      label: z.string(),
+      street: z.string(),
+      city: z.string(),
+      postalCode: z.string(),
+      country: z.string(),
+      latitude: z.number(),
+      longitude: z.number(),
+    })
+    .nullable(),
+  travelRadiusKm: z.number().min(TRAVEL_RADIUS_MIN_KM).max(TRAVEL_RADIUS_MAX_KM),
+})
 
-type LocationFormValues = z.infer<ReturnType<typeof createSchema>>
+type LocationFormValues = z.infer<typeof schema>
+
+// The saved address as the picker shows it: the same one line the suggestions use.
+const savedAddress = (address: Onboarding["address"]): AddressSuggestion | null =>
+  address && {
+    ...address,
+    label: `${address.street}, ${address.postalCode} ${address.city}, ${address.country}`,
+  }
 
 type LocationStepProps = {
-  initial: Pick<Onboarding, "city" | "street" | "travelRadiusKm">
+  initial: Pick<Onboarding, "address" | "travelRadiusKm">
   isLast: boolean
   isReturningToEvent: boolean
   isSaving: boolean
@@ -75,85 +73,79 @@ export function LocationStep({
   shouldFocusHeading,
 }: LocationStepProps) {
   const { t } = useTranslation()
-  const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      city: initial.city ?? "",
-      street: initial.street ?? "",
+      address: savedAddress(initial.address),
       travelRadiusKm: initial.travelRadiusKm ?? TRAVEL_RADIUS_DEFAULT_KM,
     },
   })
-  const [city, street, radius] = useWatch({
-    control: form.control,
-    name: ["city", "street", "travelRadiusKm"],
-  })
-  // Nothing typed, nothing saved before and the range left alone: pass the step.
-  // A moved range or something to clear is a change, so the button saves.
-  const isEmpty =
-    city.trim() === "" &&
-    street.trim() === "" &&
-    !initial.city &&
-    !initial.street &&
-    radius === (initial.travelRadiusKm ?? TRAVEL_RADIUS_DEFAULT_KM)
+  const address = useWatch({ control: form.control, name: "address" })
+  // No address picked and none saved before: the way on passes the step, even
+  // when the range was moved; a range alone is not a location.
+  const isEmpty = address === null
 
-  useRevalidateOnLanguageChange(form)
+  // Whatever was half-done is dropped, so leaving does not ask about it.
+  const leaveWith = (action: () => void) => () => {
+    form.reset()
+    action()
+  }
 
-  const submit = async (values: LocationFormValues) =>
-    onSubmit({
-      city: values.city,
-      street: values.street || undefined,
-      travelRadiusKm: values.travelRadiusKm,
+  const submit = async ({ address, travelRadiusKm }: LocationFormValues) => {
+    if (!address) return onSkip()
+    return onSubmit({
+      street: address.street,
+      city: address.city,
+      postalCode: address.postalCode,
+      country: address.country,
+      latitude: address.latitude,
+      longitude: address.longitude,
+      travelRadiusKm,
     })
+  }
 
   return (
     <OnboardingStepLayout
       screen={2}
       title={t("onboarding.location.title")}
       description={t("onboarding.location.description")}
-      onSkipAll={onSkipAll}
+      onSkipAll={leaveWith(onSkipAll)}
       isBusy={isSaving}
       shouldFocusHeading={shouldFocusHeading}
     >
       <AppForm
         form={form}
         onSubmit={submit}
-        isGuarded={false}
         className="flex flex-col gap-6"
       >
         <SaveError isVisible={hasSaveError} />
 
         <FormField
           control={form.control}
-          name="city"
+          name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("onboarding.location.city")}</FormLabel>
-              <FormControl>
-                <Input
-                  autoComplete="address-level2"
-                  placeholder={t("onboarding.location.cityPlaceholder")}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="street"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("onboarding.location.street")}</FormLabel>
-              <FormControl>
-                <Input
-                  autoComplete="street-address"
-                  placeholder={t("onboarding.location.streetPlaceholder")}
-                  {...field}
-                />
-              </FormControl>
+              <FormLabel>{t("onboarding.location.address")}</FormLabel>
+              {hasAddressSuggestions() ? (
+                <>
+                  <FormControl>
+                    <AddressSearch
+                      value={field.value?.label ?? ""}
+                      placeholder={t("onboarding.location.addressPlaceholder")}
+                      onSelect={(selected) =>
+                        field.onChange(selected, { shouldDirty: true, shouldTouch: true })
+                      }
+                    />
+                  </FormControl>
+                  <p className="typo-small text-muted-foreground">
+                    {t("onboarding.location.addressHint")}
+                  </p>
+                </>
+              ) : (
+                <p className="typo-small text-muted-foreground">
+                  {t("onboarding.location.addressUnavailable")}
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -194,7 +186,7 @@ export function LocationStep({
           isEmpty={isEmpty}
           isLast={isLast}
           isReturningToEvent={isReturningToEvent}
-          onSkip={onSkip}
+          onSkip={leaveWith(onSkip)}
           onBack={onBack}
         />
       </AppForm>

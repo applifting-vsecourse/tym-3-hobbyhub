@@ -52,12 +52,24 @@ describe('SaveActivitiesDto', () => {
 });
 
 describe('SaveLocationDto', () => {
-  const valid = { city: 'Praha 8', travelRadiusKm: 25 };
+  const valid = {
+    street: 'Sokolovská 12',
+    city: 'Praha 8',
+    postalCode: '186 00',
+    country: 'Česko',
+    latitude: 50.0942,
+    longitude: 14.4421,
+    travelRadiusKm: 25,
+  };
 
-  it('trims the text and drops a blank street', async () => {
+  it('trims the text', async () => {
     await expect(
-      validate(SaveLocationDto, { ...valid, city: ' Praha 8 ', street: '  ' }),
-    ).resolves.toEqual({ ...valid, street: undefined });
+      validate(SaveLocationDto, {
+        ...valid,
+        street: ' Sokolovská 12 ',
+        city: ' Praha 8 ',
+      }),
+    ).resolves.toEqual(valid);
   });
 
   it.each([5, 100])('accepts a range of %i km', async (travelRadiusKm) => {
@@ -75,9 +87,22 @@ describe('SaveLocationDto', () => {
     },
   );
 
-  it('asks for the city', async () => {
+  it.each(['street', 'city', 'postalCode', 'country'])(
+    'asks for the %s, the address is all or nothing',
+    async (field) => {
+      await expect(
+        validate(SaveLocationDto, { ...valid, [field]: '   ' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    },
+  );
+
+  it.each([
+    ['no position', { latitude: undefined, longitude: undefined }],
+    ['a latitude out of range', { latitude: 91 }],
+    ['a longitude out of range', { longitude: -181 }],
+  ])('refuses %s', async (_name, change) => {
     await expect(
-      validate(SaveLocationDto, { ...valid, city: '   ' }),
+      validate(SaveLocationDto, { ...valid, ...change }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

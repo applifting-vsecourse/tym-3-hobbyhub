@@ -619,19 +619,14 @@
     "loadError": "The setup could not be loaded.",
     "loading": "Loading your profile",
     "location": {
-      "city": "City",
-      "cityPlaceholder": "E.g. Praha 8",
+      "address": "Address",
+      "addressHint": "Pick an address from the list. Without one we skip this step.",
+      "addressPlaceholder": "Start typing a street and city",
+      "addressUnavailable": "Address search is not available right now. You can skip this step.",
       "description": "We will show you events nearby. Your location is private.",
       "radius": "How far will you travel?",
       "radiusValue": "{{km}} km",
-      "street": "Street and number (optional)",
-      "streetPlaceholder": "E.g. Sokolovská 12",
-      "title": "Where do you play?",
-      "validation": {
-        "cityRequired": "Enter a city.",
-        "cityTooLong": "The city can have at most {{max}} characters.",
-        "streetTooLong": "The street can have at most {{max}} characters."
-      }
+      "title": "Where do you play?"
     },
     "next": "Continue",
     "profile": {

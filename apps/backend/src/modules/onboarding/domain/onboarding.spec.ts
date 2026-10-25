@@ -36,12 +36,21 @@ describe('isProfileSetUp', () => {
     level: null,
   };
 
-  it('needs activities and a location', () => {
-    expect(isProfileSetUp({ interests: [interest], city: 'Praha 8' })).toBe(
-      true,
+  const address = {
+    street: 'Sokolovská 12',
+    city: 'Praha 8',
+    postalCode: '186 00',
+    country: 'Česko',
+    latitude: 50.0942,
+    longitude: 14.4421,
+  };
+
+  it('needs activities and a home address', () => {
+    expect(isProfileSetUp({ interests: [interest], address })).toBe(true);
+    expect(isProfileSetUp({ interests: [], address })).toBe(false);
+    expect(isProfileSetUp({ interests: [interest], address: null })).toBe(
+      false,
     );
-    expect(isProfileSetUp({ interests: [], city: 'Praha 8' })).toBe(false);
-    expect(isProfileSetUp({ interests: [interest], city: null })).toBe(false);
   });
 });
 

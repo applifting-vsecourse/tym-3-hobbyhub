@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+
+import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { Onboarding } from "@/features/onboarding/api/onboardingSchemas"
 import { OnboardingWizard } from "@/features/onboarding/components/OnboardingWizard"
@@ -22,17 +24,16 @@ const onboarding = (overrides: Partial<Onboarding> = {}): Onboarding => ({
   skipped: false,
   completedAt: null,
   interests: [],
-  city: null,
-  street: null,
+  address: null,
   travelRadiusKm: null,
   bio: null,
   ...overrides,
 })
 
-const renderWizard = (state: Onboarding) => {
+const renderWizard = async (state: Onboarding) => {
   requests.getOnboarding.mockResolvedValue(state)
   const onLeave = vi.fn()
-  render(
+  await renderWithRouter(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
@@ -67,29 +68,35 @@ describe("OnboardingWizard", () => {
   })
 
   it("starts at the first step", async () => {
-    renderWizard(onboarding())
+    await renderWizard(onboarding())
 
     expect(await screen.findByRole("heading", { name: "Co rádi hrajete?" })).toBeInTheDocument()
     expect(screen.getByText("Krok 1 ze 3")).toBeInTheDocument()
   })
 
   it("resumes at the first step that is still open", async () => {
-    renderWizard(onboarding({ stepsDone: 1 }))
+    await renderWizard(onboarding({ stepsDone: 1 }))
 
     expect(await screen.findByRole("heading", { name: "Kde hrajete?" })).toBeInTheDocument()
     expect(screen.getByText("Krok 2 ze 3")).toBeInTheDocument()
   })
 
   it("opens the last step again when every step is done but it was not finished", async () => {
-    renderWizard(onboarding({ stepsDone: 3 }))
+    await renderWizard(onboarding({ stepsDone: 3 }))
 
     expect(await screen.findByRole("heading", { name: "Ukažte se ostatním" })).toBeInTheDocument()
     expect(screen.getByText("Krok 3 ze 3")).toBeInTheDocument()
   })
 
+  it("reopens a finished wizard at the first thing the profile lacks", async () => {
+    await renderWizard(onboarding({ stepsDone: 3, skipped: true, completedAt: new Date() }))
+
+    expect(await screen.findByRole("heading", { name: "Co rádi hrajete?" })).toBeInTheDocument()
+  })
+
   it("skips a step and moves on", async () => {
     requests.skipStep.mockResolvedValue(onboarding({ stepsDone: 1, skipped: true }))
-    renderWizard(onboarding())
+    await renderWizard(onboarding())
 
     await userEvent.click(await screen.findByRole("button", { name: "Pokračovat" }))
 
@@ -101,7 +108,7 @@ describe("OnboardingWizard", () => {
     requests.skipOnboarding.mockResolvedValue(
       onboarding({ skipped: true, completedAt: new Date() }),
     )
-    const onLeave = renderWizard(onboarding())
+    const onLeave = await renderWizard(onboarding())
 
     await userEvent.click(await screen.findByRole("button", { name: "Přeskočit vše" }))
 
@@ -111,7 +118,7 @@ describe("OnboardingWizard", () => {
 
   it("stays on the step and says so when saving fails", async () => {
     requests.skipStep.mockRejectedValue(new Error("down"))
-    const onLeave = renderWizard(onboarding())
+    const onLeave = await renderWizard(onboarding())
 
     await userEvent.click(await screen.findByRole("button", { name: "Pokračovat" }))
 
@@ -121,7 +128,7 @@ describe("OnboardingWizard", () => {
   })
 
   it("goes back to the previous step", async () => {
-    renderWizard(onboarding({ stepsDone: 1 }))
+    await renderWizard(onboarding({ stepsDone: 1 }))
 
     await userEvent.click(await screen.findByRole("button", { name: "Zpět" }))
 
@@ -130,7 +137,7 @@ describe("OnboardingWizard", () => {
   })
 
   it("moves focus to the heading of the step it opens", async () => {
-    renderWizard(onboarding({ stepsDone: 1 }))
+    await renderWizard(onboarding({ stepsDone: 1 }))
 
     await userEvent.click(await screen.findByRole("button", { name: "Zpět" }))
 
@@ -138,7 +145,7 @@ describe("OnboardingWizard", () => {
   })
 
   it("leaves focus alone on the step the page opens at", async () => {
-    renderWizard(onboarding())
+    await renderWizard(onboarding())
 
     const heading = await screen.findByRole("heading", { name: "Co rádi hrajete?" })
     expect(heading).not.toHaveFocus()
@@ -149,7 +156,7 @@ describe("OnboardingWizard", () => {
     requests.finishOnboarding.mockResolvedValue(
       onboarding({ stepsDone: 3, completedAt: new Date() }),
     )
-    const onLeave = renderWizard(onboarding({ stepsDone: 2 }))
+    const onLeave = await renderWizard(onboarding({ stepsDone: 2 }))
 
     await userEvent.type(await screen.findByLabelText("Krátké bio (nepovinné)"), "Hraju rok")
     await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
@@ -164,7 +171,7 @@ describe("OnboardingWizard", () => {
     requests.finishOnboarding.mockResolvedValue(
       onboarding({ stepsDone: 3, completedAt: new Date() }),
     )
-    const onLeave = renderWizard(onboarding({ stepsDone: 2 }))
+    const onLeave = await renderWizard(onboarding({ stepsDone: 2 }))
 
     await userEvent.click(await screen.findByRole("button", { name: "Dokončit" }))
 

@@ -8,7 +8,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { onboardingQueryOptions } from "@/features/onboarding/api/onboardingQueryOptions"
-import type { ActivityOption, LevelOption } from "@/features/onboarding/api/onboardingSchemas"
+import type {
+  ActivityOption,
+  LevelOption,
+  Onboarding,
+} from "@/features/onboarding/api/onboardingSchemas"
 import { ActivitiesStep } from "@/features/onboarding/components/ActivitiesStep"
 import { LocationStep } from "@/features/onboarding/components/LocationStep"
 import { ProfileStep } from "@/features/onboarding/components/ProfileStep"
@@ -38,6 +42,18 @@ type OnboardingWizardProps = {
 }
 
 /**
+ * The screen to open at. An interrupted wizard resumes at the first step not
+ * done; one that ended with something skipped opens at the first thing the
+ * profile still lacks, but never beyond the steps the server lets in.
+ */
+function firstOpenScreen({ stepsDone, completedAt, interests, address }: Onboarding): number {
+  const reachable = Math.min(stepsDone + 1, SCREEN_COUNT)
+  if (completedAt === null) return reachable
+  const missing = interests.length === 0 ? 1 : address === null ? 2 : SCREEN_COUNT
+  return Math.min(missing, reachable)
+}
+
+/**
  * The F-04.8 wizard: activities with a level, location and range, photo and
  * bio. Each step is saved when confirmed, so a closed tab resumes at the first
  * open step; any step or the whole wizard can be skipped.
@@ -63,12 +79,14 @@ export function OnboardingWizard({
   const skipAll = useSkipOnboarding()
 
   const [screenOverride, setScreenOverride] = useState<number | null>(null)
-  const [hasSaveError, setHasSaveError] = useState(false)
   const [isWorking, setIsWorking] = useState(false)
   // After the first move between screens focus follows the heading.
   const [hasMoved, setHasMoved] = useState(false)
 
   const onboarding = onboardingQuery.data
+  const mutations = [saveActivities, saveLocation, saveProfile, skipStep, finish, skipAll]
+  // The message comes from the state of the requests; a new request clears it.
+  const hasSaveError = mutations.some((mutation) => mutation.isError)
 
   if (onboardingQuery.isPending) {
     return (
@@ -101,32 +119,30 @@ export function OnboardingWizard({
     )
   }
 
-  // The first step still open; with all of them done, the last one to finish.
-  const screen = screenOverride ?? Math.min(onboarding.stepsDone + 1, SCREEN_COUNT)
+  const screen = screenOverride ?? firstOpenScreen(onboarding)
   const isLast = screen === SCREEN_COUNT
 
   const goTo = (target: number) => {
     setScreenOverride(target)
     setHasMoved(true)
-    setHasSaveError(false)
+    mutations.forEach((mutation) => mutation.reset())
   }
   // Past the last step the wizard ends.
   const afterStep = () => (isLast ? onLeave() : goTo(screen + 1))
 
-  // A failed save keeps the user on the step with the error; it never throws
-  // into the form.
+  // A failed save rejects, so the form knows the submit did not succeed and
+  // keeps guarding its input; the step shows the error from the request state.
   const run = async (work: () => Promise<unknown>, onDone: () => void | Promise<void>) => {
     setIsWorking(true)
-    setHasSaveError(false)
     try {
       await work()
       await onDone()
-    } catch {
-      setHasSaveError(true)
     } finally {
       setIsWorking(false)
     }
   }
+  // Skipping is no form submit: nothing is waiting for the rejection.
+  const settled = (promise: Promise<unknown>) => void promise.catch(() => undefined)
 
   const skipAllSteps = () => run(() => skipAll.mutateAsync(), onLeave)
   // Saving or skipping the last step also finishes the wizard.
@@ -144,8 +160,8 @@ export function OnboardingWizard({
     isReturningToEvent,
     isSaving: isWorking,
     hasSaveError,
-    onSkip: () => void skipThisStep(),
-    onSkipAll: () => void skipAllSteps(),
+    onSkip: () => settled(skipThisStep()),
+    onSkipAll: () => settled(skipAllSteps()),
     onBack: screen > 1 ? () => goTo(screen - 1) : undefined,
     shouldFocusHeading: hasMoved,
   }

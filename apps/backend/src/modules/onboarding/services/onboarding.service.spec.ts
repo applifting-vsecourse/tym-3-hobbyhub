@@ -9,13 +9,21 @@ import { OnboardingService } from './onboarding.service';
 
 const user = new Identity('u1', 'jana@example.com', 'Jana', 'user');
 
+const anAddress = {
+  street: 'Sokolovská 12',
+  city: 'Praha 8',
+  postalCode: '186 00',
+  country: 'Česko',
+  latitude: 50.0942,
+  longitude: 14.4421,
+};
+
 const anOnboarding = (overrides: Partial<Onboarding> = {}): Onboarding => ({
   stepsDone: 0,
   skipped: false,
   completedAt: null,
   interests: [],
-  city: null,
-  street: null,
+  address: null,
   travelRadiusKm: null,
   bio: null,
   ...overrides,
@@ -85,7 +93,7 @@ describe('OnboardingService', () => {
 
   it('saves the location and counts step 2 done', async () => {
     const { repository, service } = setup(anOnboarding({ stepsDone: 1 }));
-    const data = { city: 'Praha 8', street: null, travelRadiusKm: 25 };
+    const data = { address: anAddress, travelRadiusKm: 25 };
     await service.saveLocation(user, data);
     expect(repository.saveLocation).toHaveBeenCalledWith('u1', data, 2);
   });
@@ -118,8 +126,7 @@ describe('OnboardingService', () => {
         'location',
         (service: OnboardingService): Promise<Onboarding> =>
           service.saveLocation(user, {
-            city: 'Praha',
-            street: null,
+            address: anAddress,
             travelRadiusKm: 25,
           }),
       ],
