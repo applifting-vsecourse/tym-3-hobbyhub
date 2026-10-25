@@ -17,6 +17,8 @@ type AppShellProps = {
   children: ReactNode
   /** Classes of the `<main>` element — the page's column, when it has one. */
   className?: string
+  /** Classes of the outermost element, for a page that must be exactly one screen tall. */
+  shellClassName?: string
   /** Location search in the header on discovery pages (landing only for now). */
   search?: ReactNode
 }
@@ -26,7 +28,7 @@ type AppShellProps = {
  * navigation — links and "Přidat" in the header from `md`, the BottomNav
  * below it. A visitor gets the header with "Sign in" only.
  */
-export function AppShell({ children, className, search }: AppShellProps) {
+export function AppShell({ children, className, shellClassName, search }: AppShellProps) {
   const { t } = useTranslation()
   const { user } = useSession()
   const pathname = useLocation({ select: (location) => location.pathname })
@@ -57,7 +59,7 @@ export function AppShell({ children, className, search }: AppShellProps) {
   return (
     <div
       ref={shellRef}
-      className="flex min-h-svh flex-col"
+      className={cn("flex min-h-svh flex-col", shellClassName)}
     >
       <Header
         search={search}

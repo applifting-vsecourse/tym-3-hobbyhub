@@ -152,57 +152,57 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
         )}
       />
 
-      <div className="grid grid-cols-2 items-start gap-3">
-        <FormField
-          control={form.control}
-          name="birthDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
-              <FormControl>
-                <BirthDatePicker {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={form.control}
+        name="birthDate"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
+            <FormControl>
+              <BirthDatePicker {...field} />
+            </FormControl>
+            <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth.fields.gender")}</FormLabel>
-              <Select
-                name={field.name}
-                value={field.value ?? ""}
-                onValueChange={field.onChange}
-              >
-                <FormControl>
-                  <SelectTrigger
-                    ref={field.ref}
-                    onBlur={field.onBlur}
-                    className="w-full"
+      <FormField
+        control={form.control}
+        name="gender"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("auth.fields.gender")}</FormLabel>
+            <Select
+              name={field.name}
+              value={field.value ?? ""}
+              onValueChange={field.onChange}
+            >
+              <FormControl>
+                <SelectTrigger
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  className="w-full"
+                >
+                  <SelectValue placeholder={t("auth.placeholders.gender")} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {GENDERS.map((gender) => (
+                  <SelectItem
+                    key={gender}
+                    value={gender}
                   >
-                    <SelectValue placeholder={t("auth.placeholders.gender")} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {GENDERS.map((gender) => (
-                    <SelectItem
-                      key={gender}
-                      value={gender}
-                    >
-                      {t(GENDER_LABELS[gender])}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+                    {t(GENDER_LABELS[gender])}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormDescription>{t("auth.signUp.genderNote")}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={form.control}
@@ -233,7 +233,6 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
                   }}
                 />
               </FormLabel>
-              <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
               <FormMessage />
             </div>
           </FormItem>

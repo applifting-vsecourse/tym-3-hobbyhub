@@ -120,6 +120,14 @@ describeDb('event schema constraints', () => {
       },
     ],
     ['event_coordinates_together', { locationLatitude: 50.08 }],
+    [
+      'event_coordinates_range',
+      { locationLatitude: 91, locationLongitude: 14.4 },
+    ],
+    [
+      'event_coordinates_range',
+      { locationLatitude: 50.08, locationLongitude: -181 },
+    ],
     ['event_title_length', { title: '  ab ' }],
     ['event_description_not_blank', { description: '   ' }],
     ['event_contribution_non_negative', { contributionAmount: -1 }],

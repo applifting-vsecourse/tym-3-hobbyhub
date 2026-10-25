@@ -30,6 +30,8 @@ const VIOLATION_MESSAGES: Record<EventRuleViolation, string> = {
   MIN_ABOVE_MAX: 'minParticipants must not exceed maxParticipants',
   OCCUPIED_ABOVE_MAX: 'externalOccupiedSpots must not exceed maxParticipants',
   NOTE_WITHOUT_AMOUNT: 'contributionNote requires contributionAmount',
+  POSITION_INCOMPLETE:
+    'location.latitude and location.longitude must be sent together',
 };
 
 const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
@@ -38,6 +40,7 @@ const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
   MAX_BELOW_OCCUPIED: 'maxParticipants must not be below the occupied seats',
   VENUE_KIND_CHANGED: 'An online event cannot become a place, or the reverse',
   LOCATION_REQUIRED: 'location is required for an event at a place',
+  LOCATION_NOT_ALLOWED: 'an online event has no location',
 };
 
 @Injectable()
@@ -86,7 +89,7 @@ export class EventsService {
           maxParticipants: data.maxParticipants,
           externalOccupiedSpots: data.externalOccupiedSpots,
           venueType: data.venueType,
-          hasLocation: data.location !== undefined,
+          hasLocation: data.location != null,
         },
         now,
       ).map((violation) => CHANGE_VIOLATION_MESSAGES[violation]),

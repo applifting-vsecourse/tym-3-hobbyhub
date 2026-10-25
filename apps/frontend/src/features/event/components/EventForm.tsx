@@ -1,13 +1,14 @@
 import { useId, useMemo, useState, type ComponentProps, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
-import { ChevronLeft, Loader2 } from "lucide-react"
+import { ChevronLeft, Loader2, MapPin } from "lucide-react"
 import { useForm, useFormContext, useWatch, type FieldErrors } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -20,11 +21,13 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { hasAddressSuggestions } from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 import {
@@ -77,6 +80,11 @@ const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOn
         postalCode: address(EVENT_LIMITS.postalCodeMax, t("events.validation.postalCodeRequired")),
         country: address(EVENT_LIMITS.countryMax, t("events.validation.countryRequired")),
         placeName: text(EVENT_LIMITS.placeNameMax),
+        // The position of the address picked from the suggestions; `addressKey`
+        // says which address it belongs to, so a hand-edited one drops it.
+        latitude: z.number().nullable(),
+        longitude: z.number().nullable(),
+        positionOf: z.string(),
         minParticipants: people.min(1),
         maxParticipants: people.min(1),
         externalOccupiedSpots: people,
@@ -167,6 +175,9 @@ const defaultValues = (t: TFunction): FormValues => ({
   postalCode: "",
   country: t("events.defaults.country"),
   placeName: "",
+  latitude: null,
+  longitude: null,
+  positionOf: "",
   minParticipants: 2,
   maxParticipants: 4,
   externalOccupiedSpots: 0,
@@ -177,6 +188,10 @@ const defaultValues = (t: TFunction): FormValues => ({
   venueType: "PUBLIC_VENUE",
   approvalMode: "MANUAL",
 })
+
+// The address a position was found for. Editing any part of it makes the position stale.
+const addressKey = (values: Pick<FormValues, "street" | "city" | "postalCode">) =>
+  [values.street, values.city, values.postalCode].map((part) => part.trim()).join("|")
 
 // The form's values for an event that is being edited.
 const valuesOfEvent = (event: Event): FormValues => {
@@ -194,6 +209,9 @@ const valuesOfEvent = (event: Event): FormValues => {
     postalCode: event.location?.postalCode ?? "",
     country: event.location?.country ?? "",
     placeName: event.location?.placeName ?? "",
+    latitude: event.location?.latitude ?? null,
+    longitude: event.location?.longitude ?? null,
+    positionOf: event.location?.latitude != null ? addressKey({ street: event.location.street, city: event.location.city, postalCode: event.location.postalCode }) : "",
     minParticipants: event.minParticipants,
     maxParticipants: event.maxParticipants,
     externalOccupiedSpots: event.externalOccupiedSpots,
@@ -230,6 +248,12 @@ const toInput = (values: FormValues): CreateEventInput => {
             postalCode: values.postalCode.trim(),
             country: values.country.trim(),
             placeName: values.placeName.trim() || undefined,
+            ...(values.latitude !== null &&
+              values.longitude !== null &&
+              values.positionOf === addressKey(values) && {
+                latitude: values.latitude,
+                longitude: values.longitude,
+              }),
           },
     minParticipants: values.minParticipants,
     maxParticipants: values.maxParticipants,
@@ -646,6 +670,7 @@ function WhatFields({
       {venueType === "ONLINE" ? null : (
         <fieldset className="space-y-4">
           <legend className="mb-3 typo-label-lg text-foreground">{t("events.form.address")}</legend>
+          <AddressPicker />
           <TextField
             name="street"
             label={t("events.fields.street")}
@@ -679,6 +704,60 @@ function WhatFields({
         </fieldset>
       )}
     </>
+  )
+}
+
+/**
+ * Fills the address fields from a suggested address and keeps its position, so
+ * the event can be put on the map. Without suggestions (no map token) the fields
+ * are typed by hand and the event has no position.
+ */
+function AddressPicker() {
+  const { t } = useTranslation()
+  const form = useFormContext<FormValues>()
+  const [pickedLabel, setPickedLabel] = useState("")
+  const [street, city, postalCode, latitude, positionOf] = useWatch({
+    control: form.control,
+    name: ["street", "city", "postalCode", "latitude", "positionOf"],
+  })
+  if (!hasAddressSuggestions()) return null
+
+  const isLocated = latitude !== null && positionOf === addressKey({ street, city, postalCode })
+  const options = { shouldDirty: true, shouldTouch: true, shouldValidate: true }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="event-address-search">{t("events.fields.addressSearch")}</Label>
+      <AddressSearch
+        id="event-address-search"
+        value={isLocated ? pickedLabel : ""}
+        placeholder={t("events.placeholders.addressSearch")}
+        onSelect={(address) => {
+          const key = addressKey(address)
+          setPickedLabel(address.label)
+          form.setValue("street", address.street, options)
+          form.setValue("city", address.city, options)
+          form.setValue("postalCode", address.postalCode, options)
+          if (address.country) form.setValue("country", address.country, options)
+          form.setValue("latitude", address.latitude, options)
+          form.setValue("longitude", address.longitude, options)
+          form.setValue("positionOf", key, options)
+        }}
+      />
+      <p className="flex items-center gap-1.5 typo-small text-muted-foreground">
+        {isLocated ? (
+          <>
+            <MapPin
+              aria-hidden
+              className="size-4 text-success-ink"
+            />
+            {t("events.form.addressLocated")}
+          </>
+        ) : (
+          t("events.form.addressHint")
+        )}
+      </p>
+    </div>
   )
 }
 
@@ -845,7 +924,8 @@ function PreviewFromForm({ activities }: { readonly activities: ActivityOption[]
 }
 
 type TextFieldProps = Omit<ComponentProps<typeof Input>, "name"> & {
-  readonly name: keyof FormValues
+  // The position is no text: it comes from the suggested address.
+  readonly name: Exclude<keyof FormValues, "latitude" | "longitude">
   readonly label: string
   readonly description?: string
 }

@@ -40,7 +40,10 @@ export class EventsController {
 
   // Public: browsing events needs no account (E2).
   @Get()
-  @ApiOperation({ summary: 'List upcoming public events, soonest first' })
+  @ApiOperation({
+    summary:
+      'List upcoming public events, soonest first or nearest first with lat and lng',
+  })
   @ApiResponse({ status: 200, type: EventListResponseDto })
   @ApiResponse({
     status: 400,
@@ -53,6 +56,10 @@ export class EventsController {
         activityIds: query.activityIds,
         search: query.search,
         location: query.location,
+        near:
+          query.lat !== undefined && query.lng !== undefined
+            ? { latitude: query.lat, longitude: query.lng }
+            : undefined,
       },
     );
     return EventListResponseDto.fromDomain(page);
@@ -90,6 +97,9 @@ export class EventsController {
         postalCode: body.location.postalCode,
         country: body.location.country,
         placeName: body.location.placeName,
+        // An explicit null (a client that sends "no position") means none.
+        latitude: body.location.latitude ?? undefined,
+        longitude: body.location.longitude ?? undefined,
       },
       minParticipants: body.minParticipants,
       maxParticipants: body.maxParticipants,
@@ -145,13 +155,17 @@ export class EventsController {
       approvalMode: body.approvalMode,
       startAt: body.startAt,
       endAt: body.endAt,
-      location: body.location && {
-        street: body.location.street,
-        city: body.location.city,
-        postalCode: body.location.postalCode,
-        country: body.location.country,
-        placeName: body.location.placeName,
-      },
+      location: body.location
+        ? {
+            street: body.location.street,
+            city: body.location.city,
+            postalCode: body.location.postalCode,
+            country: body.location.country,
+            placeName: body.location.placeName,
+            latitude: body.location.latitude ?? undefined,
+            longitude: body.location.longitude ?? undefined,
+          }
+        : undefined,
       minParticipants: body.minParticipants,
       maxParticipants: body.maxParticipants,
       externalOccupiedSpots: body.externalOccupiedSpots,

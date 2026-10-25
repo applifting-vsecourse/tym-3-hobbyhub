@@ -1,11 +1,39 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { fireEvent, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { Event } from "@/features/event/api/eventSchemas"
 import { EventForm, type ActivityOption } from "@/features/event/components/EventForm"
+
+// The address suggestions need a map token; the tests give one and answer the geocoder themselves.
+vi.mock("@/config/env", () => ({
+  env: {
+    VITE_API_URL: "http://api.test/api",
+    VITE_BETTER_AUTH_URL: "http://api.test",
+    VITE_MAPBOX_TOKEN: "test-token",
+  },
+}))
+
+const GEOCODER_ANSWER = {
+  features: [
+    {
+      properties: {
+        name: "Chabařovická 4",
+        full_address: "Chabařovická 4, 182 00 Praha, Česko",
+        context: {
+          address: { name: "Chabařovická 4" },
+          postcode: { name: "182 00" },
+          place: { name: "Praha" },
+          country: { name: "Česko" },
+        },
+        coordinates: { latitude: 50.1297, longitude: 14.4421 },
+      },
+    },
+  ],
+}
 
 const ACTIVITIES: ActivityOption[] = [
   {
@@ -41,20 +69,30 @@ const setViewport = (isDesktop: boolean) => {
 beforeEach(() => {
   setViewport(false)
   window.scrollTo = vi.fn()
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.resolve(Response.json(GEOCODER_ANSWER))),
+  )
 })
+
+afterEach(() => vi.unstubAllGlobals())
 
 const renderForm = async (props: Partial<Parameters<typeof EventForm>[0]> = {}) => {
   const onSubmit = vi.fn()
   await renderWithRouter(
-    <EventForm
-      activities={ACTIVITIES}
-      isActivitiesLoading={false}
-      isActivitiesError={false}
-      onRetryActivities={vi.fn()}
-      isSubmitting={false}
-      onSubmit={onSubmit}
-      {...props}
-    />,
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <EventForm
+        activities={ACTIVITIES}
+        isActivitiesLoading={false}
+        isActivitiesError={false}
+        onRetryActivities={vi.fn()}
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        {...props}
+      />
+    </QueryClientProvider>,
   )
   return { onSubmit, user: userEvent.setup() }
 }
@@ -271,6 +309,79 @@ describe("EventForm on a phone", () => {
   })
 })
 
+describe("EventForm address suggestions", () => {
+  const pickSuggestedAddress = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole("combobox", { name: "Najít adresu" }))
+    await user.type(screen.getByPlaceholderText("Ulice a číslo, město"), "Chabařo")
+    await user.click(await screen.findByRole("option", { name: /Chabařovická 4, 182 00 Praha/ }))
+  }
+
+  it("fills the address fields from the picked suggestion", async () => {
+    const { user } = await renderForm()
+
+    await pickSuggestedAddress(user)
+
+    expect(screen.getByLabelText("Ulice a číslo")).toHaveValue("Chabařovická 4")
+    expect(screen.getByLabelText("Město")).toHaveValue("Praha")
+    expect(screen.getByLabelText("PSČ")).toHaveValue("182 00")
+    expect(screen.getByLabelText("Země")).toHaveValue("Česko")
+    expect(screen.getByText("Poloha adresy je uložená, akce se ukáže na mapě.")).toBeInTheDocument()
+  })
+
+  it("asks the geocoder for Czech addresses of what was typed", async () => {
+    const { user } = await renderForm()
+
+    await pickSuggestedAddress(user)
+
+    const [requested] = vi.mocked(fetch).mock.calls.at(-1) ?? []
+    const url = new URL(requested as string)
+    expect(url.searchParams.get("q")).toBe("Chabařo")
+    expect(url.searchParams.get("types")).toBe("address")
+    expect(url.searchParams.get("country")).toBe("cz,sk")
+  })
+
+  it("forgets the position once the address is edited by hand", async () => {
+    const { user } = await renderForm()
+    await pickSuggestedAddress(user)
+
+    await user.type(screen.getByLabelText("Ulice a číslo"), "a")
+
+    expect(
+      screen.queryByText("Poloha adresy je uložená, akce se ukáže na mapě."),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/Vyberte adresu z nabídky/)).toBeInTheDocument()
+  })
+
+  it("sends the position of the picked address with the event", async () => {
+    const { onSubmit, user } = await renderForm()
+    await pickSuggestedAddress(user)
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+    await user.click(await screen.findByRole("option", { name: "Florbal" }))
+    await user.type(screen.getByLabelText("Název"), "Čtvrteční florbal")
+    setValue("Datum", "2030-01-15")
+    setValue("Čas od", "19:00")
+    setValue("Datum konce", "2030-01-15")
+    setValue("Čas do", "20:30")
+    await continueToNextStep(user)
+    await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
+    await continueToNextStep(user)
+    await screen.findByText("Krok 3 ze 3 · Detaily a zveřejnění")
+    await user.type(screen.getByLabelText("Popis akce"), "Rekreační hra.")
+    await user.click(screen.getByRole("button", { name: "Zveřejnit akci" }))
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: expect.objectContaining({
+          street: "Chabařovická 4",
+          latitude: 50.1297,
+          longitude: 14.4421,
+        }) as unknown,
+      }),
+    )
+  })
+})
+
 describe("EventForm on a desktop", () => {
   beforeEach(() => setViewport(true))
 
@@ -320,6 +431,8 @@ const EXISTING: Event = {
     postalCode: "182 00",
     country: "Česko",
     placeName: "ZŠ Kobylisy",
+    latitude: 50.12,
+    longitude: 14.46,
   },
   activity: { id: "a-florbal", name: "Florbal", icon: "florbal" },
   organizerId: "u1",
