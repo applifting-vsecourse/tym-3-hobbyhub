@@ -53,7 +53,8 @@
     "signUp": {
       "description": "You can complete your profile later.",
       "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
-      "privacyNote": "We check you are 18+ from your date of birth. Date of birth and gender are not public.",
+      "genderNote": "Private, nobody else sees it. Used only for combined event statistics.",
+      "privacyNote": "Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
       "signInLink": "I already have an account · Sign in",
       "submit": "Create account and continue",
       "terms": "I agree to the <terms>terms and privacy policy</terms>.",
@@ -157,6 +158,7 @@
     },
     "fields": {
       "activity": "Activity",
+      "addressSearch": "Find the address",
       "approvalMode": "Approving participants",
       "city": "City",
       "contributionAmount": "Contribution per seat in CZK (optional)",
@@ -183,6 +185,8 @@
       "activityLoading": "Loading activities…",
       "activityPlaceholder": "Choose an activity",
       "address": "Place",
+      "addressHint": "Pick the address from the suggestions so the event shows on the map. The fields below fill in by themselves.",
+      "addressLocated": "The address position is saved, the event will show on the map.",
       "cancel": "Cancel",
       "continue": "Continue",
       "contributionHint": "Information only, nothing is paid through the app.",
@@ -219,19 +223,38 @@
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
+      "inMapArea": "Events in the map area",
       "loadError": "Could not load events",
       "loadMore": "Load more",
       "loading": "Loading events…",
+      "nearMe": {
+        "denied": "Location access is blocked. Allow it in your browser and try again.",
+        "label": "Nearest to me",
+        "unavailable": "We couldn't find your location. Please try again."
+      },
       "reload": "Reload",
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
+      "showAll": "Show all",
       "title": "Events"
     },
     "map": {
-      "placeholder": "The map will be here"
+      "closePreview": "Close preview",
+      "cluster_one": "{{count}} event",
+      "cluster_other": "{{count}} events",
+      "detailOf": "Details of {{title}}",
+      "empty": "No event with a place on the map.",
+      "label": "Events map",
+      "loading": "Loading the map…",
+      "missing": "{{count}} missing",
+      "pinFull": "{{title}}, full",
+      "pinMissing": "{{title}}, {{count}} missing",
+      "unavailable": "The map isn't available right now.",
+      "you": "Your location"
     },
     "online": "Online",
     "placeholders": {
+      "addressSearch": "Start typing a street and town",
       "city": "E.g. Prague 8",
       "contributionAmount": "E.g. 80",
       "contributionNote": "E.g. paid in cash on the spot",
@@ -272,6 +295,16 @@
     "venueType": {
       "PRIVATE_VENUE": "Private premises",
       "PUBLIC_VENUE": "Public place"
+    }
+  },
+  "geo": {
+    "address": {
+      "error": "Couldn't load addresses. Please try again.",
+      "loading": "Looking for addresses…",
+      "minLength_one": "Type at least {{count}} character of the address",
+      "minLength_other": "Type at least {{count}} characters of the address",
+      "noMatch": "No such address found",
+      "search": "Street and number, town"
     }
   },
   "groups": {

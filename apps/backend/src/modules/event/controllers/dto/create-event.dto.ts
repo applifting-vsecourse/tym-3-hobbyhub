@@ -24,6 +24,8 @@ import {
   IsDefined,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsNotEmptyObject,
   IsNumber,
@@ -40,6 +42,19 @@ const trim = ({ value }: { value: unknown }): unknown =>
 // Optional text: whitespace only counts as not filled in.
 const trimToUndefined = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() || undefined : value;
+
+// "" would become the number 0, a point in the Gulf of Guinea: blank is no value.
+// (Read from the raw object: the number conversion has already turned it into 0.)
+const blankToUndefined = ({
+  value,
+  obj,
+  key,
+}: {
+  value: unknown;
+  obj: unknown;
+  key: string;
+}): unknown =>
+  (obj as Record<string, unknown>)[key] === '' ? undefined : value;
 
 export class CreateEventLocationDto {
   @ApiProperty({
@@ -82,6 +97,29 @@ export class CreateEventLocationDto {
   @IsString()
   @CharLength(0, EVENT_PLACE_NAME_MAX_LENGTH)
   placeName?: string;
+
+  // Not verified against the address: until the server geocodes (F-12.3) the
+  // position is what the client's address suggestions found, so it is only as
+  // trustworthy as the client. Coordinates are shown for public venues only.
+  @ApiPropertyOptional({
+    example: 50.1297,
+    minimum: -90,
+    maximum: 90,
+    description:
+      'Position of the address, from the address suggestions; sent with `longitude` or not at all',
+  })
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: 14.4421, minimum: -180, maximum: 180 })
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
 }
 
 export class CreateEventDto {

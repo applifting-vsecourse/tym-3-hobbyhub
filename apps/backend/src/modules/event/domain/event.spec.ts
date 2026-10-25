@@ -101,3 +101,33 @@ describe('foldForSearch', () => {
     expect(foldForSearch('Brno-Žabovřesky')).toBe('brno-zabovresky');
   });
 });
+
+describe('eventRuleViolations: position', () => {
+  const base = {
+    startAt: new Date('2030-01-15T18:00:00Z'),
+    endAt: new Date('2030-01-15T19:00:00Z'),
+    minParticipants: 2,
+    maxParticipants: 4,
+    externalOccupiedSpots: 0,
+  };
+  const now = new Date('2029-01-01T00:00:00Z');
+
+  it('accepts no position and a whole one', () => {
+    expect(eventRuleViolations(base, now)).toEqual([]);
+    expect(
+      eventRuleViolations(
+        { ...base, location: { latitude: 50.1, longitude: 14.4 } },
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([[{ latitude: 50.1 }], [{ longitude: 14.4 }]])(
+    'refuses half a position %j',
+    (location) => {
+      expect(eventRuleViolations({ ...base, location }, now)).toEqual([
+        'POSITION_INCOMPLETE',
+      ]);
+    },
+  );
+});
