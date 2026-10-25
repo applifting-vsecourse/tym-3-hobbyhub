@@ -9,9 +9,9 @@ import {
 } from '@/generated/prisma/client';
 import {
   CreateGroupData,
-  GroupMember,
   GroupRole as DomainGroupRole,
   Group,
+  GroupMember,
   GroupPage,
   MyGroup,
 } from '@/modules/group/domain/group';

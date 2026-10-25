@@ -1,7 +1,7 @@
 import {
   currentMembershipRequestOf,
-  MembershipRequest,
   membershipDecisionViolations,
+  MembershipRequest,
   membershipRuleViolations,
 } from './membership-request';
 

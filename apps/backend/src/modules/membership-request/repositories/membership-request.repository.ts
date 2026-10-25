@@ -137,7 +137,10 @@ export class MembershipRequestRepository {
     at: Date;
   }): Promise<
     | MembershipRequest
-    | Extract<MembershipDecisionViolation, 'NOT_PENDING' | 'APPLICANT_IS_MEMBER'>
+    | Extract<
+        MembershipDecisionViolation,
+        'NOT_PENDING' | 'APPLICANT_IS_MEMBER'
+      >
   > {
     try {
       return await this.prisma.$transaction(async (tx) => {

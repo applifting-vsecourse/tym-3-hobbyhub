@@ -86,9 +86,9 @@ describe('MembershipRequestsService', () => {
       const request = aRequest({ message: 'Ahoj' });
       repository.createPending.mockResolvedValue(request);
 
-      await expect(
-        service.requestMembership(user, 'g1', 'Ahoj'),
-      ).resolves.toBe(request);
+      await expect(service.requestMembership(user, 'g1', 'Ahoj')).resolves.toBe(
+        request,
+      );
       expect(repository.createPending).toHaveBeenCalledWith({
         groupId: 'g1',
         userId: 'u1',
@@ -137,7 +137,7 @@ describe('MembershipRequestsService', () => {
     });
   });
 
-  it("tells the user their current request and whether they may ask", async () => {
+  it('tells the user their current request and whether they may ask', async () => {
     const pending = aRequest();
     const { service } = setup([pending]);
 
