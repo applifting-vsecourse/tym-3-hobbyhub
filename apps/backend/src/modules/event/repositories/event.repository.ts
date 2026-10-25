@@ -345,6 +345,9 @@ export class EventRepository {
     now: Date,
   ): Promise<EventChangeResult> {
     return this.prisma.$transaction(async (tx) => {
+      // Same lock as createApproved and updateEvent: a seat is approved
+      // either before the cancellation or after it, never in between.
+      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
       const { count } = await tx.event.updateMany({
         where: { id, status: EventStatus.PUBLISHED, startAt: { gt: now } },
         data: {

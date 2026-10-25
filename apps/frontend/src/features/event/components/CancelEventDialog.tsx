@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react"
+import { useEffect, useId, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
@@ -71,6 +71,12 @@ export function CancelEventDialog({
     resolver: zodResolver(schema),
     defaultValues: { cancellationReasonId: "", cancellationNote: "" },
   })
+
+  // Every opening starts clean, not with what was typed the last time.
+  const { reset } = form
+  useEffect(() => {
+    if (isOpen) reset({ cancellationReasonId: "", cancellationNote: "" })
+  }, [isOpen, reset])
 
   return (
     <ResponsiveSheet

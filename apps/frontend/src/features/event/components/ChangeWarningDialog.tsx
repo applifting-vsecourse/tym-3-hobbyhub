@@ -54,8 +54,6 @@ export function ChangeWarningDialog({
           </Button>
         </>
       }
-    >
-      {null}
-    </ResponsiveSheet>
+    />
   )
 }

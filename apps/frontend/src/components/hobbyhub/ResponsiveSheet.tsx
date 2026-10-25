@@ -44,7 +44,7 @@ type ResponsiveSheetProps = {
    * little room that a pinned footer covers the field.
    */
   isFooterScrolling?: boolean
-  children: ReactNode
+  children?: ReactNode
 }
 
 /**
@@ -86,7 +86,7 @@ export function ResponsiveSheet({
             {titleRow(DialogTitle)}
             {description ? <DialogDescription>{description}</DialogDescription> : null}
           </DialogHeader>
-          <div className="-mx-6 overflow-y-auto px-6">{children}</div>
+          {children ? <div className="-mx-6 overflow-y-auto px-6">{children}</div> : null}
           {footer ? <DialogFooter className="sm:flex-col">{footer}</DialogFooter> : null}
         </DialogContent>
       </Dialog>
@@ -118,12 +118,16 @@ export function ResponsiveSheet({
           )}
           {description ? <DrawerDescription>{description}</DrawerDescription> : null}
         </DrawerHeader>
-        <div className={cn("overflow-y-auto px-5 pt-3", (!footer || isFooterScrolling) && "pb-6")}>
-          {children}
-          {footer && isFooterScrolling ? (
-            <div className="flex flex-col gap-2 pt-4">{footer}</div>
-          ) : null}
-        </div>
+        {children || (footer && isFooterScrolling) ? (
+          <div
+            className={cn("overflow-y-auto px-5 pt-3", (!footer || isFooterScrolling) && "pb-6")}
+          >
+            {children}
+            {footer && isFooterScrolling ? (
+              <div className="flex flex-col gap-2 pt-4">{footer}</div>
+            ) : null}
+          </div>
+        ) : null}
         {footer && !isFooterScrolling ? <DrawerFooter>{footer}</DrawerFooter> : null}
       </DrawerContent>
     </Drawer>

@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { ChevronLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { BackLink } from "@/components/BackLink"
 import { NotFound } from "@/components/Error/NotFound"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { Seo } from "@/components/Seo"
@@ -35,7 +35,9 @@ const changesWhenOrWhere = (event: Event, input: CreateEventInput) =>
   input.location?.city !== event.location?.city ||
   input.location?.postalCode !== event.location?.postalCode ||
   input.location?.country !== event.location?.country ||
-  (input.location?.placeName ?? null) !== (event.location?.placeName ?? null)
+  (input.location?.placeName ?? null) !== (event.location?.placeName ?? null) ||
+  (input.location?.latitude ?? null) !== (event.location?.latitude ?? null) ||
+  (input.location?.longitude ?? null) !== (event.location?.longitude ?? null)
 
 type Pending = {
   readonly values: CreateEventInput
@@ -176,20 +178,11 @@ function EditEventPage() {
               errorMessage={updateEvent.isError ? t("events.form.updateFailed") : null}
               onSubmit={handleSubmit}
               backLink={
-                <Button
-                  asChild
-                  variant="outline"
-                  size="icon"
-                  className="mb-4 rounded-full md:hidden"
-                >
-                  <Link
-                    to="/events/$eventId"
-                    params={{ eventId }}
-                    aria-label={t("events.edit.back")}
-                  >
-                    <ChevronLeft aria-hidden />
-                  </Link>
-                </Button>
+                <BackLink
+                  to="/events/$eventId"
+                  params={{ eventId }}
+                  label={t("events.edit.back")}
+                />
               }
               cancelAction={
                 <Button

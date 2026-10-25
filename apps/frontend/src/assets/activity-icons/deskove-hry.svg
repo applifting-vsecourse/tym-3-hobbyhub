@@ -1,8 +1,42 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Frame">
-<path id="Vector" d="M17 3.5H7C5.067 3.5 3.5 5.067 3.5 7V17C3.5 18.933 5.067 20.5 7 20.5H17C18.933 20.5 20.5 18.933 20.5 17V7C20.5 5.067 18.933 3.5 17 3.5Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_2" d="M8.5 9.1C8.83137 9.1 9.1 8.83137 9.1 8.5C9.1 8.16863 8.83137 7.9 8.5 7.9C8.16863 7.9 7.9 8.16863 7.9 8.5C7.9 8.83137 8.16863 9.1 8.5 9.1Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_3" d="M12 12.6C12.3314 12.6 12.6 12.3314 12.6 12C12.6 11.6686 12.3314 11.4 12 11.4C11.6686 11.4 11.4 11.6686 11.4 12C11.4 12.3314 11.6686 12.6 12 12.6Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_4" d="M15.5 16.1C15.8314 16.1 16.1 15.8314 16.1 15.5C16.1 15.1686 15.8314 14.9 15.5 14.9C15.1686 14.9 14.9 15.1686 14.9 15.5C14.9 15.8314 15.1686 16.1 15.5 16.1Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
+<svg
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g id="Frame">
+    <path
+      id="Vector"
+      d="M17 3.5H7C5.067 3.5 3.5 5.067 3.5 7V17C3.5 18.933 5.067 20.5 7 20.5H17C18.933 20.5 20.5 18.933 20.5 17V7C20.5 5.067 18.933 3.5 17 3.5Z"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_2"
+      d="M8.5 9.1C8.83137 9.1 9.1 8.83137 9.1 8.5C9.1 8.16863 8.83137 7.9 8.5 7.9C8.16863 7.9 7.9 8.16863 7.9 8.5C7.9 8.83137 8.16863 9.1 8.5 9.1Z"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_3"
+      d="M12 12.6C12.3314 12.6 12.6 12.3314 12.6 12C12.6 11.6686 12.3314 11.4 12 11.4C11.6686 11.4 11.4 11.6686 11.4 12C11.4 12.3314 11.6686 12.6 12 12.6Z"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      id="Vector_4"
+      d="M15.5 16.1C15.8314 16.1 16.1 15.8314 16.1 15.5C16.1 15.1686 15.8314 14.9 15.5 14.9C15.1686 14.9 14.9 15.1686 14.9 15.5C14.9 15.8314 15.1686 16.1 15.5 16.1Z"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
 </svg>

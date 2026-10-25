@@ -149,8 +149,7 @@ describeDb('event schema constraints', () => {
     ).rejects.toThrow(constraint);
   });
 
-  // The VARCHAR(500) column and the event_cancellation_note_length CHECK say the
-  // same thing; whichever fires first, the database refuses a longer note.
+  // The limit lives in the VARCHAR(500) column; a CHECK would repeat it.
   it.each([
     [500, true],
     [501, false],
