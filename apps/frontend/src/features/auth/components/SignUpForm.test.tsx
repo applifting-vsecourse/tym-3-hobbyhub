@@ -42,6 +42,15 @@ describe("SignUpForm", () => {
     expect(link).toHaveAttribute("target", "_blank")
   })
 
+  it("explains the birth date and gender right at their fields", async () => {
+    renderForm()
+
+    expect(await screen.findByLabelText("Datum narození")).toHaveAccessibleDescription(
+      /ověření věku 18\+/,
+    )
+    expect(screen.getByLabelText("Pohlaví")).toHaveAccessibleDescription(/soukromý údaj/i)
+  })
+
   it("asks for gender, birth date and consent", async () => {
     const onSubmit = renderForm()
 

@@ -54,7 +54,8 @@
     "signUp": {
       "description": "Profil doplníte později.",
       "descriptionReturn": "Po registraci se vrátíte k akci. Profil doplníte později.",
-      "privacyNote": "Věk 18+ ověříme z data narození. Datum narození a pohlaví nejsou veřejné.",
+      "genderNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží jen k souhrnným statistikám akcí.",
+      "privacyNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží k ověření věku 18+ a k souhrnným statistikám akcí.",
       "signInLink": "Už mám účet · Přihlásit se",
       "submit": "Vytvořit účet a pokračovat",
       "terms": "Souhlasím s <terms>podmínkami a zásadami ochrany údajů</terms>.",
@@ -161,6 +162,7 @@
     },
     "fields": {
       "activity": "Aktivita",
+      "addressSearch": "Najít adresu",
       "approvalMode": "Schvalování účasti",
       "city": "Město",
       "contributionAmount": "Příspěvek na místo v Kč (nepovinné)",
@@ -187,6 +189,8 @@
       "activityLoading": "Načítáme aktivity…",
       "activityPlaceholder": "Vyberte aktivitu",
       "address": "Místo",
+      "addressHint": "Vyberte adresu z nabídky, ať se akce ukáže na mapě. Pole níže se vyplní samy.",
+      "addressLocated": "Poloha adresy je uložená, akce se ukáže na mapě.",
       "cancel": "Zrušit",
       "continue": "Pokračovat",
       "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
@@ -225,19 +229,39 @@
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
       },
+      "inMapArea": "Akce z oblasti na mapě",
       "loadError": "Akce se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loading": "Načítáme akce…",
+      "nearMe": {
+        "denied": "Polohu nemáme povolenou. Povol ji v prohlížeči a zkus to znovu.",
+        "label": "Nejblíž mně",
+        "unavailable": "Polohu se nepodařilo zjistit. Zkus to prosím znovu."
+      },
       "reload": "Načíst znovu",
       "searchPlaceholder": "Název, místo nebo aktivita",
       "seoTitle": "Akce",
+      "showAll": "Zobrazit všechny",
       "title": "Akce"
     },
     "map": {
-      "placeholder": "Tady bude mapa"
+      "closePreview": "Zavřít náhled",
+      "cluster_few": "{{count}} akce",
+      "cluster_one": "{{count}} akce",
+      "cluster_other": "{{count}} akcí",
+      "detailOf": "Detail akce {{title}}",
+      "empty": "Žádná akce s místem na mapě.",
+      "label": "Mapa akcí",
+      "loading": "Načítáme mapu…",
+      "missing": "chybí {{count}}",
+      "pinFull": "{{title}}, naplněno",
+      "pinMissing": "{{title}}, chybí {{count}}",
+      "unavailable": "Mapu teď nemůžeme zobrazit.",
+      "you": "Tvoje poloha"
     },
     "online": "Online",
     "placeholders": {
+      "addressSearch": "Začněte psát ulici a město",
       "city": "Např. Praha 8",
       "contributionAmount": "Např. 80",
       "contributionNote": "Např. platí se na místě hotově",
@@ -280,6 +304,17 @@
     "venueType": {
       "PRIVATE_VENUE": "Soukromé prostory",
       "PUBLIC_VENUE": "Veřejné místo"
+    }
+  },
+  "geo": {
+    "address": {
+      "error": "Adresy se nepodařilo načíst. Zkuste to prosím znovu.",
+      "loading": "Hledáme adresy…",
+      "minLength_few": "Napište aspoň {{count}} znaky adresy",
+      "minLength_one": "Napište aspoň {{count}} znak adresy",
+      "minLength_other": "Napište aspoň {{count}} znaků adresy",
+      "noMatch": "Taková adresa se nenašla",
+      "search": "Ulice a číslo, město"
     }
   },
   "groups": {
