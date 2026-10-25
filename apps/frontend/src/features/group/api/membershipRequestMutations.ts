@@ -22,12 +22,9 @@ async function withRefusal<T>(send: () => Promise<T>): Promise<T> {
     return await send()
   } catch (error) {
     if (error instanceof HTTPError && error.response.status === 400) {
-      const refusal = membershipRefusalSchema.safeParse(
-        await error.response
-          .clone()
-          .json()
-          .catch(() => null),
-      )
+      // ky has already read the body into `error.data`; the response itself
+      // can no longer be read.
+      const refusal = membershipRefusalSchema.safeParse(error.data)
       if (refusal.success) throw new MembershipRefusedError(refusal.data.violations)
     }
     throw error
