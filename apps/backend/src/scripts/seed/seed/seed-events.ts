@@ -737,4 +737,44 @@ export async function seedEvents(
       ? `Created ${created} example event(s)`
       : 'Example events already exist — nothing to add.',
   );
+
+  await seedExampleGroup(
+    prisma,
+    organizer,
+    others,
+    idOf(activities, 'Florbal'),
+  );
+}
+
+// F-02.5: one public group that organizes "Čtvrteční florbal", so the event
+// links to a group page. Additive like the events: nothing is added twice.
+async function seedExampleGroup(
+  prisma: PrismaService,
+  owner: User,
+  members: User[],
+  activityId: string,
+): Promise<void> {
+  const name = 'Čtvrteční florbalisté';
+  const group =
+    (await prisma.group.findFirst({ where: { name } })) ??
+    (await prisma.group.create({
+      data: {
+        name,
+        description: 'Rekreační florbal každý čtvrtek. Nováčci vítáni.',
+        locationName: 'Praha 8',
+        usualSchedule: 'Čtvrtky 19:00',
+        activityId,
+        memberships: {
+          create: [
+            { userId: owner.id, role: 'OWNER' },
+            ...members.slice(0, 5).map((user) => ({ userId: user.id })),
+          ],
+        },
+      },
+    }));
+
+  await prisma.event.updateMany({
+    where: { title: 'Čtvrteční florbal', groupId: null },
+    data: { groupId: group.id },
+  });
 }

@@ -6,6 +6,7 @@ import { OptionalUserGuard } from '@/shared/auth/guards/optional-user.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -24,7 +25,10 @@ import {
 import { CreateGroupDto } from './dto/create-group.dto';
 import { DiscoverGroupsQueryDto } from './dto/discover-groups.query.dto';
 import { GroupPageResponseDto } from './dto/group-page.response.dto';
-import { GroupResponseDto } from './dto/group.response.dto';
+import {
+  GroupMembershipResponseDto,
+  GroupResponseDto,
+} from './dto/group.response.dto';
 import { MyGroupResponseDto } from './dto/my-group.response.dto';
 import { NearbyGroupsResponseDto } from './dto/nearby-groups.response.dto';
 import { groupsValidationPipe } from './groups-validation.pipe';
@@ -99,17 +103,39 @@ export class GroupsController {
     );
   }
 
+  // Public detail (F-02.5): a visitor needs no account. It shows the member
+  // count, never the members.
   @Get(':id')
-  @UseGuards(AuthenticatedUserGuard)
-  @ApiOperation({ summary: 'Get a group' })
+  @ApiOperation({ summary: 'Get a public group' })
   @ApiResponse({ status: 200, type: GroupResponseDto })
-  @ApiResponse({ status: 401, description: 'Not signed in' })
-  @ApiResponse({ status: 404, description: 'Group not found' })
-  // TODO(F-07.1b #93): every group is public and the list hides cancelled
-  // ones, so this returns any group to anyone signed in. Private groups must
-  // be shown to members only, and a cancelled group needs a decision too.
+  @ApiResponse({ status: 404, description: 'Group not found or not public' })
   async detail(@Param('id') id: string): Promise<GroupResponseDto> {
-    const group = await this.groupsService.getGroup(id);
+    const group = await this.groupsService.getPublicGroup(id);
     return GroupResponseDto.fromDomain(group);
+  }
+
+  @Get(':id/membership')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiOperation({ summary: 'Is the signed-in user a member of the group' })
+  @ApiResponse({ status: 200, type: GroupMembershipResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async membership(
+    @User() user: Identity,
+    @Param('id') id: string,
+  ): Promise<GroupMembershipResponseDto> {
+    const role = await this.groupsService.getMemberRole(id, user.id);
+    return { isMember: role !== null, role };
+  }
+
+  @Delete(':id/membership')
+  @UseGuards(AuthenticatedUserGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'The signed-in user leaves the group' })
+  @ApiResponse({ status: 204, description: 'Left the group' })
+  @ApiResponse({ status: 400, description: 'The owner cannot leave' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 404, description: 'Not a member of the group' })
+  async leave(@User() user: Identity, @Param('id') id: string): Promise<void> {
+    await this.groupsService.leaveGroup(id, user.id);
   }
 }

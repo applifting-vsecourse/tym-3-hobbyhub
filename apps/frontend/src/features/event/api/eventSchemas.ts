@@ -139,6 +139,8 @@ export const eventDetailSchema = eventListItemSchema.extend({
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   approvalMode: z.enum(APPROVAL_MODES),
   organizerName: z.string(),
+  /** The public group that organizes the event, if any. */
+  group: z.object({ id: z.string(), name: z.string() }).nullable(),
   /** Hidden by the server until enough participants are included. */
   stats: participantStatsSchema.nullable(),
   /** Included participants needed before the server shows stats. */

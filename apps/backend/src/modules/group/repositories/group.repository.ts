@@ -9,6 +9,7 @@ import {
 } from '@/generated/prisma/client';
 import {
   CreateGroupData,
+  GroupRole as DomainGroupRole,
   Group,
   GroupPage,
   MyGroup,
@@ -88,6 +89,23 @@ export class GroupRepository {
       include,
     });
     return group ? mapPrismaGroupToDomain(group) : null;
+  }
+
+  async getMemberRole(
+    groupId: string,
+    userId: string,
+  ): Promise<DomainGroupRole | null> {
+    const membership = await this.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+      select: { role: true },
+    });
+    return membership?.role ?? null;
+  }
+
+  async removeMember(groupId: string, userId: string): Promise<void> {
+    await this.prisma.groupMembership.deleteMany({
+      where: { groupId, userId },
+    });
   }
 
   async listGroupsOfUser(userId: string): Promise<MyGroup[]> {
