@@ -40,7 +40,9 @@ function SignUpPage() {
   const handleSubmit = async (values: SignUpFormValues) => {
     setError(null)
     try {
-      await signUp.mutateAsync(values)
+      // The repeated password is only for the form; the server never sees it.
+      const { confirmPassword: _confirmPassword, ...input } = values
+      await signUp.mutateAsync(input)
       await navigate({ to: redirectTarget(from, ROUTES.home) })
     } catch (error) {
       setError(error)

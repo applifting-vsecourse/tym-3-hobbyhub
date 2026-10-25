@@ -17,6 +17,7 @@
     },
     "fields": {
       "birthDate": "Date of birth",
+      "confirmPassword": "Repeat password",
       "email": "Email",
       "gender": "Gender",
       "name": "Name / nickname",
@@ -62,12 +63,14 @@
     },
     "validation": {
       "birthDateRequired": "Pick your date of birth",
+      "confirmPasswordRequired": "Repeat your password",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
       "genderRequired": "Choose your gender",
       "nameRequired": "Enter your name or a nickname",
       "passwordMin": "Password must be at least 8 characters",
       "passwordRequired": "Password is required",
+      "passwordsMismatch": "Passwords do not match",
       "termsRequired": "You need to accept the terms to register",
       "underage": "You must be at least 18 to register"
     }
@@ -684,15 +687,13 @@
     },
     "form": {
       "cancel": "Cancel",
-      "hiddenDetails": "Your contact details and location stay hidden.",
+      "hiddenDetails": "The organizer will not see your contact details, location, age or gender.",
       "messageLabel": "Message to the organizer (optional)",
       "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
       "messageTooLong": "The message can have at most {{count}} characters.",
       "note": "The organizer approves requests by hand. You can withdraw it until they decide.",
       "noteAutomatic": "You get the seat at once, the organizer does not need to approve it.",
       "organizerSees": "The organizer will see",
-      "profileBasic": "Basic profile",
-      "profileVerified": "E-mail verified · basic profile",
       "sendFailed": "Your request could not be sent. Please try again.",
       "sendFailedAutomatic": "The seat could not be taken. Please try again.",
       "submit": "Send request",
@@ -704,6 +705,46 @@
       "close": "Close",
       "text": "The organizer will see that you are coming.",
       "title": "You have a seat"
+    },
+    "manage": {
+      "approveFailed": "The request could not be approved. Please try again.",
+      "approved": "Request approved",
+      "back": "Back to the event",
+      "empty": "No requests yet. They will show up here as soon as someone asks to join.",
+      "emptyAutomatic": "Requests to this event are approved on their own: whoever asks takes a free seat at once.",
+      "loadError": "The requests could not be loaded",
+      "loading": "Loading requests…",
+      "locked": {
+        "EVENT_CANCELLED": "The event was cancelled, requests can no longer be decided.",
+        "EVENT_FINISHED": "The event is over, requests can no longer be decided.",
+        "EVENT_NOT_HELD": "The event did not take place, requests can no longer be decided.",
+        "EVENT_STARTED": "The event has started, requests can no longer be decided."
+      },
+      "missingToMin": "{{count}} missing to the minimum",
+      "more_one": "{{count}} more request",
+      "more_other": "{{count}} more requests",
+      "outcome": {
+        "fills": "Approving fills the event ({{taken}} of {{max}}).",
+        "full": "The event is full, the request can only be rejected.",
+        "minimumReached": "Approving reaches the minimum ({{taken}} of {{min}}).",
+        "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
+        "taken": "After approving, {{taken}} of {{max}} seats are taken."
+      },
+      "refused": {
+        "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
+        "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
+        "NOT_PENDING": "The request is no longer waiting."
+      },
+      "rejectFailed": "The request could not be rejected. Please try again.",
+      "rejected": "Request rejected",
+      "requests": "Requests",
+      "retry": "Try again",
+      "title": "Requests and participants"
+    },
+    "organizer": {
+      "manage": "Requests and participants",
+      "pendingCount_one": "{{count}} pending request",
+      "pendingCount_other": "{{count}} pending requests"
     },
     "pending": {
       "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
@@ -719,6 +760,16 @@
       "HAS_SEAT": "You already have a seat at this event.",
       "IS_ORGANIZER": "You are organizing this event.",
       "REJECTED_BEFORE": "The organizer rejected your request, you cannot send a new one."
+    },
+    "reject": {
+      "cancel": "Keep it waiting",
+      "confirm": "Reject request",
+      "reasonHint": "We keep the reason; the applicant does not see it for now.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "E.g. this time we are looking for beginners",
+      "reasonTooLong": "The reason can have at most {{count}} characters.",
+      "title": "Reject the request?",
+      "warning": "{{name}} will not be able to ask to join this event again."
     },
     "rejected": {
       "description": "The organizer rejected your request, you cannot send a new one for this event."

@@ -24,7 +24,7 @@ const createSchema = (t: TFunction) =>
       .trim()
       .min(1, t("auth.validation.emailRequired"))
       .pipe(z.email(t("auth.validation.emailInvalid"))),
-    password: z.string().trim().min(1, t("auth.validation.passwordRequired")),
+    password: z.string().min(1, t("auth.validation.passwordRequired")),
     rememberMe: z.boolean(),
   })
 

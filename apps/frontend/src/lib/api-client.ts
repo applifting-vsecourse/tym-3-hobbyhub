@@ -1,4 +1,5 @@
 import ky, { HTTPError } from "ky"
+import { z } from "zod"
 
 import { env } from "@/config/env"
 import { queryClient } from "@/config/react-query"
@@ -12,6 +13,9 @@ import { authKeys } from "@/lib/auth-keys"
 //
 // Paths are joined onto `prefix`, and a leading slash is normalised away, so
 // both `api.get("quacks")` and `api.get("/quacks")` hit the same endpoint.
+// What NestJS answers with on a failure, e.g. a refused validation.
+const nestErrorSchema = z.object({ message: z.union([z.string(), z.array(z.string())]) })
+
 export const api = ky.create({
   prefix: env.VITE_API_URL,
   credentials: "include",
@@ -19,17 +23,17 @@ export const api = ky.create({
   hooks: {
     // NestJS returns { message: string | string[] } on validation failures.
     // Without this the user would see ky's generic "Request failed with status
-    // code 400" and never learn what was actually wrong.
+    // code 400" and never learn what was actually wrong. ky has already read
+    // the body into `error.data`; the response itself can no longer be read.
     beforeError: [
-      async ({ error }) => {
+      ({ error }) => {
         if (!(error instanceof HTTPError)) return error
-        try {
-          const body = (await error.response.clone().json()) as { message?: string | string[] }
-          const message = Array.isArray(body.message) ? body.message.join(", ") : body.message
-          if (message) error.message = message
-        } catch {
-          // response had no JSON body — keep ky's default message
-        }
+        const body = nestErrorSchema.safeParse(error.data)
+        // No JSON body with a message: keep ky's default message.
+        if (!body.success) return error
+        const { message } = body.data
+        const text = Array.isArray(message) ? message.join(", ") : message
+        if (text) error.message = text
         return error
       },
     ],
