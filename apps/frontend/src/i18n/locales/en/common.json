@@ -157,6 +157,7 @@
     },
     "fields": {
       "activity": "Activity",
+      "addressSearch": "Find the address",
       "approvalMode": "Approving participants",
       "city": "City",
       "contributionAmount": "Contribution per seat in CZK (optional)",
@@ -183,6 +184,8 @@
       "activityLoading": "Loading activities…",
       "activityPlaceholder": "Choose an activity",
       "address": "Place",
+      "addressHint": "Pick the address from the suggestions so the event shows on the map. The fields below fill in by themselves.",
+      "addressLocated": "The address position is saved, the event will show on the map.",
       "cancel": "Cancel",
       "continue": "Continue",
       "contributionHint": "Information only, nothing is paid through the app.",
@@ -219,19 +222,38 @@
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
+      "inMapArea": "Events in the map area",
       "loadError": "Could not load events",
       "loadMore": "Load more",
       "loading": "Loading events…",
+      "nearMe": {
+        "denied": "Location access is blocked. Allow it in your browser and try again.",
+        "label": "Nearest to me",
+        "unavailable": "We couldn't find your location. Please try again."
+      },
       "reload": "Reload",
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
+      "showAll": "Show all",
       "title": "Events"
     },
     "map": {
-      "placeholder": "The map will be here"
+      "closePreview": "Close preview",
+      "cluster_one": "{{count}} event",
+      "cluster_other": "{{count}} events",
+      "detailOf": "Details of {{title}}",
+      "empty": "No event with a place on the map.",
+      "label": "Events map",
+      "loading": "Loading the map…",
+      "missing": "{{count}} missing",
+      "pinFull": "{{title}}, full",
+      "pinMissing": "{{title}}, {{count}} missing",
+      "unavailable": "The map isn't available right now.",
+      "you": "Your location"
     },
     "online": "Online",
     "placeholders": {
+      "addressSearch": "Start typing a street and town",
       "city": "E.g. Prague 8",
       "contributionAmount": "E.g. 80",
       "contributionNote": "E.g. paid in cash on the spot",
@@ -272,6 +294,16 @@
     "venueType": {
       "PRIVATE_VENUE": "Private premises",
       "PUBLIC_VENUE": "Public place"
+    }
+  },
+  "geo": {
+    "address": {
+      "error": "Couldn't load addresses. Please try again.",
+      "loading": "Looking for addresses…",
+      "minLength_one": "Type at least {{count}} character of the address",
+      "minLength_other": "Type at least {{count}} characters of the address",
+      "noMatch": "No such address found",
+      "search": "Street and number, town"
     }
   },
   "groups": {
