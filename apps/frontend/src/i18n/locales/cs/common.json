@@ -53,8 +53,8 @@
     "signUp": {
       "description": "Profil doplníte později.",
       "descriptionReturn": "Po registraci se vrátíte k akci. Profil doplníte později.",
-      "privacyNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží k ověření věku 18+ a k souhrnným statistikám akcí.",
       "genderNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží jen k souhrnným statistikám akcí.",
+      "privacyNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží k ověření věku 18+ a k souhrnným statistikám akcí.",
       "signInLink": "Už mám účet · Přihlásit se",
       "submit": "Vytvořit účet a pokračovat",
       "terms": "Souhlasím s <terms>podmínkami a zásadami ochrany údajů</terms>.",
