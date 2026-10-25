@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ActivityModule } from './modules/activity/activity.module';
 import { EventModule } from './modules/event/event.module';
 import { GroupModule } from './modules/group/group.module';
+import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { QuackModule } from './modules/quack/quack.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
@@ -19,6 +20,7 @@ const imports = [
   GroupModule,
   EventModule,
   ParticipationRequestModule,
+  MembershipRequestModule,
 ];
 
 @Module({
