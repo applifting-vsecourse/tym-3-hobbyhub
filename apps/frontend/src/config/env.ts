@@ -3,6 +3,11 @@ import { z } from "zod"
 const envSchema = z.object({
   VITE_API_URL: z.string().url(),
   VITE_BETTER_AUTH_URL: z.string().url(),
+  // Public Mapbox token; without it the map says it is unavailable.
+  VITE_MAPBOX_TOKEN: z
+    .string()
+    .optional()
+    .transform((token) => (token === "" ? undefined : token)),
 })
 
 type EnvSchema = z.infer<typeof envSchema>

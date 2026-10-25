@@ -18,6 +18,12 @@ export class EventLocationResponseDto {
   @ApiProperty({ type: String, nullable: true })
   placeName!: string | null;
 
+  @ApiProperty({ type: Number, nullable: true })
+  latitude!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  longitude!: number | null;
+
   static fromDomain(location: EventLocation): EventLocationResponseDto {
     return {
       street: location.street,
@@ -25,6 +31,8 @@ export class EventLocationResponseDto {
       postalCode: location.postalCode,
       country: location.country,
       placeName: location.placeName,
+      latitude: location.latitude,
+      longitude: location.longitude,
     };
   }
 }
