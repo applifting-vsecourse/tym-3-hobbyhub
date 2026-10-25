@@ -629,15 +629,13 @@
     },
     "form": {
       "cancel": "Zrušit",
-      "hiddenDetails": "Kontakt a poloha zůstávají skryté.",
+      "hiddenDetails": "Kontakt, poloha, věk ani pohlaví organizátor neuvidí.",
       "messageLabel": "Zpráva organizátorovi (nepovinné)",
       "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
       "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
       "note": "Organizátor žádost schválí ručně. Zrušit ji můžeš, dokud ji nevyřídí.",
       "noteAutomatic": "Místo získáš hned, organizátor ho nemusí schvalovat.",
       "organizerSees": "Organizátor uvidí",
-      "profileBasic": "Základní profil",
-      "profileVerified": "E-mail ověřen · základní profil",
       "sendFailed": "Žádost se nepodařilo odeslat. Zkus to znovu.",
       "sendFailedAutomatic": "Místo se nepodařilo obsadit. Zkus to znovu.",
       "submit": "Odeslat žádost",
@@ -649,6 +647,48 @@
       "close": "Zavřít",
       "text": "Organizátor uvidí, že jdeš.",
       "title": "Máš místo"
+    },
+    "manage": {
+      "approveFailed": "Žádost se nepodařilo schválit. Zkus to znovu.",
+      "approved": "Žádost schválena",
+      "back": "Zpět na akci",
+      "empty": "Zatím tu nejsou žádné žádosti. Objeví se tu, jakmile o účast někdo požádá.",
+      "emptyAutomatic": "Na téhle akci se žádosti schvalují samy: kdo požádá, rovnou obsadí volné místo.",
+      "loadError": "Žádosti se nepodařilo načíst",
+      "loading": "Načítáme žádosti…",
+      "locked": {
+        "EVENT_CANCELLED": "Akce byla zrušena, žádosti už nejde vyřídit.",
+        "EVENT_FINISHED": "Akce už proběhla, žádosti už nejde vyřídit.",
+        "EVENT_NOT_HELD": "Akce se neuskutečnila, žádosti už nejde vyřídit.",
+        "EVENT_STARTED": "Akce už začala, žádosti už nejde vyřídit."
+      },
+      "missingToMin": "Chybí {{count}} do minima",
+      "more_few": "{{count}} další žádosti",
+      "more_one": "{{count}} další žádost",
+      "more_other": "{{count}} dalších žádostí",
+      "outcome": {
+        "fills": "Po schválení bude akce plná ({{taken}} z {{max}}).",
+        "full": "Akce je plná, žádost jde jen zamítnout.",
+        "minimumReached": "Po schválení bude minimum splněno ({{taken}} z {{min}}).",
+        "missing": "Po schválení: {{taken}} z min. {{min}}, do minima chybí {{count}}.",
+        "taken": "Po schválení bude obsazeno {{taken}} z {{max}}."
+      },
+      "refused": {
+        "APPLICANT_HAS_SEAT": "Žadatel už na akci místo má.",
+        "EVENT_FULL": "Akce se mezitím zaplnila, žádost už nejde schválit.",
+        "NOT_PENDING": "Žádost už není aktuální."
+      },
+      "rejectFailed": "Žádost se nepodařilo zamítnout. Zkus to znovu.",
+      "rejected": "Žádost zamítnuta",
+      "requests": "Žádosti",
+      "retry": "Zkusit znovu",
+      "title": "Žádosti a přehled účastníků"
+    },
+    "organizer": {
+      "manage": "Žádosti a přehled účastníků",
+      "pendingCount_few": "{{count}} čekající žádosti",
+      "pendingCount_one": "{{count}} čekající žádost",
+      "pendingCount_other": "{{count}} čekajících žádostí"
     },
     "pending": {
       "description": "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
@@ -664,6 +704,16 @@
       "HAS_SEAT": "Na akci už máš místo.",
       "IS_ORGANIZER": "Tuto akci pořádáš.",
       "REJECTED_BEFORE": "Organizátor tvou žádost zamítl, novou poslat nemůžeš."
+    },
+    "reject": {
+      "cancel": "Nechat čekat",
+      "confirm": "Zamítnout žádost",
+      "reasonHint": "Důvod si uložíme, žadateli se zatím nezobrazí.",
+      "reasonLabel": "Důvod (nepovinné)",
+      "reasonPlaceholder": "Např. tentokrát hledáme spíš začátečníky",
+      "reasonTooLong": "Důvod může mít nejvýš {{count}} znaků.",
+      "title": "Zamítnout žádost?",
+      "warning": "{{name}} už o tuhle akci nebude moct požádat znovu."
     },
     "rejected": {
       "description": "Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."
