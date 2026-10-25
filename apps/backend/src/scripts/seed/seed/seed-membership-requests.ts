@@ -8,11 +8,10 @@ import {
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-// What applicants write; the last request of each group goes without one, so
-// the admin sees both.
+// What the first applicant of each group writes; the second asks without a
+// message, so the admin sees both.
 const MESSAGES = [
   'Hraju třetí rok za firemní tým a hledám pravidelnou skupinu.',
-  'Ahoj, přistěhoval jsem se nedávno do Prahy a rád bych se přidal.',
 ];
 const REQUESTS_PER_GROUP = 2;
 
