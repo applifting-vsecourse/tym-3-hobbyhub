@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 
@@ -55,6 +56,18 @@ const renderDetail = (isSignedIn: boolean) =>
     </QueryClientProvider>,
   )
 
+// A member who signs out while the page stays open: the cache still holds the
+// membership answer, the session no longer does.
+function SignOutPage() {
+  const [isSignedIn, setIsSignedIn] = useState(true)
+  return (
+    <>
+      <button onClick={() => setIsSignedIn(false)}>test sign out</button>
+      <Page isSignedIn={isSignedIn} />
+    </>
+  )
+}
+
 describe("GroupDetail", () => {
   beforeEach(() => {
     mockMembership.role = null
@@ -85,6 +98,24 @@ describe("GroupDetail", () => {
 
     expect(screen.getByRole("heading", { name: "Nadcházející akce" })).toBeInTheDocument()
     expect(screen.getByText(/Na této funkci právě pracujeme/)).toBeVisible()
+  })
+
+  it("stops showing a member's state once they sign out", async () => {
+    mockMembership.role = "MEMBER"
+    await renderWithRouter(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <SignOutPage />
+      </QueryClientProvider>,
+    )
+    expect(await screen.findByText("Jste členem")).toBeVisible()
+
+    fireEvent.click(screen.getByRole("button", { name: "test sign out" }))
+
+    expect(await screen.findByRole("link", { name: "Požádat o členství" })).toBeVisible()
+    expect(screen.queryByText("Jste členem")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
   })
 
   describe("asking to join", () => {

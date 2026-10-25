@@ -30,9 +30,12 @@ export function useGroupMembershipState(
     onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) }),
   })
   const isSimulatedMember = joinRequest.state === "accepted"
+  // The membership query is off while signed out, but its cached answer stays
+  // (signing out does not clear the cache), so it only counts while signed in.
+  const myMembership = session.isSignedIn ? membership.data : undefined
 
   let view: MembershipView
-  if (joinRequest.state === "accepted" || membership.data?.isMember) view = "member"
+  if (joinRequest.state === "accepted" || myMembership?.isMember) view = "member"
   else if (joinRequest.state === "pending") view = "pending"
   else if (session.isSignedIn) view = membership.isPending ? "loading" : "canRequest"
   else view = session.isPending ? "loading" : "visitor"
@@ -43,7 +46,7 @@ export function useGroupMembershipState(
     request: joinRequest.request,
     cancel: joinRequest.cancel,
     /** The owner stays: a group needs one, and handing it over comes later. */
-    canLeave: view === "member" && (isSimulatedMember || membership.data?.role !== "OWNER"),
+    canLeave: view === "member" && (isSimulatedMember || myMembership?.role !== "OWNER"),
     /** Resolves when the user has left; rejects when the server refuses. */
     leave: async () => {
       // The stand-in membership was never stored, so there is nothing to delete.

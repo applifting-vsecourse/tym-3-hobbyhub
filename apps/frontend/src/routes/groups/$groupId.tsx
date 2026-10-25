@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next"
 import { ROUTES } from "@/app/routes"
 import { BackLink } from "@/components/BackLink"
 import { NotFound } from "@/components/Error/NotFound"
-import { Header } from "@/components/Header/Header"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { Seo } from "@/components/Seo"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -13,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { HTTPError } from "@/lib/api-client"
 
 import { activityName } from "@/features/activity/activityName"
-import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
+import { AppShell } from "@/features/auth/components/AppShell"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
@@ -45,8 +44,9 @@ function GroupDetailPage() {
     return (
       <>
         <Seo title={t("groups.detail.title")} />
-        <Header userMenu={<HeaderMenu />} />
-        <NotFound />
+        <AppShell>
+          <NotFound />
+        </AppShell>
       </>
     )
   }
@@ -54,8 +54,7 @@ function GroupDetailPage() {
   return (
     <>
       <Seo title={groupQuery.data?.name ?? t("groups.detail.title")} />
-      <Header userMenu={<HeaderMenu />} />
-      <main className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
+      <AppShell className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
         {user ? (
           <BackLink
             to={ROUTES.groups}
@@ -95,7 +94,7 @@ function GroupDetailPage() {
             from={encodeRedirectUri(location)}
           />
         )}
-      </main>
+      </AppShell>
     </>
   )
 }
