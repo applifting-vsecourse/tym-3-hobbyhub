@@ -5,6 +5,7 @@ import {
   Group,
   GroupPage,
   GroupRole,
+  isPubliclyVisible,
   MyGroup,
   NEARBY_GROUPS_LIMIT,
   NearbyGroups,
@@ -43,7 +44,7 @@ export class GroupsService {
   // TODO(F-07.1b #93): a private group is shown to its members.
   async getPublicGroup(id: string): Promise<Group> {
     const group = await this.groupRepository.getGroupById(id);
-    if (!group || group.visibility !== 'PUBLIC' || group.status !== 'ACTIVE') {
+    if (!group || !isPubliclyVisible(group)) {
       throw new NotFoundException('Group not found');
     }
     return group;
