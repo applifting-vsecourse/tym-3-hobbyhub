@@ -211,7 +211,14 @@ const valuesOfEvent = (event: Event): FormValues => {
     placeName: event.location?.placeName ?? "",
     latitude: event.location?.latitude ?? null,
     longitude: event.location?.longitude ?? null,
-    positionOf: event.location?.latitude != null ? addressKey({ street: event.location.street, city: event.location.city, postalCode: event.location.postalCode }) : "",
+    positionOf:
+      event.location?.latitude != null
+        ? addressKey({
+            street: event.location.street,
+            city: event.location.city,
+            postalCode: event.location.postalCode,
+          })
+        : "",
     minParticipants: event.minParticipants,
     maxParticipants: event.maxParticipants,
     externalOccupiedSpots: event.externalOccupiedSpots,

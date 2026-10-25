@@ -108,11 +108,13 @@
       "description": "Akci už nepůjde upravit ani znovu otevřít. Přihlášky účastníků zůstanou, jak jsou.",
       "done": "Akce je zrušená.",
       "failed": "Akci se nepodařilo zrušit. Zkuste to prosím znovu.",
-      "note": "Poznámka (nepovinné)",
+      "note": "Zpráva pro účastníky (nepovinné)",
       "notePlaceholder": "Například co se stalo nebo kdy akci uspořádáte znovu",
-      "reason": "Důvod zrušení",
+      "reason": "Důvod",
       "reasonPlaceholder": "Vyberte důvod",
       "reasonRequired": "Vyberte důvod zrušení",
+      "reasonsFailed": "Důvody zrušení se nepodařilo načíst.",
+      "reasonsRetry": "Zkusit znovu",
       "submit": "Zrušit akci",
       "title": "Zrušit akci?"
     },
@@ -180,6 +182,7 @@
       "title": "Detail akce"
     },
     "edit": {
+      "back": "Zpět na detail akce",
       "locked": "Akce už začala nebo je zrušená, proto se nedá měnit.",
       "lockedTitle": "Akci už nejde upravit"
     },

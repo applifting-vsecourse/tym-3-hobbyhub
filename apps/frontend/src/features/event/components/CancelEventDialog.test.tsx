@@ -1,8 +1,18 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { CancelEventDialog } from "@/features/event/components/CancelEventDialog"
+
+// jsdom has no matchMedia; pretend to be a desktop so the sheet renders as a dialog.
+beforeAll(() => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: true,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }))
+})
 
 const REASONS = [
   { id: "r1", name: "Nepříznivé počasí" },
@@ -17,6 +27,8 @@ const renderDialog = (props: Partial<Parameters<typeof CancelEventDialog>[0]> = 
       onOpenChange={vi.fn()}
       reasons={REASONS}
       isReasonsLoading={false}
+      isReasonsError={false}
+      onRetryReasons={vi.fn()}
       isSubmitting={false}
       onSubmit={onSubmit}
       {...props}
@@ -38,9 +50,9 @@ describe("CancelEventDialog", () => {
   it("sends the chosen reason with the trimmed note", async () => {
     const { onSubmit, user } = renderDialog()
 
-    await user.click(screen.getByRole("combobox", { name: "Důvod zrušení" }))
+    await user.click(screen.getByRole("combobox", { name: "Důvod" }))
     await user.click(await screen.findByRole("option", { name: "Nepříznivé počasí" }))
-    await user.type(screen.getByLabelText("Poznámka (nepovinné)"), "  Hala je zavřená ")
+    await user.type(screen.getByLabelText("Zpráva pro účastníky (nepovinné)"), "  Hala je zavřená ")
     await user.click(screen.getByRole("button", { name: "Zrušit akci" }))
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -52,7 +64,7 @@ describe("CancelEventDialog", () => {
   it("leaves the note out when it is empty", async () => {
     const { onSubmit, user } = renderDialog()
 
-    await user.click(screen.getByRole("combobox", { name: "Důvod zrušení" }))
+    await user.click(screen.getByRole("combobox", { name: "Důvod" }))
     await user.click(await screen.findByRole("option", { name: "Nedostatek účastníků" }))
     await user.click(screen.getByRole("button", { name: "Zrušit akci" }))
 
@@ -65,9 +77,9 @@ describe("CancelEventDialog", () => {
   it("refuses a note over 500 characters", async () => {
     const { onSubmit, user } = renderDialog()
 
-    await user.click(screen.getByRole("combobox", { name: "Důvod zrušení" }))
+    await user.click(screen.getByRole("combobox", { name: "Důvod" }))
     await user.click(await screen.findByRole("option", { name: "Nepříznivé počasí" }))
-    await user.click(screen.getByLabelText("Poznámka (nepovinné)"))
+    await user.click(screen.getByLabelText("Zpráva pro účastníky (nepovinné)"))
     await user.paste("x".repeat(501))
     await user.click(screen.getByRole("button", { name: "Zrušit akci" }))
 

@@ -287,6 +287,34 @@ describe('EventsService', () => {
       ).resolves.toEqual(event);
     });
 
+    it('refuses an address sent as null for an event at a place', async () => {
+      const { repository, service } = setup();
+      repository.getEventById.mockResolvedValue(anEvent());
+
+      await expect(
+        service.updateEvent(organizer, 'e1', {
+          ...input(),
+          location: null as unknown as undefined,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.updateEvent).not.toHaveBeenCalled();
+    });
+
+    it('refuses an address for an online event', async () => {
+      const { repository, service } = setup();
+      repository.getEventById.mockResolvedValue(
+        anEvent({ venueType: 'ONLINE', location: null }),
+      );
+
+      await expect(
+        service.updateEvent(organizer, 'e1', {
+          ...input(),
+          venueType: 'ONLINE',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.updateEvent).not.toHaveBeenCalled();
+    });
+
     it('refuses turning an online event into a place', async () => {
       const { repository, service } = setup();
       repository.getEventById.mockResolvedValue(

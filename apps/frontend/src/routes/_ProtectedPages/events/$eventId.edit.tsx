@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { ChevronLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -24,9 +25,12 @@ export const Route = createFileRoute("/_ProtectedPages/events/$eventId/edit")({
 })
 
 // Whether the participants would be surprised: another time or another place.
+const minuteOf = (date: Date | string) => Math.floor(new Date(date).getTime() / 60_000)
+
+// The form works to the minute, so seconds stored in the event are not a change.
 const changesWhenOrWhere = (event: Event, input: CreateEventInput) =>
-  input.startAt !== event.startAt.toISOString() ||
-  input.endAt !== event.endAt.toISOString() ||
+  minuteOf(input.startAt) !== minuteOf(event.startAt) ||
+  minuteOf(input.endAt) !== minuteOf(event.endAt) ||
   input.location?.street !== event.location?.street ||
   input.location?.city !== event.location?.city ||
   input.location?.postalCode !== event.location?.postalCode ||
@@ -171,6 +175,22 @@ function EditEventPage() {
               isSubmitting={updateEvent.isPending}
               errorMessage={updateEvent.isError ? t("events.form.updateFailed") : null}
               onSubmit={handleSubmit}
+              backLink={
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  className="mb-4 rounded-full md:hidden"
+                >
+                  <Link
+                    to="/events/$eventId"
+                    params={{ eventId }}
+                    aria-label={t("events.edit.back")}
+                  >
+                    <ChevronLeft aria-hidden />
+                  </Link>
+                </Button>
+              }
               cancelAction={
                 <Button
                   asChild

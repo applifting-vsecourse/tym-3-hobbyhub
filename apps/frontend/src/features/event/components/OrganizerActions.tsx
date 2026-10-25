@@ -55,6 +55,8 @@ export function OrganizerActions({ event }: OrganizerActionsProps) {
         onOpenChange={setIsCancelOpen}
         reasons={reasonsQuery.data ?? []}
         isReasonsLoading={reasonsQuery.isPending}
+        isReasonsError={reasonsQuery.isError}
+        onRetryReasons={() => void reasonsQuery.refetch()}
         isSubmitting={cancelEvent.isPending}
         errorMessage={cancelEvent.isError ? t("events.cancel.failed") : null}
         onSubmit={handleCancel}

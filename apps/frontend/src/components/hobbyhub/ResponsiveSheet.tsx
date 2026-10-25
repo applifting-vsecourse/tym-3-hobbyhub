@@ -48,8 +48,9 @@ type ResponsiveSheetProps = {
 }
 
 /**
- * Spodní panel — a bottom drawer on phones, a dialog from `md` up. Use it for
- * secondary tasks that keep the page underneath: filters, sharing an event.
+ * Spodní panel — a bottom drawer on phones, a dialog from `md` up. Every modal
+ * in a feature goes through it: a confirmation, a short form, filters, sharing
+ * an event. Never use the kit's `Dialog` on its own.
  */
 export function ResponsiveSheet({
   isOpen,

@@ -149,6 +149,25 @@ describeDb('event schema constraints', () => {
     ).rejects.toThrow(constraint);
   });
 
+  // The VARCHAR(500) column and the event_cancellation_note_length CHECK say the
+  // same thing; whichever fires first, the database refuses a longer note.
+  it.each([
+    [500, true],
+    [501, false],
+  ])(
+    'a cancellation note of %i characters is accepted: %s',
+    async (length, ok) => {
+      const write = inRolledBackTransaction(async (tx) => {
+        const { data } = await baseEvent(tx);
+        await tx.event.create({
+          data: { ...data, cancellationNote: 'x'.repeat(length) },
+        });
+      });
+      if (ok) await write;
+      else await expect(write).rejects.toThrow();
+    },
+  );
+
   it('accepts an online event without an address', async () => {
     await inRolledBackTransaction(async (tx) => {
       const { data } = await baseEvent(tx);

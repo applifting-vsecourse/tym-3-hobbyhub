@@ -108,11 +108,13 @@
       "description": "The event can no longer be edited or reopened. Participants’ requests stay as they are.",
       "done": "The event is cancelled.",
       "failed": "Could not cancel the event. Please try again.",
-      "note": "Note (optional)",
+      "note": "Message for participants (optional)",
       "notePlaceholder": "For example what happened or when you will hold it again",
-      "reason": "Reason for cancelling",
+      "reason": "Reason",
       "reasonPlaceholder": "Choose a reason",
       "reasonRequired": "Choose a reason for cancelling",
+      "reasonsFailed": "Could not load the reasons for cancelling.",
+      "reasonsRetry": "Try again",
       "submit": "Cancel event",
       "title": "Cancel the event?"
     },
@@ -178,6 +180,7 @@
       "title": "Event detail"
     },
     "edit": {
+      "back": "Back to the event",
       "locked": "The event has started or was cancelled, so it cannot be changed.",
       "lockedTitle": "This event can no longer be edited"
     },

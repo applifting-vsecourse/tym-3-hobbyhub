@@ -1,14 +1,7 @@
 import { useTranslation } from "react-i18next"
 
+import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 type ChangeWarningDialogProps = {
   readonly isOpen: boolean
@@ -32,37 +25,37 @@ export function ChangeWarningDialog({
   const { t } = useTranslation()
 
   return (
-    <Dialog
-      open={isOpen}
+    <ResponsiveSheet
+      isOpen={isOpen}
       onOpenChange={(isOpen) => {
         // Escape while the save runs would give up on a request already sent.
         if (!isOpen && !isSubmitting) onBack()
       }}
-    >
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>{t("events.changeWarning.title")}</DialogTitle>
-          <DialogDescription>
-            {t("events.changeWarning.description", { count: approvedCount })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
+      title={t("events.changeWarning.title")}
+      description={t("events.changeWarning.description", { count: approvedCount })}
+      footer={
+        <>
           <Button
             type="button"
-            variant="outline"
-            onClick={onBack}
-          >
-            {t("events.changeWarning.back")}
-          </Button>
-          <Button
-            type="button"
+            className="w-full"
             disabled={isSubmitting}
             onClick={onConfirm}
           >
             {t("events.changeWarning.confirm")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isSubmitting}
+            onClick={onBack}
+          >
+            {t("events.changeWarning.back")}
+          </Button>
+        </>
+      }
+    >
+      {null}
+    </ResponsiveSheet>
   )
 }
