@@ -10,7 +10,7 @@ import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
 import { AppForm } from "@/components/form/AppForm"
-import { ActivityAvatar } from "@/components/hobbyhub/ActivityAvatar"
+import { JoinRequestApplicant } from "@/components/hobbyhub/JoinRequestCard"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea"
 
 import {
   PARTICIPATION_REQUEST_MESSAGE_MAX,
+  type ApplicantProfile,
   type ApprovalMode,
 } from "@/features/participation-request/api/participationRequestSchemas"
 import { JoinRefusedError } from "@/features/participation-request/api/requestToJoin"
@@ -39,12 +40,6 @@ export type RequestedEvent = {
   taken: number
   min: number
   max: number
-}
-
-/** What the organizer learns about the applicant. */
-export type Applicant = {
-  name: string
-  isEmailVerified: boolean
 }
 
 /**
@@ -90,7 +85,7 @@ type FormValues = z.infer<ReturnType<typeof createSchema>>
 type RequestFormProps = {
   formId: string
   event: RequestedEvent
-  applicant: Applicant
+  applicant: ApplicantProfile
   approvalMode: ApprovalMode
   isPending: boolean
   errorMessage: string | null
@@ -123,22 +118,13 @@ function RequestForm({
         <h3 className="typo-small text-muted-foreground">
           {t("participationRequests.form.organizerSees")}
         </h3>
-        <div className="flex items-center gap-3">
-          <ActivityAvatar
-            avatar="open"
-            size="md"
-          />
-          <div className="flex min-w-0 flex-col">
-            <p className="typo-title text-foreground">{applicant.name}</p>
-            <p className="typo-small text-muted-foreground">
-              {t(
-                applicant.isEmailVerified
-                  ? "participationRequests.form.profileVerified"
-                  : "participationRequests.form.profileBasic",
-              )}
-            </p>
-          </div>
-        </div>
+        {/* The same block the organizer's list shows (F-05.7). */}
+        <JoinRequestApplicant
+          name={applicant.name}
+          photo={applicant.image}
+          hasVerifiedEmail={applicant.hasVerifiedEmail}
+          bio={applicant.bio}
+        />
         <p className="typo-small text-muted-foreground">
           {t("participationRequests.form.hiddenDetails")}
         </p>
@@ -215,7 +201,8 @@ function SentView({
 type ParticipationRequestSheetProps = {
   eventId: string
   event: RequestedEvent
-  applicant: Applicant
+  /** What the organizer will see of the applicant. */
+  applicant: ApplicantProfile
   /** AUTOMATIC takes the seat on sending (F-05.5); MANUAL waits for the organizer. */
   approvalMode: ApprovalMode
   /** Which step is open; null when the sheet is closed. */

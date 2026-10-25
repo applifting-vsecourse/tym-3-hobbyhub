@@ -2,6 +2,7 @@ import {
   eventChangeViolations,
   eventRuleViolations,
   foldForSearch,
+  isOrganizerOf,
   occupancyOf,
 } from '@/modules/event/domain/event';
 
@@ -36,6 +37,19 @@ describe('occupancyOf', () => {
         approvedCount: 0,
       }),
     ).toMatchObject({ missingToMinimum: 0, fillState });
+  });
+});
+
+describe('isOrganizerOf', () => {
+  const event = { organizerIds: ['organizer', 'co-organizer'] };
+
+  it.each(['organizer', 'co-organizer'])('lets the %s run the event', (id) => {
+    expect(isOrganizerOf(event, id)).toBe(true);
+  });
+
+  it('keeps anyone else out', () => {
+    expect(isOrganizerOf(event, 'stranger')).toBe(false);
+    expect(isOrganizerOf({ organizerIds: [] }, 'organizer')).toBe(false);
   });
 });
 
