@@ -10,6 +10,12 @@ import { MembershipRequestsService } from './membership-requests.service';
 const user = { id: 'u1' } as Identity;
 const admin = { id: 'admin' } as Identity;
 const now = new Date('2030-01-01T12:00:00Z');
+const applicant = {
+  name: 'Fresh Duckling',
+  image: null,
+  bio: 'Florbal hraju od školy.',
+  hasVerifiedEmail: true,
+};
 
 const aGroup = (overrides: Partial<Group> = {}): Group => ({
   id: 'g1',
@@ -73,6 +79,7 @@ describe('MembershipRequestsService', () => {
     groups.getManagedGroup.mockResolvedValue(aGroup());
     groups.getMemberRole.mockResolvedValue(null);
     repository.getRequestsOf.mockResolvedValue(requests);
+    repository.getApplicantProfile.mockResolvedValue(applicant);
     return {
       repository,
       groups,
@@ -137,14 +144,16 @@ describe('MembershipRequestsService', () => {
     });
   });
 
-  it('tells the user their current request and whether they may ask', async () => {
+  it('tells the user their current request, whether they may ask and what admins see of them', async () => {
     const pending = aRequest();
-    const { service } = setup([pending]);
+    const { repository, service } = setup([pending]);
 
     await expect(service.getMyRequestState(user, 'g1')).resolves.toEqual({
       request: pending,
       violations: ['ALREADY_REQUESTED'],
+      applicant,
     });
+    expect(repository.getApplicantProfile).toHaveBeenCalledWith('u1');
   });
 
   describe('withdrawing', () => {

@@ -56,6 +56,8 @@ export function useGroupMembershipState(
     isAdmin: hasGroupAdminRights(myMembership?.role),
     /** The owner stays: a group needs one, and handing it over comes later (#94). */
     canLeave: view === "member" && myMembership?.role !== "OWNER",
+    /** What the server says the admins will see of the user; undefined until known. */
+    applicant: myRequestState?.applicant,
     /** Resolves when the user has left; rejects when the server refuses. */
     leave: () => leaveMutation.mutateAsync(),
     isLeaving: leaveMutation.isPending,

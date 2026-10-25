@@ -446,8 +446,6 @@
         "messageLabel": "Zpráva organizátorovi (nepovinné)",
         "messagePlaceholder": "Např. Hraju třetí rok za firemní tým a hledám pravidelnou skupinu.",
         "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
-        "profileBasic": "Jméno",
-        "profileVerified": "Jméno a ověřený e-mail",
         "sendFailed": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
         "submit": "Odeslat žádost",
         "title": "Žádost o členství"

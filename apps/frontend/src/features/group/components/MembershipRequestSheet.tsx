@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
-import { ActivityAvatar } from "@/components/hobbyhub/ActivityAvatar"
+import { JoinRequestApplicant } from "@/components/hobbyhub/JoinRequestCard"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -17,7 +17,10 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Textarea } from "@/components/ui/textarea"
 
 import { MembershipRefusedError } from "@/features/group/api/membershipRequestMutations"
-import { MEMBERSHIP_REQUEST_MESSAGE_MAX } from "@/features/group/api/membershipRequestSchemas"
+import {
+  MEMBERSHIP_REQUEST_MESSAGE_MAX,
+  type ApplicantProfile,
+} from "@/features/group/api/membershipRequestSchemas"
 import {
   useRequestMembership,
   useWithdrawMembershipRequest,
@@ -25,12 +28,6 @@ import {
 
 /** `form` asks, `sent` confirms a request waiting for the admins, `withdraw` confirms taking it back. */
 export type MembershipSheetStep = "form" | "sent" | "withdraw"
-
-/** What the group's admins learn about the applicant. */
-export type MembershipApplicant = {
-  name: string
-  isEmailVerified: boolean
-}
 
 // Characters as the server and the database count them: code points, so an
 // emoji is one, and a line break is one too. `trim()` is the server's as well.
@@ -53,7 +50,7 @@ type FormValues = z.infer<ReturnType<typeof createSchema>>
 
 type RequestFormProps = {
   formId: string
-  applicant: MembershipApplicant
+  applicant: ApplicantProfile
   isPending: boolean
   errorMessage: string | null
   onSubmit: (message: string | undefined) => Promise<void>
@@ -73,22 +70,13 @@ function RequestForm({ formId, applicant, isPending, errorMessage, onSubmit }: R
         <h3 className="typo-small text-muted-foreground">
           {t("groups.membershipRequest.form.adminSees")}
         </h3>
-        <div className="flex items-center gap-3">
-          <ActivityAvatar
-            avatar="open"
-            size="md"
-          />
-          <div className="flex min-w-0 flex-col">
-            <p className="typo-title text-foreground">{applicant.name}</p>
-            <p className="typo-small text-muted-foreground">
-              {t(
-                applicant.isEmailVerified
-                  ? "groups.membershipRequest.form.profileVerified"
-                  : "groups.membershipRequest.form.profileBasic",
-              )}
-            </p>
-          </div>
-        </div>
+        {/* The same block the admins' list of requests shows. */}
+        <JoinRequestApplicant
+          name={applicant.name}
+          photo={applicant.image}
+          hasVerifiedEmail={applicant.hasVerifiedEmail}
+          bio={applicant.bio}
+        />
         <p className="typo-small text-muted-foreground">
           {t("groups.membershipRequest.form.hiddenDetails")}
         </p>
@@ -130,7 +118,8 @@ function RequestForm({ formId, applicant, isPending, errorMessage, onSubmit }: R
 
 type MembershipRequestSheetProps = {
   groupId: string
-  applicant: MembershipApplicant
+  /** What the admins will see of the applicant. */
+  applicant: ApplicantProfile
   /** Which step is open; null when the sheet is closed. */
   step: MembershipSheetStep | null
   onStepChange: (step: MembershipSheetStep | null) => void

@@ -74,6 +74,15 @@ export class MembershipRequestRepository {
     return request ? mapToDomain(request) : null;
   }
 
+  // What the admins will see of the person, so the request form can show it.
+  async getApplicantProfile(userId: string): Promise<ApplicantProfile> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: applicantSelect,
+    });
+    return mapApplicant(user);
+  }
+
   // The requests waiting on the group, oldest first, so none is forgotten.
   async getPendingRequests(
     groupId: string,

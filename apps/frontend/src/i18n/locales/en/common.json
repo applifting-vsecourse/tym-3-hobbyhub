@@ -437,8 +437,6 @@
         "messageLabel": "Message to the organizer (optional)",
         "messagePlaceholder": "E.g. I have played for a company team for three years and am looking for a regular group.",
         "messageTooLong": "The message can have at most {{count}} characters.",
-        "profileBasic": "Your name",
-        "profileVerified": "Your name and verified e-mail",
         "sendFailed": "Your request could not be sent. Please try again.",
         "submit": "Send request",
         "title": "Request membership"

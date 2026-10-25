@@ -56,29 +56,6 @@ export class MembershipRequestResponseDto {
   }
 }
 
-export class MyMembershipRequestStateResponseDto {
-  @ApiProperty({ type: MembershipRequestResponseDto, nullable: true })
-  request!: MembershipRequestResponseDto | null;
-
-  @ApiProperty({
-    enum: MEMBERSHIP_RULE_VIOLATIONS,
-    isArray: true,
-    description: 'Why a new request is refused now; empty when it is allowed',
-  })
-  violations!: MembershipRuleViolation[];
-
-  static fromDomain(
-    state: MyMembershipRequestState,
-  ): MyMembershipRequestStateResponseDto {
-    return {
-      request: state.request
-        ? MembershipRequestResponseDto.fromDomain(state.request)
-        : null,
-      violations: state.violations,
-    };
-  }
-}
-
 export class ApplicantProfileResponseDto {
   @ApiProperty()
   name!: string;
@@ -98,6 +75,36 @@ export class ApplicantProfileResponseDto {
       image: applicant.image,
       bio: applicant.bio,
       hasVerifiedEmail: applicant.hasVerifiedEmail,
+    };
+  }
+}
+
+export class MyMembershipRequestStateResponseDto {
+  @ApiProperty({ type: MembershipRequestResponseDto, nullable: true })
+  request!: MembershipRequestResponseDto | null;
+
+  @ApiProperty({
+    enum: MEMBERSHIP_RULE_VIOLATIONS,
+    isArray: true,
+    description: 'Why a new request is refused now; empty when it is allowed',
+  })
+  violations!: MembershipRuleViolation[];
+
+  @ApiProperty({
+    type: ApplicantProfileResponseDto,
+    description: "What the group's admins will see of the user",
+  })
+  applicant!: ApplicantProfileResponseDto;
+
+  static fromDomain(
+    state: MyMembershipRequestState,
+  ): MyMembershipRequestStateResponseDto {
+    return {
+      request: state.request
+        ? MembershipRequestResponseDto.fromDomain(state.request)
+        : null,
+      violations: state.violations,
+      applicant: ApplicantProfileResponseDto.fromDomain(state.applicant),
     };
   }
 }

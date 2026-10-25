@@ -52,7 +52,17 @@ vi.mock("@/features/group/api/groupMembershipQueryOptions", () => ({
 vi.mock("@/features/group/api/membershipRequestQueryOptions", () => ({
   myMembershipRequestQueryOptions: (id: string, userId: string) => ({
     queryKey: ["groups", "detail", id, "my-request", userId],
-    queryFn: () => Promise.resolve({ request: server.request, violations: server.violations }),
+    queryFn: () =>
+      Promise.resolve({
+        request: server.request,
+        violations: server.violations,
+        applicant: {
+          name: "Fresh Duckling",
+          image: null,
+          bio: "Florbal hraju od školy.",
+          hasVerifiedEmail: true,
+        },
+      }),
   }),
   pendingMembershipRequestsQueryOptions: (id: string) => ({
     queryKey: ["groups", "detail", id, "requests"],
@@ -147,7 +157,14 @@ function Page({ userId }: { userId: string | null }) {
       {userId ? (
         <MembershipRequestSheet
           groupId={group.id}
-          applicant={{ name: "Fresh Duckling", isEmailVerified: true }}
+          applicant={
+            membership.applicant ?? {
+              name: "Session Name",
+              image: null,
+              bio: null,
+              hasVerifiedEmail: false,
+            }
+          }
           step={step}
           onStepChange={setStep}
         />
@@ -224,7 +241,10 @@ describe("GroupDetail", () => {
       await user.click(await requestButton())
       expect(screen.getByText(/Organizátor žádost schválí ručně/)).toBeVisible()
       const dialog = await screen.findByRole("dialog")
+      // What the admins will see, as the server says: name, verified e-mail, bio.
       expect(within(dialog).getByText("Fresh Duckling")).toBeVisible()
+      expect(within(dialog).getByText("Ověřený e-mail")).toBeVisible()
+      expect(within(dialog).getByText("Florbal hraju od školy.")).toBeVisible()
       await user.type(within(dialog).getByLabelText(/Zpráva organizátorovi/), "  Ahoj  ")
       await user.click(within(dialog).getByRole("button", { name: "Odeslat žádost" }))
 

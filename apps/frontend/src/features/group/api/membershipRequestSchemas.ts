@@ -36,17 +36,19 @@ export const membershipRequestSchema = z.object({
   requestedAt: z.coerce.date(),
 })
 
-export const myMembershipRequestStateSchema = z.object({
-  request: membershipRequestSchema.nullable(),
-  violations: z.array(membershipRuleViolationSchema),
-})
-
 /** What the admins see of the person asking. */
 export const applicantSchema = z.object({
   name: z.string(),
   image: z.string().nullable(),
   bio: z.string().nullable(),
   hasVerifiedEmail: z.boolean(),
+})
+
+export const myMembershipRequestStateSchema = z.object({
+  request: membershipRequestSchema.nullable(),
+  violations: z.array(membershipRuleViolationSchema),
+  /** What the admins will see of the user; the request form shows them the same. */
+  applicant: applicantSchema,
 })
 
 export const pendingMembershipRequestSchema = membershipRequestSchema.extend({
@@ -70,5 +72,6 @@ export type MembershipRequest = z.infer<typeof membershipRequestSchema>
 export type MembershipRuleViolation = z.infer<typeof membershipRuleViolationSchema>
 export type MembershipDecisionViolation = z.infer<typeof membershipDecisionViolationSchema>
 export type MyMembershipRequestState = z.infer<typeof myMembershipRequestStateSchema>
+export type ApplicantProfile = z.infer<typeof applicantSchema>
 export type PendingMembershipRequest = z.infer<typeof pendingMembershipRequestSchema>
 export type GroupMember = z.infer<typeof groupMemberSchema>

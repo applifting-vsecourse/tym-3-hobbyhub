@@ -1,6 +1,7 @@
 import { Group } from '@/modules/group/domain/group';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import {
+  ApplicantProfile,
   currentMembershipRequestOf,
   MembershipDecisionViolation,
   membershipDecisionViolations,
@@ -45,6 +46,8 @@ export type MyMembershipRequestState = {
   request: MembershipRequest | null;
   // Empty when they may ask to join now.
   violations: MembershipRuleViolation[];
+  // What the admins see of them, so the request form can show it.
+  applicant: ApplicantProfile;
 };
 
 @Injectable()
@@ -59,13 +62,15 @@ export class MembershipRequestsService {
     groupId: string,
   ): Promise<MyMembershipRequestState> {
     await this.groupsService.getPublicGroup(groupId);
-    const [role, requests] = await Promise.all([
+    const [role, requests, applicant] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
+      this.repository.getApplicantProfile(user.id),
     ]);
     return {
       request: currentMembershipRequestOf(requests),
       violations: membershipRuleViolations(role, requests),
+      applicant,
     };
   }
 

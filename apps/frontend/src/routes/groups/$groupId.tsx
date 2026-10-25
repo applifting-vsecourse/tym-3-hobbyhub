@@ -144,7 +144,16 @@ function GroupDetailPage() {
         {user ? (
           <MembershipRequestSheet
             groupId={groupId}
-            applicant={{ name: user.name, isEmailVerified: user.emailVerified }}
+            // What the server says the admins will see; the session's own
+            // fields stand in while it loads or when it failed.
+            applicant={
+              membership.applicant ?? {
+                name: user.name,
+                image: null,
+                bio: null,
+                hasVerifiedEmail: user.emailVerified,
+              }
+            }
             step={sheetStep}
             onStepChange={setSheetStep}
           />
