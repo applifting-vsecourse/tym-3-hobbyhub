@@ -30,6 +30,12 @@ export type Group = {
   memberCount: number;
 };
 
+// F-02.5: who may see a group's public page. Anything else is shown as "not
+// found" (or left out of an event), so nobody can tell it exists.
+export const isPubliclyVisible = (
+  group: Pick<Group, 'visibility' | 'status'>,
+): boolean => group.visibility === 'PUBLIC' && group.status === 'ACTIVE';
+
 export type CreateGroupData = {
   name: string;
   activityId: string;
