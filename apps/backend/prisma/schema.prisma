@@ -217,6 +217,7 @@ model Group {
   activity    Activity          @relation(fields: [activityId], references: [id])
   activityId  String
   memberships GroupMembership[]
+  events      Event[]
 
   @@index([activityId])
   @@map("group")
@@ -318,9 +319,14 @@ model Event {
   cancellationNote      String?                @db.VarChar(500)
   participations        Participation[]
   participationRequests ParticipationRequest[]
+  // F-02.5: the group that organizes the event; optional, set to null when
+  // the group is deleted.
+  group                 Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  groupId               String?
 
   @@index([organizerId])
   @@index([activityId])
+  @@index([groupId])
   @@index([status, visibility, startAt])
   @@map("event")
 }

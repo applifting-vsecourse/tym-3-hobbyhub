@@ -34,6 +34,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   organizerName: "Jana Nováková",
   cancellationReason: null,
   cancellationNote: null,
+  group: null,
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1, unknown: 1 } },
   statsMinParticipants: 3,
   ...overrides,

@@ -23,6 +23,8 @@ type EventDetailProps = {
   joinAction: ReactNode
   /** Edit and cancel, for the organizer of an event that has not started. */
   organizerActions?: ReactNode
+  /** Link to the group that organizes the event; absent when none does. */
+  groupLink?: ReactNode
   /**
    * The signed-in person's own place (their request, their seat, their event).
    * Shown instead of the free seat, whatever state the event is in, so a
@@ -63,6 +65,7 @@ export function EventDetail({
   activityLabel,
   joinAction,
   organizerActions,
+  groupLink,
   ownRequest,
   now = new Date(),
 }: EventDetailProps) {
@@ -189,6 +192,7 @@ export function EventDetail({
         <p className="typo-small text-muted-foreground">
           {t("events.detail.organizer", { name: event.organizerName })}
         </p>
+        {groupLink}
         {organizerActions}
       </header>
 

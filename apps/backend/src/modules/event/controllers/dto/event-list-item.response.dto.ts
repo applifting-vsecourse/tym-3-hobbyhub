@@ -150,6 +150,14 @@ export class ParticipantStatsResponseDto {
   }
 }
 
+class EventGroupResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+}
+
 export class EventDetailResponseDto extends EventListItemResponseDto {
   @ApiProperty()
   description!: string;
@@ -188,6 +196,13 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   cancellationNote!: string | null;
 
   @ApiProperty({
+    type: EventGroupResponseDto,
+    nullable: true,
+    description: 'The public group that organizes the event, if any',
+  })
+  group!: EventGroupResponseDto | null;
+
+  @ApiProperty({
     type: ParticipantStatsResponseDto,
     nullable: true,
     description: 'Hidden until enough participants are included',
@@ -212,6 +227,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       organizerId: event.organizerId,
       cancellationReason: event.cancellationReason,
       cancellationNote: event.cancellationNote,
+      group: event.group,
       stats: event.stats
         ? ParticipantStatsResponseDto.fromDomain(event.stats)
         : null,

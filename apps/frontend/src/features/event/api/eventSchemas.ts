@@ -162,6 +162,8 @@ export const eventDetailSchema = eventListItemSchema.extend({
   /** Lets the page offer editing to the organizer. */
   organizerId: z.string(),
   organizerName: z.string(),
+  /** The public group that organizes the event, if any. */
+  group: z.object({ id: z.string(), name: z.string() }).nullable(),
   cancellationReason: z.string().nullable(),
   cancellationNote: z.string().nullable(),
   /** Hidden by the server until enough participants are included. */

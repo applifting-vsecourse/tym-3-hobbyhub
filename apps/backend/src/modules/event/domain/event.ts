@@ -381,6 +381,8 @@ export type EventDetail = EventListItem & {
   organizerName: string;
   cancellationReason: string | null;
   cancellationNote: string | null;
+  // The group that organizes the event; only a public, active one is linked.
+  group: { id: string; name: string } | null;
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;

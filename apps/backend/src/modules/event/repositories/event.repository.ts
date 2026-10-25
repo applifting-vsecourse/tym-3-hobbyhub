@@ -26,6 +26,7 @@ import {
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
+import { isPubliclyVisible } from '@/modules/group/domain/group';
 import { Injectable } from '@nestjs/common';
 
 // Approved participations are the only ones that take a seat (ADR-0009).
@@ -435,6 +436,9 @@ export class EventRepository {
         level: true,
         cancellationReason: true,
         organizer: { select: { id: true, name: true } },
+        group: {
+          select: { id: true, name: true, visibility: true, status: true },
+        },
         participations: {
           where: { status: { in: LIST_TAKEN_STATUSES } },
           select: { user: { select: { birthDate: true, gender: true } } },
@@ -464,6 +468,11 @@ export class EventRepository {
       organizerName: event.organizer.name,
       cancellationReason: event.cancellationReason?.name ?? null,
       cancellationNote: event.cancellationNote,
+      // A private or cancelled group has no public page to link to.
+      group:
+        event.group && isPubliclyVisible(event.group)
+          ? { id: event.group.id, name: event.group.name }
+          : null,
       stats: computeParticipantStats(
         participants,
         event.startAt,
