@@ -17,6 +17,7 @@
     },
     "fields": {
       "birthDate": "Date of birth",
+      "confirmPassword": "Repeat password",
       "email": "Email",
       "gender": "Gender",
       "name": "Name / nickname",
@@ -62,12 +63,14 @@
     },
     "validation": {
       "birthDateRequired": "Pick your date of birth",
+      "confirmPasswordRequired": "Repeat your password",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
       "genderRequired": "Choose your gender",
       "nameRequired": "Enter your name or a nickname",
       "passwordMin": "Password must be at least 8 characters",
       "passwordRequired": "Password is required",
+      "passwordsMismatch": "Passwords do not match",
       "termsRequired": "You need to accept the terms to register",
       "underage": "You must be at least 18 to register"
     }
