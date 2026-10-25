@@ -328,10 +328,6 @@
       "members_one": "{{count}} člen",
       "members_other": "{{count}} členů",
       "membership": {
-        "cancel": "Odvolat žádost",
-        "countdown_few": "Za {{count}} sekundy budete členem skupiny.",
-        "countdown_one": "Za {{count}} sekundu budete členem skupiny.",
-        "countdown_other": "Za {{count}} sekund budete členem skupiny.",
         "hasAccount": "Už máte účet?",
         "isMember": "Jste členem",
         "leave": "Odejít ze skupiny",
@@ -340,11 +336,13 @@
         "leaveStay": "Zůstat ve skupině",
         "leaveText": "Přestanete být členem skupiny {{name}}. Znovu se můžete přidat pomocí žádosti o členství.",
         "leaveTitle": "Opravdu chcete odejít ze skupiny?",
+        "pendingText": "Žádost čeká, až ji organizátor skupiny vyřídí.",
+        "rejectedText": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde.",
         "request": "Požádat o členství",
-        "requestNote": "Žádost se zatím vyřizuje automaticky. Do té doby ji můžete odvolat.",
-        "sent": "Žádost odeslána",
+        "requestNote": "Organizátor žádost schválí ručně. Žádost čeká bez lhůty.",
         "signIn": "Přihlásit se",
-        "title": "Členství"
+        "title": "Členství",
+        "withdraw": "Zrušit žádost"
       },
       "title": "Detail skupiny",
       "upcoming": {
@@ -398,6 +396,78 @@
       "visibility": {
         "PRIVATE": "Soukromá",
         "PUBLIC": "Veřejná"
+      }
+    },
+    "manage": {
+      "adminTitle": "Správa skupiny",
+      "approved": "{{name}} je teď členem skupiny.",
+      "back": "Zpět na skupinu",
+      "decideFailed": "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      "loadError": "Nepodařilo se načíst",
+      "loading": "Načítáme…",
+      "membersEmpty": "Skupina zatím nemá žádné členy.",
+      "membersLink": "Zobrazit všechny členy",
+      "membersMore": "+{{count}}",
+      "membersTitle": "Členové ({{count}})",
+      "outcome_few": "Po schválení budou {{count}} členové.",
+      "outcome_one": "Po schválení bude {{count}} člen.",
+      "outcome_other": "Po schválení bude {{count}} členů.",
+      "refused": {
+        "APPLICANT_IS_MEMBER": "Žadatel už je členem skupiny.",
+        "GROUP_CANCELLED": "Skupina je zrušená, žádosti už vyřídit nejde.",
+        "NOT_PENDING": "Žádost mezitím vyřídil jiný správce, nebo ji žadatel zrušil."
+      },
+      "reject": {
+        "cancel": "Zpět",
+        "confirm": "Zamítnout",
+        "reasonHint": "Důvod si uložíme. Žadatel ho uvidí, až bude přehled jeho žádostí.",
+        "reasonLabel": "Důvod (nepovinné)",
+        "reasonPlaceholder": "Např. Skupina je teď plná.",
+        "reasonTooLong": "Důvod může mít nejvýš {{count}} znaků.",
+        "text": "{{name}} uvidí zamítnutí na stránce skupiny a do této skupiny už znovu požádat nemůže.",
+        "title": "Zamítnout žádost?"
+      },
+      "rejected": "Žádost zamítnuta",
+      "requestsEmpty": "Žádné žádosti o členství nečekají na vyřízení.",
+      "requestsLink": "Žádosti o členství ({{count}})",
+      "retry": "Zkusit znovu",
+      "tabs": {
+        "members": "Členové {{count}}",
+        "requests": "Žádosti {{count}}"
+      },
+      "tabsLabel": "Členové a žádosti",
+      "title": "Správa členů"
+    },
+    "membershipRequest": {
+      "form": {
+        "adminSees": "Organizátor skupiny uvidí",
+        "cancel": "Zrušit",
+        "hiddenDetails": "Datum narození, kontakt ani adresu neuvidí.",
+        "messageLabel": "Zpráva organizátorovi (nepovinné)",
+        "messagePlaceholder": "Např. Hraju třetí rok za firemní tým a hledám pravidelnou skupinu.",
+        "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+        "sendFailed": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
+        "submit": "Odeslat žádost",
+        "title": "Žádost o členství"
+      },
+      "refused": {
+        "ALREADY_REQUESTED": "O členství v této skupině už jste požádali.",
+        "IS_MEMBER": "Už jste členem této skupiny.",
+        "REJECTED_BEFORE": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde."
+      },
+      "sent": {
+        "close": "Hotovo",
+        "text": "Organizátor skupiny ji uvidí a rozhodne. Jak dopadla, uvidíte tady na stránce skupiny.",
+        "title": "Žádost odeslána",
+        "withdraw": "Zrušit žádost"
+      },
+      "withdraw": {
+        "confirm": "Zrušit žádost",
+        "done": "Žádost zrušena",
+        "failed": "Žádost se nepodařilo zrušit. Zkuste to prosím znovu.",
+        "keep": "Nechat žádost",
+        "text": "Žádost můžete zrušit, dokud ji organizátor nevyřídí. Přestane ji vidět a o členství můžete později požádat znovu.",
+        "title": "Zrušit žádost o členství?"
       }
     },
     "placeholders": {

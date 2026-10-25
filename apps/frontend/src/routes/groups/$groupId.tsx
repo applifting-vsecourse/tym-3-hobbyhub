@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useLocation } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
@@ -16,7 +17,18 @@ import { AppShell } from "@/features/auth/components/AppShell"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
+import {
+  groupMembersQueryOptions,
+  pendingMembershipRequestsQueryOptions,
+} from "@/features/group/api/membershipRequestQueryOptions"
+import { GroupAdminPanel } from "@/features/group/components/GroupAdminPanel"
 import { GroupDetail } from "@/features/group/components/GroupDetail"
+import { GroupMembershipPanel } from "@/features/group/components/GroupMembershipPanel"
+import { GroupMembersPreview } from "@/features/group/components/GroupMembersPreview"
+import {
+  MembershipRequestSheet,
+  type MembershipSheetStep,
+} from "@/features/group/components/MembershipRequestSheet"
 import { useGroupMembershipState } from "@/features/group/hooks/useGroupMembershipState"
 
 export const Route = createFileRoute("/groups/$groupId")({
@@ -24,17 +36,29 @@ export const Route = createFileRoute("/groups/$groupId")({
 })
 
 // Public detail (F-02.5): outside the protected pages, so a visitor can open it
-// from an event.
+// from an event. A signed-in user asks to join right here (F-07.3), and the
+// group's admins see the requests and members.
 function GroupDetailPage() {
   const { groupId } = Route.useParams()
   const { t } = useTranslation()
   const location = useLocation()
   const { user, isPending: isSessionPending } = useSession()
   const membership = useGroupMembershipState(groupId, {
-    isSignedIn: user !== null,
+    userId: user?.id ?? null,
     isPending: isSessionPending,
   })
   const groupQuery = useQuery(groupQueryOptions(groupId))
+  const requestsQuery = useQuery({
+    ...pendingMembershipRequestsQueryOptions(groupId),
+    enabled: membership.isAdmin,
+  })
+  const membersQuery = useQuery({
+    ...groupMembersQueryOptions(groupId),
+    enabled: membership.isAdmin,
+  })
+  // The sheet lives here, not in the panel: sending a request swaps the button
+  // for the pending request, and the sheet has to survive that.
+  const [sheetStep, setSheetStep] = useState<MembershipSheetStep | null>(null)
 
   if (
     groupQuery.isError &&
@@ -90,10 +114,50 @@ function GroupDetailPage() {
           <GroupDetail
             group={groupQuery.data}
             activityLabel={activityName(t, groupQuery.data.activity)}
-            membership={membership}
-            from={encodeRedirectUri(location)}
+            membershipPanel={
+              <GroupMembershipPanel
+                membership={membership}
+                groupName={groupQuery.data.name}
+                from={encodeRedirectUri(location)}
+                onRequest={() => setSheetStep("form")}
+                onWithdraw={() => setSheetStep("withdraw")}
+              />
+            }
+            adminPanel={
+              membership.isAdmin ? (
+                <GroupAdminPanel
+                  groupId={groupId}
+                  pendingCount={requestsQuery.data?.length}
+                />
+              ) : undefined
+            }
+            membersPreview={
+              membership.isAdmin && membersQuery.data ? (
+                <GroupMembersPreview
+                  groupId={groupId}
+                  members={membersQuery.data}
+                />
+              ) : undefined
+            }
           />
         )}
+        {user ? (
+          <MembershipRequestSheet
+            groupId={groupId}
+            // What the server says the admins will see; the session's own
+            // fields stand in while it loads or when it failed.
+            applicant={
+              membership.applicant ?? {
+                name: user.name,
+                image: null,
+                bio: null,
+                hasVerifiedEmail: user.emailVerified,
+              }
+            }
+            step={sheetStep}
+            onStepChange={setSheetStep}
+          />
+        ) : null}
       </AppShell>
     </>
   )

@@ -11,6 +11,7 @@ import {
   CreateGroupData,
   GroupRole as DomainGroupRole,
   Group,
+  GroupMember,
   GroupPage,
   MyGroup,
 } from '@/modules/group/domain/group';
@@ -100,6 +101,23 @@ export class GroupRepository {
       select: { role: true },
     });
     return membership?.role ?? null;
+  }
+
+  // F-07.3: the owner first, then admins and members, each by who joined
+  // first. The `group_role` enum sorts in that order.
+  async listMembers(groupId: string): Promise<GroupMember[]> {
+    const memberships = await this.prisma.groupMembership.findMany({
+      where: { groupId },
+      include: { user: { select: { name: true, image: true } } },
+      orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
+    });
+    return memberships.map((membership) => ({
+      userId: membership.userId,
+      name: membership.user.name,
+      image: membership.user.image,
+      role: membership.role,
+      joinedAt: membership.joinedAt,
+    }));
   }
 
   async removeMember(groupId: string, userId: string): Promise<void> {

@@ -109,6 +109,50 @@ describe('GroupsService', () => {
     expect(repository.getMemberRole).toHaveBeenCalledWith('g1', 'u1');
   });
 
+  describe('managing a group (F-07.3)', () => {
+    const user = { id: 'u1' } as Identity;
+
+    it.each(['OWNER', 'ADMIN'] as const)(
+      'gives a %s the group they manage',
+      async (role) => {
+        const { repository, service } = setup();
+        const group = aGroup();
+        repository.getGroupById.mockResolvedValue(group);
+        repository.getMemberRole.mockResolvedValue(role);
+
+        await expect(service.getManagedGroup('g1', user)).resolves.toBe(group);
+      },
+    );
+
+    it.each([
+      ['a member', 'MEMBER' as const],
+      ['someone outside the group', null],
+    ])('answers %s with not found', async (_name, role) => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue(role);
+
+      await expect(service.getManagedGroup('g1', user)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('lists the members to an admin only', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('MEMBER');
+
+      await expect(service.listMembers('g1', user)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(repository.listMembers).not.toHaveBeenCalled();
+
+      repository.getMemberRole.mockResolvedValue('ADMIN');
+      repository.listMembers.mockResolvedValue([]);
+      await expect(service.listMembers('g1', user)).resolves.toEqual([]);
+    });
+  });
+
   it('lets a member leave', async () => {
     const { repository, service } = setup();
     repository.getMemberRole.mockResolvedValue('MEMBER');
