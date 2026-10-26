@@ -250,6 +250,52 @@ describe('EventRepository.getPublicEventSeatFacts', () => {
   });
 });
 
+describe('EventRepository.getEventFacts', () => {
+  const row = {
+    id: 'e1',
+    status: 'PUBLISHED',
+    startAt: new Date('2030-01-01T18:00:00Z'),
+    endAt: new Date('2030-01-01T20:00:00Z'),
+    approvalMode: 'MANUAL',
+    minParticipants: 4,
+    maxParticipants: 5,
+    externalOccupiedSpots: 2,
+    organizerId: 'organizer',
+    coOrganizers: [{ id: 'co-organizer' }],
+    participations: [{ userId: 'u1' }],
+  };
+
+  // The organizer runs a hidden or private event too (F-05.2).
+  it('reads the event whatever its visibility', async () => {
+    const findUnique = jest.fn().mockResolvedValue(row);
+    const prisma = { event: { findUnique } } as unknown as PrismaService;
+
+    await expect(
+      new EventRepository(prisma).getEventFacts('e1'),
+    ).resolves.toEqual({
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: row.startAt,
+      endAt: row.endAt,
+      approvalMode: 'MANUAL',
+      organizerIds: ['organizer', 'co-organizer'],
+      freeSpots: 2,
+    });
+    expect(findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'e1' } }),
+    );
+  });
+
+  it('is null for an event that does not exist', async () => {
+    const findUnique = jest.fn().mockResolvedValue(null);
+    const prisma = { event: { findUnique } } as unknown as PrismaService;
+
+    await expect(
+      new EventRepository(prisma).getEventFacts('e1'),
+    ).resolves.toBeNull();
+  });
+});
+
 describe('EventRepository: guarded writes', () => {
   const now = new Date('2029-12-31T10:00:00Z');
   // Where the fake transaction ends: after the write, which is all these tests look at.
