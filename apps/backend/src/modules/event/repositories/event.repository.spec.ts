@@ -5,7 +5,12 @@ import { EventRepository, mapPrismaEventToListItem } from './event.repository';
 const anEvent = (
   overrides: Partial<Event> = {},
   participations = 4,
-  level: Level | null = { id: 'l1', name: 'Pokročilí', order: 3 },
+  level: Level | null = {
+    id: 'l1',
+    name: 'Pokročilí',
+    order: 3,
+    isSkillLevel: true,
+  },
 ): Parameters<typeof mapPrismaEventToListItem>[0] =>
   ({
     id: 'e1',

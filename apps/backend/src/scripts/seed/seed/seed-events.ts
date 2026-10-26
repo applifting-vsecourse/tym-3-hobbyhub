@@ -90,7 +90,12 @@ export async function seedLookups(prisma: PrismaService): Promise<void> {
     await prisma.level.upsert({
       where: { name },
       update: {},
-      create: { name, order: index + 1 },
+      // "Všechny úrovně" describes an event, not how well a person plays.
+      create: {
+        name,
+        order: index + 1,
+        isSkillLevel: name !== 'Všechny úrovně',
+      },
     });
   }
 
