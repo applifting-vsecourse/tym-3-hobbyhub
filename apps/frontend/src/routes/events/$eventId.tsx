@@ -19,6 +19,7 @@ import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import { EventDetail } from "@/features/event/components/EventDetail"
+import { OrganizerActions } from "@/features/event/components/OrganizerActions"
 import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
@@ -158,6 +159,14 @@ function EventDetailPage() {
                     {eventQuery.data.group.name}
                   </Link>
                 </p>
+              ) : null
+            }
+            organizerActions={
+              // F-05.10: only the organizer, and only until the event starts.
+              user?.id === eventQuery.data.organizerId &&
+              eventQuery.data.status === "PUBLISHED" &&
+              eventQuery.data.startAt > new Date() ? (
+                <OrganizerActions event={eventQuery.data} />
               ) : null
             }
             ownRequest={

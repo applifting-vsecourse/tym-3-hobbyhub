@@ -109,7 +109,9 @@ export class ParticipationRequestsService {
       eventId,
       userId: user.id,
       message,
+      at: now,
     });
+    if (typeof request === 'string') throw violationsError([request]);
     if (!request) throw violationsError(['ALREADY_REQUESTED']);
     return request;
   }

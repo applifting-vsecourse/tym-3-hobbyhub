@@ -61,7 +61,7 @@ export type JoinRuleViolation =
   | 'ALREADY_REQUESTED'
   | 'REJECTED_BEFORE';
 
-type EventStateViolation =
+export type EventStateViolation =
   'EVENT_CANCELLED' | 'EVENT_NOT_HELD' | 'EVENT_FINISHED' | 'EVENT_STARTED';
 
 // Why the organizer cannot decide a request now (F-05.7). APPLICANT_HAS_SEAT
@@ -73,7 +73,7 @@ export type Decision = 'APPROVE' | 'REJECT';
 
 // The states the event detail tells apart, decided the same way. Null while
 // the event is still ahead.
-const eventStateViolation = (
+export const eventStateViolation = (
   event: Pick<EventFacts, 'status' | 'startAt' | 'endAt'>,
   now: Date,
 ): EventStateViolation | null => {

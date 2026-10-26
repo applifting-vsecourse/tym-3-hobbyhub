@@ -339,6 +339,8 @@ model Event {
   copies                Event[]                @relation("EventCopies")
   cancellationReason    CancellationReason?    @relation(fields: [cancellationReasonId], references: [id])
   cancellationReasonId  String?
+  // F-05.10 optional words of the organizer next to the reason.
+  cancellationNote      String?                @db.VarChar(500)
   participations        Participation[]
   participationRequests ParticipationRequest[]
   // F-02.5: the group that organizes the event; optional, set to null when

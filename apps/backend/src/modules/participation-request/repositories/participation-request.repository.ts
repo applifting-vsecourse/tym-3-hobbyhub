@@ -9,6 +9,8 @@ import { occupancyOf, Page } from '@/modules/event/domain/event';
 import {
   ApplicantProfile,
   DecisionRuleViolation,
+  EventStateViolation,
+  eventStateViolation,
   JoinRuleViolation,
   ParticipationRequest,
   PendingRequestPage,
@@ -57,6 +59,21 @@ const lockEvent = (
   eventId: string,
 ): Promise<unknown> =>
   tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${eventId} FOR UPDATE`;
+
+// Why the locked event takes no new people at `at`, or null while it is open.
+// The service read the event before the lock; it may have been cancelled or
+// started since.
+const eventClosed = async (
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  at: Date,
+): Promise<EventStateViolation | null> => {
+  const event = await tx.event.findUniqueOrThrow({
+    where: { id: eventId },
+    select: { status: true, startAt: true, endAt: true },
+  });
+  return eventStateViolation(event, at);
+};
 
 // Why the person cannot take a seat on the locked event, or null when they can.
 const seatRefusal = async (
@@ -174,21 +191,30 @@ export class ParticipationRequestRepository {
   // Null when the person already has a pending request on the event: the
   // partial unique index `participation_request_one_pending_key` settles two
   // requests sent at the same moment, which a read before the write cannot.
+  // The event row is locked first, like in createApproved, so a request cannot
+  // slip in after the event was cancelled or started; the reason comes back
+  // instead of a request then.
   async createPending(data: {
     eventId: string;
     userId: string;
     message?: string;
-  }): Promise<ParticipationRequest | null> {
+    at: Date;
+  }): Promise<ParticipationRequest | null | EventStateViolation> {
     try {
-      const request = await this.prisma.participationRequest.create({
-        data: {
-          eventId: data.eventId,
-          userId: data.userId,
-          message: data.message ?? null,
-          status: RequestStatus.PENDING,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        await lockEvent(tx, data.eventId);
+        const closed = await eventClosed(tx, data.eventId, data.at);
+        if (closed) return closed;
+        const request = await tx.participationRequest.create({
+          data: {
+            eventId: data.eventId,
+            userId: data.userId,
+            message: data.message ?? null,
+            status: RequestStatus.PENDING,
+          },
+        });
+        return mapToDomain(request);
       });
-      return mapToDomain(request);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -201,18 +227,23 @@ export class ParticipationRequestRepository {
   }
 
   // F-05.5: the approved request and the seat it takes, in one transaction.
-  // Returns the reason instead of a request when the seat went meanwhile, or
-  // the person got one in another window.
+  // Returns the reason instead of a request when the seat went meanwhile, the
+  // person got one in another window, or the event closed (cancelled, started)
+  // since the service read it.
   async createApproved(data: {
     eventId: string;
     userId: string;
     message?: string;
     at: Date;
   }): Promise<
-    ParticipationRequest | Extract<JoinRuleViolation, 'EVENT_FULL' | 'HAS_SEAT'>
+    | ParticipationRequest
+    | Extract<JoinRuleViolation, 'EVENT_FULL' | 'HAS_SEAT'>
+    | EventStateViolation
   > {
     return this.prisma.$transaction(async (tx) => {
       await lockEvent(tx, data.eventId);
+      const closed = await eventClosed(tx, data.eventId, data.at);
+      if (closed) return closed;
       const refusal = await seatRefusal(tx, data.eventId, data.userId);
       if (refusal) return refusal;
 
@@ -243,11 +274,16 @@ export class ParticipationRequestRepository {
     | ParticipationRequest
     | Extract<
         DecisionRuleViolation,
-        'EVENT_FULL' | 'NOT_PENDING' | 'APPLICANT_HAS_SEAT'
+        | 'EVENT_FULL'
+        | 'NOT_PENDING'
+        | 'APPLICANT_HAS_SEAT'
+        | EventStateViolation
       >
   > {
     return this.prisma.$transaction(async (tx) => {
       await lockEvent(tx, data.eventId);
+      const closed = await eventClosed(tx, data.eventId, data.at);
+      if (closed) return closed;
       const request = await tx.participationRequest.findFirst({
         where: { id: data.requestId, eventId: data.eventId },
       });

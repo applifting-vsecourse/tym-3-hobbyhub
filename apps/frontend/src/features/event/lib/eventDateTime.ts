@@ -11,6 +11,15 @@ export function combineDateTime(date: string, time: string): Date | null {
   return Number.isNaN(value.getTime()) ? null : value
 }
 
+/** The `yyyy-mm-dd` and `HH:mm` of the native inputs, in the local time zone. */
+export function splitDateTime(value: Date): { date: string; time: string } {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return {
+    date: `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`,
+    time: `${pad(value.getHours())}:${pad(value.getMinutes())}`,
+  }
+}
+
 /** "čt 15. 10." — the short day of the preview card. */
 export function formatEventDay(date: Date, locale: string) {
   return new Intl.DateTimeFormat(locale, {
