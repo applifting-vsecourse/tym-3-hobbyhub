@@ -101,7 +101,17 @@ describe('ParticipationRequestsService', () => {
         eventId: 'e1',
         userId: 'u1',
         message: 'Ahoj',
+        at: now,
       });
+    });
+
+    it('says why when the event closed during the write', async () => {
+      const { repository, service } = setup();
+      repository.createPending.mockResolvedValue('EVENT_CANCELLED');
+
+      await expect(
+        service.requestToJoin(user, 'e1', undefined, now),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('refuses a full event and says why', async () => {

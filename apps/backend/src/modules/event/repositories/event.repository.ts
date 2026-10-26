@@ -8,8 +8,10 @@ import {
   Level as PrismaLevel,
 } from '@/generated/prisma/client';
 import {
+  CancelEventData,
   CreateEventData,
   Event,
+  EventChangeResult,
   EventDetail,
   EventFacts,
   EventListFilter,
@@ -22,6 +24,7 @@ import {
   MIN_STATS_PARTICIPANTS,
   occupancyOf,
   Page,
+  UpdateEventData,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
 import { isPubliclyVisible } from '@/modules/group/domain/group';
@@ -30,6 +33,7 @@ import { Injectable } from '@nestjs/common';
 // Approved participations are the only ones that take a seat (ADR-0009).
 const include = {
   activity: true,
+  cancellationReason: true,
   _count: {
     select: {
       participations: { where: { status: ParticipationStatus.APPROVED } },
@@ -39,6 +43,7 @@ const include = {
 
 type PrismaEventWithRelations = PrismaEvent & {
   activity: PrismaActivity;
+  cancellationReason: { name: string } | null;
   _count: { participations: number };
 };
 
@@ -267,7 +272,10 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
     defaultMinParticipants: event.activity.defaultMinParticipants,
     defaultMaxParticipants: event.activity.defaultMaxParticipants,
   },
+  approvalMode: event.approvalMode,
   organizerId: event.organizerId,
+  cancellationReason: event.cancellationReason?.name ?? null,
+  cancellationNote: event.cancellationNote,
   ...occupancyOf({
     minParticipants: event.minParticipants,
     maxParticipants: event.maxParticipants,
@@ -313,6 +321,97 @@ export class EventRepository {
       include,
     });
     return mapPrismaEventToDomain(event);
+  }
+
+  // The service checked the rules on a copy it read earlier, so the write
+  // repeats them: it only matches an event that is still editable, and the
+  // seats taken are counted in the same transaction. The location is
+  // all-or-nothing and is sent whole (none for an online event); optional
+  // texts the client left out are cleared.
+  async updateEvent(
+    id: string,
+    data: UpdateEventData,
+    now: Date,
+  ): Promise<EventChangeResult> {
+    return this.prisma.$transaction(async (tx) => {
+      // Lock first, as createApproved does, so a request cannot be approved
+      // between counting the seats and writing the new maximum.
+      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
+      const approved = await tx.participation.count({
+        where: { eventId: id, status: ParticipationStatus.APPROVED },
+      });
+      if (data.maxParticipants < data.externalOccupiedSpots + approved) {
+        return { ok: false, violation: 'MAX_BELOW_OCCUPIED' } as const;
+      }
+      const { count } = await tx.event.updateMany({
+        where: {
+          id,
+          status: { in: [EventStatus.DRAFT, EventStatus.PUBLISHED] },
+          startAt: { gt: now },
+        },
+        data: {
+          title: data.title,
+          description: data.description,
+          equipment: data.equipment ?? null,
+          venueType: data.venueType,
+          approvalMode: data.approvalMode,
+          startAt: data.startAt,
+          endAt: data.endAt,
+          minParticipants: data.minParticipants,
+          maxParticipants: data.maxParticipants,
+          externalOccupiedSpots: data.externalOccupiedSpots,
+          contributionAmount: data.contributionAmount ?? null,
+          contributionNote: data.contributionNote ?? null,
+          locationStreet: data.location?.street ?? null,
+          locationCity: data.location?.city ?? null,
+          locationPostalCode: data.location?.postalCode ?? null,
+          locationCountry: data.location?.country ?? null,
+          locationPlaceName: data.location?.placeName ?? null,
+          locationLatitude: data.location?.latitude ?? null,
+          locationLongitude: data.location?.longitude ?? null,
+          activityId: data.activityId,
+        },
+      });
+      if (count === 0) {
+        return { ok: false, violation: 'EVENT_NOT_CHANGEABLE' } as const;
+      }
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id },
+        include,
+      });
+      return { ok: true, event: mapPrismaEventToDomain(event) } as const;
+    });
+  }
+
+  // Matches only a published event that has not started, so two cancels in a
+  // row cannot overwrite the first reason.
+  async cancelEvent(
+    id: string,
+    data: CancelEventData,
+    now: Date,
+  ): Promise<EventChangeResult> {
+    return this.prisma.$transaction(async (tx) => {
+      // Same lock as createApproved and updateEvent: a seat is approved
+      // either before the cancellation or after it, never in between.
+      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
+      const { count } = await tx.event.updateMany({
+        where: { id, status: EventStatus.PUBLISHED, startAt: { gt: now } },
+        data: {
+          status: EventStatus.CANCELLED,
+          cancelledAt: now,
+          cancellationNote: data.cancellationNote ?? null,
+          cancellationReasonId: data.cancellationReasonId,
+        },
+      });
+      if (count === 0) {
+        return { ok: false, violation: 'EVENT_NOT_CANCELLABLE' } as const;
+      }
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id },
+        include,
+      });
+      return { ok: true, event: mapPrismaEventToDomain(event) } as const;
+    });
   }
 
   async getEventById(id: string): Promise<Event | null> {
@@ -380,7 +479,8 @@ export class EventRepository {
       include: {
         activity: true,
         level: true,
-        organizer: { select: { name: true } },
+        cancellationReason: true,
+        organizer: { select: { id: true, name: true } },
         group: {
           select: { id: true, name: true, visibility: true, status: true },
         },
@@ -409,7 +509,10 @@ export class EventRepository {
       contributionNote: event.contributionNote,
       status: event.status as EventDetail['status'],
       approvalMode: event.approvalMode,
+      organizerId: event.organizer.id,
       organizerName: event.organizer.name,
+      cancellationReason: event.cancellationReason?.name ?? null,
+      cancellationNote: event.cancellationNote,
       // A private or cancelled group has no public page to link to.
       group:
         event.group && isPubliclyVisible(event.group)

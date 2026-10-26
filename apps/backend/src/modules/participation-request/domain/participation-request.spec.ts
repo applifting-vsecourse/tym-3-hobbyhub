@@ -2,6 +2,7 @@ import { EventSeatFacts } from '@/modules/event/domain/event';
 import {
   currentRequestOf,
   decisionRuleViolations,
+  eventStateViolation,
   joinRuleViolations,
   ParticipationRequest,
   RequestStatus,
@@ -156,4 +157,20 @@ describe('decisionRuleViolations', () => {
       ).toEqual(['NOT_PENDING']);
     },
   );
+});
+
+describe('eventStateViolation', () => {
+  it('lets an open event through', () => {
+    expect(eventStateViolation(anEvent(), now)).toBeNull();
+  });
+
+  it.each([
+    ['EVENT_CANCELLED', { status: 'CANCELLED' as const }],
+    ['EVENT_NOT_HELD', { status: 'NOT_HELD' as const }],
+    ['EVENT_FINISHED', { status: 'FINISHED' as const }],
+    ['EVENT_FINISHED', { endAt: new Date('2030-01-01T11:00:00Z') }],
+    ['EVENT_STARTED', { startAt: new Date('2030-01-01T12:00:00Z') }],
+  ])('reports %s', (violation, override) => {
+    expect(eventStateViolation(anEvent(override), now)).toBe(violation);
+  });
 });
