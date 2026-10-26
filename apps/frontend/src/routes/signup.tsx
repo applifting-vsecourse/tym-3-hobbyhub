@@ -40,7 +40,9 @@ function SignUpPage() {
   const handleSubmit = async (values: SignUpFormValues) => {
     setError(null)
     try {
-      await signUp.mutateAsync(values)
+      // The repeated password is only for the form; the server never sees it.
+      const { confirmPassword: _confirmPassword, ...input } = values
+      await signUp.mutateAsync(input)
       // F-04.8: a new account goes through the onboarding first, which then
       // returns to the page the visitor came from.
       await navigate({ to: ROUTES.onboarding, search: { from } })
