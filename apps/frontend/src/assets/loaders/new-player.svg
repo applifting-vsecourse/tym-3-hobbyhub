@@ -1,36 +1,9 @@
-<svg
-  width="32"
-  height="32"
-  viewBox="0 0 32 32"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <g
-    id="Nov&#195;&#189; hr&#195;&#161;&#196;&#141;"
-    opacity="0"
-  >
-    <path
-      style="fill: var(--primary); stroke: var(--primary)"
-      id="Vector"
-      d="M12.5 11.5L6 12.5L1.5 15.5V18H6.5L10.5 19L8 28H14L15 24L16 28H22L19.5 19L23.5 18H28.5V15.5L24 12.5L17.5 11.5V9.45C18.2256 8.92217 18.7656 8.17821 19.0425 7.3247C19.3195 6.4712 19.3191 5.55194 19.0416 4.69862C18.7641 3.84531 18.2236 3.10172 17.4976 2.5744C16.7716 2.04707 15.8973 1.76307 15 1.76307C14.1027 1.76307 13.2284 2.04707 12.5024 2.5744C11.7764 3.10172 11.2359 3.84531 10.9584 4.69862C10.6809 5.55194 10.6805 6.4712 10.9575 7.3247C11.2344 8.17821 11.7744 8.92217 12.5 9.45V11.5Z"
-      stroke-width="3"
-      stroke-linejoin="round"
-    />
-    <g id="Group">
-      <path
-        id="Vector_2"
-        d="M10.75 6H19.25M15 1.75V10.25"
-        style="stroke: var(--primary-foreground)"
-        stroke-width="1.6"
-        stroke-linecap="round"
-      />
-      <path
-        id="Vector_3"
-        d="M12.2 2.9C13.4 4.6 13.4 7.35 12.2 9.1M17.8 2.9C16.6 4.6 16.6 7.35 17.8 9.1"
-        style="stroke: var(--primary-foreground)"
-        stroke-width="1.6"
-        stroke-linecap="round"
-      />
-    </g>
-  </g>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Nov&#195;&#189; hr&#195;&#161;&#196;&#141;" opacity="0">
+<path style="fill:var(--primary);stroke:var(--primary)" id="Vector" d="M12.5 11.5L6 12.5L1.5 15.5V18H6.5L10.5 19L8 28H14L15 24L16 28H22L19.5 19L23.5 18H28.5V15.5L24 12.5L17.5 11.5V9.45C18.2256 8.92217 18.7656 8.17821 19.0425 7.3247C19.3195 6.4712 19.3191 5.55194 19.0416 4.69862C18.7641 3.84531 18.2236 3.10172 17.4976 2.5744C16.7716 2.04707 15.8973 1.76307 15 1.76307C14.1027 1.76307 13.2284 2.04707 12.5024 2.5744C11.7764 3.10172 11.2359 3.84531 10.9584 4.69862C10.6809 5.55194 10.6805 6.4712 10.9575 7.3247C11.2344 8.17821 11.7744 8.92217 12.5 9.45V11.5Z" stroke-width="3" stroke-linejoin="round"/>
+<g id="Group">
+<path id="Vector_2" d="M10.75 6H19.25M15 1.75V10.25" style="stroke:var(--primary-foreground)" stroke-width="1.6" stroke-linecap="round"/>
+<path id="Vector_3" d="M12.2 2.9C13.4 4.6 13.4 7.35 12.2 9.1M17.8 2.9C16.6 4.6 16.6 7.35 17.8 9.1" style="stroke:var(--primary-foreground)" stroke-width="1.6" stroke-linecap="round"/>
+</g>
+</g>
 </svg>

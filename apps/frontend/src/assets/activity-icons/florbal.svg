@@ -1,34 +1,7 @@
-<svg
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <g id="Frame">
-    <path
-      id="Vector"
-      d="M17.5 3L9 16.5"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      id="Vector_2"
-      d="M9 16.5C8.4 18.3 6.7 19.5 4.5 19.5H10"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      id="Vector_3"
-      d="M17.5 20.8C19.0464 20.8 20.3 19.5464 20.3 18C20.3 16.4536 19.0464 15.2 17.5 15.2C15.9536 15.2 14.7 16.4536 14.7 18C14.7 19.5464 15.9536 20.8 17.5 20.8Z"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </g>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame">
+<path id="Vector" d="M17.5 3L9 16.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M9 16.5C8.4 18.3 6.7 19.5 4.5 19.5H10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M17.5 20.8C19.0464 20.8 20.3 19.5464 20.3 18C20.3 16.4536 19.0464 15.2 17.5 15.2C15.9536 15.2 14.7 16.4536 14.7 18C14.7 19.5464 15.9536 20.8 17.5 20.8Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
 </svg>
