@@ -26,6 +26,7 @@ import { Route as ProtectedPagesEventsNewRouteImport } from './routes/_Protected
 import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_ProtectedPages/groups/new'
 import { Route as ProtectedPagesEventsEventIdEditRouteImport } from './routes/_ProtectedPages/events/$eventId.edit'
 import { Route as ProtectedPagesEventsEventIdParticipantsRouteImport } from './routes/_ProtectedPages/events/$eventId/participants'
+import { Route as ProtectedPagesGroupsGroupIdMembersRouteImport } from './routes/_ProtectedPages/groups/$groupId/members'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -113,6 +114,12 @@ const ProtectedPagesEventsEventIdParticipantsRoute =
     path: '/events/$eventId/participants',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const ProtectedPagesGroupsGroupIdMembersRoute =
+  ProtectedPagesGroupsGroupIdMembersRouteImport.update({
+    id: '/groups/$groupId/members',
+    path: '/groups/$groupId/members',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
+  '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesByTo {
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
+  '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,6 +178,7 @@ export interface FileRoutesById {
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/_ProtectedPages/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/_ProtectedPages/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
+  '/_ProtectedPages/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/groups/new'
     | '/events/$eventId/edit'
     | '/events/$eventId/participants'
+    | '/groups/$groupId/members'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/groups/new'
     | '/events/$eventId/edit'
     | '/events/$eventId/participants'
+    | '/groups/$groupId/members'
   id:
     | '__root__'
     | '/'
@@ -226,6 +238,7 @@ export interface FileRouteTypes {
     | '/_ProtectedPages/groups/new'
     | '/_ProtectedPages/events/$eventId/edit'
     | '/_ProtectedPages/events/$eventId/participants'
+    | '/_ProtectedPages/groups/$groupId/members'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesEventsEventIdParticipantsRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/groups/$groupId/members': {
+      id: '/_ProtectedPages/groups/$groupId/members'
+      path: '/groups/$groupId/members'
+      fullPath: '/groups/$groupId/members'
+      preLoaderRoute: typeof ProtectedPagesGroupsGroupIdMembersRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
   }
 }
 
@@ -373,6 +393,7 @@ interface ProtectedPagesRouteChildren {
   ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
   ProtectedPagesEventsEventIdEditRoute: typeof ProtectedPagesEventsEventIdEditRoute
   ProtectedPagesEventsEventIdParticipantsRoute: typeof ProtectedPagesEventsEventIdParticipantsRoute
+  ProtectedPagesGroupsGroupIdMembersRoute: typeof ProtectedPagesGroupsGroupIdMembersRoute
 }
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
@@ -384,6 +405,8 @@ const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesEventsEventIdEditRoute: ProtectedPagesEventsEventIdEditRoute,
   ProtectedPagesEventsEventIdParticipantsRoute:
     ProtectedPagesEventsEventIdParticipantsRoute,
+  ProtectedPagesGroupsGroupIdMembersRoute:
+    ProtectedPagesGroupsGroupIdMembersRoute,
 }
 
 const ProtectedPagesRouteWithChildren = ProtectedPagesRoute._addFileChildren(

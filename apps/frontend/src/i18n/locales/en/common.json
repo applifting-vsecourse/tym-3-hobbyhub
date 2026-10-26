@@ -357,9 +357,6 @@
       "members_one": "{{count}} member",
       "members_other": "{{count}} members",
       "membership": {
-        "cancel": "Withdraw request",
-        "countdown_one": "You will be a member in {{count}} second.",
-        "countdown_other": "You will be a member in {{count}} seconds.",
         "hasAccount": "Already have an account?",
         "isMember": "You are a member",
         "leave": "Leave group",
@@ -368,11 +365,13 @@
         "leaveStay": "Stay in the group",
         "leaveText": "You will no longer be a member of {{name}}. You can join again by requesting membership.",
         "leaveTitle": "Do you really want to leave the group?",
+        "pendingText": "Your request is waiting for the group organizer.",
+        "rejectedText": "The organizer rejected your request. You cannot send a new one to this group.",
         "request": "Request membership",
-        "requestNote": "For now the request is handled automatically. You can withdraw it until then.",
-        "sent": "Request sent",
+        "requestNote": "The organizer approves requests by hand. A request waits with no time limit.",
         "signIn": "Sign in",
-        "title": "Membership"
+        "title": "Membership",
+        "withdraw": "Withdraw request"
       },
       "title": "Group detail",
       "upcoming": {
@@ -426,6 +425,77 @@
       "visibility": {
         "PRIVATE": "Private",
         "PUBLIC": "Public"
+      }
+    },
+    "manage": {
+      "adminTitle": "Group management",
+      "approved": "{{name}} is now a member of the group.",
+      "back": "Back to the group",
+      "decideFailed": "The request could not be decided. Please try again.",
+      "loadError": "Could not load",
+      "loading": "Loading…",
+      "membersEmpty": "The group has no members yet.",
+      "membersLink": "Show all members",
+      "membersMore": "+{{count}}",
+      "membersTitle": "Members ({{count}})",
+      "outcome_one": "After approval there will be {{count}} member.",
+      "outcome_other": "After approval there will be {{count}} members.",
+      "refused": {
+        "APPLICANT_IS_MEMBER": "The applicant is already a member of the group.",
+        "GROUP_CANCELLED": "The group is cancelled; its requests can no longer be decided.",
+        "NOT_PENDING": "Another admin decided the request meanwhile, or the applicant withdrew it."
+      },
+      "reject": {
+        "cancel": "Back",
+        "confirm": "Reject",
+        "reasonHint": "We keep the reason. The applicant will see it once they get an overview of their requests.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "E.g. The group is full right now.",
+        "reasonTooLong": "The reason can have at most {{count}} characters.",
+        "text": "{{name}} will see the rejection on the group page and cannot ask to join this group again.",
+        "title": "Reject the request?"
+      },
+      "rejected": "Request rejected",
+      "requestsEmpty": "No membership requests are waiting.",
+      "requestsLink": "Membership requests ({{count}})",
+      "retry": "Try again",
+      "tabs": {
+        "members": "Members {{count}}",
+        "requests": "Requests {{count}}"
+      },
+      "tabsLabel": "Members and requests",
+      "title": "Member management"
+    },
+    "membershipRequest": {
+      "form": {
+        "adminSees": "The group organizer will see",
+        "cancel": "Cancel",
+        "hiddenDetails": "They will not see your birth date, contact or address.",
+        "messageLabel": "Message to the organizer (optional)",
+        "messagePlaceholder": "E.g. I have played for a company team for three years and am looking for a regular group.",
+        "messageTooLong": "The message can have at most {{count}} characters.",
+        "sendFailed": "Your request could not be sent. Please try again.",
+        "submit": "Send request",
+        "title": "Request membership"
+      },
+      "refused": {
+        "ALREADY_REQUESTED": "You have already asked to join this group.",
+        "IS_MEMBER": "You are already a member of this group.",
+        "REJECTED_BEFORE": "The organizer rejected your request. You cannot send a new one to this group."
+      },
+      "sent": {
+        "close": "Done",
+        "text": "The group organizer will see it and decide. You will find the outcome here on the group page.",
+        "title": "Request sent",
+        "withdraw": "Withdraw request"
+      },
+      "withdraw": {
+        "confirm": "Withdraw request",
+        "done": "Request withdrawn",
+        "failed": "Your request could not be withdrawn. Please try again.",
+        "keep": "Keep request",
+        "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
+        "title": "Withdraw your membership request?"
       }
     },
     "placeholders": {

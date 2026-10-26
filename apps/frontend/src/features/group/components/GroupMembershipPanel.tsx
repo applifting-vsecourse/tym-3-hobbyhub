@@ -21,16 +21,26 @@ type GroupMembershipPanelProps = {
   groupName: string
   /** Encoded address of this page, so signing in or up returns here. */
   from: string
+  /** Opens the request form, which the page owns. */
+  onRequest: () => void
+  /** Opens the confirmation to withdraw a pending request, which the page owns. */
+  onWithdraw: () => void
 }
 
 /**
- * The one action of the group page: ask to join. A visitor is sent to sign up
- * and brought back here; the request itself is still a stand-in (see
- * `useJoinRequest`).
+ * The one action of the group page: ask to join (F-07.3). A visitor is sent to
+ * sign up and brought back here; a signed-in user asks with an optional
+ * message and sees the request wait for the group's admins.
  */
-export function GroupMembershipPanel({ membership, groupName, from }: GroupMembershipPanelProps) {
+export function GroupMembershipPanel({
+  membership,
+  groupName,
+  from,
+  onRequest,
+  onWithdraw,
+}: GroupMembershipPanelProps) {
   const { t } = useTranslation()
-  const { view, secondsLeft, request, cancel } = membership
+  const { view } = membership
   const [isLeaveOpen, setIsLeaveOpen] = useState(false)
 
   const confirmLeave = async () => {
@@ -63,25 +73,31 @@ export function GroupMembershipPanel({ membership, groupName, from }: GroupMembe
   } else if (view === "pending") {
     content = (
       <>
-        <StatusBadge status="pending">{t("groups.detail.membership.sent")}</StatusBadge>
-        <p
-          role="status"
-          className="typo-small text-muted-foreground"
-        >
-          {t("groups.detail.membership.countdown", { count: secondsLeft })}
+        <StatusBadge status="pending" />
+        <p className="typo-small text-muted-foreground">
+          {t("groups.detail.membership.pendingText")}
         </p>
         <Button
           variant="outline"
-          onClick={cancel}
+          onClick={onWithdraw}
         >
-          {t("groups.detail.membership.cancel")}
+          {t("groups.detail.membership.withdraw")}
         </Button>
+      </>
+    )
+  } else if (view === "rejected") {
+    content = (
+      <>
+        <StatusBadge status="rejected" />
+        <p className="typo-small text-muted-foreground">
+          {t("groups.detail.membership.rejectedText")}
+        </p>
       </>
     )
   } else if (view === "canRequest") {
     content = (
       <>
-        <Button onClick={request}>{t("groups.detail.membership.request")}</Button>
+        <Button onClick={onRequest}>{t("groups.detail.membership.request")}</Button>
         <p className="typo-small text-muted-foreground">
           {t("groups.detail.membership.requestNote")}
         </p>

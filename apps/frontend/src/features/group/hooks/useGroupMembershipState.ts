@@ -2,26 +2,32 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { groupKeys } from "@/features/group/api/groupKeys"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
+import { hasGroupAdminRights } from "@/features/group/api/groupSchemas"
 import { leaveGroup } from "@/features/group/api/leaveGroup"
-import { useJoinRequest } from "@/features/group/hooks/useJoinRequest"
+import { myMembershipRequestQueryOptions } from "@/features/group/api/membershipRequestQueryOptions"
 
 /** What the membership panel of a group shows. */
-export type MembershipView = "visitor" | "loading" | "canRequest" | "pending" | "member"
+export type MembershipView =
+  "visitor" | "loading" | "canRequest" | "pending" | "rejected" | "member"
 
 /**
- * Combines who is looking (signed in or not), whether they are already a member
- * and the stand-in join request (see `useJoinRequest`). The caller owns the
- * session, so this feature does not depend on the auth one.
+ * Combines who is looking (signed in or not), whether they are a member, and
+ * their own request to join (F-07.3). The caller owns the session, so this
+ * feature does not depend on the auth one.
  */
 export function useGroupMembershipState(
   groupId: string,
-  session: { isSignedIn: boolean; isPending: boolean },
+  session: { userId: string | null; isPending: boolean },
 ) {
   const queryClient = useQueryClient()
-  const joinRequest = useJoinRequest()
+  const isSignedIn = session.userId !== null
   const membership = useQuery({
     ...groupMembershipQueryOptions(groupId),
-    enabled: session.isSignedIn,
+    enabled: isSignedIn,
+  })
+  const myRequest = useQuery({
+    ...myMembershipRequestQueryOptions(groupId, session.userId ?? ""),
+    enabled: isSignedIn,
   })
 
   // Refetches the member count and the user's own state.
@@ -29,35 +35,34 @@ export function useGroupMembershipState(
     mutationFn: () => leaveGroup(groupId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) }),
   })
-  const isSimulatedMember = joinRequest.state === "accepted"
   // The membership query is off while signed out, but its cached answer stays
   // (signing out does not clear the cache), so it only counts while signed in.
-  const myMembership = session.isSignedIn ? membership.data : undefined
+  const myMembership = isSignedIn ? membership.data : undefined
+  const myRequestState = isSignedIn ? myRequest.data : undefined
 
   let view: MembershipView
-  if (joinRequest.state === "accepted" || myMembership?.isMember) view = "member"
-  else if (joinRequest.state === "pending") view = "pending"
-  else if (session.isSignedIn) view = membership.isPending ? "loading" : "canRequest"
-  else view = session.isPending ? "loading" : "visitor"
+  if (myMembership?.isMember) view = "member"
+  else if (isSignedIn) {
+    if (membership.isPending || myRequest.isPending) view = "loading"
+    else if (myRequestState?.request?.status === "PENDING") view = "pending"
+    // A rejection is final for the group (ADR-0014).
+    else if (myRequestState?.violations.includes("REJECTED_BEFORE")) view = "rejected"
+    else view = "canRequest"
+  } else view = session.isPending ? "loading" : "visitor"
 
   return {
     view,
-    secondsLeft: joinRequest.secondsLeft,
-    request: joinRequest.request,
-    cancel: joinRequest.cancel,
-    /** The owner stays: a group needs one, and handing it over comes later. */
-    canLeave: view === "member" && (isSimulatedMember || myMembership?.role !== "OWNER"),
+    /** OWNER or ADMIN: sees the requests and the members (F-07.3). */
+    isAdmin: hasGroupAdminRights(myMembership?.role),
+    /** The owner stays: a group needs one, and handing it over comes later (#94). */
+    canLeave: view === "member" && myMembership?.role !== "OWNER",
+    /** What the server says the admins will see of the user; undefined until known. */
+    applicant: myRequestState?.applicant,
     /** Resolves when the user has left; rejects when the server refuses. */
-    leave: async () => {
-      // The stand-in membership was never stored, so there is nothing to delete.
-      if (isSimulatedMember) joinRequest.cancel()
-      else await leaveMutation.mutateAsync()
-    },
+    leave: () => leaveMutation.mutateAsync(),
     isLeaving: leaveMutation.isPending,
     leaveFailed: leaveMutation.isError,
     resetLeave: leaveMutation.reset,
-    /** A request that went through counts as one more member, until reload. */
-    extraMembers: joinRequest.state === "accepted" ? 1 : 0,
   }
 }
 

@@ -214,10 +214,11 @@ model Group {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  activity    Activity          @relation(fields: [activityId], references: [id])
-  activityId  String
-  memberships GroupMembership[]
-  events      Event[]
+  activity           Activity            @relation(fields: [activityId], references: [id])
+  activityId         String
+  memberships        GroupMembership[]
+  membershipRequests MembershipRequest[]
+  events             Event[]
 
   @@index([activityId])
   @@map("group")
@@ -238,6 +239,29 @@ model GroupMembership {
   @@unique([groupId, userId])
   @@index([userId])
   @@map("group_membership")
+}
+
+// F-07.3, ADR-0008: a request to join a group, decided by its admins. Same
+// life cycle as ParticipationRequest; CLOSED is not used for groups yet. One
+// PENDING request per person and group, and the CHECKs: a partial unique index
+// and constraints in the migration.
+model MembershipRequest {
+  id String @id @default(cuid())
+
+  status          RequestStatus @default(PENDING)
+  message         String?       @db.VarChar(500)
+  rejectionReason String?       @db.VarChar(500)
+  requestedAt     DateTime      @default(now())
+  decidedAt       DateTime?
+
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  @@index([groupId, status])
+  @@index([userId])
+  @@map("membership_request")
 }
 
 // Event & Participation ---------------------------------------------------
@@ -514,6 +538,7 @@ model User {
   participations        Participation[]
   participationRequests ParticipationRequest[]
   groupMemberships      GroupMembership[]
+  membershipRequests    MembershipRequest[]
 
   @@unique([email])
   @@unique([username])
