@@ -30,6 +30,11 @@ Decisions about the domain model and architecture live in `docs/adr/`, one file 
 - **The author approves an ADR and vouches for it.** Only the person named as **Autor** moves it from „Navrženo ❓“ to „Přijato ✅“. Nobody approves an ADR on someone else's behalf; taking one over means putting your own name in **Autor** first.
 - **Approve before code depends on it.** A migration built on a proposed ADR is frozen once it reaches `main`, so the ADR is accepted in the same PR at the latest, where the review sees both.
 
+## Git Branches
+
+- **Check the current branch before any git work.** The branch named in your context (the session's git status snapshot, an earlier message) can be stale: the user may have switched since. Run `git branch --show-current` and compare.
+- **If it doesn't match what you expected, ask the user which branch to work on** before committing, pushing or opening a PR. Don't pick one yourself.
+
 ## Git Commits
 
 - **Format**: `type(scope): short description` - single line, no body
