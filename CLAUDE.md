@@ -1,11 +1,11 @@
-# Quacker — starter template
+# HobbyHub
 
-Full-stack teaching template: pnpm monorepo with two apps.
+App for filling the missing players at sports and hobby events: pnpm monorepo with two apps.
 
 - `apps/backend` — NestJS + Prisma + Postgres. Auth: BetterAuth (mounted at `/api/auth/*`, treat as a black box). API docs: Swagger at `/api/docs`.
 - `apps/frontend` — React + Vite + TanStack Router/Query, Tailwind + shadcn/ui, `ky` + `zod` API client. Feature folders under `src/features/`.
 
-The worked example is the quack feed: `Quack` model → seed → repository → service → `GET`/`POST /api/quacks` (DTO-validated, author taken from the session) → zod schema → TanStack Query → list page + post form. Copy its pattern for new features.
+The worked example is events: `Event` model → seed → repository → service → `GET`/`POST /api/events` (DTO-validated, organizer taken from the session) → zod schema → TanStack Query → list page + form (`src/features/event/`). Copy its pattern for new features.
 
 **Before writing or changing any UI, read [`DESIGN.md`](DESIGN.md).** It is a contract, not a suggestion — it exists to stop generated screens drifting into generic nested cards.
 
@@ -45,7 +45,7 @@ Deliberately sparse — this file grows as the team learns what it expects from 
 
 ### Backend module layers
 
-Every module under `apps/backend/src/modules/<entity>/` has the same four folders, and a request runs through them in order: controller → service → repository → database. `domain/` is the vocabulary the other three share. `event` is the fullest example; `quack` the smallest.
+Every module under `apps/backend/src/modules/<entity>/` has the same four folders, and a request runs through them in order: controller → service → repository → database. `domain/` is the vocabulary the other three share. `event` is the fullest example; `level` the smallest.
 
 - `domain/` — plain TypeScript: no Nest, no Prisma, no HTTP. Types (`Event`), limits as constants (`EVENT_TITLE_MAX_LENGTH`), derived values (`occupancyOf`) and rule functions (`eventRuleViolations`) that return violation codes and never throw. Tested by calling the function.
 - `controllers/` — HTTP only: routes, status codes, guards, Swagger, `dto/`. Reads the body, calls the service, maps the result with `ResponseDto.fromDomain`. No rules, no Prisma. The module's `ValidationPipe` lives in its own file (`events-validation.pipe.ts`) so the DTO spec validates exactly what the endpoints do.
@@ -59,7 +59,7 @@ Where a check goes:
 - **Rules that need data from elsewhere** (the activity exists, the user may do this) → the service.
 - **The database** keeps the same limits as CHECK constraints in the migration — the last line of defence, kept in step by hand and covered by `event-schema.spec.ts` (`DB_TESTS=1 pnpm backend test event-schema`).
 
-Who acts comes from the session (`@User()`), never from the request body: the organizer of an event, the author of a quack.
+Who acts comes from the session (`@User()`), never from the request body: the organizer of an event, the user asking to join one.
 
 ### UI controls come from the kit
 

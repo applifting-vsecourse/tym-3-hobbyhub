@@ -2,7 +2,7 @@
 
 HobbyHub helps people fill the missing players for sports and hobby events before the event gets cancelled. An organizer posts an event and says how many people it still needs to reach the minimum; others find the free seats on the map or in the list, ask to join, and the organizer approves them.
 
-Team 3's project for [4IT580](https://4it580.vse.cz), built on the course's full-stack starter template (Quacker).
+Team 3's project for [4IT580](https://4it580.vse.cz), built on the course's full-stack starter template.
 
 **Stack:** React + Vite + TanStack Router/Query + Tailwind/shadcn (frontend) · NestJS + Prisma + PostgreSQL + BetterAuth (backend) · pnpm workspaces.
 
@@ -14,7 +14,7 @@ What the app does today:
 - **Groups** — create a group, browse the list of groups, ask to become a member; the group's founder and admins handle the requests and manage members ([ADR-0007](docs/adr/adr-0007.md), [ADR-0014](docs/adr/adr-0014.md)).
 - **Czech and English** — Czech is the default language.
 
-Domain and architecture decisions are recorded in [`docs/adr/`](docs/adr/), wireframes in [`docs/wireframes/`](docs/wireframes/). The quack feed from the starter template (`/quacks`) is still in the code as the worked example of the full feature pattern.
+Domain and architecture decisions are recorded in [`docs/adr/`](docs/adr/), wireframes in [`docs/wireframes/`](docs/wireframes/).
 
 ## Prerequisites
 

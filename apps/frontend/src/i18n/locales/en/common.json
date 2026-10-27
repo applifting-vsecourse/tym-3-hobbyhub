@@ -900,22 +900,6 @@
     "placeholder": "The profile page is on its way.",
     "title": "Profile"
   },
-  "quacks": {
-    "form": {
-      "label": "New quack",
-      "placeholder": "Quack something...",
-      "required": "Write something first",
-      "submit": "Quack",
-      "tooLong_one": "Keep it under {{count}} character",
-      "tooLong_other": "Keep it under {{count}} characters"
-    },
-    "list": {
-      "empty": "No quacks yet. Post the first one.",
-      "loadError": "Couldn't load quacks",
-      "reload": "Reload"
-    },
-    "title": "Quacks"
-  },
   "terms": {
     "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",
     "title": "Terms of use"

@@ -1,6 +1,6 @@
 # HobbyHub Backend
 
-The REST API behind [HobbyHub](../../README.md), the app for filling the missing players at sports and hobby events. It started as the backend of the 4IT580 starter template (Quacker), a simplified version of Applifting's backend template.
+The REST API behind [HobbyHub](../../README.md), the app for filling the missing players at sports and hobby events. It started as the backend of the 4IT580 starter template, a simplified version of Applifting's backend template.
 
 What it serves:
 
@@ -9,7 +9,6 @@ What it serves:
 - **Events** — create, edit and cancel; list, search and filter upcoming events; public event detail with participant statistics.
 - **Participation requests** — users ask to join an event, the organizer approves or rejects them.
 - **Groups and membership requests** — create and list groups, ask to join, founders and admins handle requests and manage members.
-- **Quacks** — the starter template's worked example, kept as the smallest module.
 
 ## What's been set up for you
 
@@ -19,7 +18,7 @@ Compared to the bare bones Nest app you get when you create a new project, the t
 - **Prisma ORM**
 - **Docker Compose** runs the **Postgres** database for local development
 - BetterAuth-based authentication - this should allow for easy extending with e.g. social login providers
-- Database entities with migrations — events, groups, requests, lookup tables; **Quack** is the smallest example
+- Database entities with migrations — events, groups, requests, lookup tables
 - Configured tests and resolve common issues with them in Nest (like proper path resolving)
 - Decorator-based configuration with our `@applifting-io/nestjs-decorated-config` package
 - Unit tests
@@ -146,7 +145,7 @@ $ pnpm backend seed                    # refill demo data
 
 ### Test
 
-There is one example unit test (`src/modules/quack/services/quacks.service.spec.ts`) showing the pattern: mock the repository, test the service in isolation. CI runs it on every PR.
+Every module's service has unit tests that mock the repository and test the service in isolation (e.g. `src/modules/event/services/events.service.spec.ts`). CI runs them on every PR.
 
 ```bash
 # unit tests
