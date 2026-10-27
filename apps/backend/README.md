@@ -1,16 +1,25 @@
-# Quacker Backend
+# HobbyHub Backend
 
-A simplified version of Applifting's backend template for educational purposes.
+The REST API behind [HobbyHub](../../README.md), the app for filling the missing players at sports and hobby events. It started as the backend of the 4IT580 starter template (Quacker), a simplified version of Applifting's backend template.
+
+What it serves:
+
+- **Users and onboarding** — accounts via BetterAuth, then a profile (photo, bio), favourite activities with a level, and the user's location and travel radius.
+- **Lookup tables** — activities and their categories, levels, cancellation reasons.
+- **Events** — create, edit and cancel; list, search and filter upcoming events; public event detail with participant statistics.
+- **Participation requests** — users ask to join an event, the organizer approves or rejects them.
+- **Groups and membership requests** — create and list groups, ask to join, founders and admins handle requests and manage members.
+- **Quacks** — the starter template's worked example, kept as the smallest module.
 
 ## What's been set up for you
 
-Compared to the bare bones Nest app you get when you create a new project, we also set this all up for you:
+Compared to the bare bones Nest app you get when you create a new project, the template also set this all up:
 
 - **TypeScript Strict** mode
 - **Prisma ORM**
 - **Docker Compose** runs the **Postgres** database for local development
 - BetterAuth-based authentication - this should allow for easy extending with e.g. social login providers
-- Example database entity (**Quack**) with migrations
+- Database entities with migrations — events, groups, requests, lookup tables; **Quack** is the smallest example
 - Configured tests and resolve common issues with them in Nest (like proper path resolving)
 - Decorator-based configuration with our `@applifting-io/nestjs-decorated-config` package
 - Unit tests
