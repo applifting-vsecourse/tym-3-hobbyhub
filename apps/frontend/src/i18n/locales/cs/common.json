@@ -917,23 +917,6 @@
     "placeholder": "Stránku profilu připravujeme.",
     "title": "Profil"
   },
-  "quacks": {
-    "form": {
-      "label": "Nový quack",
-      "placeholder": "Quackni něco…",
-      "required": "Nejdřív něco napište",
-      "submit": "Quacknout",
-      "tooLong_few": "Maximálně {{count}} znaky",
-      "tooLong_one": "Maximálně {{count}} znak",
-      "tooLong_other": "Maximálně {{count}} znaků"
-    },
-    "list": {
-      "empty": "Zatím žádné quacky. Napište první.",
-      "loadError": "Quacky se nepodařilo načíst",
-      "reload": "Načíst znovu"
-    },
-    "title": "Quacks"
-  },
   "terms": {
     "placeholder": "Znění podmínek připravujeme. Provozovatel HobbyHubu ho doplní před spuštěním.",
     "title": "Podmínky používání"

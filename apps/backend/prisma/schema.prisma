@@ -427,18 +427,6 @@ model ParticipationRequest {
   @@map("participation_request")
 }
 
-model Quack {
-  id        String   @id @default(cuid())
-  text      String   @db.Text
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@index([userId])
-  @@map("quack")
-}
-
 model Session {
   id        String   @id
   expiresAt DateTime
@@ -507,7 +495,6 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  quacks        Quack[]
   role          UserRole  @default(user)
 
   username        String? @db.VarChar(50)
