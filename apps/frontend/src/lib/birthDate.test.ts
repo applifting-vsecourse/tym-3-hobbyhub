@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { fromIsoDate, isAdult, moveToMonth, toIsoDate } from "@/features/auth/lib/birthDate"
+import { fromIsoDate, isAdult, moveToMonth, toIsoDate } from "@/lib/birthDate"
 
 describe("birth date", () => {
   it("keeps the picked calendar day whatever the time zone", () => {

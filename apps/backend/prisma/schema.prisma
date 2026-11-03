@@ -517,6 +517,9 @@ model User {
   // emailVerified and image. Several fields the model marks as required are
   // optional here until registration (F-03.1) collects them.
   bio                   String?            @db.Text
+  // F-04.1: the picture on top of the profile: an id of the app's covers or an
+  // uploaded WebP data URL; null = the default of the first activity.
+  profileCover          String?            @db.Text
   birthDate             DateTime?          @db.Date
   gender                Gender?
   phone                 String?            @db.VarChar(30)

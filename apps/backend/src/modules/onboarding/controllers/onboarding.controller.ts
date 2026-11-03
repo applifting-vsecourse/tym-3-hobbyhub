@@ -101,11 +101,9 @@ export class OnboardingController {
   }
 
   @Put('profile')
-  @ApiOperation({ summary: 'Save the short bio (step 3)' })
+  @ApiOperation({ summary: 'Save the short bio and the picture (step 3)' })
   @ApiResponse({ status: 200, type: OnboardingResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  // TODO(F-04.1 #18): the profile photo is not uploaded yet, the project has
-  // no image storage.
   async saveProfile(
     @User() user: Identity,
     @Body() body: SaveProfileDto,
@@ -113,6 +111,7 @@ export class OnboardingController {
     return OnboardingResponseDto.fromDomain(
       await this.onboardingService.saveProfile(user, {
         bio: body.bio ?? null,
+        image: body.image,
       }),
     );
   }

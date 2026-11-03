@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import type { ActivityOption, LevelOption } from "@/features/onboarding/api/onboardingSchemas"
+export type ActivityOption = { id: string; name: string; icon: string }
+export type LevelOption = { id: string; name: string }
 
 // A Radix item needs a non-empty value; this one takes the level back.
 const NO_LEVEL = "NONE"
@@ -42,6 +43,8 @@ type ActivityPickerProps = {
   levels: LevelOption[]
   value: PickedActivity[]
   onChange: (value: PickedActivity[]) => void
+  /** Off where the level is not asked (the profile); a level already chosen is kept. */
+  hasLevels?: boolean
 }
 
 /**
@@ -55,6 +58,7 @@ export function ActivityPicker({
   levels,
   value,
   onChange,
+  hasLevels = true,
 }: ActivityPickerProps) {
   const { t } = useTranslation()
 
@@ -145,31 +149,35 @@ export function ActivityPicker({
                       label={name}
                     />
                   </p>
-                  <Select
-                    // "" shows the placeholder: no level is not a value to read.
-                    value={levelId ?? ""}
-                    onValueChange={(next) => setLevel(activity.id, next === NO_LEVEL ? null : next)}
-                  >
-                    <SelectTrigger
-                      aria-labelledby={`level-${activity.id}`}
-                      className="w-44 shrink-0"
+                  {hasLevels ? (
+                    <Select
+                      // "" shows the placeholder: no level is not a value to read.
+                      value={levelId ?? ""}
+                      onValueChange={(next) =>
+                        setLevel(activity.id, next === NO_LEVEL ? null : next)
+                      }
                     >
-                      <SelectValue placeholder={t("onboarding.activities.levelPlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {levels.map((level) => (
-                        <SelectItem
-                          key={level.id}
-                          value={level.id}
-                        >
-                          {level.name}
-                        </SelectItem>
-                      ))}
-                      {levelId ? (
-                        <SelectItem value={NO_LEVEL}>{t("onboarding.levels.NONE")}</SelectItem>
-                      ) : null}
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger
+                        aria-labelledby={`level-${activity.id}`}
+                        className="w-44 shrink-0"
+                      >
+                        <SelectValue placeholder={t("onboarding.activities.levelPlaceholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {levels.map((level) => (
+                          <SelectItem
+                            key={level.id}
+                            value={level.id}
+                          >
+                            {level.name}
+                          </SelectItem>
+                        ))}
+                        {levelId ? (
+                          <SelectItem value={NO_LEVEL}>{t("onboarding.levels.NONE")}</SelectItem>
+                        ) : null}
+                      </SelectContent>
+                    </Select>
+                  ) : null}
                   <Button
                     type="button"
                     variant="ghost"

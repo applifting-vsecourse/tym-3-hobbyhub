@@ -8,6 +8,7 @@ import { LevelModule } from './modules/level/level.module';
 import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { QuackModule } from './modules/quack/quack.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
 import { AuthModule } from './shared/auth/auth.module';
@@ -24,6 +25,7 @@ const imports = [
   GroupModule,
   LevelModule,
   OnboardingModule,
+  ProfileModule,
   EventModule,
   ParticipationRequestModule,
   MembershipRequestModule,
