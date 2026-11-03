@@ -84,7 +84,7 @@ describe("EventDetail", () => {
 
   it.each([
     ["an open event", {}, true],
-    ["a full event", { takenCount: 10 }, true],
+    ["a full event", { takenCount: 10 }, false],
     ["a cancelled event", { status: "CANCELLED" as const }, false],
     ["a finished event", { status: "FINISHED" as const }, false],
     ["an event that already started", { startAt: new Date(2026, 9, 22, 7, 0) }, false],
