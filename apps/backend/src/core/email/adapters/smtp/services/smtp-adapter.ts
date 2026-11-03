@@ -21,7 +21,8 @@ export class SMTPAdapter implements EmailService {
 
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
     await this.transporter.sendMail({
-      from: this.config.user,
+      // An empty SMTP_FROM counts as unset.
+      from: this.config.from || this.config.user,
       to,
       subject,
       html,

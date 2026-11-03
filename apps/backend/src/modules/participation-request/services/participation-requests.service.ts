@@ -91,7 +91,8 @@ export class ParticipationRequestsService {
     now: Date = new Date(),
   ): Promise<ParticipationRequest> {
     const event = await this.getEvent(eventId, user);
-    // TODO(F-03.2 #13): a verified e-mail becomes a condition here.
+    // F-03.2 (#13): asking to join deliberately needs no verified e-mail, to
+    // keep the friction for participants low; the organizer sees the status.
     const requests = await this.repository.getRequestsOf(eventId, user.id);
     const violations = joinRuleViolations(event, user.id, requests, now);
     if (violations.length > 0) throw violationsError(violations);

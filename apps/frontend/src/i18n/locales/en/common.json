@@ -73,6 +73,33 @@
       "passwordsMismatch": "Passwords do not match",
       "termsRequired": "You need to accept the terms to register",
       "underage": "You must be at least 18 to register"
+    },
+    "verifyEmail": {
+      "already": {
+        "badge": "Already verified",
+        "description": "Your email is confirmed, nothing more to do. You can carry on.",
+        "title": "Email already verified"
+      },
+      "continue": "Continue",
+      "done": {
+        "badge": "Verified",
+        "description": "Done, your account is complete. You can now publish events and found groups.",
+        "title": "Email verified"
+      },
+      "failed": {
+        "badge": "Link not working",
+        "description": "The link has expired or is not valid. Send yourself a new one and verify within 24 hours.",
+        "signIn": "Sign in to send a new one",
+        "title": "This link no longer works"
+      },
+      "resend": "Send the email again",
+      "resendFailed": "The email could not be sent. Please try again.",
+      "resendIn": "Send again in {{seconds}} s",
+      "sent": "A new email is on its way. The link is valid for 24 hours.",
+      "sheet": {
+        "description": "We sent a link to the email you signed up with. Once you confirm it, you can publish events and found groups. Didn't arrive? Send it again.",
+        "title": "Verify your email first"
+      }
     }
   },
   "common": {

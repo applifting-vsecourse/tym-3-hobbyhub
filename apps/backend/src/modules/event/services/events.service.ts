@@ -21,6 +21,7 @@ import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { eventChangesOf } from '@/modules/notification/domain/notification';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
   BadRequestException,
   ForbiddenException,
@@ -57,6 +58,10 @@ export class EventsService {
   ) {}
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
+    // F-03.2: publishing needs a verified e-mail.
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('publishing an event');
+    }
     const now = new Date();
     const violations = eventRuleViolations(data, now);
     if (violations.length > 0) {
