@@ -30,7 +30,7 @@ describe("capacityLabel", () => {
     expect(capacityLabel(i18n.t, { taken: 8, min: 10, max: 12 })).toBe("Obsazeno 8 z 12, chybí 2")
   })
 
-  it("says full when nobody is missing", () => {
-    expect(capacityLabel(i18n.t, { taken: 5, min: 5 })).toBe("Obsazeno 5 z 5, naplněno")
+  it("says minimum reached when nobody is missing", () => {
+    expect(capacityLabel(i18n.t, { taken: 5, min: 5 })).toBe("Obsazeno 5 z 5, minimum splněno")
   })
 })

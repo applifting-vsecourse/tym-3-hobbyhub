@@ -314,7 +314,7 @@
       "label": "Events map",
       "loading": "Loading the map…",
       "missing": "{{count}} missing",
-      "pinFull": "{{title}}, full",
+      "pinFull": "{{title}}, minimum reached",
       "pinMissing": "{{title}}, {{count}} missing",
       "unavailable": "The map isn't available right now.",
       "you": "Your location"
@@ -603,9 +603,9 @@
       "volejbalistka": "Volleyball player"
     },
     "capacity": {
-      "full": "full",
+      "full": "minimum reached",
       "missing": "{{count}} missing",
-      "summaryFull": "{{taken}} of {{total}} taken, full",
+      "summaryFull": "{{taken}} of {{total}} taken, minimum reached",
       "summaryMissing": "{{taken}} of {{total}} taken, {{count}} missing"
     },
     "chatShare": {
@@ -620,7 +620,7 @@
       "more": "{{label}}: more"
     },
     "eventDetail": {
-      "seatsFull": "{{taken}}/{{total}}, full",
+      "seatsFull": "{{taken}}/{{total}}, minimum reached",
       "seatsMissing": "{{taken}}/{{total}}, {{count}} missing",
       "until": "until {{time}}"
     },
@@ -660,7 +660,7 @@
     "mapPin": {
       "cluster_one": "{{count}} event",
       "cluster_other": "{{count}} events",
-      "filled": "Event, full",
+      "filled": "Event, minimum reached",
       "missing": "Event, {{count}} missing",
       "selected": "Selected event, {{count}} missing"
     },
