@@ -18,6 +18,7 @@ import {
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
+import { emailNotVerifiedException } from '@/shared/auth/domain/email-verification';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
   BadRequestException,
@@ -54,15 +55,9 @@ export class EventsService {
   ) {}
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
-    // F-03.2: publishing needs a verified e-mail. `violations` lets the client
-    // say why, as it does for a refused request to join.
+    // F-03.2: publishing needs a verified e-mail.
     if (!user.emailVerified) {
-      throw new BadRequestException({
-        statusCode: 400,
-        error: 'Bad Request',
-        message: ['Verify your email address before publishing an event'],
-        violations: ['EMAIL_NOT_VERIFIED'],
-      });
+      throw emailNotVerifiedException('publishing an event');
     }
     const now = new Date();
     const violations = eventRuleViolations(data, now);

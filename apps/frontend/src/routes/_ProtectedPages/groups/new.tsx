@@ -7,9 +7,11 @@ import { toast } from "sonner"
 import { ROUTES } from "@/app/routes"
 import { BackLink } from "@/components/BackLink"
 import { Seo } from "@/components/Seo"
+import { EmailNotVerifiedError } from "@/lib/emailNotVerified"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { VerifyEmailNotice } from "@/features/auth/components/VerifyEmailNotice"
 import type { CreateGroupInput } from "@/features/group/api/groupSchemas"
 import { GroupForm } from "@/features/group/components/GroupForm"
 import { useCreateGroup } from "@/features/group/hooks/useCreateGroup"
@@ -50,6 +52,10 @@ function NewGroupPage() {
           label={t("groups.back")}
         />
         <h1 className="typo-h1 text-foreground">{t("groups.form.title")}</h1>
+        {/* F-03.2: founding a group needs a verified e-mail; the notice is empty once it is. */}
+        <div className="mt-6 empty:hidden">
+          <VerifyEmailNotice />
+        </div>
         <div className="mt-6 md:mt-8">
           <GroupForm
             activities={activityOptions}
@@ -57,7 +63,15 @@ function NewGroupPage() {
             isActivitiesError={activitiesQuery.isError}
             onRetryActivities={() => void activitiesQuery.refetch()}
             isSubmitting={createGroup.isPending}
-            errorMessage={createGroup.isError ? t("groups.form.createFailed") : null}
+            errorMessage={
+              createGroup.isError
+                ? t(
+                    createGroup.error instanceof EmailNotVerifiedError
+                      ? "groups.form.emailNotVerified"
+                      : "groups.form.createFailed",
+                  )
+                : null
+            }
             onSubmit={handleSubmit}
           />
         </div>

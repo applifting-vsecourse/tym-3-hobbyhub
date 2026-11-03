@@ -13,6 +13,7 @@ import {
   NearbyGroups,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
+import { emailNotVerifiedException } from '@/shared/auth/domain/email-verification';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
   BadRequestException,
@@ -28,6 +29,10 @@ export class GroupsService {
   ) {}
 
   async createGroup(user: Identity, data: CreateGroupData): Promise<Group> {
+    // F-03.2: founding a group needs a verified e-mail.
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('founding a group');
+    }
     if (!(await this.activitiesService.isAvailable(data.activityId))) {
       throw new BadRequestException(
         'Activity does not exist or is no longer offered',

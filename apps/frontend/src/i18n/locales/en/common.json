@@ -417,6 +417,7 @@
       "activityPlaceholder": "Choose an activity",
       "createFailed": "Could not create the group. Please try again.",
       "created": "The group has been created.",
+      "emailNotVerified": "Verify your email first, then you can found the group.",
       "retry": "Try again",
       "submit": "Create group",
       "title": "New group"

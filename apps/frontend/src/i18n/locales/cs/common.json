@@ -426,6 +426,7 @@
       "activityPlaceholder": "Vyberte aktivitu",
       "createFailed": "Skupinu se nepodařilo založit. Zkuste to prosím znovu.",
       "created": "Skupina je založená.",
+      "emailNotVerified": "Nejdřív ověř svůj e-mail, pak můžeš skupinu založit.",
       "retry": "Zkusit znovu",
       "submit": "Vytvořit skupinu",
       "title": "Nová skupina"
