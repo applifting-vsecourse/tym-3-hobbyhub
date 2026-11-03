@@ -45,7 +45,11 @@ describe("JoinRequestAction", () => {
     render(
       <JoinRequestAction
         label="Požádat o účast"
-        state={{ request: null, violations: ["EMAIL_NOT_VERIFIED"] }}
+        state={{
+          request: null,
+          violations: ["EMAIL_NOT_VERIFIED"],
+          applicant: { ...applicant, hasVerifiedEmail: false },
+        }}
         isLoading={false}
         onRequest={vi.fn()}
         verifyEmailAction={<button>Poslat e-mail znovu</button>}

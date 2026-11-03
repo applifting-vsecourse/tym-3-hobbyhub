@@ -7,7 +7,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { OnboardingService } from './onboarding.service';
 
-const user = new Identity('u1', 'jana@example.com', 'Jana', 'user');
+const user = new Identity('u1', 'jana@example.com', 'Jana', 'user', true);
 
 const anAddress = {
   street: 'Sokolovská 12',
