@@ -131,7 +131,9 @@ describe("EventsMap", () => {
     expect(
       await screen.findByRole("button", { name: "Čtvrteční florbal, chybí 2" }),
     ).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Šachy v kavárně, minimum splněno" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Šachy v kavárně, minimum splněno" }),
+    ).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Online šachy/ })).not.toBeInTheDocument()
   })
 
