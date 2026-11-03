@@ -13,8 +13,8 @@ import {
   NearbyGroups,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
-import { emailNotVerifiedException } from '@/shared/auth/domain/email-verification';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
   BadRequestException,
   Injectable,

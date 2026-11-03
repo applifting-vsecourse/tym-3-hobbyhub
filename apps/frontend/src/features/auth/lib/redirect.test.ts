@@ -13,12 +13,16 @@ describe("redirectTarget", () => {
     expect(redirectTarget(undefined, "/")).toBe("/")
   })
 
-  it.each(["https://evil.example", "//evil.example", "javascript:alert(1)", "/\\evil.example"])(
-    "never leaves the app for %s",
-    (from) => {
-      expect(redirectTarget(encodeURIComponent(from), "/")).toBe("/")
-    },
-  )
+  it.each([
+    "https://evil.example",
+    "//evil.example",
+    "javascript:alert(1)",
+    "/\\evil.example",
+    "/\t/evil.example",
+    "/\n/evil.example",
+  ])("never leaves the app for %s", (from) => {
+    expect(redirectTarget(encodeURIComponent(from), "/")).toBe("/")
+  })
 })
 
 describe("redirectTargetOutside", () => {

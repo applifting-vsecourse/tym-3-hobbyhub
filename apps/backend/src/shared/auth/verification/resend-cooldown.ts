@@ -13,24 +13,31 @@ export class ResendCooldown {
   private readonly lastSentAt = new Map<string, number>();
   private lastPrunedAt = 0;
 
+  /** Seconds the address still has to wait, or 0 when it may be sent to now. */
+  waitSeconds(email: string, now: number = Date.now()): number {
+    const sentAt = this.lastSentAt.get(this.keyOf(email));
+    if (sentAt === undefined || now - sentAt >= RESEND_COOLDOWN_MS) return 0;
+    return Math.ceil((RESEND_COOLDOWN_MS - (now - sentAt)) / 1000);
+  }
+
   /**
-   * Seconds the address still has to wait, or 0 when it may be sent now, in
-   * which case this send is recorded.
+   * Notes that an e-mail went out, so the next one waits. Called after the
+   * send succeeded: a failed one does not use up the minute.
    */
-  take(email: string, now: number = Date.now()): number {
+  record(email: string, now: number = Date.now()): void {
     this.prune(now);
-    const key = email.trim().toLowerCase();
-    const sentAt = this.lastSentAt.get(key);
-    if (sentAt !== undefined && now - sentAt < RESEND_COOLDOWN_MS) {
-      return Math.ceil((RESEND_COOLDOWN_MS - (now - sentAt)) / 1000);
-    }
+    const key = this.keyOf(email);
+    // Delete first, so the map's insertion order stays the order of sends.
+    this.lastSentAt.delete(key);
     this.lastSentAt.set(key, now);
-    return 0;
+  }
+
+  private keyOf(email: string): string {
+    return email.trim().toLowerCase();
   }
 
   // At most once per cooldown, so a request does not pay for a full scan. If
-  // it is still full of live entries, the oldest go: a map insertion order is
-  // the order of sends.
+  // it is still full of live entries, the oldest go.
   private prune(now: number): void {
     if (now - this.lastPrunedAt >= RESEND_COOLDOWN_MS) {
       this.lastPrunedAt = now;
@@ -45,3 +52,6 @@ export class ResendCooldown {
     }
   }
 }
+
+// One for the whole backend: the hook asks it, the sender records into it.
+export const resendCooldown = new ResendCooldown();

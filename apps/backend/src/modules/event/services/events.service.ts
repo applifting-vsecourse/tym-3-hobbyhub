@@ -18,8 +18,8 @@ import {
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
-import { emailNotVerifiedException } from '@/shared/auth/domain/email-verification';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
   BadRequestException,
   ForbiddenException,

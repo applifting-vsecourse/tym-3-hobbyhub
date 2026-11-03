@@ -40,7 +40,15 @@ function VerifyEmailPage() {
   const isVerified = session?.user.emailVerified === true
 
   // A used link on an e-mail that is verified by now is no failure.
-  const outcome = !error ? "done" : isVerified ? "already" : "failed"
+  // Without `error` the link worked, unless this very person is signed in and
+  // still unverified: then the page was opened by hand, or with another person's link.
+  const outcome = error
+    ? isVerified
+      ? "already"
+      : "failed"
+    : session && !isVerified
+      ? "failed"
+      : "done"
 
   return (
     <>

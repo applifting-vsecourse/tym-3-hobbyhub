@@ -15,11 +15,23 @@ export const decodeRedirectUri = (encoded: string) => {
  * `fallback`. Only paths inside the app — `from` comes from the URL, so it
  * must not be able to send people to another site.
  */
+// A tab or newline in a path is dropped by browsers: "/\t/evil.example" is "//evil.example".
+const hasControlCharacter = (value: string) =>
+  [...value].some((character) => {
+    const code = character.charCodeAt(0)
+    return code < 32 || code === 127
+  })
+
 export const redirectTarget = (from: string | undefined, fallback: string) => {
   if (!from) return fallback
   const path = decodeRedirectUri(from)
   // A backslash is read as a slash by browsers: "/\\evil.example" is "//evil.example".
-  return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : fallback
+  return path.startsWith("/") &&
+    !path.startsWith("//") &&
+    !path.includes("\\") &&
+    !hasControlCharacter(path)
+    ? path
+    : fallback
 }
 
 /**
