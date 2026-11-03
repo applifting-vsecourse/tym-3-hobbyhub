@@ -46,6 +46,7 @@ const renderDetail = (overrides: Partial<EventDetailData> = {}) =>
       event={event(overrides)}
       activityLabel="Florbal"
       joinAction={<button type="button">Obsadit místo</button>}
+      shareAction={<button type="button">Sdílet</button>}
       now={NOW}
     />,
   )
@@ -79,6 +80,18 @@ describe("EventDetail", () => {
     renderDetail({ endAt: new Date(2026, 9, 24, 20, 30) })
 
     expect(screen.getByText(/do .*24.*20:30/)).toBeInTheDocument()
+  })
+
+  it.each([
+    ["an open event", {}, true],
+    ["a full event", { takenCount: 10 }, false],
+    ["a cancelled event", { status: "CANCELLED" as const }, false],
+    ["a finished event", { status: "FINISHED" as const }, false],
+    ["an event that already started", { startAt: new Date(2026, 9, 22, 7, 0) }, false],
+  ])("handles sharing of %s", (_, overrides, isShown) => {
+    renderDetail(overrides)
+
+    expect(screen.queryByRole("button", { name: "Sdílet" }) !== null).toBe(isShown)
   })
 
   it("offers the seat while the event is open", () => {

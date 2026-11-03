@@ -343,6 +343,12 @@
       "occupied": "Obsazeno {{taken}} z {{total}}",
       "untitled": "Název akce"
     },
+    "share": {
+      "button": "Sdílet do chatu",
+      "descriptionMissing": "Chybí {{count}} do minima. Pošli zprávu do skupiny, kde už jste, a zbytek vyřeší odkaz.",
+      "message": "{{title}} ({{when}}). Potvrď, jestli jdeš:",
+      "messageMissing": "{{title}} ({{when}}), chybí {{count}}. Potvrď, jestli jdeš:"
+    },
     "validation": {
       "activityRequired": "Vyberte aktivitu",
       "amountInvalid": "Zadejte částku v korunách, nejvýše na dvě desetinná místa",
@@ -755,12 +761,16 @@
       "copiedDiscord": "Zpráva je zkopírovaná, vlož ji do Discordu",
       "copiedMessenger": "Zpráva je zkopírovaná, vlož ji do Messengeru",
       "copyFailed": "Nepodařilo se zkopírovat",
-      "copyLink": "Zkopírovat odkaz",
       "description": "Pošli zprávu do skupiny, kde už jste, a zbytek vyřeší odkaz.",
-      "facebook": "Facebook skupina",
       "linkCopied": "Odkaz je zkopírovaný",
-      "message": "Zpráva",
       "note": "Odkaz vede na veřejnou stránku akce. Kdokoli ji uvidí bez účtu, žádost o účast už vyžaduje přihlášení.",
+      "target": {
+        "discord": "Discord",
+        "facebook": "Facebook skupina",
+        "link": "Zkopírovat odkaz",
+        "messenger": "Messenger",
+        "whatsapp": "WhatsApp"
+      },
       "title": "Sdílet do chatu",
       "where": "Kam poslat"
     },
