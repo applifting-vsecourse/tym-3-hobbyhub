@@ -76,16 +76,19 @@
     },
     "verifyEmail": {
       "already": {
-        "description": "Your email is already confirmed. You can carry on.",
+        "badge": "Already verified",
+        "description": "Your email is confirmed, nothing more to do. You can carry on.",
         "title": "Email already verified"
       },
       "continue": "Continue",
       "done": {
-        "description": "Thanks, you can now ask to join events and publish your own.",
+        "badge": "Verified",
+        "description": "Done, your account is complete. You can now ask for a seat at events and publish your own.",
         "title": "Email verified"
       },
       "failed": {
-        "description": "The link has expired or is not valid. Send yourself a new one.",
+        "badge": "Link not working",
+        "description": "The link has expired or is not valid. Send yourself a new one and verify within 24 hours.",
         "signIn": "Sign in to send a new one",
         "title": "This link no longer works"
       },

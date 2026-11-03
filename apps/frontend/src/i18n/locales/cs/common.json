@@ -76,16 +76,19 @@
     },
     "verifyEmail": {
       "already": {
-        "description": "Tvůj e-mail je už potvrzený. Můžeš pokračovat.",
+        "badge": "Už ověřeno",
+        "description": "Tvůj e-mail je potvrzený, není co dalšího dělat. Můžeš pokračovat.",
         "title": "E-mail už je ověřený"
       },
       "continue": "Pokračovat",
       "done": {
-        "description": "Díky, teď můžeš žádat o účast na akcích i zveřejňovat vlastní.",
+        "badge": "Ověřeno",
+        "description": "Hotovo, tvůj účet je kompletní. Teď můžeš žádat o místo na akcích a zveřejňovat vlastní.",
         "title": "E-mail je ověřený"
       },
       "failed": {
-        "description": "Odkaz vypršel nebo není platný. Pošli si nový.",
+        "badge": "Odkaz nefunguje",
+        "description": "Odkaz vypršel nebo není platný. Pošli si nový a ověř e-mail do 24 hodin.",
         "signIn": "Přihlásit se a poslat nový",
         "title": "Odkaz už nefunguje"
       },

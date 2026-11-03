@@ -1,8 +1,11 @@
+import type { CSSProperties } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
+import { ActivityAvatar } from "@/components/hobbyhub/ActivityAvatar"
+import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
@@ -27,6 +30,8 @@ export const Route = createFileRoute("/verify-email")({
     context.queryClient.fetchQuery({ ...authSessionQueryOptions(), staleTime: 0 }),
 })
 
+const BADGE = { done: "approved", already: "approved", failed: "rejected" } as const
+
 function VerifyEmailPage() {
   const { t } = useTranslation()
   const { next, error } = Route.useSearch()
@@ -40,30 +45,52 @@ function VerifyEmailPage() {
   return (
     <>
       <Seo title={t(`auth.verifyEmail.${outcome}.title`)} />
-      <AppShell className="mx-auto flex w-full max-w-2xl flex-col items-start gap-4 px-4 py-6 md:py-12">
-        <h1 className="typo-h1 text-foreground">{t(`auth.verifyEmail.${outcome}.title`)}</h1>
-        <p className="typo-body text-muted-foreground">
-          {t(`auth.verifyEmail.${outcome}.description`)}
-        </p>
-        {outcome === "failed" ? (
-          session ? (
-            <ResendVerification next={target} />
+      <AppShell className="mx-auto flex w-full max-w-md flex-col items-center gap-6 px-4 py-12 text-center md:py-24">
+        {/* The seat is yours: a person where there was a dashed empty place. */}
+        <div className="flex enter flex-col items-center gap-4">
+          <ActivityAvatar
+            avatar={outcome === "failed" ? "free" : "turistka"}
+            size="2xl"
+          />
+          <StatusBadge status={BADGE[outcome]}>
+            {t(`auth.verifyEmail.${outcome}.badge`)}
+          </StatusBadge>
+        </div>
+        <div
+          className="flex enter flex-col items-center gap-3"
+          style={{ "--enter-index": 1 } as CSSProperties}
+        >
+          <h1 className="typo-h1 text-balance text-foreground">
+            {t(`auth.verifyEmail.${outcome}.title`)}
+          </h1>
+          <p className="typo-body-lg text-balance text-muted-foreground">
+            {t(`auth.verifyEmail.${outcome}.description`)}
+          </p>
+        </div>
+        <div
+          className="flex w-full enter justify-center *:max-sm:w-full"
+          style={{ "--enter-index": 2 } as CSSProperties}
+        >
+          {outcome === "failed" ? (
+            session ? (
+              <ResendVerification next={target} />
+            ) : (
+              <Button asChild>
+                <Link
+                  to={ROUTES.login}
+                  // Back to this very page after signing in, where resending is possible.
+                  search={{ from: encodeURIComponent(currentPath()) }}
+                >
+                  {t("auth.verifyEmail.failed.signIn")}
+                </Link>
+              </Button>
+            )
           ) : (
             <Button asChild>
-              <Link
-                to={ROUTES.login}
-                // Back to this very page after signing in, where resending is possible.
-                search={{ from: encodeURIComponent(currentPath()) }}
-              >
-                {t("auth.verifyEmail.failed.signIn")}
-              </Link>
+              <Link to={target}>{t("auth.verifyEmail.continue")}</Link>
             </Button>
-          )
-        ) : (
-          <Button asChild>
-            <Link to={target}>{t("auth.verifyEmail.continue")}</Link>
-          </Button>
-        )}
+          )}
+        </div>
       </AppShell>
     </>
   )
