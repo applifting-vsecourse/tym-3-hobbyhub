@@ -70,6 +70,28 @@
       "passwordRequired": "Zadejte heslo",
       "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",
       "underage": "Registrace je možná až od 18 let"
+    },
+    "verifyEmail": {
+      "already": {
+        "description": "Tvůj e-mail je už potvrzený. Můžeš pokračovat.",
+        "title": "E-mail už je ověřený"
+      },
+      "continue": "Pokračovat",
+      "done": {
+        "description": "Díky, teď můžeš žádat o účast na akcích i zveřejňovat vlastní.",
+        "title": "E-mail je ověřený"
+      },
+      "failed": {
+        "description": "Odkaz vypršel nebo není platný. Pošli si nový.",
+        "signIn": "Přihlásit se a poslat nový",
+        "title": "Odkaz už nefunguje"
+      },
+      "noticeDescription": "Poslali jsme ti odkaz na {{email}}. Bez ověření nemůžeš žádat o účast ani zveřejnit akci.",
+      "noticeTitle": "Ověř svůj e-mail",
+      "resend": "Poslat e-mail znovu",
+      "resendFailed": "E-mail se nepodařilo odeslat. Zkus to znovu.",
+      "resendIn": "Poslat znovu za {{seconds}} s",
+      "sent": "Nový e-mail je na cestě. Odkaz platí 24 hodin."
     }
   },
   "common": {
@@ -194,6 +216,7 @@
       "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
       "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
       "created": "Akce je zveřejněná.",
+      "emailNotVerified": "Nejdřív ověř svůj e-mail, pak můžeš akci zveřejnit.",
       "externalHint": "Lidé z vaší party bez účtu, včetně vás. Počítají se do obsazenosti.",
       "minimumReached": "Minimum je naplněné",
       "missingHint": "Počet chybějících lidí se počítá z minima a obsazených míst.",
@@ -653,6 +676,7 @@
     },
     "refused": {
       "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
+      "EMAIL_NOT_VERIFIED": "Nejdřív ověř svůj e-mail.",
       "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
       "EVENT_FINISHED": "Akce už proběhla, o účast se nedá žádat.",
       "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",

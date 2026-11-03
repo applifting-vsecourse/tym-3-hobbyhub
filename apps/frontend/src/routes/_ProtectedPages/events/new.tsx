@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { VerifyEmailNotice } from "@/features/auth/components/VerifyEmailNotice"
+import { EmailNotVerifiedError } from "@/features/event/api/createEvent"
 import type { CreateEventInput } from "@/features/event/api/eventSchemas"
 import { EventForm } from "@/features/event/components/EventForm"
 import { useCreateEvent } from "@/features/event/hooks/useCreateEvent"
@@ -48,13 +50,25 @@ function NewEventPage() {
     <>
       <Seo title={t("events.form.title")} />
       <section className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
+        {/* F-03.2: publishing needs a verified e-mail; the notice is empty once it is. */}
+        <div className="mb-6 empty:hidden">
+          <VerifyEmailNotice />
+        </div>
         <EventForm
           activities={activityOptions}
           isActivitiesLoading={activitiesQuery.isPending}
           isActivitiesError={activitiesQuery.isError}
           onRetryActivities={() => void activitiesQuery.refetch()}
           isSubmitting={createEvent.isPending}
-          errorMessage={createEvent.isError ? t("events.form.createFailed") : null}
+          errorMessage={
+            createEvent.isError
+              ? t(
+                  createEvent.error instanceof EmailNotVerifiedError
+                    ? "events.form.emailNotVerified"
+                    : "events.form.createFailed",
+                )
+              : null
+          }
           onSubmit={handleSubmit}
           backLink={
             <BackLink

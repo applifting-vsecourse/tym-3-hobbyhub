@@ -39,4 +39,21 @@ describe("JoinRequestAction", () => {
 
     expect(screen.getByRole("button", { name: "Požádat o účast" })).toBeEnabled()
   })
+  it("offers to verify the e-mail next to the inactive button", () => {
+    render(
+      <JoinRequestAction
+        label="Požádat o účast"
+        state={{ request: null, violations: ["EMAIL_NOT_VERIFIED"] }}
+        isLoading={false}
+        onRequest={vi.fn()}
+        verifyEmailAction={<button>Poslat e-mail znovu</button>}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Požádat o účast" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Požádat o účast" })).toHaveAccessibleDescription(
+      "Nejdřív ověř svůj e-mail.",
+    )
+    expect(screen.getByRole("button", { name: "Poslat e-mail znovu" })).toBeInTheDocument()
+  })
 })

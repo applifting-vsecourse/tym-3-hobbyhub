@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useId, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
@@ -14,10 +14,18 @@ type JoinRequestActionProps = {
   isLoading: boolean
   /** Opens the request sheet, which the page owns. */
   onRequest: () => void
+  /** F-03.2: what the page offers to a person whose e-mail is not verified yet. */
+  verifyEmailAction?: ReactNode
 }
 
 /** The free seat's button for a signed-in person: ask to join, or why not. */
-export function JoinRequestAction({ label, state, isLoading, onRequest }: JoinRequestActionProps) {
+export function JoinRequestAction({
+  label,
+  state,
+  isLoading,
+  onRequest,
+  verifyEmailAction,
+}: JoinRequestActionProps) {
   const { t } = useTranslation()
   const reasonId = useId()
   const refusal = state ? refusalOf(state.violations) : null
@@ -41,6 +49,9 @@ export function JoinRequestAction({ label, state, isLoading, onRequest }: JoinRe
         >
           {t(`participationRequests.refused.${refusal}`)}
         </p>
+        {refusal === "EMAIL_NOT_VERIFIED" ? (
+          <div className="flex justify-center">{verifyEmailAction}</div>
+        ) : null}
       </>
     )
   }

@@ -18,5 +18,6 @@ export const decodeRedirectUri = (encoded: string) => {
 export const redirectTarget = (from: string | undefined, fallback: string) => {
   if (!from) return fallback
   const path = decodeRedirectUri(from)
-  return path.startsWith("/") && !path.startsWith("//") ? path : fallback
+  // A backslash is read as a slash by browsers: "/\\evil.example" is "//evil.example".
+  return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : fallback
 }

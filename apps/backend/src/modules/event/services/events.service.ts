@@ -36,6 +36,16 @@ export class EventsService {
   ) {}
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
+    // F-03.2: publishing needs a verified e-mail. `violations` lets the client
+    // say why, as it does for a refused request to join.
+    if (!user.emailVerified) {
+      throw new BadRequestException({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: ['Verify your email address before publishing an event'],
+        violations: ['EMAIL_NOT_VERIFIED'],
+      });
+    }
     const now = new Date();
     const violations = eventRuleViolations(data, now);
     if (violations.length > 0) {

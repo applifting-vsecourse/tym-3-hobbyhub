@@ -1,7 +1,10 @@
 import { EmailService } from '@/core/email/interfaces/email-service.interface';
 import { renderEmail } from '@/core/email/render';
 import { ResetPassword } from '@/core/email/templates/reset-password';
-import { VerifyEmail } from '@/core/email/templates/verify-email';
+import {
+  VERIFY_EMAIL_SUBJECT,
+  VerifyEmail,
+} from '@/core/email/templates/verify-email';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { betterAuthCoreConfig } from '@/shared/auth/config/better-auth.config';
 import {
@@ -12,6 +15,8 @@ import { Config } from '@/shared/config/config.service';
 import { Inject, Provider } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+
+const VERIFICATION_LINK_TTL_SECONDS = 24 * 60 * 60;
 
 const createAuth = (
   prismaService: PrismaService,
@@ -51,13 +56,11 @@ const createAuth = (
     emailVerification: {
       sendVerificationEmail: async ({ user, url }) => {
         const html = await renderEmail(VerifyEmail, { url });
-        await emailProvider.sendEmail(
-          user.email,
-          'Verify your email address',
-          html,
-        );
+        await emailProvider.sendEmail(user.email, VERIFY_EMAIL_SUBJECT, html);
       },
       sendOnSignUp: true,
+      // F-03.2: the link is valid for a day (BetterAuth's default is an hour).
+      expiresIn: VERIFICATION_LINK_TTL_SECONDS,
     },
     hooks: {
       before: registrationBeforeHook,

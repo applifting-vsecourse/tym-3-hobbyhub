@@ -32,7 +32,9 @@ export type JoinRuleViolation =
   | 'IS_ORGANIZER'
   | 'HAS_SEAT'
   | 'ALREADY_REQUESTED'
-  | 'REJECTED_BEFORE';
+  | 'REJECTED_BEFORE'
+  // F-03.2: the applicant has not confirmed their e-mail address.
+  | 'EMAIL_NOT_VERIFIED';
 
 // The request a person sees on an event: the one still waiting, otherwise the
 // last decision. Withdrawn and closed requests are history and leave the person

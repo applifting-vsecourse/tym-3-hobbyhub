@@ -24,6 +24,7 @@ const VIOLATION_MESSAGES: Record<JoinRuleViolation, string> = {
   HAS_SEAT: 'You already have a seat at this event',
   ALREADY_REQUESTED: 'You have already asked to join this event',
   REJECTED_BEFORE: 'Your request to join this event was rejected',
+  EMAIL_NOT_VERIFIED: 'Verify your email address before asking to join',
 };
 
 // Event messages plus the codes, so the client can say why in its language.
@@ -60,7 +61,7 @@ export class ParticipationRequestsService {
     const requests = await this.repository.getRequestsOf(eventId, user.id);
     return {
       request: currentRequestOf(requests),
-      violations: joinRuleViolations(event, user.id, requests, now),
+      violations: this.violationsFor(user, event, requests, now),
     };
   }
 
@@ -74,9 +75,8 @@ export class ParticipationRequestsService {
     now: Date = new Date(),
   ): Promise<ParticipationRequest> {
     const event = await this.getEvent(eventId, user);
-    // TODO(F-03.2 #13): a verified e-mail becomes a condition here.
     const requests = await this.repository.getRequestsOf(eventId, user.id);
-    const violations = joinRuleViolations(event, user.id, requests, now);
+    const violations = this.violationsFor(user, event, requests, now);
     if (violations.length > 0) throw violationsError(violations);
 
     // The applicant comes from the session, never from the request body.
@@ -113,6 +113,19 @@ export class ParticipationRequestsService {
     );
     if (!withdrawn)
       throw new NotFoundException('No pending request to withdraw');
+  }
+
+  // F-03.2: the event's own rules, plus the one that depends on the person.
+  private violationsFor(
+    user: Identity,
+    event: EventSeatFacts,
+    requests: ParticipationRequest[],
+    now: Date,
+  ): JoinRuleViolation[] {
+    const violations = joinRuleViolations(event, user.id, requests, now);
+    return user.emailVerified
+      ? violations
+      : [...violations, 'EMAIL_NOT_VERIFIED'];
   }
 
   private async getEvent(

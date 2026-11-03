@@ -1,3 +1,4 @@
+import { ResendCooldown } from '@/shared/auth/verification/resend-cooldown';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { BetterAuthOptions } from 'better-auth/types';
 import {
@@ -7,6 +8,9 @@ import {
 } from './registration';
 
 const SIGN_UP_PATH = '/sign-up/email';
+const RESEND_VERIFICATION_PATH = '/send-verification-email';
+
+const resendCooldown = new ResendCooldown();
 
 const MESSAGES: Record<RegistrationErrorCode, string> = {
   INVALID_GENDER: 'Gender must be MALE or FEMALE',
@@ -17,9 +21,22 @@ const MESSAGES: Record<RegistrationErrorCode, string> = {
 
 /**
  * Validates the F-03.1 fields before BetterAuth creates the user, and turns
- * the birth date into a Date for the `date` column.
+ * the birth date into a Date for the `date` column. Also paces F-03.2's
+ * "send the verification e-mail again".
  */
 export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
+  // F-03.2: "send the verification e-mail again" at most once a minute.
+  if (ctx.path === RESEND_VERIFICATION_PATH) {
+    const email = (ctx.body as { email?: unknown } | undefined)?.email;
+    const wait = typeof email === 'string' ? resendCooldown.take(email) : 0;
+    if (wait > 0) {
+      throw APIError.from('TOO_MANY_REQUESTS', {
+        code: 'VERIFICATION_RESEND_TOO_SOON',
+        message: `Wait ${wait} seconds before asking for another email`,
+      });
+    }
+  }
+
   if (ctx.path === SIGN_UP_PATH) {
     const result = validateRegistration(ctx.body ?? {}, new Date());
     if (!result.ok) {

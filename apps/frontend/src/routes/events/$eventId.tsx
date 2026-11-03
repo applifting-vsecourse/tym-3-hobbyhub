@@ -14,6 +14,7 @@ import { HTTPError } from "@/lib/api-client"
 
 import { activityName } from "@/features/activity/activityName"
 import { AppShell } from "@/features/auth/components/AppShell"
+import { ResendVerification } from "@/features/auth/components/ResendVerification"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
@@ -71,6 +72,7 @@ function EventDetailPage() {
       state={myRequestQuery.data}
       isLoading={myRequestQuery.isPending}
       onRequest={() => setSheetStep("form")}
+      verifyEmailAction={<ResendVerification />}
     />
   ) : isSessionPending ? (
     <Button disabled>{joinLabel}</Button>

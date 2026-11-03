@@ -22,6 +22,7 @@ export const joinRuleViolationSchema = z.enum([
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+  "EMAIL_NOT_VERIFIED",
 ])
 
 export const participationRequestSchema = z.object({

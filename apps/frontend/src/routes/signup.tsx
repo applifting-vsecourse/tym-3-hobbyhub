@@ -40,7 +40,7 @@ function SignUpPage() {
   const handleSubmit = async (values: SignUpFormValues) => {
     setError(null)
     try {
-      await signUp.mutateAsync(values)
+      await signUp.mutateAsync({ ...values, from })
       await navigate({ to: redirectTarget(from, ROUTES.home) })
     } catch (error) {
       setError(error)
