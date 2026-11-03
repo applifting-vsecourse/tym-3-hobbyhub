@@ -7,7 +7,7 @@ catalogs:
     prettier: ^3.9.6
     react-hook-form: ^7.85.0
     typescript: ^5.9.3
-    zod: ^4.4.3
+    zod: ^4.6.7
   lint:
     '@eslint/compat': ^2.1.0
     '@eslint/js': ^10.0.1
@@ -30,3 +30,12 @@ catalogs:
     '@types/react-dom': ^19.2.4
     react: ^19.2.8
     react-dom: ^19.2.8
+
+# Security fixes the direct dependencies don't pull in yet. Remove an entry once
+# its parent depends on the fixed version (`pnpm audit --prod` stays clean).
+overrides:
+  # An optional better-auth peer: pnpm auto-installs Next.js 15.1, which
+  # HobbyHub never loads and which carries critical advisories.
+  better-auth>next: '-'
+  '@nestjs/platform-express>multer': ^2.5.0
+  '@nestjs/swagger>js-yaml': ^5.4.1

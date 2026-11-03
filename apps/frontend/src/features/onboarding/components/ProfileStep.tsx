@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
+import { avatarPicture, illustrationOf } from "@/components/hobbyhub/PersonAvatar"
 import {
   ProfilePicturePicker,
   type ProfilePicture,
@@ -13,6 +14,7 @@ import {
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { PhotoError, toWebpDataUrl, type PhotoProblem } from "@/lib/webpImage"
 
 import type { Onboarding, SaveProfileInput } from "@/features/onboarding/api/onboardingSchemas"
 import {
@@ -37,8 +39,23 @@ const createSchema = (t: TFunction) =>
 
 type ProfileFormValues = z.infer<ReturnType<typeof createSchema>>
 
+/** What the picker shows for the stored picture: an illustration or the photo. */
+const pictureOfImage = (image: string | null): ProfilePicture | null => {
+  if (!image) return null
+  const avatar = illustrationOf(image)
+  return avatar ? { kind: "avatar", avatar } : { kind: "photo", url: image }
+}
+
+/** The stored form of the chosen picture: an illustration's name or a shrunk WebP photo. */
+const pictureToImage = async (picture: ProfilePicture | null): Promise<string | null> => {
+  if (!picture) return null
+  if (picture.kind === "avatar") return avatarPicture(picture.avatar)
+  // A photo saved before is already WebP text; a new one is an object URL.
+  return picture.url.startsWith("data:") ? picture.url : toWebpDataUrl(picture.url)
+}
+
 type ProfileStepProps = {
-  initial: Pick<Onboarding, "bio">
+  initial: Pick<Onboarding, "bio" | "image">
   isLast: boolean
   isReturningToEvent: boolean
   isSaving: boolean
@@ -69,8 +86,12 @@ export function ProfileStep({
     defaultValues: { bio: initial.bio ?? "" },
   })
   const bio = useWatch({ control: form.control, name: "bio" })
+  // The picture saved before, or none; a change is sent, an untouched one is not.
+  const [picture, setPicture] = useState<ProfilePicture | null>(() => pictureOfImage(initial.image))
+  const [isPictureChanged, setIsPictureChanged] = useState(false)
+  const [photoProblem, setPhotoProblem] = useState<PhotoProblem | null>(null)
   // An emptied bio that was saved before is a change to save, not a skip.
-  const isEmpty = bio.trim() === "" && !initial.bio
+  const isEmpty = bio.trim() === "" && !initial.bio && !picture
 
   useRevalidateOnLanguageChange(form)
 
@@ -80,11 +101,19 @@ export function ProfileStep({
     action()
   }
 
-  // Only held for now: the project has no image storage yet (F-04.1 #18), so
-  // the choice is not sent.
-  const [picture, setPicture] = useState<ProfilePicture | null>(null)
-
-  const submit = async ({ bio }: ProfileFormValues) => onSubmit({ bio: bio || undefined })
+  const submit = async ({ bio }: ProfileFormValues) => {
+    setPhotoProblem(null)
+    let image: string | null | undefined
+    if (isPictureChanged) {
+      try {
+        image = await pictureToImage(picture)
+      } catch (error) {
+        setPhotoProblem(error instanceof PhotoError ? error.problem : "unreadable")
+        return
+      }
+    }
+    await onSubmit({ bio: bio || undefined, image })
+  }
 
   return (
     <OnboardingStepLayout
@@ -104,10 +133,21 @@ export function ProfileStep({
 
         <ProfilePicturePicker
           value={picture}
-          onChange={setPicture}
+          onChange={(next) => {
+            setPicture(next)
+            setIsPictureChanged(true)
+          }}
           label={t("onboarding.profile.pictureLabel")}
           hint={t("onboarding.profile.pictureHint")}
         />
+        {photoProblem ? (
+          <p
+            role="alert"
+            className="typo-small text-destructive"
+          >
+            {t(`profile.public.photoProblem.${photoProblem}`)}
+          </p>
+        ) : null}
 
         <FormField
           control={form.control}

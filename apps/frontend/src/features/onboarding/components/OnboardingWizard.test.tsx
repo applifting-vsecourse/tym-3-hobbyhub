@@ -27,6 +27,7 @@ const onboarding = (overrides: Partial<Onboarding> = {}): Onboarding => ({
   address: null,
   travelRadiusKm: null,
   bio: null,
+  image: null,
   ...overrides,
 })
 

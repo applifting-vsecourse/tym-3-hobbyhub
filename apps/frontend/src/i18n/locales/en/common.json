@@ -647,6 +647,47 @@
       "label": "Photo or illustration (optional)",
       "upload": "Upload photo"
     },
+    "profileCover": {
+      "auto": "Based on my first sport",
+      "change": "Change cover",
+      "label": "Cover picture",
+      "names": {
+        "badminton": "Badminton",
+        "basketbal": "Basketball",
+        "beh": "Running",
+        "cviceni": "Workout",
+        "cyklistika": "Cycling",
+        "deskove-hry": "Board games",
+        "florbal": "Floorball",
+        "fotbal": "Football",
+        "hry-doma": "Games at home",
+        "konfety": "Confetti",
+        "lan-party": "LAN party",
+        "ostatni": "Other",
+        "plavani": "Swimming",
+        "roster": "The crew",
+        "sachy": "Chess",
+        "sedadla": "Free seats",
+        "stolni-tenis": "Table tennis",
+        "tenis": "Tennis",
+        "turistika": "Hiking",
+        "tymove": "Team games",
+        "venku": "Outdoors",
+        "volejbal": "Volleyball",
+        "volna": "Waves",
+        "vsechno": "Everything"
+      },
+      "own": "Your picture",
+      "problem": {
+        "size": "The file is too large (20 MB at most).",
+        "tooLarge": "The picture is still over 2 MB after shrinking. Choose another one.",
+        "type": "The picture must be a JPG, PNG or WebP.",
+        "unreadable": "The picture could not be processed. Try another one."
+      },
+      "sheetDescription": "Pick an illustration or upload your own photo. We shrink it to 2 MB at most.",
+      "sheetTitle": "Choose a cover picture",
+      "upload": "Upload your own picture"
+    },
     "profilePicture": {
       "change": "Change picture",
       "choose": "Choose a picture",
@@ -728,6 +769,50 @@
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
   },
+  "notifications": {
+    "badgeOverflow": "{{max}}+",
+    "bell": "Notifications",
+    "bellUnread_one": "Notifications, {{count}} unread",
+    "bellUnread_other": "Notifications, {{count}} unread",
+    "deletedTarget": "a deleted event",
+    "empty": "No notifications yet. They will show up here once something happens around your events and groups.",
+    "justNow": "just now",
+    "loadError": "Notifications could not be loaded",
+    "loading": "Loading notifications…",
+    "markAllRead": "Mark all as read",
+    "markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+    "message": "“{{message}}”",
+    "more_one": "{{count}} more",
+    "more_other": "{{count}} more",
+    "retry": "Try again",
+    "showAll": "Show all",
+    "someone": "Someone",
+    "text": {
+      "EVENT_CANCELLED": "The event {{title}} was cancelled",
+      "EVENT_CHANGED": {
+        "BOTH": "The event {{title}} has a new time and place",
+        "PLACE": "The event {{title}} has a new place",
+        "TIME": "The event {{title}} has a new time"
+      },
+      "NEW_REQUESTS": {
+        "event": "{{name}} asks to join the event {{title}}",
+        "group": "{{name}} asks to join the group {{title}}"
+      },
+      "REQUEST_DECIDED": {
+        "event": {
+          "APPROVED": "Your request to join the event {{title}} was approved",
+          "REJECTED": "Your request to join the event {{title}} was rejected"
+        },
+        "group": {
+          "APPROVED": "Your request to join the group {{title}} was approved",
+          "REJECTED": "Your request to join the group {{title}} was rejected"
+        }
+      },
+      "other": "News about {{title}}"
+    },
+    "title": "Notifications",
+    "unread": "Unread:"
+  },
   "onboarding": {
     "activities": {
       "addLabel": "Add an activity",
@@ -771,7 +856,7 @@
       "bioPlaceholder": "E.g. I have played for a year and like to try new activities…",
       "bioTooLong": "The bio can have at most {{max}} characters.",
       "description": "So others know who they will be playing with.",
-      "pictureHint": "Not saved yet, we will add that.",
+      "pictureHint": "An illustration, or your own photo (we shrink it, 2 MB at most).",
       "pictureLabel": "Profile picture (optional)",
       "title": "Show yourself to others"
     },
@@ -897,8 +982,54 @@
     }
   },
   "profile": {
-    "placeholder": "The profile page is on its way.",
-    "title": "Profile"
+    "cancel": "Cancel",
+    "edit": {
+      "title": "Edit profile"
+    },
+    "interests": {
+      "description": "Sports and activities you enjoy, and how well you play them. We show them on your profile.",
+      "none": "Pick at least one activity.",
+      "title": "What I like to play"
+    },
+    "loadError": "Could not load your profile.",
+    "loading": "Loading your profile…",
+    "location": {
+      "description": "A private address, nobody else sees it. It is used to find events nearby.",
+      "hasNone": "You have not added an address yet.",
+      "howTo": "Start typing your street (and house number, if you like) and we suggest places from the map. Pick your line so we know the position on the map too.",
+      "title": "Where I live"
+    },
+    "private": {
+      "birthDateHint": "You must be at least 18.",
+      "description": "You gave your gender and birth date at sign-up. You can correct them here.",
+      "notice": "Nobody else sees these details.",
+      "title": "Private details"
+    },
+    "public": {
+      "bioTooLong": "The bio can have at most {{max}} characters.",
+      "mediaHint": "The cover is your calling card: an illustration or your own photo. The picture over its edge is your profile picture.",
+      "name": "Nickname",
+      "nameRequired": "Enter a nickname",
+      "nameTooLong": "The nickname can have at most {{max}} characters.",
+      "photoProblem": {
+        "tooLarge": "The photo is still over 2 MB after shrinking. Choose another one.",
+        "unreadable": "The photo could not be processed. Try another one."
+      }
+    },
+    "save": "Save",
+    "saveError": "Could not save the changes. Please try again.",
+    "title": "My profile",
+    "view": {
+      "addActivities": "Add what I play",
+      "addBio": "Write a few words",
+      "edit": "Edit profile",
+      "memberSince": "Member since {{date}}",
+      "noActivities": "No activities yet.",
+      "noAddress": "You have not added an address yet",
+      "noBio": "Nothing about you yet.",
+      "privateHint": "Others do not see this.",
+      "privateTitle": "Only you"
+    }
   },
   "quacks": {
     "form": {

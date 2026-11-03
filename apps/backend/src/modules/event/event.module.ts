@@ -1,6 +1,7 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
 import { ActivityModule } from '@/modules/activity/activity.module';
 import { CancellationReasonModule } from '@/modules/cancellation-reason/cancellation-reason.module';
+import { NotificationModule } from '@/modules/notification/notification.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { EventsController } from './controllers/events.controller';
@@ -8,7 +9,13 @@ import { EventRepository } from './repositories/event.repository';
 import { EventsService } from './services/events.service';
 
 @Module({
-  imports: [AuthModule, PrismaModule, ActivityModule, CancellationReasonModule],
+  imports: [
+    AuthModule,
+    PrismaModule,
+    ActivityModule,
+    CancellationReasonModule,
+    NotificationModule,
+  ],
   controllers: [EventsController],
   providers: [EventsService, EventRepository],
   exports: [EventsService],
