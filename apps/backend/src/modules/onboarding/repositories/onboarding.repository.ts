@@ -74,6 +74,7 @@ const mapUserToOnboarding = (user: UserRow): Onboarding => {
     address,
     travelRadiusKm: user.travelRadiusKm,
     bio: user.bio,
+    image: user.image,
   };
 };
 
@@ -146,13 +147,18 @@ export class OnboardingRepository {
     });
   }
 
+  // `image` undefined leaves the picture as it is; null removes it.
   async saveBio(
     userId: string,
     bio: string | null,
+    image: string | null | undefined,
     step: number,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: userId }, data: { bio } });
+      await tx.user.update({
+        where: { id: userId },
+        data: { bio, ...(image !== undefined && { image }) },
+      });
       await this.advanceTo(tx, userId, step);
     });
   }

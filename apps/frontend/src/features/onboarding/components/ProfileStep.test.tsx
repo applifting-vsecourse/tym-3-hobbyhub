@@ -13,7 +13,7 @@ const renderStep = async (
 ) => {
   await renderWithRouter(
     <ProfileStep
-      initial={{ bio }}
+      initial={{ bio, image: null }}
       isLast={true}
       isReturningToEvent={false}
       isSaving={false}
@@ -89,7 +89,7 @@ describe("ProfileStep", () => {
   it("asks before the page is left with a bio that was not saved", async () => {
     const { navigateAway } = await renderWithRouter(
       <ProfileStep
-        initial={{ bio: null }}
+        initial={{ bio: null, image: null }}
         isLast={true}
         isReturningToEvent={false}
         isSaving={false}
@@ -109,7 +109,7 @@ describe("ProfileStep", () => {
   it("keeps guarding the bio when the save fails", async () => {
     const { navigateAway } = await renderWithRouter(
       <ProfileStep
-        initial={{ bio: null }}
+        initial={{ bio: null, image: null }}
         isLast={true}
         isReturningToEvent={false}
         isSaving={false}
@@ -125,5 +125,27 @@ describe("ProfileStep", () => {
     void navigateAway()
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument()
+  })
+
+  it("saves the illustration chosen as the picture instead of skipping the step", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    const onSkip = vi.fn()
+    await renderStep(onSubmit, onSkip)
+
+    await userEvent.click(screen.getByRole("button", { name: "Vybrat obrázek" }))
+    await userEvent.click(await screen.findByRole("button", { name: /Florbalista/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
+
+    expect(onSkip).not.toHaveBeenCalled()
+    expect(onSubmit).toHaveBeenCalledWith({ bio: undefined, image: "avatar:florbalista" })
+  })
+
+  it("sends no picture when it was not touched", async () => {
+    const onSubmit = await renderStep()
+
+    await userEvent.type(screen.getByLabelText("Krátké bio (nepovinné)"), "Hraju rok")
+    await userEvent.click(screen.getByRole("button", { name: "Dokončit" }))
+
+    expect(onSubmit.mock.calls[0]?.[0]).toEqual({ bio: "Hraju rok", image: undefined })
   })
 })

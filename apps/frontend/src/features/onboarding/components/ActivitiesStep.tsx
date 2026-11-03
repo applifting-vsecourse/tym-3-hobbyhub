@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
+import { ActivityPicker } from "@/components/hobbyhub/ActivityPicker"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -19,7 +20,6 @@ import type {
   Onboarding,
   SaveActivitiesInput,
 } from "@/features/onboarding/api/onboardingSchemas"
-import { ActivityPicker } from "@/features/onboarding/components/ActivityPicker"
 import {
   OnboardingStepLayout,
   SaveError,

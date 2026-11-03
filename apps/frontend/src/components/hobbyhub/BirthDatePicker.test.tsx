@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 
-import { BirthDatePicker } from "@/features/auth/components/BirthDatePicker"
+import { BirthDatePicker } from "@/components/hobbyhub/BirthDatePicker"
 
 function Picker({ initial }: { initial: string }) {
   const [value, setValue] = useState(initial)

@@ -9,6 +9,7 @@ import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
 import { AppForm } from "@/components/form/AppForm"
+import { BirthDatePicker } from "@/components/hobbyhub/BirthDatePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -29,10 +30,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { isAdult } from "@/lib/birthDate"
 
-import { BirthDatePicker } from "@/features/auth/components/BirthDatePicker"
 import { PasswordInput } from "@/features/auth/components/PasswordInput"
-import { isAdult } from "@/features/auth/lib/birthDate"
 
 const GENDERS = ["MALE", "FEMALE"] as const
 

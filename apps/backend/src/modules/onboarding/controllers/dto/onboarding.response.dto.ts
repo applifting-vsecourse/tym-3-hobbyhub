@@ -61,6 +61,9 @@ export class OnboardingResponseDto {
   @ApiProperty({ type: String, nullable: true })
   bio!: string | null;
 
+  @ApiProperty({ type: String, nullable: true })
+  image!: string | null;
+
   static fromDomain(onboarding: Onboarding): OnboardingResponseDto {
     return {
       stepsDone: onboarding.stepsDone,
@@ -75,6 +78,7 @@ export class OnboardingResponseDto {
       address: onboarding.address ? { ...onboarding.address } : null,
       travelRadiusKm: onboarding.travelRadiusKm,
       bio: onboarding.bio,
+      image: onboarding.image,
     };
   }
 }

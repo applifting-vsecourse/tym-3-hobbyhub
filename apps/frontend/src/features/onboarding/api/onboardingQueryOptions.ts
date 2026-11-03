@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 
-import { onboardingKeys } from "@/features/onboarding/api/onboardingKeys"
+import { onboardingKeys } from "@/lib/onboarding-keys"
+
 import { getOnboarding } from "@/features/onboarding/api/onboardingRequests"
 
 export const onboardingQueryOptions = () =>
