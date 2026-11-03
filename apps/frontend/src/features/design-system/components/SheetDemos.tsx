@@ -25,8 +25,8 @@ function sampleCount(filters: EventFilters) {
 function describeFilters(filters: EventFilters, t: TFunction) {
   const parts = [
     ...filters.activities.map((activity) => t(`hobbyhub.activities.${activity}`)),
-    filters.dateFrom ? `od ${filters.dateFrom}` : "",
-    filters.dateTo ? `do ${filters.dateTo}` : "",
+    filters.dateFrom ? t("events.list.filters.dateFrom", { date: filters.dateFrom }) : "",
+    filters.dateTo ? t("events.list.filters.dateTo", { date: filters.dateTo }) : "",
     filters.location,
   ].filter((part) => part !== "")
   return parts.length > 0 ? parts.join(", ") : "žádné"
