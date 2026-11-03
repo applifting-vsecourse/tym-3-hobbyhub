@@ -10,7 +10,7 @@ Je to živý dokument. První verze pokrývá data a role z Issues ve Sprintu 2 
 ## Jak matici číst
 
 - Řádek je pole nebo skupina polí, sloupec je role a buňka říká, co role vidí.
-- ✅ vidí, ❌ nevidí, ❓ čeká na rozhodnutí zadavatele (viz [Otevřené otázky](#otevřené-otázky)).
+- ✅ vidí, ❌ nevidí, ❓ čeká na rozhodnutí zadavatele.
 - Role je vztah k zobrazenému záznamu. Organizátor jiné akce je pro tuto akci obyčejný přihlášený uživatel.
 - Role se stejnými hodnotami jsou v jednom sloupci a pole se stejnými hodnotami na jednom řádku. Rozdělí se, až když se začnou lišit.
 - Hodnota závislá na stavu má vlastní řádek, například veřejné a soukromé prostory.
@@ -19,8 +19,7 @@ Je to živý dokument. První verze pokrývá data a role z Issues ve Sprintu 2 
 ## Jak matici udržovat
 
 - Přidává Issue nové pole nebo roli? Uprav matici ve stejném PR.
-- Odstraňuje PR rozdíl mezi maticí a kódem? Smaž ho z [tabulky rozdílů](#kde-se-kód-zatím-liší).
-- Padlo rozhodnutí? Nahraď ❓ výsledkem a smaž otázku.
+- Padlo rozhodnutí? Nahraď ❓ výsledkem.
 
 ## Akce
 
@@ -30,24 +29,24 @@ Je to živý dokument. První verze pokrývá data a role z Issues ve Sprintu 2 
 - **Účastník:** má na akci schválenou účast.
 - **Organizátor:** hlavní organizátor a spoluorganizátoři. Spoluorganizátory zatím v aplikaci nejde přidat ([ADR-0005](adr/adr-0005.md)). Až to půjde, je potřeba tuhle tabulku ověřit.
 
-| Pole                                                      | Návštěvník, přihlášený, žadatel | Účastník | Organizátor | Zdroj                    |
-| --------------------------------------------------------- | ------------------------------- | -------- | ----------- | ------------------------ |
-| Název, fotka, termín, aktivita, úroveň, obsazenost        | ✅                              | ✅       | ✅          | [#7][7]                  |
-| Popis, vybavení, příspěvek, stav, způsob schvalování      | ✅                              | ✅       | ✅          | [#8][8]                  |
-| Důvod zrušení a poznámka k němu                           | ✅                              | ✅       | ✅          | [#35][35]                |
-| Jméno organizátora                                        | ✅                              | ✅       | ✅          | [#8][8]                  |
-| Skupina, která akci pořádá                                | ✅                              | ✅       | ✅          | [#9][9]                  |
-| Čtvrť a město                                             | ✅                              | ✅       | ✅          | [#7][7]                  |
-| Složení účastníků: medián věku a poměr pohlaví, od 3 lidí | ✅                              | ✅       | ✅          | [#45][45]                |
-| Veřejné místo: název a pin na mapě                        | ✅                              | ✅       | ✅          | [#6][6]                  |
-| Veřejné místo: ulice                                      | ❌                              | ✅       | ✅          | [#8][8], [#43][43]       |
-| Soukromé prostory: přibližná oblast na mapě               | ✅                              | ✅       | ✅          | [#92][92]                |
-| Soukromé prostory: název místa, ulice, přesné souřadnice  | ❌                              | ✅       | ✅          | [#67][67], [#43][43]     |
-| Praktické pokyny                                          | ❌                              | ✅       | ✅          | [#43][43]                |
-| Odkaz na externí chat                                     | ❌                              | ✅       | ✅          | [#43][43]                |
-| Kontakt na organizátora                                   | ❌                              | ❓       | ✅          | [#43][43], [#19][19], O1 |
-| Jména a profily účastníků                                 | ❌                              | ❓       | ✅          | [#90][90], [#31][31], O2 |
-| Koncept akce                                              | ❌                              | ❌       | ✅          | [#8][8]                  |
+| Pole                                                      | Návštěvník, přihlášený, žadatel | Účastník | Organizátor | Zdroj                |
+| --------------------------------------------------------- | ------------------------------- | -------- | ----------- | -------------------- |
+| Název, fotka, termín, aktivita, úroveň, obsazenost        | ✅                              | ✅       | ✅          | [#7][7]              |
+| Popis, vybavení, příspěvek, stav, způsob schvalování      | ✅                              | ✅       | ✅          | [#8][8]              |
+| Důvod zrušení a poznámka k němu                           | ✅                              | ✅       | ✅          | [#35][35]            |
+| Jméno organizátora                                        | ✅                              | ✅       | ✅          | [#8][8]              |
+| Skupina, která akci pořádá                                | ✅                              | ✅       | ✅          | [#9][9]              |
+| Čtvrť a město                                             | ✅                              | ✅       | ✅          | [#7][7]              |
+| Složení účastníků: medián věku a poměr pohlaví, od 3 lidí | ✅                              | ✅       | ✅          | [#45][45]            |
+| Veřejné místo: název a pin na mapě                        | ✅                              | ✅       | ✅          | [#6][6]              |
+| Veřejné místo: ulice                                      | ❌                              | ✅       | ✅          | [#8][8], [#43][43]   |
+| Soukromé prostory: přibližná oblast na mapě               | ✅                              | ✅       | ✅          | [#92][92]            |
+| Soukromé prostory: název místa, ulice, přesné souřadnice  | ❌                              | ✅       | ✅          | [#67][67], [#43][43] |
+| Praktické pokyny                                          | ❌                              | ✅       | ✅          | [#43][43]            |
+| Odkaz na externí chat                                     | ❌                              | ✅       | ✅          | [#43][43]            |
+| Kontakt na organizátora                                   | ❌                              | ❓       | ✅          | [#43][43], [#19][19] |
+| Jména a profily účastníků                                 | ❌                              | ❓       | ✅          | [#90][90], [#31][31] |
+| Koncept akce                                              | ❌                              | ❌       | ✅          | [#8][8]              |
 
 ## Žádosti o účast a o členství
 
@@ -79,7 +78,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | ------------------------------------------------------------------ | --- | ---------- | ---------- | -------------------- | ----------------------- | ------------------ | ------------------------------------------ |
 | Jméno, fotka, bio, zájmy                                           | ✅  | ❌         | ✅         | ✅                   | ✅                      | ✅                 | [#19][19]                                  |
 | Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ✅                   | ✅                      | ❌                 | [#32][32]                                  |
-| E-mail                                                             | ✅  | ❌         | ❌         | ❌                   | ✅                      | ❓                 | [#19][19], [#32][32], O1                   |
+| E-mail                                                             | ✅  | ❌         | ❌         | ❌                   | ✅                      | ❓                 | [#19][19], [#32][32]                       |
 | Datum narození, věk, pohlaví                                       | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#12][12], [#18][18], [#19][19], [#32][32] |
 | Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#24][24], [#67][67]                       |
 | Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#41][41], [#52][52], [#152][152]          |
@@ -97,51 +96,6 @@ Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků a
 | Akce jen pro skupinu                                          | ❌                              | ✅                  | [#47][47]                     |
 | Minulé akce skupiny                                           | ❌                              | ✅                  | [#47][47]                     |
 | Seznam členů: jméno, fotka, role, datum vstupu                | ❌                              | ✅                  | [#9][9], [#47][47], [#94][94] |
-
-## Otevřené otázky
-
-### O1: Jaký kontakt si lidé vymění po schválení?
-
-Buňky: Akce / Kontakt na organizátora, Profil uživatele / E-mail × Účastník jeho akce.
-
-Interní chat je [mimo rozsah][54] a povinný je jen přihlašovací e-mail.
-
-| Varianta                            | Co to znamená                                                                    | Nevýhoda                                                                  |
-| ----------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| A. Přihlašovací e-mail oběma směry  | Účastník vidí e-mail organizátora a organizátor e-mail účastníka. Nejméně práce. | Cizí lidé dostanou přihlašovací adresu a na „jdu pozdě“ se e-mail nehodí. |
-| B. Organizátor uvede kontakt u akce | Sám zvolí telefon, WhatsApp nebo e-mail. E-mail účastníka dál vidí organizátor.  | Jedno pole navíc ve formuláři akce.                                       |
-| C. Žádné osobní kontakty            | Jen odkaz na externí chat.                                                       | Když organizátor odkaz nevyplní, účastník nemá kam napsat.                |
-
-**Návrh týmu: B.** Organizátor sdílí jen to, co sám chce, a kontakt funguje i v den akce.
-
-### O2: Vidí schválení účastníci jeden druhého?
-
-Buňka: Akce / Jména a profily účastníků × Účastník.
-
-Veřejně se jména nezobrazují ([#90][90]). Ze schůzky s PO zaznělo, že zájemce nemá vidět konkrétní lidi a ty vidí jen organizátor ([#9][9]). Řeč ale byla o zájemcích, ne o schválených účastnících.
-
-**Návrh týmu: v MVP ne.** Žádné Issue ve sprintu to nepotřebuje a později se to dá otevřít. Proti mluví to, že na setkání s cizími lidmi by pomohlo vědět, kdo další přijde.
-
-## Kde se kód zatím liší
-
-Matice říká, jak to má být. Tyhle rozdíly odstraní uvedená Issues.
-
-| Pravidlo                                                    | Dnes v kódu                                                                        | Řeší                   |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------- |
-| Člen vidí seznam členů                                      | `GET /groups/:id/members` pustí jen admina                                         | [#47][47]              |
-| Člen vidí akce skupiny, veřejnost nadcházející veřejné akce | Detail skupiny má místo akcí zástupný text                                         | [#47][47]              |
-| Účastník vidí přesné místo, pokyny a odkaz na chat          | Žádný endpoint mu je nevrací, `GET /events/:id` je veřejný výřez                   | [#43][43], [#67][67]   |
-| Organizátor vidí vyřízené žádosti a e-mail schválených      | `GET /events/:id/requests` vrací jen čekající žádosti, bez e-mailu                 | [#31][31], [#19][19]   |
-| Přihlášený vidí profil jiného uživatele                     | Endpoint neexistuje                                                                | [#19][19]              |
-| Autor žádosti vidí důvod zamítnutí                          | Důvod se ukládá, ale API ho nevrací                                                | [#52][52], [#153][153] |
-| Soukromé prostory mají přibližnou oblast na mapě            | API u nich souřadnice nevrací, takže mapa nemá co ukázat                           | [#92][92]              |
-| Žadatel ví, co o něm organizátor po schválení uvidí         | `participationRequests.form.hiddenDetails` slibuje, že organizátor kontakt neuvidí | O1, [#19][19]          |
-
-## Co v první verzi není
-
-- Správce platformy: doplní se s E11 ([#70][70]), Issues v tomto sprintu s ním nepočítají.
-- Soukromé skupiny: doplní se s [#93][93].
-- Online akce: čekají na [ADR-0006](adr/adr-0006.md).
 
 [6]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/6
 [7]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/7
@@ -161,12 +115,9 @@ Matice říká, jak to má být. Tyhle rozdíly odstraní uvedená Issues.
 [48]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/48
 [52]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/52
 [53]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/53
-[54]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/54
 [67]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/67
-[70]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/70
 [90]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/90
 [92]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/92
-[93]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/93
 [94]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/94
 [95]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/95
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
