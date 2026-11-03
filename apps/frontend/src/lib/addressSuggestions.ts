@@ -70,13 +70,21 @@ export function toSuggestion({ properties }: Feature): AddressSuggestion {
 /** Without a token the suggestions are off, and addresses are typed by hand. */
 export const hasAddressSuggestions = () => env.VITE_MAPBOX_TOKEN !== undefined
 
-export const addressSuggestionsQueryOptions = (query: string, language: string) =>
+/**
+ * `isStreetAllowed` also suggests a whole street, for a home address typed
+ * without a house number; an event's place still needs the exact address.
+ */
+export const addressSuggestionsQueryOptions = (
+  query: string,
+  language: string,
+  isStreetAllowed = false,
+) =>
   queryOptions({
-    queryKey: ["geo", "address-suggestions", language, query] as const,
+    queryKey: ["geo", "address-suggestions", language, query, isStreetAllowed] as const,
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams({
         q: query,
-        types: "address",
+        types: isStreetAllowed ? "address,street" : "address",
         autocomplete: "true",
         country: COUNTRIES,
         language,

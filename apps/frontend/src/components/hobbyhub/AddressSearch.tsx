@@ -28,6 +28,8 @@ type AddressSearchProps = {
   onSelect: (address: AddressSuggestion) => void
   /** Shown on the trigger while nothing is picked. */
   placeholder: string
+  /** Also suggest streets without a house number. */
+  isStreetAllowed?: boolean
   className?: string
   id?: string
 }
@@ -37,7 +39,14 @@ type AddressSearchProps = {
  * hands back the picked one with its position. The trigger looks like a
  * select; the suggestions come from the geocoder, not from a loaded list.
  */
-export function AddressSearch({ value, onSelect, placeholder, className, id }: AddressSearchProps) {
+export function AddressSearch({
+  value,
+  onSelect,
+  placeholder,
+  isStreetAllowed = false,
+  className,
+  id,
+}: AddressSearchProps) {
   const { t, i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [text, setText] = useState("")
@@ -49,7 +58,9 @@ export function AddressSearch({ value, onSelect, placeholder, className, id }: A
     return () => clearTimeout(timer)
   }, [text])
 
-  const suggestions = useQuery(addressSuggestionsQueryOptions(asked, i18n.language))
+  const suggestions = useQuery(
+    addressSuggestionsQueryOptions(asked, i18n.language, isStreetAllowed),
+  )
   const isTooShort = text.trim().length < MIN_ADDRESS_QUERY_LENGTH
   // The previous text's suggestions are not offered for the new text.
   const isCurrent = asked === text.trim()

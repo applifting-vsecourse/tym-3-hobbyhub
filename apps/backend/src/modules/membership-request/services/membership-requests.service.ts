@@ -11,6 +11,7 @@ import {
   PendingMembershipRequest,
 } from '@/modules/membership-request/domain/membership-request';
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
   BadRequestException,
@@ -55,6 +56,7 @@ export class MembershipRequestsService {
   constructor(
     private readonly repository: MembershipRequestRepository,
     private readonly groupsService: GroupsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getMyRequestState(
@@ -81,7 +83,7 @@ export class MembershipRequestsService {
     groupId: string,
     message?: string,
   ): Promise<MembershipRequest> {
-    await this.groupsService.getPublicGroup(groupId);
+    const group = await this.groupsService.getPublicGroup(groupId);
     const [role, requests] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
@@ -96,6 +98,12 @@ export class MembershipRequestsService {
       message,
     });
     if (!request) throw violationsError(['ALREADY_REQUESTED']);
+    // The founder and the admins have a decision to make (ADR-0015).
+    await this.notificationsService.notifyNewMembershipRequest({
+      group,
+      adminIds: await this.groupsService.getAdminIds(groupId),
+      applicant: user,
+    });
     return request;
   }
 
@@ -145,6 +153,12 @@ export class MembershipRequestsService {
       at: now,
     });
     if (typeof approved === 'string') throw violationsError([approved]);
+    await this.notificationsService.notifyMembershipRequestDecided({
+      group,
+      request: approved,
+      decision: 'APPROVED',
+      decidedBy: user,
+    });
     return approved;
   }
 
@@ -172,6 +186,12 @@ export class MembershipRequestsService {
       at: now,
     });
     if (!rejected) throw violationsError(['NOT_PENDING']);
+    await this.notificationsService.notifyMembershipRequestDecided({
+      group,
+      request: rejected,
+      decision: 'REJECTED',
+      decidedBy: user,
+    });
     return rejected;
   }
 

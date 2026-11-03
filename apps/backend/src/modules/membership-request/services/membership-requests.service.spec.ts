@@ -2,6 +2,7 @@ import { Group } from '@/modules/group/domain/group';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { MembershipRequest } from '@/modules/membership-request/domain/membership-request';
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -71,19 +72,23 @@ describe('MembershipRequestsService', () => {
   ): {
     repository: MockProxy<MembershipRequestRepository>;
     groups: MockProxy<GroupsService>;
+    notifications: MockProxy<NotificationsService>;
     service: MembershipRequestsService;
   } => {
     const repository = mock<MembershipRequestRepository>();
     const groups = mock<GroupsService>();
+    const notifications = mock<NotificationsService>();
     groups.getPublicGroup.mockResolvedValue(aGroup());
     groups.getManagedGroup.mockResolvedValue(aGroup());
     groups.getMemberRole.mockResolvedValue(null);
+    groups.getAdminIds.mockResolvedValue(['owner', 'admin']);
     repository.getRequestsOf.mockResolvedValue(requests);
     repository.getApplicantProfile.mockResolvedValue(applicant);
     return {
       repository,
       groups,
-      service: new MembershipRequestsService(repository, groups),
+      notifications,
+      service: new MembershipRequestsService(repository, groups, notifications),
     };
   };
 
@@ -103,6 +108,20 @@ describe('MembershipRequestsService', () => {
       });
     });
 
+    // ADR-0015: the founder and the admins have a decision to make.
+    it('tells the founder and the admins about the waiting request', async () => {
+      const { repository, notifications, service } = setup();
+      repository.createPending.mockResolvedValue(aRequest());
+
+      await service.requestMembership(user, 'g1');
+
+      expect(notifications.notifyNewMembershipRequest).toHaveBeenCalledWith({
+        group: aGroup(),
+        adminIds: ['owner', 'admin'],
+        applicant: user,
+      });
+    });
+
     it('refuses a group that is not public and active', async () => {
       const { groups, repository, service } = setup();
       groups.getPublicGroup.mockRejectedValue(new NotFoundException());
@@ -114,13 +133,14 @@ describe('MembershipRequestsService', () => {
     });
 
     it('refuses a member', async () => {
-      const { groups, repository, service } = setup();
+      const { groups, repository, notifications, service } = setup();
       groups.getMemberRole.mockResolvedValue('MEMBER');
 
       await expect(
         violationsOf(service.requestMembership(user, 'g1')),
       ).resolves.toEqual(['IS_MEMBER']);
       expect(repository.createPending).not.toHaveBeenCalled();
+      expect(notifications.notifyNewMembershipRequest).not.toHaveBeenCalled();
     });
 
     it('refuses anyone rejected before (ADR-0014)', async () => {
@@ -211,7 +231,7 @@ describe('MembershipRequestsService', () => {
     });
 
     it('approves a waiting request', async () => {
-      const { repository, service } = setup();
+      const { repository, notifications, service } = setup();
       const approved = aRequest({ status: 'APPROVED', decidedAt: now });
       repository.getRequest.mockResolvedValue(aRequest());
       repository.approvePending.mockResolvedValue(approved);
@@ -224,6 +244,15 @@ describe('MembershipRequestsService', () => {
         requestId: 'r1',
         at: now,
       });
+      // ADR-0015: the applicant hears the outcome.
+      expect(notifications.notifyMembershipRequestDecided).toHaveBeenCalledWith(
+        {
+          group: aGroup(),
+          request: approved,
+          decision: 'APPROVED',
+          decidedBy: admin,
+        },
+      );
     });
 
     it('refuses to decide in a cancelled group', async () => {
@@ -250,7 +279,7 @@ describe('MembershipRequestsService', () => {
     });
 
     it('reports what changed between the read and the write', async () => {
-      const { repository, service } = setup();
+      const { repository, notifications, service } = setup();
       repository.getRequest.mockResolvedValue(aRequest());
       repository.approvePending.mockResolvedValue('APPLICANT_IS_MEMBER');
       repository.rejectPending.mockResolvedValue(null);
@@ -261,10 +290,13 @@ describe('MembershipRequestsService', () => {
       await expect(
         violationsOf(service.rejectRequest(admin, 'g1', 'r1', undefined, now)),
       ).resolves.toEqual(['NOT_PENDING']);
+      expect(
+        notifications.notifyMembershipRequestDecided,
+      ).not.toHaveBeenCalled();
     });
 
     it('rejects a waiting request with the reason', async () => {
-      const { repository, service } = setup();
+      const { repository, notifications, service } = setup();
       const rejected = aRequest({
         status: 'REJECTED',
         decidedAt: now,
@@ -282,6 +314,14 @@ describe('MembershipRequestsService', () => {
         reason: 'Plno',
         at: now,
       });
+      expect(notifications.notifyMembershipRequestDecided).toHaveBeenCalledWith(
+        {
+          group: aGroup(),
+          request: rejected,
+          decision: 'REJECTED',
+          decidedBy: admin,
+        },
+      );
     });
   });
 });

@@ -42,6 +42,8 @@ export const onboardingSchema = z.object({
   address: homeAddressSchema.nullable(),
   travelRadiusKm: z.number().nullable(),
   bio: z.string().nullable(),
+  /** The profile picture: a WebP data URL or `avatar:<name>`. */
+  image: z.string().nullable(),
 })
 
 export type Onboarding = z.infer<typeof onboardingSchema>
@@ -50,4 +52,5 @@ export type SaveActivitiesInput = {
   items: { activityId: string; levelId: string | null }[]
 }
 export type SaveLocationInput = HomeAddress & { travelRadiusKm: number }
-export type SaveProfileInput = { bio?: string }
+/** `image` left out keeps the picture as it is; `null` removes it. */
+export type SaveProfileInput = { bio?: string; image?: string | null }

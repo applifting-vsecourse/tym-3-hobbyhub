@@ -7,9 +7,8 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { fromIsoDate, moveToMonth, toIsoDate } from "@/lib/birthDate"
 import { cn } from "@/lib/utils"
-
-import { fromIsoDate, moveToMonth, toIsoDate } from "@/features/auth/lib/birthDate"
 
 const CALENDAR_LOCALES = { cs, en: enUS }
 

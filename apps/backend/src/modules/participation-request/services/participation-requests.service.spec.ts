@@ -1,5 +1,6 @@
 import { EventSeatFacts, isOrganizerOf } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
   ParticipationRequest,
@@ -68,10 +69,12 @@ describe('ParticipationRequestsService', () => {
   ): {
     repository: MockProxy<ParticipationRequestRepository>;
     events: MockProxy<EventsService>;
+    notifications: MockProxy<NotificationsService>;
     service: ParticipationRequestsService;
   } => {
     const repository = mock<ParticipationRequestRepository>();
     const events = mock<EventsService>();
+    const notifications = mock<NotificationsService>();
     events.getPublicEventSeatFacts.mockResolvedValue(event);
     // As the event module answers: the event to its organizers, 404 to the rest.
     events.getOrganizedEvent.mockImplementation((_eventId, who) =>
@@ -84,7 +87,12 @@ describe('ParticipationRequestsService', () => {
     return {
       repository,
       events,
-      service: new ParticipationRequestsService(repository, events),
+      notifications,
+      service: new ParticipationRequestsService(
+        repository,
+        events,
+        notifications,
+      ),
     };
   };
 
@@ -103,6 +111,32 @@ describe('ParticipationRequestsService', () => {
         message: 'Ahoj',
         at: now,
       });
+    });
+
+    // F-09.2, ADR-0015: the organizers have a decision to make.
+    it('tells the organizers about the waiting request', async () => {
+      const { repository, notifications, service } = setup();
+      repository.createPending.mockResolvedValue(aRequest());
+
+      await service.requestToJoin(user, 'e1', undefined, now);
+
+      expect(notifications.notifyNewParticipationRequest).toHaveBeenCalledWith({
+        event: anEvent(),
+        applicant: user,
+      });
+    });
+
+    it('tells nobody when the request was refused', async () => {
+      const { repository, notifications, service } = setup(
+        anEvent({ freeSpots: 0 }),
+      );
+
+      await violationsOf(service.requestToJoin(user, 'e1', undefined, now));
+
+      expect(repository.createPending).not.toHaveBeenCalled();
+      expect(
+        notifications.notifyNewParticipationRequest,
+      ).not.toHaveBeenCalled();
     });
 
     it('says why when the event closed during the write', async () => {
@@ -155,7 +189,7 @@ describe('ParticipationRequestsService', () => {
       const automatic = anEvent({ approvalMode: 'AUTOMATIC' });
 
       it('approves the request at once and takes the seat', async () => {
-        const { repository, service } = setup(automatic);
+        const { repository, notifications, service } = setup(automatic);
         const approved = aRequest({ status: 'APPROVED', decidedAt: now });
         repository.createApproved.mockResolvedValue(approved);
 
@@ -169,6 +203,10 @@ describe('ParticipationRequestsService', () => {
           at: now,
         });
         expect(repository.createPending).not.toHaveBeenCalled();
+        // Nothing to decide, so no "new request" for the organizers.
+        expect(
+          notifications.notifyNewParticipationRequest,
+        ).not.toHaveBeenCalled();
       });
 
       it('runs the same rules first', async () => {
@@ -321,6 +359,37 @@ describe('ParticipationRequestsService', () => {
         });
       });
 
+      // F-09.3, ADR-0015: the applicant hears the outcome.
+      it('tells the applicant about the approval', async () => {
+        const { repository, notifications, service } = setup();
+        repository.getRequest.mockResolvedValue(aRequest());
+        const approved = aRequest({ status: 'APPROVED', decidedAt: now });
+        repository.approvePending.mockResolvedValue(approved);
+
+        await service.approveRequest(organizer, 'e1', 'r1', now);
+
+        expect(
+          notifications.notifyParticipationRequestDecided,
+        ).toHaveBeenCalledWith({
+          event: anEvent(),
+          request: approved,
+          decision: 'APPROVED',
+          decidedBy: organizer,
+        });
+      });
+
+      it('tells nobody when the approval was refused', async () => {
+        const { repository, notifications, service } = setup();
+        repository.getRequest.mockResolvedValue(aRequest());
+        repository.approvePending.mockResolvedValue('EVENT_FULL');
+
+        await violationsOf(service.approveRequest(organizer, 'e1', 'r1', now));
+
+        expect(
+          notifications.notifyParticipationRequestDecided,
+        ).not.toHaveBeenCalled();
+      });
+
       it('refuses a full event before taking the seat', async () => {
         const { repository, service } = setup(anEvent({ freeSpots: 0 }));
         repository.getRequest.mockResolvedValue(aRequest());
@@ -394,6 +463,29 @@ describe('ParticipationRequestsService', () => {
           requestId: 'r1',
           reason: 'Plno',
           at: now,
+        });
+      });
+
+      // F-09.3, ADR-0015: the applicant hears the outcome, with the reason.
+      it('tells the applicant about the rejection', async () => {
+        const { repository, notifications, service } = setup();
+        repository.getRequest.mockResolvedValue(aRequest());
+        const rejected = aRequest({
+          status: 'REJECTED',
+          decidedAt: now,
+          rejectionReason: 'Plno',
+        });
+        repository.rejectPending.mockResolvedValue(rejected);
+
+        await service.rejectRequest(organizer, 'e1', 'r1', 'Plno', now);
+
+        expect(
+          notifications.notifyParticipationRequestDecided,
+        ).toHaveBeenCalledWith({
+          event: anEvent(),
+          request: rejected,
+          decision: 'REJECTED',
+          decidedBy: organizer,
         });
       });
 
