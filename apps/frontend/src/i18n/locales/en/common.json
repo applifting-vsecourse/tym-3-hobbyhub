@@ -769,6 +769,50 @@
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
   },
+  "notifications": {
+    "badgeOverflow": "{{max}}+",
+    "bell": "Notifications",
+    "bellUnread_one": "Notifications, {{count}} unread",
+    "bellUnread_other": "Notifications, {{count}} unread",
+    "deletedTarget": "a deleted event",
+    "empty": "No notifications yet. They will show up here once something happens around your events and groups.",
+    "justNow": "just now",
+    "loadError": "Notifications could not be loaded",
+    "loading": "Loading notifications…",
+    "markAllRead": "Mark all as read",
+    "markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+    "message": "“{{message}}”",
+    "more_one": "{{count}} more",
+    "more_other": "{{count}} more",
+    "retry": "Try again",
+    "showAll": "Show all",
+    "someone": "Someone",
+    "text": {
+      "EVENT_CANCELLED": "The event {{title}} was cancelled",
+      "EVENT_CHANGED": {
+        "BOTH": "The event {{title}} has a new time and place",
+        "PLACE": "The event {{title}} has a new place",
+        "TIME": "The event {{title}} has a new time"
+      },
+      "NEW_REQUESTS": {
+        "event": "{{name}} asks to join the event {{title}}",
+        "group": "{{name}} asks to join the group {{title}}"
+      },
+      "REQUEST_DECIDED": {
+        "event": {
+          "APPROVED": "Your request to join the event {{title}} was approved",
+          "REJECTED": "Your request to join the event {{title}} was rejected"
+        },
+        "group": {
+          "APPROVED": "Your request to join the group {{title}} was approved",
+          "REJECTED": "Your request to join the group {{title}} was rejected"
+        }
+      },
+      "other": "News about {{title}}"
+    },
+    "title": "Notifications",
+    "unread": "Unread:"
+  },
   "onboarding": {
     "activities": {
       "addLabel": "Add an activity",

@@ -6,6 +6,7 @@ import { EventModule } from './modules/event/event.module';
 import { GroupModule } from './modules/group/group.module';
 import { LevelModule } from './modules/level/level.module';
 import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -29,6 +30,7 @@ const imports = [
   EventModule,
   ParticipationRequestModule,
   MembershipRequestModule,
+  NotificationModule,
 ];
 
 @Module({

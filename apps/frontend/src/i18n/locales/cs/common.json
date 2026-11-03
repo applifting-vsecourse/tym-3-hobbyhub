@@ -784,6 +784,52 @@
     "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
     "title": "Moje akce"
   },
+  "notifications": {
+    "badgeOverflow": "{{max}}+",
+    "bell": "Upozornění",
+    "bellUnread_few": "Upozornění, {{count}} nepřečtená",
+    "bellUnread_one": "Upozornění, {{count}} nepřečtené",
+    "bellUnread_other": "Upozornění, {{count}} nepřečtených",
+    "deletedTarget": "smazaná akce",
+    "empty": "Zatím nemáš žádná upozornění. Objeví se tu, jakmile se něco stane kolem tvých akcí a skupin.",
+    "justNow": "právě teď",
+    "loadError": "Upozornění se nepodařilo načíst",
+    "loading": "Načítáme upozornění…",
+    "markAllRead": "Označit vše jako přečtené",
+    "markAllReadFailed": "Upozornění se nepodařilo označit jako přečtená. Zkus to znovu.",
+    "message": "„{{message}}“",
+    "more_few": "{{count}} další",
+    "more_one": "{{count}} další",
+    "more_other": "{{count}} dalších",
+    "retry": "Zkusit znovu",
+    "showAll": "Zobrazit vše",
+    "someone": "Někdo",
+    "text": {
+      "EVENT_CANCELLED": "Akce {{title}} byla zrušena",
+      "EVENT_CHANGED": {
+        "BOTH": "Akce {{title}} má nový čas i místo",
+        "PLACE": "Akce {{title}} má nové místo",
+        "TIME": "Akce {{title}} má nový čas"
+      },
+      "NEW_REQUESTS": {
+        "event": "{{name}} žádá o účast na akci {{title}}",
+        "group": "{{name}} žádá o členství ve skupině {{title}}"
+      },
+      "REQUEST_DECIDED": {
+        "event": {
+          "APPROVED": "Tvoje žádost o účast na akci {{title}} byla schválena",
+          "REJECTED": "Tvoje žádost o účast na akci {{title}} byla zamítnuta"
+        },
+        "group": {
+          "APPROVED": "Tvoje žádost o členství ve skupině {{title}} byla schválena",
+          "REJECTED": "Tvoje žádost o členství ve skupině {{title}} byla zamítnuta"
+        }
+      },
+      "other": "Novinka k {{title}}"
+    },
+    "title": "Upozornění",
+    "unread": "Nepřečtené:"
+  },
   "onboarding": {
     "activities": {
       "addLabel": "Přidat aktivitu",
