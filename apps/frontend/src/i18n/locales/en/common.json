@@ -338,6 +338,12 @@
       "occupied": "{{taken}} of {{total}} taken",
       "untitled": "Event title"
     },
+    "share": {
+      "button": "Share to chat",
+      "descriptionMissing": "{{count}} still needed to reach the minimum. Send a message to a group you're already in and the link does the rest.",
+      "message": "{{title}} ({{when}}). Let me know if you're in:",
+      "messageMissing": "{{title}} ({{when}}), {{count}} missing. Let me know if you're in:"
+    },
     "validation": {
       "activityRequired": "Choose an activity",
       "amountInvalid": "Enter an amount in crowns, with at most two decimals",
@@ -740,12 +746,16 @@
       "copiedDiscord": "Message copied, paste it into Discord",
       "copiedMessenger": "Message copied, paste it into Messenger",
       "copyFailed": "Couldn't copy",
-      "copyLink": "Copy link",
       "description": "Send a message to a group you're already in and the link does the rest.",
-      "facebook": "Facebook group",
       "linkCopied": "Link copied",
-      "message": "Message",
       "note": "The link leads to the public event page. Anyone can view it without an account; asking to join requires signing in.",
+      "target": {
+        "discord": "Discord",
+        "facebook": "Facebook group",
+        "link": "Copy link",
+        "messenger": "Messenger",
+        "whatsapp": "WhatsApp"
+      },
       "title": "Share to chat",
       "where": "Where to send"
     },

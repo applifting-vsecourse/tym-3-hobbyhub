@@ -20,6 +20,7 @@ import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOp
 import { eventKeys } from "@/features/event/api/eventKeys"
 import { EventDetail } from "@/features/event/components/EventDetail"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
+import { ShareEventAction } from "@/features/event/components/ShareEventAction"
 import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
@@ -161,6 +162,7 @@ function EventDetailPage() {
                 </p>
               ) : null
             }
+            shareAction={<ShareEventAction event={eventQuery.data} />}
             organizerActions={
               // F-05.10: only the organizer, and only until the event starts.
               user?.id === eventQuery.data.organizerId &&
