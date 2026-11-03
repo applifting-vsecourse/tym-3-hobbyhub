@@ -912,6 +912,10 @@
       "title": "Your request is sent",
       "withdraw": "Withdraw request"
     },
+    "verifyEmail": {
+      "description": "We sent a link to the email you signed up with. Once you confirm it, you can ask to join events. Didn't arrive? Send it again.",
+      "title": "Verify your email first"
+    },
     "withdraw": {
       "confirm": "Withdraw request",
       "done": "Request withdrawn",

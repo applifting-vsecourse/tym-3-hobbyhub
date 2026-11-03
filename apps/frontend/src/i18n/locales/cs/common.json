@@ -929,6 +929,10 @@
       "title": "Žádost je odeslaná",
       "withdraw": "Zrušit žádost"
     },
+    "verifyEmail": {
+      "description": "Poslali jsme ti odkaz na e-mail z registrace. Jakmile ho potvrdíš, můžeš žádat o účast na akcích. Nedorazil? Pošli ho znovu.",
+      "title": "Nejdřív ověř svůj e-mail"
+    },
     "withdraw": {
       "confirm": "Zrušit žádost",
       "done": "Žádost zrušena",
