@@ -24,17 +24,24 @@ export const groupSchema = z.object({
 
 export type Group = z.infer<typeof groupSchema>
 
+export const groupRoleSchema = z.enum(["OWNER", "ADMIN", "MEMBER"])
+
+export type GroupRole = z.infer<typeof groupRoleSchema>
+
+/** Like the server's `hasGroupAdminRights`: the founder may do all an admin may. */
+export const hasGroupAdminRights = (role: GroupRole | null | undefined): boolean =>
+  role === "OWNER" || role === "ADMIN"
+
 export const groupMembershipSchema = z.object({
   isMember: z.boolean(),
-  role: z.enum(["OWNER", "ADMIN", "MEMBER"]).nullable(),
+  role: groupRoleSchema.nullable(),
 })
 
 export const myGroupSchema = groupSchema.extend({
-  myRole: z.enum(["OWNER", "ADMIN", "MEMBER"]),
+  myRole: groupRoleSchema,
 })
 
 export type MyGroup = z.infer<typeof myGroupSchema>
-export type GroupRole = MyGroup["myRole"]
 
 export const nearbyGroupsSchema = z.object({
   // Null when the user has no city in their profile.

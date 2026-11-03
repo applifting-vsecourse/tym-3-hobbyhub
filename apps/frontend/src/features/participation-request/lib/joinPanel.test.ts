@@ -14,6 +14,7 @@ const state = (
     ? { id: "r1", eventId: "e1", status, message: null, requestedAt: new Date() }
     : null,
   violations,
+  applicant: { name: "Honza", image: null, bio: null, hasVerifiedEmail: true },
 })
 
 describe("ownSeatView", () => {

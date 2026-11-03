@@ -40,6 +40,8 @@ The ports are deliberately odd — 3050, 4050, and Postgres on 5433 rather than 
 | `breadcritic@example.com`      | `password3`     |
 | `migrationseason@example.com`  | `password4`     |
 | `pondadmin@example.com`        | `password5`     |
+| `freshduckling@example.com`    | `password6`     |
+| `lostgosling@example.com`      | `password7`     |
 | `admin@example.com`            | `adminpassword` |
 
 Verification/reset emails are printed to the backend terminal (console mailer) unless you configure Resend or SMTP in `apps/backend/.env`.

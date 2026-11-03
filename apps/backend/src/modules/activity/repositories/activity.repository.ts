@@ -23,6 +23,13 @@ export class ActivityRepository {
     return activities.map(mapPrismaActivityToDomain);
   }
 
+  /** How many of the given ids are activities that are still offered. */
+  async countActive(ids: readonly string[]): Promise<number> {
+    return this.prisma.activity.count({
+      where: { id: { in: [...ids] }, isActive: true },
+    });
+  }
+
   async isActive(id: string): Promise<boolean> {
     const count = await this.prisma.activity.count({
       where: { id, isActive: true },

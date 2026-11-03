@@ -20,9 +20,11 @@ import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import { EventDetail } from "@/features/event/components/EventDetail"
+import { OrganizerActions } from "@/features/event/components/OrganizerActions"
 import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
+import { OrganizerPanel } from "@/features/participation-request/components/OrganizerPanel"
 import { OwnRequestPanel } from "@/features/participation-request/components/OwnRequestPanel"
 import {
   ParticipationRequestSheet,
@@ -161,8 +163,18 @@ function EventDetailPage() {
                 </p>
               ) : null
             }
+            organizerActions={
+              // F-05.10: only the organizer, and only until the event starts.
+              user?.id === eventQuery.data.organizerId &&
+              eventQuery.data.status === "PUBLISHED" &&
+              eventQuery.data.startAt > new Date() ? (
+                <OrganizerActions event={eventQuery.data} />
+              ) : null
+            }
             ownRequest={
-              ownView ? (
+              ownView === "organizer" ? (
+                <OrganizerPanel eventId={eventId} />
+              ) : ownView ? (
                 <OwnRequestPanel
                   view={ownView}
                   approvalMode={eventQuery.data.approvalMode}
@@ -185,7 +197,16 @@ function EventDetailPage() {
               min: eventQuery.data.minParticipants,
               max: eventQuery.data.maxParticipants,
             }}
-            applicant={{ name: user.name, isEmailVerified: user.emailVerified }}
+            // What the server says the organizer will see; the session's own
+            // fields stand in while it loads or when it failed.
+            applicant={
+              myRequestQuery.data?.applicant ?? {
+                name: user.name,
+                image: null,
+                bio: null,
+                hasVerifiedEmail: user.emailVerified,
+              }
+            }
             approvalMode={eventQuery.data.approvalMode}
             step={sheetStep}
             onStepChange={setSheetStep}

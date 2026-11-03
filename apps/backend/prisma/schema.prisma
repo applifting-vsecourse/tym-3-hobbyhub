@@ -173,16 +173,37 @@ model Activity {
   isActive               Boolean          @default(true)
   events                 Event[]
   groups                 Group[]
+  interests              UserActivity[]
 
   @@index([categoryId])
   @@map("activity")
 }
 
+// An activity the user likes to play and how well (F-04.1, F-04.8).
+model UserActivity {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  activity   Activity @relation(fields: [activityId], references: [id])
+  activityId String
+  // Optional: nobody has to rate themselves to say what they play. From the
+  // Level catalogue (ADR-0002), the ones flagged isSkillLevel.
+  level      Level?   @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  levelId    String?
+
+  @@id([userId, activityId])
+  @@index([activityId])
+  @@index([levelId])
+  @@map("user_activity")
+}
+
 model Level {
-  id     String  @id @default(cuid())
-  name   String  @unique @db.VarChar(100)
-  order  Int     @unique
-  events Event[]
+  id             String         @id @default(cuid())
+  name           String         @unique @db.VarChar(100)
+  order          Int            @unique
+  // False for "Všechny úrovně": it describes an event, not how well a person plays.
+  isSkillLevel   Boolean        @default(true)
+  events         Event[]
+  userActivities UserActivity[]
 
   @@map("level")
 }
@@ -214,10 +235,11 @@ model Group {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  activity    Activity          @relation(fields: [activityId], references: [id])
-  activityId  String
-  memberships GroupMembership[]
-  events      Event[]
+  activity           Activity            @relation(fields: [activityId], references: [id])
+  activityId         String
+  memberships        GroupMembership[]
+  membershipRequests MembershipRequest[]
+  events             Event[]
 
   @@index([activityId])
   @@map("group")
@@ -238,6 +260,29 @@ model GroupMembership {
   @@unique([groupId, userId])
   @@index([userId])
   @@map("group_membership")
+}
+
+// F-07.3, ADR-0008: a request to join a group, decided by its admins. Same
+// life cycle as ParticipationRequest; CLOSED is not used for groups yet. One
+// PENDING request per person and group, and the CHECKs: a partial unique index
+// and constraints in the migration.
+model MembershipRequest {
+  id String @id @default(cuid())
+
+  status          RequestStatus @default(PENDING)
+  message         String?       @db.VarChar(500)
+  rejectionReason String?       @db.VarChar(500)
+  requestedAt     DateTime      @default(now())
+  decidedAt       DateTime?
+
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  @@index([groupId, status])
+  @@index([userId])
+  @@map("membership_request")
 }
 
 // Event & Participation ---------------------------------------------------
@@ -315,6 +360,8 @@ model Event {
   copies                Event[]                @relation("EventCopies")
   cancellationReason    CancellationReason?    @relation(fields: [cancellationReasonId], references: [id])
   cancellationReasonId  String?
+  // F-05.10 optional words of the organizer next to the reason.
+  cancellationNote      String?                @db.VarChar(500)
   participations        Participation[]
   participationRequests ParticipationRequest[]
   // F-02.5: the group that organizes the event; optional, set to null when
@@ -367,6 +414,8 @@ model ParticipationRequest {
   message     String?       @db.VarChar(500)
   requestedAt DateTime      @default(now())
   decidedAt   DateTime?
+  // F-05.7 optional, only on REJECTED (ADR-0008). Not shown anywhere yet.
+  rejectionReason String?   @db.VarChar(500)
 
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String
@@ -477,6 +526,9 @@ model User {
   status                UserStatus         @default(ACTIVE)
   travelRadiusKm        Int?
   onboardingCompletedAt DateTime?
+  // F-04.8: how many wizard steps (activities, location, profile) are done or
+  // skipped, so an interrupted wizard resumes at the first open one.
+  onboardingStepsDone   Int                @default(0)
   termsAcceptedAt       DateTime?
   termsVersion          String?            @db.VarChar(20)
   disabledNotifications NotificationType[] @default([])
@@ -502,6 +554,8 @@ model User {
   temporaryLongitude          Decimal?  @db.Decimal(9, 6)
   temporaryLocationValidUntil DateTime?
 
+  interests UserActivity[]
+
   blockedUsers User[] @relation("UserBlocks")
   blockedBy    User[] @relation("UserBlocks")
 
@@ -510,6 +564,7 @@ model User {
   participations        Participation[]
   participationRequests ParticipationRequest[]
   groupMemberships      GroupMembership[]
+  membershipRequests    MembershipRequest[]
 
   @@unique([email])
   @@unique([username])

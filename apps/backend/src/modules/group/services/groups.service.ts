@@ -3,8 +3,10 @@ import {
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
   Group,
+  GroupMember,
   GroupPage,
   GroupRole,
+  hasGroupAdminRights,
   isPubliclyVisible,
   MyGroup,
   NEARBY_GROUPS_LIMIT,
@@ -52,6 +54,27 @@ export class GroupsService {
 
   getMemberRole(groupId: string, userId: string): Promise<GroupRole | null> {
     return this.groupRepository.getMemberRole(groupId, userId);
+  }
+
+  // F-07.3: a group the user manages (OWNER or ADMIN, ADR-0007), cancelled
+  // or not. Anyone else gets "not found", as for an event they do not
+  // organize, so every admin-only feature asks here and none checks itself.
+  async getManagedGroup(groupId: string, user: Identity): Promise<Group> {
+    const [group, role] = await Promise.all([
+      this.groupRepository.getGroupById(groupId),
+      this.groupRepository.getMemberRole(groupId, user.id),
+    ]);
+    if (!group || !role || !hasGroupAdminRights(role)) {
+      throw new NotFoundException('Group not found');
+    }
+    return group;
+  }
+
+  // F-07.3: the member list is for the group's admins only (F-02.5 shows a
+  // visitor the count, never the members).
+  async listMembers(groupId: string, user: Identity): Promise<GroupMember[]> {
+    await this.getManagedGroup(groupId, user);
+    return this.groupRepository.listMembers(groupId);
   }
 
   // The signed-in user leaves; who leaves comes from the session. The owner

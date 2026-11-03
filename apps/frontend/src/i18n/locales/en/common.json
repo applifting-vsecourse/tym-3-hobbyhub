@@ -17,6 +17,7 @@
     },
     "fields": {
       "birthDate": "Date of birth",
+      "confirmPassword": "Repeat password",
       "email": "Email",
       "gender": "Gender",
       "name": "Name / nickname",
@@ -62,12 +63,14 @@
     },
     "validation": {
       "birthDateRequired": "Pick your date of birth",
+      "confirmPasswordRequired": "Repeat your password",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
       "genderRequired": "Choose your gender",
       "nameRequired": "Enter your name or a nickname",
       "passwordMin": "Password must be at least 8 characters",
       "passwordRequired": "Password is required",
+      "passwordsMismatch": "Passwords do not match",
       "termsRequired": "You need to accept the terms to register",
       "underage": "You must be at least 18 to register"
     },
@@ -125,6 +128,28 @@
       "MANUAL": "You approve or reject every request to join yourself."
     },
     "back": "Back",
+    "cancel": {
+      "back": "Back",
+      "description": "The event can no longer be edited or reopened. Participants’ requests stay as they are.",
+      "done": "The event is cancelled.",
+      "failed": "Could not cancel the event. Please try again.",
+      "note": "Message for participants (optional)",
+      "notePlaceholder": "For example what happened or when you will hold it again",
+      "reason": "Reason",
+      "reasonPlaceholder": "Choose a reason",
+      "reasonRequired": "Choose a reason for cancelling",
+      "reasonsFailed": "Could not load the reasons for cancelling.",
+      "reasonsRetry": "Try again",
+      "submit": "Cancel event",
+      "title": "Cancel the event?"
+    },
+    "changeWarning": {
+      "back": "Back to editing",
+      "confirm": "Save change",
+      "description_one": "{{count}} participant is approved for this event. Nobody tells them about the change automatically yet, so let them know yourself.",
+      "description_other": "{{count}} participants are approved for this event. Nobody tells them about the change automatically yet, so let them know yourself.",
+      "title": "Change the time or place?"
+    },
     "day": {
       "today": "Today",
       "tomorrow": "Tomorrow"
@@ -141,6 +166,7 @@
       "approvalAutomatic": "You get the seat as soon as you sign in.",
       "approvalManual": "The organizer approves requests by hand.",
       "back": "Back to events",
+      "cancellationReason": "Reason: {{reason}}",
       "contribution": "Contribution",
       "equipment": "Equipment",
       "hasAccount": "Already have an account?",
@@ -179,6 +205,11 @@
       },
       "title": "Event detail"
     },
+    "edit": {
+      "back": "Back to the event",
+      "locked": "The event has started or was cancelled, so it cannot be changed.",
+      "lockedTitle": "This event can no longer be edited"
+    },
     "fields": {
       "activity": "Activity",
       "addressSearch": "Find the address",
@@ -215,6 +246,7 @@
       "contributionHint": "Information only, nothing is paid through the app.",
       "createFailed": "Could not publish the event. Please try again.",
       "created": "The event is published.",
+      "editTitle": "Edit event",
       "emailNotVerified": "Verify your email first, then you can publish the event.",
       "externalHint": "People from your crew without an account, you included. They count towards the occupancy.",
       "minimumReached": "The minimum is reached",
@@ -225,13 +257,16 @@
       "previousStep": "Back to the previous step",
       "publish": "Publish event",
       "retry": "Try again",
+      "save": "Save changes",
+      "saved": "Changes saved.",
       "stepOf": "Step {{step}} of {{total}}",
       "steps": {
         "details": "Details and publishing",
         "what": "What and when",
         "who": "Who and how many"
       },
-      "title": "New event"
+      "title": "New event",
+      "updateFailed": "Could not save the changes. Please try again."
     },
     "list": {
       "count_one": "{{count}} event",
@@ -261,6 +296,10 @@
       "seoTitle": "Events",
       "showAll": "Show all",
       "title": "Events"
+    },
+    "manage": {
+      "cancel": "Cancel event",
+      "edit": "Edit event"
     },
     "map": {
       "closePreview": "Close preview",
@@ -305,6 +344,7 @@
       "descriptionRequired": "Write a few words about the event",
       "endBeforeStart": "The end must come after the start",
       "maxBelowMin": "The maximum must be at least the minimum",
+      "maxBelowOccupied": "The maximum cannot be below the taken seats ({{count}})",
       "occupiedAboveMax": "Taken seats cannot exceed the maximum",
       "postalCodeRequired": "Enter a postal code",
       "startInPast": "The start must be in the future",
@@ -340,9 +380,6 @@
       "members_one": "{{count}} member",
       "members_other": "{{count}} members",
       "membership": {
-        "cancel": "Withdraw request",
-        "countdown_one": "You will be a member in {{count}} second.",
-        "countdown_other": "You will be a member in {{count}} seconds.",
         "hasAccount": "Already have an account?",
         "isMember": "You are a member",
         "leave": "Leave group",
@@ -351,11 +388,13 @@
         "leaveStay": "Stay in the group",
         "leaveText": "You will no longer be a member of {{name}}. You can join again by requesting membership.",
         "leaveTitle": "Do you really want to leave the group?",
+        "pendingText": "Your request is waiting for the group organizer.",
+        "rejectedText": "The organizer rejected your request. You cannot send a new one to this group.",
         "request": "Request membership",
-        "requestNote": "For now the request is handled automatically. You can withdraw it until then.",
-        "sent": "Request sent",
+        "requestNote": "The organizer approves requests by hand. A request waits with no time limit.",
         "signIn": "Sign in",
-        "title": "Membership"
+        "title": "Membership",
+        "withdraw": "Withdraw request"
       },
       "title": "Group detail",
       "upcoming": {
@@ -409,6 +448,77 @@
       "visibility": {
         "PRIVATE": "Private",
         "PUBLIC": "Public"
+      }
+    },
+    "manage": {
+      "adminTitle": "Group management",
+      "approved": "{{name}} is now a member of the group.",
+      "back": "Back to the group",
+      "decideFailed": "The request could not be decided. Please try again.",
+      "loadError": "Could not load",
+      "loading": "Loading…",
+      "membersEmpty": "The group has no members yet.",
+      "membersLink": "Show all members",
+      "membersMore": "+{{count}}",
+      "membersTitle": "Members ({{count}})",
+      "outcome_one": "After approval there will be {{count}} member.",
+      "outcome_other": "After approval there will be {{count}} members.",
+      "refused": {
+        "APPLICANT_IS_MEMBER": "The applicant is already a member of the group.",
+        "GROUP_CANCELLED": "The group is cancelled; its requests can no longer be decided.",
+        "NOT_PENDING": "Another admin decided the request meanwhile, or the applicant withdrew it."
+      },
+      "reject": {
+        "cancel": "Back",
+        "confirm": "Reject",
+        "reasonHint": "We keep the reason. The applicant will see it once they get an overview of their requests.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "E.g. The group is full right now.",
+        "reasonTooLong": "The reason can have at most {{count}} characters.",
+        "text": "{{name}} will see the rejection on the group page and cannot ask to join this group again.",
+        "title": "Reject the request?"
+      },
+      "rejected": "Request rejected",
+      "requestsEmpty": "No membership requests are waiting.",
+      "requestsLink": "Membership requests ({{count}})",
+      "retry": "Try again",
+      "tabs": {
+        "members": "Members {{count}}",
+        "requests": "Requests {{count}}"
+      },
+      "tabsLabel": "Members and requests",
+      "title": "Member management"
+    },
+    "membershipRequest": {
+      "form": {
+        "adminSees": "The group organizer will see",
+        "cancel": "Cancel",
+        "hiddenDetails": "They will not see your birth date, contact or address.",
+        "messageLabel": "Message to the organizer (optional)",
+        "messagePlaceholder": "E.g. I have played for a company team for three years and am looking for a regular group.",
+        "messageTooLong": "The message can have at most {{count}} characters.",
+        "sendFailed": "Your request could not be sent. Please try again.",
+        "submit": "Send request",
+        "title": "Request membership"
+      },
+      "refused": {
+        "ALREADY_REQUESTED": "You have already asked to join this group.",
+        "IS_MEMBER": "You are already a member of this group.",
+        "REJECTED_BEFORE": "The organizer rejected your request. You cannot send a new one to this group."
+      },
+      "sent": {
+        "close": "Done",
+        "text": "The group organizer will see it and decide. You will find the outcome here on the group page.",
+        "title": "Request sent",
+        "withdraw": "Withdraw request"
+      },
+      "withdraw": {
+        "confirm": "Withdraw request",
+        "done": "Request withdrawn",
+        "failed": "Your request could not be withdrawn. Please try again.",
+        "keep": "Keep request",
+        "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
+        "title": "Withdraw your membership request?"
       }
     },
     "placeholders": {
@@ -560,6 +670,19 @@
       "label": "Photo or illustration (optional)",
       "upload": "Upload photo"
     },
+    "profilePicture": {
+      "change": "Change picture",
+      "choose": "Choose a picture",
+      "chosenPhoto": "Your uploaded photo",
+      "errorSize": "The photo can be at most 5 MB.",
+      "errorType": "The photo must be a JPG or PNG.",
+      "label": "Profile picture",
+      "none": "No picture yet",
+      "remove": "Remove picture",
+      "sheetDescription": "Pick an illustration or upload your own photo (JPG or PNG, up to 5 MB).",
+      "sheetTitle": "Choose a picture",
+      "upload": "Upload your own photo"
+    },
     "roster": {
       "free": "Free seat",
       "missingToMinimum": "Needed to reach the minimum"
@@ -628,6 +751,65 @@
     "placeholder": "An overview of your requests and the events you host is on its way.",
     "title": "My events"
   },
+  "onboarding": {
+    "activities": {
+      "addLabel": "Add an activity",
+      "addPlaceholder": "Choose an activity",
+      "added": "Added: {{activity}}",
+      "allPicked": "You have added every activity.",
+      "description": "We will use it to show events that suit you.",
+      "empty": "No activities are available yet.",
+      "levelPlaceholder": "Add level",
+      "loadError": "The activities could not be loaded.",
+      "loading": "Loading activities",
+      "pickedTitle": "Your activities",
+      "remove": "Remove {{activity}}",
+      "title": "What do you like to play?",
+      "validation": {
+        "none": "Pick at least one activity."
+      }
+    },
+    "back": "Back",
+    "finish": "Finish",
+    "finishReturn": "Finish and return to the event",
+    "levels": {
+      "NONE": "No level"
+    },
+    "loadError": "The setup could not be loaded.",
+    "loading": "Loading your profile",
+    "location": {
+      "address": "Address",
+      "addressHint": "Pick an address from the list. Without one we skip this step.",
+      "addressPlaceholder": "Start typing a street and city",
+      "addressUnavailable": "Address search is not available right now. You can skip this step.",
+      "description": "We will show you events nearby. Your location is private.",
+      "radius": "How far will you travel?",
+      "radiusValue": "{{km}} km",
+      "title": "Where do you play?"
+    },
+    "next": "Continue",
+    "profile": {
+      "bio": "Short bio (optional)",
+      "bioCount": "{{length}} / {{max}} characters",
+      "bioPlaceholder": "E.g. I have played for a year and like to try new activities…",
+      "bioTooLong": "The bio can have at most {{max}} characters.",
+      "description": "So others know who they will be playing with.",
+      "pictureHint": "Not saved yet, we will add that.",
+      "pictureLabel": "Profile picture (optional)",
+      "title": "Show yourself to others"
+    },
+    "progress": "Step {{current}} of {{total}}",
+    "progressLabel": "Profile setup progress",
+    "prompt": {
+      "action": "Finish profile setup",
+      "description": "You skipped part of the setup. Add activities, location and bio and we will show you events that suit you.",
+      "title": "Finish setting up your profile"
+    },
+    "reload": "Try again",
+    "saveError": "Saving failed. Please try again.",
+    "seoTitle": "Profile setup",
+    "skipAll": "Skip all"
+  },
   "participationRequests": {
     "approved": {
       "description": "The organizer approved your participation.",
@@ -635,15 +817,13 @@
     },
     "form": {
       "cancel": "Cancel",
-      "hiddenDetails": "Your contact details and location stay hidden.",
+      "hiddenDetails": "The organizer will not see your contact details, location, age or gender.",
       "messageLabel": "Message to the organizer (optional)",
       "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
       "messageTooLong": "The message can have at most {{count}} characters.",
       "note": "The organizer approves requests by hand. You can withdraw it until they decide.",
       "noteAutomatic": "You get the seat at once, the organizer does not need to approve it.",
       "organizerSees": "The organizer will see",
-      "profileBasic": "Basic profile",
-      "profileVerified": "E-mail verified · basic profile",
       "sendFailed": "Your request could not be sent. Please try again.",
       "sendFailedAutomatic": "The seat could not be taken. Please try again.",
       "submit": "Send request",
@@ -655,6 +835,46 @@
       "close": "Close",
       "text": "The organizer will see that you are coming.",
       "title": "You have a seat"
+    },
+    "manage": {
+      "approveFailed": "The request could not be approved. Please try again.",
+      "approved": "Request approved",
+      "back": "Back to the event",
+      "empty": "No requests yet. They will show up here as soon as someone asks to join.",
+      "emptyAutomatic": "Requests to this event are approved on their own: whoever asks takes a free seat at once.",
+      "loadError": "The requests could not be loaded",
+      "loading": "Loading requests…",
+      "locked": {
+        "EVENT_CANCELLED": "The event was cancelled, requests can no longer be decided.",
+        "EVENT_FINISHED": "The event is over, requests can no longer be decided.",
+        "EVENT_NOT_HELD": "The event did not take place, requests can no longer be decided.",
+        "EVENT_STARTED": "The event has started, requests can no longer be decided."
+      },
+      "missingToMin": "{{count}} missing to the minimum",
+      "more_one": "{{count}} more request",
+      "more_other": "{{count}} more requests",
+      "outcome": {
+        "fills": "Approving fills the event ({{taken}} of {{max}}).",
+        "full": "The event is full, the request can only be rejected.",
+        "minimumReached": "Approving reaches the minimum ({{taken}} of {{min}}).",
+        "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
+        "taken": "After approving, {{taken}} of {{max}} seats are taken."
+      },
+      "refused": {
+        "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
+        "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
+        "NOT_PENDING": "The request is no longer waiting."
+      },
+      "rejectFailed": "The request could not be rejected. Please try again.",
+      "rejected": "Request rejected",
+      "requests": "Requests",
+      "retry": "Try again",
+      "title": "Requests and participants"
+    },
+    "organizer": {
+      "manage": "Requests and participants",
+      "pendingCount_one": "{{count}} pending request",
+      "pendingCount_other": "{{count}} pending requests"
     },
     "pending": {
       "description": "You have asked to join this event. The organizer has not decided yet. While it is pending, you can withdraw it.",
@@ -671,6 +891,16 @@
       "HAS_SEAT": "You already have a seat at this event.",
       "IS_ORGANIZER": "You are organizing this event.",
       "REJECTED_BEFORE": "The organizer rejected your request, you cannot send a new one."
+    },
+    "reject": {
+      "cancel": "Keep it waiting",
+      "confirm": "Reject request",
+      "reasonHint": "We keep the reason; the applicant does not see it for now.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "E.g. this time we are looking for beginners",
+      "reasonTooLong": "The reason can have at most {{count}} characters.",
+      "title": "Reject the request?",
+      "warning": "{{name}} will not be able to ask to join this event again."
     },
     "rejected": {
       "description": "The organizer rejected your request, you cannot send a new one for this event."

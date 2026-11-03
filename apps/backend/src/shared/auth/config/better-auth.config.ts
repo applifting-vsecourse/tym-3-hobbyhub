@@ -4,6 +4,9 @@ import { BetterAuthOptions } from 'better-auth/types';
 export const betterAuthCoreConfig: BetterAuthOptions = {
   emailAndPassword: {
     enabled: true,
+    // Checked by the server whatever the form says; the same limit as the
+    // frontend's sign-up schema. Answers with PASSWORD_TOO_SHORT.
+    minPasswordLength: 8,
   },
   user: {
     additionalFields: {

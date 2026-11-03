@@ -44,12 +44,13 @@ type ResponsiveSheetProps = {
    * little room that a pinned footer covers the field.
    */
   isFooterScrolling?: boolean
-  children: ReactNode
+  children?: ReactNode
 }
 
 /**
- * Spodní panel — a bottom drawer on phones, a dialog from `md` up. Use it for
- * secondary tasks that keep the page underneath: filters, sharing an event.
+ * Spodní panel — a bottom drawer on phones, a dialog from `md` up. Every modal
+ * in a feature goes through it: a confirmation, a short form, filters, sharing
+ * an event. Never use the kit's `Dialog` on its own.
  */
 export function ResponsiveSheet({
   isOpen,
@@ -80,12 +81,17 @@ export function ResponsiveSheet({
         onOpenChange={onOpenChange}
       >
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <DialogContent className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
+        <DialogContent
+          className={cn(
+            "max-h-[85vh] sm:max-w-lg",
+            children ? "grid-rows-[auto_minmax(0,1fr)_auto]" : "grid-rows-[auto_auto]",
+          )}
+        >
           <DialogHeader className="pr-8">
             {titleRow(DialogTitle)}
             {description ? <DialogDescription>{description}</DialogDescription> : null}
           </DialogHeader>
-          <div className="-mx-6 overflow-y-auto px-6">{children}</div>
+          {children ? <div className="-mx-6 overflow-y-auto px-6">{children}</div> : null}
           {footer ? <DialogFooter className="sm:flex-col">{footer}</DialogFooter> : null}
         </DialogContent>
       </Dialog>
@@ -117,12 +123,16 @@ export function ResponsiveSheet({
           )}
           {description ? <DrawerDescription>{description}</DrawerDescription> : null}
         </DrawerHeader>
-        <div className={cn("overflow-y-auto px-5 pt-3", (!footer || isFooterScrolling) && "pb-6")}>
-          {children}
-          {footer && isFooterScrolling ? (
-            <div className="flex flex-col gap-2 pt-4">{footer}</div>
-          ) : null}
-        </div>
+        {children || (footer && isFooterScrolling) ? (
+          <div
+            className={cn("overflow-y-auto px-5 pt-3", (!footer || isFooterScrolling) && "pb-6")}
+          >
+            {children}
+            {footer && isFooterScrolling ? (
+              <div className="flex flex-col gap-2 pt-4">{footer}</div>
+            ) : null}
+          </div>
+        ) : null}
         {footer && !isFooterScrolling ? <DrawerFooter>{footer}</DrawerFooter> : null}
       </DrawerContent>
     </Drawer>

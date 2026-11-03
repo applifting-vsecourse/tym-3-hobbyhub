@@ -12,4 +12,5 @@ export const ROUTES = {
   newEvent: "/events/new",
   myEvents: "/my-events",
   profile: "/profile",
+  onboarding: "/onboarding",
 } as const

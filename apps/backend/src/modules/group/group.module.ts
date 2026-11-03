@@ -10,5 +10,7 @@ import { GroupsService } from './services/groups.service';
   imports: [AuthModule, PrismaModule, ActivityModule],
   controllers: [GroupsController],
   providers: [GroupsService, GroupRepository],
+  // Membership requests (F-07.3) ask who manages a group and who is in it.
+  exports: [GroupsService],
 })
 export class GroupModule {}

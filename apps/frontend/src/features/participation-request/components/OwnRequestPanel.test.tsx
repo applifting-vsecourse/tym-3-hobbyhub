@@ -7,7 +7,7 @@ import { OwnRequestPanel } from "@/features/participation-request/components/Own
 import type { OwnSeatView } from "@/features/participation-request/lib/joinPanel"
 
 const renderPanel = (
-  view: OwnSeatView,
+  view: Exclude<OwnSeatView, "organizer">,
   onWithdraw = vi.fn(),
   approvalMode: ApprovalMode = "MANUAL",
 ) =>
@@ -54,11 +54,5 @@ describe("OwnRequestPanel", () => {
     expect(screen.getByText("Schváleno")).toBeInTheDocument()
     expect(screen.getByText(text)).toBeInTheDocument()
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
-  })
-
-  it("tells the organizer it is their event", () => {
-    renderPanel("organizer")
-
-    expect(screen.getByText("Tuto akci pořádáš.")).toBeInTheDocument()
   })
 })

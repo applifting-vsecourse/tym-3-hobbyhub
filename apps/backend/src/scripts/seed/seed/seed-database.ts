@@ -6,6 +6,7 @@ import { createQuack } from './create-quack';
 import { createUser } from './create-user';
 import { seedEvents, seedLookups } from './seed-events';
 import { seedGroups } from './seed-groups';
+import { seedMembershipRequests } from './seed-membership-requests';
 
 const MINUTE_IN_MS = 60 * 1000;
 
@@ -34,6 +35,7 @@ export const seedDatabase = async (
     });
     await seedEvents(prisma, users);
     await seedGroups(prisma, users);
+    await seedMembershipRequests(prisma, users);
     return;
   }
 
@@ -92,6 +94,22 @@ export const seedDatabase = async (
     password: 'password5',
     name: 'Pond Admin',
     username: 'PondAdmin',
+  });
+
+  // F-07.3: two newcomers in no group, who ask to join one of
+  // CaffeinatedDuck's groups, so member management has something to decide.
+  const freshDuckling = await createUser(prisma, auth, {
+    email: 'freshduckling@example.com',
+    password: 'password6',
+    name: 'Fresh Duckling',
+    username: 'FreshDuckling',
+  });
+
+  const lostGosling = await createUser(prisma, auth, {
+    email: 'lostgosling@example.com',
+    password: 'password7',
+    name: 'Lost Gosling',
+    username: 'LostGosling',
   });
 
   console.log('Creating example quacks');
@@ -199,4 +217,9 @@ Please stop tagging me.`,
   console.log('Creating example groups');
 
   await seedGroups(prisma, exampleUsers);
+  await seedMembershipRequests(prisma, [
+    ...exampleUsers,
+    freshDuckling,
+    lostGosling,
+  ]);
 };

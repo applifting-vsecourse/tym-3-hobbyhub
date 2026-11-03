@@ -35,9 +35,10 @@ import {
   CREATABLE_VENUE_TYPES,
   EVENT_LIMITS,
   type CreateEventInput,
+  type Event,
 } from "@/features/event/api/eventSchemas"
 import { EventPreview } from "@/features/event/components/EventPreview"
-import { combineDateTime } from "@/features/event/lib/eventDateTime"
+import { combineDateTime, splitDateTime } from "@/features/event/lib/eventDateTime"
 
 // Characters as the server and database count them: an emoji is one, not the
 // two UTF-16 units of `string.length`.
@@ -47,7 +48,8 @@ const charCount = (value: string) => [...value].length
 const AMOUNT_PATTERN = /^\d{1,8}([.,]\d{1,2})?$/
 
 // Built per render so validation messages follow the current language.
-const createSchema = (t: TFunction, now: () => Date) => {
+// `approvedCount` seats are already taken by people who were accepted.
+const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOnline: boolean) => {
   const text = (max: number) =>
     z
       .string()
@@ -55,6 +57,8 @@ const createSchema = (t: TFunction, now: () => Date) => {
       .refine((value) => charCount(value) <= max, t("events.validation.tooLong", { count: max }))
   const required = (max: number, message: string) =>
     text(max).refine((value) => value.length > 0, message)
+  // An online event has no address, so its address fields may stay empty.
+  const address = (max: number, message: string) => (isOnline ? text(max) : required(max, message))
   const people = z.number().int().min(0).max(EVENT_LIMITS.participantsLimit)
 
   return (
@@ -71,10 +75,10 @@ const createSchema = (t: TFunction, now: () => Date) => {
         startTime: z.string().min(1, t("events.validation.timeRequired")),
         endDate: z.string().min(1, t("events.validation.dateRequired")),
         endTime: z.string().min(1, t("events.validation.timeRequired")),
-        street: required(EVENT_LIMITS.streetMax, t("events.validation.streetRequired")),
-        city: required(EVENT_LIMITS.cityMax, t("events.validation.cityRequired")),
-        postalCode: required(EVENT_LIMITS.postalCodeMax, t("events.validation.postalCodeRequired")),
-        country: required(EVENT_LIMITS.countryMax, t("events.validation.countryRequired")),
+        street: address(EVENT_LIMITS.streetMax, t("events.validation.streetRequired")),
+        city: address(EVENT_LIMITS.cityMax, t("events.validation.cityRequired")),
+        postalCode: address(EVENT_LIMITS.postalCodeMax, t("events.validation.postalCodeRequired")),
+        country: address(EVENT_LIMITS.countryMax, t("events.validation.countryRequired")),
         placeName: text(EVENT_LIMITS.placeNameMax),
         // The position of the address picked from the suggestions; `addressKey`
         // says which address it belongs to, so a hand-edited one drops it.
@@ -97,7 +101,7 @@ const createSchema = (t: TFunction, now: () => Date) => {
           t("events.validation.descriptionRequired"),
         ),
         equipment: text(EVENT_LIMITS.equipmentMax),
-        venueType: z.enum(CREATABLE_VENUE_TYPES),
+        venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
         approvalMode: z.enum(APPROVAL_MODES),
       })
       // Rules between fields. Each lands on the field the organizer has to change.
@@ -130,6 +134,19 @@ const createSchema = (t: TFunction, now: () => Date) => {
             code: "custom",
             path: ["externalOccupiedSpots"],
             message: t("events.validation.occupiedAboveMax"),
+          })
+        }
+        if (
+          approvedCount > 0 &&
+          values.maxParticipants < values.externalOccupiedSpots + approvedCount &&
+          values.externalOccupiedSpots <= values.maxParticipants
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["maxParticipants"],
+            message: t("events.validation.maxBelowOccupied", {
+              count: values.externalOccupiedSpots + approvedCount,
+            }),
           })
         }
         if (values.contributionNote.length > 0 && values.contributionAmount === "") {
@@ -176,6 +193,44 @@ const defaultValues = (t: TFunction): FormValues => ({
 const addressKey = (values: Pick<FormValues, "street" | "city" | "postalCode">) =>
   [values.street, values.city, values.postalCode].map((part) => part.trim()).join("|")
 
+// The form's values for an event that is being edited.
+const valuesOfEvent = (event: Event): FormValues => {
+  const start = splitDateTime(event.startAt)
+  const end = splitDateTime(event.endAt)
+  return {
+    activityId: event.activity.id,
+    title: event.title,
+    startDate: start.date,
+    startTime: start.time,
+    endDate: end.date,
+    endTime: end.time,
+    street: event.location?.street ?? "",
+    city: event.location?.city ?? "",
+    postalCode: event.location?.postalCode ?? "",
+    country: event.location?.country ?? "",
+    placeName: event.location?.placeName ?? "",
+    latitude: event.location?.latitude ?? null,
+    longitude: event.location?.longitude ?? null,
+    positionOf:
+      event.location?.latitude != null
+        ? addressKey({
+            street: event.location.street,
+            city: event.location.city,
+            postalCode: event.location.postalCode,
+          })
+        : "",
+    minParticipants: event.minParticipants,
+    maxParticipants: event.maxParticipants,
+    externalOccupiedSpots: event.externalOccupiedSpots,
+    contributionAmount: event.contributionAmount === null ? "" : String(event.contributionAmount),
+    contributionNote: event.contributionNote ?? "",
+    description: event.description,
+    equipment: event.equipment ?? "",
+    venueType: event.venueType,
+    approvalMode: event.approvalMode,
+  }
+}
+
 // Optional fields left empty are not sent at all. Dates are validated by then.
 const toInput = (values: FormValues): CreateEventInput => {
   const start = combineDateTime(values.startDate, values.startTime)
@@ -191,19 +246,22 @@ const toInput = (values: FormValues): CreateEventInput => {
     approvalMode: values.approvalMode,
     startAt: start.toISOString(),
     endAt: end.toISOString(),
-    location: {
-      street: values.street.trim(),
-      city: values.city.trim(),
-      postalCode: values.postalCode.trim(),
-      country: values.country.trim(),
-      placeName: values.placeName.trim() || undefined,
-      ...(values.latitude !== null &&
-        values.longitude !== null &&
-        values.positionOf === addressKey(values) && {
-          latitude: values.latitude,
-          longitude: values.longitude,
-        }),
-    },
+    location:
+      values.venueType === "ONLINE"
+        ? undefined
+        : {
+            street: values.street.trim(),
+            city: values.city.trim(),
+            postalCode: values.postalCode.trim(),
+            country: values.country.trim(),
+            placeName: values.placeName.trim() || undefined,
+            ...(values.latitude !== null &&
+              values.longitude !== null &&
+              values.positionOf === addressKey(values) && {
+                latitude: values.latitude,
+                longitude: values.longitude,
+              }),
+          },
     minParticipants: values.minParticipants,
     maxParticipants: values.maxParticipants,
     externalOccupiedSpots: values.externalOccupiedSpots,
@@ -262,6 +320,8 @@ type EventFormProps = {
   readonly isSubmitting: boolean
   readonly errorMessage?: string | null
   readonly onSubmit: (values: CreateEventInput) => void | Promise<void>
+  /** The event being edited (F-05.10); without it the form creates a new one. */
+  readonly event?: Event
   /** Round back button of the first phone step (a link to the previous page). */
   readonly backLink?: ReactNode
   /** "Zrušit" of the desktop sidebar (a link to the previous page). */
@@ -280,17 +340,26 @@ export function EventForm({
   isSubmitting,
   errorMessage,
   onSubmit,
+  event,
   backLink,
   cancelAction,
   now = realNow,
 }: EventFormProps) {
   const { t } = useTranslation()
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
-  const schema = useMemo(() => createSchema(t, now), [t, now])
+  const isEditing = event !== undefined
+  const approvedCount = event?.approvedCount ?? 0
+  const isOnline = event?.venueType === "ONLINE"
+  const schema = useMemo(
+    () => createSchema(t, now, approvedCount, isOnline),
+    [t, now, approvedCount, isOnline],
+  )
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues(t),
+    defaultValues: event ? valuesOfEvent(event) : defaultValues(t),
   })
+  const title = t(isEditing ? "events.form.editTitle" : "events.form.title")
+  const submitLabel = t(isEditing ? "events.form.save" : "events.form.publish")
   useRevalidateOnLanguageChange(form)
   const [stepIndex, setStepIndex] = useState(0)
   const step = STEPS[stepIndex] ?? "what"
@@ -342,7 +411,7 @@ export function EventForm({
     >
       {isDesktop ? (
         <div>
-          <h1 className="typo-h1 text-foreground">{t("events.form.title")}</h1>
+          <h1 className="typo-h1 text-foreground">{title}</h1>
           <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_20rem] md:items-start">
             <div className="space-y-8">
               {error}
@@ -377,7 +446,7 @@ export function EventForm({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                {t("events.form.publish")}
+                {submitLabel}
               </Button>
               {cancelAction}
             </aside>
@@ -422,7 +491,7 @@ export function EventForm({
               />
             ))}
           </div>
-          <h1 className="mt-4 typo-h1 text-foreground">{t("events.form.title")}</h1>
+          <h1 className="mt-4 typo-h1 text-foreground">{title}</h1>
           <div className="mt-6 space-y-4">
             {error}
             <StepFields
@@ -450,7 +519,7 @@ export function EventForm({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                {t("events.form.publish")}
+                {submitLabel}
               </Button>
             ) : (
               <Button
@@ -496,6 +565,8 @@ function WhatFields({
 }: ActivityFieldProps) {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
+  // An online event has no address to ask for.
+  const venueType = useWatch({ control: form.control, name: "venueType" })
 
   const activityPlaceholder = isActivitiesLoading
     ? t("events.form.activityLoading")
@@ -603,40 +674,42 @@ function WhatFields({
         />
       </div>
 
-      <fieldset className="space-y-4">
-        <legend className="mb-3 typo-label-lg text-foreground">{t("events.form.address")}</legend>
-        <AddressPicker />
-        <TextField
-          name="street"
-          label={t("events.fields.street")}
-          placeholder={t("events.placeholders.street")}
-          autoComplete="street-address"
-        />
-        <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+      {venueType === "ONLINE" ? null : (
+        <fieldset className="space-y-4">
+          <legend className="mb-3 typo-label-lg text-foreground">{t("events.form.address")}</legend>
+          <AddressPicker />
           <TextField
-            name="city"
-            label={t("events.fields.city")}
-            placeholder={t("events.placeholders.city")}
-            autoComplete="address-level2"
+            name="street"
+            label={t("events.fields.street")}
+            placeholder={t("events.placeholders.street")}
+            autoComplete="street-address"
+          />
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+            <TextField
+              name="city"
+              label={t("events.fields.city")}
+              placeholder={t("events.placeholders.city")}
+              autoComplete="address-level2"
+            />
+            <TextField
+              name="postalCode"
+              label={t("events.fields.postalCode")}
+              placeholder={t("events.placeholders.postalCode")}
+              autoComplete="postal-code"
+            />
+          </div>
+          <TextField
+            name="country"
+            label={t("events.fields.country")}
+            autoComplete="country-name"
           />
           <TextField
-            name="postalCode"
-            label={t("events.fields.postalCode")}
-            placeholder={t("events.placeholders.postalCode")}
-            autoComplete="postal-code"
+            name="placeName"
+            label={t("events.fields.placeName")}
+            placeholder={t("events.placeholders.placeName")}
           />
-        </div>
-        <TextField
-          name="country"
-          label={t("events.fields.country")}
-          autoComplete="country-name"
-        />
-        <TextField
-          name="placeName"
-          label={t("events.fields.placeName")}
-          placeholder={t("events.placeholders.placeName")}
-        />
-      </fieldset>
+        </fieldset>
+      )}
     </>
   )
 }
@@ -752,6 +825,8 @@ function WhoFields() {
 function DetailsFields() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
+  // The kind of an online event is not up to the organizer (ADR-0006).
+  const venueType = useWatch({ control: form.control, name: "venueType" })
 
   return (
     <>
@@ -777,12 +852,14 @@ function DetailsFields() {
         label={t("events.fields.equipment")}
         placeholder={t("events.placeholders.equipment")}
       />
-      <ChipChoiceField
-        name="venueType"
-        label={t("events.fields.venueType")}
-        options={CREATABLE_VENUE_TYPES}
-        optionLabel={(venueType) => t(`events.venueType.${venueType}`)}
-      />
+      {venueType === "ONLINE" ? null : (
+        <ChipChoiceField
+          name="venueType"
+          label={t("events.fields.venueType")}
+          options={CREATABLE_VENUE_TYPES}
+          optionLabel={(venueType) => t(`events.venueType.${venueType}`)}
+        />
+      )}
     </>
   )
 }

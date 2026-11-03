@@ -1,25 +1,97 @@
 import { useState } from "react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act, fireEvent, screen, waitFor } from "@testing-library/react"
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
+import { screen, waitFor, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { Group } from "@/features/group/api/groupSchemas"
+import {
+  groupMembersQueryOptions,
+  pendingMembershipRequestsQueryOptions,
+} from "@/features/group/api/membershipRequestQueryOptions"
+import type {
+  MembershipRequest,
+  MembershipRuleViolation,
+} from "@/features/group/api/membershipRequestSchemas"
+import { GroupAdminPanel } from "@/features/group/components/GroupAdminPanel"
 import { GroupDetail } from "@/features/group/components/GroupDetail"
+import { GroupMembershipPanel } from "@/features/group/components/GroupMembershipPanel"
+import { GroupMembersPreview } from "@/features/group/components/GroupMembersPreview"
+import {
+  MembershipRequestSheet,
+  type MembershipSheetStep,
+} from "@/features/group/components/MembershipRequestSheet"
 import { useGroupMembershipState } from "@/features/group/hooks/useGroupMembershipState"
 
-const mockMembership = vi.hoisted(() => ({
+// What the server answers; each test sets its own.
+const server = vi.hoisted(() => ({
   role: null as "OWNER" | "ADMIN" | "MEMBER" | null,
+  request: null as MembershipRequest | null,
+  violations: [] as MembershipRuleViolation[],
 }))
-const leaveGroup = vi.hoisted(() => vi.fn())
+const { leaveGroup, requestMembership, withdrawMembershipRequest, toast } = vi.hoisted(() => ({
+  leaveGroup: vi.fn(),
+  requestMembership: vi.fn(),
+  withdrawMembershipRequest: vi.fn(),
+  toast: { success: vi.fn(), error: vi.fn() },
+}))
 vi.mock("@/features/group/api/leaveGroup", () => ({ leaveGroup }))
+vi.mock("@/features/group/api/membershipRequestMutations", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  requestMembership,
+  withdrawMembershipRequest,
+}))
+vi.mock("sonner", () => ({ toast }))
 vi.mock("@/features/group/api/groupMembershipQueryOptions", () => ({
   groupMembershipQueryOptions: (id: string) => ({
     queryKey: ["groups", "detail", id, "membership"],
-    queryFn: () =>
-      Promise.resolve({ isMember: mockMembership.role !== null, role: mockMembership.role }),
+    queryFn: () => Promise.resolve({ isMember: server.role !== null, role: server.role }),
   }),
 }))
+vi.mock("@/features/group/api/membershipRequestQueryOptions", () => ({
+  myMembershipRequestQueryOptions: (id: string, userId: string) => ({
+    queryKey: ["groups", "detail", id, "my-request", userId],
+    queryFn: () =>
+      Promise.resolve({
+        request: server.request,
+        violations: server.violations,
+        applicant: {
+          name: "Fresh Duckling",
+          image: null,
+          bio: "Florbal hraju od školy.",
+          hasVerifiedEmail: true,
+        },
+      }),
+  }),
+  pendingMembershipRequestsQueryOptions: (id: string) => ({
+    queryKey: ["groups", "detail", id, "requests"],
+    queryFn: () => Promise.resolve([{ id: "r1" }, { id: "r2" }]),
+  }),
+  groupMembersQueryOptions: (id: string) => ({
+    queryKey: ["groups", "detail", id, "members"],
+    queryFn: () =>
+      Promise.resolve(
+        Array.from({ length: 9 }, (_, index) => ({
+          userId: `u${index}`,
+          name: `Člen ${index}`,
+          image: null,
+          role: index === 0 ? "OWNER" : "MEMBER",
+          joinedAt: new Date(2026, 0, 1),
+        })),
+      ),
+  }),
+}))
+
+// jsdom has no matchMedia; pretend to be a desktop so the sheet renders as a dialog.
+beforeAll(() => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: true,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }))
+})
 
 const group: Group = {
   id: "g1",
@@ -34,49 +106,105 @@ const group: Group = {
   memberCount: 14,
 }
 
-// What the page does: it owns the session and hands the state down.
-function Page({ isSignedIn }: { isSignedIn: boolean }) {
-  const membership = useGroupMembershipState(group.id, { isSignedIn, isPending: false })
-  return (
-    <GroupDetail
-      group={group}
-      activityLabel="Florbal"
-      membership={membership}
-      from="%2Fgroups%2Fg1"
-    />
-  )
+const pending: MembershipRequest = {
+  id: "r1",
+  groupId: "g1",
+  status: "PENDING",
+  message: null,
+  requestedAt: new Date(2026, 0, 2),
 }
 
-const renderDetail = (isSignedIn: boolean) =>
-  renderWithRouter(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
-      <Page isSignedIn={isSignedIn} />
-    </QueryClientProvider>,
-  )
-
-// A member who signs out while the page stays open: the cache still holds the
-// membership answer, the session no longer does.
-function SignOutPage() {
-  const [isSignedIn, setIsSignedIn] = useState(true)
+// What the route does: it owns the session and the sheet, and composes the page.
+function Page({ userId }: { userId: string | null }) {
+  const membership = useGroupMembershipState(group.id, { userId, isPending: false })
+  const requests = useQuery({
+    ...pendingMembershipRequestsQueryOptions(group.id),
+    enabled: membership.isAdmin,
+  })
+  const members = useQuery({ ...groupMembersQueryOptions(group.id), enabled: membership.isAdmin })
+  const [step, setStep] = useState<MembershipSheetStep | null>(null)
   return (
     <>
-      <button onClick={() => setIsSignedIn(false)}>test sign out</button>
-      <Page isSignedIn={isSignedIn} />
+      <GroupDetail
+        group={group}
+        activityLabel="Florbal"
+        membershipPanel={
+          <GroupMembershipPanel
+            membership={membership}
+            groupName={group.name}
+            from="%2Fgroups%2Fg1"
+            onRequest={() => setStep("form")}
+            onWithdraw={() => setStep("withdraw")}
+          />
+        }
+        adminPanel={
+          membership.isAdmin ? (
+            <GroupAdminPanel
+              groupId={group.id}
+              pendingCount={requests.data?.length}
+            />
+          ) : undefined
+        }
+        membersPreview={
+          membership.isAdmin && members.data ? (
+            <GroupMembersPreview
+              groupId={group.id}
+              members={members.data}
+            />
+          ) : undefined
+        }
+      />
+      {userId ? (
+        <MembershipRequestSheet
+          groupId={group.id}
+          applicant={
+            membership.applicant ?? {
+              name: "Session Name",
+              image: null,
+              bio: null,
+              hasVerifiedEmail: false,
+            }
+          }
+          step={step}
+          onStepChange={setStep}
+        />
+      ) : null}
     </>
   )
 }
 
+// Disabled while the user's state loads; the same label, so wait for it to work.
+const requestButton = async () => {
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Požádat o členství" })).toBeEnabled(),
+  )
+  return screen.getByRole("button", { name: "Požádat o členství" })
+}
+
+const renderDetail = (userId: string | null) =>
+  renderWithRouter(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <Page userId={userId} />
+    </QueryClientProvider>,
+  )
+
 describe("GroupDetail", () => {
   beforeEach(() => {
-    mockMembership.role = null
+    server.role = null
+    server.request = null
+    server.violations = []
     leaveGroup.mockReset()
     leaveGroup.mockResolvedValue(undefined)
+    requestMembership.mockReset()
+    withdrawMembershipRequest.mockReset()
+    toast.success.mockReset()
+    toast.error.mockReset()
   })
 
   it("shows a visitor the basics, the member count and a way to sign up", async () => {
-    await renderDetail(false)
+    await renderDetail(null)
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Čtvrteční florbalisté" }),
@@ -94,144 +222,166 @@ describe("GroupDetail", () => {
   })
 
   it("says the upcoming events are being worked on", async () => {
-    await renderDetail(false)
+    await renderDetail(null)
 
     expect(screen.getByRole("heading", { name: "Nadcházející akce" })).toBeInTheDocument()
     expect(screen.getByText(/Na této funkci právě pracujeme/)).toBeVisible()
   })
 
-  it("stops showing a member's state once they sign out", async () => {
-    mockMembership.role = "MEMBER"
-    await renderWithRouter(
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
-        <SignOutPage />
-      </QueryClientProvider>,
-    )
-    expect(await screen.findByText("Jste členem")).toBeVisible()
+  describe("asking to join", () => {
+    it("sends a request with a message and shows it waiting", async () => {
+      const user = userEvent.setup()
+      requestMembership.mockImplementation(() => {
+        server.request = pending
+        server.violations = ["ALREADY_REQUESTED"]
+        return Promise.resolve(pending)
+      })
+      await renderDetail("u1")
 
-    fireEvent.click(screen.getByRole("button", { name: "test sign out" }))
+      await user.click(await requestButton())
+      expect(screen.getByText(/Organizátor žádost schválí ručně/)).toBeVisible()
+      const dialog = await screen.findByRole("dialog")
+      // What the admins will see, as the server says: name, verified e-mail, bio.
+      expect(within(dialog).getByText("Fresh Duckling")).toBeVisible()
+      expect(within(dialog).getByText("Ověřený e-mail")).toBeVisible()
+      expect(within(dialog).getByText("Florbal hraju od školy.")).toBeVisible()
+      await user.type(within(dialog).getByLabelText(/Zpráva organizátorovi/), "  Ahoj  ")
+      await user.click(within(dialog).getByRole("button", { name: "Odeslat žádost" }))
 
-    expect(await screen.findByRole("link", { name: "Požádat o členství" })).toBeVisible()
-    expect(screen.queryByText("Jste členem")).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
+      expect(await within(dialog).findByText(/Jak dopadla, uvidíte tady/)).toBeVisible()
+      expect(requestMembership.mock.calls[0]?.[0]).toEqual({ groupId: "g1", message: "Ahoj" })
+      await user.click(within(dialog).getByRole("button", { name: "Hotovo" }))
+
+      expect(await screen.findByText(/čeká, až ji organizátor skupiny vyřídí/)).toBeVisible()
+      expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
+    })
+
+    it("explains a refusal in the form", async () => {
+      const user = userEvent.setup()
+      const { MembershipRefusedError } =
+        await import("@/features/group/api/membershipRequestMutations")
+      requestMembership.mockRejectedValue(new MembershipRefusedError(["REJECTED_BEFORE"]))
+      await renderDetail("u1")
+
+      await user.click(await requestButton())
+      const dialog = await screen.findByRole("dialog")
+      await user.click(within(dialog).getByRole("button", { name: "Odeslat žádost" }))
+
+      expect(await within(dialog).findByText(/Organizátor vaši žádost zamítl/)).toBeInTheDocument()
+      expect(requestMembership.mock.calls[0]?.[0]).toEqual({ groupId: "g1", message: undefined })
+    })
+
+    it("withdraws a waiting request after asking", async () => {
+      const user = userEvent.setup()
+      server.request = pending
+      server.violations = ["ALREADY_REQUESTED"]
+      withdrawMembershipRequest.mockImplementation(() => {
+        server.request = null
+        server.violations = []
+        return Promise.resolve()
+      })
+      await renderDetail("u1")
+
+      await user.click(await screen.findByRole("button", { name: "Zrušit žádost" }))
+      const dialog = await screen.findByRole("dialog")
+      expect(within(dialog).getByText("Zrušit žádost o členství?")).toBeVisible()
+      await user.click(within(dialog).getByRole("button", { name: "Zrušit žádost" }))
+
+      await waitFor(() => expect(withdrawMembershipRequest.mock.calls[0]?.[0]).toBe("g1"))
+      expect(toast.success).toHaveBeenCalledWith("Žádost zrušena")
+      expect(await screen.findByRole("button", { name: "Požádat o členství" })).toBeVisible()
+    })
+
+    it("tells a rejected applicant they cannot ask again (ADR-0014)", async () => {
+      server.request = { ...pending, status: "REJECTED" }
+      server.violations = ["REJECTED_BEFORE"]
+      await renderDetail("u1")
+
+      expect(await screen.findByText("Zamítnuto")).toBeVisible()
+      expect(screen.getByText(/novou žádost poslat nejde/)).toBeVisible()
+      expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
+    })
   })
 
-  describe("asking to join", () => {
-    beforeEach(() => {
-      vi.useFakeTimers({ shouldAdvanceTime: true })
-    })
-    afterEach(() => {
-      vi.useRealTimers()
-    })
-
-    it("counts down, lets the user withdraw, and then accepts after 10 seconds", async () => {
-      await renderDetail(true)
-
-      // Disabled until we know the user is not a member yet.
-      const requestButton = () => screen.getByRole("button", { name: "Požádat o členství" })
-      await waitFor(() => expect(requestButton()).toBeEnabled())
-      fireEvent.click(requestButton())
-      expect(screen.getByText("Žádost odeslána")).toBeVisible()
-      expect(screen.getByRole("status")).toHaveTextContent("Za 10 sekund")
-
-      act(() => void vi.advanceTimersByTime(3000))
-      expect(screen.getByRole("status")).toHaveTextContent("Za 7 sekund")
-
-      // Withdrawn: back to the start, still 14 members.
-      fireEvent.click(screen.getByRole("button", { name: "Odvolat žádost" }))
-      expect(screen.getByRole("button", { name: "Požádat o členství" })).toBeVisible()
-      expect(screen.getByText(/14 členů/)).toBeVisible()
-
-      fireEvent.click(screen.getByRole("button", { name: "Požádat o členství" }))
-      act(() => void vi.advanceTimersByTime(10_000))
-
-      expect(screen.getByText("Jste členem")).toBeVisible()
-      expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
-      expect(screen.getByText(/15 členů/)).toBeVisible()
-    })
-
-    it("shows an existing member their state instead of the button", async () => {
-      mockMembership.role = "MEMBER"
-      await renderDetail(true)
+  describe("a member", () => {
+    it("sees their state instead of the button", async () => {
+      server.role = "MEMBER"
+      await renderDetail("u1")
 
       expect(await screen.findByText("Jste členem")).toBeVisible()
       expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("heading", { name: /Správa skupiny/ })).not.toBeInTheDocument()
     })
 
-    describe("leaving", () => {
-      const openLeaveDialog = async () => {
-        fireEvent.click(await screen.findByRole("button", { name: "Odejít ze skupiny" }))
-        return screen.findByRole("dialog")
-      }
+    it("asks before leaving, and stays when the user changes their mind", async () => {
+      const user = userEvent.setup()
+      server.role = "MEMBER"
+      await renderDetail("u1")
 
-      it("asks before leaving, and stays when the user changes their mind", async () => {
-        mockMembership.role = "MEMBER"
-        await renderDetail(true)
+      await user.click(await screen.findByRole("button", { name: "Odejít ze skupiny" }))
+      const dialog = await screen.findByRole("dialog")
+      expect(dialog).toHaveTextContent("Opravdu chcete odejít ze skupiny?")
+      await user.click(within(dialog).getByRole("button", { name: "Zůstat ve skupině" }))
 
-        const dialog = await openLeaveDialog()
-        expect(dialog).toHaveTextContent("Opravdu chcete odejít ze skupiny?")
-        expect(leaveGroup).not.toHaveBeenCalled()
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+      expect(leaveGroup).not.toHaveBeenCalled()
+    })
 
-        fireEvent.click(screen.getByRole("button", { name: "Zůstat ve skupině" }))
+    it("leaves once the user confirms", async () => {
+      const user = userEvent.setup()
+      server.role = "MEMBER"
+      await renderDetail("u1")
 
-        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-        expect(leaveGroup).not.toHaveBeenCalled()
-        expect(screen.getByText("Jste členem")).toBeVisible()
-      })
+      await user.click(await screen.findByRole("button", { name: "Odejít ze skupiny" }))
+      server.role = null
+      await user.click(
+        within(await screen.findByRole("dialog")).getByRole("button", { name: "Odejít" }),
+      )
 
-      it("leaves once the user confirms", async () => {
-        mockMembership.role = "MEMBER"
-        await renderDetail(true)
+      await waitFor(() => expect(leaveGroup).toHaveBeenCalledWith("g1"))
+      expect(await screen.findByRole("button", { name: "Požádat o členství" })).toBeInTheDocument()
+    })
 
-        await openLeaveDialog()
-        mockMembership.role = null
-        fireEvent.click(screen.getByRole("button", { name: "Odejít" }))
+    it("keeps the dialog open and says so when leaving fails", async () => {
+      const user = userEvent.setup()
+      server.role = "MEMBER"
+      leaveGroup.mockRejectedValue(new Error("nope"))
+      await renderDetail("u1")
 
-        await waitFor(() => expect(leaveGroup).toHaveBeenCalledWith("g1"))
-        expect(
-          await screen.findByRole("button", { name: "Požádat o členství" }),
-        ).toBeInTheDocument()
-        expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-      })
+      await user.click(await screen.findByRole("button", { name: "Odejít ze skupiny" }))
+      await user.click(
+        within(await screen.findByRole("dialog")).getByRole("button", { name: "Odejít" }),
+      )
 
-      it("keeps the dialog open and says so when leaving fails", async () => {
-        mockMembership.role = "MEMBER"
-        leaveGroup.mockRejectedValue(new Error("nope"))
-        await renderDetail(true)
+      expect(await screen.findByRole("alert")).toHaveTextContent("Ze skupiny se nepodařilo odejít")
+      expect(screen.getByRole("dialog")).toBeVisible()
+    })
+  })
 
-        await openLeaveDialog()
-        fireEvent.click(screen.getByRole("button", { name: "Odejít" }))
+  describe("an admin", () => {
+    it.each(["OWNER", "ADMIN"] as const)(
+      "%s sees the way to the requests and the members",
+      async (role) => {
+        server.role = role
+        await renderDetail("u1")
 
-        expect(await screen.findByRole("alert")).toHaveTextContent(
-          "Ze skupiny se nepodařilo odejít",
+        expect(await screen.findByRole("link", { name: "Žádosti o členství (2)" })).toHaveAttribute(
+          "href",
+          "/groups/g1/members?tab=requests",
         )
-        expect(screen.getByRole("dialog")).toBeVisible()
-      })
+        expect(await screen.findByRole("heading", { name: "Členové (9)" })).toBeVisible()
+        const members = screen.getByRole("link", { name: "Zobrazit všechny členy" })
+        expect(members).toHaveAttribute("href", "/groups/g1/members")
+        expect(within(members).getByText("+2")).toBeVisible()
+      },
+    )
 
-      it("does not offer the owner a way out", async () => {
-        mockMembership.role = "OWNER"
-        await renderDetail(true)
+    it("does not offer the owner a way out", async () => {
+      server.role = "OWNER"
+      await renderDetail("u1")
 
-        expect(await screen.findByText("Jste členem")).toBeVisible()
-        expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
-      })
-
-      it("lets a user who was just accepted leave again without asking the server", async () => {
-        await renderDetail(true)
-        const requestButton = () => screen.getByRole("button", { name: "Požádat o členství" })
-        await waitFor(() => expect(requestButton()).toBeEnabled())
-        fireEvent.click(requestButton())
-        act(() => void vi.advanceTimersByTime(10_000))
-
-        await openLeaveDialog()
-        fireEvent.click(screen.getByRole("button", { name: "Odejít" }))
-
-        expect(await screen.findByRole("button", { name: "Požádat o členství" })).toBeVisible()
-        expect(leaveGroup).not.toHaveBeenCalled()
-        expect(screen.getByText(/14 členů/)).toBeVisible()
-      })
+      expect(await screen.findByText("Jste členem")).toBeVisible()
+      expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
     })
   })
 })

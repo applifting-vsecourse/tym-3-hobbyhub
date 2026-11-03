@@ -17,6 +17,7 @@
     },
     "fields": {
       "birthDate": "Datum narození",
+      "confirmPassword": "Zopakujte heslo",
       "email": "E-mail",
       "gender": "Pohlaví",
       "name": "Jméno / přezdívka",
@@ -62,12 +63,14 @@
     },
     "validation": {
       "birthDateRequired": "Vyberte datum narození",
+      "confirmPasswordRequired": "Zopakujte heslo",
       "emailInvalid": "Neplatný e-mail",
       "emailRequired": "Zadejte e-mail",
       "genderRequired": "Vyberte pohlaví",
       "nameRequired": "Zadejte jméno nebo přezdívku",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
       "passwordRequired": "Zadejte heslo",
+      "passwordsMismatch": "Hesla se neshodují",
       "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",
       "underage": "Registrace je možná až od 18 let"
     },
@@ -125,6 +128,29 @@
       "MANUAL": "Každou žádost o účast schválíte, nebo zamítnete sami."
     },
     "back": "Zpět",
+    "cancel": {
+      "back": "Zpět",
+      "description": "Akci už nepůjde upravit ani znovu otevřít. Přihlášky účastníků zůstanou, jak jsou.",
+      "done": "Akce je zrušená.",
+      "failed": "Akci se nepodařilo zrušit. Zkuste to prosím znovu.",
+      "note": "Zpráva pro účastníky (nepovinné)",
+      "notePlaceholder": "Například co se stalo nebo kdy akci uspořádáte znovu",
+      "reason": "Důvod",
+      "reasonPlaceholder": "Vyberte důvod",
+      "reasonRequired": "Vyberte důvod zrušení",
+      "reasonsFailed": "Důvody zrušení se nepodařilo načíst.",
+      "reasonsRetry": "Zkusit znovu",
+      "submit": "Zrušit akci",
+      "title": "Zrušit akci?"
+    },
+    "changeWarning": {
+      "back": "Zpět k úpravám",
+      "confirm": "Uložit změnu",
+      "description_few": "Na akci jsou {{count}} schválení účastníci. Informace o změně jim zatím nikdo automaticky neposílá, dejte jim vědět sami.",
+      "description_one": "Na akci je {{count}} schválený účastník. Informace o změně mu zatím nikdo automaticky neposílá, dejte mu vědět sami.",
+      "description_other": "Na akci je {{count}} schválených účastníků. Informace o změně jim zatím nikdo automaticky neposílá, dejte jim vědět sami.",
+      "title": "Změnit čas nebo místo?"
+    },
     "day": {
       "today": "Dnes",
       "tomorrow": "Zítra"
@@ -141,6 +167,7 @@
       "approvalAutomatic": "Místo získáš hned po přihlášení.",
       "approvalManual": "Organizátor žádost schvaluje ručně.",
       "back": "Zpět na akce",
+      "cancellationReason": "Důvod: {{reason}}",
       "contribution": "Příspěvek",
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
@@ -180,6 +207,11 @@
       },
       "title": "Detail akce"
     },
+    "edit": {
+      "back": "Zpět na detail akce",
+      "locked": "Akce už začala nebo je zrušená, proto se nedá měnit.",
+      "lockedTitle": "Akci už nejde upravit"
+    },
     "fields": {
       "activity": "Aktivita",
       "addressSearch": "Najít adresu",
@@ -216,6 +248,7 @@
       "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
       "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
       "created": "Akce je zveřejněná.",
+      "editTitle": "Upravit akci",
       "emailNotVerified": "Nejdřív ověř svůj e-mail, pak můžeš akci zveřejnit.",
       "externalHint": "Lidé z vaší party bez účtu, včetně vás. Počítají se do obsazenosti.",
       "minimumReached": "Minimum je naplněné",
@@ -227,13 +260,16 @@
       "previousStep": "Zpět na předchozí krok",
       "publish": "Zveřejnit akci",
       "retry": "Zkusit znovu",
+      "save": "Uložit změny",
+      "saved": "Změny jsou uložené.",
       "stepOf": "Krok {{step}} ze {{total}}",
       "steps": {
         "details": "Detaily a zveřejnění",
         "what": "Co a kdy",
         "who": "Kdo a kolik"
       },
-      "title": "Nová akce"
+      "title": "Nová akce",
+      "updateFailed": "Změny se nepodařilo uložit. Zkuste to prosím znovu."
     },
     "list": {
       "count_few": "{{count}} akce",
@@ -264,6 +300,10 @@
       "seoTitle": "Akce",
       "showAll": "Zobrazit všechny",
       "title": "Akce"
+    },
+    "manage": {
+      "cancel": "Zrušit akci",
+      "edit": "Upravit akci"
     },
     "map": {
       "closePreview": "Zavřít náhled",
@@ -309,6 +349,7 @@
       "descriptionRequired": "Napište pár vět o akci",
       "endBeforeStart": "Konec musí být po začátku",
       "maxBelowMin": "Maximum musí být alespoň jako minimum",
+      "maxBelowOccupied": "Maximum nemůže být menší než obsazená místa ({{count}})",
       "occupiedAboveMax": "Obsazených míst nemůže být víc než maximum",
       "postalCodeRequired": "Zadejte PSČ",
       "startInPast": "Začátek musí být v budoucnu",
@@ -348,10 +389,6 @@
       "members_one": "{{count}} člen",
       "members_other": "{{count}} členů",
       "membership": {
-        "cancel": "Odvolat žádost",
-        "countdown_few": "Za {{count}} sekundy budete členem skupiny.",
-        "countdown_one": "Za {{count}} sekundu budete členem skupiny.",
-        "countdown_other": "Za {{count}} sekund budete členem skupiny.",
         "hasAccount": "Už máte účet?",
         "isMember": "Jste členem",
         "leave": "Odejít ze skupiny",
@@ -360,11 +397,13 @@
         "leaveStay": "Zůstat ve skupině",
         "leaveText": "Přestanete být členem skupiny {{name}}. Znovu se můžete přidat pomocí žádosti o členství.",
         "leaveTitle": "Opravdu chcete odejít ze skupiny?",
+        "pendingText": "Žádost čeká, až ji organizátor skupiny vyřídí.",
+        "rejectedText": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde.",
         "request": "Požádat o členství",
-        "requestNote": "Žádost se zatím vyřizuje automaticky. Do té doby ji můžete odvolat.",
-        "sent": "Žádost odeslána",
+        "requestNote": "Organizátor žádost schválí ručně. Žádost čeká bez lhůty.",
         "signIn": "Přihlásit se",
-        "title": "Členství"
+        "title": "Členství",
+        "withdraw": "Zrušit žádost"
       },
       "title": "Detail skupiny",
       "upcoming": {
@@ -418,6 +457,78 @@
       "visibility": {
         "PRIVATE": "Soukromá",
         "PUBLIC": "Veřejná"
+      }
+    },
+    "manage": {
+      "adminTitle": "Správa skupiny",
+      "approved": "{{name}} je teď členem skupiny.",
+      "back": "Zpět na skupinu",
+      "decideFailed": "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      "loadError": "Nepodařilo se načíst",
+      "loading": "Načítáme…",
+      "membersEmpty": "Skupina zatím nemá žádné členy.",
+      "membersLink": "Zobrazit všechny členy",
+      "membersMore": "+{{count}}",
+      "membersTitle": "Členové ({{count}})",
+      "outcome_few": "Po schválení budou {{count}} členové.",
+      "outcome_one": "Po schválení bude {{count}} člen.",
+      "outcome_other": "Po schválení bude {{count}} členů.",
+      "refused": {
+        "APPLICANT_IS_MEMBER": "Žadatel už je členem skupiny.",
+        "GROUP_CANCELLED": "Skupina je zrušená, žádosti už vyřídit nejde.",
+        "NOT_PENDING": "Žádost mezitím vyřídil jiný správce, nebo ji žadatel zrušil."
+      },
+      "reject": {
+        "cancel": "Zpět",
+        "confirm": "Zamítnout",
+        "reasonHint": "Důvod si uložíme. Žadatel ho uvidí, až bude přehled jeho žádostí.",
+        "reasonLabel": "Důvod (nepovinné)",
+        "reasonPlaceholder": "Např. Skupina je teď plná.",
+        "reasonTooLong": "Důvod může mít nejvýš {{count}} znaků.",
+        "text": "{{name}} uvidí zamítnutí na stránce skupiny a do této skupiny už znovu požádat nemůže.",
+        "title": "Zamítnout žádost?"
+      },
+      "rejected": "Žádost zamítnuta",
+      "requestsEmpty": "Žádné žádosti o členství nečekají na vyřízení.",
+      "requestsLink": "Žádosti o členství ({{count}})",
+      "retry": "Zkusit znovu",
+      "tabs": {
+        "members": "Členové {{count}}",
+        "requests": "Žádosti {{count}}"
+      },
+      "tabsLabel": "Členové a žádosti",
+      "title": "Správa členů"
+    },
+    "membershipRequest": {
+      "form": {
+        "adminSees": "Organizátor skupiny uvidí",
+        "cancel": "Zrušit",
+        "hiddenDetails": "Datum narození, kontakt ani adresu neuvidí.",
+        "messageLabel": "Zpráva organizátorovi (nepovinné)",
+        "messagePlaceholder": "Např. Hraju třetí rok za firemní tým a hledám pravidelnou skupinu.",
+        "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+        "sendFailed": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
+        "submit": "Odeslat žádost",
+        "title": "Žádost o členství"
+      },
+      "refused": {
+        "ALREADY_REQUESTED": "O členství v této skupině už jste požádali.",
+        "IS_MEMBER": "Už jste členem této skupiny.",
+        "REJECTED_BEFORE": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde."
+      },
+      "sent": {
+        "close": "Hotovo",
+        "text": "Organizátor skupiny ji uvidí a rozhodne. Jak dopadla, uvidíte tady na stránce skupiny.",
+        "title": "Žádost odeslána",
+        "withdraw": "Zrušit žádost"
+      },
+      "withdraw": {
+        "confirm": "Zrušit žádost",
+        "done": "Žádost zrušena",
+        "failed": "Žádost se nepodařilo zrušit. Zkuste to prosím znovu.",
+        "keep": "Nechat žádost",
+        "text": "Žádost můžete zrušit, dokud ji organizátor nevyřídí. Přestane ji vidět a o členství můžete později požádat znovu.",
+        "title": "Zrušit žádost o členství?"
       }
     },
     "placeholders": {
@@ -574,6 +685,19 @@
       "label": "Fotka nebo ilustrace (nepovinné)",
       "upload": "Nahrát fotku"
     },
+    "profilePicture": {
+      "change": "Změnit obrázek",
+      "choose": "Vybrat obrázek",
+      "chosenPhoto": "Vaše nahraná fotka",
+      "errorSize": "Fotka může mít nejvýše 5 MB.",
+      "errorType": "Fotka musí být JPG nebo PNG.",
+      "label": "Profilový obrázek",
+      "none": "Zatím žádný obrázek",
+      "remove": "Odebrat obrázek",
+      "sheetDescription": "Vyberte si ilustraci, nebo nahrajte vlastní fotku (JPG nebo PNG, nejvýš 5 MB).",
+      "sheetTitle": "Vyberte si obrázek",
+      "upload": "Nahrát vlastní fotku"
+    },
     "roster": {
       "free": "Volné místo",
       "missingToMinimum": "Chybí do minima"
@@ -642,6 +766,65 @@
     "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
     "title": "Moje akce"
   },
+  "onboarding": {
+    "activities": {
+      "addLabel": "Přidat aktivitu",
+      "addPlaceholder": "Vyberte aktivitu",
+      "added": "Přidáno: {{activity}}",
+      "allPicked": "Už jste přidali všechny aktivity.",
+      "description": "Podle toho vám ukážeme akce, které vám sednou.",
+      "empty": "Zatím nejsou k dispozici žádné aktivity.",
+      "levelPlaceholder": "Přidat úroveň",
+      "loadError": "Aktivity se nepodařilo načíst.",
+      "loading": "Načítáme aktivity",
+      "pickedTitle": "Vaše aktivity",
+      "remove": "Odebrat {{activity}}",
+      "title": "Co rádi hrajete?",
+      "validation": {
+        "none": "Vyberte aspoň jednu aktivitu."
+      }
+    },
+    "back": "Zpět",
+    "finish": "Dokončit",
+    "finishReturn": "Dokončit a vrátit se k akci",
+    "levels": {
+      "NONE": "Bez úrovně"
+    },
+    "loadError": "Průvodce se nepodařilo načíst.",
+    "loading": "Načítáme váš profil",
+    "location": {
+      "address": "Adresa",
+      "addressHint": "Vyberte adresu z nabídky. Bez ní tento krok přeskočíme.",
+      "addressPlaceholder": "Začněte psát ulici a město",
+      "addressUnavailable": "Hledání adres teď není dostupné. Tento krok můžete přeskočit.",
+      "description": "Ukážeme vám akce poblíž. Poloha je neveřejná.",
+      "radius": "Jak daleko pojedete?",
+      "radiusValue": "{{km}} km",
+      "title": "Kde hrajete?"
+    },
+    "next": "Pokračovat",
+    "profile": {
+      "bio": "Krátké bio (nepovinné)",
+      "bioCount": "{{length}} / {{max}} znaků",
+      "bioPlaceholder": "Např. hraju rok, rád zkusím nové aktivity…",
+      "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
+      "description": "Ať ostatní vědí, s kým budou hrát.",
+      "pictureHint": "Zatím se neukládá, doplníme to.",
+      "pictureLabel": "Profilový obrázek (nepovinné)",
+      "title": "Ukažte se ostatním"
+    },
+    "progress": "Krok {{current}} ze {{total}}",
+    "progressLabel": "Průběh nastavení profilu",
+    "prompt": {
+      "action": "Dokončit nastavení profilu",
+      "description": "Část nastavení jste přeskočili. Doplňte aktivity, lokalitu a bio a ukážeme vám akce, které vám sednou.",
+      "title": "Dokončete nastavení profilu"
+    },
+    "reload": "Zkusit znovu",
+    "saveError": "Uložení se nepodařilo. Zkuste to znovu.",
+    "seoTitle": "Nastavení profilu",
+    "skipAll": "Přeskočit vše"
+  },
   "participationRequests": {
     "approved": {
       "description": "Organizátor tvou účast schválil.",
@@ -649,15 +832,13 @@
     },
     "form": {
       "cancel": "Zrušit",
-      "hiddenDetails": "Kontakt a poloha zůstávají skryté.",
+      "hiddenDetails": "Kontakt, poloha, věk ani pohlaví organizátor neuvidí.",
       "messageLabel": "Zpráva organizátorovi (nepovinné)",
       "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
       "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
       "note": "Organizátor žádost schválí ručně. Zrušit ji můžeš, dokud ji nevyřídí.",
       "noteAutomatic": "Místo získáš hned, organizátor ho nemusí schvalovat.",
       "organizerSees": "Organizátor uvidí",
-      "profileBasic": "Základní profil",
-      "profileVerified": "E-mail ověřen · základní profil",
       "sendFailed": "Žádost se nepodařilo odeslat. Zkus to znovu.",
       "sendFailedAutomatic": "Místo se nepodařilo obsadit. Zkus to znovu.",
       "submit": "Odeslat žádost",
@@ -669,6 +850,48 @@
       "close": "Zavřít",
       "text": "Organizátor uvidí, že jdeš.",
       "title": "Máš místo"
+    },
+    "manage": {
+      "approveFailed": "Žádost se nepodařilo schválit. Zkus to znovu.",
+      "approved": "Žádost schválena",
+      "back": "Zpět na akci",
+      "empty": "Zatím tu nejsou žádné žádosti. Objeví se tu, jakmile o účast někdo požádá.",
+      "emptyAutomatic": "Na téhle akci se žádosti schvalují samy: kdo požádá, rovnou obsadí volné místo.",
+      "loadError": "Žádosti se nepodařilo načíst",
+      "loading": "Načítáme žádosti…",
+      "locked": {
+        "EVENT_CANCELLED": "Akce byla zrušena, žádosti už nejde vyřídit.",
+        "EVENT_FINISHED": "Akce už proběhla, žádosti už nejde vyřídit.",
+        "EVENT_NOT_HELD": "Akce se neuskutečnila, žádosti už nejde vyřídit.",
+        "EVENT_STARTED": "Akce už začala, žádosti už nejde vyřídit."
+      },
+      "missingToMin": "Chybí {{count}} do minima",
+      "more_few": "{{count}} další žádosti",
+      "more_one": "{{count}} další žádost",
+      "more_other": "{{count}} dalších žádostí",
+      "outcome": {
+        "fills": "Po schválení bude akce plná ({{taken}} z {{max}}).",
+        "full": "Akce je plná, žádost jde jen zamítnout.",
+        "minimumReached": "Po schválení bude minimum splněno ({{taken}} z {{min}}).",
+        "missing": "Po schválení: {{taken}} z min. {{min}}, do minima chybí {{count}}.",
+        "taken": "Po schválení bude obsazeno {{taken}} z {{max}}."
+      },
+      "refused": {
+        "APPLICANT_HAS_SEAT": "Žadatel už na akci místo má.",
+        "EVENT_FULL": "Akce se mezitím zaplnila, žádost už nejde schválit.",
+        "NOT_PENDING": "Žádost už není aktuální."
+      },
+      "rejectFailed": "Žádost se nepodařilo zamítnout. Zkus to znovu.",
+      "rejected": "Žádost zamítnuta",
+      "requests": "Žádosti",
+      "retry": "Zkusit znovu",
+      "title": "Žádosti a přehled účastníků"
+    },
+    "organizer": {
+      "manage": "Žádosti a přehled účastníků",
+      "pendingCount_few": "{{count}} čekající žádosti",
+      "pendingCount_one": "{{count}} čekající žádost",
+      "pendingCount_other": "{{count}} čekajících žádostí"
     },
     "pending": {
       "description": "Na tuto akci jsi podal žádost o účast. Organizátor ji zatím nevyřídil. Dokud čeká, můžeš ji zrušit.",
@@ -685,6 +908,16 @@
       "HAS_SEAT": "Na akci už máš místo.",
       "IS_ORGANIZER": "Tuto akci pořádáš.",
       "REJECTED_BEFORE": "Organizátor tvou žádost zamítl, novou poslat nemůžeš."
+    },
+    "reject": {
+      "cancel": "Nechat čekat",
+      "confirm": "Zamítnout žádost",
+      "reasonHint": "Důvod si uložíme, žadateli se zatím nezobrazí.",
+      "reasonLabel": "Důvod (nepovinné)",
+      "reasonPlaceholder": "Např. tentokrát hledáme spíš začátečníky",
+      "reasonTooLong": "Důvod může mít nejvýš {{count}} znaků.",
+      "title": "Zamítnout žádost?",
+      "warning": "{{name}} už o tuhle akci nebude moct požádat znovu."
     },
     "rejected": {
       "description": "Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."

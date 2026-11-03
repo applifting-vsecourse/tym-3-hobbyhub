@@ -7,7 +7,8 @@ import type { ApprovalMode } from "@/features/participation-request/api/particip
 import type { OwnSeatView } from "@/features/participation-request/lib/joinPanel"
 
 type OwnRequestPanelProps = {
-  view: OwnSeatView
+  /** The organizer's own event shows `OrganizerPanel` instead. */
+  view: Exclude<OwnSeatView, "organizer">
   /** With automatic approval nobody approved the seat; it was simply taken. */
   approvalMode: ApprovalMode
   /** Opens the confirmation to withdraw a pending request, which the page owns. */
@@ -23,14 +24,6 @@ const BADGES = {
 /** The signed-in person's own place in the event, shown instead of the free seat. */
 export function OwnRequestPanel({ view, approvalMode, onWithdraw }: OwnRequestPanelProps) {
   const { t } = useTranslation()
-
-  if (view === "organizer") {
-    return (
-      <p className="typo-body text-signal-soft">
-        {t("participationRequests.refused.IS_ORGANIZER")}
-      </p>
-    )
-  }
 
   return (
     <div className="flex flex-col gap-3 rounded-lg bg-accent p-4 text-accent-foreground">

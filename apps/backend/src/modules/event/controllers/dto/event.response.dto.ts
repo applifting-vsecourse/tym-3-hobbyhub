@@ -113,8 +113,17 @@ export class EventResponseDto {
   @ApiProperty({ type: ActivityResponseDto })
   activity!: ActivityResponseDto;
 
+  @ApiProperty({ enum: ['MANUAL', 'AUTOMATIC'] })
+  approvalMode!: Event['approvalMode'];
+
   @ApiProperty()
   organizerId!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  cancellationReason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  cancellationNote!: string | null;
 
   static fromDomain(event: Event): EventResponseDto {
     return {
@@ -143,7 +152,10 @@ export class EventResponseDto {
         ? EventLocationResponseDto.fromDomain(event.location)
         : null,
       activity: ActivityResponseDto.fromDomain(event.activity),
+      approvalMode: event.approvalMode,
       organizerId: event.organizerId,
+      cancellationReason: event.cancellationReason,
+      cancellationNote: event.cancellationNote,
     };
   }
 }

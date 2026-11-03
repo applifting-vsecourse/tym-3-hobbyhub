@@ -8,6 +8,10 @@ import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { PhotoPicker } from "@/components/hobbyhub/PhotoPicker"
+import {
+  ProfilePicturePicker,
+  type ProfilePicture,
+} from "@/components/hobbyhub/ProfilePicturePicker"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -128,6 +132,17 @@ function PhotoPickerExample() {
     <PhotoPicker
       value={photo}
       onFileSelect={(file) => setPhoto(URL.createObjectURL(file))}
+    />
+  )
+}
+
+function ProfilePicturePickerExample() {
+  const [picture, setPicture] = useState<ProfilePicture | null>(null)
+
+  return (
+    <ProfilePicturePicker
+      value={picture}
+      onChange={setPicture}
     />
   )
 }
@@ -260,6 +275,7 @@ export function ControlSections() {
           <ActivityComboboxExample />
           <UnsavedChangesExample />
           <PhotoPickerExample />
+          <ProfilePicturePickerExample />
           <Counter
             label="Minimum"
             value={minimum}

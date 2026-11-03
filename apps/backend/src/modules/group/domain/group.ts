@@ -44,6 +44,15 @@ export type CreateGroupData = {
   usualSchedule?: string;
 };
 
+// F-07.3: a member as the group's admins see them in member management.
+export type GroupMember = {
+  userId: string;
+  name: string;
+  image: string | null;
+  role: GroupRole;
+  joinedAt: Date;
+};
+
 // A group seen by one of its members (F-07.8 "Moje skupiny").
 export type MyGroup = Group & { myRole: GroupRole };
 

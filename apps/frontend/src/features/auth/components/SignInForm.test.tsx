@@ -44,6 +44,26 @@ describe("SignInForm", () => {
     expect(screen.queryByText("Zadejte e-mail")).not.toBeInTheDocument()
   })
 
+  it("sends the password exactly as typed, spaces included", async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(
+      <SignInForm
+        isLoading={false}
+        onSubmit={onSubmit}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("E-mail"), "jana@example.cz")
+    await user.type(screen.getByLabelText("Heslo"), " heslo123 ")
+    await user.click(screen.getByRole("button", { name: "Přihlásit se" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ password: " heslo123 " }),
+      expect.anything(),
+    )
+  })
+
   it("keeps the user signed in by default and lets them opt out", async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
