@@ -26,6 +26,7 @@ const anOnboarding = (overrides: Partial<Onboarding> = {}): Onboarding => ({
   address: null,
   travelRadiusKm: null,
   bio: null,
+  image: null,
   ...overrides,
 });
 
@@ -101,7 +102,12 @@ describe('OnboardingService', () => {
   it('saves the bio and counts step 3 done', async () => {
     const { repository, service } = setup(anOnboarding({ stepsDone: 2 }));
     await service.saveProfile(user, { bio: 'Hraju rok.' });
-    expect(repository.saveBio).toHaveBeenCalledWith('u1', 'Hraju rok.', 3);
+    expect(repository.saveBio).toHaveBeenCalledWith(
+      'u1',
+      'Hraju rok.',
+      undefined,
+      3,
+    );
   });
 
   describe('skipStep', () => {
@@ -148,7 +154,12 @@ describe('OnboardingService', () => {
     it('lets a step that is already done be saved again', async () => {
       const { repository, service } = setup(anOnboarding({ stepsDone: 3 }));
       await service.saveProfile(user, { bio: 'Nové bio' });
-      expect(repository.saveBio).toHaveBeenCalledWith('u1', 'Nové bio', 3);
+      expect(repository.saveBio).toHaveBeenCalledWith(
+        'u1',
+        'Nové bio',
+        undefined,
+        3,
+      );
     });
   });
 
@@ -175,5 +186,68 @@ describe('OnboardingService', () => {
     const now = new Date('2026-10-20T12:00:00Z');
     await service.skipAll(user, now);
     expect(repository.complete).toHaveBeenCalledWith('u1', now);
+  });
+
+  describe('editing outside the wizard (the profile)', () => {
+    it('replaces the activities even when the wizard has not got that far', async () => {
+      const { repository, service } = setup(anOnboarding({ stepsDone: 0 }));
+      await service.replaceActivities(user, [
+        { activityId: 'a1', levelId: null },
+      ]);
+      // Step 0 never moves the wizard's progress.
+      expect(repository.saveInterests).toHaveBeenCalledWith(
+        'u1',
+        [{ activityId: 'a1', levelId: null }],
+        0,
+      );
+    });
+
+    it('still refuses no activity', async () => {
+      const { repository, service } = setup();
+      await expect(service.replaceActivities(user, [])).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.saveInterests).not.toHaveBeenCalled();
+    });
+
+    it('replaces the location without moving the progress', async () => {
+      const { repository, service } = setup(anOnboarding({ stepsDone: 0 }));
+      const data = { address: anAddress, travelRadiusKm: 25 };
+      await service.replaceLocation(user, data);
+      expect(repository.saveLocation).toHaveBeenCalledWith('u1', data, 0);
+    });
+  });
+
+  describe('saveProfile', () => {
+    it('saves the bio and the picture of the third step', async () => {
+      const { repository, service } = setup(anOnboarding({ stepsDone: 2 }));
+      await service.saveProfile(user, {
+        bio: 'Hraju rok',
+        image: 'avatar:florbalista',
+      });
+      expect(repository.saveBio).toHaveBeenCalledWith(
+        'u1',
+        'Hraju rok',
+        'avatar:florbalista',
+        3,
+      );
+    });
+
+    it('leaves the picture alone when none is sent', async () => {
+      const { repository, service } = setup(anOnboarding({ stepsDone: 2 }));
+      await service.saveProfile(user, { bio: null });
+      expect(repository.saveBio).toHaveBeenCalledWith('u1', null, undefined, 3);
+    });
+
+    it('refuses a picture that is neither WebP nor an illustration', async () => {
+      const { repository, service } = setup(anOnboarding({ stepsDone: 2 }));
+      await expect(
+        service.saveProfile(user, {
+          bio: null,
+          image: 'data:image/png;base64,AAAA',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.saveBio).not.toHaveBeenCalled();
+    });
   });
 });

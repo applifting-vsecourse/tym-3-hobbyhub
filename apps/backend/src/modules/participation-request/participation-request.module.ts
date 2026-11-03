@@ -1,5 +1,6 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
 import { EventModule } from '@/modules/event/event.module';
+import { NotificationModule } from '@/modules/notification/notification.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { ParticipationRequestsController } from './controllers/participation-requests.controller';
@@ -7,7 +8,7 @@ import { ParticipationRequestRepository } from './repositories/participation-req
 import { ParticipationRequestsService } from './services/participation-requests.service';
 
 @Module({
-  imports: [AuthModule, PrismaModule, EventModule],
+  imports: [AuthModule, PrismaModule, EventModule, NotificationModule],
   controllers: [ParticipationRequestsController],
   providers: [ParticipationRequestsService, ParticipationRequestRepository],
 })

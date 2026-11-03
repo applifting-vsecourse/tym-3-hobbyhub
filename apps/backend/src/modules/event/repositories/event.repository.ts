@@ -6,11 +6,13 @@ import {
   Activity as PrismaActivity,
   Event as PrismaEvent,
   Level as PrismaLevel,
+  RequestStatus,
 } from '@/generated/prisma/client';
 import {
   CancelEventData,
   CreateEventData,
   Event,
+  EventAudience,
   EventChangeResult,
   EventDetail,
   EventFacts,
@@ -412,6 +414,26 @@ export class EventRepository {
       });
       return { ok: true, event: mapPrismaEventToDomain(event) } as const;
     });
+  }
+
+  // Who an edit or a cancellation concerns (F-09.3). The waiting requests are
+  // the request module's rows; reading their ids here spares the event module
+  // a dependency on it, which would run in a circle (ADR-0015).
+  async getEventAudience(eventId: string): Promise<EventAudience> {
+    const [participations, requests] = await Promise.all([
+      this.prisma.participation.findMany({
+        where: { eventId, status: ParticipationStatus.APPROVED },
+        select: { userId: true },
+      }),
+      this.prisma.participationRequest.findMany({
+        where: { eventId, status: RequestStatus.PENDING },
+        select: { userId: true },
+      }),
+    ]);
+    return {
+      participantIds: participations.map((row) => row.userId),
+      applicantIds: requests.map((row) => row.userId),
+    };
   }
 
   async getEventById(id: string): Promise<Event | null> {

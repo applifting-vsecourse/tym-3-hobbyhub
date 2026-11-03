@@ -31,6 +31,13 @@ async function main(): Promise<void> {
   const betterAuth = app.get<BetterAuth>('BetterAuth');
   // Express 5 (via NestJS 11) requires named wildcards — a bare `*` throws.
   appInstance.all('/api/auth/*splat', toNodeHandler(betterAuth));
+  // Room for the profile photo and cover as base64 data URLs (a 2 MB picture
+  // is ~2.8 MB, and both can come in one request); every other route keeps the
+  // default limit. The first parser to read a body wins, so this goes first.
+  appInstance.use(
+    ['/api/profile', '/api/onboarding'],
+    express.json({ limit: '8mb' }),
+  );
   appInstance.use(express.json());
 
   // Configure API prefix for all routes

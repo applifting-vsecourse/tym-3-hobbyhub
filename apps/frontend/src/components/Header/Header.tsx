@@ -15,6 +15,9 @@ type HeaderProps = {
   // Discovery header: a location search between the logo and the navigation
   // (wide screens only).
   search?: ReactNode
+  // The notification bell next to the user menu, for a signed-in user (#152).
+  // A slot for the same reason as `userMenu`.
+  notifications?: ReactNode
 }
 
 /**
@@ -22,7 +25,7 @@ type HeaderProps = {
  * the right-hand group: the search field comes and goes between pages and
  * must not move anything else.
  */
-export function Header({ userMenu, nav, actions, search }: HeaderProps) {
+export function Header({ userMenu, nav, actions, search, notifications }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4 sm:gap-4 md:h-16 md:px-6 lg:px-8">
@@ -33,6 +36,7 @@ export function Header({ userMenu, nav, actions, search }: HeaderProps) {
           {actions}
           <LanguageSwitcher />
           <ThemeSwitcher />
+          {notifications}
           {userMenu}
         </div>
       </div>

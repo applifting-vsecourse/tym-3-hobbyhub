@@ -49,6 +49,18 @@ describe('GroupsService', () => {
     };
   };
 
+  // ADR-0015: who is told about a new request to join.
+  it('names the founder and the admins as the group’s managers', async () => {
+    const { repository, service } = setup();
+    repository.listAdminIds.mockResolvedValue(['owner', 'admin']);
+
+    await expect(service.getAdminIds('g1')).resolves.toEqual([
+      'owner',
+      'admin',
+    ]);
+    expect(repository.listAdminIds).toHaveBeenCalledWith('g1');
+  });
+
   it('makes the signed-in user the owner of the new group', async () => {
     const { repository, service } = setup();
     const created = aGroup();

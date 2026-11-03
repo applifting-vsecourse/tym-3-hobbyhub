@@ -75,6 +75,12 @@ export class GroupsService {
     return group;
   }
 
+  // Who manages the group (OWNER and ADMIN, ADR-0007), for the notifications
+  // about a new request to join (ADR-0015). Public facts only: ids.
+  getAdminIds(groupId: string): Promise<string[]> {
+    return this.groupRepository.listAdminIds(groupId);
+  }
+
   // F-07.3: the member list is for the group's admins only (F-02.5 shows a
   // visitor the count, never the members).
   async listMembers(groupId: string, user: Identity): Promise<GroupMember[]> {

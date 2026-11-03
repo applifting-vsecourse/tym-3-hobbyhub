@@ -3,10 +3,9 @@ import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
 
 import "@/styles/global.css"
 
+import { AppShell } from "@/app/AppShell"
 import { NotFound } from "@/components/Error/NotFound"
 import { Toaster } from "@/components/ui/sonner"
-
-import { AppShell } from "@/features/auth/components/AppShell"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
