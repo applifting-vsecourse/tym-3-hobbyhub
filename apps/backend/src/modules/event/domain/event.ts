@@ -290,6 +290,13 @@ export const eventChangeViolations = (
   return violations;
 };
 
+// Who an edit or a cancellation concerns (F-09.3, ADR-0015): the approved
+// participants, and the people still waiting for a decision.
+export type EventAudience = {
+  participantIds: string[];
+  applicantIds: string[];
+};
+
 // What a guarded write reports: the changed event, or the rule that no longer
 // held when the write was made.
 export type EventChangeResult =

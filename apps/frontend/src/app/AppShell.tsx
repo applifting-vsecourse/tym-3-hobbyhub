@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 
 import { HeaderMenu } from "@/features/auth/components/HeaderMenu"
 import { useSession } from "@/features/auth/hooks/useSession"
+import { NotificationBell } from "@/features/notification/components/NotificationBell"
 
 type AppShellProps = {
   children: ReactNode
@@ -26,7 +27,9 @@ type AppShellProps = {
 /**
  * The app chrome every page keeps: the header, and for a signed-in user the
  * navigation — links and "Přidat" in the header from `md`, the BottomNav
- * below it. A visitor gets the header with "Sign in" only.
+ * below it — and the notification bell. A visitor gets the header with
+ * "Sign in" only. It lives in `app/`, not in a feature: it composes the auth
+ * menu and the notifications, and a feature may not import another one.
  */
 export function AppShell({ children, className, shellClassName, search }: AppShellProps) {
   const { t } = useTranslation()
@@ -76,6 +79,7 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
             </Button>
           ) : null
         }
+        notifications={isSignedIn ? <NotificationBell /> : null}
         userMenu={<HeaderMenu />}
       />
       <main className={cn("flex-1", className)}>{children}</main>

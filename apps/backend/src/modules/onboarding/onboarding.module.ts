@@ -11,5 +11,6 @@ import { OnboardingService } from './services/onboarding.service';
   imports: [AuthModule, PrismaModule, ActivityModule, LevelModule],
   controllers: [OnboardingController],
   providers: [OnboardingService, OnboardingRepository],
+  exports: [OnboardingService],
 })
 export class OnboardingModule {}

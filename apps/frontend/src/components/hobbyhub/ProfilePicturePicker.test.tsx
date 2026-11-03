@@ -160,4 +160,19 @@ describe("ProfilePicturePicker", () => {
 
     expect(screen.getByRole("button", { name: "Změnit obrázek" })).toHaveFocus()
   })
+
+  it("in compact mode is only the picture, and tapping it opens the sheet", async () => {
+    render(
+      <ProfilePicturePicker
+        isCompact
+        value={null}
+        onChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByText("Profilový obrázek")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Změnit obrázek" }))
+
+    expect(await screen.findByRole("button", { name: /Florbalista/ })).toBeInTheDocument()
+  })
 })

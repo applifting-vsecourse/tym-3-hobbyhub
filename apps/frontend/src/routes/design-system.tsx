@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import { AppShell } from "@/app/AppShell"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { Seo } from "@/components/Seo"
 
-import { AppShell } from "@/features/auth/components/AppShell"
 import { BrandSections } from "@/features/design-system/components/BrandSections"
 import { ControlSections } from "@/features/design-system/components/ControlSections"
 import { DomainSections } from "@/features/design-system/components/DomainSections"

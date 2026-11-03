@@ -667,6 +667,47 @@
       "label": "Fotka nebo ilustrace (nepovinné)",
       "upload": "Nahrát fotku"
     },
+    "profileCover": {
+      "auto": "Podle prvního sportu",
+      "change": "Změnit grafiku",
+      "label": "Úvodní grafika",
+      "names": {
+        "badminton": "Badminton",
+        "basketbal": "Basketbal",
+        "beh": "Běh",
+        "cviceni": "Cvičení",
+        "cyklistika": "Cyklistika",
+        "deskove-hry": "Deskové hry",
+        "florbal": "Florbal",
+        "fotbal": "Fotbal",
+        "hry-doma": "Hry doma",
+        "konfety": "Konfety",
+        "lan-party": "LAN party",
+        "ostatni": "Ostatní",
+        "plavani": "Plavání",
+        "roster": "Parta",
+        "sachy": "Šachy",
+        "sedadla": "Volná místa",
+        "stolni-tenis": "Stolní tenis",
+        "tenis": "Tenis",
+        "turistika": "Turistika",
+        "tymove": "Týmové hry",
+        "venku": "Venku",
+        "volejbal": "Volejbal",
+        "volna": "Vlny",
+        "vsechno": "Všechno"
+      },
+      "own": "Váš obrázek",
+      "problem": {
+        "size": "Soubor je příliš velký (nejvýš 20 MB).",
+        "tooLarge": "Obrázek je i po zmenšení větší než 2 MB. Vyberte jiný.",
+        "type": "Obrázek musí být JPG, PNG nebo WebP.",
+        "unreadable": "Obrázek se nepodařilo zpracovat. Zkuste jiný."
+      },
+      "sheetDescription": "Vyberte si ilustraci, nebo nahrajte vlastní fotku. Zmenšíme ji na nejvýš 2 MB.",
+      "sheetTitle": "Vyberte úvodní grafiku",
+      "upload": "Nahrát vlastní obrázek"
+    },
     "profilePicture": {
       "change": "Změnit obrázek",
       "choose": "Vybrat obrázek",
@@ -748,6 +789,52 @@
     "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
     "title": "Moje akce"
   },
+  "notifications": {
+    "badgeOverflow": "{{max}}+",
+    "bell": "Upozornění",
+    "bellUnread_few": "Upozornění, {{count}} nepřečtená",
+    "bellUnread_one": "Upozornění, {{count}} nepřečtené",
+    "bellUnread_other": "Upozornění, {{count}} nepřečtených",
+    "deletedTarget": "smazaná akce",
+    "empty": "Zatím nemáš žádná upozornění. Objeví se tu, jakmile se něco stane kolem tvých akcí a skupin.",
+    "justNow": "právě teď",
+    "loadError": "Upozornění se nepodařilo načíst",
+    "loading": "Načítáme upozornění…",
+    "markAllRead": "Označit vše jako přečtené",
+    "markAllReadFailed": "Upozornění se nepodařilo označit jako přečtená. Zkus to znovu.",
+    "message": "„{{message}}“",
+    "more_few": "{{count}} další",
+    "more_one": "{{count}} další",
+    "more_other": "{{count}} dalších",
+    "retry": "Zkusit znovu",
+    "showAll": "Zobrazit vše",
+    "someone": "Někdo",
+    "text": {
+      "EVENT_CANCELLED": "Akce {{title}} byla zrušena",
+      "EVENT_CHANGED": {
+        "BOTH": "Akce {{title}} má nový čas i místo",
+        "PLACE": "Akce {{title}} má nové místo",
+        "TIME": "Akce {{title}} má nový čas"
+      },
+      "NEW_REQUESTS": {
+        "event": "{{name}} žádá o účast na akci {{title}}",
+        "group": "{{name}} žádá o členství ve skupině {{title}}"
+      },
+      "REQUEST_DECIDED": {
+        "event": {
+          "APPROVED": "Tvoje žádost o účast na akci {{title}} byla schválena",
+          "REJECTED": "Tvoje žádost o účast na akci {{title}} byla zamítnuta"
+        },
+        "group": {
+          "APPROVED": "Tvoje žádost o členství ve skupině {{title}} byla schválena",
+          "REJECTED": "Tvoje žádost o členství ve skupině {{title}} byla zamítnuta"
+        }
+      },
+      "other": "Novinka k {{title}}"
+    },
+    "title": "Upozornění",
+    "unread": "Nepřečtené:"
+  },
   "onboarding": {
     "activities": {
       "addLabel": "Přidat aktivitu",
@@ -791,7 +878,7 @@
       "bioPlaceholder": "Např. hraju rok, rád zkusím nové aktivity…",
       "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
       "description": "Ať ostatní vědí, s kým budou hrát.",
-      "pictureHint": "Zatím se neukládá, doplníme to.",
+      "pictureHint": "Ilustraci, nebo vlastní fotku (zmenšíme ji, nejvýš 2 MB).",
       "pictureLabel": "Profilový obrázek (nepovinné)",
       "title": "Ukažte se ostatním"
     },
@@ -919,8 +1006,54 @@
     }
   },
   "profile": {
-    "placeholder": "Stránku profilu připravujeme.",
-    "title": "Profil"
+    "cancel": "Zrušit",
+    "edit": {
+      "title": "Upravit profil"
+    },
+    "interests": {
+      "description": "Sporty a aktivity, které vás baví, a jak dobře je hrajete. Ostatním je ukážeme na profilu.",
+      "none": "Vyberte alespoň jednu aktivitu.",
+      "title": "Co rád hraju"
+    },
+    "loadError": "Profil se nepodařilo načíst.",
+    "loading": "Načítám profil…",
+    "location": {
+      "description": "Soukromá adresa, nikdo další ji neuvidí. Slouží k hledání akcí poblíž.",
+      "hasNone": "Zatím nemáte zadanou adresu.",
+      "howTo": "Začněte psát ulici (a číslo domu, je-li), nabídneme místa z mapy. Vyberte svůj řádek, díky tomu známe i polohu na mapě.",
+      "title": "Kde bydlím"
+    },
+    "private": {
+      "birthDateHint": "Musí vám být alespoň 18 let.",
+      "description": "Pohlaví a datum narození jste zadali při registraci. Tady je můžete opravit.",
+      "notice": "Nikdo další tyto údaje neuvidí.",
+      "title": "Soukromé údaje"
+    },
+    "public": {
+      "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
+      "mediaHint": "Úvodní grafika je vaše vizitka: ilustrace, nebo vlastní fotka. Obrázek přes její okraj je váš profilový obrázek.",
+      "name": "Přezdívka",
+      "nameRequired": "Zadejte přezdívku",
+      "nameTooLong": "Přezdívka může mít nejvýše {{max}} znaků.",
+      "photoProblem": {
+        "tooLarge": "Fotka je i po zmenšení větší než 2 MB. Vyberte jinou.",
+        "unreadable": "Fotku se nepodařilo zpracovat. Zkuste jinou."
+      }
+    },
+    "save": "Uložit",
+    "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
+    "title": "Můj profil",
+    "view": {
+      "addActivities": "Přidat, co hraju",
+      "addBio": "Napsat pár slov",
+      "edit": "Upravit profil",
+      "memberSince": "Členem od {{date}}",
+      "noActivities": "Zatím žádné aktivity.",
+      "noAddress": "Adresu jste zatím nezadali",
+      "noBio": "Zatím nic o sobě.",
+      "privateHint": "Tohle ostatní neuvidí.",
+      "privateTitle": "Jen pro vás"
+    }
   },
   "quacks": {
     "form": {

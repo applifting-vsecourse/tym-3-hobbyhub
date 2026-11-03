@@ -10,6 +10,7 @@ import {
   stepNumber,
 } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingRepository } from '@/modules/onboarding/repositories/onboarding.repository';
+import { imageViolations } from '@/modules/profile/domain/profile';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
   BadRequestException,
@@ -43,10 +44,9 @@ export class OnboardingService {
     }
   }
 
-  async saveActivities(
-    user: Identity,
+  private async assertValidActivities(
     items: readonly InterestInput[],
-  ): Promise<Onboarding> {
+  ): Promise<void> {
     const violations = interestViolations(items);
     if (violations.length > 0) {
       throw new BadRequestException(violations);
@@ -63,12 +63,40 @@ export class OnboardingService {
     if (!(await this.levelsService.areAllSkillLevels(levelIds))) {
       throw new BadRequestException('Level does not exist or is not offered');
     }
+  }
+
+  async saveActivities(
+    user: Identity,
+    items: readonly InterestInput[],
+  ): Promise<Onboarding> {
+    await this.assertValidActivities(items);
     await this.assertReachable(user, 'ACTIVITIES');
     await this.onboardingRepository.saveInterests(
       user.id,
       items,
       stepNumber('ACTIVITIES'),
     );
+    return this.getOnboarding(user);
+  }
+
+  // The profile (F-04.1) edits the same answers at any time, so it does not
+  // wait for the wizard's order and does not move its progress (step 0).
+  async replaceActivities(
+    user: Identity,
+    items: readonly InterestInput[],
+  ): Promise<Onboarding> {
+    await this.assertValidActivities(items);
+    await this.getOnboarding(user);
+    await this.onboardingRepository.saveInterests(user.id, items, 0);
+    return this.getOnboarding(user);
+  }
+
+  async replaceLocation(
+    user: Identity,
+    data: { address: HomeAddress; travelRadiusKm: number },
+  ): Promise<Onboarding> {
+    await this.getOnboarding(user);
+    await this.onboardingRepository.saveLocation(user.id, data, 0);
     return this.getOnboarding(user);
   }
 
@@ -87,12 +115,17 @@ export class OnboardingService {
 
   async saveProfile(
     user: Identity,
-    data: { bio: string | null },
+    data: { bio: string | null; image?: string | null },
   ): Promise<Onboarding> {
+    if (data.image) {
+      const violations = imageViolations(data.image);
+      if (violations.length > 0) throw new BadRequestException(violations);
+    }
     await this.assertReachable(user, 'PROFILE');
     await this.onboardingRepository.saveBio(
       user.id,
       data.bio,
+      data.image,
       stepNumber('PROFILE'),
     );
     return this.getOnboarding(user);

@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { AppShell } from "@/app/AppShell"
 import { Seo } from "@/components/Seo"
-
-import { AppShell } from "@/features/auth/components/AppShell"
 
 export const Route = createFileRoute("/terms")({
   component: TermsPage,
