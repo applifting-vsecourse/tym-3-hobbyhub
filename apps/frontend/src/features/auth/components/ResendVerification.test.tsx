@@ -2,11 +2,11 @@ import type { ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { ResendVerification } from "@/features/auth/components/ResendVerification"
-import { VerifyEmailNotice } from "@/features/auth/components/VerifyEmailNotice"
+import { VerifyEmailSheet } from "@/features/auth/components/VerifyEmailSheet"
 
 const { sendVerificationEmail, getSession } = vi.hoisted(() => ({
   sendVerificationEmail: vi.fn(),
@@ -29,6 +29,16 @@ const renderWithSession = async (ui: ReactNode, isVerified = false) => {
   await queryClient.ensureQueryData(authSessionQueryOptions())
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
 }
+
+// jsdom has no matchMedia; pretend to be a desktop so the sheet renders as a dialog.
+beforeAll(() => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: true,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }))
+})
 
 describe("ResendVerification", () => {
   beforeEach(() => {
@@ -91,17 +101,16 @@ describe("ResendVerification", () => {
   })
 })
 
-describe("VerifyEmailNotice", () => {
-  it("asks an unverified person to verify, naming the address", async () => {
-    await renderWithSession(<VerifyEmailNotice />)
+describe("VerifyEmailSheet", () => {
+  it("says what is missing and offers to send the e-mail again", async () => {
+    await renderWithSession(
+      <VerifyEmailSheet
+        isOpen
+        onOpenChange={vi.fn()}
+      />,
+    )
 
-    expect(screen.getByRole("alert")).toHaveTextContent("jana@example.com")
+    expect(screen.getByRole("dialog", { name: "Nejdřív ověř svůj e-mail" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Poslat e-mail znovu" })).toBeInTheDocument()
-  })
-
-  it("stays out of the way once the e-mail is verified", async () => {
-    await renderWithSession(<VerifyEmailNotice />, true)
-
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 })

@@ -89,12 +89,14 @@
         "signIn": "Přihlásit se a poslat nový",
         "title": "Odkaz už nefunguje"
       },
-      "noticeDescription": "Poslali jsme ti odkaz na {{email}}. Bez ověření nemůžeš žádat o účast ani zveřejnit akci.",
-      "noticeTitle": "Ověř svůj e-mail",
       "resend": "Poslat e-mail znovu",
       "resendFailed": "E-mail se nepodařilo odeslat. Zkus to znovu.",
       "resendIn": "Poslat znovu za {{seconds}} s",
-      "sent": "Nový e-mail je na cestě. Odkaz platí 24 hodin."
+      "sent": "Nový e-mail je na cestě. Odkaz platí 24 hodin.",
+      "sheet": {
+        "description": "Poslali jsme ti odkaz na e-mail z registrace. Jakmile ho potvrdíš, můžeš zveřejňovat akce, zakládat skupiny a žádat o účast. Nedorazil? Pošli ho znovu.",
+        "title": "Nejdřív ověř svůj e-mail"
+      }
     }
   },
   "common": {
@@ -249,7 +251,6 @@
       "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
       "created": "Akce je zveřejněná.",
       "editTitle": "Upravit akci",
-      "emailNotVerified": "Nejdřív ověř svůj e-mail, pak můžeš akci zveřejnit.",
       "externalHint": "Lidé z vaší party bez účtu, včetně vás. Počítají se do obsazenosti.",
       "minimumReached": "Minimum je naplněné",
       "missingHint": "Počet chybějících lidí se počítá z minima a obsazených míst.",
@@ -426,7 +427,6 @@
       "activityPlaceholder": "Vyberte aktivitu",
       "createFailed": "Skupinu se nepodařilo založit. Zkuste to prosím znovu.",
       "created": "Skupina je založená.",
-      "emailNotVerified": "Nejdřív ověř svůj e-mail, pak můžeš skupinu založit.",
       "retry": "Zkusit znovu",
       "submit": "Vytvořit skupinu",
       "title": "Nová skupina"

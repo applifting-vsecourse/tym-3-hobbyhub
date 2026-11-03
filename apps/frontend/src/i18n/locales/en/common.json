@@ -89,12 +89,14 @@
         "signIn": "Sign in to send a new one",
         "title": "This link no longer works"
       },
-      "noticeDescription": "We sent a link to {{email}}. Until you verify it, you can't ask to join or publish an event.",
-      "noticeTitle": "Verify your email",
       "resend": "Send the email again",
       "resendFailed": "The email could not be sent. Please try again.",
       "resendIn": "Send again in {{seconds}} s",
-      "sent": "A new email is on its way. The link is valid for 24 hours."
+      "sent": "A new email is on its way. The link is valid for 24 hours.",
+      "sheet": {
+        "description": "We sent a link to the email you signed up with. Once you confirm it, you can publish events, found groups and ask to join. Didn't arrive? Send it again.",
+        "title": "Verify your email first"
+      }
     }
   },
   "common": {
@@ -247,7 +249,6 @@
       "createFailed": "Could not publish the event. Please try again.",
       "created": "The event is published.",
       "editTitle": "Edit event",
-      "emailNotVerified": "Verify your email first, then you can publish the event.",
       "externalHint": "People from your crew without an account, you included. They count towards the occupancy.",
       "minimumReached": "The minimum is reached",
       "missingHint": "The number of missing people comes from the minimum and the taken seats.",
@@ -417,7 +418,6 @@
       "activityPlaceholder": "Choose an activity",
       "createFailed": "Could not create the group. Please try again.",
       "created": "The group has been created.",
-      "emailNotVerified": "Verify your email first, then you can found the group.",
       "retry": "Try again",
       "submit": "Create group",
       "title": "New group"
