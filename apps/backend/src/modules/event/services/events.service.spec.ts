@@ -261,9 +261,11 @@ describe('EventsService', () => {
       const { repository, notifications, service } = setup();
       const event = anEvent();
       repository.getEventById.mockResolvedValue(event);
+      // From the same object: `anEvent()` reads the clock, and two reads a
+      // millisecond apart would look like a moved start.
       repository.updateEvent.mockResolvedValue({
         ok: true,
-        event: anEvent({ title: 'Páteční florbal' }),
+        event: { ...event, title: 'Páteční florbal' },
       });
 
       await service.updateEvent(organizer, 'e1', input());
