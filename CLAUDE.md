@@ -86,3 +86,7 @@ Don't reach for the browser to check your own work. Tests and type-checks are th
 ### Text lives in translations
 
 No user-facing strings in components — not text, `aria-label`s, placeholders or validation messages. Add the key to both `apps/frontend/src/i18n/locales/cs/common.json` and `.../en/common.json` and read it with `useTranslation()`. Czech is the default and types the keys; a test fails if the two files drift apart. Plurals use `_one`/`_few`/`_other` keys, dates and numbers go through `Intl`. `i18next/no-literal-string` warns about what is still hardcoded.
+
+### Who sees what lives in the visibility matrix
+
+[`docs/visibility-matrix.md`](docs/visibility-matrix.md) says which role sees which data. Read it before adding a field to a response DTO or a page that shows someone's data, and update it in the same PR when you add a field or a role. A cell marked ❓ is undecided: ask, don't pick an answer in code.
