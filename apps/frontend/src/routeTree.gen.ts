@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ProtectedPagesMyEventsRouteImport } from './routes/_ProtectedPages/my-events'
+import { Route as ProtectedPagesNotificationsRouteImport } from './routes/_ProtectedPages/notifications'
 import { Route as ProtectedPagesOnboardingRouteImport } from './routes/_ProtectedPages/onboarding'
 import { Route as ProtectedPagesQuacksRouteImport } from './routes/_ProtectedPages/quacks'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
@@ -64,6 +65,12 @@ const ProtectedPagesMyEventsRoute = ProtectedPagesMyEventsRouteImport.update({
   path: '/my-events',
   getParentRoute: () => ProtectedPagesRoute,
 } as any)
+const ProtectedPagesNotificationsRoute =
+  ProtectedPagesNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 const ProtectedPagesOnboardingRoute =
   ProtectedPagesOnboardingRouteImport.update({
     id: '/onboarding',
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
+  '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -164,6 +172,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
+  '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
   '/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -187,6 +196,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_ProtectedPages/my-events': typeof ProtectedPagesMyEventsRoute
+  '/_ProtectedPages/notifications': typeof ProtectedPagesNotificationsRoute
   '/_ProtectedPages/onboarding': typeof ProtectedPagesOnboardingRoute
   '/_ProtectedPages/quacks': typeof ProtectedPagesQuacksRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/my-events'
+    | '/notifications'
     | '/onboarding'
     | '/quacks'
     | '/events/$eventId'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/my-events'
+    | '/notifications'
     | '/onboarding'
     | '/quacks'
     | '/events/$eventId'
@@ -253,6 +265,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/_ProtectedPages/my-events'
+    | '/_ProtectedPages/notifications'
     | '/_ProtectedPages/onboarding'
     | '/_ProtectedPages/quacks'
     | '/events/$eventId'
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/my-events'
       fullPath: '/my-events'
       preLoaderRoute: typeof ProtectedPagesMyEventsRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
+    '/_ProtectedPages/notifications': {
+      id: '/_ProtectedPages/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof ProtectedPagesNotificationsRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
     '/_ProtectedPages/onboarding': {
@@ -428,6 +448,7 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedPagesRouteChildren {
   ProtectedPagesMyEventsRoute: typeof ProtectedPagesMyEventsRoute
+  ProtectedPagesNotificationsRoute: typeof ProtectedPagesNotificationsRoute
   ProtectedPagesOnboardingRoute: typeof ProtectedPagesOnboardingRoute
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
   ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
@@ -441,6 +462,7 @@ interface ProtectedPagesRouteChildren {
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesMyEventsRoute: ProtectedPagesMyEventsRoute,
+  ProtectedPagesNotificationsRoute: ProtectedPagesNotificationsRoute,
   ProtectedPagesOnboardingRoute: ProtectedPagesOnboardingRoute,
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
   ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,

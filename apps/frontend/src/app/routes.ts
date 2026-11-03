@@ -10,6 +10,7 @@ export const ROUTES = {
   events: "/events",
   newEvent: "/events/new",
   myEvents: "/my-events",
+  notifications: "/notifications",
   profile: "/profile",
   profileEdit: "/profile/edit",
   onboarding: "/onboarding",
