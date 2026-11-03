@@ -23,7 +23,6 @@ export const joinRuleViolationSchema = z.enum([
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
-  "EMAIL_NOT_VERIFIED",
 ])
 
 // Why the server refuses to approve or reject a request (F-05.7).

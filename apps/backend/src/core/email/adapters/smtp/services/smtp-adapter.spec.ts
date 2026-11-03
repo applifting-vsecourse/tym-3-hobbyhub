@@ -36,4 +36,16 @@ describe('SMTPAdapter', () => {
       expect.objectContaining({ from: 'HobbyHub <noreply@example.com>' }),
     );
   });
+
+  it('treats an empty sender as unset', async () => {
+    await new SMTPAdapter({ ...config, from: '' }).sendEmail(
+      'a@example.com',
+      'Hi',
+      '<p>x</p>',
+    );
+
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ from: 'jana@example.com' }),
+    );
+  });
 });

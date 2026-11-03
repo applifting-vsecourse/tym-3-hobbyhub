@@ -4,7 +4,8 @@ export class Identity {
     public readonly email: string,
     public readonly name: string | null,
     public readonly role: string,
-    // F-03.2: unverified people can browse, but not ask to join or publish.
+    // F-03.2: unverified people can browse and ask to join, but not publish an
+    // event or found a group.
     public readonly emailVerified: boolean,
   ) {}
 }

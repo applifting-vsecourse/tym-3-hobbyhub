@@ -74,7 +74,7 @@ export const VerifyEmail = ({ url }: VerifyEmailProps): React.JSX.Element => (
           Ověř svůj e-mail
         </Heading>
         <Text style={{ fontSize: 16, lineHeight: '24px', margin: '16px 0 0' }}>
-          Ještě jeden krok a můžeš žádat o účast na akcích i vytvářet vlastní.
+          Ještě jeden krok a můžeš zveřejňovat vlastní akce a zakládat skupiny.
           Klikni na tlačítko a potvrď, že je tento e-mail tvůj.
         </Text>
         <Section style={{ margin: '32px 0' }}>

@@ -1,5 +1,5 @@
 import { resendCooldown } from '@/shared/auth/verification/resend-cooldown';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, isAPIError } from 'better-auth/api';
 import { BetterAuthOptions } from 'better-auth/types';
 import {
   RegistrationErrorCode,
@@ -26,8 +26,7 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
   // F-03.2: "send the verification e-mail again" at most once a minute.
   if (ctx.path === RESEND_VERIFICATION_PATH) {
     const email = (ctx.body as { email?: unknown } | undefined)?.email;
-    const wait =
-      typeof email === 'string' ? resendCooldown.waitSeconds(email) : 0;
+    const wait = typeof email === 'string' ? resendCooldown.reserve(email) : 0;
     if (wait > 0) {
       throw APIError.from('TOO_MANY_REQUESTS', {
         code: 'VERIFICATION_RESEND_TOO_SOON',
@@ -85,3 +84,14 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
     },
   },
 };
+
+/**
+ * F-03.2: a "send again" that failed, for whatever reason, does not use up the
+ * minute the before hook reserved.
+ */
+export const resendVerificationAfterHook = createAuthMiddleware(async (ctx) => {
+  if (ctx.path !== RESEND_VERIFICATION_PATH) return;
+  if (!isAPIError(ctx.context.returned)) return;
+  const email = (ctx.body as { email?: unknown } | undefined)?.email;
+  if (typeof email === 'string') resendCooldown.release(email);
+});

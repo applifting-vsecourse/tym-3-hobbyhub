@@ -1,8 +1,10 @@
 import type { CSSProperties } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
+import { AppShell } from "@/app/AppShell"
 import { ROUTES } from "@/app/routes"
 import { ActivityAvatar } from "@/components/hobbyhub/ActivityAvatar"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
@@ -10,7 +12,6 @@ import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
-import { AppShell } from "@/features/auth/components/AppShell"
 import { ResendVerification } from "@/features/auth/components/ResendVerification"
 import { redirectTarget } from "@/features/auth/lib/redirect"
 import { currentPath } from "@/features/auth/lib/verifyEmailUrl"
@@ -35,8 +36,17 @@ const BADGE = { done: "approved", already: "approved", failed: "rejected" } as c
 function VerifyEmailPage() {
   const { t } = useTranslation()
   const { next, error } = Route.useSearch()
-  const session = Route.useLoaderData()
-  const target = redirectTarget(next, ROUTES.home)
+  // The loader fetched it afresh; the query then keeps it current, so verifying
+  // in another tab clears the failure here too.
+  const { data: session } = useQuery({
+    ...authSessionQueryOptions(),
+    initialData: Route.useLoaderData(),
+  })
+  // `next` is already decoded once by the router; the helper decodes `from`.
+  const target = redirectTarget(
+    next === undefined ? undefined : encodeURIComponent(next),
+    ROUTES.home,
+  )
   const isVerified = session?.user.emailVerified === true
 
   // A used link on an e-mail that is verified by now is no failure.

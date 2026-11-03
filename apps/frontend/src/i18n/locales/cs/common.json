@@ -83,7 +83,7 @@
       "continue": "Pokračovat",
       "done": {
         "badge": "Ověřeno",
-        "description": "Hotovo, tvůj účet je kompletní. Teď můžeš žádat o místo na akcích a zveřejňovat vlastní.",
+        "description": "Hotovo, tvůj účet je kompletní. Teď můžeš zveřejňovat akce a zakládat skupiny.",
         "title": "E-mail je ověřený"
       },
       "failed": {
@@ -97,7 +97,7 @@
       "resendIn": "Poslat znovu za {{seconds}} s",
       "sent": "Nový e-mail je na cestě. Odkaz platí 24 hodin.",
       "sheet": {
-        "description": "Poslali jsme ti odkaz na e-mail z registrace. Jakmile ho potvrdíš, můžeš zveřejňovat akce, zakládat skupiny a žádat o účast. Nedorazil? Pošli ho znovu.",
+        "description": "Poslali jsme ti odkaz na e-mail z registrace. Jakmile ho potvrdíš, můžeš zveřejňovat akce a zakládat skupiny. Nedorazil? Pošli ho znovu.",
         "title": "Nejdřív ověř svůj e-mail"
       }
     }
@@ -990,7 +990,6 @@
     },
     "refused": {
       "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
-      "EMAIL_NOT_VERIFIED": "Nejdřív ověř svůj e-mail.",
       "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
       "EVENT_FINISHED": "Akce už proběhla, o účast se nedá žádat.",
       "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",
@@ -1018,10 +1017,6 @@
       "text": "Organizátor ji schválí, nebo zamítne.",
       "title": "Žádost je odeslaná",
       "withdraw": "Zrušit žádost"
-    },
-    "verifyEmail": {
-      "description": "Poslali jsme ti odkaz na e-mail z registrace. Jakmile ho potvrdíš, můžeš žádat o účast na akcích. Nedorazil? Pošli ho znovu.",
-      "title": "Nejdřív ověř svůj e-mail"
     },
     "withdraw": {
       "confirm": "Zrušit žádost",

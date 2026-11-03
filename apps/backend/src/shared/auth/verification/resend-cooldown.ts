@@ -13,23 +13,27 @@ export class ResendCooldown {
   private readonly lastSentAt = new Map<string, number>();
   private lastPrunedAt = 0;
 
-  /** Seconds the address still has to wait, or 0 when it may be sent to now. */
-  waitSeconds(email: string, now: number = Date.now()): number {
-    const sentAt = this.lastSentAt.get(this.keyOf(email));
-    if (sentAt === undefined || now - sentAt >= RESEND_COOLDOWN_MS) return 0;
-    return Math.ceil((RESEND_COOLDOWN_MS - (now - sentAt)) / 1000);
-  }
-
   /**
-   * Notes that an e-mail went out, so the next one waits. Called after the
-   * send succeeded: a failed one does not use up the minute.
+   * Seconds the address still has to wait, or 0 when it may be sent to now, in
+   * which case the send is reserved: two requests at the same moment cannot
+   * both get 0. Give the reservation back with `release` when the send fails.
    */
-  record(email: string, now: number = Date.now()): void {
-    this.prune(now);
+  reserve(email: string, now: number = Date.now()): number {
     const key = this.keyOf(email);
+    const sentAt = this.lastSentAt.get(key);
+    if (sentAt !== undefined && now - sentAt < RESEND_COOLDOWN_MS) {
+      return Math.ceil((RESEND_COOLDOWN_MS - (now - sentAt)) / 1000);
+    }
+    this.prune(now);
     // Delete first, so the map's insertion order stays the order of sends.
     this.lastSentAt.delete(key);
     this.lastSentAt.set(key, now);
+    return 0;
+  }
+
+  /** A failed send does not use up the minute. */
+  release(email: string): void {
+    this.lastSentAt.delete(this.keyOf(email));
   }
 
   private keyOf(email: string): string {

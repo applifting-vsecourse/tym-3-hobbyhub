@@ -12,8 +12,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ParticipationRequestsService } from './participation-requests.service';
 
-const user = { id: 'u1', emailVerified: true } as Identity;
-const unverifiedUser = { id: 'u1', emailVerified: false } as Identity;
+const user = { id: 'u1' } as Identity;
 const now = new Date('2030-01-01T12:00:00Z');
 
 const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
@@ -98,39 +97,6 @@ describe('ParticipationRequestsService', () => {
   };
 
   describe('requestToJoin', () => {
-    it('refuses a person with an unverified e-mail and saves nothing', async () => {
-      const { repository, service } = setup();
-
-      await expect(
-        violationsOf(service.requestToJoin(unverifiedUser, 'e1', 'Ahoj', now)),
-      ).resolves.toEqual(['EMAIL_NOT_VERIFIED']);
-      expect(repository.createPending).not.toHaveBeenCalled();
-      expect(repository.createApproved).not.toHaveBeenCalled();
-    });
-
-    it('refuses an unverified person on an automatic event too', async () => {
-      const { repository, service } = setup(
-        anEvent({ approvalMode: 'AUTOMATIC' }),
-      );
-
-      await expect(
-        violationsOf(
-          service.requestToJoin(unverifiedUser, 'e1', undefined, now),
-        ),
-      ).resolves.toEqual(['EMAIL_NOT_VERIFIED']);
-      expect(repository.createApproved).not.toHaveBeenCalled();
-    });
-
-    it('lists the event reasons together with the missing verification', async () => {
-      const { service } = setup(anEvent({ freeSpots: 0 }));
-
-      await expect(
-        violationsOf(
-          service.requestToJoin(unverifiedUser, 'e1', undefined, now),
-        ),
-      ).resolves.toEqual(['EVENT_FULL', 'EMAIL_NOT_VERIFIED']);
-    });
-
     it('creates a pending request of the signed-in user', async () => {
       const { repository, service } = setup();
       const created = aRequest({ message: 'Ahoj' });
@@ -283,18 +249,6 @@ describe('ParticipationRequestsService', () => {
           applicant: profile,
         },
       );
-    });
-
-    it('tells an unverified person they may not ask yet', async () => {
-      const { service } = setup();
-
-      await expect(
-        service.getMyRequestState(unverifiedUser, 'e1', now),
-      ).resolves.toEqual({
-        request: null,
-        violations: ['EMAIL_NOT_VERIFIED'],
-        applicant: profile,
-      });
     });
 
     it('is free to ask with no request at all', async () => {

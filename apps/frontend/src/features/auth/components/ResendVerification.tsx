@@ -6,41 +6,46 @@ import { Button } from "@/components/ui/button"
 import { useResendVerification } from "@/features/auth/hooks/useResendVerification"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { AuthError } from "@/features/auth/lib/authErrors"
-import { RESEND_COOLDOWN_SECONDS } from "@/features/auth/lib/verifyEmailUrl"
+import { resendSecondsLeft, startResendCooldown } from "@/features/auth/lib/resendCooldown"
 
-/**
- * "Send the verification e-mail again" with the wait the server enforces
- * shown as a countdown, so the person is not left clicking a button that
- * answers "too many attempts".
- */
 type ResendVerificationProps = {
   /** Where the new link leads on; this page when omitted. */
   next?: string
 }
 
+/**
+ * "Send the verification e-mail again" with the wait the server enforces
+ * shown as a countdown, so the person is not left clicking a button that
+ * answers "too many attempts". The wait is kept per address outside this
+ * component, so closing and reopening the sheet around it does not reset it.
+ */
 export function ResendVerification({ next }: ResendVerificationProps) {
   const { t } = useTranslation()
   const { user } = useSession()
   const resend = useResendVerification()
-  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [, setTick] = useState(0)
+  const secondsLeft = user ? resendSecondsLeft(user.email) : 0
 
   useEffect(() => {
     if (secondsLeft <= 0) return
-    const timer = window.setTimeout(() => setSecondsLeft((seconds) => seconds - 1), 1000)
+    const timer = window.setTimeout(() => setTick((tick) => tick + 1), 1000)
     return () => window.clearTimeout(timer)
   }, [secondsLeft])
 
   if (!user) return null
 
+  const startWaiting = () => {
+    startResendCooldown(user.email)
+    setTick((tick) => tick + 1)
+  }
+
   const handleClick = () => {
     resend.mutate(
       { email: user.email, next },
       {
-        onSuccess: () => setSecondsLeft(RESEND_COOLDOWN_SECONDS),
+        onSuccess: startWaiting,
         onError: (error) => {
-          if (error instanceof AuthError && error.status === 429) {
-            setSecondsLeft(RESEND_COOLDOWN_SECONDS)
-          }
+          if (error instanceof AuthError && error.status === 429) startWaiting()
         },
       },
     )

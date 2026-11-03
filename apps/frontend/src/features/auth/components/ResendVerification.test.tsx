@@ -1,12 +1,13 @@
 import type { ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { ResendVerification } from "@/features/auth/components/ResendVerification"
 import { VerifyEmailSheet } from "@/features/auth/components/VerifyEmailSheet"
+import { clearResendCooldowns } from "@/features/auth/lib/resendCooldown"
 
 const { sendVerificationEmail, getSession } = vi.hoisted(() => ({
   sendVerificationEmail: vi.fn(),
@@ -42,6 +43,7 @@ beforeAll(() => {
 
 describe("ResendVerification", () => {
   beforeEach(() => {
+    clearResendCooldowns()
     sendVerificationEmail.mockReset()
     sendVerificationEmail.mockResolvedValue({ data: {}, error: null })
   })
@@ -70,6 +72,17 @@ describe("ResendVerification", () => {
     expect(sent.callbackURL).toBe(
       `${window.location.origin}/verify-email?next=${encodeURIComponent("/events/e1")}`,
     )
+  })
+
+  it("keeps the wait when the sheet around it is closed and opened again", async () => {
+    await renderWithSession(<ResendVerification />)
+    await userEvent.click(screen.getByRole("button", { name: "Poslat e-mail znovu" }))
+    expect(await screen.findByRole("button", { name: /Poslat znovu za/ })).toBeDisabled()
+
+    cleanup()
+    await renderWithSession(<ResendVerification />)
+
+    expect(screen.getByRole("button", { name: /Poslat znovu za/ })).toBeDisabled()
   })
 
   it("makes the person wait a minute before the next one", async () => {
@@ -102,6 +115,10 @@ describe("ResendVerification", () => {
 })
 
 describe("VerifyEmailSheet", () => {
+  beforeEach(() => {
+    clearResendCooldowns()
+  })
+
   it("says what is missing and offers to send the e-mail again", async () => {
     await renderWithSession(
       <VerifyEmailSheet

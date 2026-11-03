@@ -83,7 +83,7 @@
       "continue": "Continue",
       "done": {
         "badge": "Verified",
-        "description": "Done, your account is complete. You can now ask for a seat at events and publish your own.",
+        "description": "Done, your account is complete. You can now publish events and found groups.",
         "title": "Email verified"
       },
       "failed": {
@@ -97,7 +97,7 @@
       "resendIn": "Send again in {{seconds}} s",
       "sent": "A new email is on its way. The link is valid for 24 hours.",
       "sheet": {
-        "description": "We sent a link to the email you signed up with. Once you confirm it, you can publish events, found groups and ask to join. Didn't arrive? Send it again.",
+        "description": "We sent a link to the email you signed up with. Once you confirm it, you can publish events and found groups. Didn't arrive? Send it again.",
         "title": "Verify your email first"
       }
     }
@@ -971,7 +971,6 @@
     },
     "refused": {
       "ALREADY_REQUESTED": "You have already asked to join this event.",
-      "EMAIL_NOT_VERIFIED": "Verify your email first.",
       "EVENT_CANCELLED": "This event was cancelled, you can no longer ask to join.",
       "EVENT_FINISHED": "This event is over, you cannot ask to join.",
       "EVENT_FULL": "This event is full, you cannot ask to join.",
@@ -999,10 +998,6 @@
       "text": "The organizer will approve or reject it.",
       "title": "Your request is sent",
       "withdraw": "Withdraw request"
-    },
-    "verifyEmail": {
-      "description": "We sent a link to the email you signed up with. Once you confirm it, you can ask to join events. Didn't arrive? Send it again.",
-      "title": "Verify your email first"
     },
     "withdraw": {
       "confirm": "Withdraw request",

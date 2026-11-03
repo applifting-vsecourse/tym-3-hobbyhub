@@ -59,9 +59,7 @@ export type JoinRuleViolation =
   | 'IS_ORGANIZER'
   | 'HAS_SEAT'
   | 'ALREADY_REQUESTED'
-  | 'REJECTED_BEFORE'
-  // F-03.2: the applicant has not confirmed their e-mail address.
-  | 'EMAIL_NOT_VERIFIED';
+  | 'REJECTED_BEFORE';
 
 export type EventStateViolation =
   'EVENT_CANCELLED' | 'EVENT_NOT_HELD' | 'EVENT_FINISHED' | 'EVENT_STARTED';
