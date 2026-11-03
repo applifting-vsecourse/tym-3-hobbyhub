@@ -255,6 +255,9 @@
         "title": "Nothing found"
       },
       "filters": {
+        "dateFrom": "from {{date}}",
+        "dateRange": "{{from}} – {{to}}",
+        "dateTo": "to {{date}}",
         "open": "Filters",
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
@@ -599,7 +602,9 @@
       "activity": "Activity",
       "activityPlaceholder": "All activities",
       "clear": "Clear",
-      "date": "Date…",
+      "dateFrom": "From date",
+      "dateRangeReversed": "The end of the range cannot be before the start.",
+      "dateTo": "To date",
       "location": "Location",
       "locationPlaceholder": "Prague 8",
       "results_one": "Show {{count}} event",

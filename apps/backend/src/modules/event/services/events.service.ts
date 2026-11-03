@@ -9,6 +9,7 @@ import {
   EventDetail,
   EventFacts,
   EventListFilter,
+  eventListFilterViolations,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
@@ -162,11 +163,14 @@ export class EventsService {
     return event;
   }
 
-  getUpcomingPublicEvents(
+  async getUpcomingPublicEvents(
     page: Page,
     filter: EventListFilter = { activityIds: [] },
     now: Date = new Date(),
   ): Promise<EventListPage> {
+    if (eventListFilterViolations(filter).length > 0) {
+      throw new BadRequestException('dateFrom must not be after dateTo');
+    }
     return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
   }
 

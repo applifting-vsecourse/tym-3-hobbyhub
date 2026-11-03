@@ -8,6 +8,10 @@ export type EventListFilters = {
   search: string
   /** Part of the place, city or district; empty means anywhere. */
   location: string
+  /** First day (YYYY-MM-DD) an event starts on; empty means no lower bound. */
+  dateFrom?: string
+  /** Last day (YYYY-MM-DD) an event starts on; empty means no upper bound. */
+  dateTo?: string
   /** Sort nearest first from here; otherwise soonest first. */
   near?: NearPoint
 }

@@ -309,6 +309,19 @@ export const EVENT_LIST_MAX_ACTIVITY_FILTERS = 50;
 export const EVENT_LIST_SEARCH_MAX_LENGTH = 100;
 export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
 
+// The zone in which "a day" is read by the date filter: where the events are.
+export const EVENT_LIST_TIME_ZONE = 'Europe/Prague';
+
+export type EventListFilterViolation = 'DATE_FROM_AFTER_DATE_TO';
+
+// Rules between the fields of the list filter. ISO dates compare as text.
+export const eventListFilterViolations = (
+  filter: Pick<EventListFilter, 'dateFrom' | 'dateTo'>,
+): EventListFilterViolation[] =>
+  filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
+    ? ['DATE_FROM_AFTER_DATE_TO']
+    : [];
+
 // TODO(F-02.1b #91): `location` is plain text for now. A radius filter needs
 // every event to have coordinates (geocoding, F-12.3), and similar spellings
 // ("Brno" ~ "Brnoo") need matching by similarity.
@@ -325,6 +338,10 @@ export type EventListFilter = {
   activityIds: string[];
   search?: string;
   location?: string;
+  // Calendar days (YYYY-MM-DD, inclusive) on which the event starts, in
+  // `EVENT_LIST_TIME_ZONE`; either end may be left open.
+  dateFrom?: string;
+  dateTo?: string;
   near?: GeoPoint;
 };
 

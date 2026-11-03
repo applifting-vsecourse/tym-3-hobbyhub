@@ -168,6 +168,18 @@ describe('EventsService', () => {
     );
   });
 
+  it('refuses a date range that ends before it starts', async () => {
+    const { repository, service } = setup();
+
+    await expect(
+      service.getUpcomingPublicEvents(
+        { limit: 20, offset: 0 },
+        { activityIds: [], dateFrom: '2026-11-16', dateTo: '2026-11-15' },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.getUpcomingPublicEvents).not.toHaveBeenCalled();
+  });
+
   it('reports a missing event as not found', async () => {
     const { repository, service } = setup();
     repository.getEventById.mockResolvedValue(null);

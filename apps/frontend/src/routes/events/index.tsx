@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { LocateFixed, MapPin, X } from "lucide-react"
+import type { TFunction } from "i18next"
+import { CalendarDays, LocateFixed, MapPin, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
@@ -48,6 +49,16 @@ export const Route = createFileRoute("/events/")({
 // Typing waits this long before it filters, so a word is not searched letter by letter.
 const SEARCH_DEBOUNCE_MS = 300
 
+// "15. 11. – 30. 11.", "od 15. 11." or "do 30. 11."; nothing without a date.
+const dateRangeLabel = (t: TFunction, language: string, from: string, to: string) => {
+  const formatter = new Intl.DateTimeFormat(language, { day: "numeric", month: "numeric" })
+  const format = (isoDay: string) => formatter.format(new Date(`${isoDay}T00:00`))
+  if (from && to) return t("events.list.filters.dateRange", { from: format(from), to: format(to) })
+  if (from) return t("events.list.filters.dateFrom", { date: format(from) })
+  if (to) return t("events.list.filters.dateTo", { date: format(to) })
+  return ""
+}
+
 // Pages are cut by offset, so an event that moved between two requests can come
 // back on the next page; keep its first appearance.
 const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
@@ -57,11 +68,11 @@ const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
 // Public: browsing events needs no account. On phones one view at a time, from
 // `lg` the list and the map sit side by side.
 function EventsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [view, setView] = useState<EventsView>("list")
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const navigate = Route.useNavigate()
-  const { activity, q, location } = Route.useSearch()
+  const { activity, q, location, from, to } = Route.useSearch()
   const activityIds = activity ?? []
   const nearMe = useNearMe()
   // The part of the map the visitor moved to; the list then shows only its events.
@@ -76,7 +87,15 @@ function EventsPage() {
       .getElementById(SELECTED_CARD_ID)
       ?.scrollIntoView({ block: "start", behavior: isReduced ? "auto" : "smooth" })
   }, [selectedId])
-  const filters = { activityIds, search: q ?? "", location: location ?? "" }
+  // A range that ends before it starts (a hand-written link) is not asked of the server.
+  const isRangeReversed = from !== undefined && to !== undefined && from > to
+  const filters = {
+    activityIds,
+    search: q ?? "",
+    location: location ?? "",
+    dateFrom: isRangeReversed ? "" : (from ?? ""),
+    dateTo: isRangeReversed ? "" : (to ?? ""),
+  }
   // The previous list stays on screen while the next one loads, so typing does not flash.
   const eventsQuery = useInfiniteQuery({
     ...eventsQueryOptions({ ...filters, near: nearMe.position ?? undefined }),
@@ -131,7 +150,12 @@ function EventsPage() {
     return () => clearTimeout(timer)
   }, [searchText, filters.search, navigate])
 
-  const setFilters = (next: { activityIds?: string[]; location?: string }) =>
+  const setFilters = (next: {
+    activityIds?: string[]
+    location?: string
+    dateFrom?: string
+    dateTo?: string
+  }) =>
     void navigate({
       search: (previous) => ({
         ...previous,
@@ -139,6 +163,8 @@ function EventsPage() {
           activity: next.activityIds.length > 0 ? next.activityIds : undefined,
         }),
         ...(next.location !== undefined && { location: nonEmpty(next.location) }),
+        ...(next.dateFrom !== undefined && { from: nonEmpty(next.dateFrom) }),
+        ...(next.dateTo !== undefined && { to: nonEmpty(next.dateTo) }),
       }),
     })
   const clearFilters = () => {
@@ -153,7 +179,13 @@ function EventsPage() {
     id,
     activity: activities.find((item) => item.id === id),
   }))
-  const isFiltered = activityIds.length > 0 || filters.search !== "" || filters.location !== ""
+  const isFiltered =
+    activityIds.length > 0 ||
+    filters.search !== "" ||
+    filters.location !== "" ||
+    filters.dateFrom !== "" ||
+    filters.dateTo !== ""
+  const dateLabel = dateRangeLabel(t, i18n.language, filters.dateFrom, filters.dateTo)
 
   return (
     <>
@@ -189,11 +221,22 @@ function EventsPage() {
               <FiltersSheet
                 isOpen={isFiltersOpen}
                 onOpenChange={setIsFiltersOpen}
-                value={{ ...EMPTY_FILTERS, activities: activityIds, location: filters.location }}
+                value={{
+                  ...EMPTY_FILTERS,
+                  activities: activityIds,
+                  location: filters.location,
+                  dateFrom: filters.dateFrom,
+                  dateTo: filters.dateTo,
+                }}
                 onApply={(applied) =>
-                  setFilters({ activityIds: applied.activities, location: applied.location })
+                  setFilters({
+                    activityIds: applied.activities,
+                    location: applied.location,
+                    dateFrom: applied.dateFrom,
+                    dateTo: applied.dateTo,
+                  })
                 }
-                fields={["activity", "location"]}
+                fields={["activity", "when", "location"]}
                 activitiesState={{
                   isLoading: activitiesQuery.isPending,
                   error: activitiesQuery.error,
@@ -213,7 +256,7 @@ function EventsPage() {
                   />
                   {t("events.list.nearMe.label")}
                 </FilterChip>
-                {selectedActivities.length > 0 || filters.location ? (
+                {selectedActivities.length > 0 || filters.location || dateLabel ? (
                   <div
                     role="group"
                     aria-label={t("events.list.filters.selected")}
@@ -252,9 +295,33 @@ function EventsPage() {
                         />
                       </FilterChip>
                     ) : null}
+                    {dateLabel ? (
+                      <FilterChip
+                        pressed
+                        onPressedChange={() => setFilters({ dateFrom: "", dateTo: "" })}
+                      >
+                        <CalendarDays
+                          aria-hidden
+                          className="size-4 text-muted-foreground"
+                        />
+                        {dateLabel}
+                        <X
+                          aria-hidden
+                          className="size-4 text-muted-foreground"
+                        />
+                      </FilterChip>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
+              {isRangeReversed ? (
+                <p
+                  role="alert"
+                  className="typo-small text-destructive"
+                >
+                  {t("hobbyhub.filters.dateRangeReversed")}
+                </p>
+              ) : null}
               {nearMe.status === "denied" || nearMe.status === "unavailable" ? (
                 <p
                   role="status"

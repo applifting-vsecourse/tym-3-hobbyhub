@@ -29,6 +29,30 @@ describe('ListEventsQuery', () => {
     expect(query.location).toBe('Praha 8');
   });
 
+  it('takes a range of days', async () => {
+    const query = await validate({
+      dateFrom: '2026-11-15',
+      dateTo: '2026-11-30',
+    });
+    expect(query.dateFrom).toBe('2026-11-15');
+    expect(query.dateTo).toBe('2026-11-30');
+  });
+
+  it('takes a blank day as no day', async () => {
+    const query = await validate({ dateFrom: '', dateTo: '' });
+    expect(query.dateFrom).toBeUndefined();
+    expect(query.dateTo).toBeUndefined();
+  });
+
+  it.each(['15.11.2026', '2026-02-30', '2026-11-15T10:00:00Z', 'tomorrow'])(
+    'refuses %s as a day',
+    async (dateFrom) => {
+      await expect(validate({ dateFrom })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    },
+  );
+
   it('refuses a search text that is too long', async () => {
     await expect(validate({ search: 'x'.repeat(101) })).rejects.toBeInstanceOf(
       BadRequestException,

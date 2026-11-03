@@ -56,6 +56,8 @@ export class EventsController {
         activityIds: query.activityIds,
         search: query.search,
         location: query.location,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
         near:
           query.lat !== undefined && query.lng !== undefined
             ? { latitude: query.lat, longitude: query.lng }
