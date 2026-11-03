@@ -85,6 +85,22 @@ describe("ResendVerification", () => {
     expect(screen.getByRole("button", { name: /Poslat znovu za/ })).toBeDisabled()
   })
 
+  it("starts the wait even when the sheet is closed before the answer comes", async () => {
+    let answer: (value: { data: object; error: null }) => void = vi.fn()
+    sendVerificationEmail.mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    await renderWithSession(<ResendVerification />)
+    await userEvent.click(screen.getByRole("button", { name: "Poslat e-mail znovu" }))
+
+    cleanup()
+    await act(() => {
+      answer({ data: {}, error: null })
+      return Promise.resolve()
+    })
+    await renderWithSession(<ResendVerification />)
+
+    expect(screen.getByRole("button", { name: /Poslat znovu za/ })).toBeDisabled()
+  })
+
   it("makes the person wait a minute before the next one", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     await renderWithSession(<ResendVerification />)

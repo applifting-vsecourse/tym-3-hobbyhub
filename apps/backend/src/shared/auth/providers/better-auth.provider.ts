@@ -10,8 +10,9 @@ import { betterAuthCoreConfig } from '@/shared/auth/config/better-auth.config';
 import {
   registrationBeforeHook,
   registrationDatabaseHooks,
-  resendVerificationAfterHook,
 } from '@/shared/auth/registration/registration.hooks';
+import { resendCooldown } from '@/shared/auth/verification/resend-cooldown';
+import { sendOnceAMinute } from '@/shared/auth/verification/send-once-a-minute';
 import { Config } from '@/shared/config/config.service';
 import { Inject, Provider } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
@@ -56,8 +57,11 @@ const createAuth = (
     trustedOrigins: [config.frontendUrl],
     emailVerification: {
       sendVerificationEmail: async ({ user, url }) => {
-        const html = await renderEmail(VerifyEmail, { url });
-        await emailProvider.sendEmail(user.email, VERIFY_EMAIL_SUBJECT, html);
+        // F-03.2: once a minute per address, the registration's e-mail too.
+        await sendOnceAMinute(resendCooldown, user.email, async () => {
+          const html = await renderEmail(VerifyEmail, { url });
+          await emailProvider.sendEmail(user.email, VERIFY_EMAIL_SUBJECT, html);
+        });
       },
       sendOnSignUp: true,
       // F-03.2: the link is valid for a day (BetterAuth's default is an hour).
@@ -65,7 +69,6 @@ const createAuth = (
     },
     hooks: {
       before: registrationBeforeHook,
-      after: resendVerificationAfterHook,
     },
     databaseHooks: registrationDatabaseHooks,
     // On in every environment, not just production (BetterAuth's default).

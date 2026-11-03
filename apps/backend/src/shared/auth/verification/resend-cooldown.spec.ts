@@ -4,54 +4,67 @@ describe('ResendCooldown', () => {
   const t0 = 1_000_000;
 
   it('lets an address nobody sent to through', () => {
-    expect(new ResendCooldown().reserve('a@example.com', t0)).toBe(0);
+    expect(new ResendCooldown().reserve('a@example.com', t0)).not.toBeNull();
   });
 
-  it('makes the address wait after a send, and says how long', () => {
+  it('refuses the same address within the minute', () => {
     const cooldown = new ResendCooldown();
     cooldown.reserve('a@example.com', t0);
 
-    expect(cooldown.reserve('a@example.com', t0 + 20_000)).toBe(40);
+    expect(cooldown.reserve('a@example.com', t0 + 20_000)).toBeNull();
   });
 
-  // Two requests at the same moment: only the first gets the send.
-  it('reserves the send, so a second request at once has to wait', () => {
+  it('reserves the send, so a second request at once is refused', () => {
     const cooldown = new ResendCooldown();
 
-    expect(cooldown.reserve('a@example.com', t0)).toBe(0);
-    expect(cooldown.reserve('a@example.com', t0)).toBe(60);
+    expect(cooldown.reserve('a@example.com', t0)).not.toBeNull();
+    expect(cooldown.reserve('a@example.com', t0)).toBeNull();
   });
 
-  it('does not extend the wait by being asked again', () => {
+  it('lets it through again once the minute is over', () => {
     const cooldown = new ResendCooldown();
     cooldown.reserve('a@example.com', t0);
-    cooldown.reserve('a@example.com', t0 + 30_000);
 
-    expect(cooldown.reserve('a@example.com', t0 + RESEND_COOLDOWN_MS)).toBe(0);
+    expect(
+      cooldown.reserve('a@example.com', t0 + RESEND_COOLDOWN_MS),
+    ).not.toBeNull();
   });
 
   it('gives the minute back when the send failed', () => {
     const cooldown = new ResendCooldown();
-    cooldown.reserve('a@example.com', t0);
-    cooldown.release('a@example.com');
+    const token = cooldown.reserve('a@example.com', t0) as number;
+    cooldown.release('a@example.com', token);
 
-    expect(cooldown.reserve('a@example.com', t0 + 1000)).toBe(0);
+    expect(cooldown.reserve('a@example.com', t0 + 1000)).not.toBeNull();
+  });
+
+  // Request A fails late, after request B got a new reservation.
+  it('does not let an old request release a newer reservation', () => {
+    const cooldown = new ResendCooldown();
+    const old = cooldown.reserve('a@example.com', t0) as number;
+    cooldown.reserve('a@example.com', t0 + RESEND_COOLDOWN_MS + 1);
+
+    cooldown.release('a@example.com', old);
+
+    expect(
+      cooldown.reserve('a@example.com', t0 + RESEND_COOLDOWN_MS + 2),
+    ).toBeNull();
   });
 
   it('treats the address case-insensitively', () => {
     const cooldown = new ResendCooldown();
-    cooldown.reserve('Jana@Example.com', t0);
+    const token = cooldown.reserve('Jana@Example.com', t0) as number;
 
-    expect(cooldown.reserve(' jana@example.com ', t0 + 1000)).toBe(59);
-    cooldown.release('JANA@example.com');
-    expect(cooldown.reserve('jana@example.com', t0 + 2000)).toBe(0);
+    expect(cooldown.reserve(' jana@example.com ', t0 + 1000)).toBeNull();
+    cooldown.release('JANA@example.com', token);
+    expect(cooldown.reserve('jana@example.com', t0 + 2000)).not.toBeNull();
   });
 
   it('does not hold one person back for another', () => {
     const cooldown = new ResendCooldown();
     cooldown.reserve('a@example.com', t0);
 
-    expect(cooldown.reserve('b@example.com', t0 + 1000)).toBe(0);
+    expect(cooldown.reserve('b@example.com', t0 + 1000)).not.toBeNull();
   });
 
   it('never tracks more addresses than it can hold', () => {
@@ -61,8 +74,8 @@ describe('ResendCooldown', () => {
     }
 
     // The oldest were dropped to make room, the newest are still waiting.
-    expect(cooldown.reserve('x0@example.com', t0 + 1000)).toBe(0);
-    expect(cooldown.reserve('x10049@example.com', t0 + 1000)).toBe(59);
+    expect(cooldown.reserve('x0@example.com', t0 + 1000)).not.toBeNull();
+    expect(cooldown.reserve('x10049@example.com', t0 + 1000)).toBeNull();
   });
 
   it('evicts by the order of sends even for an address sent to twice', () => {
@@ -78,6 +91,6 @@ describe('ResendCooldown', () => {
 
     expect(
       cooldown.reserve('first@example.com', t0 + RESEND_COOLDOWN_MS + 8),
-    ).toBeGreaterThan(0);
+    ).toBeNull();
   });
 });

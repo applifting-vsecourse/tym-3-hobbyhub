@@ -54,9 +54,10 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
     storage: 'database',
     customRules: {
       '/sign-in/email': { window: 15 * 60, max: 5 },
-      // F-03.2: the once-a-minute wait is counted per address by the
-      // registration hook; this is only the coarse cap on top of it, per IP
-      // (or one shared bucket where no IP is known), against mail bombing.
+      // F-03.2: the once-a-minute wait is kept per address around the send
+      // itself (verification/send-once-a-minute.ts); this is only the coarse
+      // cap on top, per IP (or one shared bucket where no IP is known),
+      // against mail bombing.
       '/send-verification-email': { window: 60, max: 30 },
     },
   },

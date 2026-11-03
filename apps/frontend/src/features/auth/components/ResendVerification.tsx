@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useResendVerification } from "@/features/auth/hooks/useResendVerification"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { AuthError } from "@/features/auth/lib/authErrors"
-import { resendSecondsLeft, startResendCooldown } from "@/features/auth/lib/resendCooldown"
+import { resendSecondsLeft } from "@/features/auth/lib/resendCooldown"
 
 type ResendVerificationProps = {
   /** Where the new link leads on; this page when omitted. */
@@ -34,21 +34,8 @@ export function ResendVerification({ next }: ResendVerificationProps) {
 
   if (!user) return null
 
-  const startWaiting = () => {
-    startResendCooldown(user.email)
-    setTick((tick) => tick + 1)
-  }
-
   const handleClick = () => {
-    resend.mutate(
-      { email: user.email, next },
-      {
-        onSuccess: startWaiting,
-        onError: (error) => {
-          if (error instanceof AuthError && error.status === 429) startWaiting()
-        },
-      },
-    )
+    resend.mutate({ email: user.email, next })
   }
 
   const isWaiting = secondsLeft > 0
