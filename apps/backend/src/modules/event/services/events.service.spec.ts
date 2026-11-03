@@ -6,6 +6,7 @@ import {
   EventFacts,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
   BadRequestException,
@@ -85,15 +86,30 @@ describe('EventsService', () => {
   const setup = (
     isActivityAvailable = true,
     isReasonAvailable = true,
-  ): { repository: MockProxy<EventRepository>; service: EventsService } => {
+  ): {
+    repository: MockProxy<EventRepository>;
+    notifications: MockProxy<NotificationsService>;
+    service: EventsService;
+  } => {
     const repository = mock<EventRepository>();
+    repository.getEventAudience.mockResolvedValue({
+      participantIds: [],
+      applicantIds: [],
+    });
     const activities = mock<ActivitiesService>();
     activities.isAvailable.mockResolvedValue(isActivityAvailable);
     const reasons = mock<CancellationReasonsService>();
     reasons.isAvailable.mockResolvedValue(isReasonAvailable);
+    const notifications = mock<NotificationsService>();
     return {
       repository,
-      service: new EventsService(repository, activities, reasons),
+      notifications,
+      service: new EventsService(
+        repository,
+        activities,
+        reasons,
+        notifications,
+      ),
     };
   };
 
@@ -214,6 +230,46 @@ describe('EventsService', () => {
         service.updateEvent({ id: 'u2' } as Identity, 'e1', input()),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(repository.updateEvent).not.toHaveBeenCalled();
+    });
+
+    // F-09.3, ADR-0015: the approved participants hear about a moved time or
+    // place; the people waiting for a decision do not, they have no seat yet.
+    it('tells the approved participants when the time or the place moved', async () => {
+      const { repository, notifications, service } = setup();
+      const event = anEvent();
+      const moved = anEvent({
+        startAt: new Date(event.startAt.getTime() + 3600 * 1000),
+      });
+      repository.getEventById.mockResolvedValue(event);
+      repository.updateEvent.mockResolvedValue({ ok: true, event: moved });
+      repository.getEventAudience.mockResolvedValue({
+        participantIds: ['p1', 'p2'],
+        applicantIds: ['a1'],
+      });
+
+      await service.updateEvent(organizer, 'e1', input());
+
+      expect(notifications.notifyEventChanged).toHaveBeenCalledWith({
+        event: moved,
+        changes: ['TIME'],
+        participantIds: ['p1', 'p2'],
+        changedBy: organizer,
+      });
+    });
+
+    it('tells nobody about an edit that kept the time and the place', async () => {
+      const { repository, notifications, service } = setup();
+      const event = anEvent();
+      repository.getEventById.mockResolvedValue(event);
+      repository.updateEvent.mockResolvedValue({
+        ok: true,
+        event: anEvent({ title: 'Páteční florbal' }),
+      });
+
+      await service.updateEvent(organizer, 'e1', input());
+
+      expect(notifications.notifyEventChanged).not.toHaveBeenCalled();
+      expect(repository.getEventAudience).not.toHaveBeenCalled();
     });
 
     it('reports a missing event as not found', async () => {
@@ -390,6 +446,27 @@ describe('EventsService', () => {
         data,
         expect.any(Date),
       );
+    });
+
+    // F-09.3, ADR-0015: both the people with a seat and the ones still waiting.
+    it('tells the participants and the waiting applicants', async () => {
+      const { repository, notifications, service } = setup();
+      const cancelled = anEvent({ status: 'CANCELLED' });
+      repository.getEventById.mockResolvedValue(anEvent());
+      repository.cancelEvent.mockResolvedValue({ ok: true, event: cancelled });
+      repository.getEventAudience.mockResolvedValue({
+        participantIds: ['p1'],
+        applicantIds: ['a1'],
+      });
+
+      await service.cancelEvent(organizer, 'e1', data);
+
+      expect(notifications.notifyEventCancelled).toHaveBeenCalledWith({
+        event: cancelled,
+        participantIds: ['p1'],
+        applicantIds: ['a1'],
+        cancelledBy: organizer,
+      });
     });
 
     it('refuses someone who is not the organizer', async () => {

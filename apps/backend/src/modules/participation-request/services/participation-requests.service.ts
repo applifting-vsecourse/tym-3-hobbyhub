@@ -1,5 +1,6 @@
 import { EventFacts, EventSeatFacts, Page } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
   currentRequestOf,
@@ -60,6 +61,7 @@ export class ParticipationRequestsService {
   constructor(
     private readonly repository: ParticipationRequestRepository,
     private readonly eventsService: EventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getMyRequestState(
@@ -113,6 +115,12 @@ export class ParticipationRequestsService {
     });
     if (typeof request === 'string') throw violationsError([request]);
     if (!request) throw violationsError(['ALREADY_REQUESTED']);
+    // F-09.2: the organizers have a decision to make (ADR-0015). A seat taken
+    // at once (automatic approval) is no request to decide, so it is not one.
+    await this.notificationsService.notifyNewParticipationRequest({
+      event,
+      applicant: user,
+    });
     return request;
   }
 
@@ -165,6 +173,12 @@ export class ParticipationRequestsService {
       at: now,
     });
     if (typeof approved === 'string') throw violationsError([approved]);
+    await this.notificationsService.notifyParticipationRequestDecided({
+      event,
+      request: approved,
+      decision: 'APPROVED',
+      decidedBy: user,
+    });
     return approved;
   }
 
@@ -191,6 +205,12 @@ export class ParticipationRequestsService {
       at: now,
     });
     if (!rejected) throw violationsError(['NOT_PENDING']);
+    await this.notificationsService.notifyParticipationRequestDecided({
+      event,
+      request: rejected,
+      decision: 'REJECTED',
+      decidedBy: user,
+    });
     return rejected;
   }
 
