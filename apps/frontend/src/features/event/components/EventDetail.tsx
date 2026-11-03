@@ -25,6 +25,8 @@ type EventDetailProps = {
   organizerActions?: ReactNode
   /** Link to the group that organizes the event; absent when none does. */
   groupLink?: ReactNode
+  /** Copy the public link; shown to everyone while the event can still be joined (not once it is full). */
+  shareAction?: ReactNode
   /**
    * The signed-in person's own place (their request, their seat, their event).
    * Shown instead of the free seat, whatever state the event is in, so a
@@ -66,6 +68,7 @@ export function EventDetail({
   joinAction,
   organizerActions,
   groupLink,
+  shareAction,
   ownRequest,
   now = new Date(),
 }: EventDetailProps) {
@@ -139,6 +142,7 @@ export function EventDetail({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1 className="typo-h1 text-foreground">{event.title}</h1>
             {state !== "open" ? <StateBadge state={state} /> : null}
+            {state === "open" ? shareAction : null}
           </div>
           {state !== "open" ? (
             <p className="typo-body text-foreground">{t(`events.detail.state.${state}Text`)}</p>

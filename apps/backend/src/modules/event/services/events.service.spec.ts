@@ -113,6 +113,23 @@ describe('EventsService', () => {
     };
   };
 
+  it('refuses to publish for an unverified e-mail and saves nothing', async () => {
+    const { repository, service } = setup();
+
+    const error = await service
+      .createEvent({ id: 'u1', emailVerified: false } as Identity, input())
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect(
+      (error as BadRequestException).getResponse() as { violations: unknown },
+    ).toMatchObject({ violations: ['EMAIL_NOT_VERIFIED'] });
+    expect(repository.createPublishedEvent).not.toHaveBeenCalled();
+  });
+
   it('publishes the event with the signed-in user as organizer', async () => {
     const { repository, service } = setup();
     const created = anEvent();
@@ -120,7 +137,7 @@ describe('EventsService', () => {
     const data = input();
 
     await expect(
-      service.createEvent({ id: 'u1' } as Identity, data),
+      service.createEvent({ id: 'u1', emailVerified: true } as Identity, data),
     ).resolves.toEqual(created);
     expect(repository.createPublishedEvent).toHaveBeenCalledWith({
       ...data,
@@ -146,7 +163,7 @@ describe('EventsService', () => {
     const { repository, service } = setup();
 
     await expect(
-      service.createEvent({ id: 'u1' } as Identity, {
+      service.createEvent({ id: 'u1', emailVerified: true } as Identity, {
         ...input(),
         ...override,
       }),
@@ -158,7 +175,10 @@ describe('EventsService', () => {
     const { repository, service } = setup(false);
 
     await expect(
-      service.createEvent({ id: 'u1' } as Identity, input()),
+      service.createEvent(
+        { id: 'u1', emailVerified: true } as Identity,
+        input(),
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(repository.createPublishedEvent).not.toHaveBeenCalled();
   });

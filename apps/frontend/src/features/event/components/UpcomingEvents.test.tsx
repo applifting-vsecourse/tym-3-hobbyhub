@@ -87,7 +87,7 @@ describe("UpcomingEvents", () => {
     )
 
     expect(screen.queryByText(/chybí/)).not.toBeInTheDocument()
-    expect(screen.getByText("naplněno")).toBeInTheDocument()
+    expect(screen.getByText("minimum splněno")).toBeInTheDocument()
   })
 
   it("shows the photo only where there is one", () => {

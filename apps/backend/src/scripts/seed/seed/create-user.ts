@@ -57,6 +57,8 @@ export async function createUser(
     data: {
       username,
       role: role as UserRole,
+      // Demo accounts must be able to join and publish (F-03.2).
+      emailVerified: true,
     },
   });
 

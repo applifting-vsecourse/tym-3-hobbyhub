@@ -73,6 +73,33 @@
       "passwordsMismatch": "Passwords do not match",
       "termsRequired": "You need to accept the terms to register",
       "underage": "You must be at least 18 to register"
+    },
+    "verifyEmail": {
+      "already": {
+        "badge": "Already verified",
+        "description": "Your email is confirmed, nothing more to do. You can carry on.",
+        "title": "Email already verified"
+      },
+      "continue": "Continue",
+      "done": {
+        "badge": "Verified",
+        "description": "Done, your account is complete. You can now publish events and found groups.",
+        "title": "Email verified"
+      },
+      "failed": {
+        "badge": "Link not working",
+        "description": "The link has expired or is not valid. Send yourself a new one and verify within 24 hours.",
+        "signIn": "Sign in to send a new one",
+        "title": "This link no longer works"
+      },
+      "resend": "Send the email again",
+      "resendFailed": "The email could not be sent. Please try again.",
+      "resendIn": "Send again in {{seconds}} s",
+      "sent": "A new email is on its way. The link is valid for 24 hours.",
+      "sheet": {
+        "description": "We sent a link to the email you signed up with. Once you confirm it, you can publish events and found groups. Didn't arrive? Send it again.",
+        "title": "Verify your email first"
+      }
     }
   },
   "common": {
@@ -290,7 +317,7 @@
       "label": "Events map",
       "loading": "Loading the map…",
       "missing": "{{count}} missing",
-      "pinFull": "{{title}}, full",
+      "pinFull": "{{title}}, minimum reached",
       "pinMissing": "{{title}}, {{count}} missing",
       "unavailable": "The map isn't available right now.",
       "you": "Your location"
@@ -313,6 +340,12 @@
       "noTime": "--:--",
       "occupied": "{{taken}} of {{total}} taken",
       "untitled": "Event title"
+    },
+    "share": {
+      "button": "Share to chat",
+      "descriptionMissing": "{{count}} still needed to reach the minimum. Send a message to a group you're already in and the link does the rest.",
+      "message": "{{title}} ({{when}}). Let me know if you're in:",
+      "messageMissing": "{{title}} ({{when}}), {{count}} missing. Let me know if you're in:"
     },
     "validation": {
       "activityRequired": "Choose an activity",
@@ -573,9 +606,9 @@
       "volejbalistka": "Volleyball player"
     },
     "capacity": {
-      "full": "full",
+      "full": "minimum reached",
       "missing": "{{count}} missing",
-      "summaryFull": "{{taken}} of {{total}} taken, full",
+      "summaryFull": "{{taken}} of {{total}} taken, minimum reached",
       "summaryMissing": "{{taken}} of {{total}} taken, {{count}} missing"
     },
     "chatShare": {
@@ -590,7 +623,7 @@
       "more": "{{label}}: more"
     },
     "eventDetail": {
-      "seatsFull": "{{taken}}/{{total}}, full",
+      "seatsFull": "{{taken}}/{{total}}, minimum reached",
       "seatsMissing": "{{taken}}/{{total}}, {{count}} missing",
       "until": "until {{time}}"
     },
@@ -632,7 +665,7 @@
     "mapPin": {
       "cluster_one": "{{count}} event",
       "cluster_other": "{{count}} events",
-      "filled": "Event, full",
+      "filled": "Event, minimum reached",
       "missing": "Event, {{count}} missing",
       "selected": "Selected event, {{count}} missing"
     },
@@ -718,12 +751,16 @@
       "copiedDiscord": "Message copied, paste it into Discord",
       "copiedMessenger": "Message copied, paste it into Messenger",
       "copyFailed": "Couldn't copy",
-      "copyLink": "Copy link",
       "description": "Send a message to a group you're already in and the link does the rest.",
-      "facebook": "Facebook group",
       "linkCopied": "Link copied",
-      "message": "Message",
       "note": "The link leads to the public event page. Anyone can view it without an account; asking to join requires signing in.",
+      "target": {
+        "discord": "Discord",
+        "facebook": "Facebook group",
+        "link": "Copy link",
+        "messenger": "Messenger",
+        "whatsapp": "WhatsApp"
+      },
       "title": "Share to chat",
       "where": "Where to send"
     },

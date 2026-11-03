@@ -34,6 +34,7 @@ import { EmailModule } from './email.module';
             secure: config.smtpSecure,
             user: config.smtpUsername,
             pass: config.smtpPassword,
+            from: config.smtpFrom,
           });
         }
         return ConsoleMailerAdapterFactory.create();
