@@ -44,7 +44,9 @@ The ports are deliberately odd — 3050, 4050, and Postgres on 5433 rather than 
 | `lostgosling@example.com`      | `password7`     |
 | `admin@example.com`            | `adminpassword` |
 
-Verification/reset emails are printed to the backend terminal (console mailer) unless you configure Resend or SMTP in `apps/backend/.env`.
+Verification/reset emails are printed to the backend terminal (console mailer) unless you configure Resend or SMTP (Mailjet) in `apps/backend/.env`.
+
+Every email — verification, password reset and each notification — is first a row in the `email_delivery` table; a poller in the backend sends it within a few seconds, retries temporary failures and records the outcome (ADR-0016). To see why an email did not arrive, look at its row (`status`, `lastError`, `skipReason`), e.g. in `pnpm backend prisma:studio`.
 
 ## Everyday commands
 
