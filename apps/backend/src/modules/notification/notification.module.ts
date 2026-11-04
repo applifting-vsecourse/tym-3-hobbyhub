@@ -3,6 +3,7 @@ import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { NotificationsController } from './controllers/notifications.controller';
 import { NotificationRepository } from './repositories/notification.repository';
+import { NotificationEmailsService } from './services/notification-emails.service';
 import { NotificationsService } from './services/notifications.service';
 
 // Imports no other feature module (ADR-0015): the modules where things happen
@@ -10,7 +11,12 @@ import { NotificationsService } from './services/notifications.service';
 @Module({
   imports: [AuthModule, PrismaModule],
   controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationRepository],
+  // The outbox comes from the global MailModule (F-09.5, ADR-0016).
+  providers: [
+    NotificationsService,
+    NotificationEmailsService,
+    NotificationRepository,
+  ],
   exports: [NotificationsService],
 })
 export class NotificationModule {}

@@ -8,6 +8,7 @@ import {
   recipientsExcept,
 } from '@/modules/notification/domain/notification';
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
+import { NotificationEmailsService } from '@/modules/notification/services/notification-emails.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
@@ -24,7 +25,10 @@ type ARequest = { userId: string; rejectionReason: string | null };
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly repository: NotificationRepository) {}
+  constructor(
+    private readonly repository: NotificationRepository,
+    private readonly emails: NotificationEmailsService,
+  ) {}
 
   // -------------------------------------------------------------------------
   // The recipient's side: the bell and the page (#152).
@@ -175,13 +179,25 @@ export class NotificationsService {
 
   private async record(data: NewNotification): Promise<void> {
     if (data.recipientIds.length === 0) return;
+    let ids: string[];
     try {
-      await this.repository.createForRecipients(data);
+      ids = await this.repository.createForRecipients(data);
     } catch (error) {
       // The change that caused the notification is saved already; failing
       // the request now would tell the user it did not happen.
       this.logger.error(
         `Could not record a ${data.type} notification for ${data.recipientIds.length} recipient(s)`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      return;
+    }
+    try {
+      // F-09.5: the e-mails are made of the rows just written (ADR-0016).
+      await this.emails.queueFor(ids);
+    } catch (error) {
+      // The bell has them; only the e-mail is missing.
+      this.logger.error(
+        `Could not queue the e-mails of a ${data.type} notification for ${ids.length} recipient(s)`,
         error instanceof Error ? error.stack : String(error),
       );
     }

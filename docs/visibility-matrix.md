@@ -74,14 +74,16 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Organizátor jeho účasti:** organizátor akce, na které má dotyčný schválenou účast.
 - **Účastník jeho akce:** schválený účastník akce, kterou dotyčný pořádá.
 
-| Pole                                                               | Sám | Návštěvník | Přihlášený | Vyřizuje jeho žádost | Organizátor jeho účasti | Účastník jeho akce | Zdroj                                      |
-| ------------------------------------------------------------------ | --- | ---------- | ---------- | -------------------- | ----------------------- | ------------------ | ------------------------------------------ |
-| Jméno, fotka, bio, zájmy                                           | ✅  | ❌         | ✅         | ✅                   | ✅                      | ✅                 | [#19][19]                                  |
-| Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ✅                   | ✅                      | ❌                 | [#32][32]                                  |
-| E-mail                                                             | ✅  | ❌         | ❌         | ❌                   | ✅                      | ❓                 | [#19][19], [#32][32]                       |
-| Datum narození, věk, pohlaví                                       | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#12][12], [#18][18], [#19][19], [#32][32] |
-| Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#24][24], [#67][67]                       |
-| Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#41][41], [#52][52], [#152][152]          |
+| Pole                                                               | Sám | Návštěvník | Přihlášený | Vyřizuje jeho žádost | Organizátor jeho účasti | Účastník jeho akce | Zdroj                                        |
+| ------------------------------------------------------------------ | --- | ---------- | ---------- | -------------------- | ----------------------- | ------------------ | -------------------------------------------- |
+| Jméno, fotka, bio, zájmy                                           | ✅  | ❌         | ✅         | ✅                   | ✅                      | ✅                 | [#19][19]                                    |
+| Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ✅                   | ✅                      | ❌                 | [#32][32]                                    |
+| E-mail                                                             | ✅  | ❌         | ❌         | ❌                   | ✅                      | ❓                 | [#19][19], [#32][32]                         |
+| Datum narození, věk, pohlaví                                       | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#12][12], [#18][18], [#19][19], [#32][32]   |
+| Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#24][24], [#67][67]                         |
+| Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#41][41], [#52][52], [#152][152], [#61][61] |
+
+Notifikace chodí i e-mailem, a to jen příjemci na jeho vlastní ověřenou adresu; e-mail nese totéž co zvoneček, tedy veřejné jméno původce a název akce či skupiny ([#61][61]).
 
 Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce ([#45][45]). Jméno organizátora je veřejné přes detail akce ([#8][8]).
 
@@ -121,4 +123,5 @@ Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků a
 [94]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/94
 [95]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/95
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
+[61]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/61
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
