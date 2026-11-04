@@ -1,6 +1,7 @@
 import {
   eventChangeViolations,
   eventRuleViolations,
+  externalSpotsViolations,
   foldForSearch,
   isOrganizerOf,
   occupancyOf,
@@ -308,4 +309,41 @@ describe('eventRuleViolations: position', () => {
       ]);
     },
   );
+});
+
+describe('externalSpotsViolations', () => {
+  const now = new Date('2026-10-23T12:00:00Z');
+  const event = {
+    status: 'PUBLISHED' as const,
+    startAt: new Date('2026-10-24T12:00:00Z'),
+    maxParticipants: 10,
+    approvedCount: 6,
+  };
+
+  it('allows the outside seats up to the seats left by the approved', () => {
+    expect(externalSpotsViolations(event, 4, now)).toEqual([]);
+    expect(externalSpotsViolations(event, 0, now)).toEqual([]);
+  });
+
+  it('refuses more outside seats than the maximum leaves', () => {
+    expect(externalSpotsViolations(event, 5, now)).toEqual([
+      'MAX_BELOW_OCCUPIED',
+    ]);
+  });
+
+  it('allows a draft too', () => {
+    expect(
+      externalSpotsViolations({ ...event, status: 'DRAFT' }, 1, now),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ['started', { startAt: now }],
+    ['cancelled', { status: 'CANCELLED' as const }],
+    ['finished', { status: 'FINISHED' as const }],
+  ])('refuses an event that has %s', (_, change) => {
+    expect(externalSpotsViolations({ ...event, ...change }, 1, now)).toEqual([
+      'EVENT_NOT_CHANGEABLE',
+    ]);
+  });
 });

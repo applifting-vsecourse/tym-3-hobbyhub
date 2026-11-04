@@ -385,6 +385,44 @@ export class EventRepository {
     });
   }
 
+  // F-05.6: the seats taken outside the app, under the same lock as an edit
+  // and an approval, so the seats are counted and written in one go.
+  async updateExternalOccupiedSpots(
+    id: string,
+    externalOccupiedSpots: number,
+    now: Date,
+  ): Promise<EventChangeResult> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
+      const approved = await tx.participation.count({
+        where: { eventId: id, status: ParticipationStatus.APPROVED },
+      });
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id },
+        select: { maxParticipants: true },
+      });
+      if (event.maxParticipants < externalOccupiedSpots + approved) {
+        return { ok: false, violation: 'MAX_BELOW_OCCUPIED' } as const;
+      }
+      const { count } = await tx.event.updateMany({
+        where: {
+          id,
+          status: { in: [EventStatus.DRAFT, EventStatus.PUBLISHED] },
+          startAt: { gt: now },
+        },
+        data: { externalOccupiedSpots },
+      });
+      if (count === 0) {
+        return { ok: false, violation: 'EVENT_NOT_CHANGEABLE' } as const;
+      }
+      const updated = await tx.event.findUniqueOrThrow({
+        where: { id },
+        include,
+      });
+      return { ok: true, event: mapPrismaEventToDomain(updated) } as const;
+    });
+  }
+
   // Matches only a published event that has not started, so two cancels in a
   // row cannot overwrite the first reason.
   async cancelEvent(

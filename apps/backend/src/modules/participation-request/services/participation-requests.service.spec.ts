@@ -342,6 +342,51 @@ describe('ParticipationRequestsService', () => {
       });
     });
 
+    describe('getDecidedRequests', () => {
+      it.each(['APPROVED', 'REJECTED', 'WITHDRAWN'] as const)(
+        'lists the %s people of the event',
+        async (status) => {
+          const { repository, events, service } = setup();
+          const decided = {
+            items: [
+              {
+                id: 'r1',
+                status,
+                message: null,
+                changedAt: now,
+                applicant: profile,
+              },
+            ],
+            total: 1,
+          };
+          repository.getDecidedRequests.mockResolvedValue(decided);
+
+          await expect(
+            service.getDecidedRequests(organizer, 'e1', status, page),
+          ).resolves.toEqual(decided);
+          expect(events.getOrganizedEvent).toHaveBeenCalledWith(
+            'e1',
+            organizer,
+          );
+          expect(repository.getDecidedRequests).toHaveBeenCalledWith(
+            'e1',
+            status,
+            page,
+          );
+        },
+      );
+
+      // Nobody learns who goes to someone else's event.
+      it('answers 404 to someone who does not organize the event', async () => {
+        const { repository, service } = setup();
+
+        await expect(
+          service.getDecidedRequests(user, 'e1', 'APPROVED', page),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(repository.getDecidedRequests).not.toHaveBeenCalled();
+      });
+    });
+
     describe('approveRequest', () => {
       it('approves the waiting request', async () => {
         const { repository, service } = setup();

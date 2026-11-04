@@ -290,6 +290,29 @@ export const eventChangeViolations = (
   return violations;
 };
 
+// F-05.6: the organizer keeps the seats of people outside the app up to date
+// after creating the event. The same boundary as an edit, and the same rule
+// for the seats: outside plus approved never above the maximum.
+export const externalSpotsViolations = (
+  event: Pick<
+    Event,
+    'status' | 'startAt' | 'maxParticipants' | 'approvedCount'
+  >,
+  externalOccupiedSpots: number,
+  now: Date,
+): Extract<
+  EventChangeViolation,
+  'EVENT_NOT_CHANGEABLE' | 'MAX_BELOW_OCCUPIED'
+>[] => {
+  const changeable =
+    (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
+    !hasStarted(event, now);
+  if (!changeable) return ['EVENT_NOT_CHANGEABLE'];
+  return externalOccupiedSpots + event.approvedCount > event.maxParticipants
+    ? ['MAX_BELOW_OCCUPIED']
+    : [];
+};
+
 // Who an edit or a cancellation concerns (F-09.3, ADR-0015): the approved
 // participants, and the people still waiting for a decision.
 export type EventAudience = {

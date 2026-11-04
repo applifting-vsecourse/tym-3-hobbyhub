@@ -30,6 +30,7 @@ import {
 import { EventResponseDto } from './dto/event.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { UpdateExternalSpotsDto } from './dto/update-external-spots.dto';
 import { eventsValidationPipe } from './events-validation.pipe';
 
 @ApiTags('events')
@@ -118,13 +119,46 @@ export class EventsController {
   @ApiOperation({ summary: 'Get an event with every field, organizer only' })
   @ApiResponse({ status: 200, type: EventResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in' })
-  @ApiResponse({ status: 403, description: 'Not the organizer' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not one of its organizers',
+  })
   async getForOrganizer(
     @User() user: Identity,
     @Param('id') id: string,
   ): Promise<EventResponseDto> {
-    const event = await this.eventsService.getEventOfOrganizer(user, id);
+    const event = await this.eventsService.getManagedEvent(user, id);
+    return EventResponseDto.fromDomain(event);
+  }
+
+  @Patch(':id/external-occupied-spots')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary:
+      'Change the seats taken outside the app, until the event starts (F-05.6)',
+  })
+  @ApiResponse({ status: 200, type: EventResponseDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid number, or refused; `violations` says why: EVENT_NOT_CHANGEABLE, MAX_BELOW_OCCUPIED',
+  })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not one of its organizers',
+  })
+  async updateExternalOccupiedSpots(
+    @User() user: Identity,
+    @Param('id') id: string,
+    @Body() body: UpdateExternalSpotsDto,
+  ): Promise<EventResponseDto> {
+    const event = await this.eventsService.updateExternalOccupiedSpots(
+      user,
+      id,
+      body.externalOccupiedSpots,
+    );
     return EventResponseDto.fromDomain(event);
   }
 
