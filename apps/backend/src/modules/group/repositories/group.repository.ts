@@ -120,6 +120,16 @@ export class GroupRepository {
     }));
   }
 
+  // ADR-0015: who is told about a new request to join (the founder and the
+  // admins, ADR-0007).
+  async listAdminIds(groupId: string): Promise<string[]> {
+    const memberships = await this.prisma.groupMembership.findMany({
+      where: { groupId, role: { in: [GroupRole.OWNER, GroupRole.ADMIN] } },
+      select: { userId: true },
+    });
+    return memberships.map((membership) => membership.userId);
+  }
+
   async removeMember(groupId: string, userId: string): Promise<void> {
     await this.prisma.groupMembership.deleteMany({
       where: { groupId, userId },

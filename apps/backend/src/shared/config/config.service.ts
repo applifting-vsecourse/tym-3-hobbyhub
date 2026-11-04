@@ -96,4 +96,11 @@ export class Config {
   @Env('SMTP_PASSWORD')
   @IsOptional()
   readonly smtpPassword?: string;
+
+  // The sender of SMTP mail, e.g. `HobbyHub <noreply@example.com>`. Needed when
+  // the user name is not an address (Mailjet's is an API key); otherwise the
+  // user name is the sender.
+  @Env('SMTP_FROM', { expose: true })
+  @IsOptional()
+  readonly smtpFrom?: string;
 }

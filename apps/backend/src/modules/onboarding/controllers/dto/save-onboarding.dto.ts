@@ -123,6 +123,15 @@ export class SaveLocationDto {
 
 export class SaveProfileDto {
   @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'Profile picture: a WebP data URL (data:image/webp;base64,…, at most 2 MB) or an illustration "avatar:<name>"; omitted or null leaves it as it is',
+  })
+  @IsOptional()
+  @IsString()
+  image?: string | null;
+
+  @ApiPropertyOptional({
     example: 'Hraju rok, rád zkusím nové aktivity.',
     maxLength: ONBOARDING_BIO_MAX_LENGTH,
   })

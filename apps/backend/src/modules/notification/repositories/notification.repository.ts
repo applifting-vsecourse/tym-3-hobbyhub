@@ -1,0 +1,110 @@
+import { PrismaService } from '@/core/prisma/prisma.service';
+import { Prisma } from '@/generated/prisma/client';
+import {
+  NewNotification,
+  Notification,
+  NotificationPage,
+  NotificationPayload,
+  Page,
+} from '@/modules/notification/domain/notification';
+import { Injectable } from '@nestjs/common';
+
+// The rows the text is made of, besides the notification itself. Only public
+// names come along (visibility matrix F-13.8).
+const include = {
+  actor: { select: { id: true, name: true } },
+  event: { select: { id: true, title: true } },
+  group: { select: { id: true, name: true } },
+} as const satisfies Prisma.NotificationInclude;
+
+type NotificationRow = Prisma.NotificationGetPayload<{
+  include: typeof include;
+}>;
+
+// The column is JSON; anything that is not an object is treated as empty.
+const payloadOf = (value: Prisma.JsonValue): NotificationPayload =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as NotificationPayload)
+    : {};
+
+const mapToDomain = (row: NotificationRow): Notification => ({
+  id: row.id,
+  type: row.type,
+  payload: payloadOf(row.payload),
+  createdAt: row.createdAt,
+  readAt: row.readAt,
+  recipientId: row.recipientId,
+  actor: row.actor,
+  event: row.event,
+  group: row.group,
+});
+
+@Injectable()
+export class NotificationRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  // One row per recipient, all in one write. Returns how many were written.
+  async createForRecipients(data: NewNotification): Promise<number> {
+    if (data.recipientIds.length === 0) return 0;
+    const { count } = await this.prisma.notification.createMany({
+      data: data.recipientIds.map((recipientId) => ({
+        recipientId,
+        type: data.type,
+        actorId: data.actorId,
+        eventId: data.eventId ?? null,
+        groupId: data.groupId ?? null,
+        payload: (data.payload ?? {}) as Prisma.InputJsonObject,
+      })),
+    });
+    return count;
+  }
+
+  // The recipient's notifications, newest first, a page at a time.
+  async listOf(recipientId: string, page: Page): Promise<NotificationPage> {
+    const where = { recipientId };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.notification.findMany({
+        where,
+        include,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: page.offset,
+        take: page.limit,
+      }),
+      this.prisma.notification.count({ where }),
+    ]);
+    return { items: rows.map(mapToDomain), total };
+  }
+
+  countUnread(recipientId: string): Promise<number> {
+    return this.prisma.notification.count({
+      where: { recipientId, readAt: null },
+    });
+  }
+
+  // Null when the notification is not the recipient's (or does not exist);
+  // one already read is returned as it is, so a second click changes nothing.
+  async markRead(
+    recipientId: string,
+    id: string,
+    at: Date,
+  ): Promise<Notification | null> {
+    await this.prisma.notification.updateMany({
+      where: { id, recipientId, readAt: null },
+      data: { readAt: at },
+    });
+    const row = await this.prisma.notification.findFirst({
+      where: { id, recipientId },
+      include,
+    });
+    return row ? mapToDomain(row) : null;
+  }
+
+  // Returns how many were unread until now.
+  async markAllRead(recipientId: string, at: Date): Promise<number> {
+    const { count } = await this.prisma.notification.updateMany({
+      where: { recipientId, readAt: null },
+      data: { readAt: at },
+    });
+    return count;
+  }
+}

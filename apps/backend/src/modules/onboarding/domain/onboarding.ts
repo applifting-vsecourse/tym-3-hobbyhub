@@ -52,6 +52,8 @@ export type Onboarding = {
   address: HomeAddress | null;
   travelRadiusKm: number | null;
   bio: string | null;
+  // The profile picture the third step may set: a WebP data URL or an illustration.
+  image: string | null;
 };
 
 export type OnboardingViolation = 'NO_ACTIVITY' | 'DUPLICATE_ACTIVITY';

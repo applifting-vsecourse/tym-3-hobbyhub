@@ -13,7 +13,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 ## Colour
 
 - **Never hardcode a colour in a component.** No `#hex`, no `bg-blue-500`, no `rgb()`. Use the semantic classes only: `bg-background`, `text-foreground`, `text-muted-foreground`, `bg-card`, `bg-popover`, `bg-primary`, `bg-secondary`, `bg-muted`, `bg-accent`, `border-border`, `border-input`, `bg-overlay`, plus the state families below.
-- The only hex values outside `global.css` are the `theme-color` metas in `index.html` (they mirror `--background` in each theme) and illustrations that carry their own palette: avatars, the app icon, event photos.
+- The only hex values outside `global.css` are the `theme-color` metas in `index.html` (they mirror `--background` in each theme) and illustrations that carry their own palette: avatars, profile covers, the app icon, event photos.
 - **UI SVGs are coloured by tokens**: `currentColor` for icons, `var(--primary)`, `var(--signal)`, `var(--success)`… for pins and loaders. Never bake a hex into an icon, or it breaks in dark mode.
 - **`primary` is for actions and for the user's place in the app**: buttons, filled (taken) seats, the active bottom-nav item and its badge dot. Not decoration. One primary button per view; everything else is `outline`, `ghost`, `secondary` or a plain link.
 - **`accent` is the quiet violet tint, not the brand colour.** It is the hover/active surface of menu items and ghost buttons, the text colour of ghost buttons (`text-accent-foreground`), and the surface that invites the visitor in: `YourSeat`, the time pill and roster band on `EventCard`, a selected `ActivityToken`. Text on it is `text-accent-foreground`.
@@ -58,6 +58,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 
 - Activity icons come from `ActivityIcon` (24 px grid, 1.75 px stroke, `currentColor`); UI icons from `src/assets/ui-icons/` imported as components (`?react`). Size them with `size-*`.
 - Icons are decorative (`aria-hidden`) unless they stand alone — then they get a label.
+- Profile covers (`src/assets/covers/`, listed in `profileCovers.ts`) are drawn like the avatars — graphite 4 px outline, the avatar palette, round caps, no faces — one per sport plus mixed and brand ones. A new one follows that style.
 - People are drawn as `ActivityAvatar` illustrations — never photos or initials, and the face is always blank. An empty place is the dashed free avatar with a plus.
 - The logo comes from `Logo`; the header shows the wordmark at every width, as in the Figma header.
 

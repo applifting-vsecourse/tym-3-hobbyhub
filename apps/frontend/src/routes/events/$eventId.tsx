@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { AppShell } from "@/app/AppShell"
 import { ROUTES } from "@/app/routes"
 import { BackLink } from "@/components/BackLink"
 import { NotFound } from "@/components/Error/NotFound"
@@ -13,13 +14,13 @@ import { Button } from "@/components/ui/button"
 import { HTTPError } from "@/lib/api-client"
 
 import { activityName } from "@/features/activity/activityName"
-import { AppShell } from "@/features/auth/components/AppShell"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import { EventDetail } from "@/features/event/components/EventDetail"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
+import { ShareEventAction } from "@/features/event/components/ShareEventAction"
 import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
@@ -161,6 +162,7 @@ function EventDetailPage() {
                 </p>
               ) : null
             }
+            shareAction={<ShareEventAction event={eventQuery.data} />}
             organizerActions={
               // F-05.10: only the organizer, and only until the event starts.
               user?.id === eventQuery.data.organizerId &&

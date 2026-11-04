@@ -65,6 +65,9 @@ enum NotificationType {
   EVENT_BOARD
   ONBOARDING_SERIES
   MONTHLY_RECOMMENDATION
+  // F-09.3: a change of time or place, and a cancellation, of an event one goes to.
+  EVENT_CHANGED
+  EVENT_CANCELLED
 
   @@map("notification_type")
 }
@@ -240,6 +243,7 @@ model Group {
   memberships        GroupMembership[]
   membershipRequests MembershipRequest[]
   events             Event[]
+  notifications      Notification[]
 
   @@index([activityId])
   @@map("group")
@@ -368,6 +372,7 @@ model Event {
   // the group is deleted.
   group                 Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
   groupId               String?
+  notifications         Notification[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -425,6 +430,40 @@ model ParticipationRequest {
   @@index([eventId, status])
   @@index([userId])
   @@map("participation_request")
+}
+
+// #152, ADR-0015: one record of "something happened that concerns you", the
+// source of truth for the bell in the app and, later, for the e-mails (E9).
+// The text is not stored: the client puts it together from `type`, the linked
+// rows (who did it, which event or group) and the small `payload`, in the
+// reader's language. `readAt` is set once the recipient has seen it.
+model Notification {
+  id String @id @default(cuid())
+
+  type      NotificationType
+  // What the text needs besides the linked rows: the decision, the organizer's
+  // message, which parts of the event changed. Shape per type in `domain/`.
+  payload   Json             @default("{}")
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+
+  recipient   User    @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  // Who caused it: the applicant, the organizer who decided. Null for a
+  // notification the system sends on its own (onboarding, recommendations).
+  actor       User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId     String?
+  // Where the notification leads. A notification about a deleted event or
+  // group has nothing to show, so it goes with it.
+  event       Event?  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId     String?
+  group       Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId     String?
+
+  // The bell lists newest first and counts the unread ones.
+  @@index([recipientId, createdAt(sort: Desc)])
+  @@index([recipientId, readAt])
+  @@map("notification")
 }
 
 model Session {
@@ -504,6 +543,9 @@ model User {
   // emailVerified and image. Several fields the model marks as required are
   // optional here until registration (F-03.1) collects them.
   bio                   String?            @db.Text
+  // F-04.1: the picture on top of the profile: an id of the app's covers or an
+  // uploaded WebP data URL; null = the default of the first activity.
+  profileCover          String?            @db.Text
   birthDate             DateTime?          @db.Date
   gender                Gender?
   phone                 String?            @db.VarChar(30)
@@ -552,6 +594,8 @@ model User {
   participationRequests ParticipationRequest[]
   groupMemberships      GroupMembership[]
   membershipRequests    MembershipRequest[]
+  notifications         Notification[]         @relation("NotificationRecipient")
+  causedNotifications   Notification[]         @relation("NotificationActor")
 
   @@unique([email])
   @@unique([username])

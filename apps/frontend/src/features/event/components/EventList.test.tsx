@@ -158,7 +158,7 @@ describe("EventList", () => {
     expect(row.querySelector("svg")).not.toBeNull()
   })
 
-  it("says full once the minimum is reached", () => {
+  it("says minimum reached once the minimum is reached", () => {
     render(
       <EventList
         activityLabel={(activity) => activity.name}
@@ -168,7 +168,7 @@ describe("EventList", () => {
       />,
     )
 
-    expect(screen.getByText("naplněno")).toBeInTheDocument()
+    expect(screen.getByText("minimum splněno")).toBeInTheDocument()
     expect(screen.queryByText(/^chybí/)).not.toBeInTheDocument()
   })
 

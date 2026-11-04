@@ -2,6 +2,7 @@ export const ROUTES = {
   home: "/",
   login: "/login",
   signup: "/signup",
+  verifyEmail: "/verify-email",
   designSystem: "/design-system",
   terms: "/terms",
   groups: "/groups",
@@ -9,6 +10,8 @@ export const ROUTES = {
   events: "/events",
   newEvent: "/events/new",
   myEvents: "/my-events",
+  notifications: "/notifications",
   profile: "/profile",
+  profileEdit: "/profile/edit",
   onboarding: "/onboarding",
 } as const

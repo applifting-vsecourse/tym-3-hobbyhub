@@ -14,6 +14,7 @@ import {
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
   BadRequestException,
   Injectable,
@@ -28,6 +29,10 @@ export class GroupsService {
   ) {}
 
   async createGroup(user: Identity, data: CreateGroupData): Promise<Group> {
+    // F-03.2: founding a group needs a verified e-mail.
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('founding a group');
+    }
     if (!(await this.activitiesService.isAvailable(data.activityId))) {
       throw new BadRequestException(
         'Activity does not exist or is no longer offered',
@@ -68,6 +73,12 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
     return group;
+  }
+
+  // Who manages the group (OWNER and ADMIN, ADR-0007), for the notifications
+  // about a new request to join (ADR-0015). Public facts only: ids.
+  getAdminIds(groupId: string): Promise<string[]> {
+    return this.groupRepository.listAdminIds(groupId);
   }
 
   // F-07.3: the member list is for the group's admins only (F-02.5 shows a

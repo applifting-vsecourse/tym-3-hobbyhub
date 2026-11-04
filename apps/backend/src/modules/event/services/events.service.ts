@@ -18,7 +18,10 @@ import {
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
+import { eventChangesOf } from '@/modules/notification/domain/notification';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
   BadRequestException,
   ForbiddenException,
@@ -51,9 +54,14 @@ export class EventsService {
     private readonly eventRepository: EventRepository,
     private readonly activitiesService: ActivitiesService,
     private readonly cancellationReasonsService: CancellationReasonsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
+    // F-03.2: publishing needs a verified e-mail.
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('publishing an event');
+    }
     const now = new Date();
     const violations = eventRuleViolations(data, now);
     if (violations.length > 0) {
@@ -115,6 +123,19 @@ export class EventsService {
         CHANGE_VIOLATION_MESSAGES[result.violation],
       );
     }
+    // F-09.3: the people who go hear about a moved time or place, once the
+    // change is saved (ADR-0015). Other edits are theirs to discover.
+    const changes = eventChangesOf(event, result.event);
+    if (changes.length > 0) {
+      const { participantIds } =
+        await this.eventRepository.getEventAudience(id);
+      await this.notificationsService.notifyEventChanged({
+        event: result.event,
+        changes,
+        participantIds,
+        changedBy: user,
+      });
+    }
     return result.event;
   }
 
@@ -144,6 +165,13 @@ export class EventsService {
         CHANGE_VIOLATION_MESSAGES[result.violation],
       );
     }
+    // F-09.3: the participants and the people still waiting came for nothing.
+    const audience = await this.eventRepository.getEventAudience(id);
+    await this.notificationsService.notifyEventCancelled({
+      event: result.event,
+      ...audience,
+      cancelledBy: user,
+    });
     return result.event;
   }
 

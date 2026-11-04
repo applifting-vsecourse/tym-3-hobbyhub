@@ -39,11 +39,11 @@ export function ChatShare({ message, url, className }: ChatShareProps) {
 
   return (
     <div className={cn("flex w-full flex-col items-start gap-4", className)}>
-      <div className="flex flex-col items-start gap-1 rounded-lg rounded-bl-sm bg-muted px-4 py-3">
-        <p className="typo-body text-foreground">{message}</p>
+      <div className="flex flex-col items-start gap-1 rounded-lg rounded-bl-sm bg-accent px-4 py-3">
+        <p className="typo-body text-accent-foreground">{message}</p>
         <a
           href={url}
-          className="rounded-sm bg-accent px-2 py-1 typo-small text-accent-foreground underline-offset-4 hover:underline"
+          className="typo-small font-medium text-primary underline underline-offset-4"
         >
           {t("hobbyhub.chatShare.link")}
         </a>

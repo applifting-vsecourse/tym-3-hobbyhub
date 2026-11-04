@@ -1,5 +1,6 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
 import { GroupModule } from '@/modules/group/group.module';
+import { NotificationModule } from '@/modules/notification/notification.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { MembershipRequestsController } from './controllers/membership-requests.controller';
@@ -7,7 +8,7 @@ import { MembershipRequestRepository } from './repositories/membership-request.r
 import { MembershipRequestsService } from './services/membership-requests.service';
 
 @Module({
-  imports: [AuthModule, PrismaModule, GroupModule],
+  imports: [AuthModule, PrismaModule, GroupModule, NotificationModule],
   controllers: [MembershipRequestsController],
   providers: [MembershipRequestsService, MembershipRequestRepository],
 })

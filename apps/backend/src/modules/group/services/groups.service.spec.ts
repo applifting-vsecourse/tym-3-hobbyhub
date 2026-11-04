@@ -49,13 +49,25 @@ describe('GroupsService', () => {
     };
   };
 
+  // ADR-0015: who is told about a new request to join.
+  it('names the founder and the admins as the group’s managers', async () => {
+    const { repository, service } = setup();
+    repository.listAdminIds.mockResolvedValue(['owner', 'admin']);
+
+    await expect(service.getAdminIds('g1')).resolves.toEqual([
+      'owner',
+      'admin',
+    ]);
+    expect(repository.listAdminIds).toHaveBeenCalledWith('g1');
+  });
+
   it('makes the signed-in user the owner of the new group', async () => {
     const { repository, service } = setup();
     const created = aGroup();
     repository.createGroupWithOwner.mockResolvedValue(created);
 
     await expect(
-      service.createGroup({ id: 'u1' } as Identity, input),
+      service.createGroup({ id: 'u1', emailVerified: true } as Identity, input),
     ).resolves.toEqual(created);
     expect(repository.createGroupWithOwner).toHaveBeenCalledWith({
       ...input,
@@ -63,11 +75,28 @@ describe('GroupsService', () => {
     });
   });
 
+  it('refuses an unverified e-mail and founds nothing', async () => {
+    const { repository, service } = setup();
+
+    const error = await service
+      .createGroup({ id: 'u1', emailVerified: false } as Identity, input)
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect(
+      (error as BadRequestException).getResponse() as { violations: unknown },
+    ).toMatchObject({ violations: ['EMAIL_NOT_VERIFIED'] });
+    expect(repository.createGroupWithOwner).not.toHaveBeenCalled();
+  });
+
   it('refuses an activity that does not exist or is retired', async () => {
     const { repository, service } = setup(false);
 
     await expect(
-      service.createGroup({ id: 'u1' } as Identity, input),
+      service.createGroup({ id: 'u1', emailVerified: true } as Identity, input),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(repository.createGroupWithOwner).not.toHaveBeenCalled();
   });
@@ -110,7 +139,7 @@ describe('GroupsService', () => {
   });
 
   describe('managing a group (F-07.3)', () => {
-    const user = { id: 'u1' } as Identity;
+    const user = { id: 'u1', emailVerified: true } as Identity;
 
     it.each(['OWNER', 'ADMIN'] as const)(
       'gives a %s the group they manage',
@@ -192,7 +221,7 @@ describe('GroupsService', () => {
   });
 
   describe('nearby groups', () => {
-    const user = { id: 'u1' } as Identity;
+    const user = { id: 'u1', emailVerified: true } as Identity;
     const now = new Date('2026-10-18T10:00:00Z');
 
     it('searches the city of the signed-in user', async () => {
@@ -234,7 +263,10 @@ describe('GroupsService', () => {
     repository.listDiscoverableGroups.mockResolvedValue(page);
 
     await expect(
-      service.discoverGroups({ id: 'u1' } as Identity, 'g0'),
+      service.discoverGroups(
+        { id: 'u1', emailVerified: true } as Identity,
+        'g0',
+      ),
     ).resolves.toEqual(page);
     expect(repository.listDiscoverableGroups).toHaveBeenCalledWith(
       'u1',

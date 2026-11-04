@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { initialsOf } from "@/components/hobbyhub/PersonAvatar"
+import { illustrationOf, initialsOf } from "@/components/hobbyhub/PersonAvatar"
 
 describe("initialsOf", () => {
   it.each([
@@ -13,4 +13,17 @@ describe("initialsOf", () => {
   ])("takes the first letters of %s", (name, initials) => {
     expect(initialsOf(name)).toBe(initials)
   })
+})
+
+describe("illustrationOf", () => {
+  it("names one of our illustrated people", () => {
+    expect(illustrationOf("avatar:florbalista")).toBe("florbalista")
+  })
+
+  it.each([["avatar:unknown"], ["https://example.com/a.webp"], [null], [undefined]])(
+    "does not for %s",
+    (picture) => {
+      expect(illustrationOf(picture)).toBeNull()
+    },
+  )
 })

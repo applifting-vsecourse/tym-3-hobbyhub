@@ -1,5 +1,6 @@
 import { EventFacts, EventSeatFacts, Page } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
   currentRequestOf,
@@ -60,6 +61,7 @@ export class ParticipationRequestsService {
   constructor(
     private readonly repository: ParticipationRequestRepository,
     private readonly eventsService: EventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getMyRequestState(
@@ -89,7 +91,8 @@ export class ParticipationRequestsService {
     now: Date = new Date(),
   ): Promise<ParticipationRequest> {
     const event = await this.getEvent(eventId, user);
-    // TODO(F-03.2 #13): a verified e-mail becomes a condition here.
+    // F-03.2 (#13): asking to join deliberately needs no verified e-mail, to
+    // keep the friction for participants low; the organizer sees the status.
     const requests = await this.repository.getRequestsOf(eventId, user.id);
     const violations = joinRuleViolations(event, user.id, requests, now);
     if (violations.length > 0) throw violationsError(violations);
@@ -113,6 +116,12 @@ export class ParticipationRequestsService {
     });
     if (typeof request === 'string') throw violationsError([request]);
     if (!request) throw violationsError(['ALREADY_REQUESTED']);
+    // F-09.2: the organizers have a decision to make (ADR-0015). A seat taken
+    // at once (automatic approval) is no request to decide, so it is not one.
+    await this.notificationsService.notifyNewParticipationRequest({
+      event,
+      applicant: user,
+    });
     return request;
   }
 
@@ -165,6 +174,12 @@ export class ParticipationRequestsService {
       at: now,
     });
     if (typeof approved === 'string') throw violationsError([approved]);
+    await this.notificationsService.notifyParticipationRequestDecided({
+      event,
+      request: approved,
+      decision: 'APPROVED',
+      decidedBy: user,
+    });
     return approved;
   }
 
@@ -191,6 +206,12 @@ export class ParticipationRequestsService {
       at: now,
     });
     if (!rejected) throw violationsError(['NOT_PENDING']);
+    await this.notificationsService.notifyParticipationRequestDecided({
+      event,
+      request: rejected,
+      decision: 'REJECTED',
+      decidedBy: user,
+    });
     return rejected;
   }
 
