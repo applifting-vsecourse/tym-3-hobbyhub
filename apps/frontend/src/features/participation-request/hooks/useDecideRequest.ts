@@ -13,6 +13,8 @@ function useRefreshAfterDecision(eventId: string, onChange?: () => Promise<unkno
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: participationRequestKeys.pending(eventId) }),
+      // The decided request moves to the participants tab.
+      queryClient.invalidateQueries({ queryKey: participationRequestKeys.decidedAll(eventId) }),
       onChange?.(),
     ])
 }

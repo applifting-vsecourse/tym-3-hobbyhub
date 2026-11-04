@@ -55,6 +55,8 @@ type JoinRequestCardProps = JoinRequestApplicantProps & {
    * or why it cannot happen, e.g. a full event.
    */
   outcome?: string
+  /** A line about a decided request, e.g. "Schváleno 3. 11. 2026". */
+  note?: string
   /** Approval is not possible now (a full event); the outcome says why. */
   isApproveDisabled?: boolean
   /** Without both handlers the card only shows the request (an event that has started). */
@@ -68,6 +70,7 @@ type JoinRequestCardProps = JoinRequestApplicantProps & {
 export function JoinRequestCard({
   message,
   outcome,
+  note,
   isApproveDisabled = false,
   onApprove,
   onReject,
@@ -114,6 +117,8 @@ export function JoinRequestCard({
           </Button>
         </div>
       ) : null}
+
+      {note ? <p className="typo-small text-muted-foreground">{note}</p> : null}
 
       {outcome ? (
         <p

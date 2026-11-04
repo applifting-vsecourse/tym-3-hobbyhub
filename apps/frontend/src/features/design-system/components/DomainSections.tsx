@@ -321,6 +321,14 @@ export function DomainSections() {
             onReject={notify("Žádost zamítnuta")}
           />
         </Example>
+        <Example label="Vyřízená žádost (přehled účastníků)">
+          <JoinRequestCard
+            className="max-w-sm"
+            name="Petra"
+            bio="Běhám a o víkendech hraju volejbal."
+            note="Místo má od 3. 11. 2026"
+          />
+        </Example>
         <Example label="Zpráva do chatu (Sdílení do chatu)">
           <ChatShare
             className="max-w-sm"

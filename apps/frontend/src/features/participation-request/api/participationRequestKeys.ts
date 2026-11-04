@@ -1,3 +1,5 @@
+import type { DecidedStatus } from "@/features/participation-request/api/participationRequestSchemas"
+
 export const participationRequestKeys = {
   all: () => ["participation-requests"] as const,
   // Per user too, so the next person signing in on this device never sees the
@@ -6,4 +8,8 @@ export const participationRequestKeys = {
     [...participationRequestKeys.all(), "mine", eventId, userId] as const,
   // The organizer's list of waiting requests (F-05.7).
   pending: (eventId: string) => [...participationRequestKeys.all(), "pending", eventId] as const,
+  // The approved, rejected and withdrawn of the participants tab (F-05.6).
+  decidedAll: (eventId: string) => [...participationRequestKeys.all(), "decided", eventId] as const,
+  decided: (eventId: string, status: DecidedStatus) =>
+    [...participationRequestKeys.decidedAll(eventId), status] as const,
 }
