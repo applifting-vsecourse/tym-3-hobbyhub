@@ -13,6 +13,7 @@ export const EVENT_LIMITS = {
   postalCodeMax: 20,
   countryMax: 100,
   placeNameMax: 200,
+  contactMax: 500,
   participantsLimit: 500,
 } as const
 
@@ -58,6 +59,7 @@ export const eventSchema = z.object({
   fillState: z.enum(["BELOW_MINIMUM", "MINIMUM_REACHED", "FULL"]),
   contributionAmount: z.number().nullable(),
   contributionNote: z.string().nullable(),
+  contact: z.string().nullable(),
   location: eventLocationSchema.nullable(),
   activity: z.object({ id: z.string(), name: z.string(), icon: z.string() }),
   organizerId: z.string(),
@@ -106,6 +108,8 @@ export type CreateEventInput = {
   externalOccupiedSpots: number
   contributionAmount?: number
   contributionNote?: string
+  /** Shown to approved participants only. */
+  contact?: string
 }
 
 export const eventListItemSchema = z.object({
@@ -173,3 +177,16 @@ export const eventDetailSchema = eventListItemSchema.extend({
 })
 
 export type EventDetail = z.infer<typeof eventDetailSchema>
+
+/**
+ * What only the organizers and approved participants get (F-06.5): the exact
+ * address and the ways to reach the organizer. Not part of the public detail.
+ */
+export const participantInfoSchema = z.object({
+  venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
+  location: eventLocationSchema.nullable(),
+  organizerName: z.string(),
+  contact: z.string().nullable(),
+})
+
+export type ParticipantInfo = z.infer<typeof participantInfoSchema>

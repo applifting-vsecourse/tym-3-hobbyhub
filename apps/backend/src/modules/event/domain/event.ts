@@ -7,6 +7,7 @@ export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
 export const EVENT_EQUIPMENT_MAX_LENGTH = 500;
 export const EVENT_CONTRIBUTION_NOTE_MAX_LENGTH = 200;
 export const EVENT_CANCELLATION_NOTE_MAX_LENGTH = 500;
+export const EVENT_CONTACT_MAX_LENGTH = 500;
 // Decimal(10, 2)
 export const EVENT_CONTRIBUTION_MAX_AMOUNT = 99_999_999.99;
 export const EVENT_STREET_MAX_LENGTH = 200;
@@ -104,6 +105,9 @@ export type Event = Occupancy & {
   // Information only (F-05.1): what one pays, never a payment through the app.
   contributionAmount: number | null;
   contributionNote: string | null;
+  // F-06.5: how an approved participant reaches the group; see
+  // `ParticipantEventInfo`. Never in the public detail.
+  contact: string | null;
   location: EventLocation | null;
   activity: Activity;
   organizerId: string;
@@ -161,6 +165,7 @@ export type CreateEventData = {
   externalOccupiedSpots: number;
   contributionAmount?: number;
   contributionNote?: string;
+  contact?: string;
 };
 
 export type EventRuleViolation =
@@ -388,6 +393,16 @@ export type ParticipantStats = {
   gender: { male: number; female: number; unknown: number } | null;
 };
 
+// F-06.5: what only the organizers and the approved participants of a public
+// event may see (visibility matrix): the exact address and the ways to reach
+// the organizer. The public `EventDetail` holds all of it back.
+export type ParticipantEventInfo = {
+  venueType: VenueType;
+  location: EventLocation | null;
+  organizerName: string;
+  contact: string | null;
+};
+
 export type EventDetail = EventListItem & {
   description: string;
   equipment: string | null;
@@ -405,4 +420,17 @@ export type EventDetail = EventListItem & {
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;
+};
+
+export type ContactKind = 'email' | 'phone' | 'link';
+
+// The organizer's one contact is an e-mail, a phone number or a link (a group
+// on Facebook, WhatsApp, Telegram…). Null when it is none of those.
+export const contactKindOf = (value: string): ContactKind | null => {
+  const text = value.trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text)) return 'email';
+  // Digits with an optional leading + and the usual separators.
+  if (/^\+?[0-9][0-9 ()-]{5,}$/.test(text)) return 'phone';
+  if (/^https?:\/\/[^\s/$.?#][^\s]*$/i.test(text)) return 'link';
+  return null;
 };

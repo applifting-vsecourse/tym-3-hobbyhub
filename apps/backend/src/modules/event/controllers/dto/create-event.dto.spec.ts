@@ -164,6 +164,37 @@ describe('CreateEventDto', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
+    it.each([
+      ['an e-mail', ' org@example.com ', 'org@example.com'],
+      ['a phone', '+420 777 123 456', '+420 777 123 456'],
+      [
+        'a link to a group',
+        ' https://www.facebook.com/groups/florbal ',
+        'https://www.facebook.com/groups/florbal',
+      ],
+    ])('keeps %s as the contact', async (_, sent, kept) => {
+      await expect(
+        validate({ ...validBody, contact: sent }),
+      ).resolves.toMatchObject({ contact: kept });
+    });
+
+    it('drops a blank contact', async () => {
+      await expect(
+        validate({ ...validBody, contact: '  ' }),
+      ).resolves.toMatchObject({ contact: undefined });
+    });
+
+    it.each([
+      ['a link that is not http(s)', 'javascript:alert(1)'],
+      ['a link without a protocol', 'facebook.com/groups/florbal'],
+      ['text that is no contact', 'call me'],
+      ['an e-mail without an at sign', 'org.example.com'],
+    ])('refuses %s as the contact', async (_, contact) => {
+      await expect(validate({ ...validBody, contact })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
     // The database counts characters, not UTF-16 units.
     it('counts an emoji as one character', async () => {
       await expect(

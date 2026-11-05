@@ -21,8 +21,8 @@ import {
 
 import "mapbox-gl/dist/mapbox-gl.css"
 
-const LIGHT_STYLE = "mapbox://styles/mapbox/light-v11"
-const DARK_STYLE = "mapbox://styles/mapbox/dark-v11"
+export const LIGHT_STYLE = "mapbox://styles/mapbox/light-v11"
+export const DARK_STYLE = "mapbox://styles/mapbox/dark-v11"
 
 // Prague, until there is something to fit.
 const FALLBACK_CENTER: [number, number] = [14.4378, 50.0755]
@@ -56,7 +56,7 @@ const fitPadding = (target: mapboxgl.Map) => {
   return { top: FIT_PADDING, bottom: FIT_PADDING, left: side, right: side }
 }
 
-const isDark = () => document.documentElement.classList.contains("dark")
+export const isDark = () => document.documentElement.classList.contains("dark")
 
 type MapMarkerProps = {
   map: mapboxgl.Map
@@ -69,7 +69,14 @@ type MapMarkerProps = {
 }
 
 /** Puts React content on the map: a Mapbox marker whose element React draws into. */
-function MapMarker({ map, latitude, longitude, anchor, offsetX = 0, children }: MapMarkerProps) {
+export function MapMarker({
+  map,
+  latitude,
+  longitude,
+  anchor,
+  offsetX = 0,
+  children,
+}: MapMarkerProps) {
   const [element] = useState(() => document.createElement("div"))
   useEffect(() => {
     const marker = new mapboxgl.Marker({ element, anchor, offset: [offsetX, 0] })

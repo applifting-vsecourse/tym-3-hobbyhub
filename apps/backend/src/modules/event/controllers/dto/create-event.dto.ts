@@ -2,9 +2,11 @@ import { CharLength } from '@/core/validation/char-length.decorator';
 import {
   APPROVAL_MODES,
   ApprovalMode,
+  contactKindOf,
   CREATABLE_VENUE_TYPES,
   CreatableVenueType,
   EVENT_CITY_MAX_LENGTH,
+  EVENT_CONTACT_MAX_LENGTH,
   EVENT_CONTRIBUTION_MAX_AMOUNT,
   EVENT_CONTRIBUTION_NOTE_MAX_LENGTH,
   EVENT_COUNTRY_MAX_LENGTH,
@@ -33,11 +35,25 @@ import {
   IsString,
   Max,
   Min,
+  Validate,
   ValidateNested,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
+
+@ValidatorConstraint({ name: 'isContact' })
+class IsContactConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    return typeof value === 'string' && contactKindOf(value) !== null;
+  }
+
+  defaultMessage(): string {
+    return 'contact must be an e-mail, a phone number or an http(s) link';
+  }
+}
 
 // Optional text: whitespace only counts as not filled in.
 const trimToUndefined = ({ value }: { value: unknown }): unknown =>
@@ -232,4 +248,17 @@ export class CreateEventDto {
   @IsString()
   @CharLength(0, EVENT_CONTRIBUTION_NOTE_MAX_LENGTH)
   contributionNote?: string;
+
+  @ApiPropertyOptional({
+    example: '+420 777 123 456',
+    maxLength: EVENT_CONTACT_MAX_LENGTH,
+    description:
+      'One contact on the organizer: e-mail, phone or a link (e.g. a Facebook group). Shown to approved participants only',
+  })
+  @Transform(trimToUndefined)
+  @IsOptional()
+  @IsString()
+  @CharLength(0, EVENT_CONTACT_MAX_LENGTH)
+  @Validate(IsContactConstraint)
+  contact?: string;
 }

@@ -33,6 +33,11 @@ type EventDetailProps = {
    * pending request can still be withdrawn once the event fills up.
    */
   ownRequest?: ReactNode
+  /**
+   * The exact place and the contacts, for the organizer and people with a seat.
+   * Absent for everyone else, who is told when they appear instead.
+   */
+  participantInfo?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -70,6 +75,7 @@ export function EventDetail({
   groupLink,
   shareAction,
   ownRequest,
+  participantInfo,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -84,7 +90,7 @@ export function EventDetail({
   const addressNote =
     event.venueType === "ONLINE"
       ? { label: t("events.detail.linkLabel"), value: t("events.detail.address.online") }
-      : event.venueType === "PRIVATE_VENUE"
+      : event.venueType === "PRIVATE_VENUE" && !participantInfo
         ? { label: t("events.detail.addressLabel"), value: t("events.detail.address.private") }
         : null
   const practical = [
@@ -259,6 +265,11 @@ export function EventDetail({
             ))}
           </dl>
         ) : null}
+
+        {participantInfo ??
+          (state === "open" || state === "full" ? (
+            <p className="typo-small text-muted-foreground">{t("events.detail.hiddenInfo")}</p>
+          ) : null)}
 
         <section className="flex flex-col gap-3 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.stats.title")}</h2>

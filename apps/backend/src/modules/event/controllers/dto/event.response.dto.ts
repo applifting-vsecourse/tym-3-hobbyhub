@@ -1,5 +1,9 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
-import { Event, EventLocation } from '@/modules/event/domain/event';
+import {
+  Event,
+  EventLocation,
+  ParticipantEventInfo,
+} from '@/modules/event/domain/event';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class EventLocationResponseDto {
@@ -107,6 +111,9 @@ export class EventResponseDto {
   @ApiProperty({ type: String, nullable: true })
   contributionNote!: string | null;
 
+  @ApiProperty({ type: String, nullable: true })
+  contact!: string | null;
+
   @ApiProperty({ type: EventLocationResponseDto, nullable: true })
   location!: EventLocationResponseDto | null;
 
@@ -148,6 +155,7 @@ export class EventResponseDto {
       fillState: event.fillState,
       contributionAmount: event.contributionAmount,
       contributionNote: event.contributionNote,
+      contact: event.contact,
       location: event.location
         ? EventLocationResponseDto.fromDomain(event.location)
         : null,
@@ -156,6 +164,34 @@ export class EventResponseDto {
       organizerId: event.organizerId,
       cancellationReason: event.cancellationReason,
       cancellationNote: event.cancellationNote,
+    };
+  }
+}
+
+// F-06.5: only for the organizers and the approved participants of an event.
+export class ParticipantEventInfoResponseDto {
+  @ApiProperty({ enum: ['PUBLIC_VENUE', 'PRIVATE_VENUE', 'ONLINE'] })
+  venueType!: ParticipantEventInfo['venueType'];
+
+  @ApiProperty({ type: EventLocationResponseDto, nullable: true })
+  location!: EventLocationResponseDto | null;
+
+  @ApiProperty()
+  organizerName!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  contact!: string | null;
+
+  static fromDomain(
+    info: ParticipantEventInfo,
+  ): ParticipantEventInfoResponseDto {
+    return {
+      venueType: info.venueType,
+      location: info.location
+        ? EventLocationResponseDto.fromDomain(info.location)
+        : null,
+      organizerName: info.organizerName,
+      contact: info.contact,
     };
   }
 }

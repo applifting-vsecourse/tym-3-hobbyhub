@@ -425,6 +425,7 @@ const EXISTING: Event = {
   fillState: "MINIMUM_REACHED",
   contributionAmount: 80,
   contributionNote: null,
+  contact: null,
   location: {
     street: "Chabařovická 4",
     city: "Praha 8",
@@ -462,6 +463,33 @@ describe("EventForm editing an event", () => {
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Páteční florbal", activityId: "a-florbal" }),
+    )
+  })
+
+  it("saves one contact, and refuses text that is no e-mail, phone or link", async () => {
+    const { onSubmit, user } = await renderForm({ event: EXISTING })
+
+    await continueToNextStep(user)
+    await continueToNextStep(user)
+    await user.type(screen.getByLabelText(/Kontakt na organizátora/), "facebook.com/groups/florbal")
+    await user.click(screen.getByRole("button", { name: "Uložit změny" }))
+
+    expect(
+      await screen.findByText(
+        "Zadejte e-mail, telefon, nebo odkaz začínající na http:// nebo https://",
+      ),
+    ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText(/Kontakt na organizátora/))
+    await user.type(
+      screen.getByLabelText(/Kontakt na organizátora/),
+      "https://www.facebook.com/groups/florbal",
+    )
+    await user.click(screen.getByRole("button", { name: "Uložit změny" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ contact: "https://www.facebook.com/groups/florbal" }),
     )
   })
 
