@@ -172,3 +172,8 @@ export type ApplicationFacts = {
 };
 
 export type EventApplicationFacts = ApplicationFacts & { eventId: string };
+
+export type ApplicationFactsPage = {
+  items: EventApplicationFacts[];
+  total: number;
+};

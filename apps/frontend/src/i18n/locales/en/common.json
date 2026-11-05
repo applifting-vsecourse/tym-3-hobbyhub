@@ -814,6 +814,7 @@
     "hosted": {
       "empty": "You are not organizing any upcoming event."
     },
+    "loadMore": "Load more",
     "loading": "Loading your events",
     "status": {
       "APPROVED": "Approved",
@@ -824,7 +825,9 @@
     },
     "tabs": {
       "applications": "Applications",
+      "applicationsWithCount": "Applications ({{count}})",
       "hosted": "Organizing",
+      "hostedWithCount": "Organizing ({{count}})",
       "label": "My events"
     },
     "title": "My events"

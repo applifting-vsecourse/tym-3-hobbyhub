@@ -14,12 +14,16 @@ export const applicationStatusSchema = z.enum([
 
 export type ApplicationStatus = z.infer<typeof applicationStatusSchema>
 
-export const myEventsSchema = z.object({
-  /** Applications to events that are not over, soonest first. */
-  applications: z.array(z.object({ status: applicationStatusSchema, event: eventListItemSchema })),
-  /** Events the person organizes that are not over, soonest first. */
-  hosted: z.array(eventListItemSchema),
+export const myApplicationSchema = z.object({
+  status: applicationStatusSchema,
+  event: eventListItemSchema,
 })
 
-export type MyEvents = z.infer<typeof myEventsSchema>
-export type MyApplication = MyEvents["applications"][number]
+export type MyApplication = z.infer<typeof myApplicationSchema>
+
+/** A page of applications to events that are not over, soonest first. */
+export const myApplicationsPageSchema = z.object({
+  items: z.array(myApplicationSchema),
+  /** All upcoming applications, not just this page. */
+  total: z.number(),
+})

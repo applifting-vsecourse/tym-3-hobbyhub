@@ -16,6 +16,7 @@ describe('applicationStatusOf', () => {
     [{ requests: ['WITHDRAWN'] }, 'WITHDRAWN'],
     [{ seat: 'CANCELLED', requests: ['APPROVED'] }, 'WITHDRAWN'],
     [{ requests: ['CLOSED'] }, 'EVENT_CANCELLED'],
+    [{ requests: ['APPROVED'] }, 'APPROVED'],
   ])('maps %j to %s', (override, expected) => {
     expect(applicationStatusOf(facts(override))).toBe(expected);
   });

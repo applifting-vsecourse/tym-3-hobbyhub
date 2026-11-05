@@ -3,10 +3,10 @@ import { EventsService } from '@/modules/event/services/events.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
+  ApplicationFactsPage,
   currentRequestOf,
   DecisionRuleViolation,
   decisionRuleViolations,
-  EventApplicationFacts,
   JoinRuleViolation,
   joinRuleViolations,
   ParticipationRequest,
@@ -65,13 +65,14 @@ export class ParticipationRequestsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  // F-06.3: the person's own applications to events that are not over; the
-  // overview turns them into one status per event.
+  // F-06.3: a page of the person's own applications to events that are not
+  // over; the overview turns them into one status per event.
   getMyApplicationFacts(
     user: Identity,
+    page: Page,
     now: Date = new Date(),
-  ): Promise<EventApplicationFacts[]> {
-    return this.repository.getApplicationFacts(user.id, now);
+  ): Promise<ApplicationFactsPage> {
+    return this.repository.getApplicationFacts(user.id, now, page);
   }
 
   async getMyRequestState(

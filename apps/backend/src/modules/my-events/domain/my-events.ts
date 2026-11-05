@@ -1,29 +1,43 @@
 import { EventListItem } from '@/modules/event/domain/event';
 import { ApplicationFacts } from '@/modules/participation-request/domain/participation-request';
 
+// The overview pages like the event list: a page of each of its two lists.
+export const MY_EVENTS_DEFAULT_LIMIT = 20;
+export const MY_EVENTS_MAX_LIMIT = 50;
+
 // F-06.3: the state a person's application to an event is in, as the overview
 // tells it. WITHDRAWN covers both a request cancelled while waiting and a seat
 // given up later; the person sees both as "signed off". ADR-0003: PENDING and
 // REJECTED come from the request, APPROVED and WITHDRAWN from the seat.
-export type ApplicationStatus =
-  'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'EVENT_CANCELLED';
+export const APPLICATION_STATUSES = [
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN',
+  'EVENT_CANCELLED',
+] as const;
+export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 // One status per event. A cancelled event outranks anything still alive (a
 // seat, a waiting request, a request closed by the cancellation); a person who
-// had already left or been turned down keeps their own outcome. Null when the
-// person has no application worth showing (e.g. only a waitlist row).
+// had already left or been turned down keeps their own outcome. Null only for a
+// person with nothing to show (e.g. a waitlist row alone). An approved request
+// without a seat row counts as the seat it created (ADR-0003).
 export const applicationStatusOf = (
   facts: ApplicationFacts,
 ): ApplicationStatus | null => {
   const hasPending = facts.requests.includes('PENDING');
   const hasClosed = facts.requests.includes('CLOSED');
+  const hasSeat =
+    facts.seat === 'APPROVED' ||
+    (facts.seat === null && facts.requests.includes('APPROVED'));
   if (
     facts.eventStatus === 'CANCELLED' &&
-    (facts.seat === 'APPROVED' || hasPending || hasClosed)
+    (hasSeat || hasPending || hasClosed)
   ) {
     return 'EVENT_CANCELLED';
   }
-  if (facts.seat === 'APPROVED') return 'APPROVED';
+  if (hasSeat) return 'APPROVED';
   if (hasPending) return 'PENDING';
   if (facts.seat === 'CANCELLED') return 'WITHDRAWN';
   if (facts.requests.includes('REJECTED')) return 'REJECTED';
@@ -37,7 +51,4 @@ export type MyApplication = {
   event: EventListItem;
 };
 
-export type MyEventsOverview = {
-  applications: MyApplication[];
-  hosted: EventListItem[];
-};
+export type MyApplicationPage = { items: MyApplication[]; total: number };

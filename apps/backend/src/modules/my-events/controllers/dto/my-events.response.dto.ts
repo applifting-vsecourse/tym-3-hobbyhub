@@ -1,15 +1,17 @@
-import { EventListItemResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
 import {
+  EventListItemResponseDto,
+  EventListResponseDto,
+} from '@/modules/event/controllers/dto/event-list-item.response.dto';
+import {
+  APPLICATION_STATUSES,
   ApplicationStatus,
   MyApplication,
-  MyEventsOverview,
+  MyApplicationPage,
 } from '@/modules/my-events/domain/my-events';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class MyApplicationResponseDto {
-  @ApiProperty({
-    enum: ['PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'EVENT_CANCELLED'],
-  })
+  @ApiProperty({ enum: APPLICATION_STATUSES })
   status!: ApplicationStatus;
 
   @ApiProperty({ type: EventListItemResponseDto })
@@ -23,25 +25,22 @@ export class MyApplicationResponseDto {
   }
 }
 
-export class MyEventsResponseDto {
-  @ApiProperty({
-    type: [MyApplicationResponseDto],
-    description: 'Applications to events that are not over, soonest first',
-  })
-  applications!: MyApplicationResponseDto[];
+export class MyApplicationPageResponseDto {
+  @ApiProperty({ type: [MyApplicationResponseDto] })
+  items!: MyApplicationResponseDto[];
 
   @ApiProperty({
-    type: [EventListItemResponseDto],
-    description: 'Published events the user organizes that are not over',
+    description: 'All upcoming applications of the user, not just this page',
   })
-  hosted!: EventListItemResponseDto[];
+  total!: number;
 
-  static fromDomain(overview: MyEventsOverview): MyEventsResponseDto {
+  static fromDomain(page: MyApplicationPage): MyApplicationPageResponseDto {
     return {
-      applications: overview.applications.map(
-        MyApplicationResponseDto.fromDomain,
-      ),
-      hosted: overview.hosted.map(EventListItemResponseDto.fromDomain),
+      items: page.items.map(MyApplicationResponseDto.fromDomain),
+      total: page.total,
     };
   }
 }
+
+// The events the user organizes page like the event list.
+export { EventListResponseDto as MyHostedEventsResponseDto };

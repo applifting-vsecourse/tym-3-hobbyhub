@@ -65,12 +65,13 @@ export class EventsService {
       : this.eventRepository.getListItemsByIds(ids);
   }
 
-  // F-06.3: what the person organizes and has still ahead.
+  // F-06.3: a page of what the person organizes and has still ahead.
   getUpcomingOrganizedEvents(
     user: Identity,
+    page: Page,
     now: Date = new Date(),
-  ): Promise<EventListItem[]> {
-    return this.eventRepository.getUpcomingOrganizedBy(user.id, now);
+  ): Promise<EventListPage> {
+    return this.eventRepository.getUpcomingOrganizedBy(user.id, now, page);
   }
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {

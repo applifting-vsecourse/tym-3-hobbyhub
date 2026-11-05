@@ -829,6 +829,7 @@
     "hosted": {
       "empty": "Nepořádáte žádnou nadcházející akci."
     },
+    "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "status": {
       "APPROVED": "Schváleno",
@@ -839,7 +840,9 @@
     },
     "tabs": {
       "applications": "Přihlášky",
+      "applicationsWithCount": "Přihlášky ({{count}})",
       "hosted": "Pořádám",
+      "hostedWithCount": "Pořádám ({{count}})",
       "label": "Moje akce"
     },
     "title": "Moje akce"

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
-import type { ApplicationStatus, MyEvents } from "@/features/event/api/myEventsSchemas"
+import type { ApplicationStatus, MyApplication } from "@/features/event/api/myEventsSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
@@ -21,29 +22,66 @@ const BADGES: Record<ApplicationStatus, Status> = {
   EVENT_CANCELLED: "rejected",
 }
 
+/** What the overview needs to know about one of its two lists. */
+export type MyEventsList<T> = {
+  items: T[]
+  /** All upcoming rows, which can be more than the ones loaded. */
+  total: number
+  isLoading: boolean
+  error: Error | null
+  hasMore: boolean
+  isLoadingMore: boolean
+  onLoadMore: () => void
+  onReload: () => void
+}
+
 type MyEventsOverviewProps = {
-  data?: MyEvents
+  applications: MyEventsList<MyApplication>
+  hosted: MyEventsList<EventListItem>
   /** Display name of an event's activity; the activity feature owns the translation. */
   activityLabel: (activity: EventListItem["activity"]) => string
-  isLoading?: boolean
-  error?: Error | null
-  onReload?: () => void
   /** Injectable so "today" is stable in tests. */
   now?: Date
 }
 
+/** The next page loads by itself when the button scrolls into view; the button also works alone. */
+function LoadMore({ isLoading, onLoadMore }: { isLoading: boolean; onLoadMore: () => void }) {
+  const { t } = useTranslation()
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const button = buttonRef.current
+    if (!button || isLoading || typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) onLoadMore()
+    })
+    observer.observe(button)
+    return () => observer.disconnect()
+  }, [isLoading, onLoadMore])
+
+  return (
+    <Button
+      ref={buttonRef}
+      variant="outline"
+      className="mt-4 self-center"
+      disabled={isLoading}
+      onClick={onLoadMore}
+    >
+      {t("myEvents.loadMore")}
+    </Button>
+  )
+}
+
 /** F-06.3: the person's upcoming applications with their state, and the events they organize. */
 export function MyEventsOverview({
-  data,
+  applications,
+  hosted,
   activityLabel,
-  isLoading,
-  error,
-  onReload,
   now = new Date(),
 }: MyEventsOverviewProps) {
   const { t, i18n } = useTranslation()
 
-  if (isLoading) {
+  if (applications.isLoading && hosted.isLoading) {
     return (
       <div className="flex justify-center py-16">
         <Loader
@@ -54,16 +92,14 @@ export function MyEventsOverview({
     )
   }
 
-  if (!data) {
-    return (
-      <EventsLoadError
-        error={error ?? new Error()}
-        onRetry={onReload}
-      />
-    )
-  }
-
-  if (data.applications.length === 0 && data.hosted.length === 0) {
+  const isNothingYet =
+    !applications.error &&
+    !hosted.error &&
+    !applications.isLoading &&
+    !hosted.isLoading &&
+    applications.total === 0 &&
+    hosted.total === 0
+  if (isNothingYet) {
     return (
       <div
         role="status"
@@ -111,32 +147,73 @@ export function MyEventsOverview({
     </li>
   )
 
+  // One tab's body: loading, a failed first load, the rows with "load more", or "nothing here".
+  const body = <T,>(
+    list: MyEventsList<T>,
+    emptyKey: "myEvents.applications.empty" | "myEvents.hosted.empty",
+    render: (item: T) => React.ReactNode,
+  ) => {
+    if (list.isLoading) {
+      return (
+        <div className="flex justify-center py-12">
+          <Loader
+            variant="player"
+            label={t("myEvents.loading")}
+          />
+        </div>
+      )
+    }
+    if (list.error && list.items.length === 0) {
+      return (
+        <EventsLoadError
+          error={list.error}
+          onRetry={list.onReload}
+        />
+      )
+    }
+    if (list.items.length === 0) {
+      return <p className="mt-4 typo-body text-muted-foreground">{t(emptyKey)}</p>
+    }
+    return (
+      <div className="flex flex-col">
+        <ul>{list.items.map(render)}</ul>
+        {list.error ? (
+          // A later page failed: keep what is loaded and retry just that page.
+          <EventsLoadError
+            error={list.error}
+            onRetry={list.onLoadMore}
+          />
+        ) : list.hasMore ? (
+          <LoadMore
+            isLoading={list.isLoadingMore}
+            onLoadMore={list.onLoadMore}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
+  const label = (list: MyEventsList<unknown>, key: "applications" | "hosted") =>
+    list.isLoading
+      ? t(`myEvents.tabs.${key}`)
+      : t(`myEvents.tabs.${key}WithCount`, { count: list.total })
+
   return (
     <Tabs defaultValue="applications">
       <TabsList
         aria-label={t("myEvents.tabs.label")}
         className="w-full sm:w-fit"
       >
-        <TabsTrigger value="applications">
-          {t("myEvents.tabs.applications")} ({data.applications.length})
-        </TabsTrigger>
-        <TabsTrigger value="hosted">
-          {t("myEvents.tabs.hosted")} ({data.hosted.length})
-        </TabsTrigger>
+        <TabsTrigger value="applications">{label(applications, "applications")}</TabsTrigger>
+        <TabsTrigger value="hosted">{label(hosted, "hosted")}</TabsTrigger>
       </TabsList>
       <TabsContent value="applications">
-        {data.applications.length === 0 ? (
-          <p className="mt-4 typo-body text-muted-foreground">{t("myEvents.applications.empty")}</p>
-        ) : (
-          <ul>{data.applications.map(({ event, status }) => row(event, status))}</ul>
+        {body(applications, "myEvents.applications.empty", ({ event, status }) =>
+          row(event, status),
         )}
       </TabsContent>
       <TabsContent value="hosted">
-        {data.hosted.length === 0 ? (
-          <p className="mt-4 typo-body text-muted-foreground">{t("myEvents.hosted.empty")}</p>
-        ) : (
-          <ul>{data.hosted.map((event) => row(event))}</ul>
-        )}
+        {body(hosted, "myEvents.hosted.empty", (event) => row(event))}
       </TabsContent>
     </Tabs>
   )

@@ -110,6 +110,133 @@ describeDb('ParticipationRequestRepository', () => {
     return { eventId: event.id, userIds };
   };
 
+  describe('getApplicationFacts', () => {
+    const before = new Date('2029-12-31T10:00:00Z');
+    const page = { limit: 10, offset: 0 };
+    const february = {
+      startAt: new Date('2030-02-01T18:00:00Z'),
+      endAt: new Date('2030-02-01T20:00:00Z'),
+    };
+
+    it('returns only the own seat and requests, soonest event first', async () => {
+      const first = await eventWith(2, 2);
+      const second = await eventWith(2, 2);
+      const [me, other] = first.userIds as [string, string];
+      await prisma.event.update({
+        where: { id: second.eventId },
+        data: february,
+      });
+      await prisma.participationRequest.createMany({
+        data: [
+          { eventId: first.eventId, userId: me },
+          { eventId: first.eventId, userId: other },
+          {
+            eventId: second.eventId,
+            userId: me,
+            status: 'REJECTED',
+            decidedAt: before,
+          },
+        ],
+      });
+      await prisma.participation.create({
+        data: {
+          eventId: second.eventId,
+          userId: me,
+          status: ParticipationStatus.CANCELLED,
+        },
+      });
+
+      const result = await repository.getApplicationFacts(me, before, page);
+
+      expect(result.total).toBe(2);
+      expect(result.items).toEqual([
+        {
+          eventId: first.eventId,
+          eventStatus: 'PUBLISHED',
+          seat: null,
+          requests: ['PENDING'],
+        },
+        {
+          eventId: second.eventId,
+          eventStatus: 'PUBLISHED',
+          seat: 'CANCELLED',
+          requests: ['REJECTED'],
+        },
+      ]);
+    });
+
+    it('pages the events and counts them all', async () => {
+      const { eventId, userIds } = await eventWith(2, 1);
+      const later = await eventWith(2, 0);
+      const me = userIds[0]!;
+      await prisma.event.update({
+        where: { id: later.eventId },
+        data: february,
+      });
+      await prisma.participationRequest.createMany({
+        data: [
+          { eventId, userId: me },
+          { eventId: later.eventId, userId: me },
+        ],
+      });
+
+      const result = await repository.getApplicationFacts(me, before, {
+        limit: 1,
+        offset: 1,
+      });
+
+      expect(result.total).toBe(2);
+      expect(result.items.map((item) => item.eventId)).toEqual([later.eventId]);
+    });
+
+    it.each([
+      [
+        'over',
+        {
+          startAt: new Date('2029-12-29T00:00:00Z'),
+          endAt: new Date('2029-12-30T00:00:00Z'),
+        },
+      ],
+      ['hidden', { isHidden: true }],
+      ['not public', { visibility: 'PRIVATE' as const }],
+      ['a draft', { status: 'DRAFT' as const }],
+    ])('leaves out an event that is %s', async (_, change) => {
+      const { eventId, userIds } = await eventWith(2, 1);
+      await prisma.participationRequest.create({
+        data: { eventId, userId: userIds[0]! },
+      });
+      await prisma.event.update({ where: { id: eventId }, data: change });
+
+      const result = await repository.getApplicationFacts(
+        userIds[0]!,
+        before,
+        page,
+      );
+
+      expect(result).toEqual({ items: [], total: 0 });
+    });
+
+    it('leaves out an event where the person only waits on the waitlist', async () => {
+      const { eventId, userIds } = await eventWith(2, 1);
+      await prisma.participation.create({
+        data: {
+          eventId,
+          userId: userIds[0]!,
+          status: ParticipationStatus.WAITLISTED,
+          waitlistPosition: 1,
+        },
+      });
+
+      const result = await repository.getApplicationFacts(
+        userIds[0]!,
+        before,
+        page,
+      );
+
+      expect(result.total).toBe(0);
+    });
+  });
+
   describe('createPending', () => {
     it.each([
       ['cancelled', { status: 'CANCELLED' as const }, 'EVENT_CANCELLED'],

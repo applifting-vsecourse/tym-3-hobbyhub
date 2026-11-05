@@ -504,27 +504,34 @@ export class EventRepository {
     return events.map((event) => mapPrismaEventToListItem(event));
   }
 
-  // F-06.3: published public events a person organizes (or co-organizes) that
-  // are not over, soonest first.
+  // F-06.3: a page of the published public events a person organizes (or
+  // co-organizes) that are not over, soonest first.
   async getUpcomingOrganizedBy(
     userId: string,
     now: Date,
-  ): Promise<EventListItem[]> {
-    const events = await this.prisma.event.findMany({
-      where: {
-        status: EventStatus.PUBLISHED,
-        visibility: EventVisibility.PUBLIC,
-        isHidden: false,
-        endAt: { gte: now },
-        OR: [
-          { organizerId: userId },
-          { coOrganizers: { some: { id: userId } } },
-        ],
-      },
-      include: listInclude,
-      orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
-    });
-    return events.map((event) => mapPrismaEventToListItem(event));
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    const where: Prisma.EventWhereInput = {
+      status: EventStatus.PUBLISHED,
+      visibility: EventVisibility.PUBLIC,
+      isHidden: false,
+      endAt: { gte: now },
+      OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => mapPrismaEventToListItem(event)),
+      total,
+    };
   }
 
   // Public detail: the list's visibility rules, but an event that was cancelled

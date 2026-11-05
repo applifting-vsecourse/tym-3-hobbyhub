@@ -8,9 +8,10 @@ import { MyEventsService } from './my-events.service';
 
 const user = { id: 'u1' } as Identity;
 const now = new Date('2030-01-01T12:00:00Z');
+const page = { limit: 20, offset: 0 };
 
-const anItem = (id: string, startAt: string): EventListItem =>
-  ({ id, startAt: new Date(startAt) }) as EventListItem;
+const anItem = (id: string): EventListItem =>
+  ({ id, startAt: new Date('2030-01-02T10:00:00Z') }) as EventListItem;
 
 const facts = (
   eventId: string,
@@ -32,54 +33,66 @@ describe('MyEventsService', () => {
     events = mock<EventsService>();
     requests = mock<ParticipationRequestsService>();
     service = new MyEventsService(events, requests);
-    events.getUpcomingOrganizedEvents.mockResolvedValue([]);
   });
 
-  it('pairs each event with its status, soonest first', async () => {
-    requests.getMyApplicationFacts.mockResolvedValue([
-      facts('late'),
-      facts('soon', { seat: 'APPROVED', requests: ['APPROVED'] }),
-      facts('cancelled', { eventStatus: 'CANCELLED' }),
-    ]);
-    events.getListItemsByIds.mockResolvedValue([
-      anItem('late', '2030-03-01T10:00:00Z'),
-      anItem('soon', '2030-01-02T10:00:00Z'),
-      anItem('cancelled', '2030-02-01T10:00:00Z'),
-    ]);
+  describe('getApplications', () => {
+    it('pairs each event with its status and keeps the order of the page', async () => {
+      requests.getMyApplicationFacts.mockResolvedValue({
+        items: [
+          facts('soon', { seat: 'APPROVED', requests: ['APPROVED'] }),
+          facts('cancelled', { eventStatus: 'CANCELLED' }),
+          facts('late'),
+        ],
+        total: 45,
+      });
+      // The repository returns the cards in no particular order.
+      events.getListItemsByIds.mockResolvedValue([
+        anItem('late'),
+        anItem('soon'),
+        anItem('cancelled'),
+      ]);
 
-    const overview = await service.getOverview(user, now);
+      const result = await service.getApplications(user, page, now);
 
-    expect(
-      overview.applications.map(({ event, status }) => [event.id, status]),
-    ).toEqual([
-      ['soon', 'APPROVED'],
-      ['cancelled', 'EVENT_CANCELLED'],
-      ['late', 'PENDING'],
-    ]);
-    expect(requests.getMyApplicationFacts).toHaveBeenCalledWith(user, now);
+      expect(result.total).toBe(45);
+      expect(
+        result.items.map(({ event, status }) => [event.id, status]),
+      ).toEqual([
+        ['soon', 'APPROVED'],
+        ['cancelled', 'EVENT_CANCELLED'],
+        ['late', 'PENDING'],
+      ]);
+      expect(requests.getMyApplicationFacts).toHaveBeenCalledWith(
+        user,
+        page,
+        now,
+      );
+    });
+
+    it('leaves out events without an application worth showing', async () => {
+      requests.getMyApplicationFacts.mockResolvedValue({
+        items: [facts('none', { requests: [] })],
+        total: 1,
+      });
+      events.getListItemsByIds.mockResolvedValue([anItem('none')]);
+
+      const result = await service.getApplications(user, page, now);
+
+      expect(result.items).toEqual([]);
+    });
   });
 
-  it('leaves out events without an application worth showing', async () => {
-    requests.getMyApplicationFacts.mockResolvedValue([
-      facts('none', { requests: [] }),
-    ]);
-    events.getListItemsByIds.mockResolvedValue([]);
+  describe('getHosted', () => {
+    it('returns the page of events the user organizes', async () => {
+      const hosted = { items: [anItem('mine')], total: 1 };
+      events.getUpcomingOrganizedEvents.mockResolvedValue(hosted);
 
-    const overview = await service.getOverview(user, now);
-
-    expect(overview.applications).toEqual([]);
-    expect(events.getListItemsByIds).toHaveBeenCalledWith([]);
-  });
-
-  it('returns the events the user organizes beside the applications', async () => {
-    const hosted = [anItem('mine', '2030-01-05T10:00:00Z')];
-    requests.getMyApplicationFacts.mockResolvedValue([]);
-    events.getListItemsByIds.mockResolvedValue([]);
-    events.getUpcomingOrganizedEvents.mockResolvedValue(hosted);
-
-    const overview = await service.getOverview(user, now);
-
-    expect(overview.hosted).toBe(hosted);
-    expect(events.getUpcomingOrganizedEvents).toHaveBeenCalledWith(user, now);
+      await expect(service.getHosted(user, page, now)).resolves.toBe(hosted);
+      expect(events.getUpcomingOrganizedEvents).toHaveBeenCalledWith(
+        user,
+        page,
+        now,
+      );
+    });
   });
 });
