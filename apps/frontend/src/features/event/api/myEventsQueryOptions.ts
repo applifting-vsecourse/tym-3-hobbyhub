@@ -1,30 +1,25 @@
 import { infiniteQueryOptions } from "@tanstack/react-query"
 
 import { api } from "@/lib/api-client"
+import { myEventsKeys } from "@/lib/my-events-keys"
 
 import { eventListSchema } from "@/features/event/api/eventSchemas"
 import { myApplicationsPageSchema } from "@/features/event/api/myEventsSchemas"
 
 const MY_EVENTS_PAGE_SIZE = 20
 
-export const myEventsKeys = {
-  all: () => ["my-events"] as const,
-  // Per user, so the next person signing in on this device never sees the
-  // overview of the one before.
-  applications: (userId: string) => [...myEventsKeys.all(), "applications", userId] as const,
-  hosted: (userId: string) => [...myEventsKeys.all(), "hosted", userId] as const,
-}
+// The overview is kept for a minute. Sending, withdrawing and deciding requests
+// and creating, editing or cancelling events invalidate it, so it still shows
+// the change at once.
+const MY_EVENTS_STALE_TIME = 60_000
 
-// Offset paging, like the event list: a page starts after the rows loaded.
-const nextOffset = (loaded: number, total: number, lastPageSize: number) =>
-  loaded < total && lastPageSize > 0 ? loaded : undefined
-
-// Requests are sent and decided on other pages, so the overview reloads
-// whenever it is opened.
+// Offset paging, like the event list. The applications page says where the
+// next one starts, because the server may skip a row it cannot show; the hosted
+// list drops nothing, so its next page starts after the rows it has.
 export const myApplicationsQueryOptions = (userId: string) =>
   infiniteQueryOptions({
     queryKey: myEventsKeys.applications(userId),
-    refetchOnMount: "always",
+    staleTime: MY_EVENTS_STALE_TIME,
     queryFn: async ({ pageParam }) =>
       myApplicationsPageSchema.parse(
         await api
@@ -34,18 +29,13 @@ export const myApplicationsQueryOptions = (userId: string) =>
           .json(),
       ),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) =>
-      nextOffset(
-        pages.reduce((sum, page) => sum + page.items.length, 0),
-        lastPage.total,
-        lastPage.items.length,
-      ),
+    getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
   })
 
 export const myHostedEventsQueryOptions = (userId: string) =>
   infiniteQueryOptions({
     queryKey: myEventsKeys.hosted(userId),
-    refetchOnMount: "always",
+    staleTime: MY_EVENTS_STALE_TIME,
     queryFn: async ({ pageParam }) =>
       eventListSchema.parse(
         await api
@@ -55,10 +45,8 @@ export const myHostedEventsQueryOptions = (userId: string) =>
           .json(),
       ),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) =>
-      nextOffset(
-        pages.reduce((sum, page) => sum + page.items.length, 0),
-        lastPage.total,
-        lastPage.items.length,
-      ),
+    getNextPageParam: (lastPage, _pages, lastPageParam) => {
+      const next = lastPageParam + lastPage.items.length
+      return next < lastPage.total && lastPage.items.length > 0 ? next : undefined
+    },
   })

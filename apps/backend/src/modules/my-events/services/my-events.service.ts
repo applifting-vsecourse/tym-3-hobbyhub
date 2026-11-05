@@ -33,7 +33,8 @@ export class MyEventsService {
       const status = applicationStatusOf(rest);
       return event && status ? [{ status, event }] : [];
     });
-    return { items, total };
+    const next = page.offset + facts.length;
+    return { items, total, nextOffset: next < total ? next : null };
   }
 
   getHosted(

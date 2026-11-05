@@ -26,4 +26,6 @@ export const myApplicationsPageSchema = z.object({
   items: z.array(myApplicationSchema),
   /** All upcoming applications, not just this page. */
   total: z.number(),
+  /** Where the next page starts; null on the last one. */
+  nextOffset: z.number().nullable(),
 })

@@ -1,4 +1,3 @@
-import { EventListResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
 import { MyEventsService } from '@/modules/my-events/services/my-events.service';
 import { User } from '@/shared/auth/decorators/user.decorator';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -11,7 +10,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { MyEventsPageQuery } from './dto/my-events-page.query';
-import { MyApplicationPageResponseDto } from './dto/my-events.response.dto';
+import {
+  MyApplicationPageResponseDto,
+  MyHostedEventsResponseDto,
+} from './dto/my-events.response.dto';
 import { myEventsValidationPipe } from './my-events-validation.pipe';
 
 // F-06.3: the signed-in user's own overview, never anyone else's.
@@ -48,12 +50,12 @@ export class MyEventsController {
     summary:
       'Published events the user organizes that are not over, soonest first',
   })
-  @ApiResponse({ status: 200, type: EventListResponseDto })
+  @ApiResponse({ status: 200, type: MyHostedEventsResponseDto })
   async hosted(
     @User() user: Identity,
     @Query() query: MyEventsPageQuery,
-  ): Promise<EventListResponseDto> {
-    return EventListResponseDto.fromDomain(
+  ): Promise<MyHostedEventsResponseDto> {
+    return MyHostedEventsResponseDto.fromDomain(
       await this.service.getHosted(user, {
         limit: query.limit,
         offset: query.offset,

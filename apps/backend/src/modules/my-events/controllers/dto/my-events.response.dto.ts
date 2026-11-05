@@ -1,7 +1,5 @@
-import {
-  EventListItemResponseDto,
-  EventListResponseDto,
-} from '@/modules/event/controllers/dto/event-list-item.response.dto';
+import { EventListItemResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
+import { EventListPage } from '@/modules/event/domain/event';
 import {
   APPLICATION_STATUSES,
   ApplicationStatus,
@@ -34,13 +32,35 @@ export class MyApplicationPageResponseDto {
   })
   total!: number;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Offset of the next page; null on the last one',
+  })
+  nextOffset!: number | null;
+
   static fromDomain(page: MyApplicationPage): MyApplicationPageResponseDto {
     return {
       items: page.items.map(MyApplicationResponseDto.fromDomain),
       total: page.total,
+      nextOffset: page.nextOffset,
     };
   }
 }
 
-// The events the user organizes page like the event list.
-export { EventListResponseDto as MyHostedEventsResponseDto };
+export class MyHostedEventsResponseDto {
+  @ApiProperty({ type: [EventListItemResponseDto] })
+  items!: EventListItemResponseDto[];
+
+  @ApiProperty({
+    description: 'All upcoming events the user organizes, not just this page',
+  })
+  total!: number;
+
+  static fromDomain(page: EventListPage): MyHostedEventsResponseDto {
+    return {
+      items: page.items.map(EventListItemResponseDto.fromDomain),
+      total: page.total,
+    };
+  }
+}

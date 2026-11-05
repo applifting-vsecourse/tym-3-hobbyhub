@@ -48,16 +48,21 @@ type MyEventsOverviewProps = {
 function LoadMore({ isLoading, onLoadMore }: { isLoading: boolean; onLoadMore: () => void }) {
   const { t } = useTranslation()
   const buttonRef = useRef<HTMLButtonElement>(null)
+  // The observer outlives renders; it always calls the latest callback.
+  const onLoadMoreRef = useRef(onLoadMore)
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore
+  })
 
   useEffect(() => {
     const button = buttonRef.current
     if (!button || isLoading || typeof IntersectionObserver === "undefined") return
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) onLoadMore()
+      if (entries.some((entry) => entry.isIntersecting)) onLoadMoreRef.current()
     })
     observer.observe(button)
     return () => observer.disconnect()
-  }, [isLoading, onLoadMore])
+  }, [isLoading])
 
   return (
     <Button

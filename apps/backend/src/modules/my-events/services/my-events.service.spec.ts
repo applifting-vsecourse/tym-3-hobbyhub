@@ -55,6 +55,7 @@ describe('MyEventsService', () => {
       const result = await service.getApplications(user, page, now);
 
       expect(result.total).toBe(45);
+      expect(result.nextOffset).toBe(3);
       expect(
         result.items.map(({ event, status }) => [event.id, status]),
       ).toEqual([
@@ -67,6 +68,23 @@ describe('MyEventsService', () => {
         page,
         now,
       );
+    });
+
+    it('counts the next offset from the rows passed, not the rows shown', async () => {
+      requests.getMyApplicationFacts.mockResolvedValue({
+        items: [facts('gone'), facts('last')],
+        total: 22,
+      });
+      events.getListItemsByIds.mockResolvedValue([anItem('last')]);
+
+      const result = await service.getApplications(
+        user,
+        { limit: 2, offset: 20 },
+        now,
+      );
+
+      expect(result.items).toHaveLength(1);
+      expect(result.nextOffset).toBeNull();
     });
 
     it('leaves out events without an application worth showing', async () => {

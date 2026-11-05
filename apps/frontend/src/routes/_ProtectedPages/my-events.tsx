@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import {
+  useInfiniteQuery,
+  useSuspenseQuery,
+  type InfiniteData,
+  type UseInfiniteQueryResult,
+} from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -16,36 +21,32 @@ export const Route = createFileRoute("/_ProtectedPages/my-events")({
   component: MyEventsPage,
 })
 
-// F-06.3 (#41): applications with their state and the events the person
-// organizes. History of finished events is a later story.
-function MyEventsPage() {
-  const { t } = useTranslation()
-  const session = useQuery(authSessionQueryOptions())
-  const userId = session.data?.user.id ?? ""
-  const isEnabled = userId !== ""
-  const applicationsQuery = useInfiniteQuery({
-    ...myApplicationsQueryOptions(userId),
-    enabled: isEnabled,
-  })
-  const hostedQuery = useInfiniteQuery({
-    ...myHostedEventsQueryOptions(userId),
-    enabled: isEnabled,
-  })
+type Pages<T> = InfiniteData<{ items: T[]; total: number }>
 
-  // A disabled query is "pending" for good, so the loader follows what is fetching.
-  const listOf = <T,>(
-    query: typeof applicationsQuery | typeof hostedQuery,
-    items: T[],
-  ): MyEventsList<T> => ({
-    items,
+/** The overview's view of one infinite query: all loaded rows and what the button needs. */
+function toList<T>(query: UseInfiniteQueryResult<Pages<T>, Error>): MyEventsList<T> {
+  return {
+    items: query.data?.pages.flatMap((page) => page.items) ?? [],
     total: query.data?.pages[0]?.total ?? 0,
-    isLoading: session.isPending || query.isLoading,
-    error: query.error ?? (session.isSuccess && !isEnabled ? new Error("No session") : null),
+    isLoading: query.isLoading,
+    error: query.error,
     hasMore: query.hasNextPage,
     isLoadingMore: query.isFetchingNextPage,
-    onLoadMore: () => void query.fetchNextPage(),
+    // A running fetch is not cancelled by a second ask for the same page.
+    onLoadMore: () => void query.fetchNextPage({ cancelRefetch: false }),
     onReload: () => void query.refetch(),
-  })
+  }
+}
+
+// F-06.3 (#41): applications with their state and the events the person
+// organizes. History of finished events is a later story. The layout around
+// the page sends visitors without a session to the sign-in, so there is one.
+function MyEventsPage() {
+  const { t } = useTranslation()
+  const { data: session } = useSuspenseQuery(authSessionQueryOptions())
+  const userId = session?.user.id ?? ""
+  const applications = useInfiniteQuery(myApplicationsQueryOptions(userId))
+  const hosted = useInfiniteQuery(myHostedEventsQueryOptions(userId))
 
   return (
     <>
@@ -54,14 +55,8 @@ function MyEventsPage() {
         <h1 className="typo-h1 text-foreground">{t("myEvents.title")}</h1>
         <div className="mt-6">
           <MyEventsOverview
-            applications={listOf(
-              applicationsQuery,
-              applicationsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-            )}
-            hosted={listOf(
-              hostedQuery,
-              hostedQuery.data?.pages.flatMap((page) => page.items) ?? [],
-            )}
+            applications={toList(applications)}
+            hosted={toList(hosted)}
             activityLabel={(activity) => activityName(t, activity)}
           />
         </div>

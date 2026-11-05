@@ -51,4 +51,11 @@ export type MyApplication = {
   event: EventListItem;
 };
 
-export type MyApplicationPage = { items: MyApplication[]; total: number };
+export type MyApplicationPage = {
+  items: MyApplication[];
+  total: number;
+  // Where the next page starts, or null on the last one. A row the overview
+  // cannot show is left out of `items` but still passed, so the client cannot
+  // count the offset itself.
+  nextOffset: number | null;
+};
