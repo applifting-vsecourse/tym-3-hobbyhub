@@ -6,6 +6,7 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { ApplicationStatus, MyEvents } from "@/features/event/api/myEventsSchemas"
@@ -111,39 +112,32 @@ export function MyEventsOverview({
   )
 
   return (
-    <div className="flex flex-col gap-8">
-      <section
-        aria-labelledby="my-applications"
-        className="flex flex-col gap-2"
+    <Tabs defaultValue="applications">
+      <TabsList
+        aria-label={t("myEvents.tabs.label")}
+        className="w-full sm:w-fit"
       >
-        <h2
-          id="my-applications"
-          className="typo-h3"
-        >
-          {t("myEvents.applications.title")}
-        </h2>
+        <TabsTrigger value="applications">
+          {t("myEvents.tabs.applications")} ({data.applications.length})
+        </TabsTrigger>
+        <TabsTrigger value="hosted">
+          {t("myEvents.tabs.hosted")} ({data.hosted.length})
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="applications">
         {data.applications.length === 0 ? (
-          <p className="typo-body text-muted-foreground">{t("myEvents.applications.empty")}</p>
+          <p className="mt-4 typo-body text-muted-foreground">{t("myEvents.applications.empty")}</p>
         ) : (
           <ul>{data.applications.map(({ event, status }) => row(event, status))}</ul>
         )}
-      </section>
-      <section
-        aria-labelledby="my-hosted"
-        className="flex flex-col gap-2"
-      >
-        <h2
-          id="my-hosted"
-          className="typo-h3"
-        >
-          {t("myEvents.hosted.title")}
-        </h2>
+      </TabsContent>
+      <TabsContent value="hosted">
         {data.hosted.length === 0 ? (
-          <p className="typo-body text-muted-foreground">{t("myEvents.hosted.empty")}</p>
+          <p className="mt-4 typo-body text-muted-foreground">{t("myEvents.hosted.empty")}</p>
         ) : (
           <ul>{data.hosted.map((event) => row(event))}</ul>
         )}
-      </section>
-    </div>
+      </TabsContent>
+    </Tabs>
   )
 }

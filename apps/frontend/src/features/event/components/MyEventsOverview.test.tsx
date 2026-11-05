@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
@@ -72,7 +73,7 @@ describe("MyEventsOverview", () => {
       hosted: [],
     })
 
-    const applications = screen.getByRole("region", { name: "Moje přihlášky" })
+    const applications = screen.getByRole("tabpanel")
     expect(within(applications).getAllByRole("link")).toHaveLength(5)
     for (const label of [
       "Čeká na schválení",
@@ -89,24 +90,25 @@ describe("MyEventsOverview", () => {
     )
   })
 
-  it("lists hosted events in their own section without an application state", () => {
+  it("lists hosted events in their own tab without an application state", async () => {
     renderOverview({ applications: [], hosted: [event({ id: "h1", title: "Moje akce" })] })
 
-    const hosted = screen.getByRole("region", { name: "Akce, které pořádám" })
+    await userEvent.click(screen.getByRole("tab", { name: /Pořádám/ }))
+    const hosted = screen.getByRole("tabpanel")
     expect(within(hosted).getByRole("link", { name: /Moje akce/ })).toHaveAttribute(
       "href",
       "/events/h1",
     )
     expect(screen.queryByText("Schváleno")).not.toBeInTheDocument()
-    expect(screen.getByText("Na žádnou nadcházející akci nejste přihlášeni.")).toBeInTheDocument()
   })
 
-  it("says so in a section that has nothing", () => {
+  it("says so in a tab that has nothing", async () => {
     renderOverview({
       applications: [{ status: "PENDING", event: event() }],
       hosted: [],
     })
 
+    await userEvent.click(screen.getByRole("tab", { name: /Pořádám/ }))
     expect(screen.getByText("Nepořádáte žádnou nadcházející akci.")).toBeInTheDocument()
   })
 

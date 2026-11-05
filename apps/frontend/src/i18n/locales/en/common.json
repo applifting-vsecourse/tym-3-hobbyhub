@@ -804,8 +804,7 @@
   },
   "myEvents": {
     "applications": {
-      "empty": "You are not signed up for any upcoming event.",
-      "title": "My applications"
+      "empty": "You are not signed up for any upcoming event."
     },
     "empty": {
       "description": "Once you sign up for an event or post one, you will find it here.",
@@ -813,8 +812,7 @@
       "title": "Nothing here yet"
     },
     "hosted": {
-      "empty": "You are not organizing any upcoming event.",
-      "title": "Events I organize"
+      "empty": "You are not organizing any upcoming event."
     },
     "loading": "Loading your events",
     "status": {
@@ -823,6 +821,11 @@
       "PENDING": "Awaiting approval",
       "REJECTED": "Rejected",
       "WITHDRAWN": "Signed off"
+    },
+    "tabs": {
+      "applications": "Applications",
+      "hosted": "Organizing",
+      "label": "My events"
     },
     "title": "My events"
   },

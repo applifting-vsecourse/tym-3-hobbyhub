@@ -819,8 +819,7 @@
   },
   "myEvents": {
     "applications": {
-      "empty": "Na žádnou nadcházející akci nejste přihlášeni.",
-      "title": "Moje přihlášky"
+      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
     },
     "empty": {
       "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
@@ -828,8 +827,7 @@
       "title": "Zatím tu nic není"
     },
     "hosted": {
-      "empty": "Nepořádáte žádnou nadcházející akci.",
-      "title": "Akce, které pořádám"
+      "empty": "Nepořádáte žádnou nadcházející akci."
     },
     "loading": "Načítáme vaše akce",
     "status": {
@@ -838,6 +836,11 @@
       "PENDING": "Čeká na schválení",
       "REJECTED": "Zamítnuto",
       "WITHDRAWN": "Odhlášeno"
+    },
+    "tabs": {
+      "applications": "Přihlášky",
+      "hosted": "Pořádám",
+      "label": "Moje akce"
     },
     "title": "Moje akce"
   },
