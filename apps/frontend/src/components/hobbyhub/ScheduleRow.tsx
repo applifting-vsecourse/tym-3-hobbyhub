@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
@@ -15,6 +16,8 @@ type ScheduleRowProps = Capacity & {
   photo?: { src: string; alt: string }
   /** Icon key of the activity (`ACTIVITIES`); unknown keys leave the square empty. */
   activity?: string
+  /** A state of the person on this event (`StatusBadge`), under the subtitle. */
+  badge?: ReactNode
   className?: string
 }
 
@@ -29,6 +32,7 @@ export function ScheduleRow({
   subtitle,
   photo,
   activity,
+  badge,
   className,
   ...capacity
 }: ScheduleRowProps) {
@@ -64,6 +68,7 @@ export function ScheduleRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <h3 className="typo-title text-foreground">{title}</h3>
         <p className="typo-small text-muted-foreground">{subtitle}</p>
+        {badge ? <div className="mt-1.5">{badge}</div> : null}
       </div>
       <div className="flex shrink-0 flex-col gap-2">
         <SeatMeter

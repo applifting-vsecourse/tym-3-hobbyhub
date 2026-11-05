@@ -100,15 +100,12 @@ export function MyEventsOverview({
           // The title next to it says what the photo shows.
           photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
           activity={event.activity.icon}
+          badge={
+            status ? (
+              <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
+            ) : undefined
+          }
         />
-        {status ? (
-          <StatusBadge
-            status={BADGES[status]}
-            className="mb-4 ml-25"
-          >
-            {t(`myEvents.status.${status}`)}
-          </StatusBadge>
-        ) : null}
       </Link>
     </li>
   )
