@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { missingCount } from "@/components/hobbyhub/capacity"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 
+import { ApprovedParticipants } from "@/features/participation-request/components/ApprovedParticipants"
 import { PendingRequests } from "@/features/participation-request/components/PendingRequests"
 import type { ManagedEvent } from "@/features/participation-request/lib/requestDecision"
 
@@ -59,6 +60,8 @@ export function EventParticipants({ event, onChange, now }: EventParticipantsPro
         onChange={onChange}
         now={now}
       />
+
+      <ApprovedParticipants eventId={event.id} />
     </div>
   )
 }

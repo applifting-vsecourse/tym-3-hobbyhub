@@ -1,5 +1,6 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
+  EventStatus,
   ParticipationStatus,
   Prisma,
   ParticipationRequest as PrismaParticipationRequest,
@@ -12,6 +13,7 @@ import {
   EventStateViolation,
   eventStateViolation,
   JoinRuleViolation,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
 } from '@/modules/participation-request/domain/participation-request';
@@ -29,6 +31,14 @@ const mapToDomain = (
   decidedAt: request.decidedAt,
   rejectionReason: request.rejectionReason,
 });
+
+// The people who hold a seat: approved, or already attended an event that is
+// running. One list for the organizer's roster and for who may see whose
+// e-mail (F-04.2), so the two cannot disagree.
+const SEATED_STATUSES: ParticipationStatus[] = [
+  ParticipationStatus.APPROVED,
+  ParticipationStatus.ATTENDED,
+];
 
 // All the organizer may see of the person asking; the rest of the row stays
 // here.
@@ -154,6 +164,31 @@ export class ParticipationRequestRepository {
     return request ? mapToDomain(request) : null;
   }
 
+  // True when the person holds a seat on an event the organizer
+  // runs (as the organizer or a co-organizer). The seat is the participation,
+  // however it came about: a request, an invitation, a seeded roster.
+  async hasApprovedParticipant(
+    organizerId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const found = await this.prisma.participation.findFirst({
+      where: {
+        userId,
+        status: { in: SEATED_STATUSES },
+        event: {
+          // Contact goes away once the event is over or cancelled.
+          status: EventStatus.PUBLISHED,
+          OR: [
+            { organizerId },
+            { coOrganizers: { some: { id: organizerId } } },
+          ],
+        },
+      },
+      select: { id: true },
+    });
+    return found !== null;
+  }
+
   async getApplicantProfile(userId: string): Promise<ApplicantProfile> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -182,6 +217,28 @@ export class ParticipationRequestRepository {
     return {
       items: requests.map(({ user, ...request }) => ({
         ...mapToDomain(request),
+        applicant: mapApplicant(user),
+      })),
+      total,
+    };
+  }
+
+  // F-04.2: the people who hold a seat on the event, in the order they got it.
+  async getParticipants(eventId: string, page: Page): Promise<ParticipantPage> {
+    const where = { eventId, status: { in: SEATED_STATUSES } };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.participation.findMany({
+        where,
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        skip: page.offset,
+        take: page.limit,
+        include: { user: { select: applicantSelect } },
+      }),
+      this.prisma.participation.count({ where }),
+    ]);
+    return {
+      items: rows.map(({ userId, user }) => ({
+        userId,
         applicant: mapApplicant(user),
       })),
       total,

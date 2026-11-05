@@ -60,7 +60,20 @@ export const myRequestStateSchema = z.object({
 })
 
 export const pendingRequestSchema = participationRequestSchema.extend({
+  /** The applicant, for the link to their profile. */
+  userId: z.string(),
   applicant: applicantProfileSchema,
+})
+
+/** A person with an approved seat, for the organizer's list (F-04.2). */
+export const participantSchema = z.object({
+  userId: z.string(),
+  applicant: applicantProfileSchema,
+})
+
+export const participantPageSchema = z.object({
+  items: z.array(participantSchema),
+  total: z.number(),
 })
 
 export const pendingRequestPageSchema = z.object({

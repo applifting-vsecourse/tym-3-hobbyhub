@@ -78,10 +78,12 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | ------------------------------------------------------------------ | --- | ---------- | ---------- | -------------------- | ----------------------- | ------------------ | ------------------------------------------ |
 | Jméno, fotka, bio, zájmy                                           | ✅  | ❌         | ✅         | ✅                   | ✅                      | ✅                 | [#19][19]                                  |
 | Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ✅                   | ✅                      | ❌                 | [#32][32]                                  |
-| E-mail                                                             | ✅  | ❌         | ❌         | ❌                   | ✅                      | ❓                 | [#19][19], [#32][32]                       |
+| E-mail                                                             | ✅  | ❌         | ❌         | ❌                   | ✅                      | ❌                 | [#19][19], [#32][32]                       |
 | Datum narození, věk, pohlaví                                       | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#12][12], [#18][18], [#19][19], [#32][32] |
 | Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#24][24], [#67][67]                       |
 | Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌                   | ❌                      | ❌                 | [#41][41], [#52][52], [#152][152]          |
+
+E-mail vidí organizátor jen u člověka se schváleným místem na zveřejněné akci, kterou pořádá. Po skončení nebo zrušení akce zmizí. Seznam lidí se schváleným místem (jméno, fotka, bio) vidí na své akci organizátor ([#19][19]).
 
 Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce ([#45][45]). Jméno organizátora je veřejné přes detail akce ([#8][8]).
 

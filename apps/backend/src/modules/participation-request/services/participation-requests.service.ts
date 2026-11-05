@@ -8,6 +8,7 @@ import {
   decisionRuleViolations,
   JoinRuleViolation,
   joinRuleViolations,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
 } from '@/modules/participation-request/domain/participation-request';
@@ -63,6 +64,15 @@ export class ParticipationRequestsService {
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-04.2: whether `organizerId` runs an event on which `userId` is
+  // approved. Decides who sees the participant's e-mail on their profile.
+  isApprovedParticipantOf(
+    organizerId: string,
+    userId: string,
+  ): Promise<boolean> {
+    return this.repository.hasApprovedParticipant(organizerId, userId);
+  }
 
   async getMyRequestState(
     user: Identity,
@@ -149,6 +159,16 @@ export class ParticipationRequestsService {
   ): Promise<PendingRequestPage> {
     await this.eventsService.getOrganizedEvent(eventId, user);
     return this.repository.getPendingRequests(eventId, page);
+  }
+
+  // F-04.2: who holds an approved seat on the event, for its organizers.
+  async getParticipants(
+    user: Identity,
+    eventId: string,
+    page: Page,
+  ): Promise<ParticipantPage> {
+    await this.eventsService.getOrganizedEvent(eventId, user);
+    return this.repository.getParticipants(eventId, page);
   }
 
   // F-05.7. Approval takes a seat, so the repository checks the seats again

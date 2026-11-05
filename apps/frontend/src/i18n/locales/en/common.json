@@ -181,7 +181,7 @@
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
-      "organizer": "Organized by {{name}}",
+      "organizer": "Organized by <profile>{{name}}</profile>",
       "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
@@ -959,6 +959,8 @@
         "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
         "taken": "After approving, {{taken}} of {{max}} seats are taken."
       },
+      "participants": "Approved participants",
+      "participantsEmpty": "No approved participants yet.",
       "refused": {
         "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
         "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
@@ -1056,6 +1058,13 @@
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "title": "My profile",
+    "userProfile": {
+      "contact": "Contact",
+      "contactHint": "You see the e-mail because they are an approved participant of your event.",
+      "interests": "What they play",
+      "notFound": "Profile not found.",
+      "title": "User profile"
+    },
     "view": {
       "addActivities": "Add what I play",
       "addBio": "Write a few words",

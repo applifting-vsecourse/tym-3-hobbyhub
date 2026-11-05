@@ -2,6 +2,7 @@ import {
   ApplicantProfile,
   DecisionRuleViolation,
   JoinRuleViolation,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequest,
   PendingRequestPage,
@@ -95,12 +96,16 @@ export class ApplicantProfileResponseDto {
 }
 
 export class PendingRequestResponseDto extends ParticipationRequestResponseDto {
+  @ApiProperty({ description: 'The applicant, for the link to their profile' })
+  userId!: string;
+
   @ApiProperty({ type: ApplicantProfileResponseDto })
   applicant!: ApplicantProfileResponseDto;
 
   static fromDomain(request: PendingRequest): PendingRequestResponseDto {
     return {
       ...ParticipationRequestResponseDto.fromDomain(request),
+      userId: request.userId,
       applicant: ApplicantProfileResponseDto.fromDomain(request.applicant),
     };
   }
@@ -145,6 +150,32 @@ export class MyRequestStateResponseDto {
         : null,
       violations: state.violations,
       applicant: ApplicantProfileResponseDto.fromDomain(state.applicant),
+    };
+  }
+}
+
+export class ParticipantResponseDto {
+  @ApiProperty({ description: 'For the link to their profile' })
+  userId!: string;
+
+  @ApiProperty({ type: ApplicantProfileResponseDto })
+  applicant!: ApplicantProfileResponseDto;
+}
+
+export class ParticipantPageResponseDto {
+  @ApiProperty({ type: [ParticipantResponseDto] })
+  items!: ParticipantResponseDto[];
+
+  @ApiProperty({ description: 'All approved participants, not just this page' })
+  total!: number;
+
+  static fromDomain(page: ParticipantPage): ParticipantPageResponseDto {
+    return {
+      items: page.items.map(({ userId, applicant }) => ({
+        userId,
+        applicant: ApplicantProfileResponseDto.fromDomain(applicant),
+      })),
+      total: page.total,
     };
   }
 }

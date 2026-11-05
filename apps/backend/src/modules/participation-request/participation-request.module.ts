@@ -3,13 +3,15 @@ import { EventModule } from '@/modules/event/event.module';
 import { NotificationModule } from '@/modules/notification/notification.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
+import { EventParticipantsController } from './controllers/event-participants.controller';
 import { ParticipationRequestsController } from './controllers/participation-requests.controller';
 import { ParticipationRequestRepository } from './repositories/participation-request.repository';
 import { ParticipationRequestsService } from './services/participation-requests.service';
 
 @Module({
   imports: [AuthModule, PrismaModule, EventModule, NotificationModule],
-  controllers: [ParticipationRequestsController],
+  controllers: [ParticipationRequestsController, EventParticipantsController],
   providers: [ParticipationRequestsService, ParticipationRequestRepository],
+  exports: [ParticipationRequestsService],
 })
 export class ParticipationRequestModule {}

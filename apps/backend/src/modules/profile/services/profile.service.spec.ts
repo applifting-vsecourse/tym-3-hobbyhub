@@ -1,5 +1,6 @@
 import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
+import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import { PROFILE_IMAGE_PREFIX } from '@/modules/profile/domain/profile';
 import {
   ProfileRepository,
@@ -42,16 +43,19 @@ describe('ProfileService', () => {
   ): {
     repository: MockProxy<ProfileRepository>;
     onboardingService: MockProxy<OnboardingService>;
+    requests: MockProxy<ParticipationRequestsService>;
     service: ProfileService;
   } => {
     const repository = mock<ProfileRepository>();
     repository.getRow.mockResolvedValue(row);
     const onboardingService = mock<OnboardingService>();
     onboardingService.getOnboarding.mockResolvedValue(onboarding);
+    const requests = mock<ParticipationRequestsService>();
     return {
       repository,
       onboardingService,
-      service: new ProfileService(repository, onboardingService),
+      requests,
+      service: new ProfileService(repository, onboardingService, requests),
     };
   };
 
@@ -181,6 +185,75 @@ describe('ProfileService', () => {
         address,
         travelRadiusKm: 25,
       });
+    });
+  });
+
+  describe('getPublicProfile', () => {
+    const publicRow = {
+      id: 'u2',
+      name: 'Petr',
+      email: 'petr@example.com',
+      createdAt: new Date('2026-09-02T10:00:00Z'),
+      bio: 'Běhám',
+      image: null,
+      profileCover: null,
+    };
+
+    it('never carries gender, birth date or address', async () => {
+      const { service, repository, onboardingService, requests } = setup();
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      requests.isApprovedParticipantOf.mockResolvedValue(false);
+      const profile = await service.getPublicProfile(user, 'u2');
+      expect(Object.keys(profile).sort()).toEqual([
+        'bio',
+        'cover',
+        'email',
+        'id',
+        'image',
+        'interests',
+        'joinedAt',
+        'name',
+      ]);
+    });
+
+    it('hides the e-mail from anyone who is not the organizer of an approved participant', async () => {
+      const { service, repository, onboardingService, requests } = setup();
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      requests.isApprovedParticipantOf.mockResolvedValue(false);
+      await expect(service.getPublicProfile(user, 'u2')).resolves.toMatchObject(
+        { email: null },
+      );
+      expect(requests.isApprovedParticipantOf).toHaveBeenCalledWith('u1', 'u2');
+    });
+
+    it('shows the e-mail to the organizer of an event the person is approved on', async () => {
+      const { service, repository, onboardingService, requests } = setup();
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      requests.isApprovedParticipantOf.mockResolvedValue(true);
+      await expect(service.getPublicProfile(user, 'u2')).resolves.toMatchObject(
+        { email: 'petr@example.com' },
+      );
+    });
+
+    it('does not ask about approval when looking at oneself', async () => {
+      const { service, repository, onboardingService, requests } = setup();
+      repository.getPublicRow.mockResolvedValue({ ...publicRow, id: 'u1' });
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      await expect(service.getPublicProfile(user, 'u1')).resolves.toMatchObject(
+        { email: null },
+      );
+      expect(requests.isApprovedParticipantOf).not.toHaveBeenCalled();
+    });
+
+    it('answers not found for a user that does not exist', async () => {
+      const { service, repository } = setup();
+      repository.getPublicRow.mockResolvedValue(null);
+      await expect(service.getPublicProfile(user, 'nobody')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

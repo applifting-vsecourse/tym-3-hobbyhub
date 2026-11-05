@@ -309,6 +309,15 @@ describe('ParticipationRequestsService', () => {
         expect(repository.getPendingRequests).toHaveBeenCalledWith('e1', page);
       });
 
+      it('lists the approved participants for an organizer only', async () => {
+        const { repository, events, service } = setup();
+        repository.getParticipants.mockResolvedValue({ items: [], total: 0 });
+
+        await service.getParticipants(organizer, 'e1', page);
+        expect(events.getOrganizedEvent).toHaveBeenCalledWith('e1', organizer);
+        expect(repository.getParticipants).toHaveBeenCalledWith('e1', page);
+      });
+
       it('lets a co-organizer see them too', async () => {
         const { repository, service } = setup(
           anEvent({ organizerIds: ['organizer', 'co'] }),

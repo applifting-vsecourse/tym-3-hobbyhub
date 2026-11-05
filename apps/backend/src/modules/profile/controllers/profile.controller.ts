@@ -7,6 +7,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Put,
   UseGuards,
@@ -18,7 +19,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ProfileResponseDto } from './dto/profile.response.dto';
+import {
+  ProfileResponseDto,
+  PublicProfileResponseDto,
+} from './dto/profile.response.dto';
 import { UpdateProfileLocationDto } from './dto/update-profile-location.dto';
 import {
   UpdatePrivateDetailsDto,
@@ -43,6 +47,22 @@ export class ProfileController {
   async get(@User() user: Identity): Promise<ProfileResponseDto> {
     return ProfileResponseDto.fromDomain(
       await this.profileService.getProfile(user),
+    );
+  }
+
+  // Declared after `GET /profile`; `private`, `activities` and `location` are
+  // PUT routes, so the id cannot swallow them.
+  @Get(':userId')
+  @ApiOperation({ summary: "Another person's public profile" })
+  @ApiResponse({ status: 200, type: PublicProfileResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 404, description: 'No such user' })
+  async getPublic(
+    @User() user: Identity,
+    @Param('userId') userId: string,
+  ): Promise<PublicProfileResponseDto> {
+    return PublicProfileResponseDto.fromDomain(
+      await this.profileService.getPublicProfile(user, userId),
     );
   }
 

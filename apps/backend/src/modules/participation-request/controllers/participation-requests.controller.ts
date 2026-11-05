@@ -22,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateParticipationRequestDto } from './dto/create-participation-request.dto';
-import { ListPendingRequestsQuery } from './dto/list-pending-requests.query';
+import { PageQuery } from './dto/page.query';
 import {
   DECISION_RULE_VIOLATIONS,
   MyRequestStateResponseDto,
@@ -81,7 +81,7 @@ export class ParticipationRequestsController {
   async listPending(
     @User() user: Identity,
     @Param('eventId') eventId: string,
-    @Query() query: ListPendingRequestsQuery,
+    @Query() query: PageQuery,
   ): Promise<PendingRequestPageResponseDto> {
     const page = await this.service.getPendingRequests(user, eventId, {
       limit: query.limit,

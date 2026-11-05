@@ -6,4 +6,7 @@ export const participationRequestKeys = {
     [...participationRequestKeys.all(), "mine", eventId, userId] as const,
   // The organizer's list of waiting requests (F-05.7).
   pending: (eventId: string) => [...participationRequestKeys.all(), "pending", eventId] as const,
+  // The organizer's list of approved participants (F-04.2).
+  participants: (eventId: string) =>
+    [...participationRequestKeys.all(), "participants", eventId] as const,
 }

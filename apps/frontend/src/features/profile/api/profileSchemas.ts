@@ -47,6 +47,23 @@ export const profileSchema = z.object({
 
 export type Profile = z.infer<typeof profileSchema>
 
+/**
+ * Someone else's profile (F-04.2): no gender, birth date or address. The
+ * e-mail comes only for the organizer of an event the person is approved on.
+ */
+export const publicProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  joinedAt: z.coerce.date(),
+  bio: z.string().nullable(),
+  image: z.string().nullable(),
+  cover: z.string().nullable(),
+  interests: z.array(interestSchema),
+  email: z.string().nullable(),
+})
+
+export type PublicProfile = z.infer<typeof publicProfileSchema>
+
 export type UpdateProfileInput = {
   name?: string
   bio?: string | null

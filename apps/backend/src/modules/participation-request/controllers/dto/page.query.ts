@@ -6,7 +6,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
-export class ListPendingRequestsQuery {
+export class PageQuery {
   @ApiPropertyOptional({
     default: PENDING_REQUESTS_DEFAULT_LIMIT,
     minimum: 1,

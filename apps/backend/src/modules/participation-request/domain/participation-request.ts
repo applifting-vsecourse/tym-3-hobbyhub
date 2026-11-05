@@ -42,6 +42,10 @@ export type ApplicantProfile = {
   hasVerifiedEmail: boolean;
 };
 
+// F-04.2: a person holding an approved seat, as the organizer's list shows it.
+export type Participant = { userId: string; applicant: ApplicantProfile };
+export type ParticipantPage = { items: Participant[]; total: number };
+
 export type PendingRequest = ParticipationRequest & {
   applicant: ApplicantProfile;
 };

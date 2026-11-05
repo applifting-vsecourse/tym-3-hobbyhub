@@ -1,5 +1,6 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
 import { OnboardingModule } from '@/modules/onboarding/onboarding.module';
+import { ParticipationRequestModule } from '@/modules/participation-request/participation-request.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { ProfileController } from './controllers/profile.controller';
@@ -7,7 +8,12 @@ import { ProfileRepository } from './repositories/profile.repository';
 import { ProfileService } from './services/profile.service';
 
 @Module({
-  imports: [AuthModule, PrismaModule, OnboardingModule],
+  imports: [
+    AuthModule,
+    PrismaModule,
+    OnboardingModule,
+    ParticipationRequestModule,
+  ],
   controllers: [ProfileController],
   providers: [ProfileService, ProfileRepository],
 })
