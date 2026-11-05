@@ -1,5 +1,7 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
+  EventStatus,
+  EventVisibility,
   ParticipationStatus,
   Prisma,
   ParticipationRequest as PrismaParticipationRequest,
@@ -9,6 +11,7 @@ import { occupancyOf, Page } from '@/modules/event/domain/event';
 import {
   ApplicantProfile,
   DecisionRuleViolation,
+  EventApplicationFacts,
   EventStateViolation,
   eventStateViolation,
   JoinRuleViolation,
@@ -142,6 +145,60 @@ export class ParticipationRequestRepository {
       orderBy: { requestedAt: 'desc' },
     });
     return requests.map(mapToDomain);
+  }
+
+  // F-06.3: the events a person has applied to that are not over, with their
+  // own seat and requests on each. Hidden, non-public and draft events are left
+  // out, as everywhere a person reaches an event.
+  async getApplicationFacts(
+    userId: string,
+    now: Date,
+  ): Promise<EventApplicationFacts[]> {
+    const events = await this.prisma.event.findMany({
+      where: {
+        endAt: { gte: now },
+        status: { in: [EventStatus.PUBLISHED, EventStatus.CANCELLED] },
+        visibility: EventVisibility.PUBLIC,
+        isHidden: false,
+        OR: [
+          { participationRequests: { some: { userId } } },
+          {
+            participations: {
+              some: {
+                userId,
+                status: {
+                  in: [
+                    ParticipationStatus.APPROVED,
+                    ParticipationStatus.CANCELLED,
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        status: true,
+        participations: { where: { userId }, select: { status: true } },
+        participationRequests: { where: { userId }, select: { status: true } },
+      },
+    });
+    return events.map((event) => {
+      const seat = event.participations[0]?.status;
+      return {
+        eventId: event.id,
+        // The query keeps PUBLISHED and CANCELLED only.
+        eventStatus:
+          event.status === EventStatus.CANCELLED ? 'CANCELLED' : 'PUBLISHED',
+        seat:
+          seat === ParticipationStatus.APPROVED ||
+          seat === ParticipationStatus.CANCELLED
+            ? seat
+            : null,
+        requests: event.participationRequests.map((request) => request.status),
+      };
+    });
   }
 
   async getRequest(

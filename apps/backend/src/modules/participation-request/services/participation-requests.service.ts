@@ -6,6 +6,7 @@ import {
   currentRequestOf,
   DecisionRuleViolation,
   decisionRuleViolations,
+  EventApplicationFacts,
   JoinRuleViolation,
   joinRuleViolations,
   ParticipationRequest,
@@ -63,6 +64,15 @@ export class ParticipationRequestsService {
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-06.3: the person's own applications to events that are not over; the
+  // overview turns them into one status per event.
+  getMyApplicationFacts(
+    user: Identity,
+    now: Date = new Date(),
+  ): Promise<EventApplicationFacts[]> {
+    return this.repository.getApplicationFacts(user.id, now);
+  }
 
   async getMyRequestState(
     user: Identity,

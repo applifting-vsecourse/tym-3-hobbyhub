@@ -1,6 +1,7 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,
+  EventVisibility,
   ParticipationStatus,
   Prisma,
   Activity as PrismaActivity,
@@ -491,6 +492,39 @@ export class EventRepository {
       }),
       total: Number(totalRows[0]?.total ?? 0),
     };
+  }
+
+  // The list cards of the given events, for a caller that already knows which
+  // ones it wants (F-06.3). Visibility is the caller's business.
+  async getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      include: listInclude,
+    });
+    return events.map((event) => mapPrismaEventToListItem(event));
+  }
+
+  // F-06.3: published public events a person organizes (or co-organizes) that
+  // are not over, soonest first.
+  async getUpcomingOrganizedBy(
+    userId: string,
+    now: Date,
+  ): Promise<EventListItem[]> {
+    const events = await this.prisma.event.findMany({
+      where: {
+        status: EventStatus.PUBLISHED,
+        visibility: EventVisibility.PUBLIC,
+        isHidden: false,
+        endAt: { gte: now },
+        OR: [
+          { organizerId: userId },
+          { coOrganizers: { some: { id: userId } } },
+        ],
+      },
+      include: listInclude,
+      orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+    });
+    return events.map((event) => mapPrismaEventToListItem(event));
   }
 
   // Public detail: the list's visibility rules, but an event that was cancelled

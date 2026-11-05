@@ -9,6 +9,7 @@ import {
   EventDetail,
   EventFacts,
   EventListFilter,
+  EventListItem,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
@@ -56,6 +57,21 @@ export class EventsService {
     private readonly cancellationReasonsService: CancellationReasonsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-06.3: the cards of events another module already picked.
+  getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    return ids.length === 0
+      ? Promise.resolve([])
+      : this.eventRepository.getListItemsByIds(ids);
+  }
+
+  // F-06.3: what the person organizes and has still ahead.
+  getUpcomingOrganizedEvents(
+    user: Identity,
+    now: Date = new Date(),
+  ): Promise<EventListItem[]> {
+    return this.eventRepository.getUpcomingOrganizedBy(user.id, now);
+  }
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
     // F-03.2: publishing needs a verified e-mail.

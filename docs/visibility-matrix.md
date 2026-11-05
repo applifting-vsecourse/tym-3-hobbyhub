@@ -122,3 +122,12 @@ Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků a
 [95]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/95
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
+
+## Přehled přihlášek
+
+Přehled „Moje akce“ ([F-06.3][41]) je vždy jen vlastní: přihlášený uživatel vidí své přihlášky a akce, které pořádá. Cizí přehled neexistuje, API ho nevrací nikomu jinému.
+
+| Pole                                                                              | Vlastník přehledu | Ostatní | Zdroj     |
+| --------------------------------------------------------------------------------- | ----------------- | ------- | --------- |
+| Nadcházející přihlášky se stavem (čeká, schváleno, zamítnuto, odhlášeno, zrušena) | ✅                | ❌      | [#41][41] |
+| Akce, které uživatel pořádá, a jejich karty                                       | ✅                | ❌      | [#41][41] |
