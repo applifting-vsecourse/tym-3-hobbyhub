@@ -64,6 +64,7 @@ function BottomNavExample() {
     <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border bg-background">
       <BottomNav
         active="discover"
+        isSignedIn
         hasNewRequests
       />
     </div>
@@ -394,7 +395,7 @@ export function DomainSections() {
       <ShowcaseSection
         id="navigace"
         title="Spodní navigace"
-        description="Dolní lišta má vystouplé tlačítko s logem „Přidat“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti."
+        description="Dolní lišta má vystouplé tlačítko s logem „Přidat“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti. Návštěvník má jen Objevovat, Přidat a Skupiny."
       >
         <BottomNavExample />
       </ShowcaseSection>

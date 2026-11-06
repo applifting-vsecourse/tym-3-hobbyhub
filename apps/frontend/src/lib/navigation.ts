@@ -17,6 +17,16 @@ export const NAV_TARGETS: Record<NavPlace, NavRoute> = {
   profile: ROUTES.profile,
 }
 
+/**
+ * The places each kind of viewer gets a link to, in navigation order. A
+ * visitor has only the public ones (#151): Moje akce and Profil have nothing
+ * to show without an account. "Přidat" is not here — both navigations draw it
+ * for everyone, since it is the way a visitor finds out they need an account.
+ */
+export function navPlacesFor(isSignedIn: boolean): NavPlace[] {
+  return isSignedIn ? ["discover", "my-events", "groups", "profile"] : ["discover", "groups"]
+}
+
 const isUnder = (pathname: string, base: string) =>
   pathname === base || pathname.startsWith(`${base}/`)
 
