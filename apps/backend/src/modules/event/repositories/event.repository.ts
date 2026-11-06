@@ -12,19 +12,19 @@ import {
   CancelEventData,
   CreateEventData,
   Event,
-  EVENT_LIST_TIME_ZONE,
   EventAudience,
   EventChangeResult,
   EventDetail,
   EventFacts,
+  EventFilter,
   EventListFilter,
   EventListItem,
   EventListPage,
   EventLocation,
   EventSeatFacts,
-  foldForSearch,
   GeoPoint,
   MIN_STATS_PARTICIPANTS,
+  NO_EVENT_FILTER,
   occupancyOf,
   Page,
   ParticipantEventInfo,
@@ -33,6 +33,11 @@ import {
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
 import { isPubliclyVisible } from '@/modules/group/domain/group';
 import { Injectable } from '@nestjs/common';
+import {
+  aheadFirstOrder,
+  allOf,
+  eventFilterConditions,
+} from './event-list.sql';
 
 // Approved participations are the only ones that take a seat (ADR-0009).
 const include = {
@@ -58,34 +63,6 @@ const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
   ParticipationStatus.ATTENDED,
 ];
 
-// TODO(F-02.1b #91): this is an exact "contains" match, so "Brno" misses a
-// typo like "Brnoo". Similarity search (e.g. pg_trgm `similarity`, ranked by
-// closeness) belongs here, and so does a radius filter once every event has
-// coordinates (geocoding on save, F-12.3).
-// The database folds like `foldForSearch` does, but only for the diacritics of
-// Czech and Slovak (no `unaccent` extension needed); other accents, such as
-// "è", are not matched.
-const FOLD_FROM = 'áäčďéěíĺľňóôöŕřšťúůüýž';
-const FOLD_TO = 'aacdeeillnooorrstuuuyz';
-
-// True when `needle` is part of any of the columns, ignoring case and diacritics.
-const containsInAny = (columns: Prisma.Sql[], needle: string): Prisma.Sql =>
-  Prisma.join(
-    columns.map(
-      (column) =>
-        Prisma.sql`strpos(translate(lower(coalesce(${column}, '')), ${FOLD_FROM}, ${FOLD_TO}), ${needle}) > 0`,
-    ),
-    ' OR ',
-  );
-
-// A private venue is someone's home: its name is never matched, like it is
-// never shown.
-const PLACE_COLUMNS = [
-  Prisma.sql`CASE WHEN e."venueType" = 'PUBLIC_VENUE' THEN e."locationPlaceName" END`,
-  Prisma.sql`e."locationCity"`,
-  Prisma.sql`e."locationDistrict"`,
-];
-
 // Great-circle distance in km (haversine) from `near` to the event, with the
 // alias `e`. Null for a private venue, which is never located, and for an event
 // without coordinates; those sort last.
@@ -99,49 +76,15 @@ const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
     END`;
 
 // The condition of the public event list, with the alias `e` for the event and
-// `a` for its activity. Every word of a text has to match somewhere, so
-// "volejbal praha" finds the activity in one column and the city in another.
-const listCondition = (
-  now: Date,
-  { activityIds, search, location, dateFrom, dateTo }: EventListFilter,
-): Prisma.Sql => {
-  const words = (text?: string): string[] =>
-    foldForSearch(text ?? '')
-      .split(/\s+/)
-      .filter(Boolean);
-  const conditions = [
+// `a` for its activity: what is public and not over, narrowed by the filter.
+const listCondition = (now: Date, filter: EventListFilter): Prisma.Sql =>
+  allOf([
     Prisma.sql`e."status" = 'PUBLISHED'`,
     Prisma.sql`e."visibility" = 'PUBLIC'`,
     Prisma.sql`NOT e."isHidden"`,
     Prisma.sql`e."endAt" > ${now}`,
-    ...(activityIds.length > 0
-      ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
-      : []),
-    // "startAt" is a UTC timestamp without a zone: the days are turned into UTC
-    // instants (midnight in Prague) so the index on it stays usable.
-    ...(dateFrom
-      ? [
-          Prisma.sql`e."startAt" >= (${dateFrom}::date::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
-        ]
-      : []),
-    ...(dateTo
-      ? [
-          Prisma.sql`e."startAt" < ((${dateTo}::date + 1)::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
-        ]
-      : []),
-    ...words(search).map(
-      (word) =>
-        Prisma.sql`(${containsInAny(
-          [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
-          word,
-        )})`,
-    ),
-    ...words(location).map(
-      (word) => Prisma.sql`(${containsInAny(PLACE_COLUMNS, word)})`,
-    ),
-  ];
-  return Prisma.join(conditions, ' AND ');
-};
+    ...eventFilterConditions(filter),
+  ]);
 
 // Visibility shared by the list and the detail: public and not hidden by a
 // moderator. Drafts never show; the detail also keeps over and cancelled events.
@@ -533,22 +476,33 @@ export class EventRepository {
         JOIN "activity" a ON a."id" = e."activityId"
         WHERE ${where}`,
     ]);
-    const ids = pageRows.map((row) => row.id);
     const distances = new Map(pageRows.map((row) => [row.id, row.distanceKm]));
+    return {
+      items: await this.listItemsInOrder(
+        pageRows.map((row) => row.id),
+        distances,
+      ),
+      total: Number(totalRows[0]?.total ?? 0),
+    };
+  }
+
+  // The list cards of the ids in the order given; an id that is gone by now
+  // (deleted between the two queries) is left out.
+  private async listItemsInOrder(
+    ids: string[],
+    distances: Map<string, number | null> = new Map(),
+  ): Promise<EventListItem[]> {
     const events = await this.prisma.event.findMany({
       where: { id: { in: ids } },
       include: listInclude,
     });
     const byId = new Map(events.map((event) => [event.id, event]));
-    return {
-      items: ids.flatMap((id) => {
-        const event = byId.get(id);
-        return event
-          ? [mapPrismaEventToListItem(event, distances.get(id) ?? null)]
-          : [];
-      }),
-      total: Number(totalRows[0]?.total ?? 0),
-    };
+    return ids.flatMap((id) => {
+      const event = byId.get(id);
+      return event
+        ? [mapPrismaEventToListItem(event, distances.get(id) ?? null)]
+        : [];
+    });
   }
 
   // The list cards of the given events, for a caller that already knows which
@@ -561,33 +515,41 @@ export class EventRepository {
     return events.map((event) => mapPrismaEventToListItem(event));
   }
 
-  // F-06.3: a page of the published public events a person organizes (or
-  // co-organizes) that are not over, soonest first.
-  async getUpcomingOrganizedBy(
+  // F-06.3, #177: a page of the public events a person organizes (or
+  // co-organizes), narrowed by the filter. The ones still on come first,
+  // soonest first; then the ones that are over, latest first. A draft and an
+  // event that was called off are left out: the list has no word for them.
+  async getOrganizedBy(
     userId: string,
     now: Date,
     { limit, offset }: Page,
+    filter: EventFilter = NO_EVENT_FILTER,
   ): Promise<EventListPage> {
-    const where: Prisma.EventWhereInput = {
-      ...PUBLIC_EVENT,
-      // Only what is on offer: not a draft, and not one that was called off.
-      status: EventStatus.PUBLISHED,
-      endAt: { gte: now },
-      OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
-    };
-    const [events, total] = await Promise.all([
-      this.prisma.event.findMany({
-        where,
-        include: listInclude,
-        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
-        skip: offset,
-        take: limit,
-      }),
-      this.prisma.event.count({ where }),
+    const where = allOf([
+      Prisma.sql`e."status" IN ('PUBLISHED', 'FINISHED')`,
+      Prisma.sql`e."visibility" = 'PUBLIC'`,
+      Prisma.sql`NOT e."isHidden"`,
+      Prisma.sql`(e."organizerId" = ${userId} OR EXISTS (
+        SELECT 1 FROM "_EventCoOrganizers" c
+        WHERE c."A" = e."id" AND c."B" = ${userId}))`,
+      ...eventFilterConditions(filter),
+    ]);
+    const isAhead = Prisma.sql`(e."status" = 'PUBLISHED' AND e."endAt" >= ${now})`;
+    const [pageRows, totalRows] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT e."id" FROM "event" e
+        JOIN "activity" a ON a."id" = e."activityId"
+        WHERE ${where}
+        ORDER BY ${aheadFirstOrder(isAhead)}
+        LIMIT ${limit} OFFSET ${offset}`,
+      this.prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT count(*) AS "total" FROM "event" e
+        JOIN "activity" a ON a."id" = e."activityId"
+        WHERE ${where}`,
     ]);
     return {
-      items: events.map((event) => mapPrismaEventToListItem(event)),
-      total,
+      items: await this.listItemsInOrder(pageRows.map((row) => row.id)),
+      total: Number(totalRows[0]?.total ?? 0),
     };
   }
 

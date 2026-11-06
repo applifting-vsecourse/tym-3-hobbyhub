@@ -354,7 +354,7 @@ export type EventListFilterViolation = 'DATE_FROM_AFTER_DATE_TO';
 
 // Rules between the fields of the list filter. ISO dates compare as text.
 export const eventListFilterViolations = (
-  filter: Pick<EventListFilter, 'dateFrom' | 'dateTo'>,
+  filter: Pick<EventFilter, 'dateFrom' | 'dateTo'>,
 ): EventListFilterViolation[] =>
   filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
     ? ['DATE_FROM_AFTER_DATE_TO']
@@ -372,7 +372,9 @@ export const eventListFilterViolations = (
 // from it instead of by start time.
 export type GeoPoint = { latitude: number; longitude: number };
 
-export type EventListFilter = {
+// The filter itself, shared by every listing of events: the public list and a
+// person's own overview (F-06.3, #177).
+export type EventFilter = {
   activityIds: string[];
   search?: string;
   location?: string;
@@ -380,8 +382,11 @@ export type EventListFilter = {
   // `EVENT_LIST_TIME_ZONE`; either end may be left open.
   dateFrom?: string;
   dateTo?: string;
-  near?: GeoPoint;
 };
+
+export type EventListFilter = EventFilter & { near?: GeoPoint };
+
+export const NO_EVENT_FILTER: EventFilter = { activityIds: [] };
 
 // The form a text is compared in: lower case, no diacritics, no outer spaces.
 export const foldForSearch = (text: string): string =>

@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { CancelEventDto } from './dto/cancel-event.dto';
 import { CreateEventDto } from './dto/create-event.dto';
+import { eventFilterOf } from './dto/event-filter.query';
 import {
   EventDetailResponseDto,
   EventListResponseDto,
@@ -57,11 +58,7 @@ export class EventsController {
     const page = await this.eventsService.getUpcomingPublicEvents(
       { limit: query.limit, offset: query.offset },
       {
-        activityIds: query.activityIds,
-        search: query.search,
-        location: query.location,
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
+        ...eventFilterOf(query),
         near:
           query.lat !== undefined && query.lng !== undefined
             ? { latitude: query.lat, longitude: query.lng }
