@@ -31,7 +31,7 @@ export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
     <Link
       to="/groups/$groupId"
       params={{ groupId: group.id }}
-      className="flex h-full items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors outline-none hover:border-ring focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:flex-col md:items-stretch"
+      className="flex h-full items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors outline-none hover:border-ring focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring md:flex-col md:items-stretch"
     >
       <div
         aria-hidden

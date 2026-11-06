@@ -43,7 +43,7 @@ export function SelectedEventCard({
         to="/events/$eventId"
         params={{ eventId: event.id }}
         aria-label={t("events.map.detailOf", { title: event.title })}
-        className="block rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="block rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       >
         <EventCard
           title={event.title}

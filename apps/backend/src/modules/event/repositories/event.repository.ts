@@ -12,6 +12,7 @@ import {
   CancelEventData,
   CreateEventData,
   Event,
+  EVENT_LIST_TIME_ZONE,
   EventAudience,
   EventChangeResult,
   EventDetail,
@@ -102,7 +103,7 @@ const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
 // "volejbal praha" finds the activity in one column and the city in another.
 const listCondition = (
   now: Date,
-  { activityIds, search, location }: EventListFilter,
+  { activityIds, search, location, dateFrom, dateTo }: EventListFilter,
 ): Prisma.Sql => {
   const words = (text?: string): string[] =>
     foldForSearch(text ?? '')
@@ -115,6 +116,18 @@ const listCondition = (
     Prisma.sql`e."endAt" > ${now}`,
     ...(activityIds.length > 0
       ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
+      : []),
+    // "startAt" is a UTC timestamp without a zone: the days are turned into UTC
+    // instants (midnight in Prague) so the index on it stays usable.
+    ...(dateFrom
+      ? [
+          Prisma.sql`e."startAt" >= (${dateFrom}::date::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
+        ]
+      : []),
+    ...(dateTo
+      ? [
+          Prisma.sql`e."startAt" < ((${dateTo}::date + 1)::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
+        ]
       : []),
     ...words(search).map(
       (word) =>
@@ -389,6 +402,44 @@ export class EventRepository {
         include,
       });
       return { ok: true, event: mapPrismaEventToDomain(event) } as const;
+    });
+  }
+
+  // F-05.6: the seats taken outside the app, under the same lock as an edit
+  // and an approval, so the seats are counted and written in one go.
+  async updateExternalOccupiedSpots(
+    id: string,
+    externalOccupiedSpots: number,
+    now: Date,
+  ): Promise<EventChangeResult> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
+      const approved = await tx.participation.count({
+        where: { eventId: id, status: ParticipationStatus.APPROVED },
+      });
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id },
+        select: { maxParticipants: true },
+      });
+      if (event.maxParticipants < externalOccupiedSpots + approved) {
+        return { ok: false, violation: 'MAX_BELOW_OCCUPIED' } as const;
+      }
+      const { count } = await tx.event.updateMany({
+        where: {
+          id,
+          status: { in: [EventStatus.DRAFT, EventStatus.PUBLISHED] },
+          startAt: { gt: now },
+        },
+        data: { externalOccupiedSpots },
+      });
+      if (count === 0) {
+        return { ok: false, violation: 'EVENT_NOT_CHANGEABLE' } as const;
+      }
+      const updated = await tx.event.findUniqueOrThrow({
+        where: { id },
+        include,
+      });
+      return { ok: true, event: mapPrismaEventToDomain(updated) } as const;
     });
   }
 

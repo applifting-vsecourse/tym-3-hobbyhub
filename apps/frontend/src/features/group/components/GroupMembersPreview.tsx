@@ -38,7 +38,7 @@ export function GroupMembersPreview({ groupId, members }: GroupMembersPreviewPro
         to="/groups/$groupId/members"
         params={{ groupId }}
         aria-label={t("groups.manage.membersLink")}
-        className="flex w-fit flex-wrap items-center gap-2 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="flex w-fit flex-wrap items-center gap-2 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       >
         {shown.map((member) => (
           <ActivityAvatar

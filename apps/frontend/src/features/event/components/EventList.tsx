@@ -141,7 +141,7 @@ export function EventList({
                   id={eventRowId(event.id)}
                   aria-current={event.id === selectedId ? "true" : undefined}
                   className={cn(
-                    "-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                    "-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring",
                     event.id === selectedId && "bg-muted",
                   )}
                 >

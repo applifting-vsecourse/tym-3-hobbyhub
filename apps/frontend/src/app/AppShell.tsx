@@ -64,6 +64,12 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
       ref={shellRef}
       className={cn("flex min-h-svh flex-col", shellClassName)}
     >
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-3 typo-label text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus-visible:ring-[3px] focus-visible:ring-ring"
+      >
+        {t("hobbyhub.nav.skipToContent")}
+      </a>
       <Header
         search={search}
         nav={isSignedIn ? <HeaderNav active={active} /> : null}
@@ -82,7 +88,13 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
         notifications={isSignedIn ? <NotificationBell /> : null}
         userMenu={<HeaderMenu />}
       />
-      <main className={cn("flex-1", className)}>{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={cn("flex-1 outline-none", className)}
+      >
+        {children}
+      </main>
       {isSignedIn ? (
         // The nav's raised-button padding lets clicks through to the page;
         // the wrapper that is measured must not catch them either.

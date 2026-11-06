@@ -13,13 +13,22 @@ export type ManagedEvent = {
   title: string
   /** When it starts, already formatted, e.g. "Dnes 19:00". */
   when: string
-  status: "PUBLISHED" | "CANCELLED" | "FINISHED" | "NOT_HELD"
+  status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "FINISHED" | "NOT_HELD"
   startAt: Date
   endAt: Date
   approvalMode: ApprovalMode
   taken: number
   min: number
   max: number
+}
+
+/** The occupancy the participants page shows on top of it (F-05.6). */
+export type ManagedEventOverview = ManagedEvent & {
+  /** Approved participants with an account. */
+  approved: number
+  /** Seats the organizer took for people outside the app. */
+  externalOccupied: number
+  fillState: "BELOW_MINIMUM" | "MINIMUM_REACHED" | "FULL"
 }
 
 /** Why no request of the event can be decided any more. */
