@@ -37,7 +37,10 @@ describe("AppShell", () => {
     const navs = screen.getAllByRole("navigation", { name: "Hlavní navigace" })
     expect(navs).toHaveLength(2)
     for (const nav of navs) {
-      expect(within(nav).getByRole("link", { name: "Objevovat" })).toHaveAttribute("href", "/events")
+      expect(within(nav).getByRole("link", { name: "Objevovat" })).toHaveAttribute(
+        "href",
+        "/events",
+      )
       expect(within(nav).getByRole("link", { name: "Skupiny" })).toHaveAttribute("href", "/groups")
       expect(within(nav).queryByRole("link", { name: "Moje akce" })).not.toBeInTheDocument()
       expect(within(nav).queryByRole("link", { name: "Profil" })).not.toBeInTheDocument()
