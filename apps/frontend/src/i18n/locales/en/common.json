@@ -676,6 +676,7 @@
       "label": "Main navigation",
       "myEvents": "My events",
       "profile": "Profile",
+      "skipToContent": "Skip to content",
       "withNewRequests": "{{label}}, new requests"
     },
     "photoPicker": {

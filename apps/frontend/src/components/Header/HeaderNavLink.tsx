@@ -17,7 +17,7 @@ export function HeaderNavLink({ to, isActive, children, className }: HeaderNavLi
       to={to}
       isActive={isActive}
       className={cn(
-        "rounded-md px-2 py-1 typo-label whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "rounded-md px-2 py-1 typo-label whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
         isActive ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
         className,
       )}
