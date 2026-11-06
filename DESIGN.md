@@ -28,7 +28,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 
 - **Cards are for separable items in a list** — an event, a join request, a search result. They are not page sections and not layout tools.
 - **Never nest a card inside a card.** If content needs grouping inside a card, use spacing, a hairline divider or a tinted band (like the roster band on `EventCard`).
-- **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts, `max-w-6xl` for discovery screens like the landing page, where event cards sit three across), not inside a floating panel. The header is always `max-w-6xl`, whatever the column under it: its navigation sits on the right and must stay put between pages. The `Hero` is the one coloured section surface, and a screen has at most one.
+- **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts, `max-w-6xl` for discovery screens like the landing page, where event cards sit three across), not inside a floating panel. The header is always `max-w-6xl`, whatever the column under it: its navigation sits on the right and must stay put between pages. The `Hero` is the one coloured section surface, and a screen has at most one. The landing page is the one exception: its last section, the invitation to groups, sits on the same dashed `accent` surface as `YourSeat` — the surface that invites the visitor in — a screen's height below the hero, so the two are never on screen together.
 - **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands.
 - Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
 
@@ -84,7 +84,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 
 ## Buttons and loaders
 
-- **One primary action per screen.** Destructive only for irreversible actions and never next to a filled primary. Sizes: M (`default`, 44 px) and S (`sm`, 36 px); icon buttons `icon` (44 px) and `icon-sm` (36 px).
+- **One primary action per screen.** Destructive only for irreversible actions and never next to a filled primary. The landing page is the exception: it is several screens long and each of its sections (hero, how it works, groups) ends in its own filled call to action, one per screen of scrolling, never two in view at once. Sizes: M (`default`, 44 px) and S (`sm`, 36 px); icon buttons `icon` (44 px) and `icon-sm` (36 px).
 - The main action of a free seat ("Obsadit místo") sits inside `YourSeat`, not under it.
 - A loader appears only after 300 ms, there is only one at a time, it always has a text label and it stands still under reduced motion — use `Loader`, pick the variant by context. Any other movement (rise, scale, blur) runs only under `motion-safe:`; under reduced motion an animation may at most cross-fade in opacity, as the `enter` and `seat-enter` utilities do.
 
