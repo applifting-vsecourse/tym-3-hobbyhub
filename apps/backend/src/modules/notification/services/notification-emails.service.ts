@@ -49,18 +49,16 @@ export class NotificationEmailsService {
         if (!content) return [];
         const verified = notification.recipient.emailVerified;
         const html = verified ? htmlOf(content) : Promise.resolve('');
-        return html.then(
-          (html): OutgoingEmail => ({
-            kind: 'NOTIFICATION',
-            critical: content.critical,
-            recipientId: notification.recipientId,
-            to: notification.recipient.email,
-            subject: content.subject,
-            html,
-            notificationId: notification.id,
-            ...(verified ? {} : { skipReason: 'UNVERIFIED' as const }),
-          }),
-        );
+        return html.then((html): OutgoingEmail => ({
+          kind: 'NOTIFICATION',
+          critical: content.critical,
+          recipientId: notification.recipientId,
+          to: notification.recipient.email,
+          subject: content.subject,
+          html,
+          notificationId: notification.id,
+          ...(verified ? {} : { skipReason: 'UNVERIFIED' as const }),
+        }));
       }),
     );
     await this.outbox.enqueue(emails);
