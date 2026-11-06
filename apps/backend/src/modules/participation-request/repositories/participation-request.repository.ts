@@ -1,5 +1,7 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
+  EventStatus,
+  EventVisibility,
   ParticipationStatus,
   Prisma,
   ParticipationRequest as PrismaParticipationRequest,
@@ -8,6 +10,7 @@ import {
 import { occupancyOf, Page } from '@/modules/event/domain/event';
 import {
   ApplicantProfile,
+  ApplicationFactsPage,
   DecidedRequestPage,
   DecidedStatus,
   DecisionRuleViolation,
@@ -144,6 +147,76 @@ export class ParticipationRequestRepository {
       orderBy: { requestedAt: 'desc' },
     });
     return requests.map(mapToDomain);
+  }
+
+  // F-06.3: one page of the events a person has applied to that are not over,
+  // soonest first, with their own seat and requests on each. Hidden, non-public
+  // and draft events are left out, as everywhere a person reaches an event.
+  async getApplicationFacts(
+    userId: string,
+    now: Date,
+    { limit, offset }: Page,
+  ): Promise<ApplicationFactsPage> {
+    const where: Prisma.EventWhereInput = {
+      endAt: { gte: now },
+      status: { in: [EventStatus.PUBLISHED, EventStatus.CANCELLED] },
+      visibility: EventVisibility.PUBLIC,
+      isHidden: false,
+      OR: [
+        { participationRequests: { some: { userId } } },
+        {
+          participations: {
+            some: {
+              userId,
+              status: {
+                in: [
+                  ParticipationStatus.APPROVED,
+                  ParticipationStatus.CANCELLED,
+                ],
+              },
+            },
+          },
+        },
+      ],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+        select: {
+          id: true,
+          status: true,
+          participations: { where: { userId }, select: { status: true } },
+          participationRequests: {
+            where: { userId },
+            select: { status: true },
+          },
+        },
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => {
+        const seat = event.participations[0]?.status;
+        return {
+          eventId: event.id,
+          // The query keeps PUBLISHED and CANCELLED only.
+          eventStatus:
+            event.status === EventStatus.CANCELLED ? 'CANCELLED' : 'PUBLISHED',
+          seat:
+            seat === ParticipationStatus.APPROVED ||
+            seat === ParticipationStatus.CANCELLED
+              ? seat
+              : null,
+          requests: event.participationRequests.map(
+            (request) => request.status,
+          ),
+        };
+      }),
+      total,
+    };
   }
 
   async getRequest(

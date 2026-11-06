@@ -27,6 +27,7 @@ import {
   MIN_STATS_PARTICIPANTS,
   occupancyOf,
   Page,
+  ParticipantEventInfo,
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
@@ -279,6 +280,8 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   maxParticipants: event.maxParticipants,
   contributionAmount: event.contributionAmount?.toNumber() ?? null,
   contributionNote: event.contributionNote,
+  contact: event.contact,
+  externalChatUrl: event.externalChatUrl,
   location: mapLocation(event),
   activity: {
     id: event.activity.id,
@@ -323,6 +326,8 @@ export class EventRepository {
         externalOccupiedSpots: data.externalOccupiedSpots,
         contributionAmount: data.contributionAmount ?? null,
         contributionNote: data.contributionNote ?? null,
+        contact: data.contact ?? null,
+        externalChatUrl: data.externalChatUrl ?? null,
         locationStreet: data.location.street,
         locationCity: data.location.city,
         locationPostalCode: data.location.postalCode,
@@ -377,6 +382,8 @@ export class EventRepository {
           externalOccupiedSpots: data.externalOccupiedSpots,
           contributionAmount: data.contributionAmount ?? null,
           contributionNote: data.contributionNote ?? null,
+          contact: data.contact ?? null,
+          externalChatUrl: data.externalChatUrl ?? null,
           locationStreet: data.location?.street ?? null,
           locationCity: data.location?.city ?? null,
           locationPostalCode: data.location?.postalCode ?? null,
@@ -544,6 +551,46 @@ export class EventRepository {
     };
   }
 
+  // The list cards of the given events, for a caller that already knows which
+  // ones it wants (F-06.3). Visibility is the caller's business.
+  async getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      include: listInclude,
+    });
+    return events.map((event) => mapPrismaEventToListItem(event));
+  }
+
+  // F-06.3: a page of the published public events a person organizes (or
+  // co-organizes) that are not over, soonest first.
+  async getUpcomingOrganizedBy(
+    userId: string,
+    now: Date,
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    const where: Prisma.EventWhereInput = {
+      ...PUBLIC_EVENT,
+      // Only what is on offer: not a draft, and not one that was called off.
+      status: EventStatus.PUBLISHED,
+      endAt: { gte: now },
+      OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => mapPrismaEventToListItem(event)),
+      total,
+    };
+  }
+
   // Public detail: the list's visibility rules, but an event that was cancelled
   // or is over stays reachable, so a shared link still explains what happened.
   async getPublicEventById(id: string): Promise<EventDetail | null> {
@@ -597,6 +644,23 @@ export class EventRepository {
         listItem.takenCount,
       ),
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
+    };
+  }
+
+  // F-06.5: what the organizers and approved participants see on top of the
+  // public detail. The caller has already checked who is asking.
+  async getParticipantInfo(id: string): Promise<ParticipantEventInfo | null> {
+    const event = await this.prisma.event.findFirst({
+      where: { id, ...PUBLIC_EVENT },
+      include: { organizer: { select: { name: true } } },
+    });
+    if (!event) return null;
+    return {
+      venueType: event.venueType,
+      location: mapLocation(event),
+      organizerName: event.organizer.name,
+      contact: event.contact,
+      externalChatUrl: event.externalChatUrl,
     };
   }
 

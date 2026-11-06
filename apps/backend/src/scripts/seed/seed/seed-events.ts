@@ -169,6 +169,9 @@ type Example = {
   venueType?: VenueType;
   place?: Place;
   onlineUrl?: string;
+  // F-06.5: shown to approved participants only.
+  contact?: string;
+  externalChatUrl?: string;
   // Everything below defaults to a public, published event. The odd ones out
   // exist to check that the listing leaves them out.
   status?: EventStatus;
@@ -226,6 +229,8 @@ export async function seedEvents(
       max: 10,
       external: 2,
       contribution: 80,
+      contact: '+420 777 123 456',
+      externalChatUrl: 'https://chat.whatsapp.com/florbal-kobylisy',
       place: {
         ...prague8,
         street: 'Chabařovická 1',
@@ -246,6 +251,8 @@ export async function seedEvents(
       min: 5,
       max: 8,
       external: 1,
+      externalChatUrl: 'https://t.me/deskovky_herna_kostka',
+      contact: 'caffeinatedduck@example.com',
       place: {
         ...prague8,
         street: 'Sokolovská 100',
@@ -682,6 +689,8 @@ export async function seedEvents(
         approvalMode: ApprovalMode.MANUAL,
         venueType,
         onlineUrl: example.onlineUrl,
+        contact: example.contact,
+        externalChatUrl: example.externalChatUrl,
         startAt: example.startAt,
         endAt: new Date(example.startAt.getTime() + 2 * HOUR_IN_MS),
         publishedAt: status === EventStatus.DRAFT ? undefined : new Date(now),

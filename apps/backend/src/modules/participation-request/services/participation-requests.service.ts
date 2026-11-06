@@ -3,6 +3,7 @@ import { EventsService } from '@/modules/event/services/events.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
+  ApplicationFactsPage,
   currentRequestOf,
   DecidedRequestPage,
   DecidedStatus,
@@ -65,6 +66,16 @@ export class ParticipationRequestsService {
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-06.3: a page of the person's own applications to events that are not
+  // over; the overview turns them into one status per event.
+  getMyApplicationFacts(
+    user: Identity,
+    page: Page,
+    now: Date = new Date(),
+  ): Promise<ApplicationFactsPage> {
+    return this.repository.getApplicationFacts(user.id, now, page);
+  }
 
   async getMyRequestState(
     user: Identity,

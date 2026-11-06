@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
+import { myEventsKeys } from "@/lib/my-events-keys"
+
 import { participationRequestKeys } from "@/features/participation-request/api/participationRequestKeys"
 import { requestToJoin } from "@/features/participation-request/api/requestToJoin"
 
@@ -16,6 +18,7 @@ export function useRequestToJoin(onChange?: () => Promise<unknown>) {
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: participationRequestKeys.all() }),
+        queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
         onChange?.(),
       ]),
   })

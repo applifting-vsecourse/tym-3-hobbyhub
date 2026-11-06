@@ -27,7 +27,10 @@ import {
   EventDetailResponseDto,
   EventListResponseDto,
 } from './dto/event-list-item.response.dto';
-import { EventResponseDto } from './dto/event.response.dto';
+import {
+  EventResponseDto,
+  ParticipantEventInfoResponseDto,
+} from './dto/event.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateExternalSpotsDto } from './dto/update-external-spots.dto';
@@ -109,6 +112,8 @@ export class EventsController {
       externalOccupiedSpots: body.externalOccupiedSpots,
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
+      contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -207,6 +212,8 @@ export class EventsController {
       externalOccupiedSpots: body.externalOccupiedSpots,
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
+      contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -234,6 +241,25 @@ export class EventsController {
       cancellationNote: body.cancellationNote,
     });
     return EventResponseDto.fromDomain(event);
+  }
+
+  // F-06.5: the part of the detail a visitor never gets.
+  @Get(':id/participant-info')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Exact address and contacts, organizers and approved only',
+  })
+  @ApiResponse({ status: 200, type: ParticipantEventInfoResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 403, description: 'No seat on this event' })
+  @ApiResponse({ status: 404, description: 'Event not found or not public' })
+  async participantInfo(
+    @User() user: Identity,
+    @Param('id') id: string,
+  ): Promise<ParticipantEventInfoResponseDto> {
+    const info = await this.eventsService.getParticipantInfo(user, id);
+    return ParticipantEventInfoResponseDto.fromDomain(info);
   }
 
   // Public detail (F-02.4): approximate place only; the exact address and the
