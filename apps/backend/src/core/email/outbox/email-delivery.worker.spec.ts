@@ -126,6 +126,16 @@ describe('EmailDeliveryWorker', () => {
     });
   });
 
+  it('does not send again when the provider took it but recording failed', async () => {
+    const { repository, worker } = setup([aDueEmail()]);
+    repository.markSent.mockRejectedValue(new Error('db down'));
+
+    await worker.tick(now);
+
+    expect(repository.markRetry).not.toHaveBeenCalled();
+    expect(repository.markFailed).not.toHaveBeenCalled();
+  });
+
   describe('the daily budget', () => {
     it('lets only critical e-mails use the reserve', async () => {
       const { repository, worker } = setup([], { sentToday: 170 });

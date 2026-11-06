@@ -63,20 +63,31 @@ export const nextAttemptAt = (attempts: number, now: Date): Date | null => {
 };
 
 // What an adapter's error may carry: nodemailer puts the SMTP reply code in
-// `responseCode` and its own kind of error in `code`.
-type ProviderError = { responseCode?: unknown; code?: unknown };
+// `responseCode` and its own kind of error in `code`; the Resend adapter puts
+// the HTTP status in `statusCode`.
+type ProviderError = {
+  responseCode?: unknown;
+  code?: unknown;
+  statusCode?: unknown;
+};
+
+// The HTTP status with which Resend refuses the message itself (an invalid
+// address, a missing field). 401/403 is the API key, 429 the rate limit and
+// 5xx the provider: all of them may pass later.
+const HTTP_UNPROCESSABLE = 422;
 
 /**
  * Whether trying again cannot help. An SMTP 5xx reply refuses this message
  * for good (unknown mailbox, rejected content). A refused login (EAUTH) is a
  * 5xx too, but it is the server's configuration, not the message: once the
- * credentials are fixed the same message goes, so it is tried again. Anything
- * else (4xx, a dropped connection, a timeout, an HTTP provider's error) is
- * temporary.
+ * credentials are fixed the same message goes, so it is tried again. Over
+ * HTTP the same holds for a 422 from Resend. Anything else (4xx, a dropped
+ * connection, a timeout, another HTTP status) is temporary.
  */
 export const isPermanentFailure = (error: unknown): boolean => {
   if (error === null || typeof error !== 'object') return false;
-  const { responseCode, code } = error as ProviderError;
+  const { responseCode, code, statusCode } = error as ProviderError;
+  if (statusCode === HTTP_UNPROCESSABLE) return true;
   if (code === 'EAUTH') return false;
   return (
     typeof responseCode === 'number' &&

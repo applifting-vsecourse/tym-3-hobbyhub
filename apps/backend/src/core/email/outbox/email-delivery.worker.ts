@@ -124,14 +124,13 @@ export class EmailDeliveryWorker
   // True when it went.
   private async send(email: DueEmail, now: Date): Promise<boolean> {
     const attempts = email.attempts + 1;
+    let messageId: string | null;
     try {
-      const { messageId } = await this.emailService.sendEmail(
+      ({ messageId } = await this.emailService.sendEmail(
         email.to,
         email.subject,
         email.html,
-      );
-      await this.repository.markSent(email.id, attempts, messageId, now);
-      return true;
+      ));
     } catch (error) {
       const message = errorMessageOf(error);
       const retryAt = isPermanentFailure(error)
@@ -150,5 +149,10 @@ export class EmailDeliveryWorker
       }
       return false;
     }
+    // Outside the try: the provider has it, so a failed write is not a failed
+    // send and must not queue it again. The row stays SENDING; the pass logs
+    // the error.
+    await this.repository.markSent(email.id, attempts, messageId, now);
+    return true;
   }
 }

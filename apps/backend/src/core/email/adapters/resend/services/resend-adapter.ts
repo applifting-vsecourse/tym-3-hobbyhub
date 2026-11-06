@@ -29,7 +29,12 @@ export class ResendAdapter implements EmailService {
 
     if (error) {
       this.logger.error(`Resend delivery failed: ${error.message}`, error);
-      throw new Error(`Resend delivery failed: ${error.message}`);
+      // The HTTP status goes along, so the outbox can tell a refused message
+      // from a temporary failure (isPermanentFailure).
+      throw Object.assign(
+        new Error(`Resend delivery failed: ${error.message}`),
+        { statusCode: error.statusCode },
+      );
     }
     return { messageId: data?.id ?? null };
   }

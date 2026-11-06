@@ -96,6 +96,8 @@ export class EmailDeliveryRepository {
     });
   }
 
+  // Once an e-mail is done, its HTML goes: it may hold a password-reset or
+  // verification link. The subject, the outcome and the metadata stay.
   async markSent(
     id: string,
     attempts: number,
@@ -104,7 +106,13 @@ export class EmailDeliveryRepository {
   ): Promise<void> {
     await this.prisma.emailDelivery.update({
       where: { id },
-      data: { status: 'SENT', attempts, providerMessageId, sentAt: at },
+      data: {
+        status: 'SENT',
+        attempts,
+        providerMessageId,
+        sentAt: at,
+        html: '',
+      },
     });
   }
 
@@ -123,14 +131,14 @@ export class EmailDeliveryRepository {
   async markFailed(id: string, attempts: number, error: string): Promise<void> {
     await this.prisma.emailDelivery.update({
       where: { id },
-      data: { status: 'FAILED', attempts, lastError: error },
+      data: { status: 'FAILED', attempts, lastError: error, html: '' },
     });
   }
 
   async markSkipped(id: string, reason: EmailSkipReason): Promise<void> {
     await this.prisma.emailDelivery.update({
       where: { id },
-      data: { status: 'SKIPPED', skipReason: reason },
+      data: { status: 'SKIPPED', skipReason: reason, html: '' },
     });
   }
 }

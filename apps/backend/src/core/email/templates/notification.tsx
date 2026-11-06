@@ -1,7 +1,6 @@
 import { Hr, Link, Text } from 'react-email';
 import * as React from 'react';
 import {
-  callout,
   COLOR,
   finePrint,
   inlineLink,
@@ -17,8 +16,6 @@ export interface NotificationEmailProps {
   heading: string;
   // A sentence under the heading, if the type has one.
   body?: string;
-  // Someone's own words, e.g. the organizer's reason for a rejection.
-  quote?: { label: string; text: string };
   buttonLabel: string;
   url: string;
   notificationsUrl: string;
@@ -27,19 +24,12 @@ export interface NotificationEmailProps {
 export const NotificationEmail = ({
   heading,
   body,
-  quote,
   buttonLabel,
   url,
   notificationsUrl,
 }: NotificationEmailProps): React.JSX.Element => (
   <Layout preview={heading} heading={heading}>
     {body ? <Text style={paragraph}>{body}</Text> : null}
-    {quote ? (
-      <Text style={{ ...callout, margin: '24px 0 0' }}>
-        {quote.label}
-        <br />„{quote.text}“
-      </Text>
-    ) : null}
     <PrimaryButton href={url}>{buttonLabel}</PrimaryButton>
     <Hr style={{ borderColor: COLOR.border, margin: '32px 0 16px' }} />
     <LinkFallback url={url} />

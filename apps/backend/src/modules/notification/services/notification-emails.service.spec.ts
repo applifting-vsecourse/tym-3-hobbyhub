@@ -8,9 +8,13 @@ import { NotificationEmailsService } from './notification-emails.service';
 
 // react-email renders through a dynamic import Jest cannot run; the props the
 // template gets stand in for the HTML.
-jest.mock('@/core/email/render', () => ({
-  renderEmail: (_component: unknown, props: object): Promise<string> =>
+const mockRender = jest.fn(
+  (_component: unknown, props: object): Promise<string> =>
     Promise.resolve(JSON.stringify(props)),
+);
+jest.mock('@/core/email/render', () => ({
+  renderEmail: (component: unknown, props: object): Promise<string> =>
+    mockRender(component, props),
 }));
 
 const aNotification = (
@@ -30,6 +34,8 @@ const aNotification = (
 });
 
 describe('NotificationEmailsService', () => {
+  beforeEach(() => mockRender.mockClear());
+
   const setup = (
     notifications: NotificationForEmail[],
   ): {
@@ -62,8 +68,7 @@ describe('NotificationEmailsService', () => {
         critical: false,
         recipientId: 'u1',
         to: 'jana@example.com',
-        subject:
-          'Tvoje žádost o účast na akci Čtvrteční florbal byla zamítnuta',
+        subject: 'Tvoje žádost o účast na akci byla zamítnuta',
         notificationId: 'n1',
       }),
     ]);
@@ -76,8 +81,8 @@ describe('NotificationEmailsService', () => {
     await service.queueFor(['n1']);
 
     expect(JSON.parse(queued()[0].html)).toEqual({
-      heading: 'Tvoje žádost o účast na akci Čtvrteční florbal byla zamítnuta',
-      quote: { label: 'Zpráva od organizátora:', text: 'Je plno.' },
+      heading: 'Tvoje žádost o účast na akci byla zamítnuta',
+      body: 'Podrobnosti najdeš v detailu akce.',
       buttonLabel: 'Zobrazit akci',
       url: 'https://hobbyhub.test/events/e1',
       notificationsUrl: 'https://hobbyhub.test/notifications',
@@ -93,7 +98,24 @@ describe('NotificationEmailsService', () => {
 
     await service.queueFor(['n1']);
 
-    expect(queued()[0].skipReason).toBe('UNVERIFIED');
+    expect(queued()[0]).toEqual(
+      expect.objectContaining({ skipReason: 'UNVERIFIED', html: '' }),
+    );
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
+  it('renders an e-mail many participants get only once', async () => {
+    const cancelled = { type: 'EVENT_CANCELLED' as const, payload: {} };
+    const { service, queued } = setup([
+      aNotification({ ...cancelled, id: 'n1', recipientId: 'u1' }),
+      aNotification({ ...cancelled, id: 'n2', recipientId: 'u3' }),
+    ]);
+
+    await service.queueFor(['n1', 'n2']);
+
+    expect(queued()).toHaveLength(2);
+    expect(queued()[0].html).toBe(queued()[1].html);
+    expect(mockRender).toHaveBeenCalledTimes(1);
   });
 
   it('leaves out a notification that has no e-mail', async () => {

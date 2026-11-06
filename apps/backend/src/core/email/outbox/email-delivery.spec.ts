@@ -33,8 +33,15 @@ describe('isPermanentFailure', () => {
     );
   });
 
+  it('takes a message Resend refuses (422) as final', () => {
+    expect(isPermanentFailure({ statusCode: 422 })).toBe(true);
+  });
+
   it.each([
     ['a 4xx reply', { responseCode: 421 }],
+    ['a refused Resend API key', { statusCode: 401 }],
+    ['Resend’s rate limit', { statusCode: 429 }],
+    ['a Resend outage', { statusCode: 500 }],
     ['a dropped connection', { code: 'ECONNECTION' }],
     ['a plain error', new Error('Resend delivery failed: timeout')],
     ['something that is not an error', 'boom'],
