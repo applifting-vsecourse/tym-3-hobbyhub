@@ -686,6 +686,7 @@
       "label": "Hlavní navigace",
       "myEvents": "Moje akce",
       "profile": "Profil",
+      "skipToContent": "Přeskočit na obsah",
       "withNewRequests": "{{label}}, nové žádosti"
     },
     "photoPicker": {

@@ -53,7 +53,7 @@ function NavItem({ section, isActive, hasDot }: NavItemProps) {
       isActive={isActive}
       aria-label={hasDot ? t("hobbyhub.nav.withNewRequests", { label }) : undefined}
       className={cn(
-        "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
         isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -108,7 +108,7 @@ export function BottomNav({ active, hasNewRequests = false, className }: BottomN
         >
           <span
             aria-hidden
-            className="absolute -top-8.75 flex size-16 items-center justify-center rounded-[22px] border-5 border-background bg-primary group-focus-visible:ring-[3px] group-focus-visible:ring-ring/50"
+            className="absolute -top-8.75 flex size-16 items-center justify-center rounded-[22px] border-5 border-background bg-primary group-focus-visible:ring-[3px] group-focus-visible:ring-ring"
           >
             <Logo
               variant="mark"
