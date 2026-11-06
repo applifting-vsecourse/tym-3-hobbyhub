@@ -423,15 +423,15 @@
         "leaveStay": "Stay in the group",
         "leaveText": "You will no longer be a member of {{name}}. You can join again by requesting membership.",
         "leaveTitle": "Do you really want to leave the group?",
+        "ownerCannotLeave": "As the organizer you cannot leave the group. Hand it over to another member first.",
+        "ownerTransferLink": "Hand over the group",
         "pendingText": "Your request is waiting for the group organizer.",
         "rejectedText": "The organizer rejected your request. You cannot send a new one to this group.",
         "request": "Request membership",
         "requestNote": "The organizer approves requests by hand. A request waits with no time limit.",
         "signIn": "Sign in",
         "title": "Membership",
-        "withdraw": "Withdraw request",
-        "ownerCannotLeave": "As the organizer you cannot leave the group. Hand it over to another member first.",
-        "ownerTransferLink": "Hand over the group"
+        "withdraw": "Withdraw request"
       },
       "title": "Group detail",
       "upcoming": {
@@ -488,6 +488,39 @@
       }
     },
     "manage": {
+      "actions": {
+        "cancel": "Back",
+        "demote": {
+          "confirm": "Remove role",
+          "done": "{{name}} is no longer an admin.",
+          "menu": "Remove admin role",
+          "text": "{{name}} will stay in {{group}} as a member but lose the admin rights.",
+          "title": "Remove admin role?"
+        },
+        "failed": "The action could not be completed. We have refreshed the member list, please try again.",
+        "makeAdmin": {
+          "confirm": "Make admin",
+          "done": "{{name}} is now an admin.",
+          "menu": "Make admin",
+          "text": "{{name}} will handle membership requests and remove members in {{group}}.",
+          "title": "Make admin?"
+        },
+        "menuLabel": "Actions for {{name}}",
+        "remove": {
+          "confirm": "Remove",
+          "done": "{{name}} is no longer a member.",
+          "menu": "Remove from group",
+          "text": "{{name}} will no longer be a member of {{group}}. They can join again with a membership request.",
+          "title": "Remove from group?"
+        },
+        "transfer": {
+          "confirm": "Hand over",
+          "done": "{{name}} now runs the group.",
+          "menu": "Hand over the group",
+          "text": "{{name}} will become the organizer of {{group}}. You will stay on as an admin; only the new organizer can undo this.",
+          "title": "Hand over the group?"
+        }
+      },
       "adminTitle": "Group management",
       "approved": "{{name}} is now a member of the group.",
       "back": "Back to the group",
@@ -524,40 +557,7 @@
         "requests": "Requests {{count}}"
       },
       "tabsLabel": "Members and requests",
-      "title": "Member management",
-      "actions": {
-        "menuLabel": "Actions for {{name}}",
-        "cancel": "Back",
-        "failed": "The action could not be completed. We have refreshed the member list, please try again.",
-        "makeAdmin": {
-          "menu": "Make admin",
-          "title": "Make admin?",
-          "text": "{{name}} will handle membership requests and remove members in {{group}}.",
-          "confirm": "Make admin",
-          "done": "{{name}} is now an admin."
-        },
-        "demote": {
-          "menu": "Remove admin role",
-          "title": "Remove admin role?",
-          "text": "{{name}} will stay in {{group}} as a member but lose the admin rights.",
-          "confirm": "Remove role",
-          "done": "{{name}} is no longer an admin."
-        },
-        "transfer": {
-          "menu": "Hand over the group",
-          "title": "Hand over the group?",
-          "text": "{{name}} will become the organizer of {{group}}. You will stay on as an admin; only the new organizer can undo this.",
-          "confirm": "Hand over",
-          "done": "{{name}} now runs the group."
-        },
-        "remove": {
-          "menu": "Remove from group",
-          "title": "Remove from group?",
-          "text": "{{name}} will no longer be a member of {{group}}. They can join again with a membership request.",
-          "confirm": "Remove",
-          "done": "{{name}} is no longer a member."
-        }
-      }
+      "title": "Member management"
     },
     "membershipRequest": {
       "form": {

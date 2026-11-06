@@ -432,15 +432,15 @@
         "leaveStay": "Zůstat ve skupině",
         "leaveText": "Přestanete být členem skupiny {{name}}. Znovu se můžete přidat pomocí žádosti o členství.",
         "leaveTitle": "Opravdu chcete odejít ze skupiny?",
+        "ownerCannotLeave": "Jako organizátor ze skupiny odejít nemůžete. Nejdřív předejte správu jinému členovi.",
+        "ownerTransferLink": "Předat správu",
         "pendingText": "Žádost čeká, až ji organizátor skupiny vyřídí.",
         "rejectedText": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde.",
         "request": "Požádat o členství",
         "requestNote": "Organizátor žádost schválí ručně. Žádost čeká bez lhůty.",
         "signIn": "Přihlásit se",
         "title": "Členství",
-        "withdraw": "Zrušit žádost",
-        "ownerCannotLeave": "Jako organizátor ze skupiny odejít nemůžete. Nejdřív předejte správu jinému členovi.",
-        "ownerTransferLink": "Předat správu"
+        "withdraw": "Zrušit žádost"
       },
       "title": "Detail skupiny",
       "upcoming": {
@@ -497,6 +497,39 @@
       }
     },
     "manage": {
+      "actions": {
+        "cancel": "Zpět",
+        "demote": {
+          "confirm": "Odvolat",
+          "done": "{{name}} už není správcem.",
+          "menu": "Odvolat správce",
+          "text": "{{name}} zůstane ve skupině {{group}} jako člen, ale přijde o práva správce.",
+          "title": "Odvolat správce?"
+        },
+        "failed": "Akci se nepodařilo provést. Seznam členů jsme obnovili, zkuste to prosím znovu.",
+        "makeAdmin": {
+          "confirm": "Jmenovat správcem",
+          "done": "{{name}} je teď správcem.",
+          "menu": "Jmenovat správcem",
+          "text": "{{name}} bude ve skupině {{group}} vyřizovat žádosti o členství a odebírat členy.",
+          "title": "Jmenovat správcem?"
+        },
+        "menuLabel": "Akce pro člena {{name}}",
+        "remove": {
+          "confirm": "Odebrat",
+          "done": "{{name}} už není členem skupiny.",
+          "menu": "Odebrat ze skupiny",
+          "text": "{{name}} přestane být členem skupiny {{group}}. Znovu se může přidat pomocí žádosti o členství.",
+          "title": "Odebrat ze skupiny?"
+        },
+        "transfer": {
+          "confirm": "Předat správu",
+          "done": "Skupinu teď spravuje {{name}}.",
+          "menu": "Předat správu",
+          "text": "{{name}} se stane organizátorem skupiny {{group}}. Vy zůstanete správcem; vrátit to může už jen nový organizátor.",
+          "title": "Předat správu skupiny?"
+        }
+      },
       "adminTitle": "Správa skupiny",
       "approved": "{{name}} je teď členem skupiny.",
       "back": "Zpět na skupinu",
@@ -534,40 +567,7 @@
         "requests": "Žádosti {{count}}"
       },
       "tabsLabel": "Členové a žádosti",
-      "title": "Správa členů",
-      "actions": {
-        "menuLabel": "Akce pro člena {{name}}",
-        "cancel": "Zpět",
-        "failed": "Akci se nepodařilo provést. Seznam členů jsme obnovili, zkuste to prosím znovu.",
-        "makeAdmin": {
-          "menu": "Jmenovat správcem",
-          "title": "Jmenovat správcem?",
-          "text": "{{name}} bude ve skupině {{group}} vyřizovat žádosti o členství a odebírat členy.",
-          "confirm": "Jmenovat správcem",
-          "done": "{{name}} je teď správcem."
-        },
-        "demote": {
-          "menu": "Odvolat správce",
-          "title": "Odvolat správce?",
-          "text": "{{name}} zůstane ve skupině {{group}} jako člen, ale přijde o práva správce.",
-          "confirm": "Odvolat",
-          "done": "{{name}} už není správcem."
-        },
-        "transfer": {
-          "menu": "Předat správu",
-          "title": "Předat správu skupiny?",
-          "text": "{{name}} se stane organizátorem skupiny {{group}}. Vy zůstanete správcem; vrátit to může už jen nový organizátor.",
-          "confirm": "Předat správu",
-          "done": "Skupinu teď spravuje {{name}}."
-        },
-        "remove": {
-          "menu": "Odebrat ze skupiny",
-          "title": "Odebrat ze skupiny?",
-          "text": "{{name}} přestane být členem skupiny {{group}}. Znovu se může přidat pomocí žádosti o členství.",
-          "confirm": "Odebrat",
-          "done": "{{name}} už není členem skupiny."
-        }
-      }
+      "title": "Správa členů"
     },
     "membershipRequest": {
       "form": {
