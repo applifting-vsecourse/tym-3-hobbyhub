@@ -171,6 +171,8 @@ export const eventDetailSchema = eventListItemSchema.extend({
   organizerName: z.string(),
   /** The public group that organizes the event, if any. */
   group: z.object({ id: z.string(), name: z.string() }).nullable(),
+  /** GROUP_ONLY (F-07.2): only its group's members and those holding a seat see it. */
+  visibility: z.enum(["PUBLIC", "GROUP_ONLY"]),
   cancellationReason: z.string().nullable(),
   cancellationNote: z.string().nullable(),
   /** Hidden by the server until enough participants are included. */
@@ -180,6 +182,24 @@ export const eventDetailSchema = eventListItemSchema.extend({
 })
 
 export type EventDetail = z.infer<typeof eventDetailSchema>
+
+/** F-07.2: a card of a group's event; a cancelled one stays in the list. */
+export const groupEventSchema = eventListItemSchema.extend({
+  status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
+  visibility: z.enum(["PUBLIC", "GROUP_ONLY"]),
+})
+
+export const groupEventPageSchema = z.object({
+  items: z.array(groupEventSchema),
+  /** All the events of the period, not just this page. */
+  total: z.number(),
+})
+
+export type GroupEvent = z.infer<typeof groupEventSchema>
+
+/** Not over yet, soonest first; or over, newest first. */
+export const GROUP_EVENT_PERIODS = ["upcoming", "past"] as const
+export type GroupEventPeriod = (typeof GROUP_EVENT_PERIODS)[number]
 
 /**
  * What only the organizers and approved participants get (F-06.5): the exact

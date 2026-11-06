@@ -180,6 +180,7 @@
       },
       "contribution": "Contribution",
       "equipment": "Equipment",
+      "groupOnly": "Group members only",
       "hasAccount": "Already have an account?",
       "hiddenInfo": "You'll see the exact address and the organizer's contact once your seat is confirmed.",
       "join": "Take a seat",
@@ -410,6 +411,29 @@
     "back": "Back",
     "detail": {
       "backToEvents": "Back to events",
+      "events": {
+        "cancelled": "Cancelled",
+        "count": {
+          "past_one": "{{count}} past event",
+          "past_other": "{{count}} past events",
+          "upcoming_one": "{{count}} upcoming event",
+          "upcoming_other": "{{count}} upcoming events"
+        },
+        "empty": {
+          "past": "The group has no past events yet.",
+          "upcoming": "The group has no upcoming events right now."
+        },
+        "groupOnly": "Group only",
+        "loadMore": "Load more",
+        "loadMoreFailed": "More events could not be loaded. Please try again.",
+        "loading": "Loading the group’s events…",
+        "periods": {
+          "past": "Past",
+          "upcoming": "Upcoming"
+        },
+        "periodsLabel": "Upcoming and past events",
+        "title": "Group events"
+      },
       "loadError": "Could not load the group",
       "loading": "Loading the group…",
       "members_one": "{{count}} member",
@@ -432,10 +456,6 @@
         "withdraw": "Withdraw request"
       },
       "title": "Group detail",
-      "upcoming": {
-        "inProgress": "We are working on this. Soon you will see here what the group has planned.",
-        "title": "Upcoming events"
-      },
       "visibilityPublic": "Public group"
     },
     "fields": {

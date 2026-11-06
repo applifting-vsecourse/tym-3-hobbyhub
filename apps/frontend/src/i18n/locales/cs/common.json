@@ -181,6 +181,7 @@
       },
       "contribution": "Příspěvek",
       "equipment": "Vybavení",
+      "groupOnly": "Jen pro členy skupiny",
       "hasAccount": "Už máš účet?",
       "hiddenInfo": "Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti.",
       "join": "Obsadit místo",
@@ -418,6 +419,31 @@
     "back": "Zpět",
     "detail": {
       "backToEvents": "Zpět na akce",
+      "events": {
+        "cancelled": "Zrušeno",
+        "count": {
+          "past_few": "{{count}} minulé akce",
+          "past_one": "{{count}} minulá akce",
+          "past_other": "{{count}} minulých akcí",
+          "upcoming_few": "{{count}} nadcházející akce",
+          "upcoming_one": "{{count}} nadcházející akce",
+          "upcoming_other": "{{count}} nadcházejících akcí"
+        },
+        "empty": {
+          "past": "Skupina zatím nemá žádné minulé akce.",
+          "upcoming": "Skupina teď nemá žádné nadcházející akce."
+        },
+        "groupOnly": "Jen pro skupinu",
+        "loadMore": "Načíst další",
+        "loadMoreFailed": "Další akce se nepodařilo načíst. Zkuste to prosím znovu.",
+        "loading": "Načítáme akce skupiny…",
+        "periods": {
+          "past": "Minulé",
+          "upcoming": "Nadcházející"
+        },
+        "periodsLabel": "Nadcházející a minulé akce",
+        "title": "Akce skupiny"
+      },
       "loadError": "Skupinu se nepodařilo načíst",
       "loading": "Načítáme skupinu…",
       "members_few": "{{count}} členové",
@@ -441,10 +467,6 @@
         "withdraw": "Zrušit žádost"
       },
       "title": "Detail skupiny",
-      "upcoming": {
-        "inProgress": "Na této funkci právě pracujeme. Brzy tu uvidíte, co skupina plánuje.",
-        "title": "Nadcházející akce"
-      },
       "visibilityPublic": "Veřejná skupina"
     },
     "fields": {
