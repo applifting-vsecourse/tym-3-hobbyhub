@@ -62,7 +62,6 @@ export type PublicProfile = {
   image: string | null;
   cover: string | null;
   interests: Interest[];
-  email: string | null;
 };
 
 export type ProfileViolation =

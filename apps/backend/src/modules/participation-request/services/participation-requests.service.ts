@@ -65,15 +65,6 @@ export class ParticipationRequestsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  // F-04.2: whether `organizerId` runs an event on which `userId` is
-  // approved. Decides who sees the participant's e-mail on their profile.
-  isApprovedParticipantOf(
-    organizerId: string,
-    userId: string,
-  ): Promise<boolean> {
-    return this.repository.hasApprovedParticipant(organizerId, userId);
-  }
-
   async getMyRequestState(
     user: Identity,
     eventId: string,

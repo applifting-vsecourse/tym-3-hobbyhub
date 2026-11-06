@@ -59,7 +59,6 @@ export const publicProfileSchema = z.object({
   image: z.string().nullable(),
   cover: z.string().nullable(),
   interests: z.array(interestSchema),
-  email: z.string().nullable(),
 })
 
 export type PublicProfile = z.infer<typeof publicProfileSchema>

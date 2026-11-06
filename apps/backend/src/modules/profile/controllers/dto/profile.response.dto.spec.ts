@@ -13,7 +13,6 @@ describe('PublicProfileResponseDto', () => {
       image: null,
       cover: null,
       interests: [],
-      email: null,
       gender: 'MALE',
       birthDate: '1990-05-17',
       address: { city: 'Praha' },
@@ -24,7 +23,6 @@ describe('PublicProfileResponseDto', () => {
     ).toEqual([
       'bio',
       'cover',
-      'email',
       'id',
       'image',
       'interests',

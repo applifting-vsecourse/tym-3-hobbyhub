@@ -4,7 +4,6 @@ import {
   TRAVEL_RADIUS_DEFAULT_KM,
 } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
-import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import {
   coverViolations,
   imageViolations,
@@ -29,7 +28,6 @@ export class ProfileService {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly onboardingService: OnboardingService,
-    private readonly participationRequestsService: ParticipationRequestsService,
   ) {}
 
   async getProfile(user: Identity): Promise<Profile> {
@@ -50,23 +48,11 @@ export class ProfileService {
     };
   }
 
-  // F-04.2: another person's profile. The e-mail goes only to an organizer of
-  // an event the person is approved on.
-  async getPublicProfile(
-    viewer: Identity,
-    userId: string,
-  ): Promise<PublicProfile> {
+  // F-04.2: another person's profile: only what the visibility matrix lets any
+  // signed-in person see. The e-mail is never part of it.
+  async getPublicProfile(userId: string): Promise<PublicProfile> {
     const row = await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
-    const [interests, seesEmail] = await Promise.all([
-      this.onboardingService.getInterestsOf(userId),
-      viewer.id === userId
-        ? false
-        : this.participationRequestsService.isApprovedParticipantOf(
-            viewer.id,
-            userId,
-          ),
-    ]);
     return {
       id: row.id,
       name: row.name,
@@ -74,8 +60,7 @@ export class ProfileService {
       bio: row.bio,
       image: row.image,
       cover: row.profileCover,
-      interests,
-      email: seesEmail ? row.email : null,
+      interests: await this.onboardingService.getInterestsOf(userId),
     };
   }
 

@@ -40,7 +40,6 @@ describe("PublicProfilePage", () => {
       image: null,
       cover: null,
       interests: [],
-      email: null,
     })
     await renderPage("u2")
 

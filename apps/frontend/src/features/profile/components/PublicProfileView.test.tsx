@@ -14,7 +14,6 @@ const profile: PublicProfile = {
   image: null,
   cover: null,
   interests: [{ activity: { id: "a1", name: "Běh", icon: "beh" }, level: null }],
-  email: null,
 }
 
 const renderProfile = (overrides: Partial<PublicProfile> = {}) =>
@@ -33,17 +32,9 @@ describe("PublicProfileView", () => {
     expect(screen.getByText("Běh")).toBeDefined()
   })
 
-  it("shows no contact and nothing private without an e-mail from the server", async () => {
+  it("shows no contact: the e-mail is nobody's but the owner's", async () => {
     await renderProfile()
     expect(screen.queryByRole("link", { name: /@/ })).toBeNull()
-    expect(screen.queryByText(/Jen pro vás/)).toBeNull()
-  })
-
-  it("shows the e-mail when the server sends it", async () => {
-    await renderProfile({ email: "petr@example.com" })
-    expect(screen.getByRole("link", { name: "petr@example.com" }).getAttribute("href")).toBe(
-      "mailto:petr@example.com",
-    )
   })
 
   it("leaves out empty parts instead of showing blanks", async () => {

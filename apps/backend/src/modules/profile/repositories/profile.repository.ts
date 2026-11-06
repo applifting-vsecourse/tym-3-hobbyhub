@@ -15,7 +15,6 @@ export type ProfileRow = {
 export type PublicProfileRow = {
   id: string;
   name: string;
-  email: string;
   createdAt: Date;
   bio: string | null;
   image: string | null;
@@ -49,7 +48,6 @@ export class ProfileRepository {
       select: {
         id: true,
         name: true,
-        email: true,
         createdAt: true,
         bio: true,
         image: true,

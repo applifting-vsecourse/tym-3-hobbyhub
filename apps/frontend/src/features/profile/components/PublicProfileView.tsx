@@ -1,4 +1,3 @@
-import { Mail } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
@@ -74,31 +73,6 @@ export function PublicProfileView({ profile, activityLabel }: PublicProfileViewP
               />
             ))}
           </ul>
-        </section>
-      ) : null}
-
-      {profile.email ? (
-        <section
-          aria-labelledby="public-profile-contact"
-          className="flex flex-col gap-3 border-t border-border pt-6"
-        >
-          <h2
-            id="public-profile-contact"
-            className="typo-h3 text-foreground"
-          >
-            {t("profile.userProfile.contact")}
-          </h2>
-          <p className="typo-small text-muted-foreground">{t("profile.userProfile.contactHint")}</p>
-          <a
-            href={`mailto:${profile.email}`}
-            className="flex items-center gap-2 typo-body break-all text-foreground underline underline-offset-4"
-          >
-            <Mail
-              aria-hidden="true"
-              className="size-4 shrink-0 text-muted-foreground"
-            />
-            {profile.email}
-          </a>
         </section>
       ) : null}
     </div>

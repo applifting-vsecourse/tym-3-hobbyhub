@@ -99,14 +99,6 @@ export class PublicProfileResponseDto {
   @ApiProperty({ type: [InterestResponseDto] })
   interests!: InterestResponseDto[];
 
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    description:
-      'Only for an organizer of an event the person is approved on, else null',
-  })
-  email!: string | null;
-
   static fromDomain(profile: PublicProfile): PublicProfileResponseDto {
     return {
       id: profile.id,
@@ -121,7 +113,6 @@ export class PublicProfileResponseDto {
           ? LevelResponseDto.fromDomain(interest.level)
           : null,
       })),
-      email: profile.email,
     };
   }
 }

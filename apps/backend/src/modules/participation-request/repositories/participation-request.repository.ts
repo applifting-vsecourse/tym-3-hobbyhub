@@ -1,6 +1,5 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
-  EventStatus,
   ParticipationStatus,
   Prisma,
   ParticipationRequest as PrismaParticipationRequest,
@@ -162,31 +161,6 @@ export class ParticipationRequestRepository {
       where: { id: requestId, eventId },
     });
     return request ? mapToDomain(request) : null;
-  }
-
-  // True when the person holds a seat on an event the organizer
-  // runs (as the organizer or a co-organizer). The seat is the participation,
-  // however it came about: a request, an invitation, a seeded roster.
-  async hasApprovedParticipant(
-    organizerId: string,
-    userId: string,
-  ): Promise<boolean> {
-    const found = await this.prisma.participation.findFirst({
-      where: {
-        userId,
-        status: { in: SEATED_STATUSES },
-        event: {
-          // Contact goes away once the event is over or cancelled.
-          status: EventStatus.PUBLISHED,
-          OR: [
-            { organizerId },
-            { coOrganizers: { some: { id: organizerId } } },
-          ],
-        },
-      },
-      select: { id: true },
-    });
-    return found !== null;
   }
 
   async getApplicantProfile(userId: string): Promise<ApplicantProfile> {

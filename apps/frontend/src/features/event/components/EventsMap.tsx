@@ -375,7 +375,7 @@ export function EventsMap({
                         })
                       : t("events.map.cluster", { count: pin.group.events.length })
                   }
-                  className="cursor-pointer rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="cursor-pointer rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
                   onClick={() => (event ? onSelect(event.id) : zoomInto(pin.group))}
                 >
                   {event ? (

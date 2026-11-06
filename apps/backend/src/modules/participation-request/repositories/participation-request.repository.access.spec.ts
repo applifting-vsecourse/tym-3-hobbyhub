@@ -1,51 +1,7 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { EventStatus, ParticipationStatus } from '@/generated/prisma/client';
-import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { ParticipationStatus } from '@/generated/prisma/client';
+import { mockDeep } from 'jest-mock-extended';
 import { ParticipationRequestRepository } from './participation-request.repository';
-
-describe('ParticipationRequestRepository.hasApprovedParticipant', () => {
-  const setup = (
-    found: { id: string } | null,
-  ): {
-    prisma: DeepMockProxy<PrismaService>;
-    repository: ParticipationRequestRepository;
-  } => {
-    const prisma = mockDeep<PrismaService>();
-    prisma.participation.findFirst.mockResolvedValue(found as never);
-    return { prisma, repository: new ParticipationRequestRepository(prisma) };
-  };
-
-  it('asks for an seat on a published event (approved or attended) run by the organizer', async () => {
-    const { prisma, repository } = setup({ id: 'r1' });
-    await expect(repository.hasApprovedParticipant('org', 'u2')).resolves.toBe(
-      true,
-    );
-    expect(prisma.participation.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          userId: 'u2',
-          status: {
-            in: [ParticipationStatus.APPROVED, ParticipationStatus.ATTENDED],
-          },
-          event: {
-            status: EventStatus.PUBLISHED,
-            OR: [
-              { organizerId: 'org' },
-              { coOrganizers: { some: { id: 'org' } } },
-            ],
-          },
-        },
-      }),
-    );
-  });
-
-  it('is false when no such request exists', async () => {
-    const { repository } = setup(null);
-    await expect(repository.hasApprovedParticipant('org', 'u2')).resolves.toBe(
-      false,
-    );
-  });
-});
 
 describe('ParticipationRequestRepository.getParticipants', () => {
   const user = {
