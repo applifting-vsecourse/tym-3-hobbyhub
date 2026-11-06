@@ -14,6 +14,11 @@ type GroupGridProps<T> = {
   empty: ReactNode
   renderItem: (item: T) => ReactNode
   getKey: (item: T) => string
+  /** The list's layout; three cards across from `md` by default. */
+  listClassName?: string
+  /** What is loading and what failed, when the list is not of groups. */
+  loadingLabel?: string
+  errorTitle?: string
 }
 
 /** A list of group cards with its loading, empty and error states. */
@@ -25,6 +30,9 @@ export function GroupGrid<T>({
   empty,
   renderItem,
   getKey,
+  listClassName = "grid gap-3 md:grid-cols-3",
+  loadingLabel,
+  errorTitle,
 }: GroupGridProps<T>) {
   const { t } = useTranslation()
 
@@ -33,7 +41,7 @@ export function GroupGrid<T>({
       <div className="flex justify-center py-8">
         <Loader
           variant="player"
-          label={t("groups.list.loading")}
+          label={loadingLabel ?? t("groups.list.loading")}
         />
       </div>
     )
@@ -42,7 +50,7 @@ export function GroupGrid<T>({
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertTitle>{t("groups.list.loadError")}</AlertTitle>
+        <AlertTitle>{errorTitle ?? t("groups.list.loadError")}</AlertTitle>
         <AlertDescription className="flex items-center justify-end gap-3">
           <Button
             variant="outline"
@@ -59,7 +67,7 @@ export function GroupGrid<T>({
   if (!items?.length) return <div className="typo-body text-muted-foreground">{empty}</div>
 
   return (
-    <ul className="grid gap-3 md:grid-cols-3">
+    <ul className={listClassName}>
       {items.map((item) => (
         <li key={getKey(item)}>{renderItem(item)}</li>
       ))}

@@ -5,6 +5,9 @@ export const groupKeys = {
   nearby: () => [...groupKeys.lists(), "nearby"] as const,
   // A signed-in viewer does not see their own groups, a visitor sees them all.
   discover: (viewerId: string | null) => [...groupKeys.lists(), "discover", viewerId] as const,
+  // F-07.7, per user like `myRequest`. A list, so asking, withdrawing and a
+  // decision refresh it with the others.
+  myRequests: (userId: string) => [...groupKeys.lists(), "my-requests", userId] as const,
   details: () => [...groupKeys.all(), "detail"] as const,
   detail: (id: string) => [...groupKeys.details(), id] as const,
   membership: (id: string) => [...groupKeys.detail(id), "membership"] as const,

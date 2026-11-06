@@ -63,6 +63,33 @@ export const groupMemberSchema = z.object({
   joinedAt: z.coerce.date(),
 })
 
+// F-07.7: the applicant's own view of a request. GROUP_CANCELLED is a waiting
+// request on a cancelled group, which nobody will decide any more.
+export const myMembershipRequestStatusSchema = z.enum([
+  ...membershipRequestStatusSchema.options,
+  "GROUP_CANCELLED",
+])
+
+export const myMembershipRequestSchema = z.object({
+  id: z.string(),
+  status: myMembershipRequestStatusSchema,
+  message: z.string().nullable(),
+  requestedAt: z.coerce.date(),
+  decidedAt: z.coerce.date().nullable(),
+  rejectionReason: z.string().nullable(),
+  group: z.object({
+    id: z.string(),
+    name: z.string(),
+    /** False once the group was cancelled: its page is gone. */
+    isOpen: z.boolean(),
+  }),
+})
+
+export const myMembershipRequestPageSchema = z.object({
+  items: z.array(myMembershipRequestSchema),
+  nextCursor: z.string().nullable(),
+})
+
 // The body of a refused request (400); a broken message has no `violations`.
 export const membershipRefusalSchema = z.object({
   violations: z.array(z.union([membershipRuleViolationSchema, membershipDecisionViolationSchema])),
@@ -75,3 +102,4 @@ export type MyMembershipRequestState = z.infer<typeof myMembershipRequestStateSc
 export type ApplicantProfile = z.infer<typeof applicantSchema>
 export type PendingMembershipRequest = z.infer<typeof pendingMembershipRequestSchema>
 export type GroupMember = z.infer<typeof groupMemberSchema>
+export type MyMembershipRequest = z.infer<typeof myMembershipRequestSchema>
