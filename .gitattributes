@@ -1,0 +1,15 @@
+# Text files are LF everywhere, in the repository and in every working copy,
+# whatever `core.autocrlf` says (Git for Windows sets it to true). Prettier and
+# .editorconfig write LF too, so a checkout and a save never disagree.
+* text=auto eol=lf
+
+# Binary: never converted, never diffed as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
