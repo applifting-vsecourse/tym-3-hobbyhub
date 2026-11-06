@@ -9,6 +9,7 @@ import {
   ApplicantProfile,
   MembershipDecisionViolation,
   MembershipRequest,
+  MyMembershipRequestPage,
   PendingMembershipRequest,
 } from '@/modules/membership-request/domain/membership-request';
 import { Injectable } from '@nestjs/common';
@@ -62,6 +63,36 @@ export class MembershipRequestRepository {
       orderBy: { requestedAt: 'desc' },
     });
     return requests.map(mapToDomain);
+  }
+
+  // F-07.7: a page of the person's requests across groups, newest first; the
+  // id breaks ties so cursor pages never skip or repeat. Approved requests
+  // stay out: "Moje skupiny" says where the person is a member.
+  async listRequestsOfUser(
+    userId: string,
+    pageSize: number,
+    cursor?: string,
+  ): Promise<MyMembershipRequestPage> {
+    const requests = await this.prisma.membershipRequest.findMany({
+      where: { userId, status: { not: RequestStatus.APPROVED } },
+      include: {
+        group: {
+          select: { id: true, name: true, visibility: true, status: true },
+        },
+      },
+      orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
+      // One extra row tells whether another page exists.
+      take: pageSize + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    const items = requests
+      .slice(0, pageSize)
+      .map(({ group, ...request }) => ({ ...mapToDomain(request), group }));
+    return {
+      items,
+      nextCursor:
+        requests.length > pageSize ? items[items.length - 1].id : null,
+    };
   }
 
   async getRequest(

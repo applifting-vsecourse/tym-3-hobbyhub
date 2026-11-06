@@ -1,6 +1,9 @@
 import { Group } from '@/modules/group/domain/group';
 import { GroupsService } from '@/modules/group/services/groups.service';
-import { MembershipRequest } from '@/modules/membership-request/domain/membership-request';
+import {
+  MembershipRequest,
+  MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
+} from '@/modules/membership-request/domain/membership-request';
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -192,6 +195,21 @@ describe('MembershipRequestsService', () => {
       await expect(
         service.withdrawMyRequest(user, 'g1', now),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('the overview of my requests', () => {
+    it("pages the signed-in user's own requests", async () => {
+      const { repository, service } = setup();
+      const page = { items: [], nextCursor: null };
+      repository.listRequestsOfUser.mockResolvedValue(page);
+
+      await expect(service.listMyRequests(user, 'r9')).resolves.toBe(page);
+      expect(repository.listRequestsOfUser).toHaveBeenCalledWith(
+        'u1',
+        MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
+        'r9',
+      );
     });
   });
 
