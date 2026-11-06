@@ -551,6 +551,46 @@ export class EventRepository {
     };
   }
 
+  // The list cards of the given events, for a caller that already knows which
+  // ones it wants (F-06.3). Visibility is the caller's business.
+  async getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      include: listInclude,
+    });
+    return events.map((event) => mapPrismaEventToListItem(event));
+  }
+
+  // F-06.3: a page of the published public events a person organizes (or
+  // co-organizes) that are not over, soonest first.
+  async getUpcomingOrganizedBy(
+    userId: string,
+    now: Date,
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    const where: Prisma.EventWhereInput = {
+      ...PUBLIC_EVENT,
+      // Only what is on offer: not a draft, and not one that was called off.
+      status: EventStatus.PUBLISHED,
+      endAt: { gte: now },
+      OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => mapPrismaEventToListItem(event)),
+      total,
+    };
+  }
+
   // Public detail: the list's visibility rules, but an event that was cancelled
   // or is over stays reachable, so a shared link still explains what happened.
   async getPublicEventById(id: string): Promise<EventDetail | null> {

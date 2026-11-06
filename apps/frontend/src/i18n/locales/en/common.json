@@ -831,7 +831,33 @@
     }
   },
   "myEvents": {
-    "placeholder": "An overview of your requests and the events you host is on its way.",
+    "applications": {
+      "empty": "You are not signed up for any upcoming event."
+    },
+    "empty": {
+      "description": "Once you sign up for an event or post one, you will find it here.",
+      "find": "Find an event",
+      "title": "Nothing here yet"
+    },
+    "hosted": {
+      "empty": "You are not organizing any upcoming event."
+    },
+    "loadMore": "Load more",
+    "loading": "Loading your events",
+    "status": {
+      "APPROVED": "Approved",
+      "EVENT_CANCELLED": "Event cancelled",
+      "PENDING": "Awaiting approval",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Signed off"
+    },
+    "tabs": {
+      "applications": "Applications",
+      "applicationsWithCount": "Applications ({{count}})",
+      "hosted": "Organizing",
+      "hostedWithCount": "Organizing ({{count}})",
+      "label": "My events"
+    },
     "title": "My events"
   },
   "notifications": {

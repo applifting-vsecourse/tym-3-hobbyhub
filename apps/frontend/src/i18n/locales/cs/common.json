@@ -846,7 +846,33 @@
     }
   },
   "myEvents": {
-    "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
+    "applications": {
+      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
+    },
+    "empty": {
+      "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
+      "find": "Najít akci",
+      "title": "Zatím tu nic není"
+    },
+    "hosted": {
+      "empty": "Nepořádáte žádnou nadcházející akci."
+    },
+    "loadMore": "Načíst další",
+    "loading": "Načítáme vaše akce",
+    "status": {
+      "APPROVED": "Schváleno",
+      "EVENT_CANCELLED": "Akce zrušena",
+      "PENDING": "Čeká na schválení",
+      "REJECTED": "Zamítnuto",
+      "WITHDRAWN": "Odhlášeno"
+    },
+    "tabs": {
+      "applications": "Přihlášky",
+      "applicationsWithCount": "Přihlášky ({{count}})",
+      "hosted": "Pořádám",
+      "hostedWithCount": "Pořádám ({{count}})",
+      "label": "Moje akce"
+    },
     "title": "Moje akce"
   },
   "notifications": {

@@ -180,3 +180,19 @@ export const decisionRuleViolations = (
   }
   return violations;
 };
+
+// F-06.3: what the overview of a person's applications reads of one event and
+// the person's own rows on it. The seat is null without a roster row; only the
+// two seat states that tell a story matter here.
+export type ApplicationFacts = {
+  eventStatus: 'PUBLISHED' | 'CANCELLED';
+  seat: 'APPROVED' | 'CANCELLED' | null;
+  requests: RequestStatus[];
+};
+
+export type EventApplicationFacts = ApplicationFacts & { eventId: string };
+
+export type ApplicationFactsPage = {
+  items: EventApplicationFacts[];
+  total: number;
+};
