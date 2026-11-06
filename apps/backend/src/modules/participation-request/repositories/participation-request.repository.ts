@@ -15,6 +15,7 @@ import {
   EventStateViolation,
   eventStateViolation,
   JoinRuleViolation,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
   SeatStatus,
@@ -210,15 +211,24 @@ export class ParticipationRequestRepository {
     };
   }
 
-  // F-05.6: one state of the participants tab, the latest change first.
+  // F-05.6: the requests that ended without a seat, the latest change first.
   async getDecidedRequests(
     eventId: string,
     status: DecidedStatus,
     page: Page,
   ): Promise<DecidedRequestPage> {
-    if (status === 'APPROVED') return this.getSeats(eventId, page);
     if (status === 'REJECTED') return this.getRejected(eventId, page);
     return this.getWithdrawn(eventId, page);
+  }
+
+  // F-05.6, F-06.4: one state of the participants tab, the latest change first.
+  async getParticipants(
+    eventId: string,
+    status: SeatStatus,
+    page: Page,
+  ): Promise<ParticipantPage> {
+    if (status === 'APPROVED') return this.getSeats(eventId, page);
+    return this.getCancelledSeats(eventId, page);
   }
 
   // Everyone with a seat, so the list adds up to the approved count: a seat
@@ -226,7 +236,7 @@ export class ParticipationRequestRepository {
   private async getSeats(
     eventId: string,
     page: Page,
-  ): Promise<DecidedRequestPage> {
+  ): Promise<ParticipantPage> {
     const where = { eventId, status: ParticipationStatus.APPROVED };
     const [seats, total] = await this.prisma.$transaction([
       this.prisma.participation.findMany({
@@ -264,7 +274,55 @@ export class ParticipationRequestRepository {
         status: 'APPROVED',
         message: messages.get(seat.userId) ?? null,
         changedAt: seat.updatedAt,
-        applicant: mapApplicant(seat.user),
+        asksAgain: false,
+        person: mapApplicant(seat.user),
+      })),
+      total,
+    };
+  }
+
+  // The people who gave their seat back (F-06.4), with their words to the
+  // organizers. Someone who asked again since is still here: the request
+  // waits on the requests tab, the seat stays given back until it is approved.
+  private async getCancelledSeats(
+    eventId: string,
+    page: Page,
+  ): Promise<ParticipantPage> {
+    const where = { eventId, status: ParticipationStatus.CANCELLED };
+    const [seats, total] = await this.prisma.$transaction([
+      this.prisma.participation.findMany({
+        where,
+        orderBy: [{ cancelledAt: 'desc' }, { id: 'desc' }],
+        skip: page.offset,
+        take: page.limit,
+        select: {
+          id: true,
+          userId: true,
+          cancelledAt: true,
+          updatedAt: true,
+          cancellationMessage: true,
+          user: { select: applicantSelect },
+        },
+      }),
+      this.prisma.participation.count({ where }),
+    ]);
+    const asking = await this.prisma.participationRequest.findMany({
+      where: {
+        eventId,
+        status: RequestStatus.PENDING,
+        userId: { in: seats.map((seat) => seat.userId) },
+      },
+      select: { userId: true },
+    });
+    const askingIds = new Set(asking.map((request) => request.userId));
+    return {
+      items: seats.map((seat) => ({
+        id: seat.id,
+        status: 'CANCELLED',
+        message: seat.cancellationMessage,
+        changedAt: seat.cancelledAt ?? seat.updatedAt,
+        asksAgain: askingIds.has(seat.userId),
+        person: mapApplicant(seat.user),
       })),
       total,
     };

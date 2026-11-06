@@ -58,24 +58,45 @@ export type PendingRequest = ParticipationRequest & {
 
 export type PendingRequestPage = { items: PendingRequest[]; total: number };
 
-// F-05.6: the other states on the organizer's participants tab. APPROVED is
-// everyone with a seat, approved through a request or added without one;
-// WITHDRAWN the people who took their request back and asked no more.
-// CLOSED stays out: it only follows a cancelled event.
-export const DECIDED_STATUSES = ['APPROVED', 'REJECTED', 'WITHDRAWN'] as const;
+// F-05.6: the requests that ended without a seat, under the waiting ones on
+// the organizer's requests tab. WITHDRAWN are the people who took their
+// request back and asked no more. An approved request is no request to show:
+// its person is on the participants tab. CLOSED stays out: it only follows a
+// cancelled event.
+export const DECIDED_STATUSES = ['REJECTED', 'WITHDRAWN'] as const;
 export type DecidedStatus = (typeof DECIDED_STATUSES)[number];
 
 export type DecidedRequest = {
-  // The request, or the seat of someone approved without one.
   id: string;
   status: DecidedStatus;
   message: string | null;
-  // When the person got the seat, was rejected or withdrew.
+  // When the person was rejected or withdrew.
   changedAt: Date;
   applicant: ApplicantProfile;
 };
 
 export type DecidedRequestPage = { items: DecidedRequest[]; total: number };
+
+// F-05.6, F-06.4: the organizer's participants tab, about seats only
+// (ADR-0003). APPROVED is everyone with a seat, through a request or added
+// without one; CANCELLED the people who gave theirs back.
+export const PARTICIPANT_STATUSES = ['APPROVED', 'CANCELLED'] as const;
+
+export type Participant = {
+  // The seat.
+  id: string;
+  status: SeatStatus;
+  // APPROVED: the message of the request that led to the seat, if any.
+  // CANCELLED: the participant's words when cancelling (ADR-0016).
+  message: string | null;
+  // When the person got the seat, or gave it back.
+  changedAt: Date;
+  // CANCELLED only: they have asked to join again since.
+  asksAgain: boolean;
+  person: ApplicantProfile;
+};
+
+export type ParticipantPage = { items: Participant[]; total: number };
 
 // Why a person cannot ask to join an event now. The client shows the same
 // reasons before sending; the server is the one that counts.

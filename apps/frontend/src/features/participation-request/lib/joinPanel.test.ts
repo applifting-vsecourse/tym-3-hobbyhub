@@ -35,6 +35,8 @@ describe("ownSeatView", () => {
     // F-06.4: the approval stays after the seat was given back.
     ["cancelled", state("APPROVED", [], "CANCELLED")],
     ["cancelled", state("APPROVED", ["EVENT_STARTED"], "CANCELLED")],
+    // A seat without a request (added by hand, the demo data).
+    ["cancelled", state(null, [], "CANCELLED")],
     ["organizer", state(null, ["IS_ORGANIZER"])],
   ] as const)("shows %s", (view, given) => {
     expect(ownSeatView(given)).toBe(view)

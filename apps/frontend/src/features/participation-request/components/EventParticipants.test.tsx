@@ -49,7 +49,7 @@ beforeEach(() => {
   get.mockImplementation((path: string) => ({
     json: () =>
       Promise.resolve(
-        path.endsWith("/decided") ? { items: [], total: 0 } : { items: [], total: 2 },
+        path.endsWith("/requests") ? { items: [], total: 2 } : { items: [], total: 0 },
       ),
   }))
 })
@@ -95,12 +95,24 @@ describe("EventParticipants", () => {
     expect(screen.getByRole("link", { name: "Účastníci 7" })).toBeInTheDocument()
   })
 
-  it("shows the participants on their tab", async () => {
+  // ADR-0003: requests on one tab, seats on the other.
+  it("shows the waiting, rejected and withdrawn requests on the requests tab", async () => {
+    await renderPage()
+
+    expect(await screen.findByRole("heading", { name: /^Čekající/ })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: /^Zamítnuté/ })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: /^Stažené/ })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /^Přijdou/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /^Odhlášení/ })).not.toBeInTheDocument()
+  })
+
+  it("shows who comes and who cancelled on the participants tab", async () => {
     await renderPage(anEvent(), "participants")
 
-    expect(await screen.findByRole("heading", { name: /^Schválení/ })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: /^Zamítnutí/ })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: /^Přijdou/ })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: /^Odhlášení/ })).toBeInTheDocument()
-    expect(screen.queryByRole("heading", { name: /^Žádosti/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /^Čekající/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /^Zamítnuté/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /^Stažené/ })).not.toBeInTheDocument()
   })
 })

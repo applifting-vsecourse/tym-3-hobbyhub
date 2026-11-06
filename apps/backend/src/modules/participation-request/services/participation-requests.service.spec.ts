@@ -452,8 +452,8 @@ describe('ParticipationRequestsService', () => {
     });
 
     describe('getDecidedRequests', () => {
-      it.each(['APPROVED', 'REJECTED', 'WITHDRAWN'] as const)(
-        'lists the %s people of the event',
+      it.each(['REJECTED', 'WITHDRAWN'] as const)(
+        'lists the %s requests of the event',
         async (status) => {
           const { repository, events, service } = setup();
           const decided = {
@@ -490,9 +490,55 @@ describe('ParticipationRequestsService', () => {
         const { repository, service } = setup();
 
         await expect(
-          service.getDecidedRequests(user, 'e1', 'APPROVED', page),
+          service.getDecidedRequests(user, 'e1', 'REJECTED', page),
         ).rejects.toBeInstanceOf(NotFoundException);
         expect(repository.getDecidedRequests).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('getParticipants', () => {
+      it.each(['APPROVED', 'CANCELLED'] as const)(
+        'lists the %s seats of the event',
+        async (status) => {
+          const { repository, events, service } = setup();
+          const participants = {
+            items: [
+              {
+                id: 'p1',
+                status,
+                message: null,
+                changedAt: now,
+                asksAgain: false,
+                person: profile,
+              },
+            ],
+            total: 1,
+          };
+          repository.getParticipants.mockResolvedValue(participants);
+
+          await expect(
+            service.getParticipants(organizer, 'e1', status, page),
+          ).resolves.toEqual(participants);
+          expect(events.getOrganizedEvent).toHaveBeenCalledWith(
+            'e1',
+            organizer,
+          );
+          expect(repository.getParticipants).toHaveBeenCalledWith(
+            'e1',
+            status,
+            page,
+          );
+        },
+      );
+
+      // Nobody learns who goes to someone else's event, nor why they left.
+      it('answers 404 to someone who does not organize the event', async () => {
+        const { repository, service } = setup();
+
+        await expect(
+          service.getParticipants(user, 'e1', 'CANCELLED', page),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(repository.getParticipants).not.toHaveBeenCalled();
       });
     });
 

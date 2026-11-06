@@ -35,9 +35,9 @@ import { RejectParticipationRequestDto } from './dto/reject-participation-reques
 import { participationRequestsValidationPipe } from './participation-requests-validation.pipe';
 
 // F-06.1 requests to join, seen by the applicant, and F-05.7 the organizer's
-// side: listing the waiting ones and deciding them, and F-05.6 the overview of
-// the decided ones. Automatic approval is
-// F-05.5.
+// side: listing the waiting ones and deciding them, and F-05.6 the ones that
+// ended without a seat. Automatic approval is F-05.5. The seats themselves are
+// `ParticipationsController`.
 @ApiTags('participation-requests')
 @Controller('events/:eventId/requests')
 @UseGuards(AuthenticatedUserGuard)
@@ -96,7 +96,7 @@ export class ParticipationRequestsController {
   @Get('decided')
   @ApiOperation({
     summary:
-      'Approved, rejected or withdrawn people, latest change first (organizers only)',
+      'Rejected or withdrawn requests, latest change first (organizers only)',
   })
   @ApiResponse({ status: 200, type: DecidedRequestPageResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid state, limit or offset' })

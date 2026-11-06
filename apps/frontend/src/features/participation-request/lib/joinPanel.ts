@@ -10,9 +10,11 @@ export function ownSeatView({ request, violations, seat }: MyRequestState): OwnS
   if (violations.includes("IS_ORGANIZER")) return "organizer"
   if (request?.status === "PENDING") return "pending"
   if (violations.includes("HAS_SEAT")) return "approved"
-  // F-06.4: the approval stays after the seat was given back (ADR-0016).
-  if (request?.status === "APPROVED") return seat === "CANCELLED" ? "cancelled" : "approved"
   if (request?.status === "REJECTED") return "rejected"
+  // F-06.4: the seat says it, not the request. The approval stays after the
+  // seat was given back (ADR-0016), and a seat may have had no request at all.
+  if (seat === "CANCELLED") return "cancelled"
+  if (request?.status === "APPROVED") return "approved"
   return null
 }
 

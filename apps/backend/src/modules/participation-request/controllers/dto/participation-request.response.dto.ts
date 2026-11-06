@@ -7,6 +7,9 @@ import {
   DecidedStatus,
   DecisionRuleViolation,
   JoinRuleViolation,
+  Participant,
+  PARTICIPANT_STATUSES,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequest,
   PendingRequestPage,
@@ -140,9 +143,7 @@ export class PendingRequestPageResponseDto {
 
 // F-05.6. The rejection reason stays out here too.
 export class DecidedRequestResponseDto {
-  @ApiProperty({
-    description: 'The request, or the seat of someone approved without one',
-  })
+  @ApiProperty()
   id!: string;
 
   @ApiProperty({ enum: DECIDED_STATUSES })
@@ -154,7 +155,7 @@ export class DecidedRequestResponseDto {
   @ApiProperty({
     type: String,
     format: 'date-time',
-    description: 'When the person got the seat, was rejected or withdrew',
+    description: 'When the person was rejected or withdrew',
   })
   changedAt!: Date;
 
@@ -182,6 +183,64 @@ export class DecidedRequestPageResponseDto {
   static fromDomain(page: DecidedRequestPage): DecidedRequestPageResponseDto {
     return {
       items: page.items.map(DecidedRequestResponseDto.fromDomain),
+      total: page.total,
+    };
+  }
+}
+
+// F-05.6, F-06.4: a seat on the organizer's participants tab.
+export class ParticipantResponseDto {
+  @ApiProperty({ description: 'The seat' })
+  id!: string;
+
+  @ApiProperty({ enum: PARTICIPANT_STATUSES })
+  status!: SeatStatus;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "APPROVED: the message of the request that led to the seat. CANCELLED: the participant's words when cancelling",
+  })
+  message!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'When the person got the seat, or gave it back',
+  })
+  changedAt!: Date;
+
+  @ApiProperty({
+    description: 'CANCELLED only: they have asked to join again since',
+  })
+  asksAgain!: boolean;
+
+  @ApiProperty({ type: ApplicantProfileResponseDto })
+  person!: ApplicantProfileResponseDto;
+
+  static fromDomain(participant: Participant): ParticipantResponseDto {
+    return {
+      id: participant.id,
+      status: participant.status,
+      message: participant.message,
+      changedAt: participant.changedAt,
+      asksAgain: participant.asksAgain,
+      person: ApplicantProfileResponseDto.fromDomain(participant.person),
+    };
+  }
+}
+
+export class ParticipantPageResponseDto {
+  @ApiProperty({ type: [ParticipantResponseDto] })
+  items!: ParticipantResponseDto[];
+
+  @ApiProperty({ description: 'All of the state, not just this page' })
+  total!: number;
+
+  static fromDomain(page: ParticipantPage): ParticipantPageResponseDto {
+    return {
+      items: page.items.map(ParticipantResponseDto.fromDomain),
       total: page.total,
     };
   }

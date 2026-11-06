@@ -85,22 +85,43 @@ export const pendingRequestPageSchema = z.object({
   total: z.number(),
 })
 
-// F-05.6: the other states on the participants tab. APPROVED is everyone
-// with a seat; WITHDRAWN the people who took their request back.
-export const DECIDED_STATUSES = ["APPROVED", "REJECTED", "WITHDRAWN"] as const
+// F-05.6: the requests that ended without a seat, under the waiting ones on
+// the requests tab. WITHDRAWN are the people who took their request back.
+export const DECIDED_STATUSES = ["REJECTED", "WITHDRAWN"] as const
 export const decidedStatusSchema = z.enum(DECIDED_STATUSES)
 
 export const decidedRequestSchema = z.object({
   id: z.string(),
   status: decidedStatusSchema,
   message: z.string().nullable(),
-  /** When the person got the seat, was rejected or withdrew. */
+  /** When the person was rejected or withdrew. */
   changedAt: z.coerce.date(),
   applicant: applicantProfileSchema,
 })
 
 export const decidedRequestPageSchema = z.object({
   items: z.array(decidedRequestSchema),
+  total: z.number(),
+})
+
+// F-05.6, F-06.4: the participants tab, about seats only (ADR-0003).
+export const PARTICIPANT_STATUSES = ["APPROVED", "CANCELLED"] as const
+
+export const participantSchema = z.object({
+  /** The seat. */
+  id: z.string(),
+  status: seatStatusSchema,
+  /** APPROVED: the message of the request behind the seat. CANCELLED: the words when cancelling. */
+  message: z.string().nullable(),
+  /** When the person got the seat, or gave it back. */
+  changedAt: z.coerce.date(),
+  /** CANCELLED only: they have asked to join again since. */
+  asksAgain: z.boolean(),
+  person: applicantProfileSchema,
+})
+
+export const participantPageSchema = z.object({
+  items: z.array(participantSchema),
   total: z.number(),
 })
 
@@ -126,6 +147,7 @@ export type ApplicantProfile = z.infer<typeof applicantProfileSchema>
 export type PendingRequest = z.infer<typeof pendingRequestSchema>
 export type DecidedStatus = z.infer<typeof decidedStatusSchema>
 export type DecidedRequest = z.infer<typeof decidedRequestSchema>
+export type Participant = z.infer<typeof participantSchema>
 export type ParticipationRequest = z.infer<typeof participationRequestSchema>
 export type MyRequestState = z.infer<typeof myRequestStateSchema>
 export type RequestToJoinInput = { eventId: string; message?: string }

@@ -467,9 +467,8 @@ describeDb('ParticipationRequestRepository', () => {
     });
   });
 
-  describe('getDecidedRequests', () => {
+  describe('getParticipants', () => {
     const page = { limit: 20, offset: 0 };
-    const minutes = (n: number): Date => new Date(at.getTime() + n * 60_000);
 
     it('lists every seat, with the message of its request when there is one', async () => {
       const {
@@ -492,7 +491,7 @@ describeDb('ParticipationRequestRepository', () => {
         data: { eventId, userId: withoutRequest!, status: 'APPROVED' },
       });
 
-      const result = await repository.getDecidedRequests(
+      const result = await repository.getParticipants(
         eventId,
         'APPROVED',
         page,
@@ -504,11 +503,69 @@ describeDb('ParticipationRequestRepository', () => {
           expect.objectContaining({
             status: 'APPROVED',
             message: 'Beru hokejku',
+            asksAgain: false,
           }),
           expect.objectContaining({ status: 'APPROVED', message: null }),
         ]),
       );
     });
+
+    // F-06.4: a seat given back, with or without a request behind it.
+    it('lists the people who gave their seat back, with their words', async () => {
+      const {
+        eventId,
+        userIds: [quiet, asking, staying],
+      } = await eventWith(4, 3);
+      for (const userId of [quiet!, asking!, staying!]) {
+        await repository.createApproved({ eventId, userId, at });
+      }
+      await repository.cancelSeat({
+        eventId,
+        userId: quiet!,
+        message: 'Onemocněl jsem, promiňte.',
+        at,
+      });
+      const later = new Date(at.getTime() + 60_000);
+      await repository.cancelSeat({
+        eventId,
+        userId: asking!,
+        message: 'Nakonec nemůžu, sorry.',
+        at: later,
+      });
+      await prisma.participationRequest.create({
+        data: { eventId, userId: asking!, message: 'Přece jen můžu' },
+      });
+
+      const result = await repository.getParticipants(
+        eventId,
+        'CANCELLED',
+        page,
+      );
+
+      expect(result.total).toBe(2);
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          status: 'CANCELLED',
+          message: 'Nakonec nemůžu, sorry.',
+          changedAt: later,
+          asksAgain: true,
+        }),
+        expect.objectContaining({
+          status: 'CANCELLED',
+          message: 'Onemocněl jsem, promiňte.',
+          changedAt: at,
+          asksAgain: false,
+        }),
+      ]);
+      await expect(
+        repository.getParticipants(eventId, 'APPROVED', page),
+      ).resolves.toMatchObject({ total: 1 });
+    });
+  });
+
+  describe('getDecidedRequests', () => {
+    const page = { limit: 20, offset: 0 };
+    const minutes = (n: number): Date => new Date(at.getTime() + n * 60_000);
 
     it('lists the rejected, latest first', async () => {
       const {

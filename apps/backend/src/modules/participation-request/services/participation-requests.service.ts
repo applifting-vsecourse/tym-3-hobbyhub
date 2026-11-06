@@ -12,6 +12,7 @@ import {
   decisionRuleViolations,
   JoinRuleViolation,
   joinRuleViolations,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
   SeatStatus,
@@ -191,7 +192,19 @@ export class ParticipationRequestsService {
     return this.repository.getPendingRequests(eventId, page);
   }
 
-  // F-05.6: the approved, rejected and withdrawn, for the event's organizers.
+  // F-05.6, F-06.4: who has a seat and who gave it back, for the event's
+  // organizers.
+  async getParticipants(
+    user: Identity,
+    eventId: string,
+    status: SeatStatus,
+    page: Page,
+  ): Promise<ParticipantPage> {
+    await this.eventsService.getOrganizedEvent(eventId, user);
+    return this.repository.getParticipants(eventId, status, page);
+  }
+
+  // F-05.6: the rejected and withdrawn requests, for the event's organizers.
   async getDecidedRequests(
     user: Identity,
     eventId: string,

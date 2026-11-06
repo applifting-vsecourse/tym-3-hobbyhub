@@ -973,17 +973,6 @@
       "back": "Back to the event",
       "breakdown": "{{approved}} in the app, {{external}} outside the app",
       "decided": {
-        "APPROVED": {
-          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
-          "external_one": "Plus {{count}} spot outside the app",
-          "external_other": "Plus {{count}} spots outside the app",
-          "loadError": "The participants could not be loaded",
-          "loading": "Loading participants…",
-          "more_one": "{{count}} more participant",
-          "more_other": "{{count}} more participants",
-          "since": "Has a spot since {{date}}",
-          "title": "Approved"
-        },
         "REJECTED": {
           "empty": "You have not rejected any request yet.",
           "loadError": "The rejected requests could not be loaded",
@@ -1039,6 +1028,29 @@
         "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
         "taken": "After approving, {{taken}} of {{max}} seats are taken."
       },
+      "participants": {
+        "APPROVED": {
+          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
+          "external_one": "Plus {{count}} spot outside the app",
+          "external_other": "Plus {{count}} spots outside the app",
+          "loadError": "The participants could not be loaded",
+          "loading": "Loading participants…",
+          "more_one": "{{count}} more participant",
+          "more_other": "{{count}} more participants",
+          "since": "Has a spot since {{date}}",
+          "title": "Coming"
+        },
+        "CANCELLED": {
+          "empty": "Nobody has cancelled yet.",
+          "loadError": "The cancelled places could not be loaded",
+          "loading": "Loading cancelled places…",
+          "more_one": "{{count}} more cancelled place",
+          "more_other": "{{count}} more cancelled places",
+          "since": "Cancelled {{date}}",
+          "title": "Cancelled"
+        },
+        "asksAgain": "Asks to join again"
+      },
       "refused": {
         "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
         "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
@@ -1046,7 +1058,7 @@
       },
       "rejectFailed": "The request could not be rejected. Please try again.",
       "rejected": "Request rejected",
-      "requests": "Requests",
+      "requests": "Waiting",
       "retry": "Try again",
       "tabs": {
         "participants": "Participants",

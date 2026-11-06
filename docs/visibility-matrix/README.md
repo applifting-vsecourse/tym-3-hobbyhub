@@ -97,7 +97,7 @@ Pravidla jsou pro oba druhy žádostí stejná.
 - **Ostatní:** všichni kromě autora žádosti a toho, kdo ji vyřizuje. Patří sem i schválený účastník téže akce, člen téže skupiny a zablokovaný uživatel.
 - **Autor žádosti:** kdo žádost poslal, i když už je vyřízená nebo stažená.
 - **Vyřizuje:** organizátor akce, nebo admin skupiny (role `ADMIN` a `OWNER`).
-- **Zpráva při zrušení účasti** patří k účasti, která vznikla ze žádosti: autor je ten, kdo účast zrušil, vyřizují organizátoři akce (hlavní i spoluorganizátoři). Ostatní účastníci ji nevidí. U nové žádosti po odhlášení ji organizátor nevidí: nové místo začíná bez ní.
+- **Zpráva při zrušení účasti** patří k účasti, která vznikla ze žádosti: autor je ten, kdo účast zrušil, vyřizují organizátoři akce (hlavní i spoluorganizátoři). Ostatní účastníci ji nevidí. Organizátor ji vidí v upozornění a v přehledu účastníků pod „Odhlášení“ spolu s tím, co vidí o žadateli (jméno, fotka, bio, ověřený e-mail). U nové žádosti po odhlášení ji organizátor nevidí: nové místo začíná bez ní.
 
 | Pole                                                  | Ostatní | Autor žádosti | Vyřizuje | Superadmin | Zdroj                                     |
 | ----------------------------------------------------- | ------- | ------------- | -------- | ---------- | ----------------------------------------- |
