@@ -8,11 +8,12 @@ import {
 import { occupancyOf, Page } from '@/modules/event/domain/event';
 import {
   ApplicantProfile,
+  DecidedRequestPage,
+  DecidedStatus,
   DecisionRuleViolation,
   EventStateViolation,
   eventStateViolation,
   JoinRuleViolation,
-  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
 } from '@/modules/participation-request/domain/participation-request';
@@ -30,14 +31,6 @@ const mapToDomain = (
   decidedAt: request.decidedAt,
   rejectionReason: request.rejectionReason,
 });
-
-// The people who hold a seat: approved, or already attended an event that is
-// running. One list for the organizer's roster and for who may see whose
-// e-mail (F-04.2), so the two cannot disagree.
-const SEATED_STATUSES: ParticipationStatus[] = [
-  ParticipationStatus.APPROVED,
-  ParticipationStatus.ATTENDED,
-];
 
 // All the organizer may see of the person asking; the rest of the row stays
 // here.
@@ -197,25 +190,148 @@ export class ParticipationRequestRepository {
     };
   }
 
-  // F-04.2: the people who hold a seat on the event, in the order they got it.
-  async getParticipants(eventId: string, page: Page): Promise<ParticipantPage> {
-    const where = { eventId, status: { in: SEATED_STATUSES } };
-    const [rows, total] = await this.prisma.$transaction([
+  // F-05.6: one state of the participants tab, the latest change first.
+  async getDecidedRequests(
+    eventId: string,
+    status: DecidedStatus,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    if (status === 'APPROVED') return this.getSeats(eventId, page);
+    if (status === 'REJECTED') return this.getRejected(eventId, page);
+    return this.getWithdrawn(eventId, page);
+  }
+
+  // Everyone with a seat, so the list adds up to the approved count: a seat
+  // added without a request (the demo data) is listed too, without a message.
+  private async getSeats(
+    eventId: string,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    const where = { eventId, status: ParticipationStatus.APPROVED };
+    const [seats, total] = await this.prisma.$transaction([
       this.prisma.participation.findMany({
         where,
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        skip: page.offset,
+        take: page.limit,
+        select: {
+          id: true,
+          userId: true,
+          updatedAt: true,
+          user: { select: applicantSelect },
+        },
+      }),
+      this.prisma.participation.count({ where }),
+    ]);
+    const requests = await this.prisma.participationRequest.findMany({
+      where: {
+        eventId,
+        status: RequestStatus.APPROVED,
+        userId: { in: seats.map((seat) => seat.userId) },
+      },
+      orderBy: { decidedAt: 'desc' },
+      select: { userId: true, message: true },
+    });
+    const messages = new Map<string, string | null>();
+    for (const request of requests) {
+      if (!messages.has(request.userId)) {
+        messages.set(request.userId, request.message);
+      }
+    }
+    return {
+      items: seats.map((seat) => ({
+        id: seat.id,
+        status: 'APPROVED',
+        userId: seat.userId,
+        message: messages.get(seat.userId) ?? null,
+        changedAt: seat.updatedAt,
+        applicant: mapApplicant(seat.user),
+      })),
+      total,
+    };
+  }
+
+  // A rejection is final for the event (ADR-0013): one per person.
+  private async getRejected(
+    eventId: string,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    const where = { eventId, status: RequestStatus.REJECTED };
+    const [requests, total] = await this.prisma.$transaction([
+      this.prisma.participationRequest.findMany({
+        where,
+        orderBy: [{ decidedAt: 'desc' }, { id: 'desc' }],
         skip: page.offset,
         take: page.limit,
         include: { user: { select: applicantSelect } },
       }),
-      this.prisma.participation.count({ where }),
+      this.prisma.participationRequest.count({ where }),
     ]);
     return {
-      items: rows.map(({ userId, user }) => ({
-        userId,
-        applicant: mapApplicant(user),
+      items: requests.map((request) => ({
+        id: request.id,
+        status: 'REJECTED',
+        userId: request.userId,
+        message: request.message,
+        changedAt: request.decidedAt ?? request.requestedAt,
+        applicant: mapApplicant(request.user),
       })),
       total,
+    };
+  }
+
+  // The people whose last word was taking their request back: once per
+  // person, and not when they asked again, got a seat or were rejected since.
+  private async getWithdrawn(
+    eventId: string,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    const where = {
+      eventId,
+      status: RequestStatus.WITHDRAWN,
+      user: {
+        participationRequests: {
+          none: {
+            eventId,
+            status: {
+              in: [
+                RequestStatus.PENDING,
+                RequestStatus.APPROVED,
+                RequestStatus.REJECTED,
+              ],
+            },
+          },
+        },
+        participations: {
+          none: { eventId, status: ParticipationStatus.APPROVED },
+        },
+      },
+    } satisfies Prisma.ParticipationRequestWhereInput;
+    const [requests, people] = await this.prisma.$transaction([
+      this.prisma.participationRequest.findMany({
+        where,
+        orderBy: [{ decidedAt: 'desc' }, { id: 'desc' }],
+        distinct: ['userId'],
+        skip: page.offset,
+        take: page.limit,
+        include: { user: { select: applicantSelect } },
+      }),
+      this.prisma.participationRequest.findMany({
+        where,
+        distinct: ['userId'],
+        select: { userId: true },
+      }),
+    ]);
+    return {
+      items: requests.map((request) => ({
+        id: request.id,
+        status: 'WITHDRAWN',
+        userId: request.userId,
+        message: request.message,
+        changedAt: request.decidedAt ?? request.requestedAt,
+        applicant: mapApplicant(request.user),
+      })),
+      total: people.length,
     };
   }
 

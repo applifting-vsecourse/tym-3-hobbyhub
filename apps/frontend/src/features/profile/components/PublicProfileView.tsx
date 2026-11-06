@@ -15,14 +15,11 @@ type PublicProfileViewProps = {
 
 /**
  * Profil uživatele (F-04.2): what another signed-in person sees — the cover,
- * the photo, the nickname, the bio and what they play. The e-mail is there
- * only when the server sent it (the organizer of an approved participant).
+ * the photo, the nickname, the bio and what they play. Nothing else: the
+ * visibility matrix has no more for a signed-in stranger.
  */
 export function PublicProfileView({ profile, activityLabel }: PublicProfileViewProps) {
-  const { t, i18n } = useTranslation()
-  const joined = new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(
-    profile.joinedAt,
-  )
+  const { t } = useTranslation()
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,9 +38,6 @@ export function PublicProfileView({ profile, activityLabel }: PublicProfileViewP
         </div>
         <div className="mt-4 flex flex-col gap-2 px-1">
           <h1 className="typo-h1 text-balance break-words text-foreground">{profile.name}</h1>
-          <p className="typo-small text-muted-foreground">
-            {t("profile.view.memberSince", { date: joined })}
-          </p>
           {profile.bio ? (
             <p className="mt-1 typo-body-lg break-words whitespace-pre-line text-foreground">
               {profile.bio}

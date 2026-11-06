@@ -35,7 +35,6 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
-      joinedAt: "2026-09-02T00:00:00.000Z",
       bio: null,
       image: null,
       cover: null,

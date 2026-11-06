@@ -56,7 +56,6 @@ export class ProfileService {
     return {
       id: row.id,
       name: row.name,
-      joinedAt: row.createdAt,
       bio: row.bio,
       image: row.image,
       cover: row.profileCover,

@@ -945,8 +945,56 @@
       "approveFailed": "The request could not be approved. Please try again.",
       "approved": "Request approved",
       "back": "Back to the event",
+      "breakdown": "{{approved}} in the app, {{external}} outside the app",
+      "decided": {
+        "APPROVED": {
+          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
+          "external_one": "Plus {{count}} spot outside the app",
+          "external_other": "Plus {{count}} spots outside the app",
+          "loadError": "The participants could not be loaded",
+          "loading": "Loading participants…",
+          "more_one": "{{count}} more participant",
+          "more_other": "{{count}} more participants",
+          "since": "Has a spot since {{date}}",
+          "title": "Approved"
+        },
+        "REJECTED": {
+          "empty": "You have not rejected any request yet.",
+          "loadError": "The rejected requests could not be loaded",
+          "loading": "Loading rejected requests…",
+          "more_one": "{{count}} more rejected request",
+          "more_other": "{{count}} more rejected requests",
+          "since": "Rejected {{date}}",
+          "title": "Rejected"
+        },
+        "WITHDRAWN": {
+          "empty": "Nobody has withdrawn their request yet.",
+          "loadError": "The withdrawn requests could not be loaded",
+          "loading": "Loading withdrawn requests…",
+          "more_one": "{{count}} more withdrawn request",
+          "more_other": "{{count}} more withdrawn requests",
+          "since": "Withdrew {{date}}",
+          "title": "Withdrawn"
+        }
+      },
       "empty": "No requests yet. They will show up here as soon as someone asks to join.",
       "emptyAutomatic": "Requests to this event are approved on their own: whoever asks takes a free seat at once.",
+      "external": {
+        "hint": "People from your party who have no account in the app. They count towards the occupancy.",
+        "label": "Spots outside the app",
+        "locked_one": "Outside the app: {{count}} spot. Once the event starts, the number can no longer change.",
+        "locked_other": "Outside the app: {{count}} spots. Once the event starts, the number can no longer change.",
+        "refused": {
+          "EVENT_NOT_CHANGEABLE": "The event has started or ended, the spots outside the app can no longer change.",
+          "MAX_BELOW_OCCUPIED": "There are not that many free spots any more, someone joined meanwhile."
+        },
+        "saveFailed": "The spots outside the app could not be saved. Try again."
+      },
+      "fillState": {
+        "BELOW_MINIMUM": "Below minimum",
+        "FULL": "Full",
+        "MINIMUM_REACHED": "Minimum reached"
+      },
       "loadError": "The requests could not be loaded",
       "loading": "Loading requests…",
       "locked": {
@@ -965,8 +1013,6 @@
         "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
         "taken": "After approving, {{taken}} of {{max}} seats are taken."
       },
-      "participants": "Approved participants",
-      "participantsEmpty": "No approved participants yet.",
       "refused": {
         "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
         "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
@@ -976,6 +1022,13 @@
       "rejected": "Request rejected",
       "requests": "Requests",
       "retry": "Try again",
+      "tabs": {
+        "participants": "Participants",
+        "participantsCount": "Participants {{count}}",
+        "requests": "Requests",
+        "requestsCount": "Requests {{count}}"
+      },
+      "tabsLabel": "Requests and participants",
       "title": "Requests and participants"
     },
     "organizer": {

@@ -205,7 +205,6 @@ describe('ProfileService', () => {
         'id',
         'image',
         'interests',
-        'joinedAt',
         'name',
       ]);
     });

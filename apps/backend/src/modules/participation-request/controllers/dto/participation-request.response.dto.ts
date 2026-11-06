@@ -1,8 +1,11 @@
 import {
   ApplicantProfile,
+  DECIDED_STATUSES,
+  DecidedRequest,
+  DecidedRequestPage,
+  DecidedStatus,
   DecisionRuleViolation,
   JoinRuleViolation,
-  ParticipantPage,
   ParticipationRequest,
   PendingRequest,
   PendingRequestPage,
@@ -126,6 +129,59 @@ export class PendingRequestPageResponseDto {
   }
 }
 
+// F-05.6. The rejection reason stays out here too.
+export class DecidedRequestResponseDto {
+  @ApiProperty({
+    description: 'The request, or the seat of someone approved without one',
+  })
+  id!: string;
+
+  @ApiProperty({ enum: DECIDED_STATUSES })
+  status!: DecidedStatus;
+
+  @ApiProperty({ description: 'The applicant, for the link to their profile' })
+  userId!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  message!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'When the person got the seat, was rejected or withdrew',
+  })
+  changedAt!: Date;
+
+  @ApiProperty({ type: ApplicantProfileResponseDto })
+  applicant!: ApplicantProfileResponseDto;
+
+  static fromDomain(request: DecidedRequest): DecidedRequestResponseDto {
+    return {
+      id: request.id,
+      status: request.status,
+      userId: request.userId,
+      message: request.message,
+      changedAt: request.changedAt,
+      applicant: ApplicantProfileResponseDto.fromDomain(request.applicant),
+    };
+  }
+}
+
+export class DecidedRequestPageResponseDto {
+  @ApiProperty({ type: [DecidedRequestResponseDto] })
+  items!: DecidedRequestResponseDto[];
+
+  @ApiProperty({ description: 'All of the state, not just this page' })
+  total!: number;
+
+  static fromDomain(page: DecidedRequestPage): DecidedRequestPageResponseDto {
+    return {
+      items: page.items.map(DecidedRequestResponseDto.fromDomain),
+      total: page.total,
+    };
+  }
+}
+
 export class MyRequestStateResponseDto {
   @ApiProperty({ type: ParticipationRequestResponseDto, nullable: true })
   request!: ParticipationRequestResponseDto | null;
@@ -154,28 +210,3 @@ export class MyRequestStateResponseDto {
   }
 }
 
-export class ParticipantResponseDto {
-  @ApiProperty({ description: 'For the link to their profile' })
-  userId!: string;
-
-  @ApiProperty({ type: ApplicantProfileResponseDto })
-  applicant!: ApplicantProfileResponseDto;
-}
-
-export class ParticipantPageResponseDto {
-  @ApiProperty({ type: [ParticipantResponseDto] })
-  items!: ParticipantResponseDto[];
-
-  @ApiProperty({ description: 'All approved participants, not just this page' })
-  total!: number;
-
-  static fromDomain(page: ParticipantPage): ParticipantPageResponseDto {
-    return {
-      items: page.items.map(({ userId, applicant }) => ({
-        userId,
-        applicant: ApplicantProfileResponseDto.fromDomain(applicant),
-      })),
-      total: page.total,
-    };
-  }
-}

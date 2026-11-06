@@ -65,19 +65,29 @@ export const pendingRequestSchema = participationRequestSchema.extend({
   applicant: applicantProfileSchema,
 })
 
-/** A person with an approved seat, for the organizer's list (F-04.2). */
-export const participantSchema = z.object({
-  userId: z.string(),
-  applicant: applicantProfileSchema,
-})
-
-export const participantPageSchema = z.object({
-  items: z.array(participantSchema),
+export const pendingRequestPageSchema = z.object({
+  items: z.array(pendingRequestSchema),
   total: z.number(),
 })
 
-export const pendingRequestPageSchema = z.object({
-  items: z.array(pendingRequestSchema),
+// F-05.6: the other states on the participants tab. APPROVED is everyone
+// with a seat; WITHDRAWN the people who took their request back.
+export const DECIDED_STATUSES = ["APPROVED", "REJECTED", "WITHDRAWN"] as const
+export const decidedStatusSchema = z.enum(DECIDED_STATUSES)
+
+export const decidedRequestSchema = z.object({
+  id: z.string(),
+  status: decidedStatusSchema,
+  /** The applicant, for the link to their profile. */
+  userId: z.string(),
+  message: z.string().nullable(),
+  /** When the person got the seat, was rejected or withdrew. */
+  changedAt: z.coerce.date(),
+  applicant: applicantProfileSchema,
+})
+
+export const decidedRequestPageSchema = z.object({
+  items: z.array(decidedRequestSchema),
   total: z.number(),
 })
 
@@ -95,6 +105,8 @@ export type JoinRuleViolation = z.infer<typeof joinRuleViolationSchema>
 export type DecisionRuleViolation = z.infer<typeof decisionRuleViolationSchema>
 export type ApplicantProfile = z.infer<typeof applicantProfileSchema>
 export type PendingRequest = z.infer<typeof pendingRequestSchema>
+export type DecidedStatus = z.infer<typeof decidedStatusSchema>
+export type DecidedRequest = z.infer<typeof decidedRequestSchema>
 export type ParticipationRequest = z.infer<typeof participationRequestSchema>
 export type MyRequestState = z.infer<typeof myRequestStateSchema>
 export type RequestToJoinInput = { eventId: string; message?: string }

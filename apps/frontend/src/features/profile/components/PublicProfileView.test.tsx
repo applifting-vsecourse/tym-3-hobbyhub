@@ -9,7 +9,6 @@ import { PublicProfileView } from "@/features/profile/components/PublicProfileVi
 const profile: PublicProfile = {
   id: "u2",
   name: "Petr",
-  joinedAt: new Date(2026, 8, 2),
   bio: "Běhám po práci",
   image: null,
   cover: null,

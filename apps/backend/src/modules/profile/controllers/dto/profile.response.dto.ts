@@ -76,9 +76,6 @@ export class PublicProfileResponseDto {
   @ApiProperty({ description: 'The public nickname' })
   name!: string;
 
-  @ApiProperty({ type: String, format: 'date-time' })
-  joinedAt!: Date;
-
   @ApiProperty({ type: String, nullable: true })
   bio!: string | null;
 
@@ -103,7 +100,6 @@ export class PublicProfileResponseDto {
     return {
       id: profile.id,
       name: profile.name,
-      joinedAt: profile.joinedAt,
       bio: profile.bio,
       image: profile.image,
       cover: profile.cover,

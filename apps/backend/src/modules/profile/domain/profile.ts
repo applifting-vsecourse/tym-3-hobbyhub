@@ -50,14 +50,12 @@ export type Profile = {
 };
 
 /**
- * What another signed-in person sees (F-04.2): no gender, birth date or
- * address. The e-mail is there only for the organizer of an event the person
- * is approved on; everyone else gets null.
+ * What another signed-in person sees (F-04.2): no gender, birth date, address
+ * or e-mail (the visibility matrix: nobody sees the e-mail).
  */
 export type PublicProfile = {
   id: string;
   name: string;
-  joinedAt: Date;
   bio: string | null;
   image: string | null;
   cover: string | null;

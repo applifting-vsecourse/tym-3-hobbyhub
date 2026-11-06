@@ -43,14 +43,33 @@ export type ApplicantProfile = {
 };
 
 // F-04.2: a person holding an approved seat, as the organizer's list shows it.
-export type Participant = { userId: string; applicant: ApplicantProfile };
-export type ParticipantPage = { items: Participant[]; total: number };
 
 export type PendingRequest = ParticipationRequest & {
   applicant: ApplicantProfile;
 };
 
 export type PendingRequestPage = { items: PendingRequest[]; total: number };
+
+// F-05.6: the other states on the organizer's participants tab. APPROVED is
+// everyone with a seat, approved through a request or added without one;
+// WITHDRAWN the people who took their request back and asked no more.
+// CLOSED stays out: it only follows a cancelled event.
+export const DECIDED_STATUSES = ['APPROVED', 'REJECTED', 'WITHDRAWN'] as const;
+export type DecidedStatus = (typeof DECIDED_STATUSES)[number];
+
+export type DecidedRequest = {
+  // The request, or the seat of someone approved without one.
+  id: string;
+  status: DecidedStatus;
+  // The applicant, for the link to their profile.
+  userId: string;
+  message: string | null;
+  // When the person got the seat, was rejected or withdrew.
+  changedAt: Date;
+  applicant: ApplicantProfile;
+};
+
+export type DecidedRequestPage = { items: DecidedRequest[]; total: number };
 
 // Why a person cannot ask to join an event now. The client shows the same
 // reasons before sending; the server is the one that counts.

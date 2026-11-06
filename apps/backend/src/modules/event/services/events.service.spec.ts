@@ -594,4 +594,137 @@ describe('EventsService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
+
+  describe('getManagedEvent', () => {
+    const facts = (organizerIds: string[]): EventFacts => ({
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: inAnHour(),
+      endAt: new Date(inAnHour().getTime() + 3600 * 1000),
+      approvalMode: 'MANUAL',
+      organizerIds,
+      freeSpots: 8,
+    });
+
+    it('gives a co-organizer the whole event', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts(['u1', 'co']));
+      repository.getEventById.mockResolvedValue(anEvent());
+
+      await expect(
+        service.getManagedEvent({ id: 'co' } as Identity, 'e1'),
+      ).resolves.toEqual(anEvent());
+    });
+
+    it('answers 404 to someone who does not organize it', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts(['u1']));
+
+      await expect(
+        service.getManagedEvent({ id: 'stranger' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getEventById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateExternalOccupiedSpots', () => {
+    const organizer = { id: 'u1' } as Identity;
+    const facts: EventFacts = {
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: inAnHour(),
+      endAt: new Date(inAnHour().getTime() + 3600 * 1000),
+      approvalMode: 'MANUAL',
+      organizerIds: ['u1'],
+      freeSpots: 2,
+    };
+    const violationsOf = async (
+      promise: Promise<unknown>,
+    ): Promise<string[]> => {
+      const error = await promise.catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(BadRequestException);
+      return (
+        (error as BadRequestException).getResponse() as {
+          violations: string[];
+        }
+      ).violations;
+    };
+
+    it('saves the new number and notifies nobody', async () => {
+      const { repository, notifications, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ approvedCount: 6, externalOccupiedSpots: 4 }),
+      );
+      const saved = anEvent({ approvedCount: 6, externalOccupiedSpots: 6 });
+      repository.updateExternalOccupiedSpots.mockResolvedValue({
+        ok: true,
+        event: saved,
+      });
+
+      await expect(
+        service.updateExternalOccupiedSpots(organizer, 'e1', 6),
+      ).resolves.toBe(saved);
+      expect(repository.updateExternalOccupiedSpots).toHaveBeenCalledWith(
+        'e1',
+        6,
+        expect.any(Date),
+      );
+      expect(notifications.notifyEventChanged).not.toHaveBeenCalled();
+    });
+
+    it('refuses more than the maximum leaves and saves nothing', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ approvedCount: 6, externalOccupiedSpots: 4 }),
+      );
+
+      await expect(
+        violationsOf(service.updateExternalOccupiedSpots(organizer, 'e1', 7)),
+      ).resolves.toEqual(['MAX_BELOW_OCCUPIED']);
+      expect(repository.updateExternalOccupiedSpots).not.toHaveBeenCalled();
+    });
+
+    it('refuses an event that has started', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ startAt: new Date(Date.now() - 1000) }),
+      );
+
+      await expect(
+        violationsOf(service.updateExternalOccupiedSpots(organizer, 'e1', 1)),
+      ).resolves.toEqual(['EVENT_NOT_CHANGEABLE']);
+    });
+
+    // A seat approved between the read and the write.
+    it('reports what the guarded write refused', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(anEvent());
+      repository.updateExternalOccupiedSpots.mockResolvedValue({
+        ok: false,
+        violation: 'MAX_BELOW_OCCUPIED',
+      });
+
+      await expect(
+        violationsOf(service.updateExternalOccupiedSpots(organizer, 'e1', 8)),
+      ).resolves.toEqual(['MAX_BELOW_OCCUPIED']);
+    });
+
+    it('answers 404 to someone who does not organize it', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+
+      await expect(
+        service.updateExternalOccupiedSpots(
+          { id: 'stranger' } as Identity,
+          'e1',
+          1,
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.updateExternalOccupiedSpots).not.toHaveBeenCalled();
+    });
+  });
 });

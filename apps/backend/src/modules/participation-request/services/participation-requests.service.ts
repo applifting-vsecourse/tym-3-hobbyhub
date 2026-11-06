@@ -4,11 +4,12 @@ import { NotificationsService } from '@/modules/notification/services/notificati
 import {
   ApplicantProfile,
   currentRequestOf,
+  DecidedRequestPage,
+  DecidedStatus,
   DecisionRuleViolation,
   decisionRuleViolations,
   JoinRuleViolation,
   joinRuleViolations,
-  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
 } from '@/modules/participation-request/domain/participation-request';
@@ -152,14 +153,15 @@ export class ParticipationRequestsService {
     return this.repository.getPendingRequests(eventId, page);
   }
 
-  // F-04.2: who holds an approved seat on the event, for its organizers.
-  async getParticipants(
+  // F-05.6: the approved, rejected and withdrawn, for the event's organizers.
+  async getDecidedRequests(
     user: Identity,
     eventId: string,
+    status: DecidedStatus,
     page: Page,
-  ): Promise<ParticipantPage> {
+  ): Promise<DecidedRequestPage> {
     await this.eventsService.getOrganizedEvent(eventId, user);
-    return this.repository.getParticipants(eventId, page);
+    return this.repository.getDecidedRequests(eventId, status, page);
   }
 
   // F-05.7. Approval takes a seat, so the repository checks the seats again

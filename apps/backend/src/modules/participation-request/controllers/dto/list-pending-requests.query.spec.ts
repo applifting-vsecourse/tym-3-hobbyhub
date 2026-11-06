@@ -4,16 +4,18 @@ import {
   PENDING_REQUESTS_MAX_LIMIT,
 } from '@/modules/participation-request/domain/participation-request';
 import { BadRequestException } from '@nestjs/common';
-import { PageQuery } from './page.query';
+import { ListPendingRequestsQuery } from './list-pending-requests.query';
 
 // Query parameters arrive as strings.
-const validate = (query: Record<string, string>): Promise<PageQuery> =>
+const validate = (
+  query: Record<string, string>,
+): Promise<ListPendingRequestsQuery> =>
   participationRequestsValidationPipe.transform(query, {
     type: 'query',
-    metatype: PageQuery,
-  }) as Promise<PageQuery>;
+    metatype: ListPendingRequestsQuery,
+  }) as Promise<ListPendingRequestsQuery>;
 
-describe('PageQuery', () => {
+describe('ListPendingRequestsQuery', () => {
   it('starts at the first page by default', async () => {
     await expect(validate({})).resolves.toEqual({
       limit: PENDING_REQUESTS_DEFAULT_LIMIT,

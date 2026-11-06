@@ -8,7 +8,6 @@ describe('PublicProfileResponseDto', () => {
     const profile = {
       id: 'u2',
       name: 'Petr',
-      joinedAt: new Date('2026-09-02T10:00:00Z'),
       bio: null,
       image: null,
       cover: null,
@@ -18,15 +17,14 @@ describe('PublicProfileResponseDto', () => {
       address: { city: 'Praha' },
       phone: '123',
     } as unknown as PublicProfile;
-    expect(
-      Object.keys(PublicProfileResponseDto.fromDomain(profile)).sort(),
-    ).toEqual([
+    const response = PublicProfileResponseDto.fromDomain(profile);
+    expect(response).not.toHaveProperty('email');
+    expect(Object.keys(response).sort()).toEqual([
       'bio',
       'cover',
       'id',
       'image',
       'interests',
-      'joinedAt',
       'name',
     ]);
   });
