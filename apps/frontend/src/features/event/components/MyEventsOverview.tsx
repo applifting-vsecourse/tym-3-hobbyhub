@@ -33,6 +33,8 @@ export type MyEventsList<T> = {
   isLoadingMore: boolean
   onLoadMore: () => void
   onReload: () => void
+  /** Retries what failed after rows were loaded: the next page or a reload. */
+  onRetry: () => void
 }
 
 type MyEventsOverviewProps = {
@@ -183,10 +185,10 @@ export function MyEventsOverview({
       <div className="flex flex-col">
         <ul>{list.items.map(render)}</ul>
         {list.error ? (
-          // A later page failed: keep what is loaded and retry just that page.
+          // A later page or a reload failed: keep what is loaded and retry just that.
           <EventsLoadError
             error={list.error}
-            onRetry={list.onLoadMore}
+            onRetry={list.onRetry}
           />
         ) : list.hasMore ? (
           <LoadMore

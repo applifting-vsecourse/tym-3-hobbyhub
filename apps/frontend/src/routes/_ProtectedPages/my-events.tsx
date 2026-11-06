@@ -35,6 +35,11 @@ function toList<T>(query: UseInfiniteQueryResult<Pages<T>, Error>): MyEventsList
     // A running fetch is not cancelled by a second ask for the same page.
     onLoadMore: () => void query.fetchNextPage({ cancelRefetch: false }),
     onReload: () => void query.refetch(),
+    // Retry what failed: the next page, or the reload that went wrong.
+    onRetry: () =>
+      void (query.isFetchNextPageError
+        ? query.fetchNextPage({ cancelRefetch: false })
+        : query.refetch()),
   }
 }
 

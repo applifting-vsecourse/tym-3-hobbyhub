@@ -60,6 +60,7 @@ const list = <T,>(items: T[], overrides: Partial<MyEventsList<T>> = {}): MyEvent
   isLoadingMore: false,
   onLoadMore: vi.fn(),
   onReload: vi.fn(),
+  onRetry: vi.fn(),
   ...overrides,
 })
 
@@ -163,19 +164,19 @@ describe("MyEventsOverview", () => {
     expect(screen.queryByRole("button", { name: "Načíst další" })).not.toBeInTheDocument()
   })
 
-  it("retries just the failed page and keeps the rows", async () => {
-    const onLoadMore = vi.fn()
+  it("keeps the rows when a later page or a reload fails, and retries that", async () => {
+    const onRetry = vi.fn()
     renderOverview(
       list([{ status: "PENDING", event: event({ title: "Florbal" }) }], {
         error: new Error("boom"),
         hasMore: true,
-        onLoadMore,
+        onRetry,
       }),
     )
 
     expect(screen.getByRole("link", { name: /Florbal/ })).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: /znovu|Zkusit/i }))
-    expect(onLoadMore).toHaveBeenCalledOnce()
+    expect(onRetry).toHaveBeenCalledOnce()
   })
 
   it("shows the error of a list that failed on its first load and reloads it", async () => {

@@ -39,8 +39,10 @@ export const applicationStatusOf = (
   }
   if (hasSeat) return 'APPROVED';
   if (hasPending) return 'PENDING';
-  if (facts.seat === 'CANCELLED') return 'WITHDRAWN';
+  // A rejection is final for the event (ADR-0013), so it outranks an earlier
+  // seat the person gave up: leave, ask again, be turned down.
   if (facts.requests.includes('REJECTED')) return 'REJECTED';
+  if (facts.seat === 'CANCELLED') return 'WITHDRAWN';
   if (facts.requests.includes('WITHDRAWN')) return 'WITHDRAWN';
   if (hasClosed) return 'EVENT_CANCELLED';
   return null;

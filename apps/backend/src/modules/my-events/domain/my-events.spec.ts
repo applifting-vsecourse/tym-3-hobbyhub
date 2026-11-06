@@ -47,6 +47,14 @@ describe('applicationStatusOf', () => {
     ).toBe('WITHDRAWN');
   });
 
+  it('shows a rejection of a new request after an earlier sign-off as rejected', () => {
+    expect(
+      applicationStatusOf(
+        facts({ seat: 'CANCELLED', requests: ['APPROVED', 'REJECTED'] }),
+      ),
+    ).toBe('REJECTED');
+  });
+
   it('prefers a new waiting request over an old sign-off', () => {
     expect(
       applicationStatusOf(

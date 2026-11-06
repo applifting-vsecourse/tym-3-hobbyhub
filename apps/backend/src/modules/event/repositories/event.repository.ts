@@ -1,7 +1,6 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,
-  EventVisibility,
   ParticipationStatus,
   Prisma,
   Activity as PrismaActivity,
@@ -570,9 +569,9 @@ export class EventRepository {
     { limit, offset }: Page,
   ): Promise<EventListPage> {
     const where: Prisma.EventWhereInput = {
+      ...PUBLIC_EVENT,
+      // Only what is on offer: not a draft, and not one that was called off.
       status: EventStatus.PUBLISHED,
-      visibility: EventVisibility.PUBLIC,
-      isHidden: false,
       endAt: { gte: now },
       OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
     };

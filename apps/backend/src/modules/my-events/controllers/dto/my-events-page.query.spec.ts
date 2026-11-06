@@ -1,18 +1,25 @@
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
+import { myEventsValidationPipe } from '@/modules/my-events/controllers/my-events-validation.pipe';
+import { ArgumentMetadata, BadRequestException } from '@nestjs/common';
 import { MyEventsPageQuery } from './my-events-page.query';
 
-const errorsOf = (
-  input: Record<string, unknown>,
-): ReturnType<typeof validate> =>
-  validate(plainToInstance(MyEventsPageQuery, input));
+// Through the endpoints' own pipe, so the spec checks what they do.
+const metadata: ArgumentMetadata = {
+  type: 'query',
+  metatype: MyEventsPageQuery,
+};
+const parse = (input: Record<string, unknown>): Promise<unknown> =>
+  myEventsValidationPipe.transform(input, metadata);
 
 describe('MyEventsPageQuery', () => {
   it('defaults to the first page', async () => {
-    const query = plainToInstance(MyEventsPageQuery, {});
+    await expect(parse({})).resolves.toMatchObject({ limit: 20, offset: 0 });
+  });
 
-    expect(await validate(query)).toHaveLength(0);
-    expect(query).toMatchObject({ limit: 20, offset: 0 });
+  it('turns the query strings into numbers', async () => {
+    await expect(parse({ limit: '50', offset: '40' })).resolves.toMatchObject({
+      limit: 50,
+      offset: 40,
+    });
   });
 
   it.each([
@@ -21,6 +28,15 @@ describe('MyEventsPageQuery', () => {
     { limit: 'abc' },
     { offset: '-1' },
   ])('refuses %j', async (input) => {
-    expect(await errorsOf(input)).not.toHaveLength(0);
+    await expect(parse(input)).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  // The overview is always the caller's own: whose it is never comes from the
+  // request (docs/visibility-matrix).
+  it.each([{ userId: 'someone-else' }, { user: 'someone-else' }])(
+    'refuses %j, the overview of another user cannot be asked for',
+    async (input) => {
+      await expect(parse(input)).rejects.toBeInstanceOf(BadRequestException);
+    },
+  );
 });
