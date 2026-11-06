@@ -199,14 +199,17 @@ describe('MembershipRequestsService', () => {
   });
 
   describe('the overview of my requests', () => {
-    it("pages the signed-in user's own requests", async () => {
+    it("pages a section of the signed-in user's own requests", async () => {
       const { repository, service } = setup();
       const page = { items: [], nextCursor: null };
       repository.listRequestsOfUser.mockResolvedValue(page);
 
-      await expect(service.listMyRequests(user, 'r9')).resolves.toBe(page);
+      await expect(service.listMyRequests(user, 'history', 'r9')).resolves.toBe(
+        page,
+      );
       expect(repository.listRequestsOfUser).toHaveBeenCalledWith(
         'u1',
+        'history',
         MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
         'r9',
       );

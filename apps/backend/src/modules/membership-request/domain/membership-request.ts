@@ -27,6 +27,14 @@ export type MembershipRequest = {
 // F-07.7: the overview of a person's own requests, newest first.
 export const MY_MEMBERSHIP_REQUESTS_PAGE_SIZE = 20;
 
+// The overview's two sections, each paged on its own. `pending`: requests the
+// group's admins can still decide. `history`: the rest except approvals, which
+// "Moje skupiny" shows as memberships; that includes a waiting request on a
+// cancelled group (GROUP_CANCELLED below).
+export const MY_MEMBERSHIP_REQUEST_SECTIONS = ['pending', 'history'] as const;
+export type MyMembershipRequestSection =
+  (typeof MY_MEMBERSHIP_REQUEST_SECTIONS)[number];
+
 // A request in the applicant's overview, with the group it was for.
 export type MyMembershipRequest = MembershipRequest & {
   group: Pick<Group, 'id' | 'name' | 'visibility' | 'status'>;

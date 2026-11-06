@@ -1,6 +1,7 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   GroupRole,
+  GroupStatus,
   Prisma,
   MembershipRequest as PrismaMembershipRequest,
   RequestStatus,
@@ -10,6 +11,7 @@ import {
   MembershipDecisionViolation,
   MembershipRequest,
   MyMembershipRequestPage,
+  MyMembershipRequestSection,
   PendingMembershipRequest,
 } from '@/modules/membership-request/domain/membership-request';
 import { Injectable } from '@nestjs/common';
@@ -45,6 +47,35 @@ const mapApplicant = (user: {
   hasVerifiedEmail: user.emailVerified,
 });
 
+// The sections of the overview (F-07.7). A waiting request on a cancelled
+// group is history: no admin can decide it any more.
+const sectionWhere: Record<
+  MyMembershipRequestSection,
+  Prisma.MembershipRequestWhereInput
+> = {
+  pending: {
+    status: RequestStatus.PENDING,
+    group: { status: GroupStatus.ACTIVE },
+  },
+  history: {
+    OR: [
+      {
+        status: {
+          in: [
+            RequestStatus.REJECTED,
+            RequestStatus.WITHDRAWN,
+            RequestStatus.CLOSED,
+          ],
+        },
+      },
+      {
+        status: RequestStatus.PENDING,
+        group: { status: GroupStatus.CANCELLED },
+      },
+    ],
+  },
+};
+
 const isUniqueViolation = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === 'P2002';
@@ -65,16 +96,16 @@ export class MembershipRequestRepository {
     return requests.map(mapToDomain);
   }
 
-  // F-07.7: a page of the person's requests across groups, newest first; the
-  // id breaks ties so cursor pages never skip or repeat. Approved requests
-  // stay out: "Moje skupiny" says where the person is a member.
+  // F-07.7: a page of one section of the person's requests across groups,
+  // newest first; the id breaks ties so cursor pages never skip or repeat.
   async listRequestsOfUser(
     userId: string,
+    section: MyMembershipRequestSection,
     pageSize: number,
     cursor?: string,
   ): Promise<MyMembershipRequestPage> {
     const requests = await this.prisma.membershipRequest.findMany({
-      where: { userId, status: { not: RequestStatus.APPROVED } },
+      where: { userId, ...sectionWhere[section] },
       include: {
         group: {
           select: { id: true, name: true, visibility: true, status: true },

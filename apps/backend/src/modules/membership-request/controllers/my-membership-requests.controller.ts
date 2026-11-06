@@ -27,15 +27,16 @@ export class MyMembershipRequestsController {
   @Get('mine')
   @ApiOperation({
     summary:
-      "Page through the signed-in user's requests, newest first, without the approved ones",
+      "Page through one section of the signed-in user's requests, newest first; approved ones are in neither",
   })
   @ApiResponse({ status: 200, type: MyMembershipRequestPageResponseDto })
+  @ApiResponse({ status: 400, description: 'Missing or unknown `section`' })
   async mine(
     @User() user: Identity,
     @Query() query: MyMembershipRequestsQueryDto,
   ): Promise<MyMembershipRequestPageResponseDto> {
     return MyMembershipRequestPageResponseDto.fromDomain(
-      await this.service.listMyRequests(user, query.cursor),
+      await this.service.listMyRequests(user, query.section, query.cursor),
     );
   }
 }

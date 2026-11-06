@@ -10,6 +10,7 @@ import {
   membershipRuleViolations,
   MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
   MyMembershipRequestPage,
+  MyMembershipRequestSection,
   PendingMembershipRequest,
 } from '@/modules/membership-request/domain/membership-request';
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
@@ -78,13 +79,15 @@ export class MembershipRequestsService {
     };
   }
 
-  // F-07.7: the person's own requests, in every group, whatever became of it.
+  // F-07.7: one section of the person's own requests, in every group.
   async listMyRequests(
     user: Identity,
+    section: MyMembershipRequestSection,
     cursor?: string,
   ): Promise<MyMembershipRequestPage> {
     return this.repository.listRequestsOfUser(
       user.id,
+      section,
       MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
       cursor,
     );
