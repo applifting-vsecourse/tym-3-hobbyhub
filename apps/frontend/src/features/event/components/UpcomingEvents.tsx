@@ -63,7 +63,7 @@ export function UpcomingEvents({
           <Link
             to="/events/$eventId"
             params={{ eventId: event.id }}
-            className="group block h-full rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5"
+            className="group block h-full rounded-xl transition-transform duration-200 ease-out outline-none focus-visible:ring-[3px] focus-visible:ring-ring motion-safe:hover:-translate-y-0.5"
           >
             <EventCard
               isAnimated

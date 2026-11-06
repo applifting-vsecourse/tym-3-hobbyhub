@@ -173,16 +173,23 @@
       "approvalManual": "Organizátor žádost schvaluje ručně.",
       "back": "Zpět na akce",
       "cancellationReason": "Důvod: {{reason}}",
+      "contacts": {
+        "chat": "Skupinový chat",
+        "organizer": "Organizátor: {{name}}",
+        "phone": "Zavolat",
+        "title": "Spojení s organizátorem"
+      },
       "contribution": "Příspěvek",
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
+      "hiddenInfo": "Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti.",
       "join": "Obsadit místo",
       "linkLabel": "Odkaz",
       "loadError": "Akci se nepodařilo načíst",
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
       "organizedByGroup": "Pořádá skupina",
-      "organizer": "Pořádá {{name}}",
+      "organizer": "Pořádá <profile>{{name}}</profile>",
       "requestToJoin": "Požádat o účast",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
@@ -210,7 +217,15 @@
         "title": "Složení účastníků",
         "unknown": "Neuvedeno"
       },
-      "title": "Detail akce"
+      "title": "Detail akce",
+      "where": {
+        "loadError": "Místo a kontakty se nepodařilo načíst",
+        "loading": "Načítáme místo a kontakty…",
+        "mapLabel": "Mapa s místem akce",
+        "navigate": "Navigovat",
+        "noAddress": "Organizátor zatím nevyplnil adresu.",
+        "title": "Kde se sejdeme"
+      }
     },
     "edit": {
       "back": "Zpět na detail akce",
@@ -222,6 +237,7 @@
       "addressSearch": "Najít adresu",
       "approvalMode": "Schvalování účasti",
       "city": "Město",
+      "contact": "Kontakt na organizátora (nepovinné)",
       "contributionAmount": "Příspěvek na místo v Kč (nepovinné)",
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
       "country": "Země",
@@ -229,6 +245,7 @@
       "endDate": "Datum konce",
       "endTime": "Čas do",
       "equipment": "Vybavení (nepovinné)",
+      "externalChatUrl": "Odkaz na skupinový chat (nepovinné)",
       "externalOccupiedSpots": "Už obsazeno mimo aplikaci",
       "maxParticipants": "Maximum",
       "minParticipants": "Minimum",
@@ -249,6 +266,7 @@
       "addressHint": "Vyberte adresu z nabídky, ať se akce ukáže na mapě. Pole níže se vyplní samy.",
       "addressLocated": "Poloha adresy je uložená, akce se ukáže na mapě.",
       "cancel": "Zrušit",
+      "contactsHint": "Chat a kontakt uvidí jen lidé s potvrzenou účastí a vy.",
       "continue": "Pokračovat",
       "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
       "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
@@ -286,6 +304,9 @@
         "title": "Nic nenalezeno"
       },
       "filters": {
+        "dateFrom": "od {{date}}",
+        "dateRange": "{{from}} – {{to}}",
+        "dateTo": "do {{date}}",
         "open": "Filtry",
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
@@ -328,10 +349,12 @@
     "placeholders": {
       "addressSearch": "Začněte psát ulici a město",
       "city": "Např. Praha 8",
+      "contact": "E-mail nebo telefon",
       "contributionAmount": "Např. 80",
       "contributionNote": "Např. platí se na místě hotově",
       "description": "Např. rekreační hra pro mírně pokročilé…",
       "equipment": "Např. vlastní hokejka, sálová obuv",
+      "externalChatUrl": "Např. https://chat.whatsapp.com/…",
       "placeName": "Např. ZŠ Kobylisy",
       "postalCode": "Např. 182 00",
       "street": "Např. Chabařovická 4",
@@ -353,7 +376,9 @@
       "activityRequired": "Vyberte aktivitu",
       "amountInvalid": "Zadejte částku v korunách, nejvýše na dvě desetinná místa",
       "amountRequiredForNote": "K poznámce doplňte částku",
+      "chatUrlInvalid": "Zadejte odkaz, který začíná na http:// nebo https://",
       "cityRequired": "Zadejte město",
+      "contactInvalid": "Zadejte e-mail nebo telefon, např. +420 777 123 456",
       "countryRequired": "Zadejte zemi",
       "dateRequired": "Zadejte datum",
       "descriptionRequired": "Napište pár vět o akci",
@@ -645,7 +670,9 @@
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
       "clear": "Vymazat",
-      "date": "Datum…",
+      "dateFrom": "Od data",
+      "dateRangeReversed": "Konec rozsahu nemůže být před začátkem.",
+      "dateTo": "Do data",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
       "results_few": "Zobrazit {{count}} akce",
@@ -686,6 +713,7 @@
       "label": "Hlavní navigace",
       "myEvents": "Moje akce",
       "profile": "Profil",
+      "skipToContent": "Přeskočit na obsah",
       "withNewRequests": "{{label}}, nové žádosti"
     },
     "photoPicker": {
@@ -818,7 +846,33 @@
     }
   },
   "myEvents": {
-    "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
+    "applications": {
+      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
+    },
+    "empty": {
+      "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
+      "find": "Najít akci",
+      "title": "Zatím tu nic není"
+    },
+    "hosted": {
+      "empty": "Nepořádáte žádnou nadcházející akci."
+    },
+    "loadMore": "Načíst další",
+    "loading": "Načítáme vaše akce",
+    "status": {
+      "APPROVED": "Schváleno",
+      "EVENT_CANCELLED": "Akce zrušena",
+      "PENDING": "Čeká na schválení",
+      "REJECTED": "Zamítnuto",
+      "WITHDRAWN": "Odhlášeno"
+    },
+    "tabs": {
+      "applications": "Přihlášky",
+      "applicationsWithCount": "Přihlášky ({{count}})",
+      "hosted": "Pořádám",
+      "hostedWithCount": "Pořádám ({{count}})",
+      "label": "Moje akce"
+    },
     "title": "Moje akce"
   },
   "notifications": {
@@ -956,8 +1010,61 @@
       "approveFailed": "Žádost se nepodařilo schválit. Zkus to znovu.",
       "approved": "Žádost schválena",
       "back": "Zpět na akci",
+      "breakdown": "{{approved}} z aplikace, {{external}} mimo aplikaci",
+      "decided": {
+        "APPROVED": {
+          "empty": "Zatím tu nikdo není. Objeví se tu každý, kdo na akci získá místo.",
+          "external_few": "K tomu {{count}} místa mimo aplikaci",
+          "external_one": "K tomu {{count}} místo mimo aplikaci",
+          "external_other": "K tomu {{count}} míst mimo aplikaci",
+          "loadError": "Účastníky se nepodařilo načíst",
+          "loading": "Načítáme účastníky…",
+          "more_few": "{{count}} další účastníci",
+          "more_one": "{{count}} další účastník",
+          "more_other": "{{count}} dalších účastníků",
+          "since": "Místo má od {{date}}",
+          "title": "Schválení"
+        },
+        "REJECTED": {
+          "empty": "Zatím jsi žádnou žádost nezamítl.",
+          "loadError": "Zamítnuté žádosti se nepodařilo načíst",
+          "loading": "Načítáme zamítnuté žádosti…",
+          "more_few": "{{count}} další zamítnuté žádosti",
+          "more_one": "{{count}} další zamítnutá žádost",
+          "more_other": "{{count}} dalších zamítnutých žádostí",
+          "since": "Zamítnuto {{date}}",
+          "title": "Zamítnutí"
+        },
+        "WITHDRAWN": {
+          "empty": "Zatím nikdo svou žádost nestáhl.",
+          "loadError": "Stažené žádosti se nepodařilo načíst",
+          "loading": "Načítáme stažené žádosti…",
+          "more_few": "{{count}} další stažené žádosti",
+          "more_one": "{{count}} další stažená žádost",
+          "more_other": "{{count}} dalších stažených žádostí",
+          "since": "Žádost stáhl {{date}}",
+          "title": "Odhlášení"
+        }
+      },
       "empty": "Zatím tu nejsou žádné žádosti. Objeví se tu, jakmile o účast někdo požádá.",
       "emptyAutomatic": "Na téhle akci se žádosti schvalují samy: kdo požádá, rovnou obsadí volné místo.",
+      "external": {
+        "hint": "Lidé z tvé party, kteří nemají účet v aplikaci. Počítají se do obsazenosti.",
+        "label": "Místa mimo aplikaci",
+        "locked_few": "Mimo aplikaci: {{count}} místa. Po začátku akce už počet nejde měnit.",
+        "locked_one": "Mimo aplikaci: {{count}} místo. Po začátku akce už počet nejde měnit.",
+        "locked_other": "Mimo aplikaci: {{count}} míst. Po začátku akce už počet nejde měnit.",
+        "refused": {
+          "EVENT_NOT_CHANGEABLE": "Akce už začala nebo skončila, počet míst mimo aplikaci už nejde měnit.",
+          "MAX_BELOW_OCCUPIED": "Tolik míst už volných není, mezitím se někdo přihlásil."
+        },
+        "saveFailed": "Počet míst mimo aplikaci se nepodařilo uložit. Zkus to znovu."
+      },
+      "fillState": {
+        "BELOW_MINIMUM": "Pod minimem",
+        "FULL": "Plno",
+        "MINIMUM_REACHED": "Minimum splněno"
+      },
       "loadError": "Žádosti se nepodařilo načíst",
       "loading": "Načítáme žádosti…",
       "locked": {
@@ -986,6 +1093,13 @@
       "rejected": "Žádost zamítnuta",
       "requests": "Žádosti",
       "retry": "Zkusit znovu",
+      "tabs": {
+        "participants": "Účastníci",
+        "participantsCount": "Účastníci {{count}}",
+        "requests": "Žádosti",
+        "requestsCount": "Žádosti {{count}}"
+      },
+      "tabsLabel": "Žádosti a účastníci",
       "title": "Žádosti a přehled účastníků"
     },
     "organizer": {
@@ -1075,6 +1189,11 @@
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
     "title": "Můj profil",
+    "userProfile": {
+      "interests": "Co hraje",
+      "notFound": "Profil nenalezen.",
+      "title": "Profil uživatele"
+    },
     "view": {
       "addActivities": "Přidat, co hraju",
       "addBio": "Napsat pár slov",

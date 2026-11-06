@@ -49,6 +49,19 @@ export type Profile = {
   travelRadiusKm: number | null;
 };
 
+/**
+ * What another signed-in person sees (F-04.2): no gender, birth date, address
+ * or e-mail (the visibility matrix: nobody sees the e-mail).
+ */
+export type PublicProfile = {
+  id: string;
+  name: string;
+  bio: string | null;
+  image: string | null;
+  cover: string | null;
+  interests: Interest[];
+};
+
 export type ProfileViolation =
   | 'IMAGE_FORMAT'
   | 'IMAGE_TOO_LARGE'

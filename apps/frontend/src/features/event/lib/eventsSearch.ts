@@ -14,6 +14,18 @@ const text = z.coerce
 // The filters of the event list as they sit in the address. A hand-written or
 // shared link may hold a single value or a number where the app writes a list
 // or a text, so both are accepted instead of silently dropped.
+// A day as the server takes it; anything else in a hand-written link is dropped.
+const day = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const [year, month, date] = value.split("-").map(Number)
+    const parsed = new Date(Date.UTC(year!, month! - 1, date))
+    return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month! - 1
+  })
+  .optional()
+  .catch(undefined)
+
 export const eventsSearchSchema = z.object({
   activity: z
     .union([z.array(z.coerce.string()), z.coerce.string().transform((id) => [id])])
@@ -21,6 +33,8 @@ export const eventsSearchSchema = z.object({
     .catch(undefined),
   q: text,
   location: text,
+  from: day,
+  to: day,
 })
 
 /** An empty text is no filter, and keeps the address clean. */

@@ -119,6 +119,7 @@ export function PendingRequests({ event, onChange, now = new Date() }: PendingRe
           {items.map((request) => (
             <li key={request.id}>
               <JoinRequestCard
+                profileUserId={request.userId}
                 name={request.applicant.name}
                 photo={request.applicant.image}
                 hasVerifiedEmail={request.applicant.hasVerifiedEmail}

@@ -7,6 +7,8 @@ export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
 export const EVENT_EQUIPMENT_MAX_LENGTH = 500;
 export const EVENT_CONTRIBUTION_NOTE_MAX_LENGTH = 200;
 export const EVENT_CANCELLATION_NOTE_MAX_LENGTH = 500;
+export const EVENT_CHAT_URL_MAX_LENGTH = 500;
+export const EVENT_CONTACT_MAX_LENGTH = 200;
 // Decimal(10, 2)
 export const EVENT_CONTRIBUTION_MAX_AMOUNT = 99_999_999.99;
 export const EVENT_STREET_MAX_LENGTH = 200;
@@ -104,6 +106,10 @@ export type Event = Occupancy & {
   // Information only (F-05.1): what one pays, never a payment through the app.
   contributionAmount: number | null;
   contributionNote: string | null;
+  // F-06.5: how an approved participant reaches the group; see
+  // `ParticipantEventInfo`. Never in the public detail.
+  contact: string | null;
+  externalChatUrl: string | null;
   location: EventLocation | null;
   activity: Activity;
   organizerId: string;
@@ -161,6 +167,8 @@ export type CreateEventData = {
   externalOccupiedSpots: number;
   contributionAmount?: number;
   contributionNote?: string;
+  contact?: string;
+  externalChatUrl?: string;
 };
 
 export type EventRuleViolation =
@@ -290,6 +298,29 @@ export const eventChangeViolations = (
   return violations;
 };
 
+// F-05.6: the organizer keeps the seats of people outside the app up to date
+// after creating the event. The same boundary as an edit, and the same rule
+// for the seats: outside plus approved never above the maximum.
+export const externalSpotsViolations = (
+  event: Pick<
+    Event,
+    'status' | 'startAt' | 'maxParticipants' | 'approvedCount'
+  >,
+  externalOccupiedSpots: number,
+  now: Date,
+): Extract<
+  EventChangeViolation,
+  'EVENT_NOT_CHANGEABLE' | 'MAX_BELOW_OCCUPIED'
+>[] => {
+  const changeable =
+    (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
+    !hasStarted(event, now);
+  if (!changeable) return ['EVENT_NOT_CHANGEABLE'];
+  return externalOccupiedSpots + event.approvedCount > event.maxParticipants
+    ? ['MAX_BELOW_OCCUPIED']
+    : [];
+};
+
 // Who an edit or a cancellation concerns (F-09.3, ADR-0015): the approved
 // participants, and the people still waiting for a decision.
 export type EventAudience = {
@@ -316,6 +347,19 @@ export const EVENT_LIST_MAX_ACTIVITY_FILTERS = 50;
 export const EVENT_LIST_SEARCH_MAX_LENGTH = 100;
 export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
 
+// The zone in which "a day" is read by the date filter: where the events are.
+export const EVENT_LIST_TIME_ZONE = 'Europe/Prague';
+
+export type EventListFilterViolation = 'DATE_FROM_AFTER_DATE_TO';
+
+// Rules between the fields of the list filter. ISO dates compare as text.
+export const eventListFilterViolations = (
+  filter: Pick<EventListFilter, 'dateFrom' | 'dateTo'>,
+): EventListFilterViolation[] =>
+  filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
+    ? ['DATE_FROM_AFTER_DATE_TO']
+    : [];
+
 // TODO(F-02.1b #91): `location` is plain text for now. A radius filter needs
 // every event to have coordinates (geocoding, F-12.3), and similar spellings
 // ("Brno" ~ "Brnoo") need matching by similarity.
@@ -332,6 +376,10 @@ export type EventListFilter = {
   activityIds: string[];
   search?: string;
   location?: string;
+  // Calendar days (YYYY-MM-DD, inclusive) on which the event starts, in
+  // `EVENT_LIST_TIME_ZONE`; either end may be left open.
+  dateFrom?: string;
+  dateTo?: string;
   near?: GeoPoint;
 };
 
@@ -388,6 +436,17 @@ export type ParticipantStats = {
   gender: { male: number; female: number; unknown: number } | null;
 };
 
+// F-06.5: what only the organizers and the approved participants of a public
+// event may see (visibility matrix): the exact address and the ways to reach
+// the organizer. The public `EventDetail` holds all of it back.
+export type ParticipantEventInfo = {
+  venueType: VenueType;
+  location: EventLocation | null;
+  organizerName: string;
+  contact: string | null;
+  externalChatUrl: string | null;
+};
+
 export type EventDetail = EventListItem & {
   description: string;
   equipment: string | null;
@@ -405,4 +464,22 @@ export type EventDetail = EventListItem & {
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;
+};
+
+export type ContactKind = 'email' | 'phone';
+
+// The organizer's contact is an e-mail or a phone number; a link to a group chat
+// has its own field. Null when it is neither.
+export const contactKindOf = (value: string): ContactKind | null => {
+  const text = value.trim();
+  // No "/" or ":" before the "@", so a link such as https://example.com/@jana.novak is not an e-mail.
+  if (/^[^\s@/:]+@[^\s@/]+\.[^\s@/]{2,}$/.test(text)) return 'email';
+  // Digits with an optional leading + and the usual separators, nine digits at least:
+  // a date or a run of dashes is no phone number.
+  if (
+    /^\+?[0-9][0-9 ()-]{5,}$/.test(text) &&
+    (text.match(/[0-9]/g) ?? []).length >= 9
+  )
+    return 'phone';
+  return null;
 };

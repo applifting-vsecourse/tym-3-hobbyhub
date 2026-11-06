@@ -12,6 +12,14 @@ export type ProfileRow = {
   birthDate: Date | null;
 };
 
+export type PublicProfileRow = {
+  id: string;
+  name: string;
+  bio: string | null;
+  image: string | null;
+  profileCover: string | null;
+};
+
 // Trusts the layers above: it validates nothing, it only reads and writes.
 @Injectable()
 export class ProfileRepository {
@@ -28,6 +36,20 @@ export class ProfileRepository {
         profileCover: true,
         gender: true,
         birthDate: true,
+      },
+    });
+  }
+
+  // Only the columns another person may see; the private ones are not selected.
+  getPublicRow(userId: string): Promise<PublicProfileRow | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        bio: true,
+        image: true,
+        profileCover: true,
       },
     });
   }

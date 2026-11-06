@@ -2,9 +2,12 @@ import { CharLength } from '@/core/validation/char-length.decorator';
 import {
   APPROVAL_MODES,
   ApprovalMode,
+  contactKindOf,
   CREATABLE_VENUE_TYPES,
   CreatableVenueType,
+  EVENT_CHAT_URL_MAX_LENGTH,
   EVENT_CITY_MAX_LENGTH,
+  EVENT_CONTACT_MAX_LENGTH,
   EVENT_CONTRIBUTION_MAX_AMOUNT,
   EVENT_CONTRIBUTION_NOTE_MAX_LENGTH,
   EVENT_COUNTRY_MAX_LENGTH,
@@ -31,13 +34,28 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Max,
   Min,
+  Validate,
   ValidateNested,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
+
+@ValidatorConstraint({ name: 'isContact' })
+class IsContactConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    return typeof value === 'string' && contactKindOf(value) !== null;
+  }
+
+  defaultMessage(): string {
+    return 'contact must be an e-mail or a phone number';
+  }
+}
 
 // Optional text: whitespace only counts as not filled in.
 const trimToUndefined = ({ value }: { value: unknown }): unknown =>
@@ -232,4 +250,29 @@ export class CreateEventDto {
   @IsString()
   @CharLength(0, EVENT_CONTRIBUTION_NOTE_MAX_LENGTH)
   contributionNote?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://chat.whatsapp.com/abc123',
+    maxLength: EVENT_CHAT_URL_MAX_LENGTH,
+    description: 'Link to the group chat, shown to approved participants only',
+  })
+  @Transform(trimToUndefined)
+  @IsOptional()
+  @IsString()
+  @CharLength(0, EVENT_CHAT_URL_MAX_LENGTH)
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  externalChatUrl?: string;
+
+  @ApiPropertyOptional({
+    example: '+420 777 123 456',
+    maxLength: EVENT_CONTACT_MAX_LENGTH,
+    description:
+      'E-mail or phone of the organizer, shown to approved participants only',
+  })
+  @Transform(trimToUndefined)
+  @IsOptional()
+  @IsString()
+  @CharLength(0, EVENT_CONTACT_MAX_LENGTH)
+  @Validate(IsContactConstraint)
+  contact?: string;
 }

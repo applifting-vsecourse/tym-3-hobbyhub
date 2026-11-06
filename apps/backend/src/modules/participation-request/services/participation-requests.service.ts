@@ -3,7 +3,10 @@ import { EventsService } from '@/modules/event/services/events.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
+  ApplicationFactsPage,
   currentRequestOf,
+  DecidedRequestPage,
+  DecidedStatus,
   DecisionRuleViolation,
   decisionRuleViolations,
   JoinRuleViolation,
@@ -63,6 +66,16 @@ export class ParticipationRequestsService {
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-06.3: a page of the person's own applications to events that are not
+  // over; the overview turns them into one status per event.
+  getMyApplicationFacts(
+    user: Identity,
+    page: Page,
+    now: Date = new Date(),
+  ): Promise<ApplicationFactsPage> {
+    return this.repository.getApplicationFacts(user.id, now, page);
+  }
 
   async getMyRequestState(
     user: Identity,
@@ -149,6 +162,17 @@ export class ParticipationRequestsService {
   ): Promise<PendingRequestPage> {
     await this.eventsService.getOrganizedEvent(eventId, user);
     return this.repository.getPendingRequests(eventId, page);
+  }
+
+  // F-05.6: the approved, rejected and withdrawn, for the event's organizers.
+  async getDecidedRequests(
+    user: Identity,
+    eventId: string,
+    status: DecidedStatus,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    await this.eventsService.getOrganizedEvent(eventId, user);
+    return this.repository.getDecidedRequests(eventId, status, page);
   }
 
   // F-05.7. Approval takes a seat, so the repository checks the seats again

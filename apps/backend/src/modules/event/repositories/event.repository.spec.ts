@@ -365,4 +365,67 @@ describe('EventRepository: guarded writes', () => {
       repository.cancelEvent('e1', { cancellationReasonId: 'r1' }, now),
     ).resolves.toEqual({ ok: false, violation: 'EVENT_NOT_CANCELLABLE' });
   });
+
+  describe('updateExternalOccupiedSpots', () => {
+    // Four approved people on an event of at most eight.
+    const setupSpots = (
+      count: number,
+    ): { calls: string[]; repository: EventRepository } => {
+      const calls: string[] = [];
+      const findUniqueOrThrow = jest
+        .fn()
+        .mockResolvedValueOnce({ maxParticipants: 8 })
+        .mockRejectedValue(new Error(STOP));
+      const tx = {
+        $queryRaw: jest.fn(() => {
+          calls.push('lock');
+          return Promise.resolve([]);
+        }),
+        participation: {
+          count: jest.fn(() => {
+            calls.push('count');
+            return Promise.resolve(4);
+          }),
+        },
+        event: {
+          updateMany: jest.fn(() => {
+            calls.push('write');
+            return Promise.resolve({ count });
+          }),
+          findUniqueOrThrow,
+        },
+      };
+      const prisma = {
+        $transaction: (work: (tx: unknown) => Promise<unknown>) => work(tx),
+      } as unknown as PrismaService;
+      return { calls, repository: new EventRepository(prisma) };
+    };
+
+    it('locks the event before counting seats and writing', async () => {
+      const { calls, repository } = setupSpots(1);
+
+      await expect(
+        repository.updateExternalOccupiedSpots('e1', 4, now),
+      ).rejects.toThrow(STOP);
+
+      expect(calls).toEqual(['lock', 'count', 'write']);
+    });
+
+    it('refuses more outside seats than the approved leave, writing nothing', async () => {
+      const { calls, repository } = setupSpots(1);
+
+      await expect(
+        repository.updateExternalOccupiedSpots('e1', 5, now),
+      ).resolves.toEqual({ ok: false, violation: 'MAX_BELOW_OCCUPIED' });
+      expect(calls).not.toContain('write');
+    });
+
+    it('reports an event that started or closed meanwhile', async () => {
+      const { repository } = setupSpots(0);
+
+      await expect(
+        repository.updateExternalOccupiedSpots('e1', 1, now),
+      ).resolves.toEqual({ ok: false, violation: 'EVENT_NOT_CHANGEABLE' });
+    });
+  });
 });

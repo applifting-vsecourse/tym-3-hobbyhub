@@ -5,17 +5,20 @@ import {
   EVENT_LIST_MAX_LIMIT,
   EVENT_LIST_SEARCH_MAX_LENGTH,
 } from '@/modules/event/domain/event';
+import { applyDecorators } from '@nestjs/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
   IsInt,
+  IsISO8601,
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -34,6 +37,12 @@ const blankToUndefined = ({
   key: string;
 }): unknown =>
   (obj as Record<string, unknown>)[key] === '' ? undefined : value;
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+// A real calendar day written YYYY-MM-DD, not a date-time.
+const IsIsoDay = (): PropertyDecorator =>
+  applyDecorators(Matches(ISO_DAY), IsISO8601({ strict: true }));
 
 export class ListEventsQuery {
   @ApiPropertyOptional({
@@ -92,6 +101,26 @@ export class ListEventsQuery {
   @IsString()
   @MaxLength(EVENT_LIST_LOCATION_MAX_LENGTH)
   location?: string;
+
+  @ApiPropertyOptional({
+    example: '2026-11-15',
+    description:
+      'First day (YYYY-MM-DD, Prague time) on which a listed event starts',
+  })
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsIsoDay()
+  dateFrom?: string;
+
+  @ApiPropertyOptional({
+    example: '2026-11-30',
+    description:
+      'Last day (YYYY-MM-DD, Prague time) on which a listed event starts',
+  })
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsIsoDay()
+  dateTo?: string;
 
   @ApiPropertyOptional({
     minimum: -90,
