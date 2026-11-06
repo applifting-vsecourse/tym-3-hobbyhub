@@ -1,5 +1,6 @@
 import {
   eventChangeViolations,
+  eventListFilterViolations,
   eventRuleViolations,
   externalSpotsViolations,
   foldForSearch,
@@ -101,6 +102,28 @@ describe('foldForSearch', () => {
   it('ignores case, diacritics and outer spaces', () => {
     expect(foldForSearch('  Čtvrteční FLORBAL ')).toBe('ctvrtecni florbal');
     expect(foldForSearch('Brno-Žabovřesky')).toBe('brno-zabovresky');
+  });
+});
+
+describe('eventListFilterViolations', () => {
+  it('accepts open and ordered ranges', () => {
+    expect(eventListFilterViolations({})).toEqual([]);
+    expect(eventListFilterViolations({ dateFrom: '2026-11-15' })).toEqual([]);
+    expect(
+      eventListFilterViolations({
+        dateFrom: '2026-11-15',
+        dateTo: '2026-11-15',
+      }),
+    ).toEqual([]);
+  });
+
+  it('refuses a range that ends before it starts', () => {
+    expect(
+      eventListFilterViolations({
+        dateFrom: '2026-11-16',
+        dateTo: '2026-11-15',
+      }),
+    ).toEqual(['DATE_FROM_AFTER_DATE_TO']);
   });
 });
 

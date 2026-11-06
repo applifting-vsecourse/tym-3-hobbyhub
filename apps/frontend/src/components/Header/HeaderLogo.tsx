@@ -8,7 +8,7 @@ export function HeaderLogo() {
   return (
     <Link
       to={ROUTES.home}
-      className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
     >
       <Logo
         variant="wordmark"

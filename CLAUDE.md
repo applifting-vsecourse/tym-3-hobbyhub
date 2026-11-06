@@ -89,4 +89,4 @@ No user-facing strings in components — not text, `aria-label`s, placeholders o
 
 ### Who sees what lives in the visibility matrix
 
-[`docs/visibility-matrix.md`](docs/visibility-matrix.md) says which role sees which data. Read it before adding a field to a response DTO or a page that shows someone's data, and update it in the same PR when you add a field or a role. A cell marked ❓ is undecided: ask, don't pick an answer in code.
+[`docs/visibility-matrix/README.md`](docs/visibility-matrix/README.md) says which role sees which data. Read it before adding a field to a response DTO or a page that shows someone's data, and update it in the same PR when you add a field or a role. A cell marked ❓ is undecided: ask, don't pick an answer in code.

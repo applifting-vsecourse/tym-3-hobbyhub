@@ -286,6 +286,9 @@
         "title": "Nic nenalezeno"
       },
       "filters": {
+        "dateFrom": "od {{date}}",
+        "dateRange": "{{from}} – {{to}}",
+        "dateTo": "do {{date}}",
         "open": "Filtry",
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
@@ -645,7 +648,9 @@
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
       "clear": "Vymazat",
-      "date": "Datum…",
+      "dateFrom": "Od data",
+      "dateRangeReversed": "Konec rozsahu nemůže být před začátkem.",
+      "dateTo": "Do data",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
       "results_few": "Zobrazit {{count}} akce",
@@ -686,6 +691,7 @@
       "label": "Hlavní navigace",
       "myEvents": "Moje akce",
       "profile": "Profil",
+      "skipToContent": "Přeskočit na obsah",
       "withNewRequests": "{{label}}, nové žádosti"
     },
     "photoPicker": {
