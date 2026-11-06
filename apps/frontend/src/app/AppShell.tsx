@@ -22,6 +22,8 @@ type AppShellProps = {
   shellClassName?: string
   /** Location search in the header on discovery pages (landing only for now). */
   search?: ReactNode
+  /** The page's footer, under `<main>` and above the BottomNav (the landing page). */
+  footer?: ReactNode
 }
 
 /**
@@ -32,7 +34,7 @@ type AppShellProps = {
  * header (#151). It lives in `app/`, not in a feature: it composes the auth
  * menu and the notifications, and a feature may not import another one.
  */
-export function AppShell({ children, className, shellClassName, search }: AppShellProps) {
+export function AppShell({ children, className, shellClassName, search, footer }: AppShellProps) {
   const { t } = useTranslation()
   const { user } = useSession()
   const pathname = useLocation({ select: (location) => location.pathname })
@@ -101,6 +103,7 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
       >
         {children}
       </main>
+      {footer}
       {/* The nav's raised-button padding lets clicks through to the page;
           the wrapper that is measured must not catch them either. */}
       <div

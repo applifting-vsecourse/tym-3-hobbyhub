@@ -396,6 +396,11 @@
       "PUBLIC_VENUE": "Public place"
     }
   },
+  "footer": {
+    "copyright": "© {{year}} HobbyHub",
+    "label": "Footer",
+    "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
+  },
   "geo": {
     "address": {
       "error": "Couldn't load addresses. Please try again.",
@@ -820,10 +825,43 @@
       "title": "Fill the missing players before the event is cancelled"
     },
     "how": {
-      "step1": "Find an event that is short of players, or create one and say how many people you still need to reach the minimum.",
-      "step2": "Others see the free seats on the map or in the list and ask to join.",
-      "step3": "The organizer approves participants and the event goes ahead.",
-      "step4": "A crew that clicked becomes a group. Nobody creates the next event from scratch.",
+      "preview": {
+        "scheduleSubtitle": "Dolní school hall · Prague 8 · advanced",
+        "scheduleTime": "Thu 19:00",
+        "scheduleTitle": "Thursday floorball crew",
+        "take": "Take the seat",
+        "yourSeatText": "Thursday floorball · today 19:00",
+        "yourSeatTitle": "Your seat"
+      },
+      "step1": {
+        "p1": "The organizer says how many people they still need to reach the minimum, and everyone sees it right away: in the list, on the map and on the event card. You are not asking “whether”, you are asking “where one more fits”.",
+        "p2": "When there is no suitable event, you create one in a minute: activity, place, time and how many of you it takes to play.",
+        "short": "Find or create an event",
+        "subtitle": "Where players are missing to the minimum.",
+        "title": "Find an event short of players. Or create one."
+      },
+      "step2": {
+        "p1": "Free seats look like chairs at a table, in the list and on the map. One tap asks to join, and you can add a few words for the organizer.",
+        "p2": "You can browse everything without an account. You sign up when you want to take a seat.",
+        "short": "Ask for a seat",
+        "subtitle": "One tap, the organizer gets a message.",
+        "title": "Ask for a free seat"
+      },
+      "step3": {
+        "p1": "The organizer sees who is asking and approves whom they want. Once the minimum is met, the event goes ahead and nobody travels for nothing.",
+        "p2": "Approved participants get the exact address and practical instructions, and see who they are going with.",
+        "short": "Approval, then play",
+        "subtitle": "Minimum met, the event goes ahead.",
+        "title": "The organizer approves and you play"
+      },
+      "step4": {
+        "p1": "People who clicked stay together as a group. It has its place, its usual time and members who know each other.",
+        "p2": "Nobody creates the next event from scratch, and a newcomer sees what they are joining before asking for membership.",
+        "short": "The crew becomes a group",
+        "subtitle": "Next time nobody starts from scratch.",
+        "title": "The crew becomes a group"
+      },
+      "stepLabel": "Step {{number}}",
       "title": "How it works"
     },
     "search": {
