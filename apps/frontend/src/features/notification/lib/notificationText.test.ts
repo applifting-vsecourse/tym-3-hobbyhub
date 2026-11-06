@@ -58,7 +58,7 @@ describe("notificationText", () => {
     [
       "a participant who cancelled (F-06.4)",
       aNotification({ type: "PARTICIPANT_CANCELLED", message: "Onemocněl jsem." }),
-      "Honza_K zrušil svoji účast na akci Čtvrteční florbal",
+      "Honza_K zrušil(a) svoji účast na akci Čtvrteční florbal",
     ],
     [
       "a type without words of its own",

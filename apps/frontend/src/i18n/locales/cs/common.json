@@ -859,7 +859,7 @@
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"
       },
-      "PARTICIPANT_CANCELLED": "{{name}} zrušil svoji účast na akci {{title}}",
+      "PARTICIPANT_CANCELLED": "{{name}} zrušil(a) svoji účast na akci {{title}}",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Tvoje žádost o účast na akci {{title}} byla schválena",
