@@ -19,15 +19,14 @@ const SAMPLE_EVENT = {
 // Made-up counts so the button label reacts to the draft, as it will with real data.
 function sampleCount(filters: EventFilters) {
   const byActivity = filters.activities.length > 0 ? filters.activities.length * 6 : 24
-  return filters.when ? Math.ceil(byActivity / 2) : byActivity
+  return filters.dateFrom || filters.dateTo ? Math.ceil(byActivity / 2) : byActivity
 }
-
-const WHEN_LABELS = { week: "tento týden", weekend: "víkend", date: "vlastní datum" } as const
 
 function describeFilters(filters: EventFilters, t: TFunction) {
   const parts = [
     ...filters.activities.map((activity) => t(`hobbyhub.activities.${activity}`)),
-    filters.when ? WHEN_LABELS[filters.when] : "",
+    filters.dateFrom ? t("events.list.filters.dateFrom", { date: filters.dateFrom }) : "",
+    filters.dateTo ? t("events.list.filters.dateTo", { date: filters.dateTo }) : "",
     filters.location,
   ].filter((part) => part !== "")
   return parts.length > 0 ? parts.join(", ") : "žádné"

@@ -1,6 +1,6 @@
 ---
 name: review-PR
-description: Kompletní review pull requestu v tomto repu podle čísla PR — přiřadí uživatele jako reviewera, ověří podmínky merge (aktuální base větev, zelené CI, bez konfliktů), zkontroluje změny proti konvencím v CLAUDE.md a DESIGN.md, napíše review na GitHub (schválení, nebo žádost o opravu) a nakonec nabídne merge za autora. Použij vždy, když uživatel napíše "/review-PR <číslo>", "udělej review PR 117", "zreviduj #112", "mrkni na ten PR", "můžu to mergnout?", "je PR 109 připravený k merge?" nebo chce PR schválit, okomentovat či mergnout — i když slovo review nezazní.
+description: Kompletní review pull requestu v tomto repu podle čísla PR — přiřadí uživatele jako reviewera, ověří podmínky merge (aktuální base větev, zelené CI, bez konfliktů), zkontroluje změny proti konvencím v CLAUDE.md a DESIGN.md a proti matici viditelnosti v docs/visibility-matrix/README.md, napíše review na GitHub (schválení, nebo žádost o opravu) a nakonec nabídne merge za autora. Použij vždy, když uživatel napíše "/review-PR <číslo>", "udělej review PR 117", "zreviduj #112", "mrkni na ten PR", "můžu to mergnout?", "je PR 109 připravený k merge?" nebo chce PR schválit, okomentovat či mergnout — i když slovo review nezazní.
 argument-hint: <číslo PR>
 ---
 
@@ -66,21 +66,22 @@ gh pr diff <n>
 git show origin/<head>:<cesta>   # celý soubor, když diff nestačí pro kontext
 ```
 
-Když je v session dostupný skill `code-review`, použij `/code-review <n>` jako první průchod na chyby v logice — ale neskonči u něj: konvence tohoto repa zná jen CLAUDE.md a DESIGN.md, obojí si před review přečti.
+Když je v session dostupný skill `code-review`, použij `/code-review <n>` jako první průchod na chyby v logice — ale neskonči u něj: konvence tohoto repa zná jen CLAUDE.md a DESIGN.md a kdo co smí vidět jen `docs/visibility-matrix/README.md`, všechny tři si před review přečti.
 
 Na co se dívat, v pořadí důležitosti:
 
 1. **Správnost.** Chyby v logice, chybějící ošetření stavů, bezpečnost (kdo je aktér — vždy ze session přes `@User()`, nikdy z těla požadavku), data z jiného modulu jen přes jeho _service_.
-2. **Vrstvy backendu.** `domain/` bez Nestu a Prismy, Prisma jen v `repositories/`, pravidla mezi poli entity jako čisté funkce v `domain/`, DTO s limity čtenými z `domain/`, CHECK constrainty v migraci.
-3. **Migrace.** Nová migrace musí být časově za všemi na base větvi a žádná existující nesmí být upravená. Opravy jen novou migrací.
-4. **Frontend konvence.** Formuláře přes `AppForm`, ovládací prvky z `src/components/ui/` (ne ručně psané), žádné `shadow-*` na inputech a kartách, texty v obou překladech (`cs` i `en`), čísla a data přes `Intl`.
-5. **DESIGN.md.** Žádné generické vnořené karty; obrazovka drží vzor, který soubor předepisuje.
-6. **Testy.** Nová logika v `domain/` a `services/` má test; guarded formuláře se testují přes `renderWithRouter`.
-7. **Zadání.** Odpovídá změna tomu, co PR v popisu a názvu slibuje? Nic navíc, nic chybějícího.
+2. **Matice viditelnosti.** Každá změna, která něco vrací z API nebo ukazuje na obrazovce (response DTO, select v repozitáři, výpis, detail, notifikace, e-mail), musí sedět s `docs/visibility-matrix/README.md`. Najdi v matici řádek a sloupec pro každé pole a roli, kterých se PR dotýká, a ověř, že role s ❌ pole nedostane ani v odpovědi API — ne jen že se nevykreslí. Nové pole nebo role bez řádku v matici je blokující: matice se upravuje ve stejném PR. Buňka ❓ znamená, že rozhodnutí chybí; PR, který ji řeší v kódu, blokuj a odkaž autora na zadavatele. Ke každému ❌, které PR implementuje, patří test proti API, že pole v odpovědi není.
+3. **Vrstvy backendu.** `domain/` bez Nestu a Prismy, Prisma jen v `repositories/`, pravidla mezi poli entity jako čisté funkce v `domain/`, DTO s limity čtenými z `domain/`, CHECK constrainty v migraci.
+4. **Migrace.** Nová migrace musí být časově za všemi na base větvi a žádná existující nesmí být upravená. Opravy jen novou migrací.
+5. **Frontend konvence.** Formuláře přes `AppForm`, ovládací prvky z `src/components/ui/` (ne ručně psané), žádné `shadow-*` na inputech a kartách, texty v obou překladech (`cs` i `en`), čísla a data přes `Intl`.
+6. **DESIGN.md.** Žádné generické vnořené karty; obrazovka drží vzor, který soubor předepisuje.
+7. **Testy.** Nová logika v `domain/` a `services/` má test; guarded formuláře se testují přes `renderWithRouter`.
+8. **Zadání.** Odpovídá změna tomu, co PR v popisu a názvu slibuje? Nic navíc, nic chybějícího.
 
 Rozděl nálezy na dvě hromádky:
 
-- **Blokující** — chyba v chování, bezpečnostní díra, porušení pravidla z CLAUDE.md/DESIGN.md, upravená zmrazená migrace, chybějící překlad (test na rozjeté překlady spadne), červené CI, větev za base o commity, které se týkají kódu aplikace (zaostávání jen o skill nebo dokumentaci řeší aktualizace větve v kroku 5), konflikt.
+- **Blokující** — chyba v chování, bezpečnostní díra, porušení pravidla z CLAUDE.md/DESIGN.md, pole nebo záznam, který podle `docs/visibility-matrix/README.md` role nemá vidět a odpověď API ho nese, nové pole nebo role bez úpravy matice, upravená zmrazená migrace, chybějící překlad (test na rozjeté překlady spadne), červené CI, větev za base o commity, které se týkají kódu aplikace (zaostávání jen o skill nebo dokumentaci řeší aktualizace větve v kroku 5), konflikt.
 - **Neblokující** — styl, pojmenování, drobné zjednodušení, návrhy. Ty merge nebrzdí a autor je může přijmout nebo ne.
 
 Styl, který uživatel nebo tým výslovně neřeší, nevymýšlej. Review má být krátké a konkrétní: soubor, řádek, co je špatně, co s tím.

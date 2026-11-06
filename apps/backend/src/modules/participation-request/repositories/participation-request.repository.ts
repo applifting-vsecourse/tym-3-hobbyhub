@@ -11,6 +11,8 @@ import { occupancyOf, Page } from '@/modules/event/domain/event';
 import {
   ApplicantProfile,
   ApplicationFactsPage,
+  DecidedRequestPage,
+  DecidedStatus,
   DecisionRuleViolation,
   EventStateViolation,
   eventStateViolation,
@@ -258,6 +260,148 @@ export class ParticipationRequestRepository {
         applicant: mapApplicant(user),
       })),
       total,
+    };
+  }
+
+  // F-05.6: one state of the participants tab, the latest change first.
+  async getDecidedRequests(
+    eventId: string,
+    status: DecidedStatus,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    if (status === 'APPROVED') return this.getSeats(eventId, page);
+    if (status === 'REJECTED') return this.getRejected(eventId, page);
+    return this.getWithdrawn(eventId, page);
+  }
+
+  // Everyone with a seat, so the list adds up to the approved count: a seat
+  // added without a request (the demo data) is listed too, without a message.
+  private async getSeats(
+    eventId: string,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    const where = { eventId, status: ParticipationStatus.APPROVED };
+    const [seats, total] = await this.prisma.$transaction([
+      this.prisma.participation.findMany({
+        where,
+        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        skip: page.offset,
+        take: page.limit,
+        select: {
+          id: true,
+          userId: true,
+          updatedAt: true,
+          user: { select: applicantSelect },
+        },
+      }),
+      this.prisma.participation.count({ where }),
+    ]);
+    const requests = await this.prisma.participationRequest.findMany({
+      where: {
+        eventId,
+        status: RequestStatus.APPROVED,
+        userId: { in: seats.map((seat) => seat.userId) },
+      },
+      orderBy: { decidedAt: 'desc' },
+      select: { userId: true, message: true },
+    });
+    const messages = new Map<string, string | null>();
+    for (const request of requests) {
+      if (!messages.has(request.userId)) {
+        messages.set(request.userId, request.message);
+      }
+    }
+    return {
+      items: seats.map((seat) => ({
+        id: seat.id,
+        status: 'APPROVED',
+        message: messages.get(seat.userId) ?? null,
+        changedAt: seat.updatedAt,
+        applicant: mapApplicant(seat.user),
+      })),
+      total,
+    };
+  }
+
+  // A rejection is final for the event (ADR-0013): one per person.
+  private async getRejected(
+    eventId: string,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    const where = { eventId, status: RequestStatus.REJECTED };
+    const [requests, total] = await this.prisma.$transaction([
+      this.prisma.participationRequest.findMany({
+        where,
+        orderBy: [{ decidedAt: 'desc' }, { id: 'desc' }],
+        skip: page.offset,
+        take: page.limit,
+        include: { user: { select: applicantSelect } },
+      }),
+      this.prisma.participationRequest.count({ where }),
+    ]);
+    return {
+      items: requests.map((request) => ({
+        id: request.id,
+        status: 'REJECTED',
+        message: request.message,
+        changedAt: request.decidedAt ?? request.requestedAt,
+        applicant: mapApplicant(request.user),
+      })),
+      total,
+    };
+  }
+
+  // The people whose last word was taking their request back: once per
+  // person, and not when they asked again, got a seat or were rejected since.
+  private async getWithdrawn(
+    eventId: string,
+    page: Page,
+  ): Promise<DecidedRequestPage> {
+    const where = {
+      eventId,
+      status: RequestStatus.WITHDRAWN,
+      user: {
+        participationRequests: {
+          none: {
+            eventId,
+            status: {
+              in: [
+                RequestStatus.PENDING,
+                RequestStatus.APPROVED,
+                RequestStatus.REJECTED,
+              ],
+            },
+          },
+        },
+        participations: {
+          none: { eventId, status: ParticipationStatus.APPROVED },
+        },
+      },
+    } satisfies Prisma.ParticipationRequestWhereInput;
+    const [requests, people] = await this.prisma.$transaction([
+      this.prisma.participationRequest.findMany({
+        where,
+        orderBy: [{ decidedAt: 'desc' }, { id: 'desc' }],
+        distinct: ['userId'],
+        skip: page.offset,
+        take: page.limit,
+        include: { user: { select: applicantSelect } },
+      }),
+      this.prisma.participationRequest.findMany({
+        where,
+        distinct: ['userId'],
+        select: { userId: true },
+      }),
+    ]);
+    return {
+      items: requests.map((request) => ({
+        id: request.id,
+        status: 'WITHDRAWN',
+        message: request.message,
+        changedAt: request.decidedAt ?? request.requestedAt,
+        applicant: mapApplicant(request.user),
+      })),
+      total: people.length,
     };
   }
 

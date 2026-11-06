@@ -97,7 +97,7 @@ export function Counter({
           onKeyDown={(event) => {
             if (event.key === "Enter") commit(event.currentTarget.value)
           }}
-          className="w-20 min-w-0 rounded-sm bg-transparent text-center typo-numeral text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="w-20 min-w-0 rounded-sm bg-transparent text-center typo-numeral text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
         />
         <Button
           type="button"

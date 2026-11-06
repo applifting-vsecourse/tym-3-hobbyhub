@@ -107,7 +107,13 @@ describeDb('public event list search', () => {
 
   const search = (
     repository: EventRepository,
-    filter: { search?: string; location?: string; activityIds?: string[] },
+    filter: {
+      search?: string;
+      location?: string;
+      activityIds?: string[];
+      dateFrom?: string;
+      dateTo?: string;
+    },
   ): Promise<string[]> =>
     repository
       .getUpcomingPublicEvents(
@@ -116,6 +122,40 @@ describeDb('public event list search', () => {
         { ...filter, activityIds: filter.activityIds ?? [] },
       )
       .then((page) => page.items.map((item) => item.id));
+
+  it('filters by the day the event starts, in Prague time', async () => {
+    await withEvents(
+      [
+        // 00:30 on 2 January in Prague, still 1 January in UTC.
+        {
+          startAt: new Date('2030-01-01T23:30:00Z'),
+          endAt: new Date('2030-01-02T01:00:00Z'),
+        },
+        {
+          startAt: new Date('2030-01-05T18:00:00Z'),
+          endAt: new Date('2030-01-05T20:00:00Z'),
+        },
+      ],
+      async (repository, [early, late]) => {
+        const mine = (ids: string[]): string[] =>
+          ids.filter((id) => [early, late].includes(id));
+        expect(
+          mine(
+            await search(repository, {
+              dateFrom: '2030-01-02',
+              dateTo: '2030-01-02',
+            }),
+          ),
+        ).toEqual([early]);
+        expect(
+          mine(await search(repository, { dateFrom: '2030-01-03' })),
+        ).toEqual([late]);
+        expect(
+          mine(await search(repository, { dateTo: '2030-01-04' })),
+        ).toEqual([early]);
+      },
+    );
+  });
 
   it('finds a part of the title, ignoring case and diacritics', async () => {
     await withEvents(

@@ -11,6 +11,21 @@ const EVENTS_PAGE_SIZE = 20
 const MAP_PAGE_SIZE = 50
 const MAP_MAX_PAGES = 10
 
+// The list and the map ask the server the same question, so they show the same events.
+const filterSearchParams = (filters: EventListFilters, limit: number, offset: number) => {
+  const searchParams = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+  for (const id of filters.activityIds) searchParams.append("activityIds", id)
+  if (filters.search) searchParams.set("search", filters.search)
+  if (filters.location) searchParams.set("location", filters.location)
+  if (filters.dateFrom) searchParams.set("dateFrom", filters.dateFrom)
+  if (filters.dateTo) searchParams.set("dateTo", filters.dateTo)
+  if (filters.near) {
+    searchParams.set("lat", String(filters.near.latitude))
+    searchParams.set("lng", String(filters.near.longitude))
+  }
+  return searchParams
+}
+
 export const NO_FILTERS: EventListFilters = { activityIds: [], search: "", location: "" }
 
 // Offset paging: the list is sorted by start time, and a page starts after the
@@ -19,17 +34,7 @@ export const eventsQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
   infiniteQueryOptions({
     queryKey: eventKeys.list(filters),
     queryFn: async ({ pageParam }) => {
-      const searchParams = new URLSearchParams({
-        limit: String(EVENTS_PAGE_SIZE),
-        offset: String(pageParam),
-      })
-      for (const id of filters.activityIds) searchParams.append("activityIds", id)
-      if (filters.search) searchParams.set("search", filters.search)
-      if (filters.location) searchParams.set("location", filters.location)
-      if (filters.near) {
-        searchParams.set("lat", String(filters.near.latitude))
-        searchParams.set("lng", String(filters.near.longitude))
-      }
+      const searchParams = filterSearchParams(filters, EVENTS_PAGE_SIZE, pageParam)
       return eventListSchema.parse(await api.get("events", { searchParams }).json())
     },
     initialPageParam: 0,
@@ -47,17 +52,7 @@ export const eventsMapQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
     queryKey: eventKeys.map(filters),
     queryFn: async () => {
       const fetchPage = async (offset: number) => {
-        const searchParams = new URLSearchParams({
-          limit: String(MAP_PAGE_SIZE),
-          offset: String(offset),
-        })
-        for (const id of filters.activityIds) searchParams.append("activityIds", id)
-        if (filters.search) searchParams.set("search", filters.search)
-        if (filters.location) searchParams.set("location", filters.location)
-        if (filters.near) {
-          searchParams.set("lat", String(filters.near.latitude))
-          searchParams.set("lng", String(filters.near.longitude))
-        }
+        const searchParams = filterSearchParams(filters, MAP_PAGE_SIZE, offset)
         return eventListSchema.parse(await api.get("events", { searchParams }).json())
       }
       const first = await fetchPage(0)

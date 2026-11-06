@@ -38,11 +38,15 @@ import {
   type Event,
 } from "@/features/event/api/eventSchemas"
 import { EventPreview } from "@/features/event/components/EventPreview"
+import { contactKind } from "@/features/event/lib/contact"
 import { combineDateTime, splitDateTime } from "@/features/event/lib/eventDateTime"
 
 // Characters as the server and database count them: an emoji is one, not the
 // two UTF-16 units of `string.length`.
 const charCount = (value: string) => [...value].length
+
+// An http(s) link, as the server accepts it.
+const CHAT_URL_PATTERN = /^https?:\/\/\S+$/i
 
 // Crowns with at most two decimals, typed with a dot or a comma.
 const AMOUNT_PATTERN = /^\d{1,8}([.,]\d{1,2})?$/
@@ -101,6 +105,14 @@ const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOn
           t("events.validation.descriptionRequired"),
         ),
         equipment: text(EVENT_LIMITS.equipmentMax),
+        externalChatUrl: text(EVENT_LIMITS.chatUrlMax).refine(
+          (value) => value === "" || CHAT_URL_PATTERN.test(value),
+          t("events.validation.chatUrlInvalid"),
+        ),
+        contact: text(EVENT_LIMITS.contactMax).refine(
+          (value) => value === "" || contactKind(value) !== null,
+          t("events.validation.contactInvalid"),
+        ),
         venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
         approvalMode: z.enum(APPROVAL_MODES),
       })
@@ -185,6 +197,8 @@ const defaultValues = (t: TFunction): FormValues => ({
   contributionNote: "",
   description: "",
   equipment: "",
+  externalChatUrl: "",
+  contact: "",
   venueType: "PUBLIC_VENUE",
   approvalMode: "MANUAL",
 })
@@ -226,6 +240,8 @@ const valuesOfEvent = (event: Event): FormValues => {
     contributionNote: event.contributionNote ?? "",
     description: event.description,
     equipment: event.equipment ?? "",
+    externalChatUrl: event.externalChatUrl ?? "",
+    contact: event.contact ?? "",
     venueType: event.venueType,
     approvalMode: event.approvalMode,
   }
@@ -270,6 +286,8 @@ const toInput = (values: FormValues): CreateEventInput => {
         ? undefined
         : Number(values.contributionAmount.trim().replace(",", ".")),
     contributionNote: values.contributionNote.trim() || undefined,
+    externalChatUrl: values.externalChatUrl.trim() || undefined,
+    contact: values.contact.trim() || undefined,
   }
 }
 
@@ -299,7 +317,7 @@ const STEP_FIELDS: Record<Step, (keyof FormValues)[]> = {
     "contributionAmount",
     "contributionNote",
   ],
-  details: ["description", "equipment", "venueType"],
+  details: ["description", "equipment", "externalChatUrl", "contact", "venueType"],
 }
 
 export type ActivityOption = {
@@ -851,6 +869,20 @@ function DetailsFields() {
         name="equipment"
         label={t("events.fields.equipment")}
         placeholder={t("events.placeholders.equipment")}
+      />
+      <TextField
+        name="externalChatUrl"
+        type="url"
+        inputMode="url"
+        label={t("events.fields.externalChatUrl")}
+        placeholder={t("events.placeholders.externalChatUrl")}
+        description={t("events.form.contactsHint")}
+      />
+      <TextField
+        name="contact"
+        inputMode="text"
+        label={t("events.fields.contact")}
+        placeholder={t("events.placeholders.contact")}
       />
       {venueType === "ONLINE" ? null : (
         <ChipChoiceField

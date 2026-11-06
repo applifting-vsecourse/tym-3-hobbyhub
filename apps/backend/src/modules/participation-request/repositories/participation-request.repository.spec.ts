@@ -12,6 +12,7 @@ import {
   ApprovalMode,
   EventStatus,
   ParticipationStatus,
+  Prisma,
   VenueType,
 } from '@/generated/prisma/client';
 import { ParticipationRequestRepository } from './participation-request.repository';
@@ -487,6 +488,125 @@ describeDb('ParticipationRequestRepository', () => {
       await expect(
         repository.rejectPending({ eventId, requestId, at }),
       ).resolves.toBeNull();
+    });
+  });
+
+  describe('getDecidedRequests', () => {
+    const page = { limit: 20, offset: 0 };
+    const minutes = (n: number): Date => new Date(at.getTime() + n * 60_000);
+
+    it('lists every seat, with the message of its request when there is one', async () => {
+      const {
+        eventId,
+        userIds: [viaRequest, withoutRequest],
+      } = await eventWith(4, 2);
+      await prisma.participationRequest.create({
+        data: {
+          eventId,
+          userId: viaRequest!,
+          status: 'APPROVED',
+          message: 'Beru hokejku',
+          decidedAt: at,
+        },
+      });
+      await prisma.participation.create({
+        data: { eventId, userId: viaRequest!, status: 'APPROVED' },
+      });
+      await prisma.participation.create({
+        data: { eventId, userId: withoutRequest!, status: 'APPROVED' },
+      });
+
+      const result = await repository.getDecidedRequests(
+        eventId,
+        'APPROVED',
+        page,
+      );
+
+      expect(result.total).toBe(2);
+      expect(result.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            status: 'APPROVED',
+            message: 'Beru hokejku',
+          }),
+          expect.objectContaining({ status: 'APPROVED', message: null }),
+        ]),
+      );
+    });
+
+    it('lists the rejected, latest first', async () => {
+      const {
+        eventId,
+        userIds: [first, second],
+      } = await eventWith(4, 2);
+      await prisma.participationRequest.createMany({
+        data: [
+          {
+            id: `test-${random()}`,
+            eventId,
+            userId: first!,
+            status: 'REJECTED',
+            decidedAt: minutes(1),
+          },
+          {
+            id: `test-${random()}`,
+            eventId,
+            userId: second!,
+            status: 'REJECTED',
+            decidedAt: minutes(2),
+          },
+        ],
+      });
+
+      const result = await repository.getDecidedRequests(
+        eventId,
+        'REJECTED',
+        page,
+      );
+
+      expect(result.total).toBe(2);
+      expect(result.items.map((item) => item.changedAt)).toEqual([
+        minutes(2),
+        minutes(1),
+      ]);
+    });
+
+    it('lists a person who withdrew once, and not after they asked again', async () => {
+      const {
+        eventId,
+        userIds: [twice, askedAgain],
+      } = await eventWith(4, 2);
+      const withdrawn = (
+        userId: string,
+        n: number,
+      ): Prisma.ParticipationRequestCreateManyInput => ({
+        id: `test-${random()}`,
+        eventId,
+        userId,
+        status: 'WITHDRAWN' as const,
+        decidedAt: minutes(n),
+      });
+      await prisma.participationRequest.createMany({
+        data: [
+          withdrawn(twice!, 1),
+          withdrawn(twice!, 3),
+          withdrawn(askedAgain!, 2),
+          { id: `test-${random()}`, eventId, userId: askedAgain! },
+        ],
+      });
+
+      const result = await repository.getDecidedRequests(
+        eventId,
+        'WITHDRAWN',
+        page,
+      );
+
+      expect(result.total).toBe(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toMatchObject({
+        status: 'WITHDRAWN',
+        changedAt: minutes(3),
+      });
     });
   });
 });

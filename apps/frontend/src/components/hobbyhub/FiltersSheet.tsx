@@ -5,23 +5,30 @@ import {
   ActivityCombobox,
   type ActivityComboboxOption,
 } from "@/components/hobbyhub/ActivityCombobox"
+import { FilterChip } from "@/components/hobbyhub/FilterChip"
+import { thisWeekendRange, thisWeekRange } from "@/components/hobbyhub/filterDateRanges"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 export type EventFilters = {
   /** Activity ids (or the demo keys below) chosen in the combobox. */
   activities: string[]
-  when: "week" | "weekend" | "date" | null
+  /** First day (YYYY-MM-DD) of the date range; empty means no lower bound. */
+  dateFrom: string
+  /** Last day (YYYY-MM-DD) of the date range; empty means no upper bound. */
+  dateTo: string
   location: string
 }
 
-export const EMPTY_FILTERS: EventFilters = { activities: [], when: null, location: "" }
-
-const WHEN_OPTIONS = ["week", "weekend", "date"] as const
+export const EMPTY_FILTERS: EventFilters = {
+  activities: [],
+  dateFrom: "",
+  dateTo: "",
+  location: "",
+}
 
 /** The longest text the location field takes; the server refuses more. */
 export const FILTER_TEXT_MAX_LENGTH = 100
@@ -82,7 +89,8 @@ export function FiltersSheet({
   const [draft, setDraft] = useState(value)
   const locationId = useId()
   const activityId = useId()
-  const whenLabelId = useId()
+  const dateFromId = useId()
+  const dateToId = useId()
 
   // Every opening starts from the filters that are actually applied, whether
   // the panel was opened by its trigger or by the parent.
@@ -91,6 +99,18 @@ export function FiltersSheet({
     setIsPreviouslyOpen(isOpen)
     if (isOpen) setDraft(value)
   }
+
+  const isRangeReversed =
+    draft.dateFrom !== "" && draft.dateTo !== "" && draft.dateFrom > draft.dateTo
+  const week = thisWeekRange()
+  const weekend = thisWeekendRange()
+  // On a Sunday the week is the weekend; one chip then, so only one can be pressed.
+  const presets = [
+    ...(week.dateFrom === weekend.dateFrom && week.dateTo === weekend.dateTo
+      ? []
+      : [{ key: "week", range: week }]),
+    { key: "weekend", range: weekend },
+  ] as const
 
   const resultLabel = countResults
     ? t("hobbyhub.filters.results", { count: countResults(draft) })
@@ -116,6 +136,7 @@ export function FiltersSheet({
         <Button
           className="w-full"
           onClick={() => {
+            if (isRangeReversed) return
             onApply(draft)
             onOpenChange(false)
           }}
@@ -166,38 +187,57 @@ export function FiltersSheet({
         ) : null}
 
         {fields.includes("when") ? (
-          <>
-            <p
-              id={whenLabelId}
-              className="typo-label-lg text-foreground"
-            >
-              {t("hobbyhub.filters.when")}
-            </p>
-            <ToggleGroup
-              type="single"
-              variant="chip"
-              spacing={2}
-              aria-labelledby={whenLabelId}
-              value={draft.when ?? ""}
-              onValueChange={(next) =>
-                setDraft((current) => ({
-                  ...current,
-                  when: next ? (next as EventFilters["when"]) : null,
-                }))
-              }
-              className="flex-wrap"
-            >
-              {WHEN_OPTIONS.map((option) => (
-                <ToggleGroupItem
-                  key={option}
-                  value={option}
-                  className="h-11 px-3 md:h-9"
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              {presets.map(({ key, range }) => (
+                <FilterChip
+                  key={key}
+                  pressed={draft.dateFrom === range.dateFrom && draft.dateTo === range.dateTo}
+                  onPressedChange={(isPressed) =>
+                    setDraft((current) => ({
+                      ...current,
+                      dateFrom: isPressed ? range.dateFrom : "",
+                      dateTo: isPressed ? range.dateTo : "",
+                    }))
+                  }
                 >
-                  {t(`hobbyhub.filters.${option}`)}
-                </ToggleGroupItem>
+                  {t(`hobbyhub.filters.${key}`)}
+                </FilterChip>
               ))}
-            </ToggleGroup>
-          </>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <Label htmlFor={dateFromId}>{t("hobbyhub.filters.dateFrom")}</Label>
+                <Input
+                  id={dateFromId}
+                  type="date"
+                  value={draft.dateFrom}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, dateFrom: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <Label htmlFor={dateToId}>{t("hobbyhub.filters.dateTo")}</Label>
+                <Input
+                  id={dateToId}
+                  type="date"
+                  value={draft.dateTo}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, dateTo: event.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            {isRangeReversed ? (
+              <p
+                role="alert"
+                className="typo-small text-destructive"
+              >
+                {t("hobbyhub.filters.dateRangeReversed")}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {/* TODO(F-02.1b #91): a text for now. Later a place picker with a radius
