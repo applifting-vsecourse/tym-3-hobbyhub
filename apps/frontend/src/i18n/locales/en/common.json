@@ -842,7 +842,7 @@
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
-      "PARTICIPANT_CANCELLED": "{{name}} is no longer coming to {{title}}",
+      "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Your request to join the event {{title}} was approved",
