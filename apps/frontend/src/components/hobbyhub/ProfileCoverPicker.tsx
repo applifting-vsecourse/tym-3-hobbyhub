@@ -85,7 +85,7 @@ export function ProfileCoverPicker({
           <button
             type="button"
             aria-label={t("hobbyhub.profileCover.change")}
-            className="group relative block w-full rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="group relative block w-full rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
           >
             <ProfileCover
               cover={value}
@@ -221,7 +221,7 @@ function CoverTile({ src, name, isSelected, onSelect }: CoverTileProps) {
       aria-pressed={isSelected}
       onClick={onSelect}
       className={cn(
-        "relative flex w-full flex-col gap-1 rounded-lg border p-1.5 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 max-md:min-h-11",
+        "relative flex w-full flex-col gap-1 rounded-lg border p-1.5 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring max-md:min-h-11",
         isSelected ? "border-ring bg-accent" : "border-input bg-card hover:bg-accent",
       )}
     >

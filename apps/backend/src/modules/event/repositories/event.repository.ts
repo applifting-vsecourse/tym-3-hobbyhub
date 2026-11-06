@@ -12,6 +12,7 @@ import {
   CancelEventData,
   CreateEventData,
   Event,
+  EVENT_LIST_TIME_ZONE,
   EventAudience,
   EventChangeResult,
   EventDetail,
@@ -26,6 +27,7 @@ import {
   MIN_STATS_PARTICIPANTS,
   occupancyOf,
   Page,
+  ParticipantEventInfo,
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
@@ -101,7 +103,7 @@ const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
 // "volejbal praha" finds the activity in one column and the city in another.
 const listCondition = (
   now: Date,
-  { activityIds, search, location }: EventListFilter,
+  { activityIds, search, location, dateFrom, dateTo }: EventListFilter,
 ): Prisma.Sql => {
   const words = (text?: string): string[] =>
     foldForSearch(text ?? '')
@@ -114,6 +116,18 @@ const listCondition = (
     Prisma.sql`e."endAt" > ${now}`,
     ...(activityIds.length > 0
       ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
+      : []),
+    // "startAt" is a UTC timestamp without a zone: the days are turned into UTC
+    // instants (midnight in Prague) so the index on it stays usable.
+    ...(dateFrom
+      ? [
+          Prisma.sql`e."startAt" >= (${dateFrom}::date::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
+        ]
+      : []),
+    ...(dateTo
+      ? [
+          Prisma.sql`e."startAt" < ((${dateTo}::date + 1)::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
+        ]
       : []),
     ...words(search).map(
       (word) =>
@@ -266,6 +280,8 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   maxParticipants: event.maxParticipants,
   contributionAmount: event.contributionAmount?.toNumber() ?? null,
   contributionNote: event.contributionNote,
+  contact: event.contact,
+  externalChatUrl: event.externalChatUrl,
   location: mapLocation(event),
   activity: {
     id: event.activity.id,
@@ -310,6 +326,8 @@ export class EventRepository {
         externalOccupiedSpots: data.externalOccupiedSpots,
         contributionAmount: data.contributionAmount ?? null,
         contributionNote: data.contributionNote ?? null,
+        contact: data.contact ?? null,
+        externalChatUrl: data.externalChatUrl ?? null,
         locationStreet: data.location.street,
         locationCity: data.location.city,
         locationPostalCode: data.location.postalCode,
@@ -364,6 +382,8 @@ export class EventRepository {
           externalOccupiedSpots: data.externalOccupiedSpots,
           contributionAmount: data.contributionAmount ?? null,
           contributionNote: data.contributionNote ?? null,
+          contact: data.contact ?? null,
+          externalChatUrl: data.externalChatUrl ?? null,
           locationStreet: data.location?.street ?? null,
           locationCity: data.location?.city ?? null,
           locationPostalCode: data.location?.postalCode ?? null,
@@ -382,6 +402,44 @@ export class EventRepository {
         include,
       });
       return { ok: true, event: mapPrismaEventToDomain(event) } as const;
+    });
+  }
+
+  // F-05.6: the seats taken outside the app, under the same lock as an edit
+  // and an approval, so the seats are counted and written in one go.
+  async updateExternalOccupiedSpots(
+    id: string,
+    externalOccupiedSpots: number,
+    now: Date,
+  ): Promise<EventChangeResult> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
+      const approved = await tx.participation.count({
+        where: { eventId: id, status: ParticipationStatus.APPROVED },
+      });
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id },
+        select: { maxParticipants: true },
+      });
+      if (event.maxParticipants < externalOccupiedSpots + approved) {
+        return { ok: false, violation: 'MAX_BELOW_OCCUPIED' } as const;
+      }
+      const { count } = await tx.event.updateMany({
+        where: {
+          id,
+          status: { in: [EventStatus.DRAFT, EventStatus.PUBLISHED] },
+          startAt: { gt: now },
+        },
+        data: { externalOccupiedSpots },
+      });
+      if (count === 0) {
+        return { ok: false, violation: 'EVENT_NOT_CHANGEABLE' } as const;
+      }
+      const updated = await tx.event.findUniqueOrThrow({
+        where: { id },
+        include,
+      });
+      return { ok: true, event: mapPrismaEventToDomain(updated) } as const;
     });
   }
 
@@ -493,6 +551,46 @@ export class EventRepository {
     };
   }
 
+  // The list cards of the given events, for a caller that already knows which
+  // ones it wants (F-06.3). Visibility is the caller's business.
+  async getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      include: listInclude,
+    });
+    return events.map((event) => mapPrismaEventToListItem(event));
+  }
+
+  // F-06.3: a page of the published public events a person organizes (or
+  // co-organizes) that are not over, soonest first.
+  async getUpcomingOrganizedBy(
+    userId: string,
+    now: Date,
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    const where: Prisma.EventWhereInput = {
+      ...PUBLIC_EVENT,
+      // Only what is on offer: not a draft, and not one that was called off.
+      status: EventStatus.PUBLISHED,
+      endAt: { gte: now },
+      OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => mapPrismaEventToListItem(event)),
+      total,
+    };
+  }
+
   // Public detail: the list's visibility rules, but an event that was cancelled
   // or is over stays reachable, so a shared link still explains what happened.
   async getPublicEventById(id: string): Promise<EventDetail | null> {
@@ -546,6 +644,23 @@ export class EventRepository {
         listItem.takenCount,
       ),
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
+    };
+  }
+
+  // F-06.5: what the organizers and approved participants see on top of the
+  // public detail. The caller has already checked who is asking.
+  async getParticipantInfo(id: string): Promise<ParticipantEventInfo | null> {
+    const event = await this.prisma.event.findFirst({
+      where: { id, ...PUBLIC_EVENT },
+      include: { organizer: { select: { name: true } } },
+    });
+    if (!event) return null;
+    return {
+      venueType: event.venueType,
+      location: mapLocation(event),
+      organizerName: event.organizer.name,
+      contact: event.contact,
+      externalChatUrl: event.externalChatUrl,
     };
   }
 

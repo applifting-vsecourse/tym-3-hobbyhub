@@ -9,12 +9,16 @@ import {
   EventDetail,
   EventFacts,
   EventListFilter,
+  eventListFilterViolations,
+  EventListItem,
   EventListPage,
   EventRuleViolation,
   eventRuleViolations,
   EventSeatFacts,
+  externalSpotsViolations,
   isOrganizerOf,
   Page,
+  ParticipantEventInfo,
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
@@ -48,6 +52,19 @@ const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
   LOCATION_NOT_ALLOWED: 'an online event has no location',
 };
 
+// Messages plus the codes, so the client can say why in its language.
+const changeViolationsError = (
+  violations: EventChangeViolation[],
+): BadRequestException =>
+  new BadRequestException({
+    statusCode: 400,
+    error: 'Bad Request',
+    message: violations.map(
+      (violation) => CHANGE_VIOLATION_MESSAGES[violation],
+    ),
+    violations,
+  });
+
 @Injectable()
 export class EventsService {
   constructor(
@@ -56,6 +73,22 @@ export class EventsService {
     private readonly cancellationReasonsService: CancellationReasonsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-06.3: the cards of events another module already picked.
+  getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    return ids.length === 0
+      ? Promise.resolve([])
+      : this.eventRepository.getListItemsByIds(ids);
+  }
+
+  // F-06.3: a page of what the person organizes and has still ahead.
+  getUpcomingOrganizedEvents(
+    user: Identity,
+    page: Page,
+    now: Date = new Date(),
+  ): Promise<EventListPage> {
+    return this.eventRepository.getUpcomingOrganizedBy(user.id, now, page);
+  }
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {
     // F-03.2: publishing needs a verified e-mail.
@@ -175,6 +208,39 @@ export class EventsService {
     return result.event;
   }
 
+  // F-05.6: the seats taken outside the app, changed on the participants page
+  // by any of the organizers. No notification: who goes is unchanged for the
+  // people who go.
+  async updateExternalOccupiedSpots(
+    user: Identity,
+    id: string,
+    externalOccupiedSpots: number,
+    now: Date = new Date(),
+  ): Promise<Event> {
+    const event = await this.getManagedEvent(user, id);
+    const violations = externalSpotsViolations(
+      event,
+      externalOccupiedSpots,
+      now,
+    );
+    if (violations.length > 0) throw changeViolationsError(violations);
+    // The write repeats the check: a seat may have been approved meanwhile.
+    const result = await this.eventRepository.updateExternalOccupiedSpots(
+      id,
+      externalOccupiedSpots,
+      now,
+    );
+    if (!result.ok) throw changeViolationsError([result.violation]);
+    return result.event;
+  }
+
+  // The whole event for any of its organizers (F-05.6 participants page, the
+  // edit form); to anyone else it does not exist.
+  async getManagedEvent(user: Identity, id: string): Promise<Event> {
+    await this.getOrganizedEvent(id, user);
+    return this.getEvent(id);
+  }
+
   // The event for its organizer to read or change; anyone else is refused.
   async getEventOfOrganizer(user: Identity, id: string): Promise<Event> {
     const event = await this.getEvent(id);
@@ -190,12 +256,41 @@ export class EventsService {
     return event;
   }
 
-  getUpcomingPublicEvents(
+  async getUpcomingPublicEvents(
     page: Page,
     filter: EventListFilter = { activityIds: [] },
     now: Date = new Date(),
   ): Promise<EventListPage> {
+    if (eventListFilterViolations(filter).length > 0) {
+      throw new BadRequestException('dateFrom must not be after dateTo');
+    }
     return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
+  }
+
+  // F-06.5: the exact address and the contacts, for the organizers and the
+  // people holding a seat. Everyone else is told no, never the data.
+  async getParticipantInfo(
+    user: Identity,
+    id: string,
+  ): Promise<ParticipantEventInfo> {
+    const facts = await this.eventRepository.getPublicEventSeatFacts(
+      id,
+      user.id,
+    );
+    if (!facts) throw new NotFoundException('Event not found');
+    // Only while the event is on: a cancelled or finished one keeps its
+    // address and contacts to itself.
+    if (facts.status !== 'PUBLISHED' || facts.endAt.getTime() <= Date.now()) {
+      throw new ForbiddenException('The event is no longer on');
+    }
+    if (!facts.hasSeat && !isOrganizerOf(facts, user.id)) {
+      throw new ForbiddenException(
+        'Only the organizer and approved participants can see this',
+      );
+    }
+    const info = await this.eventRepository.getParticipantInfo(id);
+    if (!info) throw new NotFoundException('Event not found');
+    return info;
   }
 
   // Public: what a visitor may see, nothing of the organizer's private data.

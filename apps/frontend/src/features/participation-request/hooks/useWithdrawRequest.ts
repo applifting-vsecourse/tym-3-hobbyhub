@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
+import { myEventsKeys } from "@/lib/my-events-keys"
+
 import { participationRequestKeys } from "@/features/participation-request/api/participationRequestKeys"
 import { withdrawRequest } from "@/features/participation-request/api/withdrawRequest"
 
@@ -12,6 +14,7 @@ export function useWithdrawRequest(onChange?: () => Promise<unknown>) {
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: participationRequestKeys.all() }),
+        queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
         onChange?.(),
       ]),
   })

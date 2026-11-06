@@ -21,6 +21,7 @@ import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Seat } from "@/components/hobbyhub/Seat"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
+import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { Button } from "@/components/ui/button"
 
@@ -199,6 +200,7 @@ export function DomainSections() {
               taken={7}
               min={10}
               photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
+              badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
               time="20:30"
@@ -319,6 +321,14 @@ export function DomainSections() {
             outcome="Po schválení bude minimum splněno (8 z 8)."
             onApprove={notify("Žádost schválena")}
             onReject={notify("Žádost zamítnuta")}
+          />
+        </Example>
+        <Example label="Vyřízená žádost (přehled účastníků)">
+          <JoinRequestCard
+            className="max-w-sm"
+            name="Petra"
+            bio="Běhám a o víkendech hraju volejbal."
+            note="Místo má od 3. 11. 2026"
           />
         </Example>
         <Example label="Zpráva do chatu (Sdílení do chatu)">

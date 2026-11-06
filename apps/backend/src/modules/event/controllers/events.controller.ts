@@ -27,9 +27,13 @@ import {
   EventDetailResponseDto,
   EventListResponseDto,
 } from './dto/event-list-item.response.dto';
-import { EventResponseDto } from './dto/event.response.dto';
+import {
+  EventResponseDto,
+  ParticipantEventInfoResponseDto,
+} from './dto/event.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { UpdateExternalSpotsDto } from './dto/update-external-spots.dto';
 import { eventsValidationPipe } from './events-validation.pipe';
 
 @ApiTags('events')
@@ -56,6 +60,8 @@ export class EventsController {
         activityIds: query.activityIds,
         search: query.search,
         location: query.location,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
         near:
           query.lat !== undefined && query.lng !== undefined
             ? { latitude: query.lat, longitude: query.lng }
@@ -106,6 +112,8 @@ export class EventsController {
       externalOccupiedSpots: body.externalOccupiedSpots,
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
+      contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -118,13 +126,46 @@ export class EventsController {
   @ApiOperation({ summary: 'Get an event with every field, organizer only' })
   @ApiResponse({ status: 200, type: EventResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in' })
-  @ApiResponse({ status: 403, description: 'Not the organizer' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not one of its organizers',
+  })
   async getForOrganizer(
     @User() user: Identity,
     @Param('id') id: string,
   ): Promise<EventResponseDto> {
-    const event = await this.eventsService.getEventOfOrganizer(user, id);
+    const event = await this.eventsService.getManagedEvent(user, id);
+    return EventResponseDto.fromDomain(event);
+  }
+
+  @Patch(':id/external-occupied-spots')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary:
+      'Change the seats taken outside the app, until the event starts (F-05.6)',
+  })
+  @ApiResponse({ status: 200, type: EventResponseDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid number, or refused; `violations` says why: EVENT_NOT_CHANGEABLE, MAX_BELOW_OCCUPIED',
+  })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not one of its organizers',
+  })
+  async updateExternalOccupiedSpots(
+    @User() user: Identity,
+    @Param('id') id: string,
+    @Body() body: UpdateExternalSpotsDto,
+  ): Promise<EventResponseDto> {
+    const event = await this.eventsService.updateExternalOccupiedSpots(
+      user,
+      id,
+      body.externalOccupiedSpots,
+    );
     return EventResponseDto.fromDomain(event);
   }
 
@@ -171,6 +212,8 @@ export class EventsController {
       externalOccupiedSpots: body.externalOccupiedSpots,
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
+      contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -198,6 +241,25 @@ export class EventsController {
       cancellationNote: body.cancellationNote,
     });
     return EventResponseDto.fromDomain(event);
+  }
+
+  // F-06.5: the part of the detail a visitor never gets.
+  @Get(':id/participant-info')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Exact address and contacts, organizers and approved only',
+  })
+  @ApiResponse({ status: 200, type: ParticipantEventInfoResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 403, description: 'No seat on this event' })
+  @ApiResponse({ status: 404, description: 'Event not found or not public' })
+  async participantInfo(
+    @User() user: Identity,
+    @Param('id') id: string,
+  ): Promise<ParticipantEventInfoResponseDto> {
+    const info = await this.eventsService.getParticipantInfo(user, id);
+    return ParticipantEventInfoResponseDto.fromDomain(info);
   }
 
   // Public detail (F-02.4): approximate place only; the exact address and the

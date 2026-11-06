@@ -47,6 +47,20 @@ export const profileSchema = z.object({
 
 export type Profile = z.infer<typeof profileSchema>
 
+/**
+ * Someone else's profile (F-04.2): no gender, birth date, address or e-mail.
+ */
+export const publicProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  bio: z.string().nullable(),
+  image: z.string().nullable(),
+  cover: z.string().nullable(),
+  interests: z.array(interestSchema),
+})
+
+export type PublicProfile = z.infer<typeof publicProfileSchema>
+
 export type UpdateProfileInput = {
   name?: string
   bio?: string | null
