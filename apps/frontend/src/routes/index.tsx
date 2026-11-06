@@ -150,40 +150,42 @@ function LandingPage() {
           style={{ "--enter-index": 2 } as CSSProperties}
         />
 
-        {/* Groups (#151): what a group is for and one way in. No cards of
-            particular groups: the list is a click away, and a visitor cannot
-            tell a good pick from a random one. */}
+        {/* Groups (#151): the invitation. The same dashed accent surface as
+            "Tvoje místo" on an event, with the crew and one free seat: what a
+            group is for, and one way in. No cards of particular groups: the
+            list is a click away, and a visitor cannot tell a good pick from a
+            random one. */}
         <section
           aria-labelledby="groups-heading"
-          className="flex enter flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-12"
+          className="flex enter flex-col gap-3"
           style={{ "--enter-index": 3 } as CSSProperties}
         >
-          <div className="flex flex-col gap-3">
-            <h2
-              id="groups-heading"
-              className="typo-h3"
-            >
-              {t("landing.groups.title")}
-            </h2>
-            <p className="max-w-2xl typo-body text-muted-foreground">{t("landing.groups.text")}</p>
-            <div className="pt-2">
-              <Button
-                asChild
-                variant="secondary"
-              >
-                <Link to={ROUTES.groups}>{t("landing.groups.browse")}</Link>
-              </Button>
-            </div>
-          </div>
-          <div
-            aria-hidden
-            className="shrink-0 max-md:hidden"
+          <h2
+            id="groups-heading"
+            className="typo-h3"
           >
-            <RosterSeats
-              size="lg"
-              taken={5}
-              capacity={5}
-            />
+            {t("landing.groups.title")}
+          </h2>
+          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:gap-12 md:px-12 md:py-10">
+            <div
+              aria-hidden
+              className="shrink-0"
+            >
+              <RosterSeats
+                size="lg"
+                taken={4}
+                capacity={5}
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <p className="typo-title">{t("landing.groups.seatTitle")}</p>
+              <p className="max-w-xl typo-body">{t("landing.groups.text")}</p>
+              <div className="pt-2 *:max-md:w-full">
+                <Button asChild>
+                  <Link to={ROUTES.groups}>{t("landing.groups.browse")}</Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </section>
       </AppShell>

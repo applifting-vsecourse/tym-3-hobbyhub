@@ -830,6 +830,7 @@
     },
     "groups": {
       "browse": "Prohlédnout skupiny",
+      "seatTitle": "Vaše místo v partě",
       "text": "Skupina je parta lidí kolem jedné aktivity. Má své místo, obvyklý termín a členy, kteří se znají. Nováček vidí, do čeho jde, ještě než požádá o členství, a akce skupiny se nevypisují od nuly.",
       "title": "Skupiny: parta, která se schází pravidelně"
     },

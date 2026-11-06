@@ -815,6 +815,7 @@
     },
     "groups": {
       "browse": "Browse groups",
+      "seatTitle": "Your seat in the crew",
       "text": "A group is a crew of people around one activity. It has its place, its usual time and members who know each other. A newcomer sees what they are joining before asking for membership, and the group's events are never created from scratch.",
       "title": "Groups: a crew that meets regularly"
     },
