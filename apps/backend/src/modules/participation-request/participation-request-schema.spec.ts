@@ -6,7 +6,12 @@
 // Every case runs in a transaction that is rolled back.
 import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Prisma, RequestStatus, VenueType } from '@/generated/prisma/client';
+import {
+  ParticipationStatus,
+  Prisma,
+  RequestStatus,
+  VenueType,
+} from '@/generated/prisma/client';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
@@ -251,5 +256,50 @@ describeDb('participation request schema constraints', () => {
       });
     await rejected('🏐'.repeat(500));
     await expect(rejected(`${'🏐'.repeat(500)}x`)).rejects.toThrow();
+  });
+
+  // F-06.4, ADR-0016: the participant's message when cancelling a seat.
+  describe('cancellation message', () => {
+    const seat = (
+      status: ParticipationStatus,
+      cancellationMessage: string | null,
+    ): Promise<void> =>
+      inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participation.create({
+          data: {
+            ...ids,
+            status,
+            cancelledAt:
+              status === ParticipationStatus.CANCELLED ? new Date() : null,
+            cancellationMessage,
+          },
+        });
+      });
+
+    it('accepts a cancelled seat with and without a message', async () => {
+      await seat(ParticipationStatus.CANCELLED, 'Onemocněl jsem, promiňte.');
+      await seat(ParticipationStatus.CANCELLED, null);
+    });
+
+    it('rejects a message on a seat that is not cancelled', async () => {
+      await expect(
+        seat(ParticipationStatus.APPROVED, 'Onemocněl jsem, promiňte.'),
+      ).rejects.toThrow('participation_cancellation_message_only_cancelled');
+    });
+
+    it('rejects fewer than 10 characters besides whitespace, as trim() counts', async () => {
+      await seat(ParticipationStatus.CANCELLED, '🏐'.repeat(10));
+      await expect(
+        seat(ParticipationStatus.CANCELLED, `\u00a0${'x'.repeat(9)}\n\t `),
+      ).rejects.toThrow('participation_cancellation_message_length');
+    });
+
+    it('accepts 500 characters and rejects a longer message', async () => {
+      await seat(ParticipationStatus.CANCELLED, '🏐'.repeat(500));
+      await expect(
+        seat(ParticipationStatus.CANCELLED, `${'🏐'.repeat(500)}x`),
+      ).rejects.toThrow();
+    });
   });
 });

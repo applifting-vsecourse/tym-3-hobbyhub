@@ -3,6 +3,9 @@ import { z } from "zod"
 // Mirror the server-side DTOs, so the forms can tell the user before sending.
 export const PARTICIPATION_REQUEST_MESSAGE_MAX = 500
 export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX = 500
+// F-06.4: the participant's required words to the organizers on cancelling.
+export const PARTICIPATION_CANCELLATION_MESSAGE_MIN = 10
+export const PARTICIPATION_CANCELLATION_MESSAGE_MAX = 500
 
 export const requestStatusSchema = z.enum([
   "PENDING",
@@ -23,6 +26,18 @@ export const joinRuleViolationSchema = z.enum([
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+])
+
+// The person's own seat (F-06.4): CANCELLED once they gave it back.
+export const seatStatusSchema = z.enum(["APPROVED", "CANCELLED"])
+
+// Why the server refuses to cancel the seat (F-06.4).
+export const cancelRuleViolationSchema = z.enum([
+  "EVENT_CANCELLED",
+  "EVENT_NOT_HELD",
+  "EVENT_FINISHED",
+  "EVENT_STARTED",
+  "NO_SEAT",
 ])
 
 // Why the server refuses to approve or reject a request (F-05.7).
@@ -56,6 +71,8 @@ export const participationRequestSchema = z.object({
 export const myRequestStateSchema = z.object({
   request: participationRequestSchema.nullable(),
   violations: z.array(joinRuleViolationSchema),
+  seat: seatStatusSchema.nullable(),
+  cancelViolations: z.array(cancelRuleViolationSchema),
   applicant: applicantProfileSchema,
 })
 
@@ -96,9 +113,15 @@ export const decisionRefusalSchema = z.object({
   violations: z.array(decisionRuleViolationSchema),
 })
 
+export const cancelRefusalSchema = z.object({
+  violations: z.array(cancelRuleViolationSchema),
+})
+
 export type RequestStatus = z.infer<typeof requestStatusSchema>
 export type JoinRuleViolation = z.infer<typeof joinRuleViolationSchema>
 export type DecisionRuleViolation = z.infer<typeof decisionRuleViolationSchema>
+export type CancelRuleViolation = z.infer<typeof cancelRuleViolationSchema>
+export type SeatStatus = z.infer<typeof seatStatusSchema>
 export type ApplicantProfile = z.infer<typeof applicantProfileSchema>
 export type PendingRequest = z.infer<typeof pendingRequestSchema>
 export type DecidedStatus = z.infer<typeof decidedStatusSchema>

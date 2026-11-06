@@ -767,6 +767,7 @@
     },
     "status": {
       "approved": "Approved",
+      "cancelled": "Cancelled",
       "deadline": "Deadline",
       "neutral": "Full",
       "pending": "Awaiting approval",
@@ -841,6 +842,7 @@
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
+      "PARTICIPANT_CANCELLED": "{{name}} is no longer coming to {{title}}",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Your request to join the event {{title}} was approved",
@@ -917,8 +919,32 @@
   },
   "participationRequests": {
     "approved": {
+      "cancel": "Cancel my place",
       "description": "The organizer approved your participation.",
       "descriptionAutomatic": "You have a seat at this event."
+    },
+    "cancel": {
+      "confirm": "Cancel my place",
+      "done": "Place cancelled",
+      "failed": "Your place could not be cancelled. Try again.",
+      "keep": "Keep my place",
+      "messageLabel": "Message to the organizer",
+      "messagePlaceholder": "E.g. I fell ill, maybe next time…",
+      "messageTooLong": "The message can be at most {{count}} characters.",
+      "messageTooShort": "Write the organizer at least {{count}} characters.",
+      "refused": {
+        "EVENT_CANCELLED": "The event was cancelled, there is no place to cancel.",
+        "EVENT_FINISHED": "The event is over, your place can no longer be cancelled.",
+        "EVENT_NOT_HELD": "The event did not take place, your place can no longer be cancelled.",
+        "EVENT_STARTED": "The event has started, your place can no longer be cancelled.",
+        "NO_SEAT": "You no longer have a place at this event."
+      },
+      "text": "Your place frees up for someone else and the organizer is notified with your message. Cancelling before the event starts has no penalty.",
+      "title": "Cancel your place?"
+    },
+    "cancelRule": "You can cancel your place any time before the event starts; you tell the organizer why.",
+    "cancelled": {
+      "description": "You cancelled your place at this event. If you change your mind, you can ask to join again."
     },
     "form": {
       "cancel": "Cancel",

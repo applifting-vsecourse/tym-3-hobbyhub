@@ -8,6 +8,7 @@ import {
 import { occupancyOf, Page } from '@/modules/event/domain/event';
 import {
   ApplicantProfile,
+  CancelRuleViolation,
   DecidedRequestPage,
   DecidedStatus,
   DecisionRuleViolation,
@@ -16,6 +17,7 @@ import {
   JoinRuleViolation,
   ParticipationRequest,
   PendingRequestPage,
+  SeatStatus,
 } from '@/modules/participation-request/domain/participation-request';
 import { Injectable } from '@nestjs/common';
 
@@ -113,7 +115,8 @@ const seatRefusal = async (
 };
 
 // The roster holds a person once: an earlier row of theirs (waitlisted,
-// invited, cancelled) becomes the seat.
+// invited, cancelled) becomes the seat. What a cancellation left goes with it:
+// a new seat starts without the old message (ADR-0016).
 const takeSeat = (
   tx: Prisma.TransactionClient,
   eventId: string,
@@ -127,6 +130,7 @@ const takeSeat = (
       waitlistPosition: null,
       offerExpiresAt: null,
       cancelledAt: null,
+      cancellationMessage: null,
     },
   });
 
@@ -154,6 +158,22 @@ export class ParticipationRequestRepository {
       where: { id: requestId, eventId },
     });
     return request ? mapToDomain(request) : null;
+  }
+
+  // The person's seat on the event, or null when they never had one. Other
+  // states (waitlisted, invited) have no feature behind them yet.
+  async getSeatStatus(
+    eventId: string,
+    userId: string,
+  ): Promise<SeatStatus | null> {
+    const seat = await this.prisma.participation.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+      select: { status: true },
+    });
+    return seat?.status === ParticipationStatus.APPROVED ||
+      seat?.status === ParticipationStatus.CANCELLED
+      ? seat.status
+      : null;
   }
 
   async getApplicantProfile(userId: string): Promise<ApplicantProfile> {
@@ -490,5 +510,35 @@ export class ParticipationRequestRepository {
       data: { status: RequestStatus.WITHDRAWN, decidedAt: at },
     });
     return count > 0;
+  }
+
+  // F-06.4: the participant gives the seat back, with their message to the
+  // organizers. Under the event lock like taking a seat, so it cannot slip in
+  // after the event started or was cancelled; returns the reason then, or
+  // NO_SEAT when there was no seat to give back. Null once it is cancelled.
+  async cancelSeat(data: {
+    eventId: string;
+    userId: string;
+    message: string;
+    at: Date;
+  }): Promise<CancelRuleViolation | null> {
+    return this.prisma.$transaction(async (tx) => {
+      await lockEvent(tx, data.eventId);
+      const closed = await eventClosed(tx, data.eventId, data.at);
+      if (closed) return closed;
+      const { count } = await tx.participation.updateMany({
+        where: {
+          eventId: data.eventId,
+          userId: data.userId,
+          status: ParticipationStatus.APPROVED,
+        },
+        data: {
+          status: ParticipationStatus.CANCELLED,
+          cancelledAt: data.at,
+          cancellationMessage: data.message,
+        },
+      });
+      return count === 0 ? 'NO_SEAT' : null;
+    });
   }
 }

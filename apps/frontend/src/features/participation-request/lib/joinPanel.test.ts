@@ -9,11 +9,14 @@ import { ownSeatView, refusalOf } from "@/features/participation-request/lib/joi
 const state = (
   status: RequestStatus | null,
   violations: MyRequestState["violations"] = [],
+  seat: MyRequestState["seat"] = null,
 ): MyRequestState => ({
   request: status
     ? { id: "r1", eventId: "e1", status, message: null, requestedAt: new Date() }
     : null,
   violations,
+  seat,
+  cancelViolations: [],
   applicant: { name: "Honza", image: null, bio: null, hasVerifiedEmail: true },
 })
 
@@ -28,9 +31,19 @@ describe("ownSeatView", () => {
     ["rejected", state("REJECTED", ["REJECTED_BEFORE"])],
     ["approved", state("APPROVED", ["HAS_SEAT"])],
     ["approved", state(null, ["HAS_SEAT"])],
+    ["approved", state("APPROVED", ["HAS_SEAT"], "APPROVED")],
+    // F-06.4: the approval stays after the seat was given back.
+    ["cancelled", state("APPROVED", [], "CANCELLED")],
+    ["cancelled", state("APPROVED", ["EVENT_STARTED"], "CANCELLED")],
     ["organizer", state(null, ["IS_ORGANIZER"])],
   ] as const)("shows %s", (view, given) => {
     expect(ownSeatView(given)).toBe(view)
+  })
+
+  // A new request after a cancelled seat is the one that counts.
+  it("shows a new request asked after cancelling", () => {
+    expect(ownSeatView(state("PENDING", ["ALREADY_REQUESTED"], "CANCELLED"))).toBe("pending")
+    expect(ownSeatView(state("REJECTED", ["REJECTED_BEFORE"], "CANCELLED"))).toBe("rejected")
   })
 
   // A pending request stays visible on a full event, so it can be withdrawn.

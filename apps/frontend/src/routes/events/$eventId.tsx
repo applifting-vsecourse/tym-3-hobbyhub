@@ -179,6 +179,13 @@ function EventDetailPage() {
                   view={ownView}
                   approvalMode={eventQuery.data.approvalMode}
                   onWithdraw={() => setSheetStep("withdraw")}
+                  // F-06.4: any time before the start, as the server says.
+                  onCancel={
+                    myRequestQuery.data?.cancelViolations.length === 0
+                      ? () => setSheetStep("cancel")
+                      : undefined
+                  }
+                  rejoinAction={joinAction}
                 />
               ) : undefined
             }

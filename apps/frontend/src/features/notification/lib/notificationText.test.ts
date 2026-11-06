@@ -56,6 +56,11 @@ describe("notificationText", () => {
       "Akce Čtvrteční florbal byla zrušena",
     ],
     [
+      "a participant who cancelled (F-06.4)",
+      aNotification({ type: "PARTICIPANT_CANCELLED", message: "Onemocněl jsem." }),
+      "Honza_K už na akci Čtvrteční florbal nepřijde",
+    ],
+    [
       "a type without words of its own",
       aNotification({ type: "SPOT_AVAILABLE" }),
       "Novinka k Čtvrteční florbal",
@@ -88,12 +93,15 @@ describe("notificationTarget", () => {
     expect(notificationTarget(inGroup())).toEqual({ kind: "groupRequests", groupId: "g1" })
   })
 
-  it.each(["REQUEST_DECIDED", "EVENT_CHANGED", "EVENT_CANCELLED"] as const)(
-    "sends the participant to the event for %s",
-    (type) => {
-      expect(notificationTarget(aNotification({ type }))).toEqual({ kind: "event", eventId: "e1" })
-    },
-  )
+  // F-06.4: the organizer goes to the event too, not to its requests.
+  it.each([
+    "REQUEST_DECIDED",
+    "EVENT_CHANGED",
+    "EVENT_CANCELLED",
+    "PARTICIPANT_CANCELLED",
+  ] as const)("sends the participant to the event for %s", (type) => {
+    expect(notificationTarget(aNotification({ type }))).toEqual({ kind: "event", eventId: "e1" })
+  })
 
   it("sends the applicant to the group once decided", () => {
     expect(notificationTarget(inGroup({ type: "REQUEST_DECIDED" }))).toEqual({

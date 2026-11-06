@@ -782,6 +782,7 @@
     },
     "status": {
       "approved": "Schváleno",
+      "cancelled": "Odhlášeno",
       "deadline": "Uzávěrka",
       "neutral": "Plno",
       "pending": "Čeká na schválení",
@@ -858,6 +859,7 @@
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"
       },
+      "PARTICIPANT_CANCELLED": "{{name}} už na akci {{title}} nepřijde",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Tvoje žádost o účast na akci {{title}} byla schválena",
@@ -934,8 +936,32 @@
   },
   "participationRequests": {
     "approved": {
+      "cancel": "Zrušit účast",
       "description": "Organizátor tvou účast schválil.",
       "descriptionAutomatic": "Na akci máš místo."
+    },
+    "cancel": {
+      "confirm": "Zrušit účast",
+      "done": "Účast zrušena",
+      "failed": "Účast se nepodařilo zrušit. Zkus to znovu.",
+      "keep": "Nechat účast",
+      "messageLabel": "Zpráva organizátorovi",
+      "messagePlaceholder": "Např. onemocněl jsem, snad příště…",
+      "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+      "messageTooShort": "Napiš organizátorovi aspoň {{count}} znaků.",
+      "refused": {
+        "EVENT_CANCELLED": "Akce byla zrušena, účast už nejde zrušit.",
+        "EVENT_FINISHED": "Akce už proběhla, účast už nejde zrušit.",
+        "EVENT_NOT_HELD": "Akce se neuskutečnila, účast už nejde zrušit.",
+        "EVENT_STARTED": "Akce už začala, účast už nejde zrušit.",
+        "NO_SEAT": "Na akci už místo nemáš."
+      },
+      "text": "Tvoje místo se uvolní pro další zájemce a organizátor dostane upozornění i s tvou zprávou. Zrušení před začátkem akce je bez postihu.",
+      "title": "Zrušit účast?"
+    },
+    "cancelRule": "Účast můžeš zrušit kdykoli před začátkem akce, organizátorovi napíšeš proč.",
+    "cancelled": {
+      "description": "Účast na této akci jsi zrušil. Pokud si to rozmyslíš, můžeš o účast požádat znovu."
     },
     "form": {
       "cancel": "Zrušit",

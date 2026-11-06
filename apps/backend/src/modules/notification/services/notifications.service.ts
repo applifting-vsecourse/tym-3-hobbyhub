@@ -75,6 +75,25 @@ export class NotificationsService {
     });
   }
 
+  // F-06.4: every organizer of the event, with the participant's words, which
+  // a cancellation always has (ADR-0016). The e-mail comes with F-09.2 (#58).
+  notifyParticipantCancelled(input: {
+    event: AnEvent & { organizerIds: readonly string[] };
+    participant: Who;
+    message: string;
+  }): Promise<void> {
+    return this.record({
+      type: 'PARTICIPANT_CANCELLED',
+      recipientIds: recipientsExcept(
+        input.event.organizerIds,
+        input.participant.id,
+      ),
+      actorId: input.participant.id,
+      eventId: input.event.id,
+      payload: { message: input.message },
+    });
+  }
+
   // F-09.3: the applicant, with the organizer's words when there are any.
   notifyParticipationRequestDecided(input: {
     event: AnEvent;
