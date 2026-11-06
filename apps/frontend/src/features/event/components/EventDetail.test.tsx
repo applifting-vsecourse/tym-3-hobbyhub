@@ -94,6 +94,36 @@ describe("EventDetail", () => {
     expect(screen.queryByRole("button", { name: "Sdílet" }) !== null).toBe(isShown)
   })
 
+  it("tells a visitor when the exact address and the contacts appear", () => {
+    renderDetail()
+
+    expect(
+      screen.getByText("Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti."),
+    ).toBeInTheDocument()
+  })
+
+  it("shows the place and contacts of a participant instead of the hint", () => {
+    render(
+      <EventDetail
+        event={event({ venueType: "PRIVATE_VENUE" })}
+        activityLabel="Florbal"
+        joinAction={null}
+        participantInfo={<p>Kde se sejdeme</p>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("Kde se sejdeme")).toBeInTheDocument()
+    expect(screen.queryByText(/uvidíš po potvrzení účasti/)).not.toBeInTheDocument()
+    expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
+  })
+
+  it("does not promise the contacts of an event that is over", () => {
+    renderDetail({ status: "FINISHED" })
+
+    expect(screen.queryByText(/uvidíš po potvrzení účasti/)).not.toBeInTheDocument()
+  })
+
   it("offers the seat while the event is open", () => {
     renderDetail()
 

@@ -27,6 +27,10 @@ export const eventKeys = {
   // Public detail (F-02.4).
   publicDetails: () => [...eventKeys.all(), "public-detail"] as const,
   publicDetail: (id: string) => [...eventKeys.publicDetails(), id] as const,
+  // The exact address and contacts of one person's seat (F-06.5): keyed by
+  // user, so a switch of account never shows the previous one's data.
+  participantInfo: (id: string, userId: string) =>
+    [...eventKeys.all(), "participant-info", id, userId] as const,
   // The organizer's full view (F-05.10).
   managed: (id: string) => [...eventKeys.all(), "managed", id] as const,
   cancellationReasons: () => ["cancellation-reasons"] as const,

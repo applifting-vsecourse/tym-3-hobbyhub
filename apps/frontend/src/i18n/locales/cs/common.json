@@ -173,9 +173,16 @@
       "approvalManual": "Organizátor žádost schvaluje ručně.",
       "back": "Zpět na akce",
       "cancellationReason": "Důvod: {{reason}}",
+      "contacts": {
+        "chat": "Skupinový chat",
+        "organizer": "Organizátor: {{name}}",
+        "phone": "Zavolat",
+        "title": "Spojení s organizátorem"
+      },
       "contribution": "Příspěvek",
       "equipment": "Vybavení",
       "hasAccount": "Už máš účet?",
+      "hiddenInfo": "Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti.",
       "join": "Obsadit místo",
       "linkLabel": "Odkaz",
       "loadError": "Akci se nepodařilo načíst",
@@ -210,7 +217,15 @@
         "title": "Složení účastníků",
         "unknown": "Neuvedeno"
       },
-      "title": "Detail akce"
+      "title": "Detail akce",
+      "where": {
+        "loadError": "Místo a kontakty se nepodařilo načíst",
+        "loading": "Načítáme místo a kontakty…",
+        "mapLabel": "Mapa s místem akce",
+        "navigate": "Navigovat",
+        "noAddress": "Organizátor zatím nevyplnil adresu.",
+        "title": "Kde se sejdeme"
+      }
     },
     "edit": {
       "back": "Zpět na detail akce",
@@ -222,6 +237,7 @@
       "addressSearch": "Najít adresu",
       "approvalMode": "Schvalování účasti",
       "city": "Město",
+      "contact": "Kontakt na organizátora (nepovinné)",
       "contributionAmount": "Příspěvek na místo v Kč (nepovinné)",
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
       "country": "Země",
@@ -229,6 +245,7 @@
       "endDate": "Datum konce",
       "endTime": "Čas do",
       "equipment": "Vybavení (nepovinné)",
+      "externalChatUrl": "Odkaz na skupinový chat (nepovinné)",
       "externalOccupiedSpots": "Už obsazeno mimo aplikaci",
       "maxParticipants": "Maximum",
       "minParticipants": "Minimum",
@@ -249,6 +266,7 @@
       "addressHint": "Vyberte adresu z nabídky, ať se akce ukáže na mapě. Pole níže se vyplní samy.",
       "addressLocated": "Poloha adresy je uložená, akce se ukáže na mapě.",
       "cancel": "Zrušit",
+      "contactsHint": "Chat a kontakt uvidí jen lidé s potvrzenou účastí a vy.",
       "continue": "Pokračovat",
       "contributionHint": "Jen informace pro zájemce, přes aplikaci se neplatí.",
       "createFailed": "Akci se nepodařilo zveřejnit. Zkuste to prosím znovu.",
@@ -331,10 +349,12 @@
     "placeholders": {
       "addressSearch": "Začněte psát ulici a město",
       "city": "Např. Praha 8",
+      "contact": "E-mail nebo telefon",
       "contributionAmount": "Např. 80",
       "contributionNote": "Např. platí se na místě hotově",
       "description": "Např. rekreační hra pro mírně pokročilé…",
       "equipment": "Např. vlastní hokejka, sálová obuv",
+      "externalChatUrl": "Např. https://chat.whatsapp.com/…",
       "placeName": "Např. ZŠ Kobylisy",
       "postalCode": "Např. 182 00",
       "street": "Např. Chabařovická 4",
@@ -356,7 +376,9 @@
       "activityRequired": "Vyberte aktivitu",
       "amountInvalid": "Zadejte částku v korunách, nejvýše na dvě desetinná místa",
       "amountRequiredForNote": "K poznámce doplňte částku",
+      "chatUrlInvalid": "Zadejte odkaz, který začíná na http:// nebo https://",
       "cityRequired": "Zadejte město",
+      "contactInvalid": "Zadejte e-mail nebo telefon, např. +420 777 123 456",
       "countryRequired": "Zadejte zemi",
       "dateRequired": "Zadejte datum",
       "descriptionRequired": "Napište pár vět o akci",

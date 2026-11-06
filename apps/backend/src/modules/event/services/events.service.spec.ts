@@ -4,6 +4,7 @@ import {
   CreateEventData,
   Event,
   EventFacts,
+  EventSeatFacts,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
@@ -35,6 +36,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   maxParticipants: 12,
   contributionAmount: 80,
   contributionNote: null,
+  contact: null,
+  externalChatUrl: null,
   location: {
     street: 'Chabařovická 4',
     city: 'Praha 8',
@@ -591,6 +594,88 @@ describe('EventsService', () => {
 
       await expect(
         service.getOrganizedEvent('e1', { id: 'organizer' } as Identity),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('getParticipantInfo', () => {
+    const facts = (
+      overrides: Partial<EventSeatFacts> = {},
+    ): EventSeatFacts => ({
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: inAnHour(),
+      endAt: inAnHour(),
+      approvalMode: 'MANUAL',
+      organizerIds: ['u1'],
+      freeSpots: 3,
+      hasSeat: false,
+      ...overrides,
+    });
+    const info = {
+      venueType: 'PUBLIC_VENUE' as const,
+      location: null,
+      organizerName: 'Jana',
+      externalChatUrl: 'https://chat.whatsapp.com/abc',
+      contact: '+420 777 123 456',
+    };
+
+    it('gives the contacts to a person holding a seat', async () => {
+      const { repository, service } = setup();
+      repository.getPublicEventSeatFacts.mockResolvedValue(
+        facts({ hasSeat: true }),
+      );
+      repository.getParticipantInfo.mockResolvedValue(info);
+
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).resolves.toBe(info);
+    });
+
+    it('gives them to the organizer without a seat', async () => {
+      const { repository, service } = setup();
+      repository.getPublicEventSeatFacts.mockResolvedValue(facts());
+      repository.getParticipantInfo.mockResolvedValue(info);
+
+      await expect(
+        service.getParticipantInfo({ id: 'u1' } as Identity, 'e1'),
+      ).resolves.toBe(info);
+    });
+
+    it('refuses anyone else and never reads the contacts', async () => {
+      const { repository, service } = setup();
+      repository.getPublicEventSeatFacts.mockResolvedValue(facts());
+
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.getParticipantInfo).not.toHaveBeenCalled();
+    });
+
+    it('keeps the contacts of a cancelled or finished event to itself', async () => {
+      const { repository, service } = setup();
+      repository.getPublicEventSeatFacts.mockResolvedValue(
+        facts({ hasSeat: true, status: 'CANCELLED' }),
+      );
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+
+      repository.getPublicEventSeatFacts.mockResolvedValue(
+        facts({ hasSeat: true, endAt: new Date(Date.now() - 1000) }),
+      );
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.getParticipantInfo).not.toHaveBeenCalled();
+    });
+
+    it('says not found for an event that is not public', async () => {
+      const { repository, service } = setup();
+      repository.getPublicEventSeatFacts.mockResolvedValue(null);
+
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
   });

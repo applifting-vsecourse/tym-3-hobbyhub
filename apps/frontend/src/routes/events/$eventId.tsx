@@ -7,6 +7,7 @@ import { AppShell } from "@/app/AppShell"
 import { ROUTES } from "@/app/routes"
 import { BackLink } from "@/components/BackLink"
 import { NotFound } from "@/components/Error/NotFound"
+import { missingCount } from "@/components/hobbyhub/capacity"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { Seo } from "@/components/Seo"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -18,8 +19,10 @@ import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
+import { participantInfoQueryOptions } from "@/features/event/api/participantInfoQueryOptions"
 import { EventDetail } from "@/features/event/components/EventDetail"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
+import { ParticipantInfo } from "@/features/event/components/ParticipantInfo"
 import { ShareEventAction } from "@/features/event/components/ShareEventAction"
 import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
@@ -49,6 +52,20 @@ function EventDetailPage() {
     enabled: user !== null,
   })
 
+  const ownView = myRequestQuery.data ? ownSeatView(myRequestQuery.data) : null
+  // F-06.5: the exact place and the contacts go to the organizer and to people
+  // with a seat, while the event is on. The server decides again.
+  const event = eventQuery.data
+  const hasInfoRight =
+    user !== null &&
+    (ownView === "approved" || ownView === "organizer") &&
+    event?.status === "PUBLISHED" &&
+    event.endAt > new Date()
+  const infoQuery = useQuery({
+    ...participantInfoQueryOptions(eventId, user?.id ?? ""),
+    enabled: hasInfoRight,
+  })
+
   const queryClient = useQueryClient()
   // A seat taken at once (automatic approval) changes the roster; a request
   // waiting for the organizer does not, but a refusal may mean the event filled
@@ -59,7 +76,6 @@ function EventDetailPage() {
   // free seat for the pending request, and the sheet has to survive that.
   const [sheetStep, setSheetStep] = useState<RequestSheetStep | null>(null)
 
-  const ownView = myRequestQuery.data ? ownSeatView(myRequestQuery.data) : null
   const from = encodeRedirectUri(location)
   // Asking is not taking: with manual approval the seat comes only once the
   // organizer says yes; with automatic approval the server takes it at once.
@@ -170,6 +186,44 @@ function EventDetailPage() {
               eventQuery.data.startAt > new Date() ? (
                 <OrganizerActions event={eventQuery.data} />
               ) : null
+            }
+            participantInfo={
+              !hasInfoRight ? undefined : infoQuery.isPending ? (
+                <div className="flex justify-center py-4">
+                  <Loader
+                    variant="seats"
+                    label={t("events.detail.where.loading")}
+                  />
+                </div>
+              ) : infoQuery.isError ? (
+                <Alert variant="destructive">
+                  <AlertTitle>{t("events.detail.where.loadError")}</AlertTitle>
+                  <AlertDescription className="flex items-center justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void infoQuery.refetch()}
+                    >
+                      {t("events.list.reload")}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <ParticipantInfo
+                  info={infoQuery.data}
+                  pin={{
+                    activity: eventQuery.data.activity.icon,
+                    title: eventQuery.data.title,
+                    state:
+                      missingCount({
+                        taken: eventQuery.data.takenCount,
+                        min: eventQuery.data.minParticipants,
+                      }) > 0
+                        ? "missing"
+                        : "full",
+                  }}
+                />
+              )
             }
             ownRequest={
               ownView === "organizer" ? (

@@ -17,6 +17,7 @@ import {
   externalSpotsViolations,
   isOrganizerOf,
   Page,
+  ParticipantEventInfo,
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
@@ -247,6 +248,32 @@ export class EventsService {
       throw new BadRequestException('dateFrom must not be after dateTo');
     }
     return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
+  }
+
+  // F-06.5: the exact address and the contacts, for the organizers and the
+  // people holding a seat. Everyone else is told no, never the data.
+  async getParticipantInfo(
+    user: Identity,
+    id: string,
+  ): Promise<ParticipantEventInfo> {
+    const facts = await this.eventRepository.getPublicEventSeatFacts(
+      id,
+      user.id,
+    );
+    if (!facts) throw new NotFoundException('Event not found');
+    // Only while the event is on: a cancelled or finished one keeps its
+    // address and contacts to itself.
+    if (facts.status !== 'PUBLISHED' || facts.endAt.getTime() <= Date.now()) {
+      throw new ForbiddenException('The event is no longer on');
+    }
+    if (!facts.hasSeat && !isOrganizerOf(facts, user.id)) {
+      throw new ForbiddenException(
+        'Only the organizer and approved participants can see this',
+      );
+    }
+    const info = await this.eventRepository.getParticipantInfo(id);
+    if (!info) throw new NotFoundException('Event not found');
+    return info;
   }
 
   // Public: what a visitor may see, nothing of the organizer's private data.
