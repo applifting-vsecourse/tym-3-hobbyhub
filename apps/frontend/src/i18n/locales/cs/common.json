@@ -962,8 +962,61 @@
       "approveFailed": "Žádost se nepodařilo schválit. Zkus to znovu.",
       "approved": "Žádost schválena",
       "back": "Zpět na akci",
+      "breakdown": "{{approved}} z aplikace, {{external}} mimo aplikaci",
+      "decided": {
+        "APPROVED": {
+          "empty": "Zatím tu nikdo není. Objeví se tu každý, kdo na akci získá místo.",
+          "external_few": "K tomu {{count}} místa mimo aplikaci",
+          "external_one": "K tomu {{count}} místo mimo aplikaci",
+          "external_other": "K tomu {{count}} míst mimo aplikaci",
+          "loadError": "Účastníky se nepodařilo načíst",
+          "loading": "Načítáme účastníky…",
+          "more_few": "{{count}} další účastníci",
+          "more_one": "{{count}} další účastník",
+          "more_other": "{{count}} dalších účastníků",
+          "since": "Místo má od {{date}}",
+          "title": "Schválení"
+        },
+        "REJECTED": {
+          "empty": "Zatím jsi žádnou žádost nezamítl.",
+          "loadError": "Zamítnuté žádosti se nepodařilo načíst",
+          "loading": "Načítáme zamítnuté žádosti…",
+          "more_few": "{{count}} další zamítnuté žádosti",
+          "more_one": "{{count}} další zamítnutá žádost",
+          "more_other": "{{count}} dalších zamítnutých žádostí",
+          "since": "Zamítnuto {{date}}",
+          "title": "Zamítnutí"
+        },
+        "WITHDRAWN": {
+          "empty": "Zatím nikdo svou žádost nestáhl.",
+          "loadError": "Stažené žádosti se nepodařilo načíst",
+          "loading": "Načítáme stažené žádosti…",
+          "more_few": "{{count}} další stažené žádosti",
+          "more_one": "{{count}} další stažená žádost",
+          "more_other": "{{count}} dalších stažených žádostí",
+          "since": "Žádost stáhl {{date}}",
+          "title": "Odhlášení"
+        }
+      },
       "empty": "Zatím tu nejsou žádné žádosti. Objeví se tu, jakmile o účast někdo požádá.",
       "emptyAutomatic": "Na téhle akci se žádosti schvalují samy: kdo požádá, rovnou obsadí volné místo.",
+      "external": {
+        "hint": "Lidé z tvé party, kteří nemají účet v aplikaci. Počítají se do obsazenosti.",
+        "label": "Místa mimo aplikaci",
+        "locked_few": "Mimo aplikaci: {{count}} místa. Po začátku akce už počet nejde měnit.",
+        "locked_one": "Mimo aplikaci: {{count}} místo. Po začátku akce už počet nejde měnit.",
+        "locked_other": "Mimo aplikaci: {{count}} míst. Po začátku akce už počet nejde měnit.",
+        "refused": {
+          "EVENT_NOT_CHANGEABLE": "Akce už začala nebo skončila, počet míst mimo aplikaci už nejde měnit.",
+          "MAX_BELOW_OCCUPIED": "Tolik míst už volných není, mezitím se někdo přihlásil."
+        },
+        "saveFailed": "Počet míst mimo aplikaci se nepodařilo uložit. Zkus to znovu."
+      },
+      "fillState": {
+        "BELOW_MINIMUM": "Pod minimem",
+        "FULL": "Plno",
+        "MINIMUM_REACHED": "Minimum splněno"
+      },
       "loadError": "Žádosti se nepodařilo načíst",
       "loading": "Načítáme žádosti…",
       "locked": {
@@ -992,6 +1045,13 @@
       "rejected": "Žádost zamítnuta",
       "requests": "Žádosti",
       "retry": "Zkusit znovu",
+      "tabs": {
+        "participants": "Účastníci",
+        "participantsCount": "Účastníci {{count}}",
+        "requests": "Žádosti",
+        "requestsCount": "Žádosti {{count}}"
+      },
+      "tabsLabel": "Žádosti a účastníci",
       "title": "Žádosti a přehled účastníků"
     },
     "organizer": {

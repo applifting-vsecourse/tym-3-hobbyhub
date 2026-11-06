@@ -22,8 +22,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateParticipationRequestDto } from './dto/create-participation-request.dto';
+import { ListDecidedRequestsQuery } from './dto/list-decided-requests.query';
 import { ListPendingRequestsQuery } from './dto/list-pending-requests.query';
 import {
+  DecidedRequestPageResponseDto,
   DECISION_RULE_VIOLATIONS,
   MyRequestStateResponseDto,
   ParticipationRequestResponseDto,
@@ -33,7 +35,8 @@ import { RejectParticipationRequestDto } from './dto/reject-participation-reques
 import { participationRequestsValidationPipe } from './participation-requests-validation.pipe';
 
 // F-06.1 requests to join, seen by the applicant, and F-05.7 the organizer's
-// side: listing the waiting ones and deciding them. Automatic approval is
+// side: listing the waiting ones and deciding them, and F-05.6 the overview of
+// the decided ones. Automatic approval is
 // F-05.5.
 @ApiTags('participation-requests')
 @Controller('events/:eventId/requests')
@@ -88,6 +91,27 @@ export class ParticipationRequestsController {
       offset: query.offset,
     });
     return PendingRequestPageResponseDto.fromDomain(page);
+  }
+
+  @Get('decided')
+  @ApiOperation({
+    summary:
+      'Approved, rejected or withdrawn people, latest change first (organizers only)',
+  })
+  @ApiResponse({ status: 200, type: DecidedRequestPageResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid state, limit or offset' })
+  async listDecided(
+    @User() user: Identity,
+    @Param('eventId') eventId: string,
+    @Query() query: ListDecidedRequestsQuery,
+  ): Promise<DecidedRequestPageResponseDto> {
+    const page = await this.service.getDecidedRequests(
+      user,
+      eventId,
+      query.status,
+      { limit: query.limit, offset: query.offset },
+    );
+    return DecidedRequestPageResponseDto.fromDomain(page);
   }
 
   @Get('mine')

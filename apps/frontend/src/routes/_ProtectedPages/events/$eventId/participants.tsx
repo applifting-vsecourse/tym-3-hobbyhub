@@ -11,17 +11,17 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { HTTPError } from "@/lib/api-client"
 
-import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
+import { manageEventQueryOptions } from "@/features/event/api/manageEventQueryOptions"
 import { eventDay, eventTime } from "@/features/event/lib/eventLabels"
 import { pendingRequestsQueryOptions } from "@/features/participation-request/api/pendingRequestsQueryOptions"
 import { EventParticipants } from "@/features/participation-request/components/EventParticipants"
+import { PARTICIPANTS_TABS } from "@/features/participation-request/components/ParticipantsTabs"
 
-// Which part of the page is open. F-05.7 has the requests only; the
-// participants (F-05.6) come as a second tab, and links made now keep opening
-// the requests.
+// Which part of the page is open: the waiting requests (F-05.7, the default)
+// or the participants with the other states (F-05.6).
 const participantsSearchSchema = z.object({
-  tab: z.enum(["requests"]).catch("requests"),
+  tab: z.enum(PARTICIPANTS_TABS).catch("requests"),
 })
 
 export const Route = createFileRoute("/_ProtectedPages/events/$eventId/participants")({
@@ -33,11 +33,13 @@ const isNotFound = (error: unknown) => error instanceof HTTPError && error.respo
 
 function ParticipantsPage() {
   const { eventId } = Route.useParams()
+  const { tab } = Route.useSearch()
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const eventQuery = useQuery(eventDetailQueryOptions(eventId))
-  // To anyone but the organizers the requests answer 404: then the page does
-  // not exist for them either.
+  // The organizers' view of the event, with the seats outside the app. To
+  // anyone else it and the requests answer 404: then the page does not exist
+  // for them either.
+  const eventQuery = useQuery(manageEventQueryOptions(eventId))
   const requestsQuery = useInfiniteQuery(pendingRequestsQueryOptions(eventId))
 
   // A decision changes the seats, here, on the detail and in the lists.
@@ -91,10 +93,14 @@ function ParticipantsPage() {
               startAt: eventQuery.data.startAt,
               endAt: eventQuery.data.endAt,
               approvalMode: eventQuery.data.approvalMode,
-              taken: eventQuery.data.takenCount,
+              taken: eventQuery.data.occupiedSpots,
               min: eventQuery.data.minParticipants,
               max: eventQuery.data.maxParticipants,
+              approved: eventQuery.data.approvedCount,
+              externalOccupied: eventQuery.data.externalOccupiedSpots,
+              fillState: eventQuery.data.fillState,
             }}
+            tab={tab}
             onChange={refreshEvents}
           />
         )}
