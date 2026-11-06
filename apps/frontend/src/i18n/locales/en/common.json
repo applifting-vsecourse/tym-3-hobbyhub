@@ -863,19 +863,42 @@
   "notifications": {
     "badgeOverflow": "{{max}}+",
     "bell": "Notifications",
+    "bellEmpty": "No new notifications",
+    "bellTitle": "New notifications",
     "bellUnread_one": "Notifications, {{count}} unread",
     "bellUnread_other": "Notifications, {{count}} unread",
     "deletedTarget": "a deleted event",
-    "empty": "No notifications yet. They will show up here once something happens around your events and groups.",
     "justNow": "just now",
+    "kinds": {
+      "all": "All",
+      "events": "Events",
+      "groups": "Groups",
+      "label": "Kind of notifications",
+      "other": "Other",
+      "requests": "Requests"
+    },
     "loadError": "Notifications could not be loaded",
     "loading": "Loading notifications…",
     "markAllRead": "Mark all as read",
     "markAllReadFailed": "Notifications could not be marked as read. Please try again.",
     "message": "“{{message}}”",
-    "more_one": "{{count}} more",
-    "more_other": "{{count}} more",
+    "more_one": "Load more ({{count}})",
+    "more_other": "Load more ({{count}})",
     "retry": "Try again",
+    "sections": {
+      "new": {
+        "count_one": "{{count}} unread",
+        "count_other": "{{count}} unread",
+        "empty": "No new notifications. They will show up here once something happens around your events and groups.",
+        "emptyFiltered": "No new notifications of this kind.",
+        "title": "New"
+      },
+      "read": {
+        "empty": "No read notifications yet. The ones you open or mark as read move here.",
+        "emptyFiltered": "No read notifications of this kind.",
+        "title": "Read"
+      }
+    },
     "showAll": "Show all",
     "someone": "Someone",
     "text": {

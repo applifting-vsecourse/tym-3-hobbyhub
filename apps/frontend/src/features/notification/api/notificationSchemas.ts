@@ -16,6 +16,11 @@ export const notificationTypeSchema = z.enum([
   "EVENT_CANCELLED",
 ])
 
+// #175: the kinds the notification page filters by, as the server names them
+// (NOTIFICATION_KINDS). Which types each holds: `lib/notificationKinds.ts`.
+export const notificationKindSchema = z.enum(["requests", "events", "groups", "other"])
+export const NOTIFICATION_KINDS = notificationKindSchema.options
+
 export const decisionSchema = z.enum(["APPROVED", "REJECTED"])
 export const eventChangeSchema = z.enum(["TIME", "PLACE"])
 
@@ -40,5 +45,6 @@ export const notificationPageSchema = z.object({
 export const notificationCountSchema = z.object({ count: z.number() })
 
 export type NotificationType = z.infer<typeof notificationTypeSchema>
+export type NotificationKind = z.infer<typeof notificationKindSchema>
 export type Notification = z.infer<typeof notificationSchema>
 export type NotificationPage = z.infer<typeof notificationPageSchema>
