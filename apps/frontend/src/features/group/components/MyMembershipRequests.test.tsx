@@ -98,15 +98,14 @@ describe("MyMembershipRequests", () => {
     expect(within(rejected!).queryByRole("button")).not.toBeInTheDocument()
 
     expect(within(withdrawn!).getByText("Staženo")).toBeVisible()
-    expect(within(withdrawn!).getByText(/Podáno 2\. 11\. 2026 · Staženo 3\. 11\. 2026/)).toBeVisible()
+    expect(
+      within(withdrawn!).getByText(/Podáno 2\. 11\. 2026 · Staženo 3\. 11\. 2026/),
+    ).toBeVisible()
     // Neither was given: no empty label stands in for them.
     expect(within(withdrawn!).queryByText("Důvod zamítnutí")).not.toBeInTheDocument()
     expect(within(withdrawn!).queryByText("Vaše zpráva")).not.toBeInTheDocument()
 
-    expect(screen.getByRole("link", { name: "Ranní běžci" })).toHaveAttribute(
-      "href",
-      "/groups/g2",
-    )
+    expect(screen.getByRole("link", { name: "Ranní běžci" })).toHaveAttribute("href", "/groups/g2")
   })
 
   it("says a request on a cancelled group will not be decided, without a link", async () => {

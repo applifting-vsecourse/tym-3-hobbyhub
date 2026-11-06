@@ -185,7 +185,9 @@ function MyMembershipRequestCard({ request, onWithdraw }: MyMembershipRequestCar
           : null}
       </p>
       {status === "GROUP_CANCELLED" ? (
-        <p className="typo-small text-muted-foreground">{t("groups.myRequests.groupCancelledText")}</p>
+        <p className="typo-small text-muted-foreground">
+          {t("groups.myRequests.groupCancelledText")}
+        </p>
       ) : null}
       {request.rejectionReason || request.message ? (
         <dl className="flex flex-col gap-3">
