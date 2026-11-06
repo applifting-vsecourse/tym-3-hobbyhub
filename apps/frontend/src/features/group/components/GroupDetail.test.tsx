@@ -121,7 +121,10 @@ function Page({ userId }: { userId: string | null }) {
     ...pendingMembershipRequestsQueryOptions(group.id),
     enabled: membership.isAdmin,
   })
-  const members = useQuery({ ...groupMembersQueryOptions(group.id), enabled: membership.isAdmin })
+  const members = useQuery({
+    ...groupMembersQueryOptions(group.id),
+    enabled: membership.view === "member",
+  })
   const [step, setStep] = useState<MembershipSheetStep | null>(null)
   return (
     <>
@@ -130,6 +133,7 @@ function Page({ userId }: { userId: string | null }) {
         activityLabel="Florbal"
         membershipPanel={
           <GroupMembershipPanel
+            groupId={group.id}
             membership={membership}
             groupName={group.name}
             from="%2Fgroups%2Fg1"
@@ -146,7 +150,7 @@ function Page({ userId }: { userId: string | null }) {
           ) : undefined
         }
         membersPreview={
-          membership.isAdmin && members.data ? (
+          membership.view === "member" && members.data ? (
             <GroupMembersPreview
               groupId={group.id}
               members={members.data}
@@ -313,6 +317,14 @@ describe("GroupDetail", () => {
       expect(screen.queryByRole("heading", { name: /Správa skupiny/ })).not.toBeInTheDocument()
     })
 
+    it("sees the members too (visibility matrix), but not the requests", async () => {
+      server.role = "MEMBER"
+      await renderDetail("u1")
+
+      expect(await screen.findByRole("heading", { name: "Členové (9)" })).toBeVisible()
+      expect(screen.queryByRole("link", { name: /Žádosti o členství/ })).not.toBeInTheDocument()
+    })
+
     it("asks before leaving, and stays when the user changes their mind", async () => {
       const user = userEvent.setup()
       server.role = "MEMBER"
@@ -376,12 +388,16 @@ describe("GroupDetail", () => {
       },
     )
 
-    it("does not offer the owner a way out", async () => {
+    it("sends the owner to hand the group over before leaving", async () => {
       server.role = "OWNER"
       await renderDetail("u1")
 
       expect(await screen.findByText("Jste členem")).toBeVisible()
       expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "Předat správu" })).toHaveAttribute(
+        "href",
+        "/groups/g1/members",
+      )
     })
   })
 })

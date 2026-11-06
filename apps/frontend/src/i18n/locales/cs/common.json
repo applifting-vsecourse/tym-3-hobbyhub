@@ -438,7 +438,9 @@
         "requestNote": "Organizátor žádost schválí ručně. Žádost čeká bez lhůty.",
         "signIn": "Přihlásit se",
         "title": "Členství",
-        "withdraw": "Zrušit žádost"
+        "withdraw": "Zrušit žádost",
+        "ownerCannotLeave": "Jako organizátor ze skupiny odejít nemůžete. Nejdřív předejte správu jinému členovi.",
+        "ownerTransferLink": "Předat správu"
       },
       "title": "Detail skupiny",
       "upcoming": {
@@ -532,7 +534,40 @@
         "requests": "Žádosti {{count}}"
       },
       "tabsLabel": "Členové a žádosti",
-      "title": "Správa členů"
+      "title": "Správa členů",
+      "actions": {
+        "menuLabel": "Akce pro člena {{name}}",
+        "cancel": "Zpět",
+        "failed": "Akci se nepodařilo provést. Seznam členů jsme obnovili, zkuste to prosím znovu.",
+        "makeAdmin": {
+          "menu": "Jmenovat správcem",
+          "title": "Jmenovat správcem?",
+          "text": "{{name}} bude ve skupině {{group}} vyřizovat žádosti o členství a odebírat členy.",
+          "confirm": "Jmenovat správcem",
+          "done": "{{name}} je teď správcem."
+        },
+        "demote": {
+          "menu": "Odvolat správce",
+          "title": "Odvolat správce?",
+          "text": "{{name}} zůstane ve skupině {{group}} jako člen, ale přijde o práva správce.",
+          "confirm": "Odvolat",
+          "done": "{{name}} už není správcem."
+        },
+        "transfer": {
+          "menu": "Předat správu",
+          "title": "Předat správu skupiny?",
+          "text": "{{name}} se stane organizátorem skupiny {{group}}. Vy zůstanete správcem; vrátit to může už jen nový organizátor.",
+          "confirm": "Předat správu",
+          "done": "Skupinu teď spravuje {{name}}."
+        },
+        "remove": {
+          "menu": "Odebrat ze skupiny",
+          "title": "Odebrat ze skupiny?",
+          "text": "{{name}} přestane být členem skupiny {{group}}. Znovu se může přidat pomocí žádosti o členství.",
+          "confirm": "Odebrat",
+          "done": "{{name}} už není členem skupiny."
+        }
+      }
     },
     "membershipRequest": {
       "form": {

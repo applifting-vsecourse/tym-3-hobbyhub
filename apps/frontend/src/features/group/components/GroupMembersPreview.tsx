@@ -15,8 +15,8 @@ type GroupMembersPreviewProps = {
 }
 
 /**
- * Členové (N) on the group page, for its admins (F-07.3): a row of faces that
- * leads to member management. Everyone else sees only the count (F-02.5).
+ * Členové (N) on the group page, for its members (F-07.3): a row of faces that
+ * leads to the member list (member management for its admins). Everyone else sees only the count (F-02.5).
  */
 export function GroupMembersPreview({ groupId, members }: GroupMembersPreviewProps) {
   const { t } = useTranslation()

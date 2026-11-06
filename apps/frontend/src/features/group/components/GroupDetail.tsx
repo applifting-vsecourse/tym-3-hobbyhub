@@ -13,13 +13,13 @@ type GroupDetailProps = {
   membershipPanel: ReactNode
   /** For the group's admins only (F-07.3): the way to the requests. */
   adminPanel?: ReactNode
-  /** For the group's admins only (F-07.3): the members. */
+  /** For the group's members only (F-07.3): the members. */
   membersPreview?: ReactNode
 }
 
 /**
  * Public group detail (F-02.5): what a visitor needs to decide about joining.
- * Everyone sees the member count; only the group's admins see the members.
+ * Everyone sees the member count; only the group's members see the members.
  */
 export function GroupDetail({
   group,

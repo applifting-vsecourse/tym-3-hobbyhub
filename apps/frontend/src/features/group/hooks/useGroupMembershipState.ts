@@ -54,8 +54,9 @@ export function useGroupMembershipState(
     view,
     /** OWNER or ADMIN: sees the requests and the members (F-07.3). */
     isAdmin: hasGroupAdminRights(myMembership?.role),
-    /** The owner stays: a group needs one, and handing it over comes later (#94). */
+    /** The owner stays: a group needs one. They hand it over first (F-07.3b). */
     canLeave: view === "member" && myMembership?.role !== "OWNER",
+    isOwner: view === "member" && myMembership?.role === "OWNER",
     /** What the server says the admins will see of the user; undefined until known. */
     applicant: myRequestState?.applicant,
     /** Resolves when the user has left; rejects when the server refuses. */
