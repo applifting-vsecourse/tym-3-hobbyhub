@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { lazy, Suspense, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import ChatIcon from "@/assets/ui-icons/chat.svg?react"
@@ -10,17 +10,21 @@ import type { EventPinState } from "@/components/hobbyhub/EventPin"
 import { Button } from "@/components/ui/button"
 
 import type { ParticipantInfo as ParticipantInfoData } from "@/features/event/api/eventSchemas"
-import { EventLocationMap } from "@/features/event/components/EventLocationMap"
 import { contactHref, contactKind } from "@/features/event/lib/contact"
 import { mapsPlatform, navigationLink } from "@/features/event/lib/navigationLink"
+
+// Mapbox is large; the detail of an event does not wait for it (and most visitors never get the map).
+const EventLocationMap = lazy(() =>
+  import("@/features/event/components/EventLocationMap").then((module) => ({
+    default: module.EventLocationMap,
+  })),
+)
 
 type ParticipantInfoProps = {
   info: ParticipantInfoData
   /** The pin on the small map: the same as on the big one. */
   pin: { activity: string; title: string; state: EventPinState }
 }
-
-const CONTACT_ICONS = { email: MailIcon, phone: PhoneIcon, link: ChatIcon }
 
 function ContactLink({
   href,
@@ -59,14 +63,14 @@ export function ParticipantInfo({ info, pin }: ParticipantInfoProps) {
   const { t } = useTranslation()
   const { location } = info
   const kind = info.contact ? contactKind(info.contact) : null
+  const hasContacts = Boolean(info.externalChatUrl ?? kind)
 
-  if (!location && !kind) return null
+  if (!location && !hasContacts) return null
 
   const platform =
     typeof navigator === "undefined"
       ? "other"
       : mapsPlatform(navigator.userAgent, navigator.maxTouchPoints)
-  const ContactIcon = kind ? CONTACT_ICONS[kind] : null
   const link = location ? navigationLink(location, platform) : null
   const address = location
     ? [
@@ -82,13 +86,15 @@ export function ParticipantInfo({ info, pin }: ParticipantInfoProps) {
         <section className="flex flex-col gap-4 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.where.title")}</h2>
           {location.latitude !== null && location.longitude !== null ? (
-            <EventLocationMap
-              latitude={location.latitude}
-              longitude={location.longitude}
-              activity={pin.activity}
-              title={pin.title}
-              state={pin.state}
-            />
+            <Suspense fallback={<div className="h-48 rounded-lg bg-muted md:h-60" />}>
+              <EventLocationMap
+                latitude={location.latitude}
+                longitude={location.longitude}
+                activity={pin.activity}
+                title={pin.title}
+                state={pin.state}
+              />
+            </Suspense>
           ) : null}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <address className="flex items-start gap-2 typo-body text-foreground not-italic">
@@ -123,29 +129,50 @@ export function ParticipantInfo({ info, pin }: ParticipantInfoProps) {
         </section>
       ) : null}
 
-      {info.contact && kind && ContactIcon ? (
+      {hasContacts ? (
         <section className="flex flex-col gap-3 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.contacts.title")}</h2>
           <p className="typo-small text-muted-foreground">
             {t("events.detail.contacts.organizer", { name: info.organizerName })}
           </p>
-          <ContactLink
-            href={contactHref(info.contact, kind)}
-            isExternal={kind === "link"}
-            icon={
-              <ContactIcon
-                className="size-4"
-                aria-hidden
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {info.externalChatUrl ? (
+              <ContactLink
+                href={info.externalChatUrl}
+                isExternal
+                icon={
+                  <ChatIcon
+                    aria-hidden
+                    className="size-4"
+                  />
+                }
+                label={t("events.detail.contacts.chat")}
               />
-            }
-            label={
-              kind === "phone"
-                ? `${t("events.detail.contacts.phone")} ${info.contact}`
-                : kind === "email"
-                  ? info.contact
-                  : t("events.detail.contacts.link")
-            }
-          />
+            ) : null}
+            {info.contact && kind ? (
+              <ContactLink
+                href={contactHref(info.contact, kind)}
+                icon={
+                  kind === "phone" ? (
+                    <PhoneIcon
+                      aria-hidden
+                      className="size-4"
+                    />
+                  ) : (
+                    <MailIcon
+                      aria-hidden
+                      className="size-4"
+                    />
+                  )
+                }
+                label={
+                  kind === "phone"
+                    ? `${t("events.detail.contacts.phone")} ${info.contact}`
+                    : info.contact
+                }
+              />
+            ) : null}
+          </div>
         </section>
       ) : null}
     </>

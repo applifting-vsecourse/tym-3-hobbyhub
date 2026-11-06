@@ -5,6 +5,7 @@ import {
   contactKindOf,
   CREATABLE_VENUE_TYPES,
   CreatableVenueType,
+  EVENT_CHAT_URL_MAX_LENGTH,
   EVENT_CITY_MAX_LENGTH,
   EVENT_CONTACT_MAX_LENGTH,
   EVENT_CONTRIBUTION_MAX_AMOUNT,
@@ -33,6 +34,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Max,
   Min,
   Validate,
@@ -51,7 +53,7 @@ class IsContactConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(): string {
-    return 'contact must be an e-mail, a phone number or an http(s) link';
+    return 'contact must be an e-mail or a phone number';
   }
 }
 
@@ -250,10 +252,22 @@ export class CreateEventDto {
   contributionNote?: string;
 
   @ApiPropertyOptional({
+    example: 'https://chat.whatsapp.com/abc123',
+    maxLength: EVENT_CHAT_URL_MAX_LENGTH,
+    description: 'Link to the group chat, shown to approved participants only',
+  })
+  @Transform(trimToUndefined)
+  @IsOptional()
+  @IsString()
+  @CharLength(0, EVENT_CHAT_URL_MAX_LENGTH)
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  externalChatUrl?: string;
+
+  @ApiPropertyOptional({
     example: '+420 777 123 456',
     maxLength: EVENT_CONTACT_MAX_LENGTH,
     description:
-      'One contact on the organizer: e-mail, phone or a link (e.g. a Facebook group). Shown to approved participants only',
+      'E-mail or phone of the organizer, shown to approved participants only',
   })
   @Transform(trimToUndefined)
   @IsOptional()

@@ -68,6 +68,7 @@ const info = (overrides: Partial<ParticipantInfoData> = {}): ParticipantInfoData
     longitude: 14.4421,
   },
   organizerName: "Jana Nováková",
+  externalChatUrl: "https://chat.whatsapp.com/abc",
   contact: "+420 777 123 456",
   ...overrides,
 })
@@ -98,30 +99,44 @@ describe("ParticipantInfo", () => {
     expect(navigate).toHaveAttribute("rel", "noopener noreferrer")
   })
 
-  it.each([
-    ["+420 777 123 456", "Zavolat +420 777 123 456", "tel:+420777123456"],
-    ["jana@example.com", "jana@example.com", "mailto:jana@example.com"],
-    [
-      "https://www.facebook.com/groups/florbal",
-      "Otevřít odkaz od organizátora",
-      "https://www.facebook.com/groups/florbal",
-    ],
-  ])("links the contact %s to the right app", (contact, name, href) => {
+  it("shows both the chat and the contact, each linking to its app", () => {
     render(
       <ParticipantInfo
-        info={info({ contact })}
+        info={info()}
         pin={pin}
       />,
     )
 
-    expect(screen.getByRole("link", { name })).toHaveAttribute("href", href)
+    expect(screen.getByRole("link", { name: "Skupinový chat" })).toHaveAttribute(
+      "href",
+      "https://chat.whatsapp.com/abc",
+    )
+    expect(screen.getByRole("link", { name: "Zavolat +420 777 123 456" })).toHaveAttribute(
+      "href",
+      "tel:+420777123456",
+    )
     expect(screen.getByText("Organizátor: Jana Nováková")).toBeInTheDocument()
+  })
+
+  it("links an e-mail contact to the mail app", () => {
+    render(
+      <ParticipantInfo
+        info={info({ contact: "jana@example.com", externalChatUrl: null })}
+        pin={pin}
+      />,
+    )
+
+    expect(screen.getByRole("link", { name: "jana@example.com" })).toHaveAttribute(
+      "href",
+      "mailto:jana@example.com",
+    )
+    expect(screen.queryByRole("link", { name: "Skupinový chat" })).not.toBeInTheDocument()
   })
 
   it("leaves out the contacts the organizer did not fill in", () => {
     render(
       <ParticipantInfo
-        info={info({ contact: null })}
+        info={info({ contact: null, externalChatUrl: null })}
         pin={pin}
       />,
     )
@@ -167,6 +182,7 @@ describe("ParticipantInfo", () => {
         info={info({
           location: null,
           contact: null,
+          externalChatUrl: null,
         })}
         pin={pin}
       />,

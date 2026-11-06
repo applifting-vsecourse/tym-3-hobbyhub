@@ -44,7 +44,7 @@ Je to živý dokument. První verze pokrývá data a role z Issues ve Sprintu 2 
 | Soukromé prostory: název místa, ulice, přesné souřadnice  | ❌                              | ✅       | ✅          | [#67][67], [#43][43] |
 | Praktické pokyny                                          | ❌                              | ✅       | ✅          | [#43][43]            |
 | Odkaz na externí chat                                     | ❌                              | ✅       | ✅          | [#43][43]            |
-| Kontakt na organizátora (e-mail, telefon nebo odkaz)      | ❌                              | ✅       | ✅          | [#43][43], [#19][19] |
+| Kontakt na organizátora (telefon, e-mail)                 | ❌                              | ✅       | ✅          | [#43][43], [#19][19] |
 | Jména a profily účastníků                                 | ❌                              | ❓       | ✅          | [#90][90], [#31][31] |
 | Koncept akce                                              | ❌                              | ❌       | ✅          | [#8][8]              |
 

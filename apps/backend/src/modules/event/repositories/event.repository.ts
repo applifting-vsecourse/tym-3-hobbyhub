@@ -268,6 +268,7 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   contributionAmount: event.contributionAmount?.toNumber() ?? null,
   contributionNote: event.contributionNote,
   contact: event.contact,
+  externalChatUrl: event.externalChatUrl,
   location: mapLocation(event),
   activity: {
     id: event.activity.id,
@@ -313,6 +314,7 @@ export class EventRepository {
         contributionAmount: data.contributionAmount ?? null,
         contributionNote: data.contributionNote ?? null,
         contact: data.contact ?? null,
+        externalChatUrl: data.externalChatUrl ?? null,
         locationStreet: data.location.street,
         locationCity: data.location.city,
         locationPostalCode: data.location.postalCode,
@@ -368,6 +370,7 @@ export class EventRepository {
           contributionAmount: data.contributionAmount ?? null,
           contributionNote: data.contributionNote ?? null,
           contact: data.contact ?? null,
+          externalChatUrl: data.externalChatUrl ?? null,
           locationStreet: data.location?.street ?? null,
           locationCity: data.location?.city ?? null,
           locationPostalCode: data.location?.postalCode ?? null,
@@ -566,6 +569,7 @@ export class EventRepository {
       location: mapLocation(event),
       organizerName: event.organizer.name,
       contact: event.contact,
+      externalChatUrl: event.externalChatUrl,
     };
   }
 

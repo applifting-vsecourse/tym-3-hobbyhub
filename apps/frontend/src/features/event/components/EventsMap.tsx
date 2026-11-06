@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import mapboxgl from "mapbox-gl"
-import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 
 import { missingCount } from "@/components/hobbyhub/capacity"
@@ -10,6 +9,7 @@ import { env } from "@/config/env"
 import type { NearPoint } from "@/features/event/api/eventKeys"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
+import { DARK_STYLE, isDark, LIGHT_STYLE, MapMarker } from "@/features/event/components/mapShared"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import {
   clusterEvents,
@@ -20,9 +20,6 @@ import {
 } from "@/features/event/lib/clusterEvents"
 
 import "mapbox-gl/dist/mapbox-gl.css"
-
-export const LIGHT_STYLE = "mapbox://styles/mapbox/light-v11"
-export const DARK_STYLE = "mapbox://styles/mapbox/dark-v11"
 
 // Prague, until there is something to fit.
 const FALLBACK_CENTER: [number, number] = [14.4378, 50.0755]
@@ -54,39 +51,6 @@ const soleEvent = (group: LocatedGroup) => (group.events.length === 1 ? group.ev
 const fitPadding = (target: mapboxgl.Map) => {
   const side = Math.min(FIT_SIDE_PADDING, target.getContainer().clientWidth / 4)
   return { top: FIT_PADDING, bottom: FIT_PADDING, left: side, right: side }
-}
-
-export const isDark = () => document.documentElement.classList.contains("dark")
-
-type MapMarkerProps = {
-  map: mapboxgl.Map
-  latitude: number
-  longitude: number
-  anchor: "bottom" | "center"
-  /** Pixels to shift the marker sideways from its position, to lay pins on one spot side by side. */
-  offsetX?: number
-  children: ReactNode
-}
-
-/** Puts React content on the map: a Mapbox marker whose element React draws into. */
-export function MapMarker({
-  map,
-  latitude,
-  longitude,
-  anchor,
-  offsetX = 0,
-  children,
-}: MapMarkerProps) {
-  const [element] = useState(() => document.createElement("div"))
-  useEffect(() => {
-    const marker = new mapboxgl.Marker({ element, anchor, offset: [offsetX, 0] })
-      .setLngLat([longitude, latitude])
-      .addTo(map)
-    return () => {
-      marker.remove()
-    }
-  }, [map, element, anchor, offsetX, latitude, longitude])
-  return createPortal(children, element)
 }
 
 type MapPinData = {

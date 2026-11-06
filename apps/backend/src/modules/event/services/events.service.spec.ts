@@ -37,6 +37,7 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   contributionAmount: 80,
   contributionNote: null,
   contact: null,
+  externalChatUrl: null,
   location: {
     street: 'Chabařovická 4',
     city: 'Praha 8',
@@ -603,7 +604,8 @@ describe('EventsService', () => {
       venueType: 'PUBLIC_VENUE' as const,
       location: null,
       organizerName: 'Jana',
-      contact: 'https://chat.whatsapp.com/abc',
+      externalChatUrl: 'https://chat.whatsapp.com/abc',
+      contact: '+420 777 123 456',
     };
 
     it('gives the contacts to a person holding a seat', async () => {

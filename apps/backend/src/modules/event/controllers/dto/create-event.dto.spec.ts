@@ -167,32 +167,49 @@ describe('CreateEventDto', () => {
     it.each([
       ['an e-mail', ' org@example.com ', 'org@example.com'],
       ['a phone', '+420 777 123 456', '+420 777 123 456'],
-      [
-        'a link to a group',
-        ' https://www.facebook.com/groups/florbal ',
-        'https://www.facebook.com/groups/florbal',
-      ],
     ])('keeps %s as the contact', async (_, sent, kept) => {
       await expect(
         validate({ ...validBody, contact: sent }),
       ).resolves.toMatchObject({ contact: kept });
     });
 
-    it('drops a blank contact', async () => {
+    it('keeps a chat link, and drops a blank chat link and contact', async () => {
       await expect(
-        validate({ ...validBody, contact: '  ' }),
-      ).resolves.toMatchObject({ contact: undefined });
+        validate({
+          ...validBody,
+          externalChatUrl: ' https://chat.whatsapp.com/abc ',
+          contact: '+420 777 123 456',
+        }),
+      ).resolves.toMatchObject({
+        externalChatUrl: 'https://chat.whatsapp.com/abc',
+        contact: '+420 777 123 456',
+      });
+      await expect(
+        validate({ ...validBody, externalChatUrl: '  ', contact: ' ' }),
+      ).resolves.toMatchObject({
+        externalChatUrl: undefined,
+        contact: undefined,
+      });
     });
 
     it.each([
-      ['a link that is not http(s)', 'javascript:alert(1)'],
-      ['a link without a protocol', 'facebook.com/groups/florbal'],
-      ['text that is no contact', 'call me'],
-      ['an e-mail without an at sign', 'org.example.com'],
-    ])('refuses %s as the contact', async (_, contact) => {
-      await expect(validate({ ...validBody, contact })).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      [
+        'a chat link that is not http(s)',
+        { externalChatUrl: 'javascript:alert(1)' },
+      ],
+      [
+        'a chat link without a protocol',
+        { externalChatUrl: 'chat.whatsapp.com/abc' },
+      ],
+      ['text that is no contact', { contact: 'call me' }],
+      ['an e-mail without an at sign', { contact: 'org.example.com' }],
+      ['a link as the contact', { contact: 'https://example.com/@jana.novak' }],
+      ['a date as the contact', { contact: '2026-11-06' }],
+      ['dashes as the contact', { contact: '1------' }],
+    ])('refuses %s', async (_, override) => {
+      await expect(
+        validate({ ...validBody, ...override }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     // The database counts characters, not UTF-16 units.

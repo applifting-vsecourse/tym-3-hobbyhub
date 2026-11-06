@@ -112,6 +112,9 @@ export class EventResponseDto {
   contributionNote!: string | null;
 
   @ApiProperty({ type: String, nullable: true })
+  externalChatUrl!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
   contact!: string | null;
 
   @ApiProperty({ type: EventLocationResponseDto, nullable: true })
@@ -156,6 +159,7 @@ export class EventResponseDto {
       contributionAmount: event.contributionAmount,
       contributionNote: event.contributionNote,
       contact: event.contact,
+      externalChatUrl: event.externalChatUrl,
       location: event.location
         ? EventLocationResponseDto.fromDomain(event.location)
         : null,
@@ -180,6 +184,9 @@ export class ParticipantEventInfoResponseDto {
   organizerName!: string;
 
   @ApiProperty({ type: String, nullable: true })
+  externalChatUrl!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
   contact!: string | null;
 
   static fromDomain(
@@ -192,6 +199,7 @@ export class ParticipantEventInfoResponseDto {
         : null,
       organizerName: info.organizerName,
       contact: info.contact,
+      externalChatUrl: info.externalChatUrl,
     };
   }
 }

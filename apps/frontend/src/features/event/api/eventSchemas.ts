@@ -13,7 +13,8 @@ export const EVENT_LIMITS = {
   postalCodeMax: 20,
   countryMax: 100,
   placeNameMax: 200,
-  contactMax: 500,
+  chatUrlMax: 500,
+  contactMax: 200,
   participantsLimit: 500,
 } as const
 
@@ -59,6 +60,7 @@ export const eventSchema = z.object({
   fillState: z.enum(["BELOW_MINIMUM", "MINIMUM_REACHED", "FULL"]),
   contributionAmount: z.number().nullable(),
   contributionNote: z.string().nullable(),
+  externalChatUrl: z.string().nullable(),
   contact: z.string().nullable(),
   location: eventLocationSchema.nullable(),
   activity: z.object({ id: z.string(), name: z.string(), icon: z.string() }),
@@ -109,6 +111,7 @@ export type CreateEventInput = {
   contributionAmount?: number
   contributionNote?: string
   /** Shown to approved participants only. */
+  externalChatUrl?: string
   contact?: string
 }
 
@@ -186,6 +189,11 @@ export const participantInfoSchema = z.object({
   venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
   location: eventLocationSchema.nullable(),
   organizerName: z.string(),
+  // Rendered as a link: only web addresses, whatever an old row may hold.
+  externalChatUrl: z
+    .string()
+    .refine((url) => /^https?:\/\//i.test(url))
+    .nullable(),
   contact: z.string().nullable(),
 })
 

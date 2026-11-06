@@ -110,6 +110,7 @@ export class EventsController {
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
       contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -176,6 +177,7 @@ export class EventsController {
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
       contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }

@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "event" ADD COLUMN     "contact" VARCHAR(500);
+ALTER TABLE "event" ADD COLUMN     "contact" VARCHAR(200);
