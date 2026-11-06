@@ -188,7 +188,7 @@
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
-      "organizer": "Organized by {{name}}",
+      "organizer": "Organized by <profile>{{name}}</profile>",
       "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
@@ -1165,6 +1165,11 @@
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "title": "My profile",
+    "userProfile": {
+      "interests": "What they play",
+      "notFound": "Profile not found.",
+      "title": "User profile"
+    },
     "view": {
       "addActivities": "Add what I play",
       "addBio": "Write a few words",

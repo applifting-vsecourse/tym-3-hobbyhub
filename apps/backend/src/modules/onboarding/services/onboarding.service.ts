@@ -2,6 +2,7 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import { LevelsService } from '@/modules/level/services/levels.service';
 import {
   HomeAddress,
+  Interest,
   InterestInput,
   interestViolations,
   Onboarding,
@@ -30,6 +31,13 @@ export class OnboardingService {
     const onboarding = await this.onboardingRepository.getOnboarding(user.id);
     if (!onboarding) throw new NotFoundException('User not found');
     return onboarding;
+  }
+
+  // What a person plays, for the profile others open (F-04.2).
+  async getInterestsOf(userId: string): Promise<Interest[]> {
+    const onboarding = await this.onboardingRepository.getOnboarding(userId);
+    if (!onboarding) throw new NotFoundException('User not found');
+    return onboarding.interests;
   }
 
   // Steps go in order: one can be saved or skipped only once the ones before

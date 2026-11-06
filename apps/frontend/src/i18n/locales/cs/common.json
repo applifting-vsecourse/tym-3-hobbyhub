@@ -189,7 +189,7 @@
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
       "organizedByGroup": "Pořádá skupina",
-      "organizer": "Pořádá {{name}}",
+      "organizer": "Pořádá <profile>{{name}}</profile>",
       "requestToJoin": "Požádat o účast",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
@@ -1189,6 +1189,11 @@
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
     "title": "Můj profil",
+    "userProfile": {
+      "interests": "Co hraje",
+      "notFound": "Profil nenalezen.",
+      "title": "Profil uživatele"
+    },
     "view": {
       "addActivities": "Přidat, co hraju",
       "addBio": "Napsat pár slov",

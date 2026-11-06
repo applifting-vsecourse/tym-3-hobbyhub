@@ -352,6 +352,7 @@ describe('ParticipationRequestsService', () => {
               {
                 id: 'r1',
                 status,
+                userId: 'u2',
                 message: null,
                 changedAt: now,
                 applicant: profile,

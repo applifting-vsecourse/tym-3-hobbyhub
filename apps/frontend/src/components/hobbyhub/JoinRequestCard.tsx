@@ -1,4 +1,5 @@
 import { useId } from "react"
+import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
@@ -12,6 +13,8 @@ type JoinRequestApplicantProps = {
   photo?: string | null
   hasVerifiedEmail?: boolean
   bio?: string | null
+  /** When set, the name links to this person's profile (F-04.2). */
+  profileUserId?: string
 }
 
 /**
@@ -23,6 +26,7 @@ export function JoinRequestApplicant({
   photo,
   hasVerifiedEmail = false,
   bio,
+  profileUserId,
 }: JoinRequestApplicantProps) {
   const { t } = useTranslation()
 
@@ -35,7 +39,19 @@ export function JoinRequestApplicant({
       />
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="typo-title break-words text-foreground">{name}</h3>
+          <h3 className="typo-title break-words text-foreground">
+            {profileUserId ? (
+              <Link
+                to="/profile/$userId"
+                params={{ userId: profileUserId }}
+                className="underline-offset-4 hover:underline"
+              >
+                {name}
+              </Link>
+            ) : (
+              name
+            )}
+          </h3>
           {hasVerifiedEmail ? (
             <StatusBadge status="approved">{t("hobbyhub.joinRequest.verified")}</StatusBadge>
           ) : null}

@@ -42,6 +42,8 @@ export type ApplicantProfile = {
   hasVerifiedEmail: boolean;
 };
 
+// F-04.2: a person holding an approved seat, as the organizer's list shows it.
+
 export type PendingRequest = ParticipationRequest & {
   applicant: ApplicantProfile;
 };
@@ -59,6 +61,8 @@ export type DecidedRequest = {
   // The request, or the seat of someone approved without one.
   id: string;
   status: DecidedStatus;
+  // The applicant, for the link to their profile.
+  userId: string;
   message: string | null;
   // When the person got the seat, was rejected or withdrew.
   changedAt: Date;

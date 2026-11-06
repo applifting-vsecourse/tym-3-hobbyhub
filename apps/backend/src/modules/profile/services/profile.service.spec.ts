@@ -183,4 +183,38 @@ describe('ProfileService', () => {
       });
     });
   });
+
+  describe('getPublicProfile', () => {
+    const publicRow = {
+      id: 'u2',
+      name: 'Petr',
+      createdAt: new Date('2026-09-02T10:00:00Z'),
+      bio: 'Běhám',
+      image: null,
+      profileCover: null,
+    };
+
+    it('carries neither e-mail, gender, birth date nor address', async () => {
+      const { service, repository, onboardingService } = setup();
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      const profile = await service.getPublicProfile('u2');
+      expect(Object.keys(profile).sort()).toEqual([
+        'bio',
+        'cover',
+        'id',
+        'image',
+        'interests',
+        'name',
+      ]);
+    });
+
+    it('answers not found for a user that does not exist', async () => {
+      const { service, repository } = setup();
+      repository.getPublicRow.mockResolvedValue(null);
+      await expect(service.getPublicProfile('nobody')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 });

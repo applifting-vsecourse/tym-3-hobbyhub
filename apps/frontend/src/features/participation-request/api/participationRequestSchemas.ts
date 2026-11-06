@@ -60,6 +60,8 @@ export const myRequestStateSchema = z.object({
 })
 
 export const pendingRequestSchema = participationRequestSchema.extend({
+  /** The applicant, for the link to their profile. */
+  userId: z.string(),
   applicant: applicantProfileSchema,
 })
 
@@ -76,6 +78,8 @@ export const decidedStatusSchema = z.enum(DECIDED_STATUSES)
 export const decidedRequestSchema = z.object({
   id: z.string(),
   status: decidedStatusSchema,
+  /** The applicant, for the link to their profile. */
+  userId: z.string(),
   message: z.string().nullable(),
   /** When the person got the seat, was rejected or withdrew. */
   changedAt: z.coerce.date(),

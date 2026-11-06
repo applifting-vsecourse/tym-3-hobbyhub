@@ -164,6 +164,7 @@ function EventDetailPage() {
             event={eventQuery.data}
             activityLabel={activityName(t, eventQuery.data.activity)}
             joinAction={joinAction}
+            isOrganizerLinked={Boolean(user)}
             groupLink={
               eventQuery.data.group ? (
                 <p className="typo-small text-muted-foreground">

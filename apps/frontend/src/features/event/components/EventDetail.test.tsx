@@ -1,5 +1,7 @@
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
+
+import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
 import { EventDetail } from "@/features/event/components/EventDetail"
@@ -40,9 +42,10 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   ...overrides,
 })
 
-const renderDetail = (overrides: Partial<EventDetailData> = {}) =>
-  render(
+const renderDetail = (overrides: Partial<EventDetailData> = {}, isOrganizerLinked = false) =>
+  renderWithRouter(
     <EventDetail
+      isOrganizerLinked={isOrganizerLinked}
       event={event(overrides)}
       activityLabel="Florbal"
       joinAction={<button type="button">Obsadit místo</button>}
@@ -52,8 +55,21 @@ const renderDetail = (overrides: Partial<EventDetailData> = {}) =>
   )
 
 describe("EventDetail", () => {
-  it("shows what a visitor needs to decide", () => {
-    renderDetail()
+  it("links the organizer to their profile", async () => {
+    await renderDetail({ organizerId: "org-1", organizerName: "Jana" }, true)
+
+    expect(screen.getByRole("link", { name: "Jana" }).getAttribute("href")).toBe("/profile/org-1")
+  })
+
+  it("names the organizer without a link for a visitor", async () => {
+    await renderDetail({ organizerId: "org-1", organizerName: "Jana" })
+
+    expect(screen.queryByRole("link", { name: "Jana" })).toBeNull()
+    expect(screen.getByText("Pořádá", { exact: false })).toHaveTextContent("Pořádá Jana")
+  })
+
+  it("shows what a visitor needs to decide", async () => {
+    await renderDetail()
 
     expect(screen.getByRole("heading", { level: 1, name: "Čtvrteční florbal" })).toBeInTheDocument()
     expect(screen.getByText("Florbal")).toBeInTheDocument()
@@ -63,21 +79,21 @@ describe("EventDetail", () => {
     expect(screen.getByText("do 20:30")).toBeInTheDocument()
     expect(screen.getByText("ZŠ Kobylisy, Praha 8")).toBeInTheDocument()
     expect(screen.getByText("Pokročilí")).toBeInTheDocument()
-    expect(screen.getByText("Pořádá Jana Nováková")).toBeInTheDocument()
+    expect(screen.getByText("Pořádá", { exact: false })).toHaveTextContent("Pořádá Jana Nováková")
     expect(screen.getByText("Hokejka a sálová obuv")).toBeInTheDocument()
     expect(screen.getByText(/80\s*Kč/)).toBeInTheDocument()
     expect(screen.getByText("chybí 3 do minima")).toBeInTheDocument()
     expect(screen.getByText("5 z 10 míst")).toBeInTheDocument()
   })
 
-  it("keeps the decimals and the note of the contribution", () => {
-    renderDetail({ contributionAmount: 80.5, contributionNote: "platí se na místě" })
+  it("keeps the decimals and the note of the contribution", async () => {
+    await renderDetail({ contributionAmount: 80.5, contributionNote: "platí se na místě" })
 
     expect(screen.getByText(/80,5\s*Kč · platí se na místě/)).toBeInTheDocument()
   })
 
-  it("names the end date of an event that ends on another day", () => {
-    renderDetail({ endAt: new Date(2026, 9, 24, 20, 30) })
+  it("names the end date of an event that ends on another day", async () => {
+    await renderDetail({ endAt: new Date(2026, 9, 24, 20, 30) })
 
     expect(screen.getByText(/do .*24.*20:30/)).toBeInTheDocument()
   })
@@ -88,22 +104,22 @@ describe("EventDetail", () => {
     ["a cancelled event", { status: "CANCELLED" as const }, false],
     ["a finished event", { status: "FINISHED" as const }, false],
     ["an event that already started", { startAt: new Date(2026, 9, 22, 7, 0) }, false],
-  ])("handles sharing of %s", (_, overrides, isShown) => {
-    renderDetail(overrides)
+  ])("handles sharing of %s", async (_, overrides, isShown) => {
+    await renderDetail(overrides)
 
     expect(screen.queryByRole("button", { name: "Sdílet" }) !== null).toBe(isShown)
   })
 
-  it("tells a visitor when the exact address and the contacts appear", () => {
-    renderDetail()
+  it("tells a visitor when the exact address and the contacts appear", async () => {
+    await renderDetail()
 
     expect(
       screen.getByText("Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti."),
     ).toBeInTheDocument()
   })
 
-  it("shows the place and contacts of a participant instead of the hint", () => {
-    render(
+  it("shows the place and contacts of a participant instead of the hint", async () => {
+    await renderWithRouter(
       <EventDetail
         event={event({ venueType: "PRIVATE_VENUE" })}
         activityLabel="Florbal"
@@ -118,21 +134,21 @@ describe("EventDetail", () => {
     expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
   })
 
-  it("does not promise the contacts of an event that is over", () => {
-    renderDetail({ status: "FINISHED" })
+  it("does not promise the contacts of an event that is over", async () => {
+    await renderDetail({ status: "FINISHED" })
 
     expect(screen.queryByText(/uvidíš po potvrzení účasti/)).not.toBeInTheDocument()
   })
 
-  it("offers the seat while the event is open", () => {
-    renderDetail()
+  it("offers the seat while the event is open", async () => {
+    await renderDetail()
 
     expect(screen.getByRole("button", { name: "Obsadit místo" })).toBeInTheDocument()
     expect(screen.getByText("Organizátor žádost schvaluje ručně.")).toBeInTheDocument()
   })
 
-  it("shows the mix of participants adding up to the taken seats", () => {
-    renderDetail({
+  it("shows the mix of participants adding up to the taken seats", async () => {
+    await renderDetail({
       takenCount: 7,
       stats: { included: 5, total: 7, medianAge: 36, gender: { male: 5, female: 0, unknown: 2 } },
     })
@@ -145,8 +161,8 @@ describe("EventDetail", () => {
     expect(screen.getByText("Věk a pohlaví známe u 5 z 7 přihlášených.")).toBeInTheDocument()
   })
 
-  it("leaves out the unknown figure when everyone is counted", () => {
-    renderDetail({
+  it("leaves out the unknown figure when everyone is counted", async () => {
+    await renderDetail({
       stats: { included: 5, total: 5, medianAge: 36, gender: { male: 3, female: 2, unknown: 0 } },
     })
 
@@ -160,8 +176,8 @@ describe("EventDetail", () => {
     [1, "aspoň 1 účastník z aplikace"],
     [3, "aspoň 3 účastníci z aplikace"],
     [5, "aspoň 5 účastníků z aplikace"],
-  ])("explains who the mix waits for when %i are needed", (statsMinParticipants, needed) => {
-    renderDetail({ stats: null, takenCount: 3, statsMinParticipants })
+  ])("explains who the mix waits for when %i are needed", async (statsMinParticipants, needed) => {
+    await renderDetail({ stats: null, takenCount: 3, statsMinParticipants })
 
     expect(screen.getByText("3 z 10 míst")).toBeInTheDocument()
     expect(
@@ -206,16 +222,16 @@ describe("EventDetail", () => {
       "Proběhlo",
       "Akce už proběhla, o účast se nedá žádat.",
     ],
-  ])("does not let anyone ask to join %s", (_name, overrides, badge, text) => {
-    renderDetail(overrides)
+  ])("does not let anyone ask to join %s", async (_name, overrides, badge, text) => {
+    await renderDetail(overrides)
 
     expect(screen.getByText(badge)).toBeInTheDocument()
     expect(screen.getByText(text)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
   })
 
-  it("shows the person's own request instead of the seat, even on a full event", () => {
-    render(
+  it("shows the person's own request instead of the seat, even on a full event", async () => {
+    await renderWithRouter(
       <EventDetail
         event={event({ takenCount: 10 })}
         activityLabel="Florbal"
@@ -229,22 +245,22 @@ describe("EventDetail", () => {
     expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
   })
 
-  it("does not promise a hidden address for a public venue", () => {
-    renderDetail({ equipment: null, contributionAmount: null })
+  it("does not promise a hidden address for a public venue", async () => {
+    await renderDetail({ equipment: null, contributionAmount: null })
 
     expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
     expect(screen.queryByText("Odkaz po schválení")).not.toBeInTheDocument()
   })
 
-  it("promises the link, not an address, for an online event", () => {
-    renderDetail({ venueType: "ONLINE", placeName: null, district: null, city: null })
+  it("promises the link, not an address, for an online event", async () => {
+    await renderDetail({ venueType: "ONLINE", placeName: null, district: null, city: null })
 
     expect(screen.getByText("Odkaz po schválení")).toBeInTheDocument()
     expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
   })
 
-  it("gives the reason and the note of a cancelled event", () => {
-    renderDetail({
+  it("gives the reason and the note of a cancelled event", async () => {
+    await renderDetail({
       status: "CANCELLED",
       cancellationReason: "Nepříznivé počasí",
       cancellationNote: "Hrajeme příští týden",
@@ -253,8 +269,8 @@ describe("EventDetail", () => {
     expect(screen.getByText("Důvod: Nepříznivé počasí · Hrajeme příští týden")).toBeInTheDocument()
   })
 
-  it("shows what the page gives the organizer", () => {
-    render(
+  it("shows what the page gives the organizer", async () => {
+    await renderWithRouter(
       <EventDetail
         event={event()}
         activityLabel="Florbal"
