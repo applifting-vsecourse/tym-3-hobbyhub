@@ -85,6 +85,12 @@ export const myMembershipRequestSchema = z.object({
   }),
 })
 
+/**
+ * The overview's sections, each paged on its own. `pending`: still to be
+ * decided. `history`: rejected, withdrawn, or waiting on a cancelled group.
+ */
+export type MyMembershipRequestSection = "pending" | "history"
+
 export const myMembershipRequestPageSchema = z.object({
   items: z.array(myMembershipRequestSchema),
   nextCursor: z.string().nullable(),

@@ -1,16 +1,21 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { Trans, useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { Loader } from "@/components/hobbyhub/Loader"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 import { myMembershipRequestsQueryOptions } from "@/features/group/api/membershipRequestQueryOptions"
-import type { MyMembershipRequest } from "@/features/group/api/membershipRequestSchemas"
+import type {
+  MyMembershipRequest,
+  MyMembershipRequestSection,
+} from "@/features/group/api/membershipRequestSchemas"
 import { GroupGrid } from "@/features/group/components/GroupGrid"
 import { useWithdrawMembershipRequest } from "@/features/group/hooks/useMembershipRequestMutations"
 
@@ -25,14 +30,21 @@ const BADGES: Record<MyMembershipRequest["status"], Status> = {
 
 const linkClassName = "text-primary underline-offset-4 hover:underline"
 
+function useSectionQuery(userId: string, section: MyMembershipRequestSection) {
+  return useInfiniteQuery(myMembershipRequestsQueryOptions(userId, section))
+}
+
+type SectionQuery = ReturnType<typeof useSectionQuery>
+
 /**
- * "Žádosti" tab (F-07.7): the viewer's requests to join groups, newest first,
- * without the approved ones, which "Moje skupiny" shows as memberships.
+ * "Žádosti" tab (F-07.7): the viewer's requests to join groups in two
+ * sections, "Čekající" and "Historie", each newest first. Approved requests
+ * are in neither: "Moje skupiny" shows them as memberships.
  */
 export function MyMembershipRequests({ userId }: { userId: string }) {
   const { t } = useTranslation()
-  const query = useInfiniteQuery(myMembershipRequestsQueryOptions(userId))
-  const requests = query.data?.pages.flatMap((page) => page.items)
+  const pending = useSectionQuery(userId, "pending")
+  const history = useSectionQuery(userId, "history")
   const withdraw = useWithdrawMembershipRequest()
   const [withdrawing, setWithdrawing] = useState<MyMembershipRequest | null>(null)
 
@@ -46,39 +58,26 @@ export function MyMembershipRequests({ userId }: { userId: string }) {
     }
   }
 
+  // One loader for the tab, not one per section.
+  if (pending.isPending || history.isPending) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader
+          variant="player"
+          label={t("groups.myRequests.loading")}
+        />
+      </div>
+    )
+  }
+
   return (
-    <section
-      aria-labelledby="my-requests-heading"
-      className="flex flex-col gap-6"
-    >
-      <h2
-        id="my-requests-heading"
-        className="sr-only"
-      >
-        {t("groups.list.tabs.requests")}
-      </h2>
-      <GroupGrid
-        items={requests}
-        isPending={query.isPending}
-        // A failed next page keeps the loaded ones; the button below retries it.
-        error={requests ? null : query.error}
-        onRetry={() => void query.refetch()}
-        getKey={(request) => request.id}
-        listClassName="flex flex-col gap-3"
-        loadingLabel={t("groups.myRequests.loading")}
-        errorTitle={t("groups.myRequests.loadError")}
-        renderItem={(request) => (
-          <MyMembershipRequestCard
-            request={request}
-            onWithdraw={() => {
-              withdraw.reset()
-              setWithdrawing(request)
-            }}
-          />
-        )}
+    <div className="flex flex-col gap-8">
+      <RequestSection
+        section="pending"
+        query={pending}
         empty={
           <Trans
-            i18nKey="groups.myRequests.empty"
+            i18nKey="groups.myRequests.pendingEmpty"
             components={{
               discover: (
                 <Link
@@ -90,26 +89,16 @@ export function MyMembershipRequests({ userId }: { userId: string }) {
             }}
           />
         }
+        onWithdraw={(request) => {
+          withdraw.reset()
+          setWithdrawing(request)
+        }}
       />
-      {query.hasNextPage ? (
-        <div className="flex flex-col items-center gap-2">
-          {query.isFetchNextPageError ? (
-            <p
-              role="alert"
-              className="typo-small text-destructive"
-            >
-              {t("groups.myRequests.loadMoreError")}
-            </p>
-          ) : null}
-          <Button
-            variant="outline"
-            disabled={query.isFetchingNextPage}
-            onClick={() => void query.fetchNextPage()}
-          >
-            {query.isFetchingNextPage ? t("groups.list.loadingMore") : t("groups.list.loadMore")}
-          </Button>
-        </div>
-      ) : null}
+      <RequestSection
+        section="history"
+        query={history}
+        empty={t("groups.myRequests.historyEmpty")}
+      />
       <ResponsiveSheet
         isOpen={withdrawing !== null}
         onOpenChange={(isOpening) => {
@@ -139,23 +128,101 @@ export function MyMembershipRequests({ userId }: { userId: string }) {
           {t("groups.membershipRequest.withdraw.text")}
         </p>
       </ResponsiveSheet>
+    </div>
+  )
+}
+
+type RequestSectionProps = {
+  section: MyMembershipRequestSection
+  query: SectionQuery
+  /** One sentence saying what would appear here. */
+  empty: ReactNode
+  /** Only the waiting requests can be withdrawn. */
+  onWithdraw?: (request: MyMembershipRequest) => void
+}
+
+/** A titled list of requests, a page at a time, with its empty and error states. */
+function RequestSection({ section, query, empty, onWithdraw }: RequestSectionProps) {
+  const { t } = useTranslation()
+  const requests = query.data?.pages.flatMap((page) => page.items)
+  const headingId = `my-requests-${section}-heading`
+
+  return (
+    <section
+      aria-labelledby={headingId}
+      className="flex flex-col gap-4"
+    >
+      <h2
+        id={headingId}
+        className="typo-h3 text-foreground"
+      >
+        {t(`groups.myRequests.${section}Title`)}
+      </h2>
+      <GroupGrid
+        items={requests}
+        isPending={false}
+        // A failed next page keeps the loaded ones; the button below retries it.
+        error={requests ? null : query.error}
+        onRetry={() => void query.refetch()}
+        getKey={(request) => request.id}
+        listClassName="flex flex-col gap-3"
+        errorTitle={t("groups.myRequests.loadError")}
+        renderItem={(request) => (
+          <MyMembershipRequestCard
+            request={request}
+            // Every waiting request is waiting; the section title says so.
+            hasStatus={section === "history"}
+            onWithdraw={onWithdraw ? () => onWithdraw(request) : undefined}
+          />
+        )}
+        empty={empty}
+      />
+      {query.hasNextPage ? (
+        <div className="flex flex-col items-center gap-2">
+          {query.isFetchNextPageError ? (
+            <p
+              role="alert"
+              className="typo-small text-destructive"
+            >
+              {t("groups.myRequests.loadMoreError")}
+            </p>
+          ) : null}
+          <Button
+            variant="outline"
+            disabled={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+          >
+            {query.isFetchingNextPage ? t("groups.list.loadingMore") : t("groups.list.loadMore")}
+          </Button>
+        </div>
+      ) : null}
     </section>
   )
 }
 
 type MyMembershipRequestCardProps = {
   request: MyMembershipRequest
-  onWithdraw: () => void
+  hasStatus: boolean
+  onWithdraw?: () => void
 }
 
-/** One request as its applicant sees it: where, how it stands, and when. */
-function MyMembershipRequestCard({ request, onWithdraw }: MyMembershipRequestCardProps) {
+/**
+ * One request as its applicant sees it: where, how it stands, and when. A
+ * withdrawn one is drawn like a disabled control: it no longer counts, but the
+ * group is still a link, because a new request starts there.
+ */
+function MyMembershipRequestCard({ request, hasStatus, onWithdraw }: MyMembershipRequestCardProps) {
   const { t, i18n } = useTranslation()
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" })
   const { status, group } = request
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-border p-4">
+    <article
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border border-border p-4",
+        status === "WITHDRAWN" && "opacity-50",
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="typo-title break-words text-foreground">
           {group.isOpen ? (
@@ -170,11 +237,13 @@ function MyMembershipRequestCard({ request, onWithdraw }: MyMembershipRequestCar
             group.name
           )}
         </h3>
-        <StatusBadge status={BADGES[status]}>
-          {status === "PENDING" || status === "REJECTED"
-            ? undefined
-            : t(`groups.myRequests.status.${status}`)}
-        </StatusBadge>
+        {hasStatus ? (
+          <StatusBadge status={BADGES[status]}>
+            {status === "PENDING" || status === "REJECTED"
+              ? undefined
+              : t(`groups.myRequests.status.${status}`)}
+          </StatusBadge>
+        ) : null}
       </div>
       <p className="typo-small text-muted-foreground">
         {t("groups.myRequests.requestedAt", { date: date.format(request.requestedAt) })}
@@ -211,7 +280,7 @@ function MyMembershipRequestCard({ request, onWithdraw }: MyMembershipRequestCar
           ) : null}
         </dl>
       ) : null}
-      {status === "PENDING" ? (
+      {status === "PENDING" && onWithdraw ? (
         <Button
           variant="outline"
           className="self-start"

@@ -564,12 +564,15 @@
         "REJECTED": "Rejected {{date}}",
         "WITHDRAWN": "Withdrawn {{date}}"
       },
-      "empty": "You have not asked to join any group yet. Find one under <discover>Discover</discover>.",
       "groupCancelledText": "The organizer cancelled the group, so nobody will decide this request.",
+      "historyEmpty": "Rejected and withdrawn requests will show up here.",
+      "historyTitle": "History",
       "loadError": "Your requests could not be loaded",
       "loadMoreError": "More requests could not be loaded. Please try again.",
       "loading": "Loading requests…",
       "message": "Your message",
+      "pendingEmpty": "No request is waiting for a decision. Find groups under <discover>Discover</discover>.",
+      "pendingTitle": "Pending",
       "rejectionReason": "Reason for rejection",
       "requestedAt": "Sent {{date}}",
       "status": {

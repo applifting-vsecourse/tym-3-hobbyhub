@@ -9,6 +9,7 @@ import {
   myMembershipRequestPageSchema,
   myMembershipRequestStateSchema,
   pendingMembershipRequestSchema,
+  type MyMembershipRequestSection,
 } from "@/features/group/api/membershipRequestSchemas"
 
 /** Only for a signed-in user: the endpoint answers 401 to a visitor. */
@@ -19,15 +20,18 @@ export const myMembershipRequestQueryOptions = (groupId: string, userId: string)
       myMembershipRequestStateSchema.parse(await api.get(`groups/${groupId}/requests/mine`).json()),
   })
 
-/** The signed-in user's own requests across groups (F-07.7), a page at a time. */
-export const myMembershipRequestsQueryOptions = (userId: string) =>
+/** One section of the signed-in user's own requests across groups (F-07.7), a page at a time. */
+export const myMembershipRequestsQueryOptions = (
+  userId: string,
+  section: MyMembershipRequestSection,
+) =>
   infiniteQueryOptions({
-    queryKey: groupKeys.myRequests(userId),
+    queryKey: groupKeys.myRequests(userId, section),
     queryFn: async ({ pageParam }) =>
       myMembershipRequestPageSchema.parse(
         await api
           .get("membership-requests/mine", {
-            searchParams: pageParam ? { cursor: pageParam } : {},
+            searchParams: pageParam ? { section, cursor: pageParam } : { section },
           })
           .json(),
       ),

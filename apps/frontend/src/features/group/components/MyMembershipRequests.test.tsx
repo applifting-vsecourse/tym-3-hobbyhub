@@ -5,7 +5,10 @@ import userEvent from "@testing-library/user-event"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { groupKeys } from "@/features/group/api/groupKeys"
-import type { MyMembershipRequest } from "@/features/group/api/membershipRequestSchemas"
+import type {
+  MyMembershipRequest,
+  MyMembershipRequestSection,
+} from "@/features/group/api/membershipRequestSchemas"
 import { MyMembershipRequests } from "@/features/group/components/MyMembershipRequests"
 
 const { withdrawMembershipRequest, toast } = vi.hoisted(() => ({
@@ -39,21 +42,28 @@ const aRequest = (overrides: Partial<MyMembershipRequest> = {}): MyMembershipReq
   ...overrides,
 })
 
-// The list as the server sent it, so the tab renders without a request.
-const renderRequests = (requests: MyMembershipRequest[]) => {
+// Both sections as the server sent them, so the tab renders without a request.
+const renderRequests = (
+  sections: Partial<Record<MyMembershipRequestSection, MyMembershipRequest[]>>,
+) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   })
-  queryClient.setQueryData(groupKeys.myRequests("u1"), {
-    pages: [{ items: requests, nextCursor: null }],
-    pageParams: [null],
-  })
+  for (const section of ["pending", "history"] as const) {
+    queryClient.setQueryData(groupKeys.myRequests("u1", section), {
+      pages: [{ items: sections[section] ?? [], nextCursor: null }],
+      pageParams: [null],
+    })
+  }
   return renderWithRouter(
     <QueryClientProvider client={queryClient}>
       <MyMembershipRequests userId="u1" />
     </QueryClientProvider>,
   )
 }
+
+const sectionNamed = (name: string) =>
+  screen.getByRole("heading", { level: 2, name }).closest("section")!
 
 describe("MyMembershipRequests", () => {
   beforeEach(() => {
@@ -62,61 +72,79 @@ describe("MyMembershipRequests", () => {
     toast.error.mockReset()
   })
 
-  it("points to Objevit when there are no requests", async () => {
-    await renderRequests([])
+  it("says what would appear in each empty section", async () => {
+    await renderRequests({})
 
-    expect(screen.getByText(/Zatím jste o členství v žádné skupině nežádali/)).toBeVisible()
-    expect(screen.getByRole("link", { name: "Objevit" })).toBeVisible()
+    const pending = sectionNamed("Čekající")
+    expect(within(pending).getByText(/Žádná žádost nečeká na vyřízení/)).toBeVisible()
+    expect(within(pending).getByRole("link", { name: "Objevit" })).toBeVisible()
+    expect(
+      within(sectionNamed("Historie")).getByText("Tady se objeví zamítnuté a stažené žádosti."),
+    ).toBeVisible()
   })
 
-  it("shows how each request stands, with its dates, reason and message", async () => {
-    await renderRequests([
-      aRequest({ message: "Hraju třetí rok." }),
-      aRequest({
-        id: "r2",
-        status: "REJECTED",
-        decidedAt: new Date(2026, 10, 4),
-        rejectionReason: "Skupina je plná.",
-        group: { id: "g2", name: "Ranní běžci", isOpen: true },
-      }),
-      aRequest({
-        id: "r3",
-        status: "WITHDRAWN",
-        decidedAt: new Date(2026, 10, 3),
-        group: { id: "g3", name: "Volejbal Letná", isOpen: true },
-      }),
-    ])
+  it("lists waiting requests without a status, and can withdraw them", async () => {
+    await renderRequests({ pending: [aRequest({ message: "Hraju třetí rok." })] })
 
-    const [pending, rejected, withdrawn] = screen.getAllByRole("article")
-    expect(within(pending!).getByText("Čeká na schválení")).toBeVisible()
-    expect(within(pending!).getByText("Hraju třetí rok.")).toBeVisible()
-    expect(within(pending!).getByRole("button", { name: "Zrušit žádost" })).toBeVisible()
+    const card = within(sectionNamed("Čekající")).getByRole("article")
+    expect(within(card).queryByText("Čeká na schválení")).not.toBeInTheDocument()
+    expect(within(card).getByText("Podáno 2. 11. 2026")).toBeVisible()
+    expect(within(card).getByText("Hraju třetí rok.")).toBeVisible()
+    expect(within(card).getByRole("button", { name: "Zrušit žádost" })).toBeVisible()
+  })
 
+  it("shows the history with a status, dates and reason, a withdrawn one dimmed", async () => {
+    await renderRequests({
+      history: [
+        aRequest({
+          id: "r2",
+          status: "REJECTED",
+          decidedAt: new Date(2026, 10, 4),
+          rejectionReason: "Skupina je plná.",
+          group: { id: "g2", name: "Ranní běžci", isOpen: true },
+        }),
+        aRequest({
+          id: "r3",
+          status: "WITHDRAWN",
+          decidedAt: new Date(2026, 10, 3),
+          group: { id: "g3", name: "Volejbal Letná", isOpen: true },
+        }),
+      ],
+    })
+
+    const [rejected, withdrawn] = within(sectionNamed("Historie")).getAllByRole("article")
     expect(within(rejected!).getByText("Zamítnuto")).toBeVisible()
     expect(within(rejected!).getByText(/Zamítnuto 4\. 11\. 2026/)).toBeVisible()
     expect(within(rejected!).getByText("Skupina je plná.")).toBeVisible()
     expect(within(rejected!).queryByRole("button")).not.toBeInTheDocument()
+    expect(rejected).not.toHaveClass("opacity-50")
 
-    expect(within(withdrawn!).getByText("Staženo")).toBeVisible()
+    expect(withdrawn).toHaveClass("opacity-50")
+    expect(within(withdrawn!).getByText("Staženo")).toBeInTheDocument()
     expect(
       within(withdrawn!).getByText(/Podáno 2\. 11\. 2026 · Staženo 3\. 11\. 2026/),
-    ).toBeVisible()
+    ).toBeInTheDocument()
     // Neither was given: no empty label stands in for them.
     expect(within(withdrawn!).queryByText("Důvod zamítnutí")).not.toBeInTheDocument()
     expect(within(withdrawn!).queryByText("Vaše zpráva")).not.toBeInTheDocument()
-
-    expect(screen.getByRole("link", { name: "Ranní běžci" })).toHaveAttribute("href", "/groups/g2")
+    // A new request starts on the group's page, so the link stays.
+    expect(within(withdrawn!).getByRole("link", { name: "Volejbal Letná" })).toHaveAttribute(
+      "href",
+      "/groups/g3",
+    )
   })
 
   it("says a request on a cancelled group will not be decided, without a link", async () => {
-    await renderRequests([
-      aRequest({
-        status: "GROUP_CANCELLED",
-        group: { id: "g1", name: "Čtvrteční florbalisté", isOpen: false },
-      }),
-    ])
+    await renderRequests({
+      history: [
+        aRequest({
+          status: "GROUP_CANCELLED",
+          group: { id: "g1", name: "Čtvrteční florbalisté", isOpen: false },
+        }),
+      ],
+    })
 
-    const card = screen.getByRole("article")
+    const card = within(sectionNamed("Historie")).getByRole("article")
     expect(within(card).getByText("Skupina zrušena")).toBeVisible()
     expect(within(card).getByText(/žádost už nikdo nevyřídí/)).toBeVisible()
     expect(within(card).getByRole("heading", { name: "Čtvrteční florbalisté" })).toBeVisible()
@@ -127,7 +155,7 @@ describe("MyMembershipRequests", () => {
   it("withdraws a waiting request after asking", async () => {
     const user = userEvent.setup()
     withdrawMembershipRequest.mockResolvedValue(undefined)
-    await renderRequests([aRequest()])
+    await renderRequests({ pending: [aRequest()] })
 
     await user.click(screen.getByRole("button", { name: "Zrušit žádost" }))
     const dialog = await screen.findByRole("dialog")
@@ -141,7 +169,7 @@ describe("MyMembershipRequests", () => {
   it("keeps the confirmation open when withdrawing fails", async () => {
     const user = userEvent.setup()
     withdrawMembershipRequest.mockRejectedValue(new Error("offline"))
-    await renderRequests([aRequest()])
+    await renderRequests({ pending: [aRequest()] })
 
     await user.click(screen.getByRole("button", { name: "Zrušit žádost" }))
     const dialog = await screen.findByRole("dialog")

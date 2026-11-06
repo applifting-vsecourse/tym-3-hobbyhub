@@ -16,8 +16,7 @@ type GroupGridProps<T> = {
   getKey: (item: T) => string
   /** The list's layout; three cards across from `md` by default. */
   listClassName?: string
-  /** What is loading and what failed, when the list is not of groups. */
-  loadingLabel?: string
+  /** What failed, when the list is not of groups. */
   errorTitle?: string
 }
 
@@ -31,7 +30,6 @@ export function GroupGrid<T>({
   renderItem,
   getKey,
   listClassName = "grid gap-3 md:grid-cols-3",
-  loadingLabel,
   errorTitle,
 }: GroupGridProps<T>) {
   const { t } = useTranslation()
@@ -41,7 +39,7 @@ export function GroupGrid<T>({
       <div className="flex justify-center py-8">
         <Loader
           variant="player"
-          label={loadingLabel ?? t("groups.list.loading")}
+          label={t("groups.list.loading")}
         />
       </div>
     )

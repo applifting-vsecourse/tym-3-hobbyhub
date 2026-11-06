@@ -1,3 +1,5 @@
+import type { MyMembershipRequestSection } from "@/features/group/api/membershipRequestSchemas"
+
 export const groupKeys = {
   all: () => ["groups"] as const,
   lists: () => [...groupKeys.all(), "list"] as const,
@@ -7,7 +9,8 @@ export const groupKeys = {
   discover: (viewerId: string | null) => [...groupKeys.lists(), "discover", viewerId] as const,
   // F-07.7, per user like `myRequest`. A list, so asking, withdrawing and a
   // decision refresh it with the others.
-  myRequests: (userId: string) => [...groupKeys.lists(), "my-requests", userId] as const,
+  myRequests: (userId: string, section: MyMembershipRequestSection) =>
+    [...groupKeys.lists(), "my-requests", userId, section] as const,
   details: () => [...groupKeys.all(), "detail"] as const,
   detail: (id: string) => [...groupKeys.details(), id] as const,
   membership: (id: string) => [...groupKeys.detail(id), "membership"] as const,
