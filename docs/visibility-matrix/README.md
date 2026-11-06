@@ -157,6 +157,8 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 
 **Soukromá skupina je dohledatelná, ale zavřená.** Skupina, kterou nejde najít, nemůže shánět lidi, a to je důvod, proč produkt existuje. Vidět má jít, že existuje a čemu se věnuje; co se v ní děje, ne.
 
+**Akce jen pro skupinu vidí i ten, kdo na ní má místo** ([#47][47]). Kdo má schválenou účast, je náhradník nebo má čekající žádost, vidí akci dál, i když ze skupiny odejde nebo je odebrán. Jinak by se z akce nemohl odhlásit a zmizela by mu z přehledu. Pro všechny ostatní mimo skupinu akce neexistuje: není ve výpisu skupiny a na odkaz vrací „nenalezeno“.
+
 [po]: review-2026-11-05.md
 [6]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/6
 [7]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/7
