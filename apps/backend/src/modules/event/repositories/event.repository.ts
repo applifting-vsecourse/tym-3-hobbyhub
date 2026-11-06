@@ -12,6 +12,7 @@ import {
   CancelEventData,
   CreateEventData,
   Event,
+  EVENT_LIST_TIME_ZONE,
   EventAudience,
   EventChangeResult,
   EventDetail,
@@ -101,7 +102,7 @@ const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
 // "volejbal praha" finds the activity in one column and the city in another.
 const listCondition = (
   now: Date,
-  { activityIds, search, location }: EventListFilter,
+  { activityIds, search, location, dateFrom, dateTo }: EventListFilter,
 ): Prisma.Sql => {
   const words = (text?: string): string[] =>
     foldForSearch(text ?? '')
@@ -114,6 +115,18 @@ const listCondition = (
     Prisma.sql`e."endAt" > ${now}`,
     ...(activityIds.length > 0
       ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
+      : []),
+    // "startAt" is a UTC timestamp without a zone: the days are turned into UTC
+    // instants (midnight in Prague) so the index on it stays usable.
+    ...(dateFrom
+      ? [
+          Prisma.sql`e."startAt" >= (${dateFrom}::date::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
+        ]
+      : []),
+    ...(dateTo
+      ? [
+          Prisma.sql`e."startAt" < ((${dateTo}::date + 1)::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
+        ]
       : []),
     ...words(search).map(
       (word) =>

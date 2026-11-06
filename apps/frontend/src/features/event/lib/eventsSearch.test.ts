@@ -30,6 +30,15 @@ describe("eventsSearchSchema", () => {
     expect(parsed.q).toHaveLength(EVENT_SEARCH_MAX_LENGTH)
   })
 
+  it("keeps a date range and drops what is no day", () => {
+    expect(eventsSearchSchema.parse({ from: "2026-11-15", to: "2026-11-30" })).toEqual({
+      from: "2026-11-15",
+      to: "2026-11-30",
+    })
+    expect(eventsSearchSchema.parse({ from: "15.11.2026", to: 5 })).toEqual({})
+    expect(eventsSearchSchema.parse({ from: "9999-99-99", to: "2026-02-30" })).toEqual({})
+  })
+
   it("has no filter when nothing is in the address", () => {
     expect(eventsSearchSchema.parse({})).toEqual({})
   })

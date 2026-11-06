@@ -31,16 +31,44 @@ describe("FiltersSheet", () => {
     await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
     await user.click(await screen.findByRole("option", { name: "Volejbal" }))
     await user.keyboard("{Escape}")
-    await user.click(screen.getByRole("radio", { name: "Víkend" }))
+    await user.type(screen.getByLabelText("Od data"), "2026-11-15")
     expect(onApply).not.toHaveBeenCalled()
 
     await user.click(screen.getByRole("button", { name: "Zobrazit 3 akce" }))
     expect(onApply).toHaveBeenCalledWith({
       activities: ["volejbal"],
-      when: "weekend",
+      dateFrom: "2026-11-15",
+      dateTo: "",
       location: "",
     })
     expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("fills the dates from a quick choice and refuses a reversed range", async () => {
+    const user = userEvent.setup()
+    const onApply = vi.fn()
+    render(
+      <FiltersSheet
+        isOpen
+        onOpenChange={vi.fn()}
+        value={EMPTY_FILTERS}
+        onApply={onApply}
+        fields={["when"]}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "Víkend" }))
+    expect(screen.getByLabelText("Od data")).not.toHaveValue("")
+    expect(screen.getByLabelText("Do data")).not.toHaveValue("")
+
+    await user.clear(screen.getByLabelText("Od data"))
+    await user.type(screen.getByLabelText("Od data"), "2026-11-20")
+    await user.clear(screen.getByLabelText("Do data"))
+    await user.type(screen.getByLabelText("Do data"), "2026-11-10")
+    expect(screen.getByRole("alert")).toHaveTextContent("Konec rozsahu nemůže být před začátkem.")
+
+    await user.click(screen.getByRole("button", { name: "Zobrazit výsledky" }))
+    expect(onApply).not.toHaveBeenCalled()
   })
 
   it("offers only the requested filters, with the given activities", async () => {
