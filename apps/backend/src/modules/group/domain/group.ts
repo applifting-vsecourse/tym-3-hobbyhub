@@ -14,6 +14,48 @@ export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 export const hasGroupAdminRights = (role: GroupRole): boolean =>
   role === 'OWNER' || role === 'ADMIN';
 
+// The roles an owner hands out (ADR-0007); OWNER moves only by a transfer.
+export const ASSIGNABLE_GROUP_ROLES = ['ADMIN', 'MEMBER'] as const;
+export type AssignableGroupRole = (typeof ASSIGNABLE_GROUP_ROLES)[number];
+
+// F-07.3b: what one member does to another in member management.
+export type MemberAction =
+  | { kind: 'remove' }
+  | { kind: 'setRole'; role: AssignableGroupRole }
+  | { kind: 'transferOwnership' };
+
+export type MemberActionViolation =
+  // Leaving goes through DELETE /membership, not member management.
+  'ACTING_ON_SELF' | 'NOT_ALLOWED';
+
+// ADR-0007: an admin removes MEMBERs; only the owner names, demotes or
+// removes admins and hands the group over; nobody touches the owner.
+const isAllowed = (
+  actorRole: GroupRole,
+  targetRole: GroupRole,
+  action: MemberAction,
+): boolean => {
+  if (targetRole === 'OWNER') return false;
+  switch (action.kind) {
+    case 'remove':
+      return targetRole === 'MEMBER'
+        ? hasGroupAdminRights(actorRole)
+        : actorRole === 'OWNER';
+    case 'setRole':
+    case 'transferOwnership':
+      return actorRole === 'OWNER';
+  }
+};
+
+export const memberActionViolations = (
+  actor: { userId: string; role: GroupRole },
+  target: { userId: string; role: GroupRole },
+  action: MemberAction,
+): MemberActionViolation[] => {
+  if (actor.userId === target.userId) return ['ACTING_ON_SELF'];
+  return isAllowed(actor.role, target.role, action) ? [] : ['NOT_ALLOWED'];
+};
+
 export type GroupVisibility = 'PUBLIC' | 'PRIVATE';
 export type GroupStatus = 'ACTIVE' | 'CANCELLED';
 

@@ -6,8 +6,10 @@ import {
   Prisma,
   Activity as PrismaActivity,
   Group as PrismaGroup,
+  GroupMembership as PrismaGroupMembership,
 } from '@/generated/prisma/client';
 import {
+  AssignableGroupRole,
   CreateGroupData,
   GroupRole as DomainGroupRole,
   Group,
@@ -44,6 +46,22 @@ const mapPrismaGroupToDomain = (
     defaultMaxParticipants: group.activity.defaultMaxParticipants,
   },
   memberCount: group._count.memberships,
+});
+
+const memberInclude = {
+  user: { select: { name: true, image: true } },
+} as const;
+
+const mapMembershipToMember = (
+  membership: PrismaGroupMembership & {
+    user: { name: string; image: string | null };
+  },
+): GroupMember => ({
+  userId: membership.userId,
+  name: membership.user.name,
+  image: membership.user.image,
+  role: membership.role,
+  joinedAt: membership.joinedAt,
 });
 
 // Newest first; the id breaks ties so cursor pages never skip or repeat.
@@ -108,16 +126,10 @@ export class GroupRepository {
   async listMembers(groupId: string): Promise<GroupMember[]> {
     const memberships = await this.prisma.groupMembership.findMany({
       where: { groupId },
-      include: { user: { select: { name: true, image: true } } },
+      include: memberInclude,
       orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
     });
-    return memberships.map((membership) => ({
-      userId: membership.userId,
-      name: membership.user.name,
-      image: membership.user.image,
-      role: membership.role,
-      joinedAt: membership.joinedAt,
-    }));
+    return memberships.map(mapMembershipToMember);
   }
 
   // ADR-0015: who is told about a new request to join (the founder and the
@@ -134,6 +146,38 @@ export class GroupRepository {
     await this.prisma.groupMembership.deleteMany({
       where: { groupId, userId },
     });
+  }
+
+  async setMemberRole(
+    groupId: string,
+    userId: string,
+    role: AssignableGroupRole,
+  ): Promise<GroupMember> {
+    const membership = await this.prisma.groupMembership.update({
+      where: { groupId_userId: { groupId, userId } },
+      data: { role },
+      include: memberInclude,
+    });
+    return mapMembershipToMember(membership);
+  }
+
+  // ADR-0007: the old owner stays on as an admin. Demoted first, inside one
+  // transaction: `group_membership_one_owner_key` allows one OWNER at a time.
+  async transferOwnership(
+    groupId: string,
+    fromUserId: string,
+    toUserId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.groupMembership.update({
+        where: { groupId_userId: { groupId, userId: fromUserId } },
+        data: { role: GroupRole.ADMIN },
+      }),
+      this.prisma.groupMembership.update({
+        where: { groupId_userId: { groupId, userId: toUserId } },
+        data: { role: GroupRole.OWNER },
+      }),
+    ]);
   }
 
   async listGroupsOfUser(userId: string): Promise<MyGroup[]> {
