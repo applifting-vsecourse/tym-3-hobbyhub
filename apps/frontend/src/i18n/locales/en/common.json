@@ -808,16 +808,22 @@
       "create": "Create an event",
       "find": "Find an event"
     },
+    "groups": {
+      "browse": "Browse groups",
+      "text": "A group is a crew of people around one activity. It has its place, its usual time and members who know each other. A newcomer sees what they are joining before asking for membership, and the group's events are never created from scratch.",
+      "title": "Groups: a crew that meets regularly"
+    },
     "hero": {
       "join": "Find a free seat",
       "kicker": "Sports and games near you",
-      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours.",
+      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours. And a crew that clicks can keep meeting as a group.",
       "title": "Fill the missing players before the event is cancelled"
     },
     "how": {
-      "step1": "Create an event and say how many people you still need to reach the minimum.",
+      "step1": "Find an event that is short of players, or create one and say how many people you still need to reach the minimum.",
       "step2": "Others see the free seats on the map or in the list and ask to join.",
-      "step3": "You approve participants and the event goes ahead.",
+      "step3": "The organizer approves participants and the event goes ahead.",
+      "step4": "A crew that clicked becomes a group. Nobody creates the next event from scratch.",
       "title": "How it works"
     },
     "search": {

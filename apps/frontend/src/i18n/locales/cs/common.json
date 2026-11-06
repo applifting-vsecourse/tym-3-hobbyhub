@@ -823,16 +823,22 @@
       "create": "Vypsat akci",
       "find": "Najít akci"
     },
+    "groups": {
+      "browse": "Prohlédnout skupiny",
+      "text": "Skupina je parta lidí kolem jedné aktivity. Má své místo, obvyklý termín a členy, kteří se znají. Nováček vidí, do čeho jde, ještě než požádá o členství, a akce skupiny se nevypisují od nuly.",
+      "title": "Skupiny: parta, která se schází pravidelně"
+    },
     "hero": {
       "join": "Najít volné místo",
       "kicker": "Sport a hry ve vašem okolí",
-      "text": "Organizátoři ukážou, kolik lidí jim chybí do minima. Jedno z volných míst může být vaše.",
+      "text": "Organizátoři ukážou, kolik lidí jim chybí do minima. Jedno z volných míst může být vaše. A parta, která vám sedne, se může scházet dál jako skupina.",
       "title": "Doplňte chybějící hráče dřív, než se akce zruší"
     },
     "how": {
-      "step1": "Vypište akci a řekněte, kolik lidí vám chybí do minima.",
+      "step1": "Najděte akci, kde chybí hráči, nebo ji vypište a řekněte, kolik lidí vám chybí do minima.",
       "step2": "Ostatní uvidí volná místa na mapě nebo v seznamu a požádají o účast.",
-      "step3": "Schválíte účastníky a akce se uskuteční.",
+      "step3": "Organizátor schválí účastníky a akce se uskuteční.",
+      "step4": "Parta, která si sedla, se stane skupinou. Příští akci už nikdo nevypisuje od nuly.",
       "title": "Jak to funguje"
     },
     "search": {
