@@ -42,10 +42,28 @@ describe('NotificationsService', () => {
       await expect(
         service.listMine(user, { limit: 20, offset: 0 }),
       ).resolves.toEqual(page);
-      expect(repository.listOf).toHaveBeenCalledWith('u1', {
-        limit: 20,
-        offset: 0,
-      });
+      expect(repository.listOf).toHaveBeenCalledWith(
+        'u1',
+        { limit: 20, offset: 0 },
+        {},
+      );
+    });
+
+    it('passes the filter on to the repository', async () => {
+      const { repository, service } = setup();
+      repository.listOf.mockResolvedValue({ items: [], total: 0 });
+
+      await service.listMine(
+        user,
+        { limit: 10, offset: 10 },
+        { read: false, kind: 'events' },
+      );
+
+      expect(repository.listOf).toHaveBeenCalledWith(
+        'u1',
+        { limit: 10, offset: 10 },
+        { read: false, kind: 'events' },
+      );
     });
 
     it('marks one of their notifications read', async () => {

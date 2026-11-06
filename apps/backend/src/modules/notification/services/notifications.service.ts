@@ -3,6 +3,7 @@ import {
   EventChange,
   NewNotification,
   Notification,
+  NotificationFilter,
   NotificationPage,
   Page,
   recipientsExcept,
@@ -30,8 +31,12 @@ export class NotificationsService {
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  listMine(user: Identity, page: Page): Promise<NotificationPage> {
-    return this.repository.listOf(user.id, page);
+  listMine(
+    user: Identity,
+    page: Page,
+    filter: NotificationFilter = {},
+  ): Promise<NotificationPage> {
+    return this.repository.listOf(user.id, page, filter);
   }
 
   countUnread(user: Identity): Promise<number> {

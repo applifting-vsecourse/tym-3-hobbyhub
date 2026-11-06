@@ -39,17 +39,25 @@ export class NotificationsController {
   constructor(private readonly service: NotificationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'My notifications, newest first' })
+  @ApiOperation({
+    summary: 'My notifications, newest first',
+    description:
+      'Optionally only the read or the unread ones (`read`) and only one kind (`kind`); `total` counts what the filter lets through.',
+  })
   @ApiResponse({ status: 200, type: NotificationPageResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid limit or offset' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid limit, offset, read or kind',
+  })
   async list(
     @User() user: Identity,
     @Query() query: ListNotificationsQuery,
   ): Promise<NotificationPageResponseDto> {
-    const page = await this.service.listMine(user, {
-      limit: query.limit,
-      offset: query.offset,
-    });
+    const page = await this.service.listMine(
+      user,
+      { limit: query.limit, offset: query.offset },
+      { read: query.read, kind: query.kind },
+    );
     return NotificationPageResponseDto.fromDomain(page);
   }
 
