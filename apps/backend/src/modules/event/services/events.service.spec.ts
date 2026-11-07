@@ -852,11 +852,12 @@ describe('EventsService', () => {
     it('gives a co-organizer the whole event', async () => {
       const { repository, service } = setup();
       repository.getEventFacts.mockResolvedValue(facts(['u1', 'co']));
-      repository.getEventById.mockResolvedValue(anEvent());
+      const event = anEvent();
+      repository.getEventById.mockResolvedValue(event);
 
       await expect(
         service.getManagedEvent({ id: 'co' } as Identity, 'e1'),
-      ).resolves.toEqual(anEvent());
+      ).resolves.toEqual(event);
     });
 
     it('answers 404 to someone who does not organize it', async () => {
