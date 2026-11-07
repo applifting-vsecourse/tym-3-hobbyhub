@@ -11,7 +11,7 @@ import { NotificationsService } from './services/notifications.service';
 @Module({
   imports: [AuthModule, PrismaModule],
   controllers: [NotificationsController],
-  // The outbox comes from the global MailModule (F-09.5, ADR-0016).
+  // The outbox comes from the global MailModule (F-09.5, ADR-0018).
   providers: [
     NotificationsService,
     NotificationEmailsService,

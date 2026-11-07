@@ -462,7 +462,7 @@ model Notification {
   group       Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId     String?
 
-  // F-09.5: the e-mail made of it, if one was (ADR-0016).
+  // F-09.5: the e-mail made of it, if one was (ADR-0018).
   emailDelivery EmailDelivery?
 
   // The bell lists newest first and counts the unread ones.
@@ -471,7 +471,7 @@ model Notification {
   @@map("notification")
 }
 
-// F-09.5, ADR-0016: the e-mail outbox. Every e-mail the app sends is first a
+// F-09.5, ADR-0018: the e-mail outbox. Every e-mail the app sends is first a
 // row here, and a poller in the backend sends what is due: in the order the
 // limits allow, again after a temporary failure, and with the outcome kept.
 enum EmailKind {

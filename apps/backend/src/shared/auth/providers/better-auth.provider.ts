@@ -48,7 +48,7 @@ const createAuth = (
           url: passwordResetUrl,
         });
         // F-09.5: through the outbox, critical: retried, and never held
-        // back by the limits for the other e-mails (ADR-0016).
+        // back by the limits for the other e-mails (ADR-0018).
         await emailOutbox.enqueue([
           {
             kind: 'RESET_PASSWORD',

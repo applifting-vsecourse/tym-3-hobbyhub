@@ -128,7 +128,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Rok narození, věk, pohlaví                                         | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#12][12], [#18][18], [#19][19], [#32][32], [#174][174], [PO][po] |
 | E-mailová adresa                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                                    |
 | Placené členství                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                               |
-| Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [PO][po]                       |
+| Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [#61][61], [PO][po]            |
 
 - **Veřejný profil** je jméno a příjmení, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
 - **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).

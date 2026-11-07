@@ -107,7 +107,7 @@ export class Config {
   @IsOptional()
   readonly smtpFrom?: string;
 
-  // F-09.5, ADR-0016: the outbox's limits. How many e-mails may go in any 24
+  // F-09.5, ADR-0018: the outbox's limits. How many e-mails may go in any 24
   // hours: the provider's daily limit (Mailjet's free plan: 200).
   @Env('EMAIL_DAILY_LIMIT', { expose: true, defaultValue: 200 })
   @IsInt()

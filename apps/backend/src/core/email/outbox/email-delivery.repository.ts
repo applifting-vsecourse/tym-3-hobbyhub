@@ -2,7 +2,7 @@ import { PrismaService } from '@/core/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { DueEmail, EmailSkipReason, OutgoingEmail } from './email-delivery';
 
-// F-09.5, ADR-0016: the only place that touches the `email_delivery` table.
+// F-09.5, ADR-0018: the only place that touches the `email_delivery` table.
 // It validates nothing; the outbox and the poller decide.
 @Injectable()
 export class EmailDeliveryRepository {
@@ -67,7 +67,7 @@ export class EmailDeliveryRepository {
 
   // On start nothing is being sent: whatever a stopped backend left SENDING
   // goes back to the queue. If it did reach the provider before the stop, it
-  // goes once more (ADR-0016).
+  // goes once more (ADR-0018).
   async releaseInterrupted(): Promise<number> {
     const { count } = await this.prisma.emailDelivery.updateMany({
       where: { status: 'SENDING' },

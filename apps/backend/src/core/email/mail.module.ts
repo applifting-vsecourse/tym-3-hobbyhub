@@ -16,7 +16,7 @@ import { EMAIL_OUTBOX } from './outbox/email-outbox.interface';
  *   SMTP_HOST + USERNAME + PASS  → SMTP
  *   otherwise                    → Console (logs emails to stdout, dev only)
  *
- * F-09.5, ADR-0016: the app does not call the adapter itself. It hands every
+ * F-09.5, ADR-0018: the app does not call the adapter itself. It hands every
  * e-mail to the `'EmailOutbox'` (`@InjectEmailOutbox()`), which keeps it in
  * the database, and the poller here sends it through the adapter.
  */

@@ -1,4 +1,4 @@
-// F-09.5, ADR-0016: the vocabulary of the e-mail outbox. Plain TypeScript:
+// F-09.5, ADR-0018: the vocabulary of the e-mail outbox. Plain TypeScript:
 // the rules for when an e-mail may go, when to try again and when to give up,
 // tested by calling them.
 

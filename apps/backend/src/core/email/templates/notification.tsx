@@ -10,7 +10,7 @@ import {
   PrimaryButton,
 } from './_components/layout';
 
-// F-09.5, ADR-0016: one template for every notification (ADR-0015). What it
+// F-09.5, ADR-0018: one template for every notification (ADR-0015). What it
 // says is put together by the notification module; this is only the look.
 export interface NotificationEmailProps {
   heading: string;

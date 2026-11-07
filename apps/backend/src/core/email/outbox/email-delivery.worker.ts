@@ -24,7 +24,7 @@ import { EmailDeliveryRepository } from './email-delivery.repository';
 const BATCH_SIZE = 20;
 
 /**
- * F-09.5, ADR-0016: the poller. Every few seconds it sends what is due in the
+ * F-09.5, ADR-0018: the poller. Every few seconds it sends what is due in the
  * outbox: critical e-mails first, within the daily budget and the cap per
  * recipient, and records how each attempt ended. One backend instance runs
  * it; two passes never overlap.

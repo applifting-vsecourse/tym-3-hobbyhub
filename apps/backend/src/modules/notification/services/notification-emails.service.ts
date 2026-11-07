@@ -14,7 +14,7 @@ import { Config } from '@/shared/config/config.service';
 import { Injectable } from '@nestjs/common';
 
 /**
- * F-09.5, ADR-0016: turns freshly recorded notifications into e-mails and
+ * F-09.5, ADR-0018: turns freshly recorded notifications into e-mails and
  * hands them to the outbox, one per notification. An address its owner has
  * not verified gets none: the row is kept as skipped, without HTML, and the
  * bell still shows the notification. `disabledNotifications` is not looked

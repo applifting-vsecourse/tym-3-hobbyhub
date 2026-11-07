@@ -262,7 +262,7 @@ describe('NotificationsService', () => {
     error.mockRestore();
   });
 
-  // F-09.5, ADR-0016.
+  // F-09.5, ADR-0018.
   describe('the e-mails', () => {
     it('are made of the rows just written', async () => {
       const { repository, emails, service } = setup();

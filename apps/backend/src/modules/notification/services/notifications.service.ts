@@ -192,7 +192,7 @@ export class NotificationsService {
       return;
     }
     try {
-      // F-09.5: the e-mails are made of the rows just written (ADR-0016).
+      // F-09.5: the e-mails are made of the rows just written (ADR-0018).
       await this.emails.queueFor(ids);
     } catch (error) {
       // The bell has them; only the e-mail is missing.

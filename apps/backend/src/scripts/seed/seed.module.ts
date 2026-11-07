@@ -24,7 +24,7 @@ import { SeedService } from './seed.service';
     Config,
     PrismaService,
     // The seed's sign-ups print their e-mails right away instead of queuing
-    // them for the running backend to send to @example.com (ADR-0016).
+    // them for the running backend to send to @example.com (ADR-0018).
     {
       provide: EMAIL_OUTBOX,
       useFactory: (emailService: EmailService): ImmediateEmailOutbox =>

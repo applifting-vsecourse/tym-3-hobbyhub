@@ -4,7 +4,7 @@ import {
   NotificationType,
 } from '@/modules/notification/domain/notification';
 
-// F-09.5, ADR-0016: what the e-mail of a notification says. The visibility
+// F-09.5, ADR-0018: what the e-mail of a notification says. The visibility
 // matrix (docs/visibility-matrix/README.md, "Notifikace a e-mail nesou jen
 // důvod a odkaz") keeps it to the reason and a link: an e-mail lives outside
 // the login, can be forwarded and nobody can take it back. So it names no
