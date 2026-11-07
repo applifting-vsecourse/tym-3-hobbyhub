@@ -408,6 +408,11 @@
       "PUBLIC_VENUE": "Veřejné místo"
     }
   },
+  "footer": {
+    "copyright": "© {{year}} HobbyHub",
+    "label": "Patička",
+    "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
+  },
   "geo": {
     "address": {
       "error": "Adresy se nepodařilo načíst. Zkuste to prosím znovu.",
@@ -850,16 +855,56 @@
       "create": "Vypsat akci",
       "find": "Najít akci"
     },
+    "groups": {
+      "browse": "Prohlédnout skupiny",
+      "seatTitle": "Vaše místo v partě",
+      "text": "Skupina je parta lidí kolem jedné aktivity. Má své místo, obvyklý termín a členy, kteří se znají. Nováček vidí, do čeho jde, ještě než požádá o členství, a akce skupiny se nevypisují od nuly.",
+      "title": "Skupiny: parta, která se schází pravidelně"
+    },
     "hero": {
       "join": "Najít volné místo",
       "kicker": "Sport a hry ve vašem okolí",
-      "text": "Organizátoři ukážou, kolik lidí jim chybí do minima. Jedno z volných míst může být vaše.",
+      "text": "Organizátoři ukážou, kolik lidí jim chybí do minima. Jedno z volných míst může být vaše. A parta, která vám sedne, se může scházet dál jako skupina.",
       "title": "Doplňte chybějící hráče dřív, než se akce zruší"
     },
     "how": {
-      "step1": "Vypište akci a řekněte, kolik lidí vám chybí do minima.",
-      "step2": "Ostatní uvidí volná místa na mapě nebo v seznamu a požádají o účast.",
-      "step3": "Schválíte účastníky a akce se uskuteční.",
+      "preview": {
+        "scheduleSubtitle": "Hala ZŠ Dolní · Praha 8 · pokročilí",
+        "scheduleTime": "čt 19:00",
+        "scheduleTitle": "Čtvrteční florbalisté",
+        "take": "Obsadit místo",
+        "yourSeatText": "Čtvrteční florbal · dnes 19:00",
+        "yourSeatTitle": "Tvoje místo"
+      },
+      "step1": {
+        "p1": "Organizátor řekne, kolik lidí mu chybí do minima, a všichni to vidí hned: v seznamu, na mapě i na kartě akce. Nehledáte „jestli“, hledáte „kde se hodí ještě jeden“.",
+        "p2": "Když vhodná akce není, vypíšete ji za minutu: aktivita, místo, termín a kolik vás musí být, aby se hrálo.",
+        "short": "Najděte nebo vypište akci",
+        "subtitle": "Kde chybí hráči do minima.",
+        "title": "Najděte akci, kde chybí hráči. Nebo ji vypište."
+      },
+      "step2": {
+        "p1": "Volná místa vidíte jako židle u stolu, v seznamu i na mapě. Jedním klepnutím požádáte o účast a můžete připsat pár slov organizátorovi.",
+        "p2": "Bez registrace si všechno prohlédnete. Účet si založíte, až budete chtít sednout na místo.",
+        "short": "Požádejte o místo",
+        "subtitle": "Jedno klepnutí, organizátor dostane zprávu.",
+        "title": "Požádejte o volné místo"
+      },
+      "step3": {
+        "p1": "Organizátor vidí, kdo se hlásí, a schválí, koho chce. Jakmile je minimum splněné, akce se uskuteční a nikdo nejede zbytečně.",
+        "p2": "Schválení účastníci dostanou přesnou adresu a praktické pokyny a vidí, s kým jdou.",
+        "short": "Schválení a hraje se",
+        "subtitle": "Minimum splněno, akce se uskuteční.",
+        "title": "Organizátor schválí a hraje se"
+      },
+      "step4": {
+        "p1": "Lidé, kteří si sedli, zůstanou spolu jako skupina. Má své místo, obvyklý termín a členy, kteří se znají.",
+        "p2": "Příští akci už nikdo nevypisuje od nuly a nováček vidí, do čeho jde, ještě než požádá o členství.",
+        "short": "Z party je skupina",
+        "subtitle": "Příště už nikdo nevypisuje od nuly.",
+        "title": "Z party je skupina"
+      },
+      "stepLabel": "Krok {{number}}",
       "title": "Jak to funguje"
     },
     "search": {
