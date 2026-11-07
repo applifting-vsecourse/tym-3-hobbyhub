@@ -1,3 +1,5 @@
+import type { GroupEventPeriod } from "@/features/event/api/eventSchemas"
+
 /** The visitor's position, rounded, so a small move does not refetch. */
 export type NearPoint = { latitude: number; longitude: number }
 
@@ -24,9 +26,19 @@ export const eventKeys = {
   map: (filters: EventListFilters) => [...eventKeys.lists(), "map", filters] as const,
   // The few soonest events on the landing page.
   upcoming: (limit: number) => [...eventKeys.lists(), "upcoming", limit] as const,
-  // Public detail (F-02.4).
-  publicDetails: () => [...eventKeys.all(), "public-detail"] as const,
-  publicDetail: (id: string) => [...eventKeys.publicDetails(), id] as const,
+  // Detail (F-02.4). Keyed by viewer too: a group-only event (F-07.2) shows to
+  // its group's members only, so signing out must not leave it in the cache.
+  details: () => [...eventKeys.all(), "detail"] as const,
+  detail: (id: string) => [...eventKeys.details(), id] as const,
+  detailFor: (id: string, viewerId: string | null) => [...eventKeys.detail(id), viewerId] as const,
+  // F-07.2: the events of a group on its page. Members get the group-only and
+  // past ones too, so whether the viewer is one is part of the key.
+  groupEvents: (
+    groupId: string,
+    period: GroupEventPeriod,
+    viewerId: string | null,
+    isMember: boolean,
+  ) => [...eventKeys.all(), "group", groupId, period, viewerId, isMember] as const,
   // The exact address and contacts of one person's seat (F-06.5): keyed by
   // user, so a switch of account never shows the previous one's data.
   participantInfo: (id: string, userId: string) =>

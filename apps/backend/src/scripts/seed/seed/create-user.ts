@@ -11,7 +11,7 @@ type CreateUserParams = {
   role?: string;
   // F-03.1 registration fields; seeded people do not need distinct values.
   gender?: Gender;
-  birthDate?: Date;
+  birthYear?: number;
 };
 
 export async function createUser(
@@ -26,7 +26,7 @@ export async function createUser(
     username,
     role,
     gender = 'MALE',
-    birthDate = new Date('1990-01-01T00:00:00Z'),
+    birthYear = 1990,
   } = params;
 
   // use better auth api to sign the user up using email & password. The
@@ -37,8 +37,9 @@ export async function createUser(
     password,
     name,
     gender,
-    birthDate,
+    birthYear,
     termsAccepted: true,
+    adulthoodConfirmed: true,
   };
   await auth.api.signUpEmail({ body });
 
