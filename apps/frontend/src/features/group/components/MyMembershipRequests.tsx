@@ -9,7 +9,6 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 import { myMembershipRequestsQueryOptions } from "@/features/group/api/membershipRequestQueryOptions"
 import type {
@@ -208,8 +207,8 @@ type MyMembershipRequestCardProps = {
 
 /**
  * One request as its applicant sees it: where, how it stands, and when. A
- * withdrawn one is drawn like a disabled control: it no longer counts, but the
- * group is still a link, because a new request starts there.
+ * withdrawn one is told apart by its badge alone, at full contrast, and the
+ * group stays a link, because a new request starts there.
  */
 function MyMembershipRequestCard({ request, hasStatus, onWithdraw }: MyMembershipRequestCardProps) {
   const { t, i18n } = useTranslation()
@@ -217,12 +216,7 @@ function MyMembershipRequestCard({ request, hasStatus, onWithdraw }: MyMembershi
   const { status, group } = request
 
   return (
-    <article
-      className={cn(
-        "flex flex-col gap-3 rounded-lg border border-border p-4",
-        status === "WITHDRAWN" && "opacity-50",
-      )}
-    >
+    <article className="flex flex-col gap-3 rounded-lg border border-border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="typo-title break-words text-foreground">
           {group.isOpen ? (

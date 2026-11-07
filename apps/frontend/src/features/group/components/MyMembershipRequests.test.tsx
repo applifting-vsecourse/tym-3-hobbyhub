@@ -93,7 +93,7 @@ describe("MyMembershipRequests", () => {
     expect(within(card).getByRole("button", { name: "Zrušit žádost" })).toBeVisible()
   })
 
-  it("shows the history with a status, dates and reason, a withdrawn one dimmed", async () => {
+  it("shows the history with a status, dates and reason, a withdrawn one at full contrast", async () => {
     await renderRequests({
       history: [
         aRequest({
@@ -117,13 +117,13 @@ describe("MyMembershipRequests", () => {
     expect(within(rejected!).getByText(/Zamítnuto 4\. 11\. 2026/)).toBeVisible()
     expect(within(rejected!).getByText("Skupina je plná.")).toBeVisible()
     expect(within(rejected!).queryByRole("button")).not.toBeInTheDocument()
-    expect(rejected).not.toHaveClass("opacity-50")
 
-    expect(withdrawn).toHaveClass("opacity-50")
-    expect(within(withdrawn!).getByText("Staženo")).toBeInTheDocument()
+    // The badge alone tells a withdrawn one apart; nothing dims its text.
+    expect(withdrawn).not.toHaveClass("opacity-50")
+    expect(within(withdrawn!).getByText("Staženo")).toBeVisible()
     expect(
       within(withdrawn!).getByText(/Podáno 2\. 11\. 2026 · Staženo 3\. 11\. 2026/),
-    ).toBeInTheDocument()
+    ).toBeVisible()
     // Neither was given: no empty label stands in for them.
     expect(within(withdrawn!).queryByText("Důvod zamítnutí")).not.toBeInTheDocument()
     expect(within(withdrawn!).queryByText("Vaše zpráva")).not.toBeInTheDocument()
