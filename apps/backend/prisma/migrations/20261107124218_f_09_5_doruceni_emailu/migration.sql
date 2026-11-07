@@ -47,7 +47,7 @@ ALTER TABLE "email_delivery" ADD CONSTRAINT "email_delivery_recipientId_fkey" FO
 -- AddForeignKey
 ALTER TABLE "email_delivery" ADD CONSTRAINT "email_delivery_notificationId_fkey" FOREIGN KEY ("notificationId") REFERENCES "notification"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
--- ADR-0016: the same rules as the outbox code, as the last line of defence.
+-- ADR-0018: the same rules as the outbox code, as the last line of defence.
 ALTER TABLE "email_delivery"
   ADD CONSTRAINT "email_delivery_attempts_check" CHECK ("attempts" BETWEEN 0 AND 5),
   ADD CONSTRAINT "email_delivery_sent_check" CHECK (("status" = 'SENT') = ("sentAt" IS NOT NULL)),
