@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next"
 import { z } from "zod"
 
-import { isAdult } from "@/lib/birthDate"
+import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
 
 import { GENDERS, type Profile } from "@/features/profile/api/profileSchemas"
 import { BIO_MAX_LENGTH, NAME_MAX_LENGTH } from "@/features/profile/lib/profileLimits"
@@ -43,22 +43,25 @@ export const createEditProfileSchema = (t: TFunction) =>
         .nullable(),
       // An account made another way may have neither; both or none are saved.
       gender: z.enum(GENDERS).optional(),
-      birthDate: z
-        .string()
-        .refine(
-          (value) => value === "" || isAdult(value, new Date()),
-          t("auth.validation.underage"),
-        ),
+      // The typed year; only the year is kept, never the full date (#174).
+      birthYear: z.string().superRefine((value, context) => {
+        const problem = birthYearProblem(value, new Date())
+        // An empty year is checked together with the gender below.
+        if (problem && problem !== "required") {
+          context.addIssue({ code: "custom", message: t(BIRTH_YEAR_MESSAGES[problem]) })
+        }
+      }),
     })
     .superRefine((values, context) => {
-      if (values.gender && !values.birthDate) {
+      const hasBirthYear = values.birthYear.trim() !== ""
+      if (values.gender && !hasBirthYear) {
         context.addIssue({
           code: "custom",
-          path: ["birthDate"],
-          message: t("auth.validation.birthDateRequired"),
+          path: ["birthYear"],
+          message: t(BIRTH_YEAR_MESSAGES.required),
         })
       }
-      if (values.birthDate && !values.gender) {
+      if (hasBirthYear && !values.gender) {
         context.addIssue({
           code: "custom",
           path: ["gender"],
@@ -84,5 +87,5 @@ export const editValuesOf = (profile: Profile): EditProfileValues => ({
     label: `${profile.address.street}, ${profile.address.postalCode} ${profile.address.city}, ${profile.address.country}`,
   },
   gender: profile.gender ?? undefined,
-  birthDate: profile.birthDate ?? "",
+  birthYear: profile.birthYear === null ? "" : String(profile.birthYear),
 })

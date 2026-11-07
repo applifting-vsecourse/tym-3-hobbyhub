@@ -57,7 +57,7 @@ export const myMembershipRequestStatusOf = (
     ? 'GROUP_CANCELLED'
     : request.status;
 
-// What the admins see of the person asking: no birth date, gender, contact or
+// What the admins see of the person asking: no birth year, gender, contact or
 // place. The same as an organizer sees of an applicant to an event.
 export type ApplicantProfile = {
   name: string;

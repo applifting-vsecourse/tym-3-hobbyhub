@@ -9,13 +9,11 @@ import {
   imageViolations,
   privateDetailsViolations,
   Profile,
+  PublicProfile,
 } from '@/modules/profile/domain/profile';
 import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
 import { Identity } from '@/shared/auth/domain/identity';
-import {
-  Gender,
-  parseBirthDate,
-} from '@/shared/auth/registration/registration';
+import { Gender } from '@/shared/auth/registration/registration';
 import {
   BadRequestException,
   Injectable,
@@ -40,10 +38,25 @@ export class ProfileService {
       image: row.image,
       cover: row.profileCover,
       gender: row.gender,
-      birthDate: row.birthDate?.toISOString().slice(0, 10) ?? null,
+      birthYear: row.birthYear,
       interests: onboarding.interests,
       address: onboarding.address,
       travelRadiusKm: onboarding.travelRadiusKm,
+    };
+  }
+
+  // F-04.2: another person's profile: only what the visibility matrix lets any
+  // signed-in person see. The e-mail is never part of it.
+  async getPublicProfile(userId: string): Promise<PublicProfile> {
+    const row = await this.profileRepository.getPublicRow(userId);
+    if (!row) throw new NotFoundException('User not found');
+    return {
+      id: row.id,
+      name: row.name,
+      bio: row.bio,
+      image: row.image,
+      cover: row.profileCover,
+      interests: await this.onboardingService.getInterestsOf(userId),
     };
   }
 
@@ -75,18 +88,18 @@ export class ProfileService {
 
   async updatePrivate(
     user: Identity,
-    data: { gender: Gender; birthDate: string },
+    data: { gender: Gender; birthYear: number },
     now = new Date(),
   ): Promise<Profile> {
     const violations = privateDetailsViolations(
       data.gender,
-      data.birthDate,
+      data.birthYear,
       now,
     );
     if (violations.length > 0) throw new BadRequestException(violations);
     await this.profileRepository.updatePrivate(user.id, {
       gender: data.gender,
-      birthDate: parseBirthDate(data.birthDate) as Date,
+      birthYear: data.birthYear,
     });
     return this.getProfile(user);
   }

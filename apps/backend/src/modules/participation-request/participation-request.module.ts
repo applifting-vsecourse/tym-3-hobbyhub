@@ -11,5 +11,6 @@ import { ParticipationRequestsService } from './services/participation-requests.
   imports: [AuthModule, PrismaModule, EventModule, NotificationModule],
   controllers: [ParticipationRequestsController],
   providers: [ParticipationRequestsService, ParticipationRequestRepository],
+  exports: [ParticipationRequestsService],
 })
 export class ParticipationRequestModule {}

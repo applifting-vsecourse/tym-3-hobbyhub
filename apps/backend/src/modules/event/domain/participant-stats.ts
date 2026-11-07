@@ -3,40 +3,22 @@ import {
   MIN_STATS_PARTICIPANTS,
   ParticipantStats,
 } from '@/modules/event/domain/event';
+import { ageInYear, yearIn } from '@/shared/auth/registration/registration';
 
 export type StatsParticipant = {
-  birthDate: Date | null;
+  birthYear: number | null;
   gender: Gender | null;
 };
 
-const EVENT_TIME_ZONE = 'Europe/Prague';
-
-// Calendar day of the event where it takes place, not in UTC: an event at
-// 00:30 Prague time still starts on the previous day in UTC.
-const localDay = (at: Date): { year: number; month: number; day: number } => {
-  const [year, month, day] = new Intl.DateTimeFormat('en-CA', {
-    timeZone: EVENT_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
-    .format(at)
-    .split('-')
-    .map(Number);
-  return { year, month: month - 1, day };
-};
-
-// Full years between the birth date and the day of the event.
-export const ageAt = (birthDate: Date, at: Date): number => {
-  const event = localDay(at);
-  let age = event.year - birthDate.getUTCFullYear();
-  const hadBirthday =
-    event.month > birthDate.getUTCMonth() ||
-    (event.month === birthDate.getUTCMonth() &&
-      event.day >= birthDate.getUTCDate());
-  if (!hadBirthday) age -= 1;
-  return age;
-};
+/**
+ * Age at the event with the precision of a year: the year of the event (in
+ * Prague, where it takes place, so an event at 00:30 on New Year's Day counts
+ * in the new year) minus the year of birth. Only the year of birth is known
+ * (#174, ADR-0016), so someone whose birthday comes later in that year counts
+ * a year older than they are.
+ */
+export const ageAt = (birthYear: number, at: Date): number =>
+  ageInYear(birthYear, yearIn(at));
 
 const median = (values: number[]): number => {
   const sorted = [...values].sort((a, b) => a - b);
@@ -48,7 +30,8 @@ const median = (values: number[]): number => {
 
 /**
  * Median age and gender split of the participants, or null when fewer than the
- * minimum of them gave both a birth date and a gender. Both figures appear
+ * minimum of them gave both a year of birth and a gender. The median rests on
+ * ages with the precision of a year (see `ageAt`). Both figures appear
  * together and rest on the same people: showing them on different thresholds
  * would let the change between two views single someone out. Everyone else
  * among the taken seats counts as unknown, so the split adds up to the seats.
@@ -58,8 +41,8 @@ export const computeParticipantStats = (
   eventStart: Date,
   total: number,
 ): ParticipantStats | null => {
-  const complete = participants.flatMap(({ birthDate, gender }) =>
-    birthDate && gender ? [{ birthDate, gender }] : [],
+  const complete = participants.flatMap(({ birthYear, gender }) =>
+    birthYear !== null && gender ? [{ birthYear, gender }] : [],
   );
   if (complete.length < MIN_STATS_PARTICIPANTS) return null;
 
@@ -67,7 +50,7 @@ export const computeParticipantStats = (
     included: complete.length,
     total,
     medianAge: median(
-      complete.map(({ birthDate }) => ageAt(birthDate, eventStart)),
+      complete.map(({ birthYear }) => ageAt(birthYear, eventStart)),
     ),
     gender: {
       male: complete.filter(({ gender }) => gender === 'MALE').length,

@@ -33,7 +33,7 @@ export type ParticipationRequest = {
   rejectionReason: string | null;
 };
 
-// What the organizer sees of the person asking (F-05.7): no birth date,
+// What the organizer sees of the person asking (F-05.7): no birth year,
 // gender, contact or place. The request form shows the applicant exactly this.
 export type ApplicantProfile = {
   name: string;
@@ -41,6 +41,8 @@ export type ApplicantProfile = {
   bio: string | null;
   hasVerifiedEmail: boolean;
 };
+
+// F-04.2: a person holding an approved seat, as the organizer's list shows it.
 
 export type PendingRequest = ParticipationRequest & {
   applicant: ApplicantProfile;
@@ -59,6 +61,8 @@ export type DecidedRequest = {
   // The request, or the seat of someone approved without one.
   id: string;
   status: DecidedStatus;
+  // The applicant, for the link to their profile.
+  userId: string;
   message: string | null;
   // When the person got the seat, was rejected or withdrew.
   changedAt: Date;
@@ -179,4 +183,20 @@ export const decisionRuleViolations = (
     violations.push('EVENT_FULL');
   }
   return violations;
+};
+
+// F-06.3: what the overview of a person's applications reads of one event and
+// the person's own rows on it. The seat is null without a roster row; only the
+// two seat states that tell a story matter here.
+export type ApplicationFacts = {
+  eventStatus: 'PUBLISHED' | 'CANCELLED';
+  seat: 'APPROVED' | 'CANCELLED' | null;
+  requests: RequestStatus[];
+};
+
+export type EventApplicationFacts = ApplicationFacts & { eventId: string };
+
+export type ApplicationFactsPage = {
+  items: EventApplicationFacts[];
+  total: number;
 };

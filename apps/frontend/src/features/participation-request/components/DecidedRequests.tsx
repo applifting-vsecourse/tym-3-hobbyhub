@@ -92,6 +92,7 @@ function DecidedSection({ eventId, status, externalOccupied }: DecidedSectionPro
             <li key={request.id}>
               <JoinRequestCard
                 name={request.applicant.name}
+                profileUserId={request.userId}
                 photo={request.applicant.image}
                 hasVerifiedEmail={request.applicant.hasVerifiedEmail}
                 bio={request.applicant.bio}

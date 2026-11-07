@@ -23,7 +23,7 @@ const profile: Profile = {
   image: null,
   cover: null,
   gender: "FEMALE",
-  birthDate: "1990-05-17",
+  birthYear: 1990,
   interests: [{ activity: { id: "a1", name: "Florbal", icon: "florbal" }, level: null }],
   address: null,
 }
@@ -111,7 +111,7 @@ describe("EditProfileForm", () => {
     expect(requests.updateInterests).not.toHaveBeenCalled()
   })
 
-  it("sends the gender and birth date to the private endpoint", async () => {
+  it("sends the gender and birth year to the private endpoint", async () => {
     await renderForm()
 
     await userEvent.click(screen.getByRole("combobox", { name: "Pohlaví" }))
@@ -121,9 +121,41 @@ describe("EditProfileForm", () => {
     await waitFor(() => expect(requests.updatePrivateDetails).toHaveBeenCalled())
     expect(requests.updatePrivateDetails.mock.calls[0]?.[0]).toEqual({
       gender: "MALE",
-      birthDate: "1990-05-17",
+      birthYear: 1990,
     })
     expect(requests.updateProfile).not.toHaveBeenCalled()
+  })
+
+  it("shows the saved birth year and sends a corrected one as a number", async () => {
+    await renderForm()
+
+    const birthYear = screen.getByLabelText("Rok narození")
+    expect(birthYear).toHaveValue("1990")
+    await userEvent.clear(birthYear)
+    await userEvent.type(birthYear, "1985")
+    await userEvent.click(screen.getByRole("button", { name: "Uložit" }))
+
+    await waitFor(() => expect(requests.updatePrivateDetails).toHaveBeenCalled())
+    expect(requests.updatePrivateDetails.mock.calls[0]?.[0]).toEqual({
+      gender: "FEMALE",
+      birthYear: 1985,
+    })
+  })
+
+  it.each([
+    [String(new Date().getFullYear() - 17), "Registrace je možná až od 18 let"],
+    ["1899", "Zadejte rok narození jako čtyřmístné číslo od 1900 do letoška"],
+    ["", "Zadejte rok narození"],
+  ])("refuses the birth year %p and says why", async (year, message) => {
+    await renderForm()
+
+    const birthYear = screen.getByLabelText("Rok narození")
+    await userEvent.clear(birthYear)
+    if (year) await userEvent.type(birthYear, year)
+    await userEvent.click(screen.getByRole("button", { name: "Uložit" }))
+
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    expect(requests.updatePrivateDetails).not.toHaveBeenCalled()
   })
 
   it("does not send a part again that went through when a later one failed", async () => {

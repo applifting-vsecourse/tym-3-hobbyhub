@@ -1,7 +1,8 @@
 import { EventsService } from '@/modules/event/services/events.service';
-import { User } from '@/shared/auth/decorators/user.decorator';
+import { OptionalUser, User } from '@/shared/auth/decorators/user.decorator';
 import { Identity } from '@/shared/auth/domain/identity';
 import { AuthenticatedUserGuard } from '@/shared/auth/guards/authenticated-user.guard';
+import { OptionalUserGuard } from '@/shared/auth/guards/optional-user.guard';
 import {
   Body,
   Controller,
@@ -262,14 +263,23 @@ export class EventsController {
     return ParticipantEventInfoResponseDto.fromDomain(info);
   }
 
-  // Public detail (F-02.4): approximate place only; the exact address and the
-  // online link of an event stay with approved participants (F-10.4).
+  // Detail (F-02.4): approximate place only; the exact address and the
+  // online link of an event stay with approved participants (F-10.4). Open to
+  // visitors; a group-only event (F-07.2) only to its group's members and
+  // those holding a seat.
   @Get(':id')
-  @ApiOperation({ summary: 'Get a public event' })
+  @UseGuards(OptionalUserGuard)
+  @ApiOperation({ summary: 'Get an event the viewer may see' })
   @ApiResponse({ status: 200, type: EventDetailResponseDto })
-  @ApiResponse({ status: 404, description: 'Event not found or not public' })
-  async detail(@Param('id') id: string): Promise<EventDetailResponseDto> {
-    const event = await this.eventsService.getPublicEvent(id);
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not visible to the viewer',
+  })
+  async detail(
+    @OptionalUser() user: Identity | undefined,
+    @Param('id') id: string,
+  ): Promise<EventDetailResponseDto> {
+    const event = await this.eventsService.getEventDetail(id, user);
     return EventDetailResponseDto.fromDomainDetail(event);
   }
 }

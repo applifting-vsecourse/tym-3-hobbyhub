@@ -2,8 +2,9 @@
   "auth": {
     "back": "Zpět",
     "errors": {
+      "adulthoodNotConfirmed": "Bez potvrzení plnoletosti se nelze zaregistrovat.",
       "emailNotVerified": "E-mail zatím není ověřený.",
-      "invalidBirthDate": "Neplatné datum narození.",
+      "invalidBirthYear": "Neplatný rok narození.",
       "invalidCredentials": "Nesprávný e-mail nebo heslo.",
       "invalidEmail": "Neplatný e-mail.",
       "invalidGender": "Vyberte pohlaví.",
@@ -16,7 +17,7 @@
       "userExists": "Účet s tímto e-mailem už existuje."
     },
     "fields": {
-      "birthDate": "Datum narození",
+      "birthYear": "Rok narození",
       "confirmPassword": "Zopakujte heslo",
       "email": "E-mail",
       "gender": "Pohlaví",
@@ -34,7 +35,7 @@
       "showLabel": "Zobrazit heslo"
     },
     "placeholders": {
-      "birthDate": "Vyberte datum",
+      "birthYear": "např. 1995",
       "email": "např. jan@novak.cz",
       "gender": "Vyberte"
     },
@@ -52,17 +53,20 @@
       "success": "Byli jste odhlášeni."
     },
     "signUp": {
+      "adulthood": "Touto registrací potvrzuji, že je mi alespoň 18 let.",
       "description": "Profil doplníte později.",
       "descriptionReturn": "Po registraci se vrátíte k akci. Profil doplníte později.",
       "genderNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží jen k souhrnným statistikám akcí.",
-      "privacyNote": "Soukromý údaj, nikdo další ho neuvidí. Slouží k ověření věku 18+ a k souhrnným statistikám akcí.",
+      "privacyNote": "Stačí rok, přesné datum nechceme. Soukromý údaj, nikdo další ho neuvidí. Slouží k ověření věku 18+ a k souhrnným statistikám akcí.",
       "signInLink": "Už mám účet · Přihlásit se",
       "submit": "Vytvořit účet a pokračovat",
       "terms": "Souhlasím s <terms>podmínkami a zásadami ochrany údajů</terms>.",
       "title": "Rychlá registrace"
     },
     "validation": {
-      "birthDateRequired": "Vyberte datum narození",
+      "adulthoodRequired": "Registrace je možná jen od 18 let, potvrďte svou plnoletost",
+      "birthYearInvalid": "Zadejte rok narození jako čtyřmístné číslo od 1900 do letoška",
+      "birthYearRequired": "Zadejte rok narození",
       "confirmPasswordRequired": "Zopakujte heslo",
       "emailInvalid": "Neplatný e-mail",
       "emailRequired": "Zadejte e-mail",
@@ -181,6 +185,7 @@
       },
       "contribution": "Příspěvek",
       "equipment": "Vybavení",
+      "groupOnly": "Jen pro členy skupiny",
       "hasAccount": "Už máš účet?",
       "hiddenInfo": "Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti.",
       "join": "Obsadit místo",
@@ -189,7 +194,7 @@
       "loading": "Načítáme akci…",
       "missingToMin": "chybí {{count}} do minima",
       "organizedByGroup": "Pořádá skupina",
-      "organizer": "Pořádá {{name}}",
+      "organizer": "Pořádá <profile>{{name}}</profile>",
       "requestToJoin": "Požádat o účast",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
@@ -418,6 +423,31 @@
     "back": "Zpět",
     "detail": {
       "backToEvents": "Zpět na akce",
+      "events": {
+        "cancelled": "Zrušeno",
+        "count": {
+          "past_few": "{{count}} minulé akce",
+          "past_one": "{{count}} minulá akce",
+          "past_other": "{{count}} minulých akcí",
+          "upcoming_few": "{{count}} nadcházející akce",
+          "upcoming_one": "{{count}} nadcházející akce",
+          "upcoming_other": "{{count}} nadcházejících akcí"
+        },
+        "empty": {
+          "past": "Skupina zatím nemá žádné minulé akce.",
+          "upcoming": "Skupina teď nemá žádné nadcházející akce."
+        },
+        "groupOnly": "Jen pro skupinu",
+        "loadMore": "Načíst další",
+        "loadMoreFailed": "Další akce se nepodařilo načíst. Zkuste to prosím znovu.",
+        "loading": "Načítáme akce skupiny…",
+        "periods": {
+          "past": "Minulé",
+          "upcoming": "Nadcházející"
+        },
+        "periodsLabel": "Nadcházející a minulé akce",
+        "title": "Akce skupiny"
+      },
       "loadError": "Skupinu se nepodařilo načíst",
       "loading": "Načítáme skupinu…",
       "members_few": "{{count}} členové",
@@ -441,10 +471,6 @@
         "withdraw": "Zrušit žádost"
       },
       "title": "Detail skupiny",
-      "upcoming": {
-        "inProgress": "Na této funkci právě pracujeme. Brzy tu uvidíte, co skupina plánuje.",
-        "title": "Nadcházející akce"
-      },
       "visibilityPublic": "Veřejná skupina"
     },
     "fields": {
@@ -539,7 +565,7 @@
       "form": {
         "adminSees": "Organizátor skupiny uvidí",
         "cancel": "Zrušit",
-        "hiddenDetails": "Datum narození, kontakt ani adresu neuvidí.",
+        "hiddenDetails": "Rok narození, kontakt ani adresu neuvidí.",
         "messageLabel": "Zpráva organizátorovi (nepovinné)",
         "messagePlaceholder": "Např. Hraju třetí rok za firemní tým a hledám pravidelnou skupinu.",
         "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
@@ -872,7 +898,33 @@
     }
   },
   "myEvents": {
-    "placeholder": "Přehled vašich přihlášek a akcí, které pořádáte, připravujeme.",
+    "applications": {
+      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
+    },
+    "empty": {
+      "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
+      "find": "Najít akci",
+      "title": "Zatím tu nic není"
+    },
+    "hosted": {
+      "empty": "Nepořádáte žádnou nadcházející akci."
+    },
+    "loadMore": "Načíst další",
+    "loading": "Načítáme vaše akce",
+    "status": {
+      "APPROVED": "Schváleno",
+      "EVENT_CANCELLED": "Akce zrušena",
+      "PENDING": "Čeká na schválení",
+      "REJECTED": "Zamítnuto",
+      "WITHDRAWN": "Odhlášeno"
+    },
+    "tabs": {
+      "applications": "Přihlášky",
+      "applicationsWithCount": "Přihlášky ({{count}})",
+      "hosted": "Pořádám",
+      "hostedWithCount": "Pořádám ({{count}})",
+      "label": "Moje akce"
+    },
     "title": "Moje akce"
   },
   "notifications": {
@@ -1170,8 +1222,8 @@
       "title": "Kde bydlím"
     },
     "private": {
-      "birthDateHint": "Musí vám být alespoň 18 let.",
-      "description": "Pohlaví a datum narození jste zadali při registraci. Tady je můžete opravit.",
+      "birthYearHint": "Stačí rok, přesné datum nechceme. Letos vám musí být alespoň 18.",
+      "description": "Pohlaví a rok narození jste zadali při registraci. Tady je můžete opravit.",
       "notice": "Nikdo další tyto údaje neuvidí.",
       "title": "Soukromé údaje"
     },
@@ -1189,14 +1241,21 @@
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
     "title": "Můj profil",
+    "userProfile": {
+      "interests": "Co hraje",
+      "notFound": "Profil nenalezen.",
+      "title": "Profil uživatele"
+    },
     "view": {
       "addActivities": "Přidat, co hraju",
       "addBio": "Napsat pár slov",
+      "birthYear": "Rok narození {{year}}",
       "edit": "Upravit profil",
       "memberSince": "Členem od {{date}}",
       "noActivities": "Zatím žádné aktivity.",
       "noAddress": "Adresu jste zatím nezadali",
       "noBio": "Zatím nic o sobě.",
+      "noBirthYear": "Rok narození jste zatím nezadali",
       "privateHint": "Tohle ostatní neuvidí.",
       "privateTitle": "Jen pro vás"
     }
