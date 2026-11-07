@@ -6,9 +6,11 @@ import { useTranslation } from "react-i18next"
 
 import { AppShell } from "@/app/AppShell"
 import { ROUTES } from "@/app/routes"
+import { Footer } from "@/components/Footer"
 import { AppForm } from "@/components/form/AppForm"
 import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { Hero } from "@/components/hobbyhub/Hero"
+import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
@@ -18,6 +20,7 @@ import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryO
 import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
+import { HowItWorks } from "@/features/landing/components/HowItWorks"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -25,8 +28,6 @@ export const Route = createFileRoute("/")({
 
 // Three cards: one row from `lg`, where the landing page is at its widest.
 const UPCOMING_EVENTS_COUNT = 3
-
-const STEP_KEYS = ["step1", "step2", "step3"] as const
 
 function LandingPage() {
   const { t } = useTranslation()
@@ -84,6 +85,7 @@ function LandingPage() {
       <AppShell
         className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8"
         search={searchField}
+        footer={<Footer />}
       >
         <FiltersSheet
           isOpen={isFiltersOpen}
@@ -143,41 +145,47 @@ function LandingPage() {
           />
         </section>
 
-        <section
-          aria-labelledby="how-heading"
-          className="flex enter flex-col gap-3"
+        <HowItWorks
+          className="enter"
           style={{ "--enter-index": 2 } as CSSProperties}
+        />
+
+        {/* Groups (#151): the invitation. The same dashed accent surface as
+            "Tvoje místo" on an event, with the crew and one free seat: what a
+            group is for, and one way in. No cards of particular groups: the
+            list is a click away, and a visitor cannot tell a good pick from a
+            random one. */}
+        <section
+          aria-labelledby="groups-heading"
+          className="flex enter flex-col gap-3"
+          style={{ "--enter-index": 3 } as CSSProperties}
         >
           <h2
-            id="how-heading"
+            id="groups-heading"
             className="typo-h3"
           >
-            {t("landing.how.title")}
+            {t("landing.groups.title")}
           </h2>
-          <ol className="flex flex-col gap-2 typo-body text-muted-foreground lg:grid lg:grid-cols-3 lg:gap-8">
-            {STEP_KEYS.map((key, index) => (
-              <li
-                key={key}
-                className="flex gap-3"
-              >
-                <span className="w-4 shrink-0 text-foreground">{index + 1}.</span>
-                {t(`landing.how.${key}`)}
-              </li>
-            ))}
-          </ol>
-          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-            <Button
-              asChild
-              variant="secondary"
+          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:gap-12 md:px-12 md:py-10">
+            <div
+              aria-hidden
+              className="shrink-0"
             >
-              <Link to={ROUTES.events}>{t("landing.actions.find")}</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-            >
-              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
-            </Button>
+              <RosterSeats
+                size="lg"
+                taken={4}
+                capacity={5}
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <p className="typo-title">{t("landing.groups.seatTitle")}</p>
+              <p className="max-w-xl typo-body">{t("landing.groups.text")}</p>
+              <div className="pt-2 *:max-md:w-full">
+                <Button asChild>
+                  <Link to={ROUTES.groups}>{t("landing.groups.browse")}</Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </section>
       </AppShell>

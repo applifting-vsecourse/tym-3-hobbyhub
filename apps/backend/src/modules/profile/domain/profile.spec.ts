@@ -41,27 +41,25 @@ describe('privateDetailsViolations', () => {
   const today = new Date('2026-11-03T10:00:00Z');
 
   it('accepts a grown-up with a gender', () => {
-    expect(privateDetailsViolations('FEMALE', '1990-05-17', today)).toEqual([]);
+    expect(privateDetailsViolations('FEMALE', 1990, today)).toEqual([]);
   });
 
-  it('counts the 18th birthday', () => {
-    expect(privateDetailsViolations('MALE', '2008-11-03', today)).toEqual([]);
-    expect(privateDetailsViolations('MALE', '2008-11-04', today)).toEqual([
-      'UNDERAGE',
-    ]);
+  it('accepts the year of turning 18 and refuses the one after', () => {
+    expect(privateDetailsViolations('MALE', 2008, today)).toEqual([]);
+    expect(privateDetailsViolations('MALE', 2009, today)).toEqual(['UNDERAGE']);
   });
 
-  it.each([['2026-02-30'], ['17.5.1990'], ['2027-01-01'], ['1899-12-31']])(
-    'refuses the birth date %s',
-    (birthDate) => {
-      expect(privateDetailsViolations('MALE', birthDate, today)).toEqual([
-        'INVALID_BIRTH_DATE',
+  it.each([[1899], [2027], ['1990'], ['1990-05-17'], [1990.5]])(
+    'refuses the birth year %p',
+    (birthYear) => {
+      expect(privateDetailsViolations('MALE', birthYear, today)).toEqual([
+        'INVALID_BIRTH_YEAR',
       ]);
     },
   );
 
   it('refuses an unknown gender', () => {
-    expect(privateDetailsViolations('OTHER', '1990-05-17', today)).toEqual([
+    expect(privateDetailsViolations('OTHER', 1990, today)).toEqual([
       'INVALID_GENDER',
     ]);
   });

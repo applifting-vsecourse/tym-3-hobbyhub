@@ -255,7 +255,7 @@ export class ParticipationRequestsService {
     eventId: string,
     user: Identity,
   ): Promise<EventSeatFacts> {
-    const event = await this.eventsService.getPublicEventSeatFacts(
+    const event = await this.eventsService.getVisibleEventSeatFacts(
       eventId,
       user.id,
     );
