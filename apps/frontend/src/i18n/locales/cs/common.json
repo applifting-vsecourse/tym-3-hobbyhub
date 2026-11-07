@@ -835,6 +835,7 @@
     },
     "status": {
       "approved": "Schváleno",
+      "cancelled": "Odhlášeno",
       "deadline": "Uzávěrka",
       "neutral": "Plno",
       "pending": "Čeká na schválení",
@@ -977,6 +978,7 @@
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"
       },
+      "PARTICIPANT_CANCELLED": "{{name}} zrušil(a) svoji účast na akci {{title}}",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Tvoje žádost o účast na akci {{title}} byla schválena",
@@ -1053,8 +1055,32 @@
   },
   "participationRequests": {
     "approved": {
+      "cancel": "Zrušit účast",
       "description": "Organizátor tvou účast schválil.",
       "descriptionAutomatic": "Na akci máš místo."
+    },
+    "cancel": {
+      "confirm": "Zrušit účast",
+      "done": "Účast zrušena",
+      "failed": "Účast se nepodařilo zrušit. Zkus to znovu.",
+      "keep": "Nechat účast",
+      "messageLabel": "Zpráva organizátorovi",
+      "messagePlaceholder": "Např. onemocněl jsem, snad příště…",
+      "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
+      "messageTooShort": "Napiš organizátorovi aspoň {{count}} znaků.",
+      "refused": {
+        "EVENT_CANCELLED": "Akce byla zrušena, účast už nejde zrušit.",
+        "EVENT_FINISHED": "Akce už proběhla, účast už nejde zrušit.",
+        "EVENT_NOT_HELD": "Akce se neuskutečnila, účast už nejde zrušit.",
+        "EVENT_STARTED": "Akce už začala, účast už nejde zrušit.",
+        "NO_SEAT": "Na akci už místo nemáš."
+      },
+      "text": "Tvoje místo se uvolní pro další zájemce a organizátor dostane upozornění i s tvou zprávou. Zrušení před začátkem akce je bez postihu.",
+      "title": "Zrušit účast?"
+    },
+    "cancelRule": "Účast můžeš zrušit kdykoli před začátkem akce, organizátorovi napíšeš proč.",
+    "cancelled": {
+      "description": "Účast na této akci jsi zrušil. Pokud si to rozmyslíš, můžeš o účast požádat znovu."
     },
     "form": {
       "cancel": "Zrušit",
@@ -1083,19 +1109,6 @@
       "back": "Zpět na akci",
       "breakdown": "{{approved}} z aplikace, {{external}} mimo aplikaci",
       "decided": {
-        "APPROVED": {
-          "empty": "Zatím tu nikdo není. Objeví se tu každý, kdo na akci získá místo.",
-          "external_few": "K tomu {{count}} místa mimo aplikaci",
-          "external_one": "K tomu {{count}} místo mimo aplikaci",
-          "external_other": "K tomu {{count}} míst mimo aplikaci",
-          "loadError": "Účastníky se nepodařilo načíst",
-          "loading": "Načítáme účastníky…",
-          "more_few": "{{count}} další účastníci",
-          "more_one": "{{count}} další účastník",
-          "more_other": "{{count}} dalších účastníků",
-          "since": "Místo má od {{date}}",
-          "title": "Schválení"
-        },
         "REJECTED": {
           "empty": "Zatím jsi žádnou žádost nezamítl.",
           "loadError": "Zamítnuté žádosti se nepodařilo načíst",
@@ -1104,7 +1117,7 @@
           "more_one": "{{count}} další zamítnutá žádost",
           "more_other": "{{count}} dalších zamítnutých žádostí",
           "since": "Zamítnuto {{date}}",
-          "title": "Zamítnutí"
+          "title": "Zamítnuté"
         },
         "WITHDRAWN": {
           "empty": "Zatím nikdo svou žádost nestáhl.",
@@ -1113,8 +1126,8 @@
           "more_few": "{{count}} další stažené žádosti",
           "more_one": "{{count}} další stažená žádost",
           "more_other": "{{count}} dalších stažených žádostí",
-          "since": "Žádost stáhl {{date}}",
-          "title": "Odhlášení"
+          "since": "Žádost stáhl(a) {{date}}",
+          "title": "Stažené"
         }
       },
       "empty": "Zatím tu nejsou žádné žádosti. Objeví se tu, jakmile o účast někdo požádá.",
@@ -1155,6 +1168,32 @@
         "missing": "Po schválení: {{taken}} z min. {{min}}, do minima chybí {{count}}.",
         "taken": "Po schválení bude obsazeno {{taken}} z {{max}}."
       },
+      "participants": {
+        "APPROVED": {
+          "empty": "Zatím tu nikdo není. Objeví se tu každý, kdo na akci získá místo.",
+          "external_few": "K tomu {{count}} místa mimo aplikaci",
+          "external_one": "K tomu {{count}} místo mimo aplikaci",
+          "external_other": "K tomu {{count}} míst mimo aplikaci",
+          "loadError": "Účastníky se nepodařilo načíst",
+          "loading": "Načítáme účastníky…",
+          "more_few": "{{count}} další účastníci",
+          "more_one": "{{count}} další účastník",
+          "more_other": "{{count}} dalších účastníků",
+          "since": "Místo má od {{date}}",
+          "title": "Přijdou"
+        },
+        "CANCELLED": {
+          "empty": "Zatím se nikdo neodhlásil.",
+          "loadError": "Odhlášené se nepodařilo načíst",
+          "loading": "Načítáme odhlášené…",
+          "more_few": "{{count}} další odhlášení",
+          "more_one": "{{count}} další odhlášený",
+          "more_other": "{{count}} dalších odhlášených",
+          "since": "Účast zrušil(a) {{date}}",
+          "title": "Odhlášení"
+        },
+        "asksAgain": "Znovu žádá o účast"
+      },
       "refused": {
         "APPLICANT_HAS_SEAT": "Žadatel už na akci místo má.",
         "EVENT_FULL": "Akce se mezitím zaplnila, žádost už nejde schválit.",
@@ -1162,7 +1201,7 @@
       },
       "rejectFailed": "Žádost se nepodařilo zamítnout. Zkus to znovu.",
       "rejected": "Žádost zamítnuta",
-      "requests": "Žádosti",
+      "requests": "Čekající",
       "retry": "Zkusit znovu",
       "tabs": {
         "participants": "Účastníci",

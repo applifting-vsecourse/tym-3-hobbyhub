@@ -86,6 +86,7 @@ describe('ParticipationRequestsService', () => {
     );
     repository.getRequestsOf.mockResolvedValue(requests);
     repository.getApplicantProfile.mockResolvedValue(profile);
+    repository.getSeatStatus.mockResolvedValue(null);
     return {
       repository,
       events,
@@ -248,6 +249,8 @@ describe('ParticipationRequestsService', () => {
         {
           request: pending,
           violations: ['ALREADY_REQUESTED'],
+          seat: null,
+          cancelViolations: ['NO_SEAT'],
           applicant: profile,
         },
       );
@@ -257,8 +260,114 @@ describe('ParticipationRequestsService', () => {
       const { service } = setup();
 
       await expect(service.getMyRequestState(user, 'e1', now)).resolves.toEqual(
-        { request: null, violations: [], applicant: profile },
+        {
+          request: null,
+          violations: [],
+          seat: null,
+          cancelViolations: ['NO_SEAT'],
+          applicant: profile,
+        },
       );
+    });
+
+    // F-06.4, ADR-0017.
+    it('shows a participant their seat and that they may cancel it', async () => {
+      const approved = aRequest({ status: 'APPROVED', decidedAt: now });
+      const { repository, service } = setup(anEvent({ hasSeat: true }), [
+        approved,
+      ]);
+      repository.getSeatStatus.mockResolvedValue('APPROVED');
+
+      await expect(
+        service.getMyRequestState(user, 'e1', now),
+      ).resolves.toMatchObject({
+        request: approved,
+        violations: ['HAS_SEAT'],
+        seat: 'APPROVED',
+        cancelViolations: [],
+      });
+    });
+
+    it('lets someone who cancelled their seat ask again', async () => {
+      const approved = aRequest({ status: 'APPROVED', decidedAt: now });
+      const { repository, service } = setup(anEvent(), [approved]);
+      repository.getSeatStatus.mockResolvedValue('CANCELLED');
+
+      await expect(
+        service.getMyRequestState(user, 'e1', now),
+      ).resolves.toMatchObject({
+        request: approved,
+        violations: [],
+        seat: 'CANCELLED',
+        cancelViolations: ['NO_SEAT'],
+      });
+    });
+  });
+
+  // F-06.4.
+  describe('cancelMySeat', () => {
+    const message = 'Onemocněl jsem, promiňte.';
+
+    it('gives the seat back and tells the organizers why', async () => {
+      const event = anEvent({ hasSeat: true });
+      const { repository, notifications, service } = setup(event);
+      repository.cancelSeat.mockResolvedValue(null);
+
+      await service.cancelMySeat(user, 'e1', message, now);
+
+      expect(repository.cancelSeat).toHaveBeenCalledWith({
+        eventId: 'e1',
+        userId: 'u1',
+        message,
+        at: now,
+      });
+      expect(notifications.notifyParticipantCancelled).toHaveBeenCalledWith({
+        event,
+        participant: user,
+        message,
+      });
+    });
+
+    it.each([
+      ['no seat', anEvent(), ['NO_SEAT']],
+      [
+        'an event that started',
+        anEvent({ hasSeat: true, startAt: now }),
+        ['EVENT_STARTED'],
+      ],
+      [
+        'a cancelled event',
+        anEvent({ hasSeat: true, status: 'CANCELLED' }),
+        ['EVENT_CANCELLED'],
+      ],
+    ])('refuses with %s, and tells nobody', async (_, event, violations) => {
+      const { repository, notifications, service } = setup(event);
+
+      await expect(
+        violationsOf(service.cancelMySeat(user, 'e1', message, now)),
+      ).resolves.toEqual(violations);
+      expect(repository.cancelSeat).not.toHaveBeenCalled();
+      expect(notifications.notifyParticipantCancelled).not.toHaveBeenCalled();
+    });
+
+    it('refuses when the event started after it was read', async () => {
+      const { repository, notifications, service } = setup(
+        anEvent({ hasSeat: true }),
+      );
+      repository.cancelSeat.mockResolvedValue('EVENT_STARTED');
+
+      await expect(
+        violationsOf(service.cancelMySeat(user, 'e1', message, now)),
+      ).resolves.toEqual(['EVENT_STARTED']);
+      expect(notifications.notifyParticipantCancelled).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 for an event that is not public', async () => {
+      const { service } = setup(null);
+
+      await expect(
+        service.cancelMySeat(user, 'e1', message, now),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
@@ -345,8 +454,8 @@ describe('ParticipationRequestsService', () => {
     });
 
     describe('getDecidedRequests', () => {
-      it.each(['APPROVED', 'REJECTED', 'WITHDRAWN'] as const)(
-        'lists the %s people of the event',
+      it.each(['REJECTED', 'WITHDRAWN'] as const)(
+        'lists the %s requests of the event',
         async (status) => {
           const { repository, events, service } = setup();
           const decided = {
@@ -384,9 +493,55 @@ describe('ParticipationRequestsService', () => {
         const { repository, service } = setup();
 
         await expect(
-          service.getDecidedRequests(user, 'e1', 'APPROVED', page),
+          service.getDecidedRequests(user, 'e1', 'REJECTED', page),
         ).rejects.toBeInstanceOf(NotFoundException);
         expect(repository.getDecidedRequests).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('getParticipants', () => {
+      it.each(['APPROVED', 'CANCELLED'] as const)(
+        'lists the %s seats of the event',
+        async (status) => {
+          const { repository, events, service } = setup();
+          const participants = {
+            items: [
+              {
+                id: 'p1',
+                status,
+                message: null,
+                changedAt: now,
+                asksAgain: false,
+                person: profile,
+              },
+            ],
+            total: 1,
+          };
+          repository.getParticipants.mockResolvedValue(participants);
+
+          await expect(
+            service.getParticipants(organizer, 'e1', status, page),
+          ).resolves.toEqual(participants);
+          expect(events.getOrganizedEvent).toHaveBeenCalledWith(
+            'e1',
+            organizer,
+          );
+          expect(repository.getParticipants).toHaveBeenCalledWith(
+            'e1',
+            status,
+            page,
+          );
+        },
+      );
+
+      // Nobody learns who goes to someone else's event, nor why they left.
+      it('answers 404 to someone who does not organize the event', async () => {
+        const { repository, service } = setup();
+
+        await expect(
+          service.getParticipants(user, 'e1', 'CANCELLED', page),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(repository.getParticipants).not.toHaveBeenCalled();
       });
     });
 

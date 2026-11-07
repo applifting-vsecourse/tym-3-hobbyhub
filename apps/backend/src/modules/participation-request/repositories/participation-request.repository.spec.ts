@@ -468,6 +468,109 @@ describeDb('ParticipationRequestRepository', () => {
     });
   });
 
+  // F-06.4, ADR-0017.
+  describe('cancelSeat', () => {
+    const message = 'Onemocněl jsem, promiňte.';
+
+    it('gives the seat back with the message, and frees it', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      await repository.createApproved({ eventId, userId: userId!, at });
+
+      await expect(
+        repository.cancelSeat({ eventId, userId: userId!, message, at }),
+      ).resolves.toBeNull();
+      await expect(
+        prisma.participation.findUniqueOrThrow({
+          where: { eventId_userId: { eventId, userId: userId! } },
+          select: {
+            status: true,
+            cancelledAt: true,
+            cancellationMessage: true,
+            isLateCancellation: true,
+          },
+        }),
+      ).resolves.toEqual({
+        status: ParticipationStatus.CANCELLED,
+        cancelledAt: at,
+        cancellationMessage: message,
+        isLateCancellation: false,
+      });
+      await expect(repository.getSeatStatus(eventId, userId!)).resolves.toBe(
+        'CANCELLED',
+      );
+      // The seat is free again: someone else can take it.
+      await expect(
+        repository.createApproved({ eventId, userId: userId!, at }),
+      ).resolves.toMatchObject({ status: 'APPROVED' });
+    });
+
+    it('starts a seat taken again without the old message', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      await repository.createApproved({ eventId, userId: userId!, at });
+      await repository.cancelSeat({ eventId, userId: userId!, message, at });
+      await repository.createApproved({ eventId, userId: userId!, at });
+
+      await expect(
+        prisma.participation.findUniqueOrThrow({
+          where: { eventId_userId: { eventId, userId: userId! } },
+          select: {
+            status: true,
+            cancelledAt: true,
+            cancellationMessage: true,
+          },
+        }),
+      ).resolves.toEqual({
+        status: ParticipationStatus.APPROVED,
+        cancelledAt: null,
+        cancellationMessage: null,
+      });
+    });
+
+    it('finds no seat to give back, twice or never taken', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      await expect(
+        repository.getSeatStatus(eventId, userId!),
+      ).resolves.toBeNull();
+      await expect(
+        repository.cancelSeat({ eventId, userId: userId!, message, at }),
+      ).resolves.toBe('NO_SEAT');
+
+      await repository.createApproved({ eventId, userId: userId!, at });
+      await repository.cancelSeat({ eventId, userId: userId!, message, at });
+      await expect(
+        repository.cancelSeat({ eventId, userId: userId!, message, at }),
+      ).resolves.toBe('NO_SEAT');
+    });
+
+    it('keeps the seat of an event that started after the service read it', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      await repository.createApproved({ eventId, userId: userId!, at });
+      await prisma.event.update({
+        where: { id: eventId },
+        data: { startAt: new Date('2029-12-31T09:00:00Z') },
+      });
+
+      await expect(
+        repository.cancelSeat({ eventId, userId: userId!, message, at }),
+      ).resolves.toBe('EVENT_STARTED');
+      await expect(repository.getSeatStatus(eventId, userId!)).resolves.toBe(
+        'APPROVED',
+      );
+    });
+  });
+
   describe('rejectPending', () => {
     it('rejects the waiting request once, with the reason', async () => {
       const {
@@ -491,9 +594,8 @@ describeDb('ParticipationRequestRepository', () => {
     });
   });
 
-  describe('getDecidedRequests', () => {
+  describe('getParticipants', () => {
     const page = { limit: 20, offset: 0 };
-    const minutes = (n: number): Date => new Date(at.getTime() + n * 60_000);
 
     it('lists every seat, with the message of its request when there is one', async () => {
       const {
@@ -516,7 +618,7 @@ describeDb('ParticipationRequestRepository', () => {
         data: { eventId, userId: withoutRequest!, status: 'APPROVED' },
       });
 
-      const result = await repository.getDecidedRequests(
+      const result = await repository.getParticipants(
         eventId,
         'APPROVED',
         page,
@@ -528,11 +630,69 @@ describeDb('ParticipationRequestRepository', () => {
           expect.objectContaining({
             status: 'APPROVED',
             message: 'Beru hokejku',
+            asksAgain: false,
           }),
           expect.objectContaining({ status: 'APPROVED', message: null }),
         ]),
       );
     });
+
+    // F-06.4: a seat given back, with or without a request behind it.
+    it('lists the people who gave their seat back, with their words', async () => {
+      const {
+        eventId,
+        userIds: [quiet, asking, staying],
+      } = await eventWith(4, 3);
+      for (const userId of [quiet!, asking!, staying!]) {
+        await repository.createApproved({ eventId, userId, at });
+      }
+      await repository.cancelSeat({
+        eventId,
+        userId: quiet!,
+        message: 'Onemocněl jsem, promiňte.',
+        at,
+      });
+      const later = new Date(at.getTime() + 60_000);
+      await repository.cancelSeat({
+        eventId,
+        userId: asking!,
+        message: 'Nakonec nemůžu, sorry.',
+        at: later,
+      });
+      await prisma.participationRequest.create({
+        data: { eventId, userId: asking!, message: 'Přece jen můžu' },
+      });
+
+      const result = await repository.getParticipants(
+        eventId,
+        'CANCELLED',
+        page,
+      );
+
+      expect(result.total).toBe(2);
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          status: 'CANCELLED',
+          message: 'Nakonec nemůžu, sorry.',
+          changedAt: later,
+          asksAgain: true,
+        }),
+        expect.objectContaining({
+          status: 'CANCELLED',
+          message: 'Onemocněl jsem, promiňte.',
+          changedAt: at,
+          asksAgain: false,
+        }),
+      ]);
+      await expect(
+        repository.getParticipants(eventId, 'APPROVED', page),
+      ).resolves.toMatchObject({ total: 1 });
+    });
+  });
+
+  describe('getDecidedRequests', () => {
+    const page = { limit: 20, offset: 0 };
+    const minutes = (n: number): Date => new Date(at.getTime() + n * 60_000);
 
     it('lists the rejected, latest first', async () => {
       const {

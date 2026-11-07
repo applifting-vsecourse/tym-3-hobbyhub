@@ -51,6 +51,8 @@ export function notificationText(t: TFunction, notification: Notification): stri
     }
     case "EVENT_CANCELLED":
       return t("notifications.text.EVENT_CANCELLED", { title })
+    case "PARTICIPANT_CANCELLED":
+      return t("notifications.text.PARTICIPANT_CANCELLED", { name, title })
     default:
       // Types without a trigger yet (F-05.8, F-05.9, F-07.4…): a plain line
       // rather than nothing, should a row of theirs ever appear.
