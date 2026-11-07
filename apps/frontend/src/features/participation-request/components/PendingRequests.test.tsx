@@ -58,6 +58,7 @@ const aRequest = (id: string, name = "Honza_K") => ({
   status: "PENDING",
   message: "Hraju třetí rok za firemní tým.",
   requestedAt: "2029-12-30T10:00:00.000Z",
+  userId: `user-${id}`,
   applicant: { name, image: null, bio: "Florbal hraju od školy.", hasVerifiedEmail: true },
 })
 
@@ -96,6 +97,9 @@ describe("PendingRequests", () => {
     await renderList()
 
     const card = (await screen.findByRole("heading", { name: "Honza_K" })).closest("article")!
+    expect(within(card).getByRole("link", { name: "Honza_K" }).getAttribute("href")).toBe(
+      "/profile/user-r1",
+    )
     expect(within(card).getByText("Ověřený e-mail")).toBeInTheDocument()
     expect(within(card).getByText("Florbal hraju od školy.")).toBeInTheDocument()
     expect(within(card).getByText("Hraju třetí rok za firemní tým.")).toBeInTheDocument()

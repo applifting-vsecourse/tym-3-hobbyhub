@@ -27,6 +27,7 @@ import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as ProtectedPagesEventsNewRouteImport } from './routes/_ProtectedPages/events/new'
 import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_ProtectedPages/groups/new'
 import { Route as ProtectedPagesProfileIndexRouteImport } from './routes/_ProtectedPages/profile/index'
+import { Route as ProtectedPagesProfileUserIdRouteImport } from './routes/_ProtectedPages/profile/$userId'
 import { Route as ProtectedPagesProfileEditRouteImport } from './routes/_ProtectedPages/profile/edit'
 import { Route as ProtectedPagesEventsEventIdEditRouteImport } from './routes/_ProtectedPages/events/$eventId.edit'
 import { Route as ProtectedPagesEventsEventIdParticipantsRouteImport } from './routes/_ProtectedPages/events/$eventId/participants'
@@ -124,6 +125,12 @@ const ProtectedPagesProfileIndexRoute =
     path: '/profile/',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const ProtectedPagesProfileUserIdRoute =
+  ProtectedPagesProfileUserIdRouteImport.update({
+    id: '/profile/$userId',
+    path: '/profile/$userId',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 const ProtectedPagesProfileEditRoute =
   ProtectedPagesProfileEditRouteImport.update({
     id: '/profile/edit',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/groups/': typeof GroupsIndexRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/profile/': typeof ProtectedPagesProfileIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/groups': typeof GroupsIndexRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/profile': typeof ProtectedPagesProfileIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/groups/': typeof GroupsIndexRoute
   '/_ProtectedPages/events/new': typeof ProtectedPagesEventsNewRoute
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/_ProtectedPages/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/_ProtectedPages/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/_ProtectedPages/profile/': typeof ProtectedPagesProfileIndexRoute
   '/_ProtectedPages/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/events/new'
     | '/groups/new'
+    | '/profile/$userId'
     | '/profile/edit'
     | '/profile/'
     | '/events/$eventId/edit'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/groups'
     | '/events/new'
     | '/groups/new'
+    | '/profile/$userId'
     | '/profile/edit'
     | '/profile'
     | '/events/$eventId/edit'
@@ -286,6 +298,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/_ProtectedPages/events/new'
     | '/_ProtectedPages/groups/new'
+    | '/_ProtectedPages/profile/$userId'
     | '/_ProtectedPages/profile/edit'
     | '/_ProtectedPages/profile/'
     | '/_ProtectedPages/events/$eventId/edit'
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesProfileIndexRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/profile/$userId': {
+      id: '/_ProtectedPages/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof ProtectedPagesProfileUserIdRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/profile/edit': {
       id: '/_ProtectedPages/profile/edit'
       path: '/profile/edit'
@@ -473,6 +493,7 @@ interface ProtectedPagesRouteChildren {
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
   ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
   ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
+  ProtectedPagesProfileUserIdRoute: typeof ProtectedPagesProfileUserIdRoute
   ProtectedPagesProfileEditRoute: typeof ProtectedPagesProfileEditRoute
   ProtectedPagesProfileIndexRoute: typeof ProtectedPagesProfileIndexRoute
   ProtectedPagesEventsEventIdEditRoute: typeof ProtectedPagesEventsEventIdEditRoute
@@ -487,6 +508,7 @@ const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
   ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,
   ProtectedPagesGroupsNewRoute: ProtectedPagesGroupsNewRoute,
+  ProtectedPagesProfileUserIdRoute: ProtectedPagesProfileUserIdRoute,
   ProtectedPagesProfileEditRoute: ProtectedPagesProfileEditRoute,
   ProtectedPagesProfileIndexRoute: ProtectedPagesProfileIndexRoute,
   ProtectedPagesEventsEventIdEditRoute: ProtectedPagesEventsEventIdEditRoute,

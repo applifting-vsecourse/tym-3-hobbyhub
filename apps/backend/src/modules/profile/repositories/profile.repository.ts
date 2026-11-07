@@ -9,7 +9,15 @@ export type ProfileRow = {
   image: string | null;
   profileCover: string | null;
   gender: Gender | null;
-  birthDate: Date | null;
+  birthYear: number | null;
+};
+
+export type PublicProfileRow = {
+  id: string;
+  name: string;
+  bio: string | null;
+  image: string | null;
+  profileCover: string | null;
 };
 
 // Trusts the layers above: it validates nothing, it only reads and writes.
@@ -27,7 +35,21 @@ export class ProfileRepository {
         image: true,
         profileCover: true,
         gender: true,
-        birthDate: true,
+        birthYear: true,
+      },
+    });
+  }
+
+  // Only the columns another person may see; the private ones are not selected.
+  getPublicRow(userId: string): Promise<PublicProfileRow | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        bio: true,
+        image: true,
+        profileCover: true,
       },
     });
   }
@@ -49,7 +71,7 @@ export class ProfileRepository {
 
   async updatePrivate(
     userId: string,
-    data: { gender: Gender; birthDate: Date },
+    data: { gender: Gender; birthYear: number },
   ): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },

@@ -14,6 +14,12 @@ describe("authErrorMessage", () => {
     expect(authErrorMessage(i18n.t, new AuthError("UNDERAGE"), "signUpFailed")).toBe(
       "Registrace je možná až od 18 let.",
     )
+    expect(authErrorMessage(i18n.t, new AuthError("INVALID_BIRTH_YEAR"), "signUpFailed")).toBe(
+      "Neplatný rok narození.",
+    )
+    expect(authErrorMessage(i18n.t, new AuthError("ADULTHOOD_NOT_CONFIRMED"), "signUpFailed")).toBe(
+      "Bez potvrzení plnoletosti se nelze zaregistrovat.",
+    )
   })
 
   it("explains the rate limit, which has no code", () => {

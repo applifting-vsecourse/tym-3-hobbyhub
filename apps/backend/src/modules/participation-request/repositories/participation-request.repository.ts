@@ -315,6 +315,7 @@ export class ParticipationRequestRepository {
       items: seats.map((seat) => ({
         id: seat.id,
         status: 'APPROVED',
+        userId: seat.userId,
         message: messages.get(seat.userId) ?? null,
         changedAt: seat.updatedAt,
         applicant: mapApplicant(seat.user),
@@ -343,6 +344,7 @@ export class ParticipationRequestRepository {
       items: requests.map((request) => ({
         id: request.id,
         status: 'REJECTED',
+        userId: request.userId,
         message: request.message,
         changedAt: request.decidedAt ?? request.requestedAt,
         applicant: mapApplicant(request.user),
@@ -397,6 +399,7 @@ export class ParticipationRequestRepository {
       items: requests.map((request) => ({
         id: request.id,
         status: 'WITHDRAWN',
+        userId: request.userId,
         message: request.message,
         changedAt: request.decidedAt ?? request.requestedAt,
         applicant: mapApplicant(request.user),

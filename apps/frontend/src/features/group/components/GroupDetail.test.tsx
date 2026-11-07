@@ -221,13 +221,6 @@ describe("GroupDetail", () => {
     )
   })
 
-  it("says the upcoming events are being worked on", async () => {
-    await renderDetail(null)
-
-    expect(screen.getByRole("heading", { name: "Nadcházející akce" })).toBeInTheDocument()
-    expect(screen.getByText(/Na této funkci právě pracujeme/)).toBeVisible()
-  })
-
   describe("asking to join", () => {
     it("sends a request with a message and shows it waiting", async () => {
       const user = userEvent.setup()

@@ -7,6 +7,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Put,
   UseGuards,
@@ -18,7 +19,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ProfileResponseDto } from './dto/profile.response.dto';
+import {
+  ProfileResponseDto,
+  PublicProfileResponseDto,
+} from './dto/profile.response.dto';
 import { UpdateProfileLocationDto } from './dto/update-profile-location.dto';
 import {
   UpdatePrivateDetailsDto,
@@ -46,6 +50,21 @@ export class ProfileController {
     );
   }
 
+  // Declared after `GET /profile`; `private`, `activities` and `location` are
+  // PUT routes, so the id cannot swallow them.
+  @Get(':userId')
+  @ApiOperation({ summary: "Another person's public profile" })
+  @ApiResponse({ status: 200, type: PublicProfileResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 404, description: 'No such user' })
+  async getPublic(
+    @Param('userId') userId: string,
+  ): Promise<PublicProfileResponseDto> {
+    return PublicProfileResponseDto.fromDomain(
+      await this.profileService.getPublicProfile(userId),
+    );
+  }
+
   @Patch()
   @ApiOperation({ summary: 'Change the nickname, bio or photo' })
   @ApiResponse({ status: 200, type: ProfileResponseDto })
@@ -60,7 +79,7 @@ export class ProfileController {
   }
 
   @Put('private')
-  @ApiOperation({ summary: 'Correct the private gender and birth date' })
+  @ApiOperation({ summary: 'Correct the private gender and year of birth' })
   @ApiResponse({ status: 200, type: ProfileResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid input or under 18' })
   async updatePrivate(

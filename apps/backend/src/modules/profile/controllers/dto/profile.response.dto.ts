@@ -4,7 +4,7 @@ import {
   HomeAddressResponseDto,
   InterestResponseDto,
 } from '@/modules/onboarding/controllers/dto/onboarding.response.dto';
-import { Profile } from '@/modules/profile/domain/profile';
+import { Profile, PublicProfile } from '@/modules/profile/domain/profile';
 import { GENDERS } from '@/shared/auth/registration/registration';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -36,12 +36,12 @@ export class ProfileResponseDto {
   gender!: (typeof GENDERS)[number] | null;
 
   @ApiProperty({
-    type: String,
+    type: Number,
     nullable: true,
-    example: '1990-05-17',
-    description: 'Private',
+    example: 1990,
+    description: 'Private; the year only, never the full date',
   })
-  birthDate!: string | null;
+  birthYear!: number | null;
 
   @ApiProperty({ type: [InterestResponseDto] })
   interests!: InterestResponseDto[];
@@ -57,7 +57,7 @@ export class ProfileResponseDto {
       image: profile.image,
       cover: profile.cover,
       gender: profile.gender,
-      birthDate: profile.birthDate,
+      birthYear: profile.birthYear,
       interests: profile.interests.map((interest) => ({
         activity: ActivityResponseDto.fromDomain(interest.activity),
         level: interest.level
@@ -65,6 +65,50 @@ export class ProfileResponseDto {
           : null,
       })),
       address: profile.address ? { ...profile.address } : null,
+    };
+  }
+}
+
+export class PublicProfileResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ description: 'The public nickname' })
+  name!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  bio!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'WebP data URL of the photo',
+  })
+  image!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Cover id, null = default',
+  })
+  cover!: string | null;
+
+  @ApiProperty({ type: [InterestResponseDto] })
+  interests!: InterestResponseDto[];
+
+  static fromDomain(profile: PublicProfile): PublicProfileResponseDto {
+    return {
+      id: profile.id,
+      name: profile.name,
+      bio: profile.bio,
+      image: profile.image,
+      cover: profile.cover,
+      interests: profile.interests.map((interest) => ({
+        activity: ActivityResponseDto.fromDomain(interest.activity),
+        level: interest.level
+          ? LevelResponseDto.fromDomain(interest.level)
+          : null,
+      })),
     };
   }
 }

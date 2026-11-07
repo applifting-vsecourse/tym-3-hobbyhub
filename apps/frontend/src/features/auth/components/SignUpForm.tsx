@@ -9,7 +9,6 @@ import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
 import { AppForm } from "@/components/form/AppForm"
-import { BirthDatePicker } from "@/components/hobbyhub/BirthDatePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -30,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
-import { isAdult } from "@/lib/birthDate"
+import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
 
 import { PasswordInput } from "@/features/auth/components/PasswordInput"
 
@@ -54,10 +53,14 @@ const createSchema = (t: TFunction) =>
       password: z.string().min(8, t("auth.validation.passwordMin")),
       confirmPassword: z.string().min(1, t("auth.validation.confirmPasswordRequired")),
       gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
-      birthDate: z
-        .string()
-        .min(1, t("auth.validation.birthDateRequired"))
-        .refine((value) => isAdult(value, new Date()), t("auth.validation.underage")),
+      // #174: only the year, never the full date.
+      birthYear: z.string().superRefine((value, context) => {
+        const problem = birthYearProblem(value, new Date())
+        if (problem) context.addIssue({ code: "custom", message: t(BIRTH_YEAR_MESSAGES[problem]) })
+      }),
+      // A year cannot tell whether someone born late in the year is 18 yet;
+      // the user confirms it (#174).
+      adulthoodConfirmed: z.boolean().refine(Boolean, t("auth.validation.adulthoodRequired")),
       termsAccepted: z.boolean().refine(Boolean, t("auth.validation.termsRequired")),
     })
     .refine((values) => values.password === values.confirmPassword, {
@@ -68,15 +71,19 @@ const createSchema = (t: TFunction) =>
         z.object({ password: z.string(), confirmPassword: z.string() }).safeParse(value).success,
     })
 
-export type SignUpFormValues = z.infer<ReturnType<typeof createSchema>>
+type FormValues = z.infer<ReturnType<typeof createSchema>>
+
+/** What the form submits: the year as a number, ready for the server. */
+export type SignUpFormValues = Omit<FormValues, "birthYear"> & { birthYear: number }
 
 // Gender has no default: the user picks one.
-const defaultValues: DefaultValues<SignUpFormValues> = {
+const defaultValues: DefaultValues<FormValues> = {
   name: "",
   email: "",
   password: "",
   confirmPassword: "",
-  birthDate: "",
+  birthYear: "",
+  adulthoodConfirmed: false,
   termsAccepted: false,
 }
 
@@ -89,7 +96,7 @@ type SignUpFormProps = {
 export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
-  const form = useForm<SignUpFormValues>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues,
     // Password rules and the match show up while typing, not after submit.
@@ -100,7 +107,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
   return (
     <AppForm
       form={form}
-      onSubmit={onSubmit}
+      onSubmit={(values) => onSubmit({ ...values, birthYear: Number(values.birthYear.trim()) })}
       // Nothing is lost by leaving a sign-up half-way.
       isGuarded={false}
       className="flex flex-col gap-4"
@@ -184,12 +191,18 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
 
       <FormField
         control={form.control}
-        name="birthDate"
+        name="birthYear"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
+            <FormLabel>{t("auth.fields.birthYear")}</FormLabel>
             <FormControl>
-              <BirthDatePicker {...field} />
+              <Input
+                inputMode="numeric"
+                autoComplete="bday-year"
+                maxLength={4}
+                placeholder={t("auth.placeholders.birthYear")}
+                {...field}
+              />
             </FormControl>
             <FormDescription>{t("auth.signUp.privacyNote")}</FormDescription>
             <FormMessage />
@@ -230,6 +243,27 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
             </Select>
             <FormDescription>{t("auth.signUp.genderNote")}</FormDescription>
             <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="adulthoodConfirmed"
+        render={({ field }) => (
+          <FormItem className="flex items-start gap-3">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+              />
+            </FormControl>
+            <div className="grid gap-1">
+              <FormLabel className="block typo-small text-muted-foreground">
+                {t("auth.signUp.adulthood")}
+              </FormLabel>
+              <FormMessage />
+            </div>
           </FormItem>
         )}
       />

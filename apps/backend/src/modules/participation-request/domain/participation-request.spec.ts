@@ -13,6 +13,8 @@ const now = new Date('2030-01-01T12:00:00Z');
 const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   id: 'e1',
   status: 'PUBLISHED',
+  visibility: 'PUBLIC',
+  groupId: null,
   startAt: new Date('2030-01-01T18:00:00Z'),
   endAt: new Date('2030-01-01T20:00:00Z'),
   approvalMode: 'MANUAL',

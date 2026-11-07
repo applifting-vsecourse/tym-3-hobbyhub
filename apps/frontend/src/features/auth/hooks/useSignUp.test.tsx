@@ -20,7 +20,8 @@ const input: SignUpInput = {
   email: user.email,
   password: "heslo123",
   gender: "FEMALE",
-  birthDate: "1995-04-12",
+  birthYear: 1995,
+  adulthoodConfirmed: true,
   termsAccepted: true,
 }
 
