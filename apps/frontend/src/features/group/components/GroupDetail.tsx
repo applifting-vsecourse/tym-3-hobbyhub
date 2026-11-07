@@ -15,6 +15,8 @@ type GroupDetailProps = {
   adminPanel?: ReactNode
   /** For the group's members only (F-07.3): the members. */
   membersPreview?: ReactNode
+  /** Akce skupiny (F-07.2); the event feature owns the list. */
+  events?: ReactNode
 }
 
 /**
@@ -27,6 +29,7 @@ export function GroupDetail({
   membershipPanel,
   adminPanel,
   membersPreview,
+  events,
 }: GroupDetailProps) {
   const { t } = useTranslation()
   const meta = [
@@ -62,21 +65,7 @@ export function GroupDetail({
           {group.description}
         </p>
 
-        {/* TODO(F-07.5 #50): the upcoming events of the group go here. */}
-        <section
-          aria-labelledby="upcoming-heading"
-          className="flex flex-col gap-3 border-t border-border pt-4"
-        >
-          <h2
-            id="upcoming-heading"
-            className="typo-h3 text-foreground"
-          >
-            {t("groups.detail.upcoming.title")}
-          </h2>
-          <p className="typo-body text-muted-foreground">
-            {t("groups.detail.upcoming.inProgress")}
-          </p>
-        </section>
+        {events}
 
         {membersPreview}
       </div>

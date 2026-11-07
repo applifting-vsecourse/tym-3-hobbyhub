@@ -122,6 +122,9 @@ export type Event = Occupancy & {
 export type EventFacts = {
   id: string;
   status: EventStatus;
+  // Who may see it (`canSeeEvent`): the group decides for a group-only event.
+  visibility: EventVisibility;
+  groupId: string | null;
   startAt: Date;
   endAt: Date;
   approvalMode: ApprovalMode;
@@ -129,6 +132,34 @@ export type EventFacts = {
   organizerIds: string[];
   freeSpots: number;
 };
+
+// F-07.2: who may see an event that is not a draft and not hidden by a
+// moderator. A public one, everyone. A group-only one, the group's members,
+// its organizers, and whoever holds or awaits a seat on it, so someone who
+// left the group can still see the event and cancel. A private one (invite
+// link, F-05.2) has its own way in and is never shown here.
+export type EventViewer = {
+  isGroupMember: boolean;
+  // An organizer, or holding or awaiting a seat (`INVOLVED_PARTICIPATION_STATUSES`).
+  isInvolved: boolean;
+};
+
+export const canSeeEvent = (
+  visibility: EventVisibility,
+  viewer: EventViewer,
+): boolean =>
+  visibility === 'PUBLIC' ||
+  (visibility === 'GROUP_ONLY' && (viewer.isGroupMember || viewer.isInvolved));
+
+// Participations that tie a person to an event for `canSeeEvent`; a pending
+// request to join counts too.
+export const INVOLVED_PARTICIPATION_STATUSES = [
+  'APPROVED',
+  'WAITLISTED',
+  'INVITED',
+  'ATTENDED',
+  'NO_SHOW',
+] as const;
 
 // What deciding a request to join (F-06.1) needs to know about a public event
 // and one person: the event's facts, and whether they have a seat.
@@ -417,6 +448,21 @@ export type EventListItem = {
 
 export type EventListPage = { items: EventListItem[]; total: number };
 
+// F-07.2: the events of a group, on its page. Not over yet soonest first, or
+// over (or called off before) newest first.
+export type GroupEventsPeriod = 'upcoming' | 'past';
+
+// A card of a group's event: cancelled ones stay in the list, so members know
+// it is off, and a group-only one says so.
+export type GroupEventListItem = EventListItem & {
+  status: Exclude<EventStatus, 'DRAFT'>;
+  visibility: 'PUBLIC' | 'GROUP_ONLY';
+};
+
+export type GroupEventPage = { items: GroupEventListItem[]; total: number };
+
+export const GROUP_EVENTS_PAGE_SIZE = 10;
+
 // Statistics are hidden below this many included participants, so nobody can
 // be picked out of them (F-06.7).
 export const MIN_STATS_PARTICIPANTS = 3;
@@ -461,6 +507,8 @@ export type EventDetail = EventListItem & {
   cancellationNote: string | null;
   // The group that organizes the event; only a public, active one is linked.
   group: { id: string; name: string } | null;
+  // F-07.2: a group-only event says so; a private one never gets here.
+  visibility: 'PUBLIC' | 'GROUP_ONLY';
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;
