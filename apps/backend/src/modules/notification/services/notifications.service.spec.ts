@@ -101,6 +101,27 @@ describe('NotificationsService', () => {
     });
   });
 
+  // F-06.4.
+  describe('a participant who cancelled their seat', () => {
+    it('tells every organizer, with the participant’s words', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyParticipantCancelled({
+        event: { id: 'e1', organizerIds: ['organizer', 'co-organizer'] },
+        participant: { id: 'participant' },
+        message: 'Onemocněl jsem, promiňte.',
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'PARTICIPANT_CANCELLED',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: 'participant',
+        eventId: 'e1',
+        payload: { message: 'Onemocněl jsem, promiňte.' },
+      });
+    });
+  });
+
   describe('a decided request to join an event', () => {
     it('tells the applicant the decision and the organizer’s words', async () => {
       const { repository, service } = setup();

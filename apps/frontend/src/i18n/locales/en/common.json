@@ -505,7 +505,8 @@
       },
       "tabs": {
         "discover": "Discover",
-        "mine": "My groups"
+        "mine": "My groups",
+        "requests": "Requests"
       },
       "tabsLabel": "Show groups",
       "title": "Groups",
@@ -583,6 +584,31 @@
         "keep": "Keep request",
         "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
         "title": "Withdraw your membership request?"
+      }
+    },
+    "myRequests": {
+      "decidedAt": {
+        "APPROVED": "Approved {{date}}",
+        "CLOSED": "Closed {{date}}",
+        "REJECTED": "Rejected {{date}}",
+        "WITHDRAWN": "Withdrawn {{date}}"
+      },
+      "groupCancelledText": "The organizer cancelled the group, so nobody will decide this request.",
+      "historyEmpty": "Rejected and withdrawn requests will show up here.",
+      "historyTitle": "History",
+      "loadError": "Your requests could not be loaded",
+      "loadMoreError": "More requests could not be loaded. Please try again.",
+      "loading": "Loading requests…",
+      "message": "Your message",
+      "pendingEmpty": "No request is waiting for a decision. Find groups under <discover>Discover</discover>.",
+      "pendingTitle": "Pending",
+      "rejectionReason": "Reason for rejection",
+      "requestedAt": "Sent {{date}}",
+      "status": {
+        "APPROVED": "Approved",
+        "CLOSED": "Closed",
+        "GROUP_CANCELLED": "Group cancelled",
+        "WITHDRAWN": "Withdrawn"
       }
     },
     "placeholders": {
@@ -818,6 +844,7 @@
     },
     "status": {
       "approved": "Approved",
+      "cancelled": "Cancelled",
       "deadline": "Deadline",
       "neutral": "Full",
       "pending": "Awaiting approval",
@@ -958,6 +985,7 @@
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
+      "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Your request to join the event {{title}} was approved",
@@ -1034,8 +1062,32 @@
   },
   "participationRequests": {
     "approved": {
+      "cancel": "Cancel my place",
       "description": "The organizer approved your participation.",
       "descriptionAutomatic": "You have a seat at this event."
+    },
+    "cancel": {
+      "confirm": "Cancel my place",
+      "done": "Place cancelled",
+      "failed": "Your place could not be cancelled. Try again.",
+      "keep": "Keep my place",
+      "messageLabel": "Message to the organizer",
+      "messagePlaceholder": "E.g. I fell ill, maybe next time…",
+      "messageTooLong": "The message can be at most {{count}} characters.",
+      "messageTooShort": "Write the organizer at least {{count}} characters.",
+      "refused": {
+        "EVENT_CANCELLED": "The event was cancelled, there is no place to cancel.",
+        "EVENT_FINISHED": "The event is over, your place can no longer be cancelled.",
+        "EVENT_NOT_HELD": "The event did not take place, your place can no longer be cancelled.",
+        "EVENT_STARTED": "The event has started, your place can no longer be cancelled.",
+        "NO_SEAT": "You no longer have a place at this event."
+      },
+      "text": "Your place frees up for someone else and the organizer is notified with your message. Cancelling before the event starts has no penalty.",
+      "title": "Cancel your place?"
+    },
+    "cancelRule": "You can cancel your place any time before the event starts; you tell the organizer why.",
+    "cancelled": {
+      "description": "You cancelled your place at this event. If you change your mind, you can ask to join again."
     },
     "form": {
       "cancel": "Cancel",
@@ -1064,17 +1116,6 @@
       "back": "Back to the event",
       "breakdown": "{{approved}} in the app, {{external}} outside the app",
       "decided": {
-        "APPROVED": {
-          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
-          "external_one": "Plus {{count}} spot outside the app",
-          "external_other": "Plus {{count}} spots outside the app",
-          "loadError": "The participants could not be loaded",
-          "loading": "Loading participants…",
-          "more_one": "{{count}} more participant",
-          "more_other": "{{count}} more participants",
-          "since": "Has a spot since {{date}}",
-          "title": "Approved"
-        },
         "REJECTED": {
           "empty": "You have not rejected any request yet.",
           "loadError": "The rejected requests could not be loaded",
@@ -1130,6 +1171,29 @@
         "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
         "taken": "After approving, {{taken}} of {{max}} seats are taken."
       },
+      "participants": {
+        "APPROVED": {
+          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
+          "external_one": "Plus {{count}} spot outside the app",
+          "external_other": "Plus {{count}} spots outside the app",
+          "loadError": "The participants could not be loaded",
+          "loading": "Loading participants…",
+          "more_one": "{{count}} more participant",
+          "more_other": "{{count}} more participants",
+          "since": "Has a spot since {{date}}",
+          "title": "Coming"
+        },
+        "CANCELLED": {
+          "empty": "Nobody has cancelled yet.",
+          "loadError": "The cancelled places could not be loaded",
+          "loading": "Loading cancelled places…",
+          "more_one": "{{count}} more cancelled place",
+          "more_other": "{{count}} more cancelled places",
+          "since": "Cancelled {{date}}",
+          "title": "Cancelled"
+        },
+        "asksAgain": "Asks to join again"
+      },
       "refused": {
         "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
         "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
@@ -1137,7 +1201,7 @@
       },
       "rejectFailed": "The request could not be rejected. Please try again.",
       "rejected": "Request rejected",
-      "requests": "Requests",
+      "requests": "Waiting",
       "retry": "Try again",
       "tabs": {
         "participants": "Participants",

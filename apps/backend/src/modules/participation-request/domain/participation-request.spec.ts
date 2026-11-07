@@ -1,5 +1,6 @@
 import { EventSeatFacts } from '@/modules/event/domain/event';
 import {
+  cancelRuleViolations,
   currentRequestOf,
   decisionRuleViolations,
   eventStateViolation,
@@ -109,6 +110,46 @@ describe('currentRequestOf', () => {
   it('shows the rejection when nothing is pending', () => {
     const rejected = aRequest('REJECTED');
     expect(currentRequestOf([rejected, aRequest('WITHDRAWN')])).toBe(rejected);
+  });
+
+  // F-06.4, ADR-0017: after a cancelled seat the old approval stays.
+  it('shows a request asked after a cancelled seat over the old approval', () => {
+    const approved = aRequest('APPROVED', new Date('2029-12-20T10:00:00Z'));
+    const pending = aRequest('PENDING', new Date('2029-12-31T10:00:00Z'));
+    const rejected = aRequest('REJECTED', new Date('2029-12-31T10:00:00Z'));
+    expect(currentRequestOf([approved, pending])).toBe(pending);
+    expect(currentRequestOf([approved, rejected])).toBe(rejected);
+  });
+});
+
+describe('cancelRuleViolations', () => {
+  it('lets a participant cancel any time before the start', () => {
+    expect(cancelRuleViolations(anEvent({ hasSeat: true }), now)).toEqual([]);
+    const aMinuteBefore = new Date('2030-01-01T17:59:00Z');
+    expect(
+      cancelRuleViolations(anEvent({ hasSeat: true }), aMinuteBefore),
+    ).toEqual([]);
+  });
+
+  it('refuses someone without a seat', () => {
+    expect(cancelRuleViolations(anEvent(), now)).toEqual(['NO_SEAT']);
+  });
+
+  it.each([
+    [
+      'EVENT_STARTED',
+      anEvent({ hasSeat: true }),
+      new Date('2030-01-01T18:00:00Z'),
+    ],
+    [
+      'EVENT_FINISHED',
+      anEvent({ hasSeat: true }),
+      new Date('2030-01-01T21:00:00Z'),
+    ],
+    ['EVENT_CANCELLED', anEvent({ hasSeat: true, status: 'CANCELLED' }), now],
+    ['EVENT_NOT_HELD', anEvent({ hasSeat: true, status: 'NOT_HELD' }), now],
+  ])('refuses once the event is %s', (violation, event, at) => {
+    expect(cancelRuleViolations(event, at)).toEqual([violation]);
   });
 });
 

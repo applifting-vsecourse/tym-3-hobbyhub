@@ -97,6 +97,7 @@ Pravidla jsou pro oba druhy žádostí stejná.
 - **Ostatní:** všichni kromě autora žádosti a toho, kdo ji vyřizuje. Patří sem i schválený účastník téže akce, člen téže skupiny a zablokovaný uživatel.
 - **Autor žádosti:** kdo žádost poslal, i když už je vyřízená nebo stažená.
 - **Vyřizuje:** organizátor akce, nebo admin skupiny (role `ADMIN` a `OWNER`).
+- **Zpráva při zrušení účasti** patří k účasti, která vznikla ze žádosti: autor je ten, kdo účast zrušil, vyřizují organizátoři akce (hlavní i spoluorganizátoři). Ostatní účastníci ji nevidí. Organizátor ji vidí v upozornění a v přehledu účastníků pod „Odhlášení“ spolu s tím, co vidí o žadateli (jméno, fotka, bio, ověřený e-mail). U nové žádosti po odhlášení ji organizátor nevidí: nové místo začíná bez ní.
 
 | Pole                                                  | Ostatní | Autor žádosti | Vyřizuje | Superadmin | Zdroj                                     |
 | ----------------------------------------------------- | ------- | ------------- | -------- | ---------- | ----------------------------------------- |
@@ -104,6 +105,7 @@ Pravidla jsou pro oba druhy žádostí stejná.
 | Zpráva od žadatele                                    | ❌      | ✅            | ✅       | ✅         | [#53][53], [#32][32], [#48][48], [PO][po] |
 | Stav žádosti                                          | ❌      | ✅            | ✅       | ✅         | [#41][41], [#31][31], [#52][52]           |
 | Důvod zamítnutí a zpráva při schválení                | ❌      | ✅            | ✅       | ✅         | [#52][52], [#153][153]                    |
+| Zpráva organizátorům při zrušení účasti               | ❌      | ✅            | ✅       | ✅         | [#42][42], [ADR-0017](../adr/adr-0017.md) |
 
 ## Profil uživatele
 
@@ -179,6 +181,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [35]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/35
 [37]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/37
 [41]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/41
+[42]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/42
 [43]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/43
 [44]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/44
 [45]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/45
