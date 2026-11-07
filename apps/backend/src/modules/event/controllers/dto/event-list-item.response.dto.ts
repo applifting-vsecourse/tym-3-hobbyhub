@@ -203,6 +203,12 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   group!: EventGroupResponseDto | null;
 
   @ApiProperty({
+    enum: ['PUBLIC', 'GROUP_ONLY'],
+    description: 'GROUP_ONLY: shown to the members of its group only',
+  })
+  visibility!: EventDetail['visibility'];
+
+  @ApiProperty({
     type: ParticipantStatsResponseDto,
     nullable: true,
     description: 'Hidden until enough participants are included',
@@ -228,6 +234,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       cancellationReason: event.cancellationReason,
       cancellationNote: event.cancellationNote,
       group: event.group,
+      visibility: event.visibility,
       stats: event.stats
         ? ParticipantStatsResponseDto.fromDomain(event.stats)
         : null,

@@ -46,7 +46,12 @@ function EventDetailPage() {
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const { user, isPending: isSessionPending } = useSession()
-  const eventQuery = useQuery(eventDetailQueryOptions(eventId))
+  // A group-only event (F-07.2) answers by who asks: wait for the session, so
+  // a member does not see "not found" first.
+  const eventQuery = useQuery({
+    ...eventDetailQueryOptions(eventId, user?.id ?? null),
+    enabled: !isSessionPending,
+  })
   const myRequestQuery = useQuery({
     ...myRequestQueryOptions(eventId, user?.id ?? ""),
     enabled: user !== null,
@@ -70,8 +75,7 @@ function EventDetailPage() {
   // A seat taken at once (automatic approval) changes the roster; a request
   // waiting for the organizer does not, but a refusal may mean the event filled
   // up or started meanwhile. Either way the page shows the latest state.
-  const refreshEvent = () =>
-    queryClient.invalidateQueries({ queryKey: eventKeys.publicDetail(eventId) })
+  const refreshEvent = () => queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
   // The sheet lives here, not in the seat panel: sending a request swaps the
   // free seat for the pending request, and the sheet has to survive that.
   const [sheetStep, setSheetStep] = useState<RequestSheetStep | null>(null)

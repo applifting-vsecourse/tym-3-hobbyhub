@@ -13,7 +13,7 @@ describe('PublicProfileResponseDto', () => {
       cover: null,
       interests: [],
       gender: 'MALE',
-      birthDate: '1990-05-17',
+      birthYear: 1990,
       address: { city: 'Praha' },
       phone: '123',
     } as unknown as PublicProfile;

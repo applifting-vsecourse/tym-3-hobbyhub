@@ -23,6 +23,10 @@ import {
   EventLocation,
   EventSeatFacts,
   GeoPoint,
+  GroupEventListItem,
+  GroupEventPage,
+  GroupEventsPeriod,
+  INVOLVED_PARTICIPATION_STATUSES,
   MIN_STATS_PARTICIPANTS,
   NO_EVENT_FILTER,
   occupancyOf,
@@ -94,11 +98,23 @@ const PUBLIC_EVENT = {
   isHidden: false,
 } as const;
 
+// F-07.2: what may be shown to someone, depending on who they are: public or
+// group-only, never a draft, a private event or one hidden by a moderator.
+// Whether this person may see a group-only one is the service's to decide
+// (`canSeeEvent`).
+const SHOWABLE_EVENT = {
+  status: { not: 'DRAFT' },
+  visibility: { in: ['PUBLIC', 'GROUP_ONLY'] },
+  isHidden: false,
+} as const satisfies Prisma.EventWhereInput;
+
 // What the rules about seats read of an event (`EventFacts`). The approved
 // people come along, so a caller can find one of them without a second query.
 const eventFactsSelect = {
   id: true,
   status: true,
+  visibility: true,
+  groupId: true,
   startAt: true,
   endAt: true,
   approvalMode: true,
@@ -127,6 +143,8 @@ const mapEventFacts = (event: EventFactsRow): EventFacts => {
   return {
     id: event.id,
     status: event.status,
+    visibility: event.visibility,
+    groupId: event.groupId,
     startAt: event.startAt,
     endAt: event.endAt,
     approvalMode: event.approvalMode,
@@ -553,11 +571,12 @@ export class EventRepository {
     };
   }
 
-  // Public detail: the list's visibility rules, but an event that was cancelled
-  // or is over stays reachable, so a shared link still explains what happened.
-  async getPublicEventById(id: string): Promise<EventDetail | null> {
+  // The detail: public or group-only (the service checks who asks), and an
+  // event that was cancelled or is over stays reachable, so a shared link
+  // still explains what happened.
+  async getShowableEventById(id: string): Promise<EventDetail | null> {
     const event = await this.prisma.event.findFirst({
-      where: { id, ...PUBLIC_EVENT },
+      where: { id, ...SHOWABLE_EVENT },
       include: {
         activity: true,
         level: true,
@@ -568,7 +587,7 @@ export class EventRepository {
         },
         participations: {
           where: { status: { in: LIST_TAKEN_STATUSES } },
-          select: { user: { select: { birthDate: true, gender: true } } },
+          select: { user: { select: { birthYear: true, gender: true } } },
         },
       },
     });
@@ -600,6 +619,7 @@ export class EventRepository {
         event.group && isPubliclyVisible(event.group)
           ? { id: event.group.id, name: event.group.name }
           : null,
+      visibility: event.visibility as EventDetail['visibility'],
       stats: computeParticipantStats(
         participants,
         event.startAt,
@@ -613,7 +633,7 @@ export class EventRepository {
   // public detail. The caller has already checked who is asking.
   async getParticipantInfo(id: string): Promise<ParticipantEventInfo | null> {
     const event = await this.prisma.event.findFirst({
-      where: { id, ...PUBLIC_EVENT },
+      where: { id, ...SHOWABLE_EVENT },
       include: { organizer: { select: { name: true } } },
     });
     if (!event) return null;
@@ -626,13 +646,13 @@ export class EventRepository {
     };
   }
 
-  // F-06.1: the same visibility as the public detail, seen by one person.
-  async getPublicEventSeatFacts(
+  // F-06.1: the same events as the detail, seen by one person.
+  async getShowableEventSeatFacts(
     id: string,
     userId: string,
   ): Promise<EventSeatFacts | null> {
     const event = await this.prisma.event.findFirst({
-      where: { id, ...PUBLIC_EVENT },
+      where: { id, ...SHOWABLE_EVENT },
       select: eventFactsSelect,
     });
     if (!event) return null;
@@ -641,6 +661,69 @@ export class EventRepository {
       hasSeat: event.participations.some(
         (participation) => participation.userId === userId,
       ),
+    };
+  }
+
+  // F-07.2: whether someone holds or awaits a seat on the event, so a
+  // group-only one stays visible to them after they leave the group.
+  async isInvolvedIn(eventId: string, userId: string): Promise<boolean> {
+    const [participations, requests] = await Promise.all([
+      this.prisma.participation.count({
+        where: {
+          eventId,
+          userId,
+          status: { in: [...INVOLVED_PARTICIPATION_STATUSES] },
+        },
+      }),
+      this.prisma.participationRequest.count({
+        where: { eventId, userId, status: RequestStatus.PENDING },
+      }),
+    ]);
+    return participations + requests > 0;
+  }
+
+  // F-07.2: a page of a group's events. Upcoming: not over yet, soonest
+  // first. Past: over, newest first. Cancelled ones stay, drafts, private and
+  // hidden ones never show; which visibilities the viewer gets is the
+  // service's to decide.
+  async getGroupEvents(
+    groupId: string,
+    {
+      period,
+      visibilities,
+      now,
+    }: {
+      period: GroupEventsPeriod;
+      visibilities: GroupEventListItem['visibility'][];
+      now: Date;
+    },
+    { limit, offset }: Page,
+  ): Promise<GroupEventPage> {
+    const where: Prisma.EventWhereInput = {
+      groupId,
+      status: { not: EventStatus.DRAFT },
+      isHidden: false,
+      visibility: { in: visibilities },
+      endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+    };
+    const direction = period === 'upcoming' ? 'asc' : 'desc';
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: direction }, { id: direction }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => ({
+        ...mapPrismaEventToListItem(event),
+        status: event.status as GroupEventListItem['status'],
+        visibility: event.visibility as GroupEventListItem['visibility'],
+      })),
+      total,
     };
   }
 

@@ -561,7 +561,9 @@ model User {
   // F-04.1: the picture on top of the profile: an id of the app's covers or an
   // uploaded WebP data URL; null = the default of the first activity.
   profileCover          String?            @db.Text
-  birthDate             DateTime?          @db.Date
+  // #174: only the year of birth is kept, never the full date (ADR-0016).
+  // CHECK user_birth_year_range in the migration: 1900 or later.
+  birthYear             Int?
   gender                Gender?
   phone                 String?            @db.VarChar(30)
   phoneVerifiedAt       DateTime?
@@ -575,6 +577,9 @@ model User {
   onboardingStepsDone   Int                @default(0)
   termsAcceptedAt       DateTime?
   termsVersion          String?            @db.VarChar(20)
+  // #174: when the user confirmed at sign-up that they are 18 or older; null
+  // for accounts created before the confirmation existed (ADR-0016).
+  adulthoodConfirmedAt  DateTime?
   disabledNotifications NotificationType[] @default([])
 
   // Model datatype `Location` (private): where the user lives, and a temporary

@@ -36,12 +36,12 @@ export class ProfileResponseDto {
   gender!: (typeof GENDERS)[number] | null;
 
   @ApiProperty({
-    type: String,
+    type: Number,
     nullable: true,
-    example: '1990-05-17',
-    description: 'Private',
+    example: 1990,
+    description: 'Private; the year only, never the full date',
   })
-  birthDate!: string | null;
+  birthYear!: number | null;
 
   @ApiProperty({ type: [InterestResponseDto] })
   interests!: InterestResponseDto[];
@@ -57,7 +57,7 @@ export class ProfileResponseDto {
       image: profile.image,
       cover: profile.cover,
       gender: profile.gender,
-      birthDate: profile.birthDate,
+      birthYear: profile.birthYear,
       interests: profile.interests.map((interest) => ({
         activity: ActivityResponseDto.fromDomain(interest.activity),
         level: interest.level
