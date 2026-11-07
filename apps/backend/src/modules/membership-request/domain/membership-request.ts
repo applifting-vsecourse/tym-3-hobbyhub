@@ -19,11 +19,45 @@ export type MembershipRequest = {
   requestedAt: Date;
   // When it stopped being PENDING, by anyone's hand.
   decidedAt: Date | null;
-  // Optional, only on a rejection (ADR-0008). Nobody sees it in the app yet.
+  // Optional, only on a rejection (ADR-0008). Only the applicant sees it, in
+  // their overview (F-07.7).
   rejectionReason: string | null;
 };
 
-// What the admins see of the person asking: no birth date, gender, contact or
+// F-07.7: the overview of a person's own requests, newest first.
+export const MY_MEMBERSHIP_REQUESTS_PAGE_SIZE = 20;
+
+// The overview's two sections, each paged on its own. `pending`: requests the
+// group's admins can still decide. `history`: the rest except approvals, which
+// "Moje skupiny" shows as memberships; that includes a waiting request on a
+// cancelled group (GROUP_CANCELLED below).
+export const MY_MEMBERSHIP_REQUEST_SECTIONS = ['pending', 'history'] as const;
+export type MyMembershipRequestSection =
+  (typeof MY_MEMBERSHIP_REQUEST_SECTIONS)[number];
+
+// A request in the applicant's overview, with the group it was for.
+export type MyMembershipRequest = MembershipRequest & {
+  group: Pick<Group, 'id' | 'name' | 'visibility' | 'status'>;
+};
+
+export type MyMembershipRequestPage = {
+  items: MyMembershipRequest[];
+  nextCursor: string | null;
+};
+
+// What the overview says about a request: its status, or GROUP_CANCELLED for
+// a waiting request on a cancelled group, which no admin can decide any more.
+// The row stays PENDING; CLOSED is not used for groups (ADR-0008).
+export type MyMembershipRequestStatus = RequestStatus | 'GROUP_CANCELLED';
+
+export const myMembershipRequestStatusOf = (
+  request: Pick<MyMembershipRequest, 'status' | 'group'>,
+): MyMembershipRequestStatus =>
+  request.status === 'PENDING' && request.group.status === 'CANCELLED'
+    ? 'GROUP_CANCELLED'
+    : request.status;
+
+// What the admins see of the person asking: no birth year, gender, contact or
 // place. The same as an organizer sees of an applicant to an event.
 export type ApplicantProfile = {
   name: string;

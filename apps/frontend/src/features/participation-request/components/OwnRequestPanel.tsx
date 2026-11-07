@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
@@ -13,16 +14,30 @@ type OwnRequestPanelProps = {
   approvalMode: ApprovalMode
   /** Opens the confirmation to withdraw a pending request, which the page owns. */
   onWithdraw: () => void
+  /**
+   * Opens the dialog to cancel the seat (F-06.4), which the page owns. Absent
+   * once the seat can no longer be cancelled: the event started or ended.
+   */
+  onCancel?: () => void
+  /** The button to ask again, for someone who cancelled their seat. */
+  rejoinAction?: ReactNode
 }
 
 const BADGES = {
   pending: "pending",
   approved: "approved",
+  cancelled: "cancelled",
   rejected: "rejected",
 } as const
 
 /** The signed-in person's own place in the event, shown instead of the free seat. */
-export function OwnRequestPanel({ view, approvalMode, onWithdraw }: OwnRequestPanelProps) {
+export function OwnRequestPanel({
+  view,
+  approvalMode,
+  onWithdraw,
+  onCancel,
+  rejoinAction,
+}: OwnRequestPanelProps) {
   const { t } = useTranslation()
 
   return (
@@ -44,6 +59,18 @@ export function OwnRequestPanel({ view, approvalMode, onWithdraw }: OwnRequestPa
           {t("participationRequests.pending.withdraw")}
         </Button>
       ) : null}
+      {view === "approved" && onCancel ? (
+        <>
+          <p className="typo-small">{t("participationRequests.cancelRule")}</p>
+          <Button
+            variant="outline"
+            onClick={onCancel}
+          >
+            {t("participationRequests.approved.cancel")}
+          </Button>
+        </>
+      ) : null}
+      {view === "cancelled" ? rejoinAction : null}
     </div>
   )
 }

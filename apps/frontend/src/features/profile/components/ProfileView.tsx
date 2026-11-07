@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { Lock, MapPin, Pencil } from "lucide-react"
+import { Cake, Lock, MapPin, Pencil } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -20,7 +20,7 @@ type ProfileViewProps = {
 /**
  * Můj profil — the profile as others see it: a tinted cover with the photo on
  * its edge, the nickname, the bio and what I play. What only I see (the home
- * city) is set apart and marked as private. Editing is one tap away.
+ * city and the year of birth) is set apart and marked as private. Editing is one tap away.
  */
 export function ProfileView({ profile, activityLabel }: ProfileViewProps) {
   const { t, i18n } = useTranslation()
@@ -128,6 +128,15 @@ export function ProfileView({ profile, activityLabel }: ProfileViewProps) {
             className="size-4 text-muted-foreground"
           />
           {profile.address ? profile.address.city : t("profile.view.noAddress")}
+        </p>
+        <p className="flex items-center gap-2 typo-body text-foreground">
+          <Cake
+            aria-hidden="true"
+            className="size-4 text-muted-foreground"
+          />
+          {profile.birthYear === null
+            ? t("profile.view.noBirthYear")
+            : t("profile.view.birthYear", { year: profile.birthYear })}
         </p>
       </section>
     </div>

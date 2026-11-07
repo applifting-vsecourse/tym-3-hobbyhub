@@ -106,11 +106,14 @@ export function EditProfileForm({
       }
       if (
         values.gender &&
-        values.birthDate &&
-        (values.gender !== done.gender || values.birthDate !== done.birthDate)
+        values.birthYear &&
+        (values.gender !== done.gender || values.birthYear !== done.birthYear)
       ) {
-        await updatePrivate.mutateAsync({ gender: values.gender, birthDate: values.birthDate })
-        done = { ...done, gender: values.gender, birthDate: values.birthDate }
+        await updatePrivate.mutateAsync({
+          gender: values.gender,
+          birthYear: Number(values.birthYear.trim()),
+        })
+        done = { ...done, gender: values.gender, birthYear: values.birthYear }
       }
     } catch (error) {
       setSaved(done)

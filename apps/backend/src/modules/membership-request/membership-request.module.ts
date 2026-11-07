@@ -4,12 +4,13 @@ import { NotificationModule } from '@/modules/notification/notification.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { Module } from '@nestjs/common';
 import { MembershipRequestsController } from './controllers/membership-requests.controller';
+import { MyMembershipRequestsController } from './controllers/my-membership-requests.controller';
 import { MembershipRequestRepository } from './repositories/membership-request.repository';
 import { MembershipRequestsService } from './services/membership-requests.service';
 
 @Module({
   imports: [AuthModule, PrismaModule, GroupModule, NotificationModule],
-  controllers: [MembershipRequestsController],
+  controllers: [MembershipRequestsController, MyMembershipRequestsController],
   providers: [MembershipRequestsService, MembershipRequestRepository],
 })
 export class MembershipRequestModule {}

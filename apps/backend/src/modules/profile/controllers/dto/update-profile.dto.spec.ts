@@ -41,18 +41,21 @@ describe('UpdateProfileDto', () => {
 });
 
 describe('UpdatePrivateDetailsDto', () => {
-  it('accepts a gender and a calendar date', async () => {
+  it('accepts a gender and a year of birth', async () => {
     await expect(
       validate(UpdatePrivateDetailsDto, {
         gender: 'MALE',
-        birthDate: '1990-05-17',
+        birthYear: 1990,
       }),
     ).resolves.toBeDefined();
   });
 
   it.each([
-    [{ gender: 'OTHER', birthDate: '1990-05-17' }],
-    [{ gender: 'MALE', birthDate: '17.5.1990' }],
+    [{ gender: 'OTHER', birthYear: 1990 }],
+    [{ gender: 'MALE', birthYear: '1990' }],
+    [{ gender: 'MALE', birthYear: 1990.5 }],
+    [{ gender: 'MALE', birthYear: 1899 }],
+    [{ gender: 'MALE', birthDate: '1990-05-17' }],
     [{ gender: 'MALE' }],
   ])('refuses %j', async (body) => {
     await expect(

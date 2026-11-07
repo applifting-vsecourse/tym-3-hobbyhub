@@ -2,8 +2,9 @@
   "auth": {
     "back": "Back",
     "errors": {
+      "adulthoodNotConfirmed": "You need to confirm you are 18 or older to register.",
       "emailNotVerified": "Your email is not verified yet.",
-      "invalidBirthDate": "Invalid date of birth.",
+      "invalidBirthYear": "Invalid year of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
       "invalidGender": "Choose your gender.",
@@ -16,7 +17,7 @@
       "userExists": "An account with this email already exists."
     },
     "fields": {
-      "birthDate": "Date of birth",
+      "birthYear": "Year of birth",
       "confirmPassword": "Repeat password",
       "email": "Email",
       "gender": "Gender",
@@ -34,7 +35,7 @@
       "showLabel": "Show password"
     },
     "placeholders": {
-      "birthDate": "Pick a date",
+      "birthYear": "e.g. 1995",
       "email": "e.g. john@doe.com",
       "gender": "Select"
     },
@@ -52,17 +53,20 @@
       "success": "You have been signed out."
     },
     "signUp": {
+      "adulthood": "By signing up I confirm that I am at least 18 years old.",
       "description": "You can complete your profile later.",
       "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
       "genderNote": "Private, nobody else sees it. Used only for combined event statistics.",
-      "privacyNote": "Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
+      "privacyNote": "Just the year, we don't want the exact date. Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
       "signInLink": "I already have an account · Sign in",
       "submit": "Create account and continue",
       "terms": "I agree to the <terms>terms and privacy policy</terms>.",
       "title": "Quick sign-up"
     },
     "validation": {
-      "birthDateRequired": "Pick your date of birth",
+      "adulthoodRequired": "You must be 18 or older to register, please confirm it",
+      "birthYearInvalid": "Enter a four-digit year from 1900 to this year",
+      "birthYearRequired": "Enter your year of birth",
       "confirmPasswordRequired": "Repeat your password",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
@@ -180,6 +184,7 @@
       },
       "contribution": "Contribution",
       "equipment": "Equipment",
+      "groupOnly": "Group members only",
       "hasAccount": "Already have an account?",
       "hiddenInfo": "You'll see the exact address and the organizer's contact once your seat is confirmed.",
       "join": "Take a seat",
@@ -396,6 +401,11 @@
       "PUBLIC_VENUE": "Public place"
     }
   },
+  "footer": {
+    "copyright": "© {{year}} HobbyHub",
+    "label": "Footer",
+    "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
+  },
   "geo": {
     "address": {
       "error": "Couldn't load addresses. Please try again.",
@@ -410,6 +420,29 @@
     "back": "Back",
     "detail": {
       "backToEvents": "Back to events",
+      "events": {
+        "cancelled": "Cancelled",
+        "count": {
+          "past_one": "{{count}} past event",
+          "past_other": "{{count}} past events",
+          "upcoming_one": "{{count}} upcoming event",
+          "upcoming_other": "{{count}} upcoming events"
+        },
+        "empty": {
+          "past": "The group has no past events yet.",
+          "upcoming": "The group has no upcoming events right now."
+        },
+        "groupOnly": "Group only",
+        "loadMore": "Load more",
+        "loadMoreFailed": "More events could not be loaded. Please try again.",
+        "loading": "Loading the group’s events…",
+        "periods": {
+          "past": "Past",
+          "upcoming": "Upcoming"
+        },
+        "periodsLabel": "Upcoming and past events",
+        "title": "Group events"
+      },
       "loadError": "Could not load the group",
       "loading": "Loading the group…",
       "members_one": "{{count}} member",
@@ -432,10 +465,6 @@
         "withdraw": "Withdraw request"
       },
       "title": "Group detail",
-      "upcoming": {
-        "inProgress": "We are working on this. Soon you will see here what the group has planned.",
-        "title": "Upcoming events"
-      },
       "visibilityPublic": "Public group"
     },
     "fields": {
@@ -476,7 +505,8 @@
       },
       "tabs": {
         "discover": "Discover",
-        "mine": "My groups"
+        "mine": "My groups",
+        "requests": "Requests"
       },
       "tabsLabel": "Show groups",
       "title": "Groups",
@@ -528,7 +558,7 @@
       "form": {
         "adminSees": "The group organizer will see",
         "cancel": "Cancel",
-        "hiddenDetails": "They will not see your birth date, contact or address.",
+        "hiddenDetails": "They will not see your birth year, contact or address.",
         "messageLabel": "Message to the organizer (optional)",
         "messagePlaceholder": "E.g. I have played for a company team for three years and am looking for a regular group.",
         "messageTooLong": "The message can have at most {{count}} characters.",
@@ -554,6 +584,31 @@
         "keep": "Keep request",
         "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
         "title": "Withdraw your membership request?"
+      }
+    },
+    "myRequests": {
+      "decidedAt": {
+        "APPROVED": "Approved {{date}}",
+        "CLOSED": "Closed {{date}}",
+        "REJECTED": "Rejected {{date}}",
+        "WITHDRAWN": "Withdrawn {{date}}"
+      },
+      "groupCancelledText": "The organizer cancelled the group, so nobody will decide this request.",
+      "historyEmpty": "Rejected and withdrawn requests will show up here.",
+      "historyTitle": "History",
+      "loadError": "Your requests could not be loaded",
+      "loadMoreError": "More requests could not be loaded. Please try again.",
+      "loading": "Loading requests…",
+      "message": "Your message",
+      "pendingEmpty": "No request is waiting for a decision. Find groups under <discover>Discover</discover>.",
+      "pendingTitle": "Pending",
+      "rejectionReason": "Reason for rejection",
+      "requestedAt": "Sent {{date}}",
+      "status": {
+        "APPROVED": "Approved",
+        "CLOSED": "Closed",
+        "GROUP_CANCELLED": "Group cancelled",
+        "WITHDRAWN": "Withdrawn"
       }
     },
     "placeholders": {
@@ -789,6 +844,7 @@
     },
     "status": {
       "approved": "Approved",
+      "cancelled": "Cancelled",
       "deadline": "Deadline",
       "neutral": "Full",
       "pending": "Awaiting approval",
@@ -808,16 +864,56 @@
       "create": "Create an event",
       "find": "Find an event"
     },
+    "groups": {
+      "browse": "Browse groups",
+      "seatTitle": "Your seat in the crew",
+      "text": "A group is a crew of people around one activity. It has its place, its usual time and members who know each other. A newcomer sees what they are joining before asking for membership, and the group's events are never created from scratch.",
+      "title": "Groups: a crew that meets regularly"
+    },
     "hero": {
       "join": "Find a free seat",
       "kicker": "Sports and games near you",
-      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours.",
+      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours. And a crew that clicks can keep meeting as a group.",
       "title": "Fill the missing players before the event is cancelled"
     },
     "how": {
-      "step1": "Create an event and say how many people you still need to reach the minimum.",
-      "step2": "Others see the free seats on the map or in the list and ask to join.",
-      "step3": "You approve participants and the event goes ahead.",
+      "preview": {
+        "scheduleSubtitle": "Dolní school hall · Prague 8 · advanced",
+        "scheduleTime": "Thu 19:00",
+        "scheduleTitle": "Thursday floorball crew",
+        "take": "Take the seat",
+        "yourSeatText": "Thursday floorball · today 19:00",
+        "yourSeatTitle": "Your seat"
+      },
+      "step1": {
+        "p1": "The organizer says how many people they still need to reach the minimum, and everyone sees it right away: in the list, on the map and on the event card. You are not asking “whether”, you are asking “where one more fits”.",
+        "p2": "When there is no suitable event, you create one in a minute: activity, place, time and how many of you it takes to play.",
+        "short": "Find or create an event",
+        "subtitle": "Where players are missing to the minimum.",
+        "title": "Find an event short of players. Or create one."
+      },
+      "step2": {
+        "p1": "Free seats look like chairs at a table, in the list and on the map. One tap asks to join, and you can add a few words for the organizer.",
+        "p2": "You can browse everything without an account. You sign up when you want to take a seat.",
+        "short": "Ask for a seat",
+        "subtitle": "One tap, the organizer gets a message.",
+        "title": "Ask for a free seat"
+      },
+      "step3": {
+        "p1": "The organizer sees who is asking and approves whom they want. Once the minimum is met, the event goes ahead and nobody travels for nothing.",
+        "p2": "Approved participants get the exact address and practical instructions, and see who they are going with.",
+        "short": "Approval, then play",
+        "subtitle": "Minimum met, the event goes ahead.",
+        "title": "The organizer approves and you play"
+      },
+      "step4": {
+        "p1": "People who clicked stay together as a group. It has its place, its usual time and members who know each other.",
+        "p2": "Nobody creates the next event from scratch, and a newcomer sees what they are joining before asking for membership.",
+        "short": "The crew becomes a group",
+        "subtitle": "Next time nobody starts from scratch.",
+        "title": "The crew becomes a group"
+      },
+      "stepLabel": "Step {{number}}",
       "title": "How it works"
     },
     "search": {
@@ -889,6 +985,7 @@
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
+      "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Your request to join the event {{title}} was approved",
@@ -965,8 +1062,32 @@
   },
   "participationRequests": {
     "approved": {
+      "cancel": "Cancel my place",
       "description": "The organizer approved your participation.",
       "descriptionAutomatic": "You have a seat at this event."
+    },
+    "cancel": {
+      "confirm": "Cancel my place",
+      "done": "Place cancelled",
+      "failed": "Your place could not be cancelled. Try again.",
+      "keep": "Keep my place",
+      "messageLabel": "Message to the organizer",
+      "messagePlaceholder": "E.g. I fell ill, maybe next time…",
+      "messageTooLong": "The message can be at most {{count}} characters.",
+      "messageTooShort": "Write the organizer at least {{count}} characters.",
+      "refused": {
+        "EVENT_CANCELLED": "The event was cancelled, there is no place to cancel.",
+        "EVENT_FINISHED": "The event is over, your place can no longer be cancelled.",
+        "EVENT_NOT_HELD": "The event did not take place, your place can no longer be cancelled.",
+        "EVENT_STARTED": "The event has started, your place can no longer be cancelled.",
+        "NO_SEAT": "You no longer have a place at this event."
+      },
+      "text": "Your place frees up for someone else and the organizer is notified with your message. Cancelling before the event starts has no penalty.",
+      "title": "Cancel your place?"
+    },
+    "cancelRule": "You can cancel your place any time before the event starts; you tell the organizer why.",
+    "cancelled": {
+      "description": "You cancelled your place at this event. If you change your mind, you can ask to join again."
     },
     "form": {
       "cancel": "Cancel",
@@ -995,17 +1116,6 @@
       "back": "Back to the event",
       "breakdown": "{{approved}} in the app, {{external}} outside the app",
       "decided": {
-        "APPROVED": {
-          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
-          "external_one": "Plus {{count}} spot outside the app",
-          "external_other": "Plus {{count}} spots outside the app",
-          "loadError": "The participants could not be loaded",
-          "loading": "Loading participants…",
-          "more_one": "{{count}} more participant",
-          "more_other": "{{count}} more participants",
-          "since": "Has a spot since {{date}}",
-          "title": "Approved"
-        },
         "REJECTED": {
           "empty": "You have not rejected any request yet.",
           "loadError": "The rejected requests could not be loaded",
@@ -1061,6 +1171,29 @@
         "missing": "After approving: {{taken}} of min. {{min}}, {{count}} still missing.",
         "taken": "After approving, {{taken}} of {{max}} seats are taken."
       },
+      "participants": {
+        "APPROVED": {
+          "empty": "Nobody here yet. Everyone who gets a spot at the event shows up here.",
+          "external_one": "Plus {{count}} spot outside the app",
+          "external_other": "Plus {{count}} spots outside the app",
+          "loadError": "The participants could not be loaded",
+          "loading": "Loading participants…",
+          "more_one": "{{count}} more participant",
+          "more_other": "{{count}} more participants",
+          "since": "Has a spot since {{date}}",
+          "title": "Coming"
+        },
+        "CANCELLED": {
+          "empty": "Nobody has cancelled yet.",
+          "loadError": "The cancelled places could not be loaded",
+          "loading": "Loading cancelled places…",
+          "more_one": "{{count}} more cancelled place",
+          "more_other": "{{count}} more cancelled places",
+          "since": "Cancelled {{date}}",
+          "title": "Cancelled"
+        },
+        "asksAgain": "Asks to join again"
+      },
       "refused": {
         "APPLICANT_HAS_SEAT": "The applicant already has a seat at this event.",
         "EVENT_FULL": "The event filled up meanwhile, the request can no longer be approved.",
@@ -1068,7 +1201,7 @@
       },
       "rejectFailed": "The request could not be rejected. Please try again.",
       "rejected": "Request rejected",
-      "requests": "Requests",
+      "requests": "Waiting",
       "retry": "Try again",
       "tabs": {
         "participants": "Participants",
@@ -1146,8 +1279,8 @@
       "title": "Where I live"
     },
     "private": {
-      "birthDateHint": "You must be at least 18.",
-      "description": "You gave your gender and birth date at sign-up. You can correct them here.",
+      "birthYearHint": "Just the year, we don't want the exact date. You must turn at least 18 this year.",
+      "description": "You gave your gender and year of birth at sign-up. You can correct them here.",
       "notice": "Nobody else sees these details.",
       "title": "Private details"
     },
@@ -1173,11 +1306,13 @@
     "view": {
       "addActivities": "Add what I play",
       "addBio": "Write a few words",
+      "birthYear": "Born in {{year}}",
       "edit": "Edit profile",
       "memberSince": "Member since {{date}}",
       "noActivities": "No activities yet.",
       "noAddress": "You have not added an address yet",
       "noBio": "Nothing about you yet.",
+      "noBirthYear": "You have not added your year of birth yet",
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }
