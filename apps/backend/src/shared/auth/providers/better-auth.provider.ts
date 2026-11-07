@@ -1,6 +1,9 @@
 import { EmailService } from '@/core/email/interfaces/email-service.interface';
 import { renderEmail } from '@/core/email/render';
-import { ResetPassword } from '@/core/email/templates/reset-password';
+import {
+  RESET_PASSWORD_SUBJECT,
+  ResetPassword,
+} from '@/core/email/templates/reset-password';
 import {
   VERIFY_EMAIL_SUBJECT,
   VerifyEmail,
@@ -11,6 +14,7 @@ import {
   registrationBeforeHook,
   registrationDatabaseHooks,
 } from '@/shared/auth/registration/registration.hooks';
+import { passwordResetCooldown } from '@/shared/auth/verification/password-reset-cooldown';
 import { resendCooldown } from '@/shared/auth/verification/resend-cooldown';
 import { sendOnceAMinute } from '@/shared/auth/verification/send-once-a-minute';
 import { Config } from '@/shared/config/config.service';
@@ -33,17 +37,6 @@ const createAuth = (
     database: prismaAdapter(prismaService, {
       provider: 'postgresql',
     }),
-    emailAndPassword: {
-      enabled: true,
-      sendResetPassword: async ({ user, token }) => {
-        const passwordResetUrl = `${config.frontendUrl}/${config.frontendResetPasswordUrl}?token=${token}`;
-        const html = await renderEmail(ResetPassword, {
-          username: user.name,
-          url: passwordResetUrl,
-        });
-        await emailProvider.sendEmail(user.email, 'Password reset', html);
-      },
-    },
     user: {
       additionalFields: {
         role: {
@@ -83,6 +76,25 @@ const createAuth = (
     },
     // If change (setup) affects database, must be in core config, in order to be able to run migrations
     ...betterAuthCoreConfig,
+    // F-03.5. Merged into the core options, which the spread above would
+    // otherwise replace.
+    emailAndPassword: {
+      enabled: true,
+      ...betterAuthCoreConfig.emailAndPassword,
+      sendResetPassword: async ({ user, token }) => {
+        // Once a minute per address; a skipped send answers like a made one,
+        // so the endpoint tells nobody whether an address has an account.
+        await sendOnceAMinute(passwordResetCooldown, user.email, async () => {
+          const url = `${config.frontendUrl}/${config.frontendResetPasswordUrl}?token=${encodeURIComponent(token)}`;
+          const html = await renderEmail(ResetPassword, { url });
+          await emailProvider.sendEmail(
+            user.email,
+            RESET_PASSWORD_SUBJECT,
+            html,
+          );
+        });
+      },
+    },
     plugins: [...(betterAuthCoreConfig.plugins ?? [])],
   });
 
