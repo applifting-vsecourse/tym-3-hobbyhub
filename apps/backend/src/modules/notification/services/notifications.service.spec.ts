@@ -101,10 +101,11 @@ describe('NotificationsService', () => {
     });
   });
 
-  // F-06.4.
+  // F-06.4; the e-mail F-09.2 (#58).
   describe('a participant who cancelled their seat', () => {
-    it('tells every organizer, with the participant’s words', async () => {
-      const { repository, service } = setup();
+    it('tells every organizer, with the participant’s words, and e-mails them', async () => {
+      const { repository, emails, service } = setup();
+      repository.createForRecipients.mockResolvedValue(['n1', 'n2']);
 
       await service.notifyParticipantCancelled({
         event: { id: 'e1', organizerIds: ['organizer', 'co-organizer'] },
@@ -119,6 +120,7 @@ describe('NotificationsService', () => {
         eventId: 'e1',
         payload: { message: 'Onemocněl jsem, promiňte.' },
       });
+      expect(emails.queueFor).toHaveBeenCalledWith(['n1', 'n2']);
     });
   });
 

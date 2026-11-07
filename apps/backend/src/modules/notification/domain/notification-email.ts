@@ -97,6 +97,16 @@ const eventDraft = (
         buttonLabel: 'Zobrazit akci',
         path: eventPath,
       };
+    // F-09.2 (#58): to every organizer. The participant's words stay out like
+    // their name: the organizers read both on the participants page, under
+    // "Odhlášení", which the event detail links to.
+    case 'PARTICIPANT_CANCELLED':
+      return {
+        heading: 'Účastník se odhlásil z tvé akce',
+        body: 'Uvolnilo se místo. Kdo to byl a proč, najdeš v přehledu účastníků akce.',
+        buttonLabel: 'Zobrazit akci',
+        path: eventPath,
+      };
     default:
       return null;
   }

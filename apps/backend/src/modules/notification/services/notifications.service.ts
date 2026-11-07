@@ -80,7 +80,8 @@ export class NotificationsService {
   }
 
   // F-06.4: every organizer of the event, with the participant's words, which
-  // a cancellation always has (ADR-0017). The e-mail comes with F-09.2 (#58).
+  // a cancellation always has (ADR-0017). Their e-mail (F-09.2, #58) leaves
+  // the words out, as the visibility matrix asks of every e-mail.
   notifyParticipantCancelled(input: {
     event: AnEvent & { organizerIds: readonly string[] };
     participant: Who;

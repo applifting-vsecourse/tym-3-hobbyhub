@@ -94,6 +94,25 @@ describe('notificationEmailOf', () => {
     );
   });
 
+  // F-09.2 (#58).
+  it('tells an organizer a participant cancelled and leads to the event', () => {
+    expect(
+      notificationEmailOf(
+        aNotification({
+          type: 'PARTICIPANT_CANCELLED',
+          payload: { message: MESSAGE },
+        }),
+      ),
+    ).toEqual({
+      subject: 'Účastník se odhlásil z tvé akce',
+      heading: 'Účastník se odhlásil z tvé akce',
+      body: 'Uvolnilo se místo. Kdo to byl a proč, najdeš v přehledu účastníků akce.',
+      buttonLabel: 'Zobrazit akci',
+      path: '/events/e1',
+      critical: false,
+    });
+  });
+
   it('tells a group’s admins and leads to the group’s requests', () => {
     expect(notificationEmailOf(aNotification(aboutGroup))).toEqual(
       expect.objectContaining({
@@ -132,6 +151,7 @@ describe('notificationEmailOf', () => {
       ['REQUEST_DECIDED', { decision: 'APPROVED', message: MESSAGE }],
       ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }],
       ['EVENT_CANCELLED', {}],
+      ['PARTICIPANT_CANCELLED', { message: MESSAGE }],
     ])('%s %j', (type, payload) => {
       const text = JSON.stringify(
         notificationEmailOf(aNotification({ ...target, type, payload })),
