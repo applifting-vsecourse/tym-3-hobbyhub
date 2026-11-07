@@ -33,7 +33,7 @@ export type ParticipationRequest = {
   rejectionReason: string | null;
 };
 
-// What the organizer sees of the person asking (F-05.7): no birth date,
+// What the organizer sees of the person asking (F-05.7): no birth year,
 // gender, contact or place. The request form shows the applicant exactly this.
 export type ApplicantProfile = {
   name: string;

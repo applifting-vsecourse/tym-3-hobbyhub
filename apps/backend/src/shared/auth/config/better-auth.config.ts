@@ -25,13 +25,20 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
         input: true,
         returned: false,
       },
-      birthDate: {
-        type: 'date',
+      // #174: the year only, never the full date (ADR-0016).
+      birthYear: {
+        type: 'number',
         required: false,
         input: true,
         returned: false,
       },
       // Set by the registration database hook, not by the client.
+      adulthoodConfirmedAt: {
+        type: 'date',
+        required: false,
+        input: false,
+        returned: false,
+      },
       termsAcceptedAt: {
         type: 'date',
         required: false,

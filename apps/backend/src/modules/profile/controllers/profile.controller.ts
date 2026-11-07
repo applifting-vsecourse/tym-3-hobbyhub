@@ -79,7 +79,7 @@ export class ProfileController {
   }
 
   @Put('private')
-  @ApiOperation({ summary: 'Correct the private gender and birth date' })
+  @ApiOperation({ summary: 'Correct the private gender and year of birth' })
   @ApiResponse({ status: 200, type: ProfileResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid input or under 18' })
   async updatePrivate(

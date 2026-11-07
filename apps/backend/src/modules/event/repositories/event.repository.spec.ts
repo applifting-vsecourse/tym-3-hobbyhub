@@ -177,9 +177,7 @@ describe('EventRepository.getShowableEventById', () => {
       status: 'PUBLISHED',
       approvalMode: 'MANUAL',
       organizer: { name: 'Jana Nováková' },
-      participations: [
-        { user: { birthDate: new Date('1990-01-01'), gender: 'MALE' } },
-      ],
+      participations: [{ user: { birthYear: 1990, gender: 'MALE' } }],
     });
     const prisma = { event: { findFirst } } as unknown as PrismaService;
 
@@ -194,7 +192,7 @@ describe('EventRepository.getShowableEventById', () => {
     expect(detail).not.toHaveProperty('onlineUrl');
     expect(detail).not.toHaveProperty('locationStreet');
     expect(detail).not.toHaveProperty('locationLatitude');
-    expect(JSON.stringify(detail)).not.toContain('1990-01-01');
+    expect(JSON.stringify(detail)).not.toContain('birthYear');
   });
 });
 

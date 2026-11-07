@@ -625,7 +625,7 @@ export class EventRepository {
         },
         participations: {
           where: { status: { in: LIST_TAKEN_STATUSES } },
-          select: { user: { select: { birthDate: true, gender: true } } },
+          select: { user: { select: { birthYear: true, gender: true } } },
         },
       },
     });
