@@ -1167,6 +1167,15 @@
       "description": "A private address, nobody else sees it. It is used to find events nearby.",
       "hasNone": "You have not added an address yet.",
       "howTo": "Start typing your street (and house number, if you like) and we suggest places from the map. Pick your line so we know the position on the map too.",
+      "notice": "Only you can see your location. It is not shown to friends, organizers or group members. The app keeps no history of your location and does not detect it from GPS or your IP address.",
+      "remove": {
+        "button": "Remove location",
+        "cancel": "Keep it",
+        "confirm": "Remove",
+        "description": "We will delete your address, temporary place and travel radius. You will not see nearby events until you add an address again.",
+        "error": "We could not remove your location. Please try again.",
+        "title": "Remove your location?"
+      },
       "title": "Where I live"
     },
     "private": {

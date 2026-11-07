@@ -12,6 +12,7 @@ const requests = vi.hoisted(() => ({
   updateProfile: vi.fn(),
   updateInterests: vi.fn(),
   updateLocation: vi.fn(),
+  removeLocation: vi.fn(),
   updatePrivateDetails: vi.fn(),
 }))
 vi.mock("@/features/profile/api/profileRequests", () => requests)
@@ -28,11 +29,11 @@ const profile: Profile = {
   address: null,
 }
 
-const renderForm = () =>
+const renderForm = (shown: Profile = profile) =>
   renderWithRouter(
     <QueryClientProvider client={new QueryClient()}>
       <EditProfileForm
-        profile={profile}
+        profile={shown}
         activities={[
           { id: "a1", name: "Florbal", icon: "florbal" },
           { id: "a2", name: "Šachy", icon: "sachy" },
@@ -174,5 +175,67 @@ describe("EditProfileForm", () => {
 
     await waitFor(() => expect(requests.updateInterests).toHaveBeenCalledTimes(2))
     expect(requests.updateProfile).toHaveBeenCalledTimes(1)
+  })
+
+  describe("location privacy", () => {
+    const withAddress: Profile = {
+      ...profile,
+      address: {
+        street: "Sokolovská 12",
+        city: "Praha 8",
+        postalCode: "186 00",
+        country: "Česko",
+        latitude: 50.0942,
+        longitude: 14.4421,
+      },
+    }
+
+    it("says who sees the location and that no history is kept", async () => {
+      await renderForm()
+
+      expect(screen.getByText(/Lokalitu vidíte jen vy/)).toBeInTheDocument()
+      expect(screen.getByText(/neukládá historii polohy/)).toBeInTheDocument()
+    })
+
+    it("offers no removal while there is no location", async () => {
+      await renderForm()
+
+      expect(screen.queryByRole("button", { name: "Odstranit lokalitu" })).not.toBeInTheDocument()
+    })
+
+    it("removes the whole location only after the confirmation", async () => {
+      requests.removeLocation.mockResolvedValue({ ...withAddress, address: null })
+      await renderForm(withAddress)
+
+      await userEvent.click(screen.getByRole("button", { name: "Odstranit lokalitu" }))
+      expect(requests.removeLocation).not.toHaveBeenCalled()
+
+      await userEvent.click(screen.getByRole("button", { name: "Odstranit" }))
+
+      await waitFor(() => expect(requests.removeLocation).toHaveBeenCalledTimes(1))
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", { name: "Odstranit lokalitu" }),
+        ).not.toBeInTheDocument(),
+      )
+    })
+
+    it("keeps the location when the removal is declined or fails", async () => {
+      requests.removeLocation.mockRejectedValue(new Error("offline"))
+      await renderForm(withAddress)
+
+      await userEvent.click(screen.getByRole("button", { name: "Odstranit lokalitu" }))
+      await userEvent.click(screen.getByRole("button", { name: "Ponechat" }))
+      expect(requests.removeLocation).not.toHaveBeenCalled()
+
+      await userEvent.click(screen.getByRole("button", { name: "Odstranit lokalitu" }))
+      await userEvent.click(screen.getByRole("button", { name: "Odstranit" }))
+
+      expect(await screen.findByText(/nepodařilo odstranit/)).toBeInTheDocument()
+      // The open dialog hides the page behind it from the accessibility tree.
+      expect(
+        screen.getByRole("button", { name: "Odstranit lokalitu", hidden: true }),
+      ).toBeInTheDocument()
+    })
   })
 })
