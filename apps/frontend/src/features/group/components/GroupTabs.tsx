@@ -2,9 +2,9 @@ import { useTranslation } from "react-i18next"
 
 import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 
-export type GroupTab = "mine" | "discover"
+export type GroupTab = "mine" | "discover" | "requests"
 
-/** "Moje skupiny" / "Objevit": the tab lives in the URL, "mine" without a param. */
+/** "Moje skupiny" / "Objevit" / "Žádosti": the tab lives in the URL, "mine" without a param. */
 export function GroupTabs({ active }: { active: GroupTab }) {
   const { t } = useTranslation()
 
@@ -23,6 +23,13 @@ export function GroupTabs({ active }: { active: GroupTab }) {
         isActive={active === "discover"}
       >
         {t("groups.list.tabs.discover")}
+      </PageTab>
+      <PageTab
+        to="/groups"
+        search={{ tab: "requests" }}
+        isActive={active === "requests"}
+      >
+        {t("groups.list.tabs.requests")}
       </PageTab>
     </PageTabs>
   )

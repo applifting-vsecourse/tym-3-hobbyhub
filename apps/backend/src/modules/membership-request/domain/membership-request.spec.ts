@@ -3,7 +3,18 @@ import {
   membershipDecisionViolations,
   MembershipRequest,
   membershipRuleViolations,
+  MyMembershipRequest,
+  myMembershipRequestStatusOf,
 } from './membership-request';
+
+const aGroup = (
+  status: MyMembershipRequest['group']['status'],
+): MyMembershipRequest['group'] => ({
+  id: 'g1',
+  name: 'Čtvrteční florbalisté',
+  visibility: 'PUBLIC',
+  status,
+});
 
 const aRequest = (
   overrides: Partial<MembershipRequest> = {},
@@ -86,6 +97,35 @@ describe('membershipDecisionViolations', () => {
       ),
     ).toEqual(['GROUP_CANCELLED']);
   });
+});
+
+describe('myMembershipRequestStatusOf', () => {
+  it.each(['PENDING', 'REJECTED', 'WITHDRAWN'] as const)(
+    'shows a %s request on an active group as it is',
+    (status) => {
+      expect(
+        myMembershipRequestStatusOf({ status, group: aGroup('ACTIVE') }),
+      ).toBe(status);
+    },
+  );
+
+  it('shows a waiting request on a cancelled group as GROUP_CANCELLED', () => {
+    expect(
+      myMembershipRequestStatusOf({
+        status: 'PENDING',
+        group: aGroup('CANCELLED'),
+      }),
+    ).toBe('GROUP_CANCELLED');
+  });
+
+  it.each(['REJECTED', 'WITHDRAWN'] as const)(
+    'keeps a %s request on a cancelled group as it is',
+    (status) => {
+      expect(
+        myMembershipRequestStatusOf({ status, group: aGroup('CANCELLED') }),
+      ).toBe(status);
+    },
+  );
 });
 
 describe('currentMembershipRequestOf', () => {

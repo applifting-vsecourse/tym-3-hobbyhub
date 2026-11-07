@@ -6,7 +6,7 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 import { GroupTabs } from "@/features/group/components/GroupTabs"
 
 describe("GroupTabs", () => {
-  it("links both tabs to their URL and marks the one on screen", async () => {
+  it("links every tab to its URL and marks the one on screen", async () => {
     await renderWithRouter(<GroupTabs active="discover" />)
 
     const mine = screen.getByRole("link", { name: "Moje skupiny" })
@@ -15,5 +15,9 @@ describe("GroupTabs", () => {
     expect(mine).not.toHaveAttribute("aria-current")
     expect(discover).toHaveAttribute("href", "/groups?tab=discover")
     expect(discover).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("link", { name: "Žádosti" })).toHaveAttribute(
+      "href",
+      "/groups?tab=requests",
+    )
   })
 })

@@ -9,6 +9,12 @@ import {
 export const PARTICIPATION_REQUEST_MESSAGE_MAX_LENGTH = 500;
 export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH = 500;
 
+// F-06.4, ADR-0017: the participant's required words to the organizers when
+// cancelling a seat. Same limits as the column and CHECK constraints of
+// `participation.cancellationMessage`.
+export const PARTICIPATION_CANCELLATION_MESSAGE_MIN_LENGTH = 10;
+export const PARTICIPATION_CANCELLATION_MESSAGE_MAX_LENGTH = 500;
+
 // The organizer's list of waiting requests (F-05.7) pages like the event list.
 export const PENDING_REQUESTS_DEFAULT_LIMIT = 20;
 export const PENDING_REQUESTS_MAX_LIMIT = 50;
@@ -19,6 +25,10 @@ export const PENDING_REQUESTS_MAX_LIMIT = 50;
 // without a decision because the event was cancelled.
 export type RequestStatus =
   'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'CLOSED';
+
+// The person's own seat on an event (ADR-0003). Only the two states a seat
+// reached through a request can be in today; the rest come with their features.
+export type SeatStatus = 'APPROVED' | 'CANCELLED';
 
 export type ParticipationRequest = {
   id: string;
@@ -50,26 +60,47 @@ export type PendingRequest = ParticipationRequest & {
 
 export type PendingRequestPage = { items: PendingRequest[]; total: number };
 
-// F-05.6: the other states on the organizer's participants tab. APPROVED is
-// everyone with a seat, approved through a request or added without one;
-// WITHDRAWN the people who took their request back and asked no more.
-// CLOSED stays out: it only follows a cancelled event.
-export const DECIDED_STATUSES = ['APPROVED', 'REJECTED', 'WITHDRAWN'] as const;
+// F-05.6: the requests that ended without a seat, under the waiting ones on
+// the organizer's requests tab. WITHDRAWN are the people who took their
+// request back and asked no more. An approved request is no request to show:
+// its person is on the participants tab. CLOSED stays out: it only follows a
+// cancelled event.
+export const DECIDED_STATUSES = ['REJECTED', 'WITHDRAWN'] as const;
 export type DecidedStatus = (typeof DECIDED_STATUSES)[number];
 
 export type DecidedRequest = {
-  // The request, or the seat of someone approved without one.
   id: string;
   status: DecidedStatus;
   // The applicant, for the link to their profile.
   userId: string;
   message: string | null;
-  // When the person got the seat, was rejected or withdrew.
+  // When the person was rejected or withdrew.
   changedAt: Date;
   applicant: ApplicantProfile;
 };
 
 export type DecidedRequestPage = { items: DecidedRequest[]; total: number };
+
+// F-05.6, F-06.4: the organizer's participants tab, about seats only
+// (ADR-0003). APPROVED is everyone with a seat, through a request or added
+// without one; CANCELLED the people who gave theirs back.
+export const PARTICIPANT_STATUSES = ['APPROVED', 'CANCELLED'] as const;
+
+export type Participant = {
+  // The seat.
+  id: string;
+  status: SeatStatus;
+  // APPROVED: the message of the request that led to the seat, if any.
+  // CANCELLED: the participant's words when cancelling (ADR-0017).
+  message: string | null;
+  // When the person got the seat, or gave it back.
+  changedAt: Date;
+  // CANCELLED only: they have asked to join again since.
+  asksAgain: boolean;
+  person: ApplicantProfile;
+};
+
+export type ParticipantPage = { items: Participant[]; total: number };
 
 // Why a person cannot ask to join an event now. The client shows the same
 // reasons before sending; the server is the one that counts.
@@ -94,6 +125,9 @@ export type DecisionRuleViolation =
 
 export type Decision = 'APPROVE' | 'REJECT';
 
+// F-06.4: why a participant cannot cancel their seat now.
+export type CancelRuleViolation = EventStateViolation | 'NO_SEAT';
+
 // The states the event detail tells apart, decided the same way. Null while
 // the event is still ahead.
 export const eventStateViolation = (
@@ -109,25 +143,23 @@ export const eventStateViolation = (
   return null;
 };
 
-// The request a person sees on an event: the one still waiting, otherwise the
-// last decision. Withdrawn and closed requests are history and leave the person
-// free to ask again.
+// The request a person sees on an event: the latest one waiting or decided.
+// Withdrawn and closed requests are history and leave the person free to ask
+// again. So does a seat they cancelled (F-06.4): the approved request stays,
+// and a new one asked after it is the current one (ADR-0017).
+const CURRENT_REQUEST_STATUSES: readonly RequestStatus[] = [
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+];
+
 export const currentRequestOf = (
   requests: ParticipationRequest[],
-): ParticipationRequest | null => {
-  const latestWith = (
-    status: RequestStatus,
-  ): ParticipationRequest | undefined =>
-    requests
-      .filter((request) => request.status === status)
-      .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())[0];
-  return (
-    latestWith('PENDING') ??
-    latestWith('APPROVED') ??
-    latestWith('REJECTED') ??
-    null
-  );
-};
+): ParticipationRequest | null =>
+  requests
+    .filter((request) => CURRENT_REQUEST_STATUSES.includes(request.status))
+    .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())[0] ??
+  null;
 
 // F-06.1: who may ask to join, given the event and the applicant's own
 // requests on it. A pending request takes no seat, so a full event refuses new
@@ -181,6 +213,23 @@ export const decisionRuleViolations = (
   }
   if (decision === 'APPROVE' && event.freeSpots <= 0) {
     violations.push('EVENT_FULL');
+  }
+  return violations;
+};
+
+// F-06.4: a participant may cancel their seat any time before the event
+// starts, with no penalty in the MVP (custom deadlines are F-05.14).
+export const cancelRuleViolations = (
+  event: Pick<EventSeatFacts, 'status' | 'startAt' | 'endAt' | 'hasSeat'>,
+  now: Date,
+): CancelRuleViolation[] => {
+  const violations: CancelRuleViolation[] = [];
+  const state = eventStateViolation(event, now);
+  if (state) {
+    violations.push(state);
+  }
+  if (!event.hasSeat) {
+    violations.push('NO_SEAT');
   }
   return violations;
 };

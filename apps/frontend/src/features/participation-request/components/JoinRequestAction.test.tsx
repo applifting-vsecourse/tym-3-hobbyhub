@@ -20,7 +20,10 @@ const renderAction = (state: MyRequestState | undefined, onRequest = vi.fn()) =>
 describe("JoinRequestAction", () => {
   it("opens the request when asking is allowed", async () => {
     const onRequest = vi.fn()
-    renderAction({ request: null, violations: [], applicant }, onRequest)
+    renderAction(
+      { request: null, violations: [], seat: null, cancelViolations: [], applicant },
+      onRequest,
+    )
 
     await userEvent.click(screen.getByRole("button", { name: "Požádat o účast" }))
 
@@ -28,7 +31,13 @@ describe("JoinRequestAction", () => {
   })
 
   it("explains a refusal next to an inactive button", () => {
-    renderAction({ request: null, violations: ["EVENT_STARTED"], applicant })
+    renderAction({
+      request: null,
+      violations: ["EVENT_STARTED"],
+      seat: null,
+      cancelViolations: [],
+      applicant,
+    })
 
     expect(screen.getByRole("button", { name: "Požádat o účast" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Požádat o účast" })).toHaveAccessibleDescription(

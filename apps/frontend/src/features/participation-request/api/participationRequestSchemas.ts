@@ -3,6 +3,9 @@ import { z } from "zod"
 // Mirror the server-side DTOs, so the forms can tell the user before sending.
 export const PARTICIPATION_REQUEST_MESSAGE_MAX = 500
 export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX = 500
+// F-06.4: the participant's required words to the organizers on cancelling.
+export const PARTICIPATION_CANCELLATION_MESSAGE_MIN = 10
+export const PARTICIPATION_CANCELLATION_MESSAGE_MAX = 500
 
 export const requestStatusSchema = z.enum([
   "PENDING",
@@ -23,6 +26,18 @@ export const joinRuleViolationSchema = z.enum([
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+])
+
+// The person's own seat (F-06.4): CANCELLED once they gave it back.
+export const seatStatusSchema = z.enum(["APPROVED", "CANCELLED"])
+
+// Why the server refuses to cancel the seat (F-06.4).
+export const cancelRuleViolationSchema = z.enum([
+  "EVENT_CANCELLED",
+  "EVENT_NOT_HELD",
+  "EVENT_FINISHED",
+  "EVENT_STARTED",
+  "NO_SEAT",
 ])
 
 // Why the server refuses to approve or reject a request (F-05.7).
@@ -56,6 +71,8 @@ export const participationRequestSchema = z.object({
 export const myRequestStateSchema = z.object({
   request: participationRequestSchema.nullable(),
   violations: z.array(joinRuleViolationSchema),
+  seat: seatStatusSchema.nullable(),
+  cancelViolations: z.array(cancelRuleViolationSchema),
   applicant: applicantProfileSchema,
 })
 
@@ -70,9 +87,9 @@ export const pendingRequestPageSchema = z.object({
   total: z.number(),
 })
 
-// F-05.6: the other states on the participants tab. APPROVED is everyone
-// with a seat; WITHDRAWN the people who took their request back.
-export const DECIDED_STATUSES = ["APPROVED", "REJECTED", "WITHDRAWN"] as const
+// F-05.6: the requests that ended without a seat, under the waiting ones on
+// the requests tab. WITHDRAWN are the people who took their request back.
+export const DECIDED_STATUSES = ["REJECTED", "WITHDRAWN"] as const
 export const decidedStatusSchema = z.enum(DECIDED_STATUSES)
 
 export const decidedRequestSchema = z.object({
@@ -81,13 +98,34 @@ export const decidedRequestSchema = z.object({
   /** The applicant, for the link to their profile. */
   userId: z.string(),
   message: z.string().nullable(),
-  /** When the person got the seat, was rejected or withdrew. */
+  /** When the person was rejected or withdrew. */
   changedAt: z.coerce.date(),
   applicant: applicantProfileSchema,
 })
 
 export const decidedRequestPageSchema = z.object({
   items: z.array(decidedRequestSchema),
+  total: z.number(),
+})
+
+// F-05.6, F-06.4: the participants tab, about seats only (ADR-0003).
+export const PARTICIPANT_STATUSES = ["APPROVED", "CANCELLED"] as const
+
+export const participantSchema = z.object({
+  /** The seat. */
+  id: z.string(),
+  status: seatStatusSchema,
+  /** APPROVED: the message of the request behind the seat. CANCELLED: the words when cancelling. */
+  message: z.string().nullable(),
+  /** When the person got the seat, or gave it back. */
+  changedAt: z.coerce.date(),
+  /** CANCELLED only: they have asked to join again since. */
+  asksAgain: z.boolean(),
+  person: applicantProfileSchema,
+})
+
+export const participantPageSchema = z.object({
+  items: z.array(participantSchema),
   total: z.number(),
 })
 
@@ -100,13 +138,20 @@ export const decisionRefusalSchema = z.object({
   violations: z.array(decisionRuleViolationSchema),
 })
 
+export const cancelRefusalSchema = z.object({
+  violations: z.array(cancelRuleViolationSchema),
+})
+
 export type RequestStatus = z.infer<typeof requestStatusSchema>
 export type JoinRuleViolation = z.infer<typeof joinRuleViolationSchema>
 export type DecisionRuleViolation = z.infer<typeof decisionRuleViolationSchema>
+export type CancelRuleViolation = z.infer<typeof cancelRuleViolationSchema>
+export type SeatStatus = z.infer<typeof seatStatusSchema>
 export type ApplicantProfile = z.infer<typeof applicantProfileSchema>
 export type PendingRequest = z.infer<typeof pendingRequestSchema>
 export type DecidedStatus = z.infer<typeof decidedStatusSchema>
 export type DecidedRequest = z.infer<typeof decidedRequestSchema>
+export type Participant = z.infer<typeof participantSchema>
 export type ParticipationRequest = z.infer<typeof participationRequestSchema>
 export type MyRequestState = z.infer<typeof myRequestStateSchema>
 export type RequestToJoinInput = { eventId: string; message?: string }

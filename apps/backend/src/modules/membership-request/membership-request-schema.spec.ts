@@ -9,11 +9,17 @@
 import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
+  Group,
   GroupRole,
+  GroupStatus,
   MembershipRequest,
   Prisma,
   RequestStatus,
 } from '@/generated/prisma/client';
+import {
+  MyMembershipRequest,
+  MyMembershipRequestSection,
+} from './domain/membership-request';
 import { MembershipRequestRepository } from './repositories/membership-request.repository';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
@@ -166,6 +172,118 @@ describeDb('membership request database rules', () => {
         () => createRequest(fixture, { message: ' 　\n' }),
         'membership_request_message_not_blank',
       );
+    });
+  });
+
+  // F-07.7: the applicant's overview across groups, two sections paged by a
+  // cursor each.
+  it('pages my requests by section, newest first, without the approved ones', async () => {
+    await inRolledBackTransaction(async (fixture) => {
+      const { tx, groupId, applicantId } = fixture;
+      const repository = new MembershipRequestRepository(
+        tx as unknown as PrismaService,
+      );
+      const day = (n: number): Date => new Date(Date.UTC(2030, 0, n));
+      const { activityId } = await tx.group.findUniqueOrThrow({
+        where: { id: groupId },
+      });
+      const anotherGroup = (status: GroupStatus): Promise<Group> =>
+        tx.group.create({
+          data: {
+            name: `group-${random()}`,
+            description: 'Test',
+            activityId,
+            status,
+          },
+        });
+      const rejecting = await anotherGroup(GroupStatus.ACTIVE);
+      const deciding = await anotherGroup(GroupStatus.ACTIVE);
+      const cancelled = await anotherGroup(GroupStatus.CANCELLED);
+
+      // Withdrawn, then asked again and approved: the history stays.
+      const withdrawn = await createRequest(fixture, {
+        status: RequestStatus.WITHDRAWN,
+        requestedAt: day(1),
+        decidedAt: day(2),
+      });
+      await createRequest(fixture, {
+        status: RequestStatus.APPROVED,
+        requestedAt: day(3),
+        decidedAt: day(4),
+      });
+      const rejected = await createRequest(
+        { ...fixture, groupId: rejecting.id },
+        {
+          status: RequestStatus.REJECTED,
+          requestedAt: day(5),
+          decidedAt: day(6),
+          rejectionReason: 'Plno',
+        },
+      );
+      // Waiting on a cancelled group: nobody decides it, so it is history.
+      const stranded = await createRequest(
+        { ...fixture, groupId: cancelled.id },
+        { requestedAt: day(7) },
+      );
+      const waiting = await createRequest(
+        { ...fixture, groupId: deciding.id },
+        { requestedAt: day(8) },
+      );
+      // Someone else's request is not in the overview.
+      const stranger = await tx.user.create({
+        data: {
+          id: `test-${random()}`,
+          name: 'Cizí',
+          email: `test-${random()}@example.com`,
+          emailVerified: true,
+          createdAt: at,
+          updatedAt: at,
+        },
+      });
+      await createRequest(
+        { ...fixture, applicantId: stranger.id },
+        { requestedAt: day(9) },
+      );
+
+      // Every page of one section, in order.
+      const listAll = async (
+        section: MyMembershipRequestSection,
+      ): Promise<MyMembershipRequest[]> => {
+        const items: MyMembershipRequest[] = [];
+        let cursor: string | undefined;
+        do {
+          const page = await repository.listRequestsOfUser(
+            applicantId,
+            section,
+            1,
+            cursor,
+          );
+          items.push(...page.items);
+          cursor = page.nextCursor ?? undefined;
+        } while (cursor);
+        return items;
+      };
+
+      const pending = await listAll('pending');
+      expect(pending.map((item) => item.id)).toEqual([waiting.id]);
+
+      const history = await listAll('history');
+      expect(history.map((item) => item.id)).toEqual([
+        stranded.id,
+        rejected.id,
+        withdrawn.id,
+      ]);
+      expect(history[0].group).toEqual({
+        id: cancelled.id,
+        name: cancelled.name,
+        visibility: 'PUBLIC',
+        status: GroupStatus.CANCELLED,
+      });
+      expect(history[1]).toMatchObject({
+        status: RequestStatus.REJECTED,
+        decidedAt: day(6),
+        rejectionReason: 'Plno',
+      });
     });
   });
 
