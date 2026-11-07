@@ -1,17 +1,19 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import { Loader } from "@/components/hobbyhub/Loader"
+import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { ApplicationStatus, MyApplication } from "@/features/event/api/myEventsSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
+import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
 const BADGES: Record<ApplicationStatus, Status> = {
@@ -22,12 +24,17 @@ const BADGES: Record<ApplicationStatus, Status> = {
   EVENT_CANCELLED: "rejected",
 }
 
+/** The two lists of the overview; the first one has no param in the URL. */
+export type MyEventsTab = "applications" | "hosted"
+
 /** What the overview needs to know about one of its two lists. */
 export type MyEventsList<T> = {
   items: T[]
-  /** All upcoming rows, which can be more than the ones loaded. */
+  /** All rows that match the filter, which can be more than the ones loaded. */
   total: number
   isLoading: boolean
+  /** The rows are those of the previous filter while the new ones load. */
+  isStale?: boolean
   error: Error | null
   hasMore: boolean
   isLoadingMore: boolean
@@ -40,6 +47,13 @@ export type MyEventsList<T> = {
 type MyEventsOverviewProps = {
   applications: MyEventsList<MyApplication>
   hosted: MyEventsList<EventListItem>
+  /** The list on screen, from the URL. */
+  tab: MyEventsTab
+  /** Search and filters of both lists, shown under the tabs. */
+  filters?: ReactNode
+  /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
+  isFiltered?: boolean
+  onClearFilters?: () => void
   /** Display name of an event's activity; the activity feature owns the translation. */
   activityLabel: (activity: EventListItem["activity"]) => string
   /** Injectable so "today" is stable in tests. */
@@ -79,10 +93,51 @@ function LoadMore({ isLoading, onLoadMore }: { isLoading: boolean; onLoadMore: (
   )
 }
 
-/** F-06.3: the person's upcoming applications with their state, and the events they organize. */
+/**
+ * "Přihlášky" / "Pořádám": links, because the tab lives in the URL
+ * (`/my-events`, `/my-events?tab=hosted`). Switching keeps the filters.
+ */
+function MyEventsTabs({
+  active,
+  labels,
+}: {
+  active: MyEventsTab
+  labels: Record<MyEventsTab, string>
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <PageTabs label={t("myEvents.tabs.label")}>
+      <PageTab
+        to="/my-events"
+        search={(previous) => ({ ...previous, tab: undefined })}
+        isActive={active === "applications"}
+      >
+        {labels.applications}
+      </PageTab>
+      <PageTab
+        to="/my-events"
+        search={(previous) => ({ ...previous, tab: "hosted" as const })}
+        isActive={active === "hosted"}
+      >
+        {labels.hosted}
+      </PageTab>
+    </PageTabs>
+  )
+}
+
+/**
+ * F-06.3, #177: the person's applications with their state, and the events
+ * they organize — what is still on first, then the rest — with the search and
+ * filters of the event list.
+ */
 export function MyEventsOverview({
   applications,
   hosted,
+  tab,
+  filters,
+  isFiltered = false,
+  onClearFilters,
   activityLabel,
   now = new Date(),
 }: MyEventsOverviewProps) {
@@ -100,6 +155,7 @@ export function MyEventsOverview({
   }
 
   const isNothingYet =
+    !isFiltered &&
     !applications.error &&
     !hosted.error &&
     !applications.isLoading &&
@@ -179,7 +235,11 @@ export function MyEventsOverview({
       )
     }
     if (list.items.length === 0) {
-      return <p className="mt-4 typo-body text-muted-foreground">{t(emptyKey)}</p>
+      return isFiltered ? (
+        <NoMatchingEvents onClearFilters={onClearFilters} />
+      ) : (
+        <p className="typo-body text-muted-foreground">{t(emptyKey)}</p>
+      )
     }
     return (
       <div className="flex flex-col">
@@ -205,23 +265,29 @@ export function MyEventsOverview({
       ? t(`myEvents.tabs.${key}`)
       : t(`myEvents.tabs.${key}WithCount`, { count: list.total })
 
+  const active = tab === "hosted" ? hosted : applications
+
   return (
-    <Tabs defaultValue="applications">
-      <TabsList
-        aria-label={t("myEvents.tabs.label")}
-        className="w-full sm:w-fit"
+    <div className="flex flex-col gap-6">
+      <MyEventsTabs
+        active={tab}
+        labels={{
+          applications: label(applications, "applications"),
+          hosted: label(hosted, "hosted"),
+        }}
+      />
+      {filters}
+      <div
+        aria-busy={active.isStale}
+        // The previous list stays until the new one arrives; show that it is stale.
+        className={cn(active.isStale && "opacity-60 transition-opacity")}
       >
-        <TabsTrigger value="applications">{label(applications, "applications")}</TabsTrigger>
-        <TabsTrigger value="hosted">{label(hosted, "hosted")}</TabsTrigger>
-      </TabsList>
-      <TabsContent value="applications">
-        {body(applications, "myEvents.applications.empty", ({ event, status }) =>
-          row(event, status),
-        )}
-      </TabsContent>
-      <TabsContent value="hosted">
-        {body(hosted, "myEvents.hosted.empty", (event) => row(event))}
-      </TabsContent>
-    </Tabs>
+        {tab === "hosted"
+          ? body(hosted, "myEvents.hosted.empty", (event) => row(event))
+          : body(applications, "myEvents.applications.empty", ({ event, status }) =>
+              row(event, status),
+            )}
+      </div>
+    </div>
   )
 }

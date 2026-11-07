@@ -21,10 +21,10 @@ export const myApplicationSchema = z.object({
 
 export type MyApplication = z.infer<typeof myApplicationSchema>
 
-/** A page of applications to events that are not over, soonest first. */
+/** A page of applications: waiting and approved ones to events still on first, then the rest. */
 export const myApplicationsPageSchema = z.object({
   items: z.array(myApplicationSchema),
-  /** All upcoming applications, not just this page. */
+  /** All applications that match the filter, not just this page. */
   total: z.number(),
   /** Where the next page starts; null on the last one. */
   nextOffset: z.number().nullable(),

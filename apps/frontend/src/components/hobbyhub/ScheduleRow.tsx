@@ -70,7 +70,10 @@ export function ScheduleRow({
         <p className="typo-small text-muted-foreground">{subtitle}</p>
         {badge ? <div className="mt-1.5">{badge}</div> : null}
       </div>
-      <div className="flex shrink-0 flex-col gap-2">
+      {/* One width for every row and aligned to the right edge, so the seats and
+          the word under them stay in one column whatever the word says (#177).
+          A long table of seats may widen it rather than run into the title. */}
+      <div className="flex min-w-28 shrink-0 flex-col items-end gap-2 text-right">
         <SeatMeter
           size="sm"
           {...capacity}
