@@ -505,7 +505,8 @@
       },
       "tabs": {
         "discover": "Discover",
-        "mine": "My groups"
+        "mine": "My groups",
+        "requests": "Requests"
       },
       "tabsLabel": "Show groups",
       "title": "Groups",
@@ -583,6 +584,31 @@
         "keep": "Keep request",
         "text": "You can withdraw your request until the organizer decides. They will no longer see it, and you can ask to join again later.",
         "title": "Withdraw your membership request?"
+      }
+    },
+    "myRequests": {
+      "decidedAt": {
+        "APPROVED": "Approved {{date}}",
+        "CLOSED": "Closed {{date}}",
+        "REJECTED": "Rejected {{date}}",
+        "WITHDRAWN": "Withdrawn {{date}}"
+      },
+      "groupCancelledText": "The organizer cancelled the group, so nobody will decide this request.",
+      "historyEmpty": "Rejected and withdrawn requests will show up here.",
+      "historyTitle": "History",
+      "loadError": "Your requests could not be loaded",
+      "loadMoreError": "More requests could not be loaded. Please try again.",
+      "loading": "Loading requests…",
+      "message": "Your message",
+      "pendingEmpty": "No request is waiting for a decision. Find groups under <discover>Discover</discover>.",
+      "pendingTitle": "Pending",
+      "rejectionReason": "Reason for rejection",
+      "requestedAt": "Sent {{date}}",
+      "status": {
+        "APPROVED": "Approved",
+        "CLOSED": "Closed",
+        "GROUP_CANCELLED": "Group cancelled",
+        "WITHDRAWN": "Withdrawn"
       }
     },
     "placeholders": {

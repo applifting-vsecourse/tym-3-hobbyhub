@@ -516,7 +516,8 @@
       },
       "tabs": {
         "discover": "Objevit",
-        "mine": "Moje skupiny"
+        "mine": "Moje skupiny",
+        "requests": "Žádosti"
       },
       "tabsLabel": "Zobrazit skupiny",
       "title": "Skupiny",
@@ -595,6 +596,31 @@
         "keep": "Nechat žádost",
         "text": "Žádost můžete zrušit, dokud ji organizátor nevyřídí. Přestane ji vidět a o členství můžete později požádat znovu.",
         "title": "Zrušit žádost o členství?"
+      }
+    },
+    "myRequests": {
+      "decidedAt": {
+        "APPROVED": "Schváleno {{date}}",
+        "CLOSED": "Uzavřeno {{date}}",
+        "REJECTED": "Zamítnuto {{date}}",
+        "WITHDRAWN": "Staženo {{date}}"
+      },
+      "groupCancelledText": "Organizátor skupinu zrušil, žádost už nikdo nevyřídí.",
+      "historyEmpty": "Tady se objeví zamítnuté a stažené žádosti.",
+      "historyTitle": "Historie",
+      "loadError": "Žádosti se nepodařilo načíst",
+      "loadMoreError": "Další žádosti se nepodařilo načíst. Zkuste to prosím znovu.",
+      "loading": "Načítáme žádosti…",
+      "message": "Vaše zpráva",
+      "pendingEmpty": "Žádná žádost nečeká na vyřízení. Skupiny najdete v záložce <discover>Objevit</discover>.",
+      "pendingTitle": "Čekající",
+      "rejectionReason": "Důvod zamítnutí",
+      "requestedAt": "Podáno {{date}}",
+      "status": {
+        "APPROVED": "Schváleno",
+        "CLOSED": "Uzavřeno",
+        "GROUP_CANCELLED": "Skupina zrušena",
+        "WITHDRAWN": "Staženo"
       }
     },
     "placeholders": {
