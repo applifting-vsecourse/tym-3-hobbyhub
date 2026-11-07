@@ -20,12 +20,15 @@ import { Button } from "@/components/ui/button"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
+import { CancelRefusedError } from "@/features/participation-request/api/cancelParticipation"
 import {
   PARTICIPATION_REQUEST_MESSAGE_MAX,
   type ApplicantProfile,
   type ApprovalMode,
 } from "@/features/participation-request/api/participationRequestSchemas"
 import { JoinRefusedError } from "@/features/participation-request/api/requestToJoin"
+import { CancelParticipationForm } from "@/features/participation-request/components/CancelParticipationForm"
+import { useCancelParticipation } from "@/features/participation-request/hooks/useCancelParticipation"
 import { useRequestToJoin } from "@/features/participation-request/hooks/useRequestToJoin"
 import { useWithdrawRequest } from "@/features/participation-request/hooks/useWithdrawRequest"
 import { refusalOf } from "@/features/participation-request/lib/joinPanel"
@@ -45,9 +48,10 @@ export type RequestedEvent = {
 /**
  * `form` asks, `sent` confirms a request waiting for the organizer, `joined`
  * confirms a seat taken at once (automatic approval), `withdraw` confirms
- * taking a waiting request back.
+ * taking a waiting request back, `cancel` gives the seat back with a message
+ * to the organizers (F-06.4).
  */
-export type RequestSheetStep = "form" | "sent" | "joined" | "withdraw"
+export type RequestSheetStep = "form" | "sent" | "joined" | "withdraw" | "cancel"
 
 function EventRow({ event }: { event: RequestedEvent }) {
   return (
@@ -166,6 +170,8 @@ function RequestForm({
               : "participationRequests.form.note",
           )}
         </p>
+        {/* F-06.4: the rule for cancelling, before the person commits. */}
+        <p className="typo-small text-muted-foreground">{t("participationRequests.cancelRule")}</p>
       </AppForm>
     </div>
   )
@@ -214,7 +220,8 @@ type ParticipationRequestSheetProps = {
 
 /**
  * Žádost o účast (F-06.1): ask with an optional message, see it sent, and
- * confirm withdrawing it. With automatic approval the same form takes the seat
+ * confirm withdrawing it. Zrušení účasti (F-06.4): give the seat back with a
+ * required message to the organizers. With automatic approval the same form takes the seat
  * at once (F-05.5). The page owns the sheet, so it stays open while the seat
  * panel under it switches to the pending request or the seat.
  */
@@ -229,17 +236,21 @@ export function ParticipationRequestSheet({
 }: ParticipationRequestSheetProps) {
   const { t } = useTranslation()
   const formId = useId()
+  const cancelFormId = useId()
   const requestToJoin = useRequestToJoin(onChange)
   const withdraw = useWithdrawRequest(onChange)
+  const cancelSeat = useCancelParticipation(onChange)
   // While the sheet animates out, it keeps showing the step it closed on.
   const [shownStep, setShownStep] = useState<RequestSheetStep>(step ?? "form")
   if (step !== null && step !== shownStep) setShownStep(step)
 
   // A new attempt starts without the error of the last one.
   const { reset: resetRequest } = requestToJoin
+  const { reset: resetCancel } = cancelSeat
   useEffect(() => {
     if (step === "form") resetRequest()
-  }, [step, resetRequest])
+    if (step === "cancel") resetCancel()
+  }, [step, resetRequest, resetCancel])
 
   const close = () => onStepChange(null)
 
@@ -260,6 +271,23 @@ export function ParticipationRequestSheet({
       toast.error(t("participationRequests.withdraw.failed"))
     }
   }
+
+  // Throws on failure, so the form keeps its text and stays guarded.
+  const confirmCancel = async (message: string) => {
+    await cancelSeat.mutateAsync({ eventId, message })
+    close()
+    toast.success(t("participationRequests.cancel.done"))
+  }
+
+  const cancelRefusal =
+    cancelSeat.error instanceof CancelRefusedError
+      ? (cancelSeat.error.violations.find((violation) => violation !== "NO_SEAT") ?? "NO_SEAT")
+      : null
+  const cancelErrorMessage = cancelSeat.error
+    ? cancelRefusal
+      ? t(`participationRequests.cancel.refused.${cancelRefusal}`)
+      : t("participationRequests.cancel.failed")
+    : null
 
   const { error } = requestToJoin
   const refusal = error instanceof JoinRefusedError ? refusalOf(error.violations) : null
@@ -386,6 +414,32 @@ export function ParticipationRequestSheet({
         </>
       ),
     },
+    cancel: {
+      title: t("participationRequests.cancel.title"),
+      body: (
+        <CancelParticipationForm
+          formId={cancelFormId}
+          eventRow={<EventRow event={event} />}
+          isPending={cancelSeat.isPending}
+          errorMessage={cancelErrorMessage}
+          onSubmit={confirmCancel}
+        />
+      ),
+      footer: (
+        <>
+          <Button onClick={close}>{t("participationRequests.cancel.keep")}</Button>
+          <Button
+            type="submit"
+            form={cancelFormId}
+            variant="outline"
+            disabled={cancelSeat.isPending}
+          >
+            {cancelSeat.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            {t("participationRequests.cancel.confirm")}
+          </Button>
+        </>
+      ),
+    },
   }
   const shown = steps[shownStep]
 
@@ -399,7 +453,7 @@ export function ParticipationRequestSheet({
       footer={shown.footer}
       hasCloseButton
       // The form has the message field; its buttons must not cover it.
-      isFooterScrolling={shownStep === "form"}
+      isFooterScrolling={shownStep === "form" || shownStep === "cancel"}
     >
       {shown.body}
     </ResponsiveSheet>

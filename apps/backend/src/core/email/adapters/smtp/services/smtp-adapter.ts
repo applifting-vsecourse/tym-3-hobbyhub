@@ -1,5 +1,8 @@
 import { SMTPConfig } from '@/core/email/adapters/smtp/interfaces/smtp-config.interface';
-import { EmailService } from '@/core/email/interfaces/email-service.interface';
+import {
+  EmailService,
+  SentEmail,
+} from '@/core/email/interfaces/email-service.interface';
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
@@ -19,13 +22,20 @@ export class SMTPAdapter implements EmailService {
     });
   }
 
-  async sendEmail(to: string, subject: string, html: string): Promise<void> {
-    await this.transporter.sendMail({
+  // A refusal rejects with nodemailer's error, which carries the SMTP reply
+  // code; the outbox tells a permanent one from a temporary one by it.
+  async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<SentEmail> {
+    const info = (await this.transporter.sendMail({
       // An empty SMTP_FROM counts as unset.
       from: this.config.from || this.config.user,
       to,
       subject,
       html,
-    });
+    })) as { messageId?: string } | undefined;
+    return { messageId: info?.messageId ?? null };
   }
 }
