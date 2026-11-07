@@ -79,13 +79,12 @@ function StepPicture({ step }: { step: StepKey }) {
           <YourSeat
             title={t("landing.how.preview.yourSeatTitle")}
             description={t("landing.how.preview.yourSeatText")}
+            // A picture, not a control: the action shows as a label, so nobody
+            // taps a button that does nothing.
             action={
-              <Button
-                size="sm"
-                tabIndex={-1}
-              >
+              <p className="text-center typo-label text-accent-foreground">
                 {t("landing.how.preview.take")}
-              </Button>
+              </p>
             }
           />
         </div>
@@ -131,8 +130,10 @@ function StepPicture({ step }: { step: StepKey }) {
  * left its marker on a rail (and from `lg` a short heading), on the right the
  * step itself with a title, two paragraphs and a picture from the kit. The
  * reader's position decides every row's state at once — the steps above are
- * done, the one on screen is current, the ones below are still to come and
- * drawn faint — so the rail and the text always agree.
+ * done, the one on screen is current, the ones below are still to come — so
+ * the rail and the text always agree. A step still to come is told apart by
+ * its outlined grey marker, the grey rail and its muted heading; its
+ * paragraphs and picture stay at full contrast, never faded.
  */
 export function HowItWorks({ className, style }: { className?: string; style?: CSSProperties }) {
   const { t } = useTranslation()
@@ -158,6 +159,7 @@ export function HowItWorks({ className, style }: { className?: string; style?: C
             <li
               key={key}
               ref={register(index)}
+              aria-current={state === "current" ? "step" : undefined}
               className="grid grid-cols-[auto_1fr] gap-x-4 md:gap-x-6 lg:grid-cols-[auto_16rem_1fr] lg:gap-x-8"
             >
               {/* The marker and the rail down to the next step. */}
@@ -182,10 +184,7 @@ export function HowItWorks({ className, style }: { className?: string; style?: C
                   the step's heading, so a screen reader gets it once. */}
               <div
                 aria-hidden
-                className={cn(
-                  "hidden flex-col gap-1 pt-2 transition-opacity duration-500 lg:flex",
-                  state === "upcoming" ? "opacity-50" : "opacity-100",
-                )}
+                className="hidden flex-col gap-1 pt-2 lg:flex"
               >
                 <p
                   className={cn(
@@ -202,16 +201,23 @@ export function HowItWorks({ className, style }: { className?: string; style?: C
               </div>
               <div
                 className={cn(
-                  "flex flex-col gap-6 pt-2 transition-opacity duration-500 motion-safe:transition-[opacity,transform] md:flex-row md:items-start md:justify-between md:gap-12",
+                  "flex flex-col gap-6 pt-2 duration-500 motion-safe:transition-transform md:flex-row md:items-start md:justify-between md:gap-12",
                   isLast ? "pb-2" : "pb-16 lg:pb-24",
-                  state === "upcoming" ? "opacity-40 motion-safe:translate-y-4" : "opacity-100",
+                  state === "upcoming" && "motion-safe:translate-y-4",
                 )}
               >
                 <div className="flex max-w-xl flex-col gap-3">
                   <p className="typo-caption text-muted-foreground">
                     {t("landing.how.stepLabel", { number: index + 1 })}
                   </p>
-                  <h3 className="typo-h2">{t(`landing.how.${key}.title`)}</h3>
+                  <h3
+                    className={cn(
+                      "typo-h2 transition-colors duration-500",
+                      state === "upcoming" && "text-muted-foreground",
+                    )}
+                  >
+                    {t(`landing.how.${key}.title`)}
+                  </h3>
                   <p className="typo-body text-muted-foreground">{t(`landing.how.${key}.p1`)}</p>
                   <p className="typo-body text-muted-foreground">{t(`landing.how.${key}.p2`)}</p>
                 </div>
