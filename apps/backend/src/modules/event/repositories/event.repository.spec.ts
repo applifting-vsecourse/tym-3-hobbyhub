@@ -147,13 +147,13 @@ describe('EventRepository', () => {
   });
 });
 
-describe('EventRepository.getPublicEventById', () => {
-  it('only looks at public, visible events that are not drafts', async () => {
+describe('EventRepository.getShowableEventById', () => {
+  it('only looks at public or group-only, visible events that are not drafts', async () => {
     const findFirst = jest.fn().mockResolvedValue(null);
     const prisma = { event: { findFirst } } as unknown as PrismaService;
 
     await expect(
-      new EventRepository(prisma).getPublicEventById('e1'),
+      new EventRepository(prisma).getShowableEventById('e1'),
     ).resolves.toBeNull();
 
     expect(findFirst).toHaveBeenCalledWith(
@@ -161,7 +161,7 @@ describe('EventRepository.getPublicEventById', () => {
         where: {
           id: 'e1',
           status: { not: 'DRAFT' },
-          visibility: 'PUBLIC',
+          visibility: { in: ['PUBLIC', 'GROUP_ONLY'] },
           isHidden: false,
         },
       }),
@@ -177,13 +177,11 @@ describe('EventRepository.getPublicEventById', () => {
       status: 'PUBLISHED',
       approvalMode: 'MANUAL',
       organizer: { name: 'Jana Nováková' },
-      participations: [
-        { user: { birthDate: new Date('1990-01-01'), gender: 'MALE' } },
-      ],
+      participations: [{ user: { birthYear: 1990, gender: 'MALE' } }],
     });
     const prisma = { event: { findFirst } } as unknown as PrismaService;
 
-    const detail = await new EventRepository(prisma).getPublicEventById('e1');
+    const detail = await new EventRepository(prisma).getShowableEventById('e1');
 
     expect(detail).toMatchObject({
       organizerName: 'Jana Nováková',
@@ -194,14 +192,16 @@ describe('EventRepository.getPublicEventById', () => {
     expect(detail).not.toHaveProperty('onlineUrl');
     expect(detail).not.toHaveProperty('locationStreet');
     expect(detail).not.toHaveProperty('locationLatitude');
-    expect(JSON.stringify(detail)).not.toContain('1990-01-01');
+    expect(JSON.stringify(detail)).not.toContain('birthYear');
   });
 });
 
-describe('EventRepository.getPublicEventSeatFacts', () => {
+describe('EventRepository.getShowableEventSeatFacts', () => {
   const row = {
     id: 'e1',
     status: 'PUBLISHED',
+    visibility: 'PUBLIC',
+    groupId: null,
     startAt: new Date('2030-01-01T18:00:00Z'),
     endAt: new Date('2030-01-01T20:00:00Z'),
     approvalMode: 'AUTOMATIC',
@@ -213,19 +213,19 @@ describe('EventRepository.getPublicEventSeatFacts', () => {
     participations: [{ userId: 'u1' }, { userId: 'u2' }],
   };
 
-  it('uses the visibility of the public detail', async () => {
+  it('looks at the same events as the detail', async () => {
     const findFirst = jest.fn().mockResolvedValue(null);
     const prisma = { event: { findFirst } } as unknown as PrismaService;
 
     await expect(
-      new EventRepository(prisma).getPublicEventSeatFacts('e1', 'u1'),
+      new EventRepository(prisma).getShowableEventSeatFacts('e1', 'u1'),
     ).resolves.toBeNull();
     expect(findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           id: 'e1',
           status: { not: 'DRAFT' },
-          visibility: 'PUBLIC',
+          visibility: { in: ['PUBLIC', 'GROUP_ONLY'] },
           isHidden: false,
         },
       }),
@@ -238,10 +238,12 @@ describe('EventRepository.getPublicEventSeatFacts', () => {
     const repository = new EventRepository(prisma);
 
     await expect(
-      repository.getPublicEventSeatFacts('e1', 'u1'),
+      repository.getShowableEventSeatFacts('e1', 'u1'),
     ).resolves.toEqual({
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: row.startAt,
       endAt: row.endAt,
       approvalMode: 'AUTOMATIC',
@@ -250,7 +252,7 @@ describe('EventRepository.getPublicEventSeatFacts', () => {
       hasSeat: true,
     });
     await expect(
-      repository.getPublicEventSeatFacts('e1', 'u3'),
+      repository.getShowableEventSeatFacts('e1', 'u3'),
     ).resolves.toMatchObject({ hasSeat: false });
   });
 });
@@ -259,6 +261,8 @@ describe('EventRepository.getEventFacts', () => {
   const row = {
     id: 'e1',
     status: 'PUBLISHED',
+    visibility: 'PUBLIC',
+    groupId: null,
     startAt: new Date('2030-01-01T18:00:00Z'),
     endAt: new Date('2030-01-01T20:00:00Z'),
     approvalMode: 'MANUAL',
@@ -280,6 +284,8 @@ describe('EventRepository.getEventFacts', () => {
     ).resolves.toEqual({
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: row.startAt,
       endAt: row.endAt,
       approvalMode: 'MANUAL',
@@ -364,5 +370,68 @@ describe('EventRepository: guarded writes', () => {
     await expect(
       repository.cancelEvent('e1', { cancellationReasonId: 'r1' }, now),
     ).resolves.toEqual({ ok: false, violation: 'EVENT_NOT_CANCELLABLE' });
+  });
+
+  describe('updateExternalOccupiedSpots', () => {
+    // Four approved people on an event of at most eight.
+    const setupSpots = (
+      count: number,
+    ): { calls: string[]; repository: EventRepository } => {
+      const calls: string[] = [];
+      const findUniqueOrThrow = jest
+        .fn()
+        .mockResolvedValueOnce({ maxParticipants: 8 })
+        .mockRejectedValue(new Error(STOP));
+      const tx = {
+        $queryRaw: jest.fn(() => {
+          calls.push('lock');
+          return Promise.resolve([]);
+        }),
+        participation: {
+          count: jest.fn(() => {
+            calls.push('count');
+            return Promise.resolve(4);
+          }),
+        },
+        event: {
+          updateMany: jest.fn(() => {
+            calls.push('write');
+            return Promise.resolve({ count });
+          }),
+          findUniqueOrThrow,
+        },
+      };
+      const prisma = {
+        $transaction: (work: (tx: unknown) => Promise<unknown>) => work(tx),
+      } as unknown as PrismaService;
+      return { calls, repository: new EventRepository(prisma) };
+    };
+
+    it('locks the event before counting seats and writing', async () => {
+      const { calls, repository } = setupSpots(1);
+
+      await expect(
+        repository.updateExternalOccupiedSpots('e1', 4, now),
+      ).rejects.toThrow(STOP);
+
+      expect(calls).toEqual(['lock', 'count', 'write']);
+    });
+
+    it('refuses more outside seats than the approved leave, writing nothing', async () => {
+      const { calls, repository } = setupSpots(1);
+
+      await expect(
+        repository.updateExternalOccupiedSpots('e1', 5, now),
+      ).resolves.toEqual({ ok: false, violation: 'MAX_BELOW_OCCUPIED' });
+      expect(calls).not.toContain('write');
+    });
+
+    it('reports an event that started or closed meanwhile', async () => {
+      const { repository } = setupSpots(0);
+
+      await expect(
+        repository.updateExternalOccupiedSpots('e1', 1, now),
+      ).resolves.toEqual({ ok: false, violation: 'EVENT_NOT_CHANGEABLE' });
+    });
   });
 });

@@ -25,13 +25,20 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
         input: true,
         returned: false,
       },
-      birthDate: {
-        type: 'date',
+      // #174: the year only, never the full date (ADR-0016).
+      birthYear: {
+        type: 'number',
         required: false,
         input: true,
         returned: false,
       },
       // Set by the registration database hook, not by the client.
+      adulthoodConfirmedAt: {
+        type: 'date',
+        required: false,
+        input: false,
+        returned: false,
+      },
       termsAcceptedAt: {
         type: 'date',
         required: false,
@@ -54,6 +61,11 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
     storage: 'database',
     customRules: {
       '/sign-in/email': { window: 15 * 60, max: 5 },
+      // F-03.2: the once-a-minute wait is kept per address around the send
+      // itself (verification/send-once-a-minute.ts); this is only the coarse
+      // cap on top, per IP (or one shared bucket where no IP is known),
+      // against mail bombing.
+      '/send-verification-email': { window: 60, max: 30 },
     },
   },
   plugins: [openAPI(), username()],

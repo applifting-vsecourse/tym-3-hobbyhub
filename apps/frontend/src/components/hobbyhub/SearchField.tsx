@@ -24,7 +24,7 @@ export function SearchField({ label, onOpenFilters, className, ...props }: Searc
     <div
       className={cn(
         "flex h-12 w-full items-center gap-3 rounded-full border border-border bg-card px-4 transition-[color,box-shadow]",
-        "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+        "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring",
         className,
       )}
     >

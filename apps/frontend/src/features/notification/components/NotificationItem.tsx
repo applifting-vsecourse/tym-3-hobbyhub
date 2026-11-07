@@ -21,7 +21,7 @@ type NotificationItemProps = {
 }
 
 const rowClassName =
-  "flex w-full items-start gap-3 rounded-md px-3 py-2 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+  "flex w-full items-start gap-3 rounded-md px-3 py-2 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring"
 
 // Each target is its own `Link`, so the router checks the params and search
 // of every page the notifications can lead to.

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
-import { useTranslation } from "react-i18next"
+import { Link } from "@tanstack/react-router"
+import { Trans, useTranslation } from "react-i18next"
 
 import LevelIcon from "@/assets/ui-icons/level.svg?react"
 import MapPinIcon from "@/assets/ui-icons/map-pin.svg?react"
@@ -23,14 +24,23 @@ type EventDetailProps = {
   joinAction: ReactNode
   /** Edit and cancel, for the organizer of an event that has not started. */
   organizerActions?: ReactNode
+  /** Names the organizer as a link to their profile: only signed-in people can open it. */
+  isOrganizerLinked?: boolean
   /** Link to the group that organizes the event; absent when none does. */
   groupLink?: ReactNode
+  /** Copy the public link; shown to everyone while the event can still be joined (not once it is full). */
+  shareAction?: ReactNode
   /**
    * The signed-in person's own place (their request, their seat, their event).
    * Shown instead of the free seat, whatever state the event is in, so a
    * pending request can still be withdrawn once the event fills up.
    */
   ownRequest?: ReactNode
+  /**
+   * The exact place and the contacts, for the organizer and people with a seat.
+   * Absent for everyone else, who is told when they appear instead.
+   */
+  participantInfo?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -65,8 +75,11 @@ export function EventDetail({
   activityLabel,
   joinAction,
   organizerActions,
+  isOrganizerLinked = false,
   groupLink,
+  shareAction,
   ownRequest,
+  participantInfo,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -81,7 +94,7 @@ export function EventDetail({
   const addressNote =
     event.venueType === "ONLINE"
       ? { label: t("events.detail.linkLabel"), value: t("events.detail.address.online") }
-      : event.venueType === "PRIVATE_VENUE"
+      : event.venueType === "PRIVATE_VENUE" && !participantInfo
         ? { label: t("events.detail.addressLabel"), value: t("events.detail.address.private") }
         : null
   const practical = [
@@ -139,6 +152,11 @@ export function EventDetail({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1 className="typo-h1 text-foreground">{event.title}</h1>
             {state !== "open" ? <StateBadge state={state} /> : null}
+            {/* F-07.2: says why someone outside the group cannot find it. */}
+            {event.visibility === "GROUP_ONLY" ? (
+              <StatusBadge status="neutral">{t("events.detail.groupOnly")}</StatusBadge>
+            ) : null}
+            {state === "open" ? shareAction : null}
           </div>
           {state !== "open" ? (
             <p className="typo-body text-foreground">{t(`events.detail.state.${state}Text`)}</p>
@@ -190,7 +208,22 @@ export function EventDetail({
           </ul>
         </div>
         <p className="typo-small text-muted-foreground">
-          {t("events.detail.organizer", { name: event.organizerName })}
+          <Trans
+            t={t}
+            i18nKey="events.detail.organizer"
+            values={{ name: event.organizerName }}
+            components={{
+              profile: isOrganizerLinked ? (
+                <Link
+                  to="/profile/$userId"
+                  params={{ userId: event.organizerId }}
+                  className="underline underline-offset-4"
+                />
+              ) : (
+                <span />
+              ),
+            }}
+          />
         </p>
         {groupLink}
         {organizerActions}
@@ -255,6 +288,11 @@ export function EventDetail({
             ))}
           </dl>
         ) : null}
+
+        {participantInfo ??
+          (state === "open" || state === "full" ? (
+            <p className="typo-small text-muted-foreground">{t("events.detail.hiddenInfo")}</p>
+          ) : null)}
 
         <section className="flex flex-col gap-3 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.stats.title")}</h2>

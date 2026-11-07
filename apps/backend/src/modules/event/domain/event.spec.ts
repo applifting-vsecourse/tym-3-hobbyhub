@@ -1,6 +1,9 @@
 import {
+  canSeeEvent,
   eventChangeViolations,
+  eventListFilterViolations,
   eventRuleViolations,
+  externalSpotsViolations,
   foldForSearch,
   isOrganizerOf,
   occupancyOf,
@@ -37,6 +40,32 @@ describe('occupancyOf', () => {
         approvedCount: 0,
       }),
     ).toMatchObject({ missingToMinimum: 0, fillState });
+  });
+});
+
+describe('canSeeEvent', () => {
+  const nobody = { isGroupMember: false, isInvolved: false };
+
+  it('shows a public event to everyone', () => {
+    expect(canSeeEvent('PUBLIC', nobody)).toBe(true);
+  });
+
+  it.each([
+    ['a member of its group', { isGroupMember: true, isInvolved: false }, true],
+    [
+      'someone holding a seat',
+      { isGroupMember: false, isInvolved: true },
+      true,
+    ],
+    ['anyone else', nobody, false],
+  ])('shows a group-only event to %s: %s', (_name, viewer, expected) => {
+    expect(canSeeEvent('GROUP_ONLY', viewer)).toBe(expected);
+  });
+
+  it('never shows a private event this way, not even to a member', () => {
+    expect(
+      canSeeEvent('PRIVATE', { isGroupMember: true, isInvolved: true }),
+    ).toBe(false);
   });
 });
 
@@ -100,6 +129,28 @@ describe('foldForSearch', () => {
   it('ignores case, diacritics and outer spaces', () => {
     expect(foldForSearch('  Čtvrteční FLORBAL ')).toBe('ctvrtecni florbal');
     expect(foldForSearch('Brno-Žabovřesky')).toBe('brno-zabovresky');
+  });
+});
+
+describe('eventListFilterViolations', () => {
+  it('accepts open and ordered ranges', () => {
+    expect(eventListFilterViolations({})).toEqual([]);
+    expect(eventListFilterViolations({ dateFrom: '2026-11-15' })).toEqual([]);
+    expect(
+      eventListFilterViolations({
+        dateFrom: '2026-11-15',
+        dateTo: '2026-11-15',
+      }),
+    ).toEqual([]);
+  });
+
+  it('refuses a range that ends before it starts', () => {
+    expect(
+      eventListFilterViolations({
+        dateFrom: '2026-11-16',
+        dateTo: '2026-11-15',
+      }),
+    ).toEqual(['DATE_FROM_AFTER_DATE_TO']);
   });
 });
 
@@ -308,4 +359,41 @@ describe('eventRuleViolations: position', () => {
       ]);
     },
   );
+});
+
+describe('externalSpotsViolations', () => {
+  const now = new Date('2026-10-23T12:00:00Z');
+  const event = {
+    status: 'PUBLISHED' as const,
+    startAt: new Date('2026-10-24T12:00:00Z'),
+    maxParticipants: 10,
+    approvedCount: 6,
+  };
+
+  it('allows the outside seats up to the seats left by the approved', () => {
+    expect(externalSpotsViolations(event, 4, now)).toEqual([]);
+    expect(externalSpotsViolations(event, 0, now)).toEqual([]);
+  });
+
+  it('refuses more outside seats than the maximum leaves', () => {
+    expect(externalSpotsViolations(event, 5, now)).toEqual([
+      'MAX_BELOW_OCCUPIED',
+    ]);
+  });
+
+  it('allows a draft too', () => {
+    expect(
+      externalSpotsViolations({ ...event, status: 'DRAFT' }, 1, now),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ['started', { startAt: now }],
+    ['cancelled', { status: 'CANCELLED' as const }],
+    ['finished', { status: 'FINISHED' as const }],
+  ])('refuses an event that has %s', (_, change) => {
+    expect(externalSpotsViolations({ ...event, ...change }, 1, now)).toEqual([
+      'EVENT_NOT_CHANGEABLE',
+    ]);
+  });
 });

@@ -171,7 +171,7 @@ export function ProfilePicturePicker({
                   aria-pressed={isSelected}
                   onClick={() => choose({ kind: "avatar", avatar })}
                   className={cn(
-                    "flex w-full flex-col items-center gap-1 rounded-lg border p-2 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                    "flex w-full flex-col items-center gap-1 rounded-lg border p-2 outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
                     isSelected
                       ? "border-ring bg-accent text-accent-foreground"
                       : "border-input bg-card text-foreground hover:bg-accent",

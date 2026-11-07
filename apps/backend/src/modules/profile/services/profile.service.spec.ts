@@ -10,7 +10,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ProfileService } from './profile.service';
 
-const user = new Identity('u1', 'jana@example.com', 'Jana', 'user');
+const user = new Identity('u1', 'jana@example.com', 'Jana', 'user', true);
 
 const aRow = (overrides: Partial<ProfileRow> = {}): ProfileRow => ({
   name: 'Jana',
@@ -19,7 +19,7 @@ const aRow = (overrides: Partial<ProfileRow> = {}): ProfileRow => ({
   image: null,
   profileCover: null,
   gender: 'FEMALE',
-  birthDate: new Date('1990-05-17T00:00:00Z'),
+  birthYear: 1990,
   ...overrides,
 });
 
@@ -61,7 +61,7 @@ describe('ProfileService', () => {
       name: 'Jana',
       bio: 'Hraju rok',
       gender: 'FEMALE',
-      birthDate: '1990-05-17',
+      birthYear: 1990,
       interests: [],
       address: null,
     });
@@ -126,27 +126,23 @@ describe('ProfileService', () => {
   describe('updatePrivate', () => {
     const now = new Date('2026-11-03T10:00:00Z');
 
-    it('corrects the gender and the birth date', async () => {
+    it('corrects the gender and the year of birth', async () => {
       const { service, repository } = setup();
       await service.updatePrivate(
         user,
-        { gender: 'MALE', birthDate: '1985-01-02' },
+        { gender: 'MALE', birthYear: 1985 },
         now,
       );
       expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
         gender: 'MALE',
-        birthDate: new Date('1985-01-02T00:00:00Z'),
+        birthYear: 1985,
       });
     });
 
     it('refuses someone under 18', async () => {
       const { service, repository } = setup();
       await expect(
-        service.updatePrivate(
-          user,
-          { gender: 'MALE', birthDate: '2015-01-02' },
-          now,
-        ),
+        service.updatePrivate(user, { gender: 'MALE', birthYear: 2009 }, now),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(repository.updatePrivate).not.toHaveBeenCalled();
     });
@@ -181,6 +177,40 @@ describe('ProfileService', () => {
         address,
         travelRadiusKm: 25,
       });
+    });
+  });
+
+  describe('getPublicProfile', () => {
+    const publicRow = {
+      id: 'u2',
+      name: 'Petr',
+      createdAt: new Date('2026-09-02T10:00:00Z'),
+      bio: 'Běhám',
+      image: null,
+      profileCover: null,
+    };
+
+    it('carries neither e-mail, gender, birth year nor address', async () => {
+      const { service, repository, onboardingService } = setup();
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      const profile = await service.getPublicProfile('u2');
+      expect(Object.keys(profile).sort()).toEqual([
+        'bio',
+        'cover',
+        'id',
+        'image',
+        'interests',
+        'name',
+      ]);
+    });
+
+    it('answers not found for a user that does not exist', async () => {
+      const { service, repository } = setup();
+      repository.getPublicRow.mockResolvedValue(null);
+      await expect(service.getPublicProfile('nobody')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

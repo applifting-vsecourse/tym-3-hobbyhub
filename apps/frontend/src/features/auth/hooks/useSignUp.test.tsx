@@ -20,17 +20,18 @@ const input: SignUpInput = {
   email: user.email,
   password: "heslo123",
   gender: "FEMALE",
-  birthDate: "1995-04-12",
+  birthYear: 1995,
+  adulthoodConfirmed: true,
   termsAccepted: true,
 }
 
-const signUp = async (queryClient: QueryClient) => {
+const signUp = async (queryClient: QueryClient, from?: string) => {
   const { result } = renderHook(() => useSignUp(), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     ),
   })
-  await result.current.mutateAsync(input)
+  await result.current.mutateAsync({ ...input, from })
 }
 
 describe("useSignUp", () => {
@@ -38,12 +39,36 @@ describe("useSignUp", () => {
     signUpEmail.mockResolvedValue({ data: {}, error: null })
   })
 
-  it("sends the verification link to a page of the app", async () => {
+  it("sends the verification link to the confirmation page of the app", async () => {
     getSession.mockResolvedValue({ data: null, error: null })
     await signUp(new QueryClient())
 
     expect(signUpEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ callbackURL: `${window.location.origin}/events` }),
+      expect.objectContaining({ callbackURL: `${window.location.origin}/verify-email` }),
+    )
+  })
+
+  it("lets the confirmation lead back to the page the visitor came from", async () => {
+    getSession.mockResolvedValue({ data: null, error: null })
+    await signUp(new QueryClient(), encodeURIComponent("/events/e1"))
+
+    expect(signUpEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackURL: `${window.location.origin}/verify-email?next=${encodeURIComponent("/events/e1")}`,
+      }),
+    )
+    // `from` is the page's business, not the sign-up API's.
+    expect(signUpEmail.mock.calls[0]?.[0]).not.toHaveProperty("from")
+  })
+
+  it("does not lead anywhere outside the app", async () => {
+    getSession.mockResolvedValue({ data: null, error: null })
+    await signUp(new QueryClient(), encodeURIComponent("//evil.example"))
+
+    expect(signUpEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackURL: `${window.location.origin}/verify-email?next=${encodeURIComponent("/")}`,
+      }),
     )
   })
 

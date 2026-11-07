@@ -3,6 +3,7 @@ export const ROUTES = {
   quacks: "/quacks",
   login: "/login",
   signup: "/signup",
+  verifyEmail: "/verify-email",
   designSystem: "/design-system",
   terms: "/terms",
   groups: "/groups",

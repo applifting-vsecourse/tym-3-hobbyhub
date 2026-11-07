@@ -14,10 +14,11 @@ import { DiscoverGroups } from "@/features/group/components/DiscoverGroups"
 import type { ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupTabs } from "@/features/group/components/GroupTabs"
 import { MyGroups } from "@/features/group/components/MyGroups"
+import { MyMembershipRequests } from "@/features/group/components/MyMembershipRequests"
 
 const groupsSearchSchema = z.object({
   // "Moje skupiny" is the default and has no param; anything unknown falls back to it.
-  tab: z.enum(["discover"]).optional().catch(undefined),
+  tab: z.enum(["discover", "requests"]).optional().catch(undefined),
 })
 
 export const Route = createFileRoute("/groups/")({
@@ -58,6 +59,8 @@ function GroupsPage() {
                 viewerId={user.id}
                 activityLabel={activityLabel}
               />
+            ) : tab === "requests" ? (
+              <MyMembershipRequests userId={user.id} />
             ) : (
               <MyGroups activityLabel={activityLabel} />
             )}

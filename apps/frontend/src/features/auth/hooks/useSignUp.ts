@@ -5,31 +5,40 @@ import { authKeys } from "@/lib/auth-keys"
 
 import { authClient } from "@/features/auth/lib/auth-client"
 import { AuthError } from "@/features/auth/lib/authErrors"
+import { redirectTarget } from "@/features/auth/lib/redirect"
+import { verifyEmailCallbackUrl } from "@/features/auth/lib/verifyEmailUrl"
 
 export type SignUpInput = {
   name: string
   email: string
   password: string
   gender: "MALE" | "FEMALE"
-  /** "YYYY-MM-DD" */
-  birthDate: string
+  /** Only the year, never the full date (#174). */
+  birthYear: number
+  /** The user confirmed being 18 or older. */
+  adulthoodConfirmed: boolean
   termsAccepted: boolean
+}
+
+type SignUpVariables = SignUpInput & {
+  /** The page the visitor wanted, as the sign-up page got it in `from`. */
+  from?: string
 }
 
 export function useSignUp() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (input: SignUpInput) => {
+    mutationFn: async ({ from, ...input }: SignUpVariables) => {
       // BetterAuth handles the whole flow (and signs the user in by default).
-      // Gender, birth date and consent are read by the backend's registration
+      // Gender, year of birth and the consents are read by the backend's registration
       // hook; the typed sign-up body does not list them, hence the variable.
       const body = {
         ...input,
         // Where the link in the verification e-mail ends. Without it BetterAuth
-        // redirects to `/` on the backend, which has no page. A public page,
-        // because the link is often opened where the user is not signed in.
-        callbackURL: `${window.location.origin}${ROUTES.events}`,
+        // redirects to `/` on the backend, which has no page. It leads back
+        // to the page the visitor wanted, if there was one (F-03.2).
+        callbackURL: verifyEmailCallbackUrl(from ? redirectTarget(from, ROUTES.home) : undefined),
       }
       const { error } = await authClient.signUp.email(body)
       if (error) throw new AuthError(error.code, error.message, error.status)

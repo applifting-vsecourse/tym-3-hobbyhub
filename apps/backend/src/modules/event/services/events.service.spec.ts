@@ -3,9 +3,13 @@ import { CancellationReasonsService } from '@/modules/cancellation-reason/servic
 import {
   CreateEventData,
   Event,
+  EventDetail,
   EventFacts,
+  EventSeatFacts,
+  GROUP_EVENTS_PAGE_SIZE,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
+import { GroupsService } from '@/modules/group/services/groups.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
@@ -35,6 +39,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   maxParticipants: 12,
   contributionAmount: 80,
   contributionNote: null,
+  contact: null,
+  externalChatUrl: null,
   location: {
     street: 'Chabařovická 4',
     city: 'Praha 8',
@@ -89,6 +95,7 @@ describe('EventsService', () => {
   ): {
     repository: MockProxy<EventRepository>;
     notifications: MockProxy<NotificationsService>;
+    groups: MockProxy<GroupsService>;
     service: EventsService;
   } => {
     const repository = mock<EventRepository>();
@@ -101,17 +108,38 @@ describe('EventsService', () => {
     const reasons = mock<CancellationReasonsService>();
     reasons.isAvailable.mockResolvedValue(isReasonAvailable);
     const notifications = mock<NotificationsService>();
+    const groups = mock<GroupsService>();
+    groups.getMemberRole.mockResolvedValue(null);
     return {
       repository,
       notifications,
+      groups,
       service: new EventsService(
         repository,
         activities,
         reasons,
         notifications,
+        groups,
       ),
     };
   };
+
+  it('refuses to publish for an unverified e-mail and saves nothing', async () => {
+    const { repository, service } = setup();
+
+    const error = await service
+      .createEvent({ id: 'u1', emailVerified: false } as Identity, input())
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect(
+      (error as BadRequestException).getResponse() as { violations: unknown },
+    ).toMatchObject({ violations: ['EMAIL_NOT_VERIFIED'] });
+    expect(repository.createPublishedEvent).not.toHaveBeenCalled();
+  });
 
   it('publishes the event with the signed-in user as organizer', async () => {
     const { repository, service } = setup();
@@ -120,7 +148,7 @@ describe('EventsService', () => {
     const data = input();
 
     await expect(
-      service.createEvent({ id: 'u1' } as Identity, data),
+      service.createEvent({ id: 'u1', emailVerified: true } as Identity, data),
     ).resolves.toEqual(created);
     expect(repository.createPublishedEvent).toHaveBeenCalledWith({
       ...data,
@@ -146,7 +174,7 @@ describe('EventsService', () => {
     const { repository, service } = setup();
 
     await expect(
-      service.createEvent({ id: 'u1' } as Identity, {
+      service.createEvent({ id: 'u1', emailVerified: true } as Identity, {
         ...input(),
         ...override,
       }),
@@ -158,7 +186,10 @@ describe('EventsService', () => {
     const { repository, service } = setup(false);
 
     await expect(
-      service.createEvent({ id: 'u1' } as Identity, input()),
+      service.createEvent(
+        { id: 'u1', emailVerified: true } as Identity,
+        input(),
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(repository.createPublishedEvent).not.toHaveBeenCalled();
   });
@@ -184,6 +215,18 @@ describe('EventsService', () => {
     );
   });
 
+  it('refuses a date range that ends before it starts', async () => {
+    const { repository, service } = setup();
+
+    await expect(
+      service.getUpcomingPublicEvents(
+        { limit: 20, offset: 0 },
+        { activityIds: [], dateFrom: '2026-11-16', dateTo: '2026-11-15' },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.getUpcomingPublicEvents).not.toHaveBeenCalled();
+  });
+
   it('reports a missing event as not found', async () => {
     const { repository, service } = setup();
     repository.getEventById.mockResolvedValue(null);
@@ -193,13 +236,157 @@ describe('EventsService', () => {
     );
   });
 
-  it('reports a public event that does not exist, or is not public, as not found', async () => {
+  it('reports an event that does not exist, or cannot be shown, as not found', async () => {
     const { repository, service } = setup();
-    repository.getPublicEventById.mockResolvedValue(null);
+    repository.getShowableEventById.mockResolvedValue(null);
 
-    await expect(service.getPublicEvent('nope')).rejects.toBeInstanceOf(
+    await expect(service.getEventDetail('nope')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  describe('a group-only event (F-07.2)', () => {
+    const groupOnly = { visibility: 'GROUP_ONLY' } as EventDetail;
+    const groupFacts: EventFacts = {
+      id: 'e1',
+      status: 'PUBLISHED',
+      visibility: 'GROUP_ONLY',
+      groupId: 'g1',
+      startAt: inAnHour(),
+      endAt: inAnHour(),
+      approvalMode: 'MANUAL',
+      organizerIds: ['organizer'],
+      freeSpots: 3,
+    };
+    const viewer = { id: 'u2' } as Identity;
+
+    it('shows a public event to a visitor without asking the group', async () => {
+      const { repository, groups, service } = setup();
+      const event = { visibility: 'PUBLIC' } as EventDetail;
+      repository.getShowableEventById.mockResolvedValue(event);
+
+      await expect(service.getEventDetail('e1')).resolves.toBe(event);
+      expect(groups.getMemberRole).not.toHaveBeenCalled();
+    });
+
+    it('shows it to a member of the group', async () => {
+      const { repository, groups, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+
+      await expect(service.getEventDetail('e1', viewer)).resolves.toBe(
+        groupOnly,
+      );
+      expect(groups.getMemberRole).toHaveBeenCalledWith('g1', 'u2');
+    });
+
+    it('shows it to someone who left the group but holds a seat', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(true);
+
+      await expect(service.getEventDetail('e1', viewer)).resolves.toBe(
+        groupOnly,
+      );
+      expect(repository.isInvolvedIn).toHaveBeenCalledWith('e1', 'u2');
+    });
+
+    it('shows it to its organizer', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+
+      await expect(
+        service.getEventDetail('e1', { id: 'organizer' } as Identity),
+      ).resolves.toBe(groupOnly);
+    });
+
+    it.each([
+      ['a visitor', undefined],
+      ['someone outside the group', viewer],
+    ])('hides it from %s as not found', async (_name, who) => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+
+      await expect(service.getEventDetail('e1', who)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('gives its seat facts to a member only', async () => {
+      const { repository, groups, service } = setup();
+      const seatFacts = { ...groupFacts, hasSeat: false };
+      repository.getShowableEventSeatFacts.mockResolvedValue(seatFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+
+      await expect(
+        service.getVisibleEventSeatFacts('e1', 'u2'),
+      ).resolves.toBeNull();
+
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+      await expect(service.getVisibleEventSeatFacts('e1', 'u2')).resolves.toBe(
+        seatFacts,
+      );
+    });
+  });
+
+  describe('getGroupEvents (F-07.2)', () => {
+    const page = { items: [], total: 0 };
+    const now = new Date('2030-01-01T12:00:00Z');
+
+    it('gives a member the group-only events too', async () => {
+      const { repository, groups, service } = setup();
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+      repository.getGroupEvents.mockResolvedValue(page);
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 10, now),
+      ).resolves.toBe(page);
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        { period: 'past', visibilities: ['PUBLIC', 'GROUP_ONLY'], now },
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
+      );
+      expect(groups.getPublicGroup).not.toHaveBeenCalled();
+    });
+
+    it('gives anyone else the upcoming public events of a public group', async () => {
+      const { repository, groups, service } = setup();
+      repository.getGroupEvents.mockResolvedValue(page);
+
+      await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
+
+      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1');
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        { period: 'upcoming', visibilities: ['PUBLIC'], now },
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
+      );
+    });
+
+    it('answers not found to a non-member asking for the past', async () => {
+      const { repository, service } = setup();
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
+    });
+
+    it('answers not found for a group without a public page', async () => {
+      const { repository, groups, service } = setup();
+      groups.getPublicGroup.mockRejectedValue(new NotFoundException());
+
+      await expect(
+        service.getGroupEvents('g1', undefined, 'upcoming', 0, now),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateEvent', () => {
@@ -523,6 +710,8 @@ describe('EventsService', () => {
     const facts: EventFacts = {
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: inAnHour(),
       endAt: new Date(inAnHour().getTime() + 3600 * 1000),
       approvalMode: 'MANUAL',
@@ -560,6 +749,227 @@ describe('EventsService', () => {
       await expect(
         service.getOrganizedEvent('e1', { id: 'organizer' } as Identity),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('getParticipantInfo', () => {
+    const facts = (
+      overrides: Partial<EventSeatFacts> = {},
+    ): EventSeatFacts => ({
+      id: 'e1',
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
+      startAt: inAnHour(),
+      endAt: inAnHour(),
+      approvalMode: 'MANUAL',
+      organizerIds: ['u1'],
+      freeSpots: 3,
+      hasSeat: false,
+      ...overrides,
+    });
+    const info = {
+      venueType: 'PUBLIC_VENUE' as const,
+      location: null,
+      organizerName: 'Jana',
+      externalChatUrl: 'https://chat.whatsapp.com/abc',
+      contact: '+420 777 123 456',
+    };
+
+    it('gives the contacts to a person holding a seat', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventSeatFacts.mockResolvedValue(
+        facts({ hasSeat: true }),
+      );
+      repository.getParticipantInfo.mockResolvedValue(info);
+
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).resolves.toBe(info);
+    });
+
+    it('gives them to the organizer without a seat', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventSeatFacts.mockResolvedValue(facts());
+      repository.getParticipantInfo.mockResolvedValue(info);
+
+      await expect(
+        service.getParticipantInfo({ id: 'u1' } as Identity, 'e1'),
+      ).resolves.toBe(info);
+    });
+
+    it('refuses anyone else and never reads the contacts', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventSeatFacts.mockResolvedValue(facts());
+
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.getParticipantInfo).not.toHaveBeenCalled();
+    });
+
+    it('keeps the contacts of a cancelled or finished event to itself', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventSeatFacts.mockResolvedValue(
+        facts({ hasSeat: true, status: 'CANCELLED' }),
+      );
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+
+      repository.getShowableEventSeatFacts.mockResolvedValue(
+        facts({ hasSeat: true, endAt: new Date(Date.now() - 1000) }),
+      );
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.getParticipantInfo).not.toHaveBeenCalled();
+    });
+
+    it('says not found for an event that is not public', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventSeatFacts.mockResolvedValue(null);
+
+      await expect(
+        service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('getManagedEvent', () => {
+    const facts = (organizerIds: string[]): EventFacts => ({
+      id: 'e1',
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
+      startAt: inAnHour(),
+      endAt: new Date(inAnHour().getTime() + 3600 * 1000),
+      approvalMode: 'MANUAL',
+      organizerIds,
+      freeSpots: 8,
+    });
+
+    it('gives a co-organizer the whole event', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts(['u1', 'co']));
+      repository.getEventById.mockResolvedValue(anEvent());
+
+      await expect(
+        service.getManagedEvent({ id: 'co' } as Identity, 'e1'),
+      ).resolves.toEqual(anEvent());
+    });
+
+    it('answers 404 to someone who does not organize it', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts(['u1']));
+
+      await expect(
+        service.getManagedEvent({ id: 'stranger' } as Identity, 'e1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getEventById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateExternalOccupiedSpots', () => {
+    const organizer = { id: 'u1' } as Identity;
+    const facts: EventFacts = {
+      id: 'e1',
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
+      startAt: inAnHour(),
+      endAt: new Date(inAnHour().getTime() + 3600 * 1000),
+      approvalMode: 'MANUAL',
+      organizerIds: ['u1'],
+      freeSpots: 2,
+    };
+    const violationsOf = async (
+      promise: Promise<unknown>,
+    ): Promise<string[]> => {
+      const error = await promise.catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(BadRequestException);
+      return (
+        (error as BadRequestException).getResponse() as {
+          violations: string[];
+        }
+      ).violations;
+    };
+
+    it('saves the new number and notifies nobody', async () => {
+      const { repository, notifications, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ approvedCount: 6, externalOccupiedSpots: 4 }),
+      );
+      const saved = anEvent({ approvedCount: 6, externalOccupiedSpots: 6 });
+      repository.updateExternalOccupiedSpots.mockResolvedValue({
+        ok: true,
+        event: saved,
+      });
+
+      await expect(
+        service.updateExternalOccupiedSpots(organizer, 'e1', 6),
+      ).resolves.toBe(saved);
+      expect(repository.updateExternalOccupiedSpots).toHaveBeenCalledWith(
+        'e1',
+        6,
+        expect.any(Date),
+      );
+      expect(notifications.notifyEventChanged).not.toHaveBeenCalled();
+    });
+
+    it('refuses more than the maximum leaves and saves nothing', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ approvedCount: 6, externalOccupiedSpots: 4 }),
+      );
+
+      await expect(
+        violationsOf(service.updateExternalOccupiedSpots(organizer, 'e1', 7)),
+      ).resolves.toEqual(['MAX_BELOW_OCCUPIED']);
+      expect(repository.updateExternalOccupiedSpots).not.toHaveBeenCalled();
+    });
+
+    it('refuses an event that has started', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ startAt: new Date(Date.now() - 1000) }),
+      );
+
+      await expect(
+        violationsOf(service.updateExternalOccupiedSpots(organizer, 'e1', 1)),
+      ).resolves.toEqual(['EVENT_NOT_CHANGEABLE']);
+    });
+
+    // A seat approved between the read and the write.
+    it('reports what the guarded write refused', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(anEvent());
+      repository.updateExternalOccupiedSpots.mockResolvedValue({
+        ok: false,
+        violation: 'MAX_BELOW_OCCUPIED',
+      });
+
+      await expect(
+        violationsOf(service.updateExternalOccupiedSpots(organizer, 'e1', 8)),
+      ).resolves.toEqual(['MAX_BELOW_OCCUPIED']);
+    });
+
+    it('answers 404 to someone who does not organize it', async () => {
+      const { repository, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+
+      await expect(
+        service.updateExternalOccupiedSpots(
+          { id: 'stranger' } as Identity,
+          'e1',
+          1,
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.updateExternalOccupiedSpots).not.toHaveBeenCalled();
     });
   });
 });

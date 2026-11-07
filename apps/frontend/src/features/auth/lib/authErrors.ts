@@ -37,12 +37,14 @@ export function authErrorMessage(
     // F-03.1 registration rules, checked again by the backend.
     case "UNDERAGE":
       return t("auth.errors.underage")
-    case "INVALID_BIRTH_DATE":
-      return t("auth.errors.invalidBirthDate")
+    case "INVALID_BIRTH_YEAR":
+      return t("auth.errors.invalidBirthYear")
     case "INVALID_GENDER":
       return t("auth.errors.invalidGender")
     case "TERMS_NOT_ACCEPTED":
       return t("auth.errors.termsNotAccepted")
+    case "ADULTHOOD_NOT_CONFIRMED":
+      return t("auth.errors.adulthoodNotConfirmed")
     default:
       return t(`auth.errors.${fallback}`)
   }

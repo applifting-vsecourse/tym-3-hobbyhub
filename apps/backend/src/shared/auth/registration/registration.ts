@@ -1,60 +1,79 @@
-// F-03.1 registration rules on top of BetterAuth's email sign-up: gender, full
-// birth date (18+, F-10.3) and consent to the terms. The frontend checks the
-// same, but only the server can be trusted.
+// F-03.1 registration rules on top of BetterAuth's email sign-up: gender, year
+// of birth (18+, F-10.3), confirmation of adulthood and consent to the terms.
+// Only the year is collected, never the full date (#174, ADR-0016). The
+// frontend checks the same, but only the server can be trusted.
 
 /** Version of the terms a new user agrees to. Bump it when the text changes. */
 export const TERMS_VERSION = '2026-10';
 
 export const MIN_AGE = 18;
+export const OLDEST_BIRTH_YEAR = 1900;
 
 export const GENDERS = ['MALE', 'FEMALE'] as const;
 export type Gender = (typeof GENDERS)[number];
 
 // Codes the frontend translates (features/auth/lib/authErrors.ts).
 export type RegistrationErrorCode =
-  'INVALID_GENDER' | 'INVALID_BIRTH_DATE' | 'UNDERAGE' | 'TERMS_NOT_ACCEPTED';
+  | 'INVALID_GENDER'
+  | 'INVALID_BIRTH_YEAR'
+  | 'UNDERAGE'
+  | 'TERMS_NOT_ACCEPTED'
+  | 'ADULTHOOD_NOT_CONFIRMED';
 
-const BIRTH_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
-const OLDEST_BIRTH_YEAR = 1900;
+// The year is the calendar year in Prague, where the app runs, so the server
+// does not move to the new year an hour after the people using it.
+const APP_TIME_ZONE = 'Europe/Prague';
 
-/**
- * Parses a "YYYY-MM-DD" calendar date into midnight UTC. A plain date and not
- * an ISO timestamp, so the user's time zone cannot shift it by a day.
- * A Date (server-side calls such as the seed) is read by its UTC day.
- * Returns null for anything that is not a real date.
- */
-export function parseBirthDate(value: unknown): Date | null {
-  const text =
-    value instanceof Date && !Number.isNaN(value.getTime())
-      ? value.toISOString().slice(0, 10)
-      : value;
-  if (typeof text !== 'string') return null;
-  const match = BIRTH_DATE_PATTERN.exec(text);
-  if (!match) return null;
-
-  const [year, month, day] = match.slice(1).map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  // Date.UTC rolls 2026-02-30 over to March; a real date survives the trip.
-  const isRealDate =
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day;
-
-  return isRealDate ? date : null;
+/** The calendar year of `at` in Prague. */
+export function yearIn(at: Date): number {
+  return Number(
+    new Intl.DateTimeFormat('en', {
+      timeZone: APP_TIME_ZONE,
+      year: 'numeric',
+    }).format(at),
+  );
 }
 
-/** Whole years between the birth date and `today`; the birthday itself counts. */
-export function ageOn(birthDate: Date, today: Date): number {
-  const age = today.getUTCFullYear() - birthDate.getUTCFullYear();
-  const hadBirthday =
-    today.getUTCMonth() > birthDate.getUTCMonth() ||
-    (today.getUTCMonth() === birthDate.getUTCMonth() &&
-      today.getUTCDate() >= birthDate.getUTCDate());
-  return hadBirthday ? age : age - 1;
+/**
+ * Reads a year of birth: a whole number, as JSON sends it. Returns null for
+ * anything else (a string, a fraction, nothing).
+ */
+export function parseBirthYear(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) ? value : null;
+}
+
+/**
+ * The age someone born in `birthYear` reaches during `year`. Without the day
+ * it is exact only after the birthday; before it the person is a year younger.
+ */
+export function ageInYear(birthYear: number, year: number): number {
+  return year - birthYear;
+}
+
+/**
+ * The F-03.1 rule for the year of birth. A year 1900 to this year; and the
+ * person must turn 18 this year at the latest. Someone who turns 18 later this
+ * year passes too: without the day nobody can tell, and the confirmation of
+ * adulthood at sign-up covers that edge (ADR-0016).
+ */
+export function birthYearViolation(
+  value: unknown,
+  today: Date,
+): 'INVALID_BIRTH_YEAR' | 'UNDERAGE' | null {
+  const birthYear = parseBirthYear(value);
+  const thisYear = yearIn(today);
+  if (
+    birthYear === null ||
+    birthYear < OLDEST_BIRTH_YEAR ||
+    birthYear > thisYear
+  ) {
+    return 'INVALID_BIRTH_YEAR';
+  }
+  return ageInYear(birthYear, thisYear) < MIN_AGE ? 'UNDERAGE' : null;
 }
 
 export type RegistrationResult =
-  | { ok: true; gender: Gender; birthDate: Date }
+  | { ok: true; gender: Gender; birthYear: number }
   | { ok: false; code: RegistrationErrorCode };
 
 /** Checks the F-03.1 fields of a sign-up body. */
@@ -62,27 +81,42 @@ export function validateRegistration(
   body: Record<string, unknown>,
   today: Date,
 ): RegistrationResult {
-  const { gender, birthDate: rawBirthDate, termsAccepted } = body;
+  const { gender, birthYear, termsAccepted, adulthoodConfirmed } = body;
 
   if (!GENDERS.includes(gender as Gender)) {
     return { ok: false, code: 'INVALID_GENDER' };
   }
 
-  const birthDate = parseBirthDate(rawBirthDate);
-  if (
-    !birthDate ||
-    birthDate > today ||
-    birthDate.getUTCFullYear() < OLDEST_BIRTH_YEAR
-  ) {
-    return { ok: false, code: 'INVALID_BIRTH_DATE' };
-  }
-  if (ageOn(birthDate, today) < MIN_AGE) {
-    return { ok: false, code: 'UNDERAGE' };
-  }
+  const birthYearCode = birthYearViolation(birthYear, today);
+  if (birthYearCode) return { ok: false, code: birthYearCode };
 
   if (termsAccepted !== true) {
     return { ok: false, code: 'TERMS_NOT_ACCEPTED' };
   }
+  if (adulthoodConfirmed !== true) {
+    return { ok: false, code: 'ADULTHOOD_NOT_CONFIRMED' };
+  }
 
-  return { ok: true, gender: gender as Gender, birthDate };
+  return {
+    ok: true,
+    gender: gender as Gender,
+    birthYear: birthYear as number,
+  };
+}
+
+/**
+ * What an account created by sign-up records about the consents: which terms
+ * the user agreed to, and when they confirmed being 18 or older (#174).
+ * Only called once `validateRegistration` has accepted both.
+ */
+export function consentsAtSignUp(now: Date): {
+  termsAcceptedAt: Date;
+  termsVersion: string;
+  adulthoodConfirmedAt: Date;
+} {
+  return {
+    termsAcceptedAt: now,
+    termsVersion: TERMS_VERSION,
+    adulthoodConfirmedAt: now,
+  };
 }

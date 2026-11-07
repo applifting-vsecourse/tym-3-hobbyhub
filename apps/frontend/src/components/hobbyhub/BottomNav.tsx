@@ -9,18 +9,15 @@ import MyEventsIcon from "@/assets/ui-icons/nav-my-events.svg?react"
 import ProfileIcon from "@/assets/ui-icons/nav-profile.svg?react"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { NavLink } from "@/components/NavLink"
-import { NAV_TARGETS, type NavPlace, type NavSection } from "@/lib/navigation"
+import { NAV_TARGETS, navPlacesFor, type NavPlace, type NavSection } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
-const SECTIONS: {
-  key: NavPlace
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-}[] = [
-  { key: "discover", Icon: DiscoverIcon },
-  { key: "my-events", Icon: MyEventsIcon },
-  { key: "groups", Icon: GroupsIcon },
-  { key: "profile", Icon: ProfileIcon },
-]
+const ICONS: Record<NavPlace, ComponentType<SVGProps<SVGSVGElement>>> = {
+  discover: DiscoverIcon,
+  "my-events": MyEventsIcon,
+  groups: GroupsIcon,
+  profile: ProfileIcon,
+}
 
 const NAV_LABELS = {
   discover: "hobbyhub.nav.discover",
@@ -32,28 +29,30 @@ const NAV_LABELS = {
 type BottomNavProps = {
   /** The highlighted section; `null` on pages that belong to none (the landing page). */
   readonly active: NavSection | null
+  /** A visitor gets Objevovat, Přidat and Skupiny only (#151). */
+  readonly isSignedIn: boolean
   readonly hasNewRequests?: boolean
   readonly className?: string
 }
 
 type NavItemProps = {
-  readonly section: (typeof SECTIONS)[number]
+  readonly place: NavPlace
   readonly isActive: boolean
   readonly hasDot: boolean
 }
 
-function NavItem({ section, isActive, hasDot }: NavItemProps) {
+function NavItem({ place, isActive, hasDot }: NavItemProps) {
   const { t } = useTranslation()
-  const { key, Icon } = section
-  const label = t(NAV_LABELS[key])
+  const Icon = ICONS[place]
+  const label = t(NAV_LABELS[place])
 
   return (
     <NavLink
-      to={NAV_TARGETS[key]}
+      to={NAV_TARGETS[place]}
       isActive={isActive}
       aria-label={hasDot ? t("hobbyhub.nav.withNewRequests", { label }) : undefined}
       className={cn(
-        "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "relative flex flex-1 flex-col items-center gap-0.5 rounded-md py-2 typo-caption outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
         isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -72,18 +71,27 @@ function NavItem({ section, isActive, hasDot }: NavItemProps) {
 }
 
 /**
- * Spodní navigace (vzhled Soupiska) — four sections and a raised logo button
- * "Přidat" in the middle that starts a new event. Přihlášky and Pořádám are
- * merged into Moje akce. Positioning (sticky to the bottom) is the shell's job.
+ * Spodní navigace (vzhled Soupiska) — the sections of the viewer around a
+ * raised logo button "Přidat" in the middle that starts a new event: four for
+ * a signed-in user, two for a visitor. Přihlášky and Pořádám are merged into
+ * Moje akce. Positioning (sticky to the bottom) is the shell's job.
  */
-export function BottomNav({ active, hasNewRequests = false, className }: BottomNavProps) {
+export function BottomNav({
+  active,
+  isSignedIn,
+  hasNewRequests = false,
+  className,
+}: BottomNavProps) {
   const { t } = useTranslation()
-  const renderItem = (section: (typeof SECTIONS)[number]) => (
+  const places = navPlacesFor(isSignedIn)
+  // "Přidat" splits the places evenly: two and two, or one and one.
+  const middle = Math.ceil(places.length / 2)
+  const renderItem = (place: NavPlace) => (
     <NavItem
-      key={section.key}
-      section={section}
-      isActive={active === section.key}
-      hasDot={hasNewRequests && section.key === "my-events"}
+      key={place}
+      place={place}
+      isActive={active === place}
+      hasDot={hasNewRequests && place === "my-events"}
     />
   )
 
@@ -95,7 +103,7 @@ export function BottomNav({ active, hasNewRequests = false, className }: BottomN
       className={cn("pointer-events-none w-full pt-9", className)}
     >
       <div className="pointer-events-auto flex items-start border-t border-border bg-card pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        {SECTIONS.slice(0, 2).map(renderItem)}
+        {places.slice(0, middle).map(renderItem)}
         <Link
           to={ROUTES.newEvent}
           aria-current={active === "add" ? "page" : undefined}
@@ -108,7 +116,7 @@ export function BottomNav({ active, hasNewRequests = false, className }: BottomN
         >
           <span
             aria-hidden
-            className="absolute -top-8.75 flex size-16 items-center justify-center rounded-[22px] border-5 border-background bg-primary group-focus-visible:ring-[3px] group-focus-visible:ring-ring/50"
+            className="absolute -top-8.75 flex size-16 items-center justify-center rounded-[22px] border-5 border-background bg-primary group-focus-visible:ring-[3px] group-focus-visible:ring-ring"
           >
             <Logo
               variant="mark"
@@ -118,7 +126,7 @@ export function BottomNav({ active, hasNewRequests = false, className }: BottomN
           <span className="size-6" />
           {t("hobbyhub.nav.add")}
         </Link>
-        {SECTIONS.slice(2).map(renderItem)}
+        {places.slice(middle).map(renderItem)}
       </div>
     </nav>
   )

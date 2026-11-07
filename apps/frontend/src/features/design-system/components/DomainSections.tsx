@@ -21,6 +21,7 @@ import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Seat } from "@/components/hobbyhub/Seat"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
+import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { Button } from "@/components/ui/button"
 
@@ -63,6 +64,7 @@ function BottomNavExample() {
     <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border bg-background">
       <BottomNav
         active="discover"
+        isSignedIn
         hasNewRequests
       />
     </div>
@@ -199,6 +201,7 @@ export function DomainSections() {
               taken={7}
               min={10}
               photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
+              badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
               time="20:30"
@@ -321,6 +324,14 @@ export function DomainSections() {
             onReject={notify("Žádost zamítnuta")}
           />
         </Example>
+        <Example label="Vyřízená žádost (přehled účastníků)">
+          <JoinRequestCard
+            className="max-w-sm"
+            name="Petra"
+            bio="Běhám a o víkendech hraju volejbal."
+            note="Místo má od 3. 11. 2026"
+          />
+        </Example>
         <Example label="Zpráva do chatu (Sdílení do chatu)">
           <ChatShare
             className="max-w-sm"
@@ -384,7 +395,7 @@ export function DomainSections() {
       <ShowcaseSection
         id="navigace"
         title="Spodní navigace"
-        description="Dolní lišta má vystouplé tlačítko s logem „Přidat“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti."
+        description="Dolní lišta má vystouplé tlačítko s logem „Přidat“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti. Návštěvník má jen Objevovat, Přidat a Skupiny."
       >
         <BottomNavExample />
       </ShowcaseSection>

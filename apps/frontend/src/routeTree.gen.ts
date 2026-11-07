@@ -15,6 +15,7 @@ import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as ProtectedPagesMyEventsRouteImport } from './routes/_ProtectedPages/my-events'
 import { Route as ProtectedPagesNotificationsRouteImport } from './routes/_ProtectedPages/notifications'
 import { Route as ProtectedPagesOnboardingRouteImport } from './routes/_ProtectedPages/onboarding'
@@ -26,6 +27,7 @@ import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as ProtectedPagesEventsNewRouteImport } from './routes/_ProtectedPages/events/new'
 import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_ProtectedPages/groups/new'
 import { Route as ProtectedPagesProfileIndexRouteImport } from './routes/_ProtectedPages/profile/index'
+import { Route as ProtectedPagesProfileUserIdRouteImport } from './routes/_ProtectedPages/profile/$userId'
 import { Route as ProtectedPagesProfileEditRouteImport } from './routes/_ProtectedPages/profile/edit'
 import { Route as ProtectedPagesEventsEventIdEditRouteImport } from './routes/_ProtectedPages/events/$eventId.edit'
 import { Route as ProtectedPagesEventsEventIdParticipantsRouteImport } from './routes/_ProtectedPages/events/$eventId/participants'
@@ -58,6 +60,11 @@ const SignupRoute = SignupRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedPagesMyEventsRoute = ProtectedPagesMyEventsRouteImport.update({
@@ -118,6 +125,12 @@ const ProtectedPagesProfileIndexRoute =
     path: '/profile/',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const ProtectedPagesProfileUserIdRoute =
+  ProtectedPagesProfileUserIdRouteImport.update({
+    id: '/profile/$userId',
+    path: '/profile/$userId',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 const ProtectedPagesProfileEditRoute =
   ProtectedPagesProfileEditRouteImport.update({
     id: '/profile/edit',
@@ -149,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
   '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
@@ -159,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/groups/': typeof GroupsIndexRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/profile/': typeof ProtectedPagesProfileIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -171,6 +186,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
   '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
@@ -181,6 +197,7 @@ export interface FileRoutesByTo {
   '/groups': typeof GroupsIndexRoute
   '/events/new': typeof ProtectedPagesEventsNewRoute
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/profile': typeof ProtectedPagesProfileIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -195,6 +212,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_ProtectedPages/my-events': typeof ProtectedPagesMyEventsRoute
   '/_ProtectedPages/notifications': typeof ProtectedPagesNotificationsRoute
   '/_ProtectedPages/onboarding': typeof ProtectedPagesOnboardingRoute
@@ -205,6 +223,7 @@ export interface FileRoutesById {
   '/groups/': typeof GroupsIndexRoute
   '/_ProtectedPages/events/new': typeof ProtectedPagesEventsNewRoute
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
+  '/_ProtectedPages/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/_ProtectedPages/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/_ProtectedPages/profile/': typeof ProtectedPagesProfileIndexRoute
   '/_ProtectedPages/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -219,6 +238,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/terms'
+    | '/verify-email'
     | '/my-events'
     | '/notifications'
     | '/onboarding'
@@ -229,6 +249,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/events/new'
     | '/groups/new'
+    | '/profile/$userId'
     | '/profile/edit'
     | '/profile/'
     | '/events/$eventId/edit'
@@ -241,6 +262,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/terms'
+    | '/verify-email'
     | '/my-events'
     | '/notifications'
     | '/onboarding'
@@ -251,6 +273,7 @@ export interface FileRouteTypes {
     | '/groups'
     | '/events/new'
     | '/groups/new'
+    | '/profile/$userId'
     | '/profile/edit'
     | '/profile'
     | '/events/$eventId/edit'
@@ -264,6 +287,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/terms'
+    | '/verify-email'
     | '/_ProtectedPages/my-events'
     | '/_ProtectedPages/notifications'
     | '/_ProtectedPages/onboarding'
@@ -274,6 +298,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/_ProtectedPages/events/new'
     | '/_ProtectedPages/groups/new'
+    | '/_ProtectedPages/profile/$userId'
     | '/_ProtectedPages/profile/edit'
     | '/_ProtectedPages/profile/'
     | '/_ProtectedPages/events/$eventId/edit'
@@ -288,6 +313,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -336,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_ProtectedPages/my-events': {
@@ -415,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesProfileIndexRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/profile/$userId': {
+      id: '/_ProtectedPages/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof ProtectedPagesProfileUserIdRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/profile/edit': {
       id: '/_ProtectedPages/profile/edit'
       path: '/profile/edit'
@@ -453,6 +493,7 @@ interface ProtectedPagesRouteChildren {
   ProtectedPagesQuacksRoute: typeof ProtectedPagesQuacksRoute
   ProtectedPagesEventsNewRoute: typeof ProtectedPagesEventsNewRoute
   ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
+  ProtectedPagesProfileUserIdRoute: typeof ProtectedPagesProfileUserIdRoute
   ProtectedPagesProfileEditRoute: typeof ProtectedPagesProfileEditRoute
   ProtectedPagesProfileIndexRoute: typeof ProtectedPagesProfileIndexRoute
   ProtectedPagesEventsEventIdEditRoute: typeof ProtectedPagesEventsEventIdEditRoute
@@ -467,6 +508,7 @@ const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesQuacksRoute: ProtectedPagesQuacksRoute,
   ProtectedPagesEventsNewRoute: ProtectedPagesEventsNewRoute,
   ProtectedPagesGroupsNewRoute: ProtectedPagesGroupsNewRoute,
+  ProtectedPagesProfileUserIdRoute: ProtectedPagesProfileUserIdRoute,
   ProtectedPagesProfileEditRoute: ProtectedPagesProfileEditRoute,
   ProtectedPagesProfileIndexRoute: ProtectedPagesProfileIndexRoute,
   ProtectedPagesEventsEventIdEditRoute: ProtectedPagesEventsEventIdEditRoute,
@@ -487,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   GroupsGroupIdRoute: GroupsGroupIdRoute,
   EventsIndexRoute: EventsIndexRoute,

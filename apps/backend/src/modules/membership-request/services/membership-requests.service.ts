@@ -8,6 +8,9 @@ import {
   MembershipRequest,
   MembershipRuleViolation,
   membershipRuleViolations,
+  MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
+  MyMembershipRequestPage,
+  MyMembershipRequestSection,
   PendingMembershipRequest,
 } from '@/modules/membership-request/domain/membership-request';
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
@@ -74,6 +77,20 @@ export class MembershipRequestsService {
       violations: membershipRuleViolations(role, requests),
       applicant,
     };
+  }
+
+  // F-07.7: one section of the person's own requests, in every group.
+  async listMyRequests(
+    user: Identity,
+    section: MyMembershipRequestSection,
+    cursor?: string,
+  ): Promise<MyMembershipRequestPage> {
+    return this.repository.listRequestsOfUser(
+      user.id,
+      section,
+      MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
+      cursor,
+    );
   }
 
   // F-07.3: a request waits for the group's admins; automatic approval is
@@ -162,8 +179,8 @@ export class MembershipRequestsService {
     return approved;
   }
 
-  // F-07.3. Final for the group (ADR-0014); the reason is kept for the
-  // applicant's overview (F-07.7 #52), not shown yet.
+  // F-07.3. Final for the group (ADR-0014); the applicant sees the reason in
+  // their overview (F-07.7).
   async rejectRequest(
     user: Identity,
     groupId: string,
