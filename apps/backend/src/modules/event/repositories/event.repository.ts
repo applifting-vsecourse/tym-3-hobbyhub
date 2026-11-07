@@ -90,14 +90,6 @@ const listCondition = (now: Date, filter: EventListFilter): Prisma.Sql =>
     ...eventFilterConditions(filter),
   ]);
 
-// Visibility shared by the list and the detail: public and not hidden by a
-// moderator. Drafts never show; the detail also keeps over and cancelled events.
-const PUBLIC_EVENT = {
-  status: { not: 'DRAFT' },
-  visibility: 'PUBLIC',
-  isHidden: false,
-} as const;
-
 // F-07.2: what may be shown to someone, depending on who they are: public or
 // group-only, never a draft, a private event or one hidden by a moderator.
 // Whether this person may see a group-only one is the service's to decide
