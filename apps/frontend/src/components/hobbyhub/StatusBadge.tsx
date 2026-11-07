@@ -7,6 +7,7 @@ const STATUSES = {
   pending: "pending",
   approved: "success",
   rejected: "destructive",
+  cancelled: "secondary",
   deadline: "signal",
   neutral: "secondary",
 } as const

@@ -386,17 +386,20 @@ model Event {
 model Participation {
   id String @id @default(cuid())
 
-  status             ParticipationStatus
+  status              ParticipationStatus
   // Set exactly while the status is WAITLISTED.
-  waitlistPosition   Int?
+  waitlistPosition    Int?
   // Deadline to accept: a substitute (F-05.9) or an invited group member.
-  offerExpiresAt     DateTime?
-  confirmedAt        DateTime?
-  cancelledAt        DateTime?
-  isLateCancellation Boolean             @default(false)
-  checkInCode        String?             @db.VarChar(20)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  offerExpiresAt      DateTime?
+  confirmedAt         DateTime?
+  cancelledAt         DateTime?
+  // F-06.4, ADR-0017: the participant's words to the organizers when they
+  // cancelled the seat themselves; 10–500 characters, a CHECK in the migration.
+  cancellationMessage String?             @db.VarChar(500)
+  isLateCancellation  Boolean             @default(false)
+  checkInCode         String?             @db.VarChar(20)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String
