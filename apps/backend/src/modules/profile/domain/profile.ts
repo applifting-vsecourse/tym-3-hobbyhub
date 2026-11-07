@@ -1,10 +1,8 @@
 import { Interest } from '@/modules/onboarding/domain/onboarding';
 import {
-  ageOn,
+  birthYearViolation,
   Gender,
   GENDERS,
-  MIN_AGE,
-  parseBirthDate,
 } from '@/shared/auth/registration/registration';
 
 export const PROFILE_NAME_MAX_LENGTH = 50;
@@ -23,7 +21,6 @@ const NAME_PATTERN = /^[a-z0-9-]{1,40}$/;
 export const PROFILE_AVATAR_PREFIX = 'avatar:';
 
 const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;
-const OLDEST_BIRTH_YEAR = 1900;
 
 export type HomeLocation = {
   street: string;
@@ -42,15 +39,16 @@ export type Profile = {
   image: string | null;
   cover: string | null;
   // Private: used for statistics and age checks, never shown to others.
+  // Only the year of birth exists, never the full date (#174).
   gender: Gender | null;
-  birthDate: string | null;
+  birthYear: number | null;
   interests: Interest[];
   address: HomeLocation | null;
   travelRadiusKm: number | null;
 };
 
 /**
- * What another signed-in person sees (F-04.2): no gender, birth date, address
+ * What another signed-in person sees (F-04.2): no gender, birth year, address
  * or e-mail (the visibility matrix: nobody sees the e-mail).
  */
 export type PublicProfile = {
@@ -66,7 +64,7 @@ export type ProfileViolation =
   | 'IMAGE_FORMAT'
   | 'IMAGE_TOO_LARGE'
   | 'INVALID_GENDER'
-  | 'INVALID_BIRTH_DATE'
+  | 'INVALID_BIRTH_YEAR'
   | 'UNDERAGE';
 
 /** Rules for the cover: one of the app's covers, or the user's own WebP picture. */
@@ -92,19 +90,15 @@ export function imageViolations(image: string): ProfileViolation[] {
     : [];
 }
 
-/** The same gender and birth date rules as registration (F-03.1). */
+/** The same gender and year-of-birth rules as registration (F-03.1, #174). */
 export function privateDetailsViolations(
   gender: unknown,
-  birthDate: unknown,
+  birthYear: unknown,
   today: Date,
 ): ProfileViolation[] {
   const violations: ProfileViolation[] = [];
   if (!GENDERS.includes(gender as Gender)) violations.push('INVALID_GENDER');
-  const date = parseBirthDate(birthDate);
-  if (!date || date > today || date.getUTCFullYear() < OLDEST_BIRTH_YEAR) {
-    violations.push('INVALID_BIRTH_DATE');
-  } else if (ageOn(date, today) < MIN_AGE) {
-    violations.push('UNDERAGE');
-  }
+  const birthYearCode = birthYearViolation(birthYear, today);
+  if (birthYearCode) violations.push(birthYearCode);
   return violations;
 }

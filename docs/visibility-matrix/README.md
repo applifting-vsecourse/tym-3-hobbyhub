@@ -97,6 +97,7 @@ Pravidla jsou pro oba druhy žádostí stejná.
 - **Ostatní:** všichni kromě autora žádosti a toho, kdo ji vyřizuje. Patří sem i schválený účastník téže akce, člen téže skupiny a zablokovaný uživatel.
 - **Autor žádosti:** kdo žádost poslal, i když už je vyřízená nebo stažená.
 - **Vyřizuje:** organizátor akce, nebo admin skupiny (role `ADMIN` a `OWNER`).
+- **Zpráva při zrušení účasti** patří k účasti, která vznikla ze žádosti: autor je ten, kdo účast zrušil, vyřizují organizátoři akce (hlavní i spoluorganizátoři). Ostatní účastníci ji nevidí. Organizátor ji vidí v upozornění a v přehledu účastníků pod „Odhlášení“ spolu s tím, co vidí o žadateli (jméno, fotka, bio, ověřený e-mail). U nové žádosti po odhlášení ji organizátor nevidí: nové místo začíná bez ní.
 
 | Pole                                                  | Ostatní | Autor žádosti | Vyřizuje | Superadmin | Zdroj                                     |
 | ----------------------------------------------------- | ------- | ------------- | -------- | ---------- | ----------------------------------------- |
@@ -104,6 +105,7 @@ Pravidla jsou pro oba druhy žádostí stejná.
 | Zpráva od žadatele                                    | ❌      | ✅            | ✅       | ✅         | [#53][53], [#32][32], [#48][48], [PO][po] |
 | Stav žádosti                                          | ❌      | ✅            | ✅       | ✅         | [#41][41], [#31][31], [#52][52]           |
 | Důvod zamítnutí a zpráva při schválení                | ❌      | ✅            | ✅       | ✅         | [#52][52], [#153][153]                    |
+| Zpráva organizátorům při zrušení účasti               | ❌      | ✅            | ✅       | ✅         | [#42][42], [ADR-0017](../adr/adr-0017.md) |
 
 ## Profil uživatele
 
@@ -117,23 +119,25 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Organizátor jeho účasti:** organizátor akce, na které má dotyčný schválenou účast.
 - **Superadmin** a **Zablokovaný** (koho dotyčný zablokoval): viz výše.
 
-| Pole                                                               | Sám | Návštěvník | Přihlášený | Přítel | Vyřizuje jeho žádost | Organizátor jeho účasti | Superadmin    | Zablokovaný | Zdroj                                                |
-| ------------------------------------------------------------------ | --- | ---------- | ---------- | ------ | -------------------- | ----------------------- | ------------- | ----------- | ---------------------------------------------------- |
-| Jméno a příjmení, fotka, bio, seznam zájmů                         | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#19][19], [PO][po]                                  |
-| Průměr hodnocení a počet hodnocení                                 | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#44][44], [PO][po]                                  |
-| Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ❌     | ✅                   | ✅                      | ✅            | ❌          | [#32][32], [PO][po]                                  |
-| Historie účasti a pořádaných akcí                                  | ✅  | ❌         | ❌         | ✅     | ❌                   | ❌                      | ✅            | ❌          | [#56][56], [PO][po]                                  |
-| Slovní hodnocení, která obdržel                                    | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | jen na report | ❌          | [#44][44], [PO][po]                                  |
-| Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#24][24], [#67][67], [PO][po]                       |
-| Datum narození, věk, pohlaví                                       | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#12][12], [#18][18], [#19][19], [#32][32], [PO][po] |
-| E-mailová adresa                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                       |
-| Placené členství                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                  |
-| Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [PO][po]          |
+| Pole                                                               | Sám | Návštěvník | Přihlášený | Přítel | Vyřizuje jeho žádost | Organizátor jeho účasti | Superadmin    | Zablokovaný | Zdroj                                                             |
+| ------------------------------------------------------------------ | --- | ---------- | ---------- | ------ | -------------------- | ----------------------- | ------------- | ----------- | ----------------------------------------------------------------- |
+| Jméno a příjmení, fotka, bio, seznam zájmů                         | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#19][19], [PO][po]                                               |
+| Průměr hodnocení a počet hodnocení                                 | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#44][44], [PO][po]                                               |
+| Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ❌     | ✅                   | ✅                      | ✅            | ❌          | [#32][32], [PO][po]                                               |
+| Historie účasti a pořádaných akcí                                  | ✅  | ❌         | ❌         | ✅     | ❌                   | ❌                      | ✅            | ❌          | [#56][56], [PO][po]                                               |
+| Slovní hodnocení, která obdržel                                    | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | jen na report | ❌          | [#44][44], [PO][po]                                               |
+| Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#24][24], [#67][67], [PO][po]                                    |
+| Rok narození, věk, pohlaví                                         | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#12][12], [#18][18], [#19][19], [#32][32], [#174][174], [PO][po] |
+| E-mailová adresa                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                                    |
+| Placené členství                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                               |
+| Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [#61][61], [PO][po]            |
 
 - **Veřejný profil** je jméno a příjmení, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
-- **Lokalitu, dojezd, datum narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
+- **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
+- **Přesné datum narození aplikace nezná.** Drží jen rok, věk ve složení účastníků je proto přesný na rok ([#174][174], [ADR-0016](../adr/adr-0016.md)).
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
 - **Historie akcí**, kde člověk byl a co pořádal, je až pro propojené uživatele. To je hlavní věc, kterou propojení přináší. Jméno organizátora je i tak veřejné přes detail akce ([#8][8]).
+- **Notifikace chodí i e-mailem**, jen příjemci a jen na jeho ověřenou adresu ([#61][61]). E-mail podle pravidla výše říká jen, co se stalo, a odkazem vede do aplikace: nenese jméno původce, název akce ani skupiny, ani zprávu organizátora nebo správce. Detail se ukáže až po přihlášení.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec.
 
 ## Skupina
@@ -157,6 +161,8 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 
 **Soukromá skupina je dohledatelná, ale zavřená.** Skupina, kterou nejde najít, nemůže shánět lidi, a to je důvod, proč produkt existuje. Vidět má jít, že existuje a čemu se věnuje; co se v ní děje, ne.
 
+**Akce jen pro skupinu vidí i ten, kdo na ní má místo** ([#47][47]). Kdo má schválenou účast, je náhradník nebo má čekající žádost, vidí akci dál, i když ze skupiny odejde nebo je odebrán. Jinak by se z akce nemohl odhlásit a zmizela by mu z přehledu. Pro všechny ostatní mimo skupinu akce neexistuje: není ve výpisu skupiny a na odkaz vrací „nenalezeno“.
+
 [po]: review-2026-11-05.md
 [6]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/6
 [7]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/7
@@ -175,6 +181,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [35]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/35
 [37]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/37
 [41]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/41
+[42]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/42
 [43]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/43
 [44]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/44
 [45]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/45
@@ -184,6 +191,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [53]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/53
 [56]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/56
 [57]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/57
+[61]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/61
 [64]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/64
 [65]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/65
 [67]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/67
@@ -197,3 +205,4 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [95]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/95
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
+[174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174

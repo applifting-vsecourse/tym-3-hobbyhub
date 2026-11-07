@@ -8,6 +8,7 @@ import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { pendingRequestsQueryOptions } from "@/features/participation-request/api/pendingRequestsQueryOptions"
 import { DecidedRequests } from "@/features/participation-request/components/DecidedRequests"
 import { ExternalSpotsCounter } from "@/features/participation-request/components/ExternalSpotsCounter"
+import { Participants } from "@/features/participation-request/components/Participants"
 import {
   ParticipantsTabs,
   type ParticipantsTab,
@@ -37,10 +38,12 @@ type EventParticipantsProps = {
 }
 
 /**
- * Žádosti a přehled účastníků: the organizer's view of one event. The waiting
- * requests (F-05.7) and the participants with the other states (F-05.6) are
- * two tabs under one occupancy, which the organizer completes with the seats
- * of people outside the app. Attendance (F-05.11) joins later. A component of
+ * Žádosti a přehled účastníků: the organizer's view of one event, two tabs
+ * under one occupancy that the organizer completes with the seats of people
+ * outside the app. They follow ADR-0003: the requests tab is about requests
+ * (waiting, F-05.7; rejected and withdrawn, F-05.6), the participants tab
+ * about seats (taken; given back, F-06.4). Attendance (F-05.11) joins the
+ * participants later. A component of
  * its own, so the organizer's overview (wireframe 37) can show it next to the
  * event list.
  */
@@ -113,13 +116,16 @@ export function EventParticipants({
       />
 
       {tab === "participants" ? (
-        <DecidedRequests event={event} />
+        <Participants event={event} />
       ) : (
-        <PendingRequests
-          event={event}
-          onChange={onChange}
-          now={now}
-        />
+        <div className="flex flex-col gap-8">
+          <PendingRequests
+            event={event}
+            onChange={onChange}
+            now={now}
+          />
+          <DecidedRequests eventId={event.id} />
+        </div>
       )}
     </div>
   )

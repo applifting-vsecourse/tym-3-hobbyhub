@@ -13,8 +13,10 @@ export type SignUpInput = {
   email: string
   password: string
   gender: "MALE" | "FEMALE"
-  /** "YYYY-MM-DD" */
-  birthDate: string
+  /** Only the year, never the full date (#174). */
+  birthYear: number
+  /** The user confirmed being 18 or older. */
+  adulthoodConfirmed: boolean
   termsAccepted: boolean
 }
 
@@ -29,7 +31,7 @@ export function useSignUp() {
   return useMutation({
     mutationFn: async ({ from, ...input }: SignUpVariables) => {
       // BetterAuth handles the whole flow (and signs the user in by default).
-      // Gender, birth date and consent are read by the backend's registration
+      // Gender, year of birth and the consents are read by the backend's registration
       // hook; the typed sign-up body does not list them, hence the variable.
       const body = {
         ...input,

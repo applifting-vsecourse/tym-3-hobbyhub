@@ -2,10 +2,13 @@ import { Env } from '@applifting-io/nestjs-decorated-config';
 import { Injectable } from '@nestjs/common';
 import {
   IsBoolean,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsSemVer,
   IsUrl,
+  Max,
+  Min,
 } from 'class-validator';
 
 /**
@@ -103,4 +106,32 @@ export class Config {
   @Env('SMTP_FROM', { expose: true })
   @IsOptional()
   readonly smtpFrom?: string;
+
+  // F-09.5, ADR-0018: the outbox's limits. How many e-mails may go in any 24
+  // hours: the provider's daily limit (Mailjet's free plan: 200).
+  @Env('EMAIL_DAILY_LIMIT', { expose: true, defaultValue: 200 })
+  @IsInt()
+  @Min(1)
+  readonly emailDailyLimit!: number;
+
+  // The share of the daily limit kept for critical e-mails (sign-in, a changed
+  // or cancelled event); the others wait once the rest is used up.
+  @Env('EMAIL_CRITICAL_RESERVE_PERCENT', { expose: true, defaultValue: 20 })
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  readonly emailCriticalReservePercent!: number;
+
+  // At most this many non-critical e-mails to one person in an hour; the rest
+  // are only in the bell.
+  @Env('EMAIL_RECIPIENT_HOURLY_LIMIT', { expose: true, defaultValue: 10 })
+  @IsInt()
+  @Min(1)
+  readonly emailRecipientHourlyLimit!: number;
+
+  // How often the poller looks for due e-mails.
+  @Env('EMAIL_POLL_INTERVAL_MS', { expose: true, defaultValue: 5000 })
+  @IsInt()
+  @Min(500)
+  readonly emailPollIntervalMs!: number;
 }

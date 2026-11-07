@@ -39,8 +39,8 @@ export const profileSchema = z.object({
   /** The chosen cover id; null = the default of the first sport. */
   cover: z.string().nullable(),
   gender: z.enum(GENDERS).nullable(),
-  /** "YYYY-MM-DD". */
-  birthDate: z.string().nullable(),
+  /** Only the year, never the full date (#174). */
+  birthYear: z.number().int().nullable(),
   interests: z.array(interestSchema),
   address: homeAddressSchema.nullable(),
 })
@@ -48,7 +48,7 @@ export const profileSchema = z.object({
 export type Profile = z.infer<typeof profileSchema>
 
 /**
- * Someone else's profile (F-04.2): no gender, birth date, address or e-mail.
+ * Someone else's profile (F-04.2): no gender, birth year, address or e-mail.
  */
 export const publicProfileSchema = z.object({
   id: z.string(),
@@ -70,5 +70,5 @@ export type UpdateProfileInput = {
 
 export type UpdatePrivateDetailsInput = {
   gender: (typeof GENDERS)[number]
-  birthDate: string
+  birthYear: number
 }

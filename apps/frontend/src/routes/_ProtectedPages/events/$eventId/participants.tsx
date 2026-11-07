@@ -18,8 +18,8 @@ import { pendingRequestsQueryOptions } from "@/features/participation-request/ap
 import { EventParticipants } from "@/features/participation-request/components/EventParticipants"
 import { PARTICIPANTS_TABS } from "@/features/participation-request/components/ParticipantsTabs"
 
-// Which part of the page is open: the waiting requests (F-05.7, the default)
-// or the participants with the other states (F-05.6).
+// Which part of the page is open: the requests (F-05.7, F-05.6, the default)
+// or the participants, taken and given-back seats (F-05.6, F-06.4).
 const participantsSearchSchema = z.object({
   tab: z.enum(PARTICIPANTS_TABS).catch("requests"),
 })
