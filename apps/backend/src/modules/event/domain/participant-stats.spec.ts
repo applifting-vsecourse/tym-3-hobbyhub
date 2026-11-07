@@ -6,31 +6,29 @@ import {
 } from './participant-stats';
 
 const person = (
-  birthDate: string | null,
+  birthYear: number | null,
   gender: Gender | null,
-): StatsParticipant => ({
-  birthDate: birthDate ? new Date(birthDate) : null,
-  gender,
-});
+): StatsParticipant => ({ birthYear, gender });
 const EVENT_START = new Date('2026-10-22T17:00:00Z');
 
 describe('ageAt', () => {
-  it('counts full years up to the day of the event', () => {
-    expect(ageAt(new Date('1990-10-22'), EVENT_START)).toBe(36);
-    expect(ageAt(new Date('1990-10-23'), EVENT_START)).toBe(35);
+  it('is the year of the event minus the year of birth, birthday or not', () => {
+    // Born in October or in December 1990: only the year is known, so both
+    // count as 36 at an event on 22 October 2026.
+    expect(ageAt(1990, EVENT_START)).toBe(36);
   });
 
-  it('uses the Prague day, even when UTC is still the day before', () => {
-    // 00:30 on 1 March in Prague is 23:30 on 28 February in UTC.
-    const start = new Date('2026-02-28T23:30:00Z');
-    expect(ageAt(new Date('1990-03-01'), start)).toBe(36);
+  it('uses the Prague year, even when UTC is still in the year before', () => {
+    // 00:30 on 1 January in Prague is 23:30 on 31 December in UTC.
+    const start = new Date('2026-12-31T23:30:00Z');
+    expect(ageAt(1990, start)).toBe(37);
   });
 });
 
 describe('computeParticipantStats', () => {
   it('stays hidden below three participants', () => {
     const stats = computeParticipantStats(
-      [person('1990-01-01', 'MALE'), person('1991-01-01', 'FEMALE')],
+      [person(1990, 'MALE'), person(1991, 'FEMALE')],
       EVENT_START,
       4,
     );
@@ -40,11 +38,7 @@ describe('computeParticipantStats', () => {
 
   it('gives the median age, the gender split and the coverage', () => {
     const stats = computeParticipantStats(
-      [
-        person('1996-01-01', 'MALE'),
-        person('1986-01-01', 'FEMALE'),
-        person('1976-01-01', 'MALE'),
-      ],
+      [person(1996, 'MALE'), person(1986, 'FEMALE'), person(1976, 'MALE')],
       EVENT_START,
       5,
     );
@@ -60,11 +54,11 @@ describe('computeParticipantStats', () => {
   it('counts people taken along from outside the app as unknown gender', () => {
     const stats = computeParticipantStats(
       [
-        person('1990-01-01', 'MALE'),
-        person('1985-01-01', 'MALE'),
-        person('1980-01-01', 'MALE'),
-        person('1995-01-01', 'MALE'),
-        person('1988-01-01', 'MALE'),
+        person(1990, 'MALE'),
+        person(1985, 'MALE'),
+        person(1980, 'MALE'),
+        person(1995, 'MALE'),
+        person(1988, 'MALE'),
       ],
       EVENT_START,
       7,
@@ -76,10 +70,10 @@ describe('computeParticipantStats', () => {
   it('rounds the median of an even number of ages', () => {
     const stats = computeParticipantStats(
       [
-        person('2000-01-01', 'MALE'),
-        person('1996-01-01', 'MALE'),
-        person('1990-01-01', 'MALE'),
-        person('1985-01-01', 'MALE'),
+        person(2000, 'MALE'),
+        person(1996, 'MALE'),
+        person(1990, 'MALE'),
+        person(1985, 'MALE'),
       ],
       EVENT_START,
       4,
@@ -88,13 +82,13 @@ describe('computeParticipantStats', () => {
     expect(stats?.medianAge).toBe(33);
   });
 
-  it('counts only people who gave both a birth date and a gender', () => {
+  it('counts only people who gave both a birth year and a gender', () => {
     const stats = computeParticipantStats(
       [
-        person('1990-01-01', null),
-        person('1991-01-01', 'FEMALE'),
+        person(1990, null),
+        person(1991, 'FEMALE'),
         person(null, 'MALE'),
-        person('1985-01-01', 'MALE'),
+        person(1985, 'MALE'),
       ],
       EVENT_START,
       4,
@@ -106,10 +100,10 @@ describe('computeParticipantStats', () => {
   it('shows age and gender together, resting on the same people', () => {
     const stats = computeParticipantStats(
       [
-        person('1990-01-01', 'MALE'),
-        person('1991-01-01', 'FEMALE'),
+        person(1990, 'MALE'),
+        person(1991, 'FEMALE'),
         person(null, 'MALE'),
-        person('1985-01-01', 'MALE'),
+        person(1985, 'MALE'),
       ],
       EVENT_START,
       6,

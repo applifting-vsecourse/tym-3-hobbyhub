@@ -13,7 +13,7 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
   image: null,
   cover: null,
   gender: "FEMALE",
-  birthDate: "1990-05-17",
+  birthYear: 1990,
   interests: [
     {
       activity: { id: "a1", name: "Florbal", icon: "florbal" },
@@ -55,20 +55,21 @@ describe("ProfileView", () => {
     )
   })
 
-  it("keeps the home city under the private heading, and never shows gender or birth date", async () => {
+  it("keeps the home city and the birth year under the private heading, never the gender", async () => {
     await renderView(profile())
 
     expect(screen.getByRole("heading", { name: "Jen pro vás" })).toBeInTheDocument()
     expect(screen.getByText("Praha 8")).toBeInTheDocument()
-    expect(screen.queryByText("1990-05-17")).not.toBeInTheDocument()
+    expect(screen.getByText("Rok narození 1990")).toBeInTheDocument()
     expect(screen.queryByText("Žena")).not.toBeInTheDocument()
   })
 
   it("invites to fill in an empty profile", async () => {
-    await renderView(profile({ bio: null, interests: [], address: null }))
+    await renderView(profile({ bio: null, interests: [], address: null, birthYear: null }))
 
     expect(screen.getByRole("link", { name: "Napsat pár slov" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Přidat, co hraju" })).toBeInTheDocument()
     expect(screen.getByText("Adresu jste zatím nezadali")).toBeInTheDocument()
+    expect(screen.getByText("Rok narození jste zatím nezadali")).toBeInTheDocument()
   })
 })

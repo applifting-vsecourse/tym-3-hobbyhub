@@ -9,7 +9,6 @@ import {
   type LevelOption,
 } from "@/components/hobbyhub/ActivityPicker"
 import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
-import { BirthDatePicker } from "@/components/hobbyhub/BirthDatePicker"
 import { ProfileCoverPicker } from "@/components/hobbyhub/ProfileCoverPicker"
 import {
   ProfilePicturePicker,
@@ -237,7 +236,7 @@ export function LocationFields() {
   )
 }
 
-/** Soukromé údaje — gender and birth date from the sign-up, never shown to anyone else. */
+/** Soukromé údaje — gender and year of birth from the sign-up, never shown to anyone else. */
 export function PrivateFields() {
   const { t } = useTranslation()
   const form = useFormContext<EditProfileValues>()
@@ -293,14 +292,20 @@ export function PrivateFields() {
 
       <FormField
         control={form.control}
-        name="birthDate"
+        name="birthYear"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("auth.fields.birthDate")}</FormLabel>
+            <FormLabel>{t("auth.fields.birthYear")}</FormLabel>
             <FormControl>
-              <BirthDatePicker {...field} />
+              <Input
+                inputMode="numeric"
+                autoComplete="bday-year"
+                maxLength={4}
+                placeholder={t("auth.placeholders.birthYear")}
+                {...field}
+              />
             </FormControl>
-            <FormDescription>{t("profile.private.birthDateHint")}</FormDescription>
+            <FormDescription>{t("profile.private.birthYearHint")}</FormDescription>
             <FormMessage />
           </FormItem>
         )}
