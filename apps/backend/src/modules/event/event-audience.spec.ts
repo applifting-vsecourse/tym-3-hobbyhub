@@ -123,7 +123,10 @@ describeDb('EventRepository: the audience of an event', () => {
         userId,
         status,
         ...(status === ParticipationStatus.CANCELLED
-          ? { cancelledAt: now, cancellationMessage: 'Onemocněl jsem, promiňte.' }
+          ? {
+              cancelledAt: now,
+              cancellationMessage: 'Onemocněl jsem, promiňte.',
+            }
           : {}),
       },
     });
@@ -190,11 +193,7 @@ describeDb('EventRepository: the audience of an event', () => {
     created.reasonIds.push(reason.id);
 
     await expect(
-      repository.cancelEvent(
-        eventId,
-        { cancellationReasonId: reason.id },
-        now,
-      ),
+      repository.cancelEvent(eventId, { cancellationReasonId: reason.id }, now),
     ).resolves.toMatchObject({ ok: true });
 
     await expect(repository.getEventAudience(eventId)).resolves.toEqual({
