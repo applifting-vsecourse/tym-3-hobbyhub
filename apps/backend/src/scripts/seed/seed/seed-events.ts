@@ -761,7 +761,8 @@ export async function seedEvents(
 }
 
 // F-02.5: one public group that organizes "Čtvrteční florbal", so the event
-// links to a group page. Additive like the events: nothing is added twice.
+// links to a group page, and the group-only training (F-07.2), so its members
+// see it on the group page. Additive like the events: nothing is added twice.
 async function seedExampleGroup(
   prisma: PrismaService,
   owner: User,
@@ -788,7 +789,10 @@ async function seedExampleGroup(
     }));
 
   await prisma.event.updateMany({
-    where: { title: 'Čtvrteční florbal', groupId: null },
+    where: {
+      title: { in: ['Čtvrteční florbal', 'Interní trénink skupiny'] },
+      groupId: null,
+    },
     data: { groupId: group.id },
   });
 }

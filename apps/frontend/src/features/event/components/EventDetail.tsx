@@ -152,6 +152,10 @@ export function EventDetail({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1 className="typo-h1 text-foreground">{event.title}</h1>
             {state !== "open" ? <StateBadge state={state} /> : null}
+            {/* F-07.2: says why someone outside the group cannot find it. */}
+            {event.visibility === "GROUP_ONLY" ? (
+              <StatusBadge status="neutral">{t("events.detail.groupOnly")}</StatusBadge>
+            ) : null}
             {state === "open" ? shareAction : null}
           </div>
           {state !== "open" ? (

@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { createFileRoute, useLocation } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { z } from "zod"
 
 import { AppShell } from "@/app/AppShell"
 import { ROUTES } from "@/app/routes"
@@ -16,6 +17,8 @@ import { HTTPError } from "@/lib/api-client"
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
+import { groupEventsQueryOptions } from "@/features/event/api/groupEventsQueryOptions"
+import { GroupEvents } from "@/features/event/components/GroupEvents"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
 import {
   groupMembersQueryOptions,
@@ -31,7 +34,14 @@ import {
 } from "@/features/group/components/MembershipRequestSheet"
 import { useGroupMembershipState } from "@/features/group/hooks/useGroupMembershipState"
 
+const groupSearchSchema = z.object({
+  // F-07.2: the upcoming events are the default and have no param; anything
+  // unknown falls back to them.
+  events: z.enum(["past"]).optional().catch(undefined),
+})
+
 export const Route = createFileRoute("/groups/$groupId")({
+  validateSearch: groupSearchSchema,
   component: GroupDetailPage,
 })
 
@@ -48,6 +58,17 @@ function GroupDetailPage() {
     isPending: isSessionPending,
   })
   const groupQuery = useQuery(groupQueryOptions(groupId))
+  // F-07.2: members also see the past; anyone else only what is coming, so a
+  // link to the past from a non-member shows the upcoming events.
+  const search = Route.useSearch()
+  const isMember = membership.view === "member"
+  const period = isMember ? (search.events ?? "upcoming") : "upcoming"
+  const eventsQuery = useInfiniteQuery({
+    ...groupEventsQueryOptions(groupId, period, { userId: user?.id ?? null, isMember }),
+    // Who is looking decides what comes back: wait until that is known.
+    enabled: membership.view !== "loading",
+  })
+  const groupEvents = eventsQuery.data?.pages.flatMap((page) => page.items) ?? []
   const requestsQuery = useQuery({
     ...pendingMembershipRequestsQueryOptions(groupId),
     enabled: membership.isAdmin,
@@ -130,6 +151,22 @@ function GroupDetailPage() {
                   pendingCount={requestsQuery.data?.length}
                 />
               ) : undefined
+            }
+            events={
+              <GroupEvents
+                groupId={groupId}
+                period={period}
+                isMember={isMember}
+                events={groupEvents}
+                total={eventsQuery.data?.pages[0]?.total ?? 0}
+                activityLabel={(activity) => activityName(t, activity)}
+                isLoading={eventsQuery.isPending}
+                error={eventsQuery.error}
+                onReload={() => void eventsQuery.refetch()}
+                hasMore={eventsQuery.hasNextPage}
+                isLoadingMore={eventsQuery.isFetchingNextPage}
+                onLoadMore={() => void eventsQuery.fetchNextPage()}
+              />
             }
             membersPreview={
               membership.isAdmin && membersQuery.data ? (

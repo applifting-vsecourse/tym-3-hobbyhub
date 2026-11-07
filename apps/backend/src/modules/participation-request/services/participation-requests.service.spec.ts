@@ -18,6 +18,8 @@ const now = new Date('2030-01-01T12:00:00Z');
 const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   id: 'e1',
   status: 'PUBLISHED',
+  visibility: 'PUBLIC',
+  groupId: null,
   startAt: new Date('2030-01-01T18:00:00Z'),
   endAt: new Date('2030-01-01T20:00:00Z'),
   approvalMode: 'MANUAL',
@@ -75,7 +77,7 @@ describe('ParticipationRequestsService', () => {
     const repository = mock<ParticipationRequestRepository>();
     const events = mock<EventsService>();
     const notifications = mock<NotificationsService>();
-    events.getPublicEventSeatFacts.mockResolvedValue(event);
+    events.getVisibleEventSeatFacts.mockResolvedValue(event);
     // As the event module answers: the event to its organizers, 404 to the rest.
     events.getOrganizedEvent.mockImplementation((_eventId, who) =>
       event && isOrganizerOf(event, who.id)
@@ -276,7 +278,7 @@ describe('ParticipationRequestsService', () => {
       await expect(
         service.withdrawMyRequest(user, 'e1', now),
       ).resolves.toBeUndefined();
-      expect(events.getPublicEventSeatFacts).not.toHaveBeenCalled();
+      expect(events.getVisibleEventSeatFacts).not.toHaveBeenCalled();
     });
 
     it('answers 404 when nothing is pending', async () => {

@@ -1,4 +1,5 @@
 import {
+  canSeeEvent,
   eventChangeViolations,
   eventListFilterViolations,
   eventRuleViolations,
@@ -39,6 +40,32 @@ describe('occupancyOf', () => {
         approvedCount: 0,
       }),
     ).toMatchObject({ missingToMinimum: 0, fillState });
+  });
+});
+
+describe('canSeeEvent', () => {
+  const nobody = { isGroupMember: false, isInvolved: false };
+
+  it('shows a public event to everyone', () => {
+    expect(canSeeEvent('PUBLIC', nobody)).toBe(true);
+  });
+
+  it.each([
+    ['a member of its group', { isGroupMember: true, isInvolved: false }, true],
+    [
+      'someone holding a seat',
+      { isGroupMember: false, isInvolved: true },
+      true,
+    ],
+    ['anyone else', nobody, false],
+  ])('shows a group-only event to %s: %s', (_name, viewer, expected) => {
+    expect(canSeeEvent('GROUP_ONLY', viewer)).toBe(expected);
+  });
+
+  it('never shows a private event this way, not even to a member', () => {
+    expect(
+      canSeeEvent('PRIVATE', { isGroupMember: true, isInvolved: true }),
+    ).toBe(false);
   });
 });
 
