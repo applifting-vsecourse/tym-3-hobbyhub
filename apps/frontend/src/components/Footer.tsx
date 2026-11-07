@@ -37,13 +37,13 @@ export function Footer() {
         </div>
         <nav
           aria-label={t("footer.label")}
-          className="flex flex-col gap-2 md:items-end"
+          className="flex flex-col md:items-end md:gap-2"
         >
           {LINKS.map(({ to, labelKey }) => (
             <Link
               key={to}
               to={to}
-              className="w-fit rounded-md py-1 typo-label text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring"
+              className="inline-flex min-h-11 w-fit items-center rounded-md typo-label text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring md:min-h-0 md:py-1"
             >
               {t(labelKey)}
             </Link>
