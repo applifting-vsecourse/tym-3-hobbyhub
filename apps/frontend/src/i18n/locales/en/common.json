@@ -2,8 +2,9 @@
   "auth": {
     "back": "Back",
     "errors": {
+      "adulthoodNotConfirmed": "You need to confirm you are 18 or older to register.",
       "emailNotVerified": "Your email is not verified yet.",
-      "invalidBirthDate": "Invalid date of birth.",
+      "invalidBirthYear": "Invalid year of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
       "invalidGender": "Choose your gender.",
@@ -16,7 +17,7 @@
       "userExists": "An account with this email already exists."
     },
     "fields": {
-      "birthDate": "Date of birth",
+      "birthYear": "Year of birth",
       "confirmPassword": "Repeat password",
       "email": "Email",
       "gender": "Gender",
@@ -34,7 +35,7 @@
       "showLabel": "Show password"
     },
     "placeholders": {
-      "birthDate": "Pick a date",
+      "birthYear": "e.g. 1995",
       "email": "e.g. john@doe.com",
       "gender": "Select"
     },
@@ -52,17 +53,20 @@
       "success": "You have been signed out."
     },
     "signUp": {
+      "adulthood": "By signing up I confirm that I am at least 18 years old.",
       "description": "You can complete your profile later.",
       "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
       "genderNote": "Private, nobody else sees it. Used only for combined event statistics.",
-      "privacyNote": "Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
+      "privacyNote": "Just the year, we don't want the exact date. Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
       "signInLink": "I already have an account · Sign in",
       "submit": "Create account and continue",
       "terms": "I agree to the <terms>terms and privacy policy</terms>.",
       "title": "Quick sign-up"
     },
     "validation": {
-      "birthDateRequired": "Pick your date of birth",
+      "adulthoodRequired": "You must be 18 or older to register, please confirm it",
+      "birthYearInvalid": "Enter a four-digit year from 1900 to this year",
+      "birthYearRequired": "Enter your year of birth",
       "confirmPasswordRequired": "Repeat your password",
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
@@ -172,16 +176,24 @@
       "approvalManual": "The organizer approves requests by hand.",
       "back": "Back to events",
       "cancellationReason": "Reason: {{reason}}",
+      "contacts": {
+        "chat": "Group chat",
+        "organizer": "Organizer: {{name}}",
+        "phone": "Call",
+        "title": "Reach the organizer"
+      },
       "contribution": "Contribution",
       "equipment": "Equipment",
+      "groupOnly": "Group members only",
       "hasAccount": "Already have an account?",
+      "hiddenInfo": "You'll see the exact address and the organizer's contact once your seat is confirmed.",
       "join": "Take a seat",
       "linkLabel": "Link",
       "loadError": "Could not load the event",
       "loading": "Loading the event…",
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
-      "organizer": "Organized by {{name}}",
+      "organizer": "Organized by <profile>{{name}}</profile>",
       "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
@@ -208,7 +220,15 @@
         "title": "Who is coming",
         "unknown": "Not stated"
       },
-      "title": "Event detail"
+      "title": "Event detail",
+      "where": {
+        "loadError": "Could not load the place and contacts",
+        "loading": "Loading the place and contacts…",
+        "mapLabel": "Map with the event location",
+        "navigate": "Navigate",
+        "noAddress": "The organizer has not filled in an address yet.",
+        "title": "Where we meet"
+      }
     },
     "edit": {
       "back": "Back to the event",
@@ -220,6 +240,7 @@
       "addressSearch": "Find the address",
       "approvalMode": "Approving participants",
       "city": "City",
+      "contact": "Organizer contact (optional)",
       "contributionAmount": "Contribution per seat in CZK (optional)",
       "contributionNote": "Note on the contribution (optional)",
       "country": "Country",
@@ -227,6 +248,7 @@
       "endDate": "End date",
       "endTime": "Until",
       "equipment": "Equipment (optional)",
+      "externalChatUrl": "Group chat link (optional)",
       "externalOccupiedSpots": "Already taken outside the app",
       "maxParticipants": "Maximum",
       "minParticipants": "Minimum",
@@ -247,6 +269,7 @@
       "addressHint": "Pick the address from the suggestions so the event shows on the map. The fields below fill in by themselves.",
       "addressLocated": "The address position is saved, the event will show on the map.",
       "cancel": "Cancel",
+      "contactsHint": "Only people with a confirmed seat, and you, see the chat and contact.",
       "continue": "Continue",
       "contributionHint": "Information only, nothing is paid through the app.",
       "createFailed": "Could not publish the event. Please try again.",
@@ -326,10 +349,12 @@
     "placeholders": {
       "addressSearch": "Start typing a street and town",
       "city": "E.g. Prague 8",
+      "contact": "E-mail or phone",
       "contributionAmount": "E.g. 80",
       "contributionNote": "E.g. paid in cash on the spot",
       "description": "E.g. a casual game for slightly advanced players…",
       "equipment": "E.g. your own stick, indoor shoes",
+      "externalChatUrl": "E.g. https://chat.whatsapp.com/…",
       "placeName": "E.g. Kobylisy school gym",
       "postalCode": "E.g. 182 00",
       "street": "E.g. Chabařovická 4",
@@ -351,7 +376,9 @@
       "activityRequired": "Choose an activity",
       "amountInvalid": "Enter an amount in crowns, with at most two decimals",
       "amountRequiredForNote": "Add an amount to go with the note",
+      "chatUrlInvalid": "Enter a link that starts with http:// or https://",
       "cityRequired": "Enter a city",
+      "contactInvalid": "Enter an e-mail or a phone number, e.g. +420 777 123 456",
       "countryRequired": "Enter a country",
       "dateRequired": "Enter a date",
       "descriptionRequired": "Write a few words about the event",
@@ -388,6 +415,29 @@
     "back": "Back",
     "detail": {
       "backToEvents": "Back to events",
+      "events": {
+        "cancelled": "Cancelled",
+        "count": {
+          "past_one": "{{count}} past event",
+          "past_other": "{{count}} past events",
+          "upcoming_one": "{{count}} upcoming event",
+          "upcoming_other": "{{count}} upcoming events"
+        },
+        "empty": {
+          "past": "The group has no past events yet.",
+          "upcoming": "The group has no upcoming events right now."
+        },
+        "groupOnly": "Group only",
+        "loadMore": "Load more",
+        "loadMoreFailed": "More events could not be loaded. Please try again.",
+        "loading": "Loading the group’s events…",
+        "periods": {
+          "past": "Past",
+          "upcoming": "Upcoming"
+        },
+        "periodsLabel": "Upcoming and past events",
+        "title": "Group events"
+      },
       "loadError": "Could not load the group",
       "loading": "Loading the group…",
       "members_one": "{{count}} member",
@@ -410,10 +460,6 @@
         "withdraw": "Withdraw request"
       },
       "title": "Group detail",
-      "upcoming": {
-        "inProgress": "We are working on this. Soon you will see here what the group has planned.",
-        "title": "Upcoming events"
-      },
       "visibilityPublic": "Public group"
     },
     "fields": {
@@ -506,7 +552,7 @@
       "form": {
         "adminSees": "The group organizer will see",
         "cancel": "Cancel",
-        "hiddenDetails": "They will not see your birth date, contact or address.",
+        "hiddenDetails": "They will not see your birth year, contact or address.",
         "messageLabel": "Message to the organizer (optional)",
         "messagePlaceholder": "E.g. I have played for a company team for three years and am looking for a regular group.",
         "messageTooLong": "The message can have at most {{count}} characters.",
@@ -810,7 +856,33 @@
     }
   },
   "myEvents": {
-    "placeholder": "An overview of your requests and the events you host is on its way.",
+    "applications": {
+      "empty": "You are not signed up for any upcoming event."
+    },
+    "empty": {
+      "description": "Once you sign up for an event or post one, you will find it here.",
+      "find": "Find an event",
+      "title": "Nothing here yet"
+    },
+    "hosted": {
+      "empty": "You are not organizing any upcoming event."
+    },
+    "loadMore": "Load more",
+    "loading": "Loading your events",
+    "status": {
+      "APPROVED": "Approved",
+      "EVENT_CANCELLED": "Event cancelled",
+      "PENDING": "Awaiting approval",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Signed off"
+    },
+    "tabs": {
+      "applications": "Applications",
+      "applicationsWithCount": "Applications ({{count}})",
+      "hosted": "Organizing",
+      "hostedWithCount": "Organizing ({{count}})",
+      "label": "My events"
+    },
     "title": "My events"
   },
   "notifications": {
@@ -1136,8 +1208,8 @@
       "title": "Where I live"
     },
     "private": {
-      "birthDateHint": "You must be at least 18.",
-      "description": "You gave your gender and birth date at sign-up. You can correct them here.",
+      "birthYearHint": "Just the year, we don't want the exact date. You must turn at least 18 this year.",
+      "description": "You gave your gender and year of birth at sign-up. You can correct them here.",
       "notice": "Nobody else sees these details.",
       "title": "Private details"
     },
@@ -1155,14 +1227,21 @@
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "title": "My profile",
+    "userProfile": {
+      "interests": "What they play",
+      "notFound": "Profile not found.",
+      "title": "User profile"
+    },
     "view": {
       "addActivities": "Add what I play",
       "addBio": "Write a few words",
+      "birthYear": "Born in {{year}}",
       "edit": "Edit profile",
       "memberSince": "Member since {{date}}",
       "noActivities": "No activities yet.",
       "noAddress": "You have not added an address yet",
       "noBio": "Nothing about you yet.",
+      "noBirthYear": "You have not added your year of birth yet",
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }

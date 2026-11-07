@@ -14,6 +14,8 @@ const now = new Date('2030-01-01T12:00:00Z');
 const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   id: 'e1',
   status: 'PUBLISHED',
+  visibility: 'PUBLIC',
+  groupId: null,
   startAt: new Date('2030-01-01T18:00:00Z'),
   endAt: new Date('2030-01-01T20:00:00Z'),
   approvalMode: 'MANUAL',
@@ -110,7 +112,7 @@ describe('currentRequestOf', () => {
     expect(currentRequestOf([rejected, aRequest('WITHDRAWN')])).toBe(rejected);
   });
 
-  // F-06.4, ADR-0016: after a cancelled seat the old approval stays.
+  // F-06.4, ADR-0017: after a cancelled seat the old approval stays.
   it('shows a request asked after a cancelled seat over the old approval', () => {
     const approved = aRequest('APPROVED', new Date('2029-12-20T10:00:00Z'));
     const pending = aRequest('PENDING', new Date('2029-12-31T10:00:00Z'));

@@ -21,6 +21,7 @@ import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Seat } from "@/components/hobbyhub/Seat"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
+import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { Button } from "@/components/ui/button"
 
@@ -199,6 +200,7 @@ export function DomainSections() {
               taken={7}
               min={10}
               photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
+              badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
               time="20:30"

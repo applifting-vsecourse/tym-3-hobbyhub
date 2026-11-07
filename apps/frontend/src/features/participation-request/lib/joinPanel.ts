@@ -12,7 +12,7 @@ export function ownSeatView({ request, violations, seat }: MyRequestState): OwnS
   if (violations.includes("HAS_SEAT")) return "approved"
   if (request?.status === "REJECTED") return "rejected"
   // F-06.4: the seat says it, not the request. The approval stays after the
-  // seat was given back (ADR-0016), and a seat may have had no request at all.
+  // seat was given back (ADR-0017), and a seat may have had no request at all.
   if (seat === "CANCELLED") return "cancelled"
   if (request?.status === "APPROVED") return "approved"
   return null

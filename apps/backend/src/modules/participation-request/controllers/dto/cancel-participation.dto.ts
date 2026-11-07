@@ -10,7 +10,7 @@ import { IsString } from 'class-validator';
 const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
 
-// F-06.4, ADR-0016: the message is required, its edges' whitespace does not
+// F-06.4, ADR-0017: the message is required, its edges' whitespace does not
 // count towards the minimum.
 export class CancelParticipationDto {
   @ApiProperty({

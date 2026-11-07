@@ -9,7 +9,7 @@ import {
 export const PARTICIPATION_REQUEST_MESSAGE_MAX_LENGTH = 500;
 export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH = 500;
 
-// F-06.4, ADR-0016: the participant's required words to the organizers when
+// F-06.4, ADR-0017: the participant's required words to the organizers when
 // cancelling a seat. Same limits as the column and CHECK constraints of
 // `participation.cancellationMessage`.
 export const PARTICIPATION_CANCELLATION_MESSAGE_MIN_LENGTH = 10;
@@ -43,7 +43,7 @@ export type ParticipationRequest = {
   rejectionReason: string | null;
 };
 
-// What the organizer sees of the person asking (F-05.7): no birth date,
+// What the organizer sees of the person asking (F-05.7): no birth year,
 // gender, contact or place. The request form shows the applicant exactly this.
 export type ApplicantProfile = {
   name: string;
@@ -51,6 +51,8 @@ export type ApplicantProfile = {
   bio: string | null;
   hasVerifiedEmail: boolean;
 };
+
+// F-04.2: a person holding an approved seat, as the organizer's list shows it.
 
 export type PendingRequest = ParticipationRequest & {
   applicant: ApplicantProfile;
@@ -69,6 +71,8 @@ export type DecidedStatus = (typeof DECIDED_STATUSES)[number];
 export type DecidedRequest = {
   id: string;
   status: DecidedStatus;
+  // The applicant, for the link to their profile.
+  userId: string;
   message: string | null;
   // When the person was rejected or withdrew.
   changedAt: Date;
@@ -87,7 +91,7 @@ export type Participant = {
   id: string;
   status: SeatStatus;
   // APPROVED: the message of the request that led to the seat, if any.
-  // CANCELLED: the participant's words when cancelling (ADR-0016).
+  // CANCELLED: the participant's words when cancelling (ADR-0017).
   message: string | null;
   // When the person got the seat, or gave it back.
   changedAt: Date;
@@ -142,7 +146,7 @@ export const eventStateViolation = (
 // The request a person sees on an event: the latest one waiting or decided.
 // Withdrawn and closed requests are history and leave the person free to ask
 // again. So does a seat they cancelled (F-06.4): the approved request stays,
-// and a new one asked after it is the current one (ADR-0016).
+// and a new one asked after it is the current one (ADR-0017).
 const CURRENT_REQUEST_STATUSES: readonly RequestStatus[] = [
   'PENDING',
   'APPROVED',
@@ -228,4 +232,20 @@ export const cancelRuleViolations = (
     violations.push('NO_SEAT');
   }
   return violations;
+};
+
+// F-06.3: what the overview of a person's applications reads of one event and
+// the person's own rows on it. The seat is null without a roster row; only the
+// two seat states that tell a story matter here.
+export type ApplicationFacts = {
+  eventStatus: 'PUBLISHED' | 'CANCELLED';
+  seat: 'APPROVED' | 'CANCELLED' | null;
+  requests: RequestStatus[];
+};
+
+export type EventApplicationFacts = ApplicationFacts & { eventId: string };
+
+export type ApplicationFactsPage = {
+  items: EventApplicationFacts[];
+  total: number;
 };

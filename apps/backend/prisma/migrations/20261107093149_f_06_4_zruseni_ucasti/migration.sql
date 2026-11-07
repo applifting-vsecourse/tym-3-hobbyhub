@@ -3,7 +3,7 @@ ALTER TABLE "participation" ADD COLUMN     "cancellationMessage" VARCHAR(500);
 
 -- Not expressible in Prisma (see the note at the top of schema.prisma).
 
--- F-06.4, ADR-0016: the message belongs to a cancelled seat only. A seat
+-- F-06.4, ADR-0017: the message belongs to a cancelled seat only. A seat
 -- cancelled any other way (none yet) may have none.
 ALTER TABLE "participation" ADD CONSTRAINT "participation_cancellation_message_only_cancelled" CHECK ("cancellationMessage" IS NULL OR "status" = 'CANCELLED');
 

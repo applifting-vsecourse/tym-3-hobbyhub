@@ -48,6 +48,7 @@ function DecidedSection({ eventId, status }: { eventId: string; status: DecidedS
       renderItem={(request) => (
         <JoinRequestCard
           name={request.applicant.name}
+          profileUserId={request.userId}
           photo={request.applicant.image}
           hasVerifiedEmail={request.applicant.hasVerifiedEmail}
           bio={request.applicant.bio}

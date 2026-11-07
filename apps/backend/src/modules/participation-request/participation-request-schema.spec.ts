@@ -258,7 +258,7 @@ describeDb('participation request schema constraints', () => {
     await expect(rejected(`${'🏐'.repeat(500)}x`)).rejects.toThrow();
   });
 
-  // F-06.4, ADR-0016: the participant's message when cancelling a seat.
+  // F-06.4, ADR-0017: the participant's message when cancelling a seat.
   describe('cancellation message', () => {
     const seat = (
       status: ParticipationStatus,

@@ -17,6 +17,7 @@ vi.mock("@/lib/api-client", async (importOriginal) => ({
 const aRequest = (id: string, status: DecidedStatus, name: string) => ({
   id,
   status,
+  userId: `user-${id}`,
   message: null,
   changedAt: "2029-12-30T10:00:00.000Z",
   applicant: { name, image: null, bio: null, hasVerifiedEmail: false },
@@ -69,6 +70,14 @@ describe("DecidedRequests", () => {
     expect(get).toHaveBeenCalledWith("events/e1/requests/decided", {
       searchParams: { status: "WITHDRAWN", limit: "20", offset: "0" },
     })
+  })
+
+  it("links each name to the person's profile (F-04.2)", async () => {
+    answer({ REJECTED: { items: [aRequest("p1", "REJECTED", "Honza_K")] } })
+    await renderList()
+
+    const link = await screen.findByRole("link", { name: "Honza_K" })
+    expect(link.getAttribute("href")).toBe("/profile/user-p1")
   })
 
   it("says what would appear in an empty section", async () => {

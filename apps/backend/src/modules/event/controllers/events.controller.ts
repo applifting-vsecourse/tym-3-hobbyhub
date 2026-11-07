@@ -1,7 +1,8 @@
 import { EventsService } from '@/modules/event/services/events.service';
-import { User } from '@/shared/auth/decorators/user.decorator';
+import { OptionalUser, User } from '@/shared/auth/decorators/user.decorator';
 import { Identity } from '@/shared/auth/domain/identity';
 import { AuthenticatedUserGuard } from '@/shared/auth/guards/authenticated-user.guard';
+import { OptionalUserGuard } from '@/shared/auth/guards/optional-user.guard';
 import {
   Body,
   Controller,
@@ -27,7 +28,10 @@ import {
   EventDetailResponseDto,
   EventListResponseDto,
 } from './dto/event-list-item.response.dto';
-import { EventResponseDto } from './dto/event.response.dto';
+import {
+  EventResponseDto,
+  ParticipantEventInfoResponseDto,
+} from './dto/event.response.dto';
 import { ListEventsQuery } from './dto/list-events.query';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateExternalSpotsDto } from './dto/update-external-spots.dto';
@@ -109,6 +113,8 @@ export class EventsController {
       externalOccupiedSpots: body.externalOccupiedSpots,
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
+      contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -207,6 +213,8 @@ export class EventsController {
       externalOccupiedSpots: body.externalOccupiedSpots,
       contributionAmount: body.contributionAmount,
       contributionNote: body.contributionNote,
+      contact: body.contact,
+      externalChatUrl: body.externalChatUrl,
     });
     return EventResponseDto.fromDomain(event);
   }
@@ -236,14 +244,42 @@ export class EventsController {
     return EventResponseDto.fromDomain(event);
   }
 
-  // Public detail (F-02.4): approximate place only; the exact address and the
-  // online link of an event stay with approved participants (F-10.4).
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a public event' })
-  @ApiResponse({ status: 200, type: EventDetailResponseDto })
+  // F-06.5: the part of the detail a visitor never gets.
+  @Get(':id/participant-info')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Exact address and contacts, organizers and approved only',
+  })
+  @ApiResponse({ status: 200, type: ParticipantEventInfoResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 403, description: 'No seat on this event' })
   @ApiResponse({ status: 404, description: 'Event not found or not public' })
-  async detail(@Param('id') id: string): Promise<EventDetailResponseDto> {
-    const event = await this.eventsService.getPublicEvent(id);
+  async participantInfo(
+    @User() user: Identity,
+    @Param('id') id: string,
+  ): Promise<ParticipantEventInfoResponseDto> {
+    const info = await this.eventsService.getParticipantInfo(user, id);
+    return ParticipantEventInfoResponseDto.fromDomain(info);
+  }
+
+  // Detail (F-02.4): approximate place only; the exact address and the
+  // online link of an event stay with approved participants (F-10.4). Open to
+  // visitors; a group-only event (F-07.2) only to its group's members and
+  // those holding a seat.
+  @Get(':id')
+  @UseGuards(OptionalUserGuard)
+  @ApiOperation({ summary: 'Get an event the viewer may see' })
+  @ApiResponse({ status: 200, type: EventDetailResponseDto })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not visible to the viewer',
+  })
+  async detail(
+    @OptionalUser() user: Identity | undefined,
+    @Param('id') id: string,
+  ): Promise<EventDetailResponseDto> {
+    const event = await this.eventsService.getEventDetail(id, user);
     return EventDetailResponseDto.fromDomainDetail(event);
   }
 }

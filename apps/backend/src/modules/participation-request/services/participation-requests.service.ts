@@ -3,6 +3,7 @@ import { EventsService } from '@/modules/event/services/events.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
   ApplicantProfile,
+  ApplicationFactsPage,
   CancelRuleViolation,
   cancelRuleViolations,
   currentRequestOf,
@@ -58,7 +59,7 @@ export type MyRequestState = {
   // Empty when they may ask to join now.
   violations: JoinRuleViolation[];
   // Their seat, if they ever had one: an approved request with a CANCELLED
-  // seat is a person who cancelled it (F-06.4, ADR-0016).
+  // seat is a person who cancelled it (F-06.4, ADR-0017).
   seat: SeatStatus | null;
   // Empty when they may cancel their seat now.
   cancelViolations: CancelRuleViolation[];
@@ -73,6 +74,16 @@ export class ParticipationRequestsService {
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // F-06.3: a page of the person's own applications to events that are not
+  // over; the overview turns them into one status per event.
+  getMyApplicationFacts(
+    user: Identity,
+    page: Page,
+    now: Date = new Date(),
+  ): Promise<ApplicationFactsPage> {
+    return this.repository.getApplicationFacts(user.id, now, page);
+  }
 
   async getMyRequestState(
     user: Identity,
@@ -295,7 +306,7 @@ export class ParticipationRequestsService {
     eventId: string,
     user: Identity,
   ): Promise<EventSeatFacts> {
-    const event = await this.eventsService.getPublicEventSeatFacts(
+    const event = await this.eventsService.getVisibleEventSeatFacts(
       eventId,
       user.id,
     );

@@ -3,15 +3,19 @@ import {
   PROFILE_BIO_MAX_LENGTH,
   PROFILE_NAME_MAX_LENGTH,
 } from '@/modules/profile/domain/profile';
-import { GENDERS } from '@/shared/auth/registration/registration';
+import {
+  GENDERS,
+  OLDEST_BIRTH_YEAR,
+} from '@/shared/auth/registration/registration';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  Matches,
+  Min,
   ValidateIf,
 } from 'class-validator';
 
@@ -66,8 +70,13 @@ export class UpdatePrivateDetailsDto {
   @IsIn(GENDERS)
   gender!: (typeof GENDERS)[number];
 
-  @ApiProperty({ example: '1990-05-17', description: 'Calendar date, 18+' })
-  @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  birthDate!: string;
+  @ApiProperty({
+    example: 1990,
+    minimum: OLDEST_BIRTH_YEAR,
+    description:
+      'Year of birth, never the full date; at most the year of turning 18',
+  })
+  @IsInt()
+  @Min(OLDEST_BIRTH_YEAR)
+  birthYear!: number;
 }

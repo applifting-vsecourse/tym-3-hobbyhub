@@ -115,12 +115,16 @@ export class ApplicantProfileResponseDto {
 }
 
 export class PendingRequestResponseDto extends ParticipationRequestResponseDto {
+  @ApiProperty({ description: 'The applicant, for the link to their profile' })
+  userId!: string;
+
   @ApiProperty({ type: ApplicantProfileResponseDto })
   applicant!: ApplicantProfileResponseDto;
 
   static fromDomain(request: PendingRequest): PendingRequestResponseDto {
     return {
       ...ParticipationRequestResponseDto.fromDomain(request),
+      userId: request.userId,
       applicant: ApplicantProfileResponseDto.fromDomain(request.applicant),
     };
   }
@@ -149,6 +153,9 @@ export class DecidedRequestResponseDto {
   @ApiProperty({ enum: DECIDED_STATUSES })
   status!: DecidedStatus;
 
+  @ApiProperty({ description: 'The applicant, for the link to their profile' })
+  userId!: string;
+
   @ApiProperty({ type: String, nullable: true })
   message!: string | null;
 
@@ -166,6 +173,7 @@ export class DecidedRequestResponseDto {
     return {
       id: request.id,
       status: request.status,
+      userId: request.userId,
       message: request.message,
       changedAt: request.changedAt,
       applicant: ApplicantProfileResponseDto.fromDomain(request.applicant),

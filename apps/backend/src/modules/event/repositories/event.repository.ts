@@ -24,9 +24,14 @@ import {
   EventSeatFacts,
   foldForSearch,
   GeoPoint,
+  GroupEventListItem,
+  GroupEventPage,
+  GroupEventsPeriod,
+  INVOLVED_PARTICIPATION_STATUSES,
   MIN_STATS_PARTICIPANTS,
   occupancyOf,
   Page,
+  ParticipantEventInfo,
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
@@ -150,11 +155,23 @@ const PUBLIC_EVENT = {
   isHidden: false,
 } as const;
 
+// F-07.2: what may be shown to someone, depending on who they are: public or
+// group-only, never a draft, a private event or one hidden by a moderator.
+// Whether this person may see a group-only one is the service's to decide
+// (`canSeeEvent`).
+const SHOWABLE_EVENT = {
+  status: { not: 'DRAFT' },
+  visibility: { in: ['PUBLIC', 'GROUP_ONLY'] },
+  isHidden: false,
+} as const satisfies Prisma.EventWhereInput;
+
 // What the rules about seats read of an event (`EventFacts`). The approved
 // people come along, so a caller can find one of them without a second query.
 const eventFactsSelect = {
   id: true,
   status: true,
+  visibility: true,
+  groupId: true,
   startAt: true,
   endAt: true,
   approvalMode: true,
@@ -183,6 +200,8 @@ const mapEventFacts = (event: EventFactsRow): EventFacts => {
   return {
     id: event.id,
     status: event.status,
+    visibility: event.visibility,
+    groupId: event.groupId,
     startAt: event.startAt,
     endAt: event.endAt,
     approvalMode: event.approvalMode,
@@ -279,6 +298,8 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   maxParticipants: event.maxParticipants,
   contributionAmount: event.contributionAmount?.toNumber() ?? null,
   contributionNote: event.contributionNote,
+  contact: event.contact,
+  externalChatUrl: event.externalChatUrl,
   location: mapLocation(event),
   activity: {
     id: event.activity.id,
@@ -323,6 +344,8 @@ export class EventRepository {
         externalOccupiedSpots: data.externalOccupiedSpots,
         contributionAmount: data.contributionAmount ?? null,
         contributionNote: data.contributionNote ?? null,
+        contact: data.contact ?? null,
+        externalChatUrl: data.externalChatUrl ?? null,
         locationStreet: data.location.street,
         locationCity: data.location.city,
         locationPostalCode: data.location.postalCode,
@@ -377,6 +400,8 @@ export class EventRepository {
           externalOccupiedSpots: data.externalOccupiedSpots,
           contributionAmount: data.contributionAmount ?? null,
           contributionNote: data.contributionNote ?? null,
+          contact: data.contact ?? null,
+          externalChatUrl: data.externalChatUrl ?? null,
           locationStreet: data.location?.street ?? null,
           locationCity: data.location?.city ?? null,
           locationPostalCode: data.location?.postalCode ?? null,
@@ -544,11 +569,52 @@ export class EventRepository {
     };
   }
 
-  // Public detail: the list's visibility rules, but an event that was cancelled
-  // or is over stays reachable, so a shared link still explains what happened.
-  async getPublicEventById(id: string): Promise<EventDetail | null> {
+  // The list cards of the given events, for a caller that already knows which
+  // ones it wants (F-06.3). Visibility is the caller's business.
+  async getListItemsByIds(ids: string[]): Promise<EventListItem[]> {
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      include: listInclude,
+    });
+    return events.map((event) => mapPrismaEventToListItem(event));
+  }
+
+  // F-06.3: a page of the published public events a person organizes (or
+  // co-organizes) that are not over, soonest first.
+  async getUpcomingOrganizedBy(
+    userId: string,
+    now: Date,
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    const where: Prisma.EventWhereInput = {
+      ...PUBLIC_EVENT,
+      // Only what is on offer: not a draft, and not one that was called off.
+      status: EventStatus.PUBLISHED,
+      endAt: { gte: now },
+      OR: [{ organizerId: userId }, { coOrganizers: { some: { id: userId } } }],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => mapPrismaEventToListItem(event)),
+      total,
+    };
+  }
+
+  // The detail: public or group-only (the service checks who asks), and an
+  // event that was cancelled or is over stays reachable, so a shared link
+  // still explains what happened.
+  async getShowableEventById(id: string): Promise<EventDetail | null> {
     const event = await this.prisma.event.findFirst({
-      where: { id, ...PUBLIC_EVENT },
+      where: { id, ...SHOWABLE_EVENT },
       include: {
         activity: true,
         level: true,
@@ -559,7 +625,7 @@ export class EventRepository {
         },
         participations: {
           where: { status: { in: LIST_TAKEN_STATUSES } },
-          select: { user: { select: { birthDate: true, gender: true } } },
+          select: { user: { select: { birthYear: true, gender: true } } },
         },
       },
     });
@@ -591,6 +657,7 @@ export class EventRepository {
         event.group && isPubliclyVisible(event.group)
           ? { id: event.group.id, name: event.group.name }
           : null,
+      visibility: event.visibility as EventDetail['visibility'],
       stats: computeParticipantStats(
         participants,
         event.startAt,
@@ -600,13 +667,30 @@ export class EventRepository {
     };
   }
 
-  // F-06.1: the same visibility as the public detail, seen by one person.
-  async getPublicEventSeatFacts(
+  // F-06.5: what the organizers and approved participants see on top of the
+  // public detail. The caller has already checked who is asking.
+  async getParticipantInfo(id: string): Promise<ParticipantEventInfo | null> {
+    const event = await this.prisma.event.findFirst({
+      where: { id, ...SHOWABLE_EVENT },
+      include: { organizer: { select: { name: true } } },
+    });
+    if (!event) return null;
+    return {
+      venueType: event.venueType,
+      location: mapLocation(event),
+      organizerName: event.organizer.name,
+      contact: event.contact,
+      externalChatUrl: event.externalChatUrl,
+    };
+  }
+
+  // F-06.1: the same events as the detail, seen by one person.
+  async getShowableEventSeatFacts(
     id: string,
     userId: string,
   ): Promise<EventSeatFacts | null> {
     const event = await this.prisma.event.findFirst({
-      where: { id, ...PUBLIC_EVENT },
+      where: { id, ...SHOWABLE_EVENT },
       select: eventFactsSelect,
     });
     if (!event) return null;
@@ -615,6 +699,69 @@ export class EventRepository {
       hasSeat: event.participations.some(
         (participation) => participation.userId === userId,
       ),
+    };
+  }
+
+  // F-07.2: whether someone holds or awaits a seat on the event, so a
+  // group-only one stays visible to them after they leave the group.
+  async isInvolvedIn(eventId: string, userId: string): Promise<boolean> {
+    const [participations, requests] = await Promise.all([
+      this.prisma.participation.count({
+        where: {
+          eventId,
+          userId,
+          status: { in: [...INVOLVED_PARTICIPATION_STATUSES] },
+        },
+      }),
+      this.prisma.participationRequest.count({
+        where: { eventId, userId, status: RequestStatus.PENDING },
+      }),
+    ]);
+    return participations + requests > 0;
+  }
+
+  // F-07.2: a page of a group's events. Upcoming: not over yet, soonest
+  // first. Past: over, newest first. Cancelled ones stay, drafts, private and
+  // hidden ones never show; which visibilities the viewer gets is the
+  // service's to decide.
+  async getGroupEvents(
+    groupId: string,
+    {
+      period,
+      visibilities,
+      now,
+    }: {
+      period: GroupEventsPeriod;
+      visibilities: GroupEventListItem['visibility'][];
+      now: Date;
+    },
+    { limit, offset }: Page,
+  ): Promise<GroupEventPage> {
+    const where: Prisma.EventWhereInput = {
+      groupId,
+      status: { not: EventStatus.DRAFT },
+      isHidden: false,
+      visibility: { in: visibilities },
+      endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+    };
+    const direction = period === 'upcoming' ? 'asc' : 'desc';
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: direction }, { id: direction }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => ({
+        ...mapPrismaEventToListItem(event),
+        status: event.status as GroupEventListItem['status'],
+        visibility: event.visibility as GroupEventListItem['visibility'],
+      })),
+      total,
     };
   }
 

@@ -425,6 +425,8 @@ const EXISTING: Event = {
   fillState: "MINIMUM_REACHED",
   contributionAmount: 80,
   contributionNote: null,
+  externalChatUrl: null,
+  contact: null,
   location: {
     street: "Chabařovická 4",
     city: "Praha 8",
@@ -462,6 +464,40 @@ describe("EventForm editing an event", () => {
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Páteční florbal", activityId: "a-florbal" }),
+    )
+  })
+
+  it("saves the chat link and the contact, and refuses what does not fit them", async () => {
+    const { onSubmit, user } = await renderForm({ event: EXISTING })
+
+    await continueToNextStep(user)
+    await continueToNextStep(user)
+    await user.type(screen.getByLabelText(/Odkaz na skupinový chat/), "chat.whatsapp.com/abc")
+    await user.type(screen.getByLabelText(/Kontakt na organizátora/), "2026-11-06")
+    await user.click(screen.getByRole("button", { name: "Uložit změny" }))
+
+    expect(
+      await screen.findByText("Zadejte odkaz, který začíná na http:// nebo https://"),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Zadejte e-mail nebo telefon, např. +420 777 123 456"),
+    ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText(/Odkaz na skupinový chat/))
+    await user.type(
+      screen.getByLabelText(/Odkaz na skupinový chat/),
+      "https://chat.whatsapp.com/abc",
+    )
+    await user.clear(screen.getByLabelText(/Kontakt na organizátora/))
+    await user.type(screen.getByLabelText(/Kontakt na organizátora/), "+420 777 123 456")
+    await user.click(screen.getByRole("button", { name: "Uložit změny" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        externalChatUrl: "https://chat.whatsapp.com/abc",
+        contact: "+420 777 123 456",
+      }),
     )
   })
 
