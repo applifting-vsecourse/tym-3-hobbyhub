@@ -3,8 +3,10 @@ import { Prisma } from '@/generated/prisma/client';
 import {
   NewNotification,
   Notification,
+  NotificationFilter,
   NotificationPage,
   NotificationPayload,
+  notificationTypesOf,
   Page,
 } from '@/modules/notification/domain/notification';
 import { Injectable } from '@nestjs/common';
@@ -59,9 +61,22 @@ export class NotificationRepository {
     return count;
   }
 
-  // The recipient's notifications, newest first, a page at a time.
-  async listOf(recipientId: string, page: Page): Promise<NotificationPage> {
-    const where = { recipientId };
+  // The recipient's notifications, newest first, a page at a time; `total`
+  // counts the ones the filter lets through.
+  async listOf(
+    recipientId: string,
+    page: Page,
+    filter: NotificationFilter = {},
+  ): Promise<NotificationPage> {
+    const where: Prisma.NotificationWhereInput = {
+      recipientId,
+      ...(filter.read === undefined
+        ? {}
+        : { readAt: filter.read ? { not: null } : null }),
+      ...(filter.kind === undefined
+        ? {}
+        : { type: { in: [...notificationTypesOf(filter.kind)] } }),
+    };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.notification.findMany({
         where,

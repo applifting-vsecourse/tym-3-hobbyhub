@@ -5,12 +5,17 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
+import type { NotificationListFilter } from "@/features/notification/api/notificationKeys"
 import type { Notification } from "@/features/notification/api/notificationSchemas"
 import { notificationsQueryOptions } from "@/features/notification/api/notificationsQueryOptions"
 import { NotificationItem } from "@/features/notification/components/NotificationItem"
 import { useMarkNotificationRead } from "@/features/notification/hooks/useMarkRead"
 
 type NotificationListProps = {
+  /** Which notifications: the bell's unread ones, a section of the page. */
+  filter?: NotificationListFilter
+  /** The one sentence of the empty state: what would appear here. */
+  empty: string
   /** The bell shows the first page only; the page loads more. */
   hasMorePages?: boolean
   /** Called after a notification was opened, e.g. to close the bell. */
@@ -23,9 +28,15 @@ type NotificationListProps = {
  * The notifications, newest first, with the three states every list has.
  * Opening one marks it read; the link itself takes the user where it leads.
  */
-export function NotificationList({ hasMorePages = false, onOpen, now }: NotificationListProps) {
+export function NotificationList({
+  filter,
+  empty,
+  hasMorePages = false,
+  onOpen,
+  now,
+}: NotificationListProps) {
   const { t } = useTranslation()
-  const query = useInfiniteQuery(notificationsQueryOptions())
+  const query = useInfiniteQuery(notificationsQueryOptions(filter))
   const markRead = useMarkNotificationRead()
 
   const items = query.data?.pages.flatMap((page) => page.items) ?? []
@@ -63,7 +74,7 @@ export function NotificationList({ hasMorePages = false, onOpen, now }: Notifica
     )
   }
   if (items.length === 0) {
-    return <p className="px-3 py-6 typo-body text-muted-foreground">{t("notifications.empty")}</p>
+    return <p className="px-3 py-6 typo-body text-muted-foreground">{empty}</p>
   }
   return (
     <div className="flex flex-col gap-3">
