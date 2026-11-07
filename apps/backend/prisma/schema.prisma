@@ -420,12 +420,12 @@ model Participation {
 model ParticipationRequest {
   id String @id @default(cuid())
 
-  status      RequestStatus @default(PENDING)
-  message     String?       @db.VarChar(500)
-  requestedAt DateTime      @default(now())
-  decidedAt   DateTime?
+  status          RequestStatus @default(PENDING)
+  message         String?       @db.VarChar(500)
+  requestedAt     DateTime      @default(now())
+  decidedAt       DateTime?
   // F-05.7 optional, only on REJECTED (ADR-0008). Not shown anywhere yet.
-  rejectionReason String?   @db.VarChar(500)
+  rejectionReason String?       @db.VarChar(500)
 
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String
@@ -465,10 +465,78 @@ model Notification {
   group       Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId     String?
 
+  // F-09.5: the e-mail made of it, if one was (ADR-0018).
+  emailDelivery EmailDelivery?
+
   // The bell lists newest first and counts the unread ones.
   @@index([recipientId, createdAt(sort: Desc)])
   @@index([recipientId, readAt])
   @@map("notification")
+}
+
+// F-09.5, ADR-0018: the e-mail outbox. Every e-mail the app sends is first a
+// row here, and a poller in the backend sends what is due: in the order the
+// limits allow, again after a temporary failure, and with the outcome kept.
+enum EmailKind {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+  NOTIFICATION
+}
+
+enum EmailDeliveryStatus {
+  // Waiting for its turn, or for the next attempt after a temporary failure.
+  PENDING
+  // Taken by the poller, being handed to the provider right now.
+  SENDING
+  SENT
+  // A permanent failure, or the last attempt failed too.
+  FAILED
+  // Never sent, on purpose: see skipReason.
+  SKIPPED
+}
+
+enum EmailSkipReason {
+  // A notification for an address its owner has not verified.
+  UNVERIFIED
+  // The recipient had too many non-critical e-mails in the last hour.
+  RECIPIENT_CAP
+}
+
+model EmailDelivery {
+  id String @id @default(cuid())
+
+  kind     EmailKind
+  // Critical e-mails go first and may use the reserve of the daily budget.
+  critical Boolean
+  status   EmailDeliveryStatus @default(PENDING)
+
+  // Rendered when queued, so a retry sends exactly what was meant.
+  toAddress String @db.VarChar(320)
+  subject   String @db.VarChar(300)
+  html      String @db.Text
+
+  // Whose e-mail it is: the per-recipient cap counts by it. Their e-mails go
+  // with their account.
+  recipient      User          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId    String
+  // At most one e-mail per notification; the record stays when it goes.
+  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  notificationId String?       @unique
+
+  attempts          Int              @default(0)
+  nextAttemptAt     DateTime         @default(now())
+  lastError         String?          @db.Text
+  skipReason        EmailSkipReason?
+  // The provider's id of the sent message, to look it up there.
+  providerMessageId String?          @db.VarChar(300)
+  createdAt         DateTime         @default(now())
+  sentAt            DateTime?
+
+  // The poller looks for what is due; the budgets count what was sent.
+  @@index([status, nextAttemptAt])
+  @@index([sentAt])
+  @@index([recipientId, sentAt])
+  @@map("email_delivery")
 }
 
 model Quack {
@@ -619,6 +687,7 @@ model User {
   membershipRequests    MembershipRequest[]
   notifications         Notification[]         @relation("NotificationRecipient")
   causedNotifications   Notification[]         @relation("NotificationActor")
+  emailDeliveries       EmailDelivery[]
 
   @@unique([email])
   @@unique([username])
