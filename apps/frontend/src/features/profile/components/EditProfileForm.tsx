@@ -143,7 +143,13 @@ export function EditProfileForm({
         activityLabel={activityLabel}
         levels={levels}
       />
-      <LocationFields />
+      <LocationFields
+        hasSavedAddress={saved.address !== null}
+        onRemoved={() => {
+          setSaved((current) => ({ ...current, address: null }))
+          form.resetField("address", { defaultValue: null })
+        }}
+      />
       <PrivateFields />
 
       {hasSaveError ? (
