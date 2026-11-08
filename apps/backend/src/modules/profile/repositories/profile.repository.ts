@@ -78,4 +78,33 @@ export class ProfileRepository {
       data: { ...data, updatedAt: new Date() },
     });
   }
+
+  // #24: the whole location at once: the home address, the temporary place and
+  // the travel radius. Nothing is kept as history.
+  async clearLocation(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        homeStreet: null,
+        homeCity: null,
+        homePostalCode: null,
+        homeCountry: null,
+        homeDistrict: null,
+        homePlaceName: null,
+        homeLatitude: null,
+        homeLongitude: null,
+        temporaryStreet: null,
+        temporaryCity: null,
+        temporaryPostalCode: null,
+        temporaryCountry: null,
+        temporaryDistrict: null,
+        temporaryPlaceName: null,
+        temporaryLatitude: null,
+        temporaryLongitude: null,
+        temporaryLocationValidUntil: null,
+        travelRadiusKm: null,
+        updatedAt: new Date(),
+      },
+    });
+  }
 }

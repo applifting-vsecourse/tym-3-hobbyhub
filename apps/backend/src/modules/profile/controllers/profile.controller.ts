@@ -6,6 +6,7 @@ import { AuthenticatedUserGuard } from '@/shared/auth/guards/authenticated-user.
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -120,6 +121,18 @@ export class ProfileController {
   ): Promise<ProfileResponseDto> {
     return ProfileResponseDto.fromDomain(
       await this.profileService.updateLocation(user, { ...body }),
+    );
+  }
+
+  @Delete('location')
+  @ApiOperation({
+    summary: 'Remove my whole location: address, temporary place and radius',
+  })
+  @ApiResponse({ status: 200, type: ProfileResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async removeLocation(@User() user: Identity): Promise<ProfileResponseDto> {
+    return ProfileResponseDto.fromDomain(
+      await this.profileService.removeLocation(user),
     );
   }
 }
