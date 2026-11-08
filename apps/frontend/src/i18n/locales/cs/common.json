@@ -1157,8 +1157,8 @@
     "form": {
       "cancel": "Zrušit",
       "hiddenDetails": "Kontakt, poloha, věk ani pohlaví organizátor neuvidí.",
-      "messageHint": "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne po schválení přes kontakt nebo chat, který organizátor uvede.",
-      "messageHintAutomatic": "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, který organizátor uvede.",
+      "messageHint": "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne po schválení přes kontakt nebo chat, pokud ho organizátor uvede.",
+      "messageHintAutomatic": "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, pokud ho organizátor uvede.",
       "messageLabel": "Zpráva organizátorovi (nepovinné)",
       "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
       "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",

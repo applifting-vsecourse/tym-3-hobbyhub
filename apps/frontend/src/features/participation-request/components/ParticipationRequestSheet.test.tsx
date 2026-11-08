@@ -139,7 +139,7 @@ describe("ParticipationRequestSheet", () => {
     await renderSheet("form")
 
     expect(await messageField()).toHaveAccessibleDescription(
-      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne po schválení přes kontakt nebo chat, který organizátor uvede.",
+      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne po schválení přes kontakt nebo chat, pokud ho organizátor uvede.",
     )
   })
 
@@ -147,7 +147,7 @@ describe("ParticipationRequestSheet", () => {
     await renderSheet("form", "AUTOMATIC")
 
     expect(await messageField()).toHaveAccessibleDescription(
-      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, který organizátor uvede.",
+      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, pokud ho organizátor uvede.",
     )
   })
 
