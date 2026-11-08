@@ -23,5 +23,8 @@ export const updatePrivateDetails = async (input: UpdatePrivateDetailsInput) =>
 export const updateInterests = async (input: SaveInterestsInput) =>
   profileSchema.parse(await api.put("profile/activities", { json: input }).json())
 
+export const removeLocation = async () =>
+  profileSchema.parse(await api.delete("profile/location").json())
+
 export const updateLocation = async (input: HomeAddress) =>
   profileSchema.parse(await api.put("profile/location", { json: input }).json())
