@@ -193,7 +193,7 @@ describe("EditProfileForm", () => {
     it("says who sees the location and that no history is kept", async () => {
       await renderForm()
 
-      expect(screen.getByText(/Lokalitu vidíte jen vy/)).toBeInTheDocument()
+      expect(screen.getByText(/Lokalitu z uživatelů vidíte jen vy/)).toBeInTheDocument()
       expect(screen.getByText(/neukládá historii polohy/)).toBeInTheDocument()
     })
 

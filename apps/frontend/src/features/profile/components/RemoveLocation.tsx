@@ -1,16 +1,9 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 import { useRemoveLocation } from "@/features/profile/hooks/useProfileMutations"
 
@@ -48,42 +41,42 @@ export function RemoveLocation({ onRemoved }: RemoveLocationProps) {
       >
         {t("profile.location.remove.button")}
       </Button>
-      <Dialog
-        open={isOpen}
+      <ResponsiveSheet
+        isOpen={isOpen}
         onOpenChange={(isNowOpen) => {
           if (!removeLocation.isPending) setIsOpen(isNowOpen)
         }}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{t("profile.location.remove.title")}</DialogTitle>
-            <DialogDescription>{t("profile.location.remove.description")}</DialogDescription>
-          </DialogHeader>
-          {removeLocation.isError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{t("profile.location.remove.error")}</AlertDescription>
-            </Alert>
-          ) : null}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={removeLocation.isPending}
-              onClick={() => setIsOpen(false)}
-            >
-              {t("profile.location.remove.cancel")}
-            </Button>
+        title={t("profile.location.remove.title")}
+        description={t("profile.location.remove.description")}
+        footer={
+          <>
             <Button
               type="button"
               variant="destructive"
+              className="w-full"
               disabled={removeLocation.isPending}
               onClick={() => void remove()}
             >
               {t("profile.location.remove.confirm")}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={removeLocation.isPending}
+              onClick={() => setIsOpen(false)}
+            >
+              {t("profile.location.remove.cancel")}
+            </Button>
+          </>
+        }
+      >
+        {removeLocation.isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{t("profile.location.remove.error")}</AlertDescription>
+          </Alert>
+        ) : null}
+      </ResponsiveSheet>
     </>
   )
 }

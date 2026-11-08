@@ -1304,7 +1304,7 @@
       "description": "A private address, nobody else sees it. It is used to find events nearby.",
       "hasNone": "You have not added an address yet.",
       "howTo": "Start typing your street (and house number, if you like) and we suggest places from the map. Pick your line so we know the position on the map too.",
-      "notice": "Only you can see your location. It is not shown to friends, organizers or group members. The app keeps no history of your location and does not detect it from GPS or your IP address.",
+      "notice": "Among users, only you can see your location. It is not shown to friends, organizers or group members. The app keeps no history of your location and reads your GPS position only when you ask it to (for example for “nearest to me” sorting), without storing it.",
       "remove": {
         "button": "Remove location",
         "cancel": "Keep it",
