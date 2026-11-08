@@ -4,6 +4,8 @@ import { NotificationsService } from '@/modules/notification/services/notificati
 import {
   ApplicantProfile,
   ApplicationFactsPage,
+  CancelRuleViolation,
+  cancelRuleViolations,
   currentRequestOf,
   DecidedRequestPage,
   DecidedStatus,
@@ -11,8 +13,10 @@ import {
   decisionRuleViolations,
   JoinRuleViolation,
   joinRuleViolations,
+  ParticipantPage,
   ParticipationRequest,
   PendingRequestPage,
+  SeatStatus,
 } from '@/modules/participation-request/domain/participation-request';
 import { ParticipationRequestRepository } from '@/modules/participation-request/repositories/participation-request.repository';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -22,10 +26,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-const VIOLATION_MESSAGES: Record<
-  JoinRuleViolation | DecisionRuleViolation,
-  string
-> = {
+type Violation =
+  JoinRuleViolation | DecisionRuleViolation | CancelRuleViolation;
+
+const VIOLATION_MESSAGES: Record<Violation, string> = {
   EVENT_CANCELLED: 'The event was cancelled',
   EVENT_NOT_HELD: 'The event did not take place',
   EVENT_FINISHED: 'The event is over',
@@ -37,12 +41,11 @@ const VIOLATION_MESSAGES: Record<
   REJECTED_BEFORE: 'Your request to join this event was rejected',
   NOT_PENDING: 'The request no longer waits for a decision',
   APPLICANT_HAS_SEAT: 'The applicant already has a seat at this event',
+  NO_SEAT: 'You have no seat at this event to cancel',
 };
 
 // Event messages plus the codes, so the client can say why in its language.
-const violationsError = (
-  violations: (JoinRuleViolation | DecisionRuleViolation)[],
-): BadRequestException =>
+const violationsError = (violations: Violation[]): BadRequestException =>
   new BadRequestException({
     statusCode: 400,
     error: 'Bad Request',
@@ -55,6 +58,11 @@ export type MyRequestState = {
   request: ParticipationRequest | null;
   // Empty when they may ask to join now.
   violations: JoinRuleViolation[];
+  // Their seat, if they ever had one: an approved request with a CANCELLED
+  // seat is a person who cancelled it (F-06.4, ADR-0017).
+  seat: SeatStatus | null;
+  // Empty when they may cancel their seat now.
+  cancelViolations: CancelRuleViolation[];
   // What the organizer sees of them (F-05.7), so the request form can show it.
   applicant: ApplicantProfile;
 };
@@ -83,13 +91,16 @@ export class ParticipationRequestsService {
     now: Date = new Date(),
   ): Promise<MyRequestState> {
     const event = await this.getEvent(eventId, user);
-    const [requests, applicant] = await Promise.all([
+    const [requests, seat, applicant] = await Promise.all([
       this.repository.getRequestsOf(eventId, user.id),
+      this.repository.getSeatStatus(eventId, user.id),
       this.repository.getApplicantProfile(user.id),
     ]);
     return {
       request: currentRequestOf(requests),
       violations: joinRuleViolations(event, user.id, requests, now),
+      seat,
+      cancelViolations: cancelRuleViolations(event, now),
       applicant,
     };
   }
@@ -154,6 +165,34 @@ export class ParticipationRequestsService {
       throw new NotFoundException('No pending request to withdraw');
   }
 
+  // F-06.4: the participant gives their seat back any time before the start,
+  // and tells the organizers why. The seat frees up for anyone who asks next;
+  // offering it to the waitlist is F-05.9.
+  async cancelMySeat(
+    user: Identity,
+    eventId: string,
+    message: string,
+    now: Date = new Date(),
+  ): Promise<void> {
+    const event = await this.getEvent(eventId, user);
+    const violations = cancelRuleViolations(event, now);
+    if (violations.length > 0) throw violationsError(violations);
+
+    // Who cancels comes from the session, never from the request body.
+    const refusal = await this.repository.cancelSeat({
+      eventId,
+      userId: user.id,
+      message,
+      at: now,
+    });
+    if (refusal) throw violationsError([refusal]);
+    await this.notificationsService.notifyParticipantCancelled({
+      event,
+      participant: user,
+      message,
+    });
+  }
+
   // F-05.7: the requests waiting on the event, for its organizers.
   async getPendingRequests(
     user: Identity,
@@ -164,7 +203,19 @@ export class ParticipationRequestsService {
     return this.repository.getPendingRequests(eventId, page);
   }
 
-  // F-05.6: the approved, rejected and withdrawn, for the event's organizers.
+  // F-05.6, F-06.4: who has a seat and who gave it back, for the event's
+  // organizers.
+  async getParticipants(
+    user: Identity,
+    eventId: string,
+    status: SeatStatus,
+    page: Page,
+  ): Promise<ParticipantPage> {
+    await this.eventsService.getOrganizedEvent(eventId, user);
+    return this.repository.getParticipants(eventId, status, page);
+  }
+
+  // F-05.6: the rejected and withdrawn requests, for the event's organizers.
   async getDecidedRequests(
     user: Identity,
     eventId: string,

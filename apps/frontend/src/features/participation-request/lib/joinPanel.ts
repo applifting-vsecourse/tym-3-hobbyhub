@@ -4,13 +4,17 @@ import type {
 } from "@/features/participation-request/api/participationRequestSchemas"
 
 /** What the seat panel shows instead of the free seat: the person's own place in the event. */
-export type OwnSeatView = "organizer" | "pending" | "approved" | "rejected"
+export type OwnSeatView = "organizer" | "pending" | "approved" | "cancelled" | "rejected"
 
-export function ownSeatView({ request, violations }: MyRequestState): OwnSeatView | null {
+export function ownSeatView({ request, violations, seat }: MyRequestState): OwnSeatView | null {
   if (violations.includes("IS_ORGANIZER")) return "organizer"
   if (request?.status === "PENDING") return "pending"
-  if (violations.includes("HAS_SEAT") || request?.status === "APPROVED") return "approved"
+  if (violations.includes("HAS_SEAT")) return "approved"
   if (request?.status === "REJECTED") return "rejected"
+  // F-06.4: the seat says it, not the request. The approval stays after the
+  // seat was given back (ADR-0017), and a seat may have had no request at all.
+  if (seat === "CANCELLED") return "cancelled"
+  if (request?.status === "APPROVED") return "approved"
   return null
 }
 

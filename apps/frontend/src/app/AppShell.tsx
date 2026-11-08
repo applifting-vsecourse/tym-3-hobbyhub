@@ -22,16 +22,19 @@ type AppShellProps = {
   shellClassName?: string
   /** Location search in the header on discovery pages (landing only for now). */
   search?: ReactNode
+  /** The page's footer, under `<main>` and above the BottomNav (the landing page). */
+  footer?: ReactNode
 }
 
 /**
- * The app chrome every page keeps: the header, and for a signed-in user the
- * navigation — links and "Přidat" in the header from `md`, the BottomNav
- * below it — and the notification bell. A visitor gets the header with
- * "Sign in" only. It lives in `app/`, not in a feature: it composes the auth
+ * The app chrome every page keeps: the header and the navigation — links and
+ * "Přidat" in the header from `md`, the BottomNav below it. A signed-in user
+ * also gets the notification bell and, in the navigation, Moje akce and
+ * Profil; a visitor has Objevovat, Přidat and Skupiny with "Sign in" in the
+ * header (#151). It lives in `app/`, not in a feature: it composes the auth
  * menu and the notifications, and a feature may not import another one.
  */
-export function AppShell({ children, className, shellClassName, search }: AppShellProps) {
+export function AppShell({ children, className, shellClassName, search, footer }: AppShellProps) {
   const { t } = useTranslation()
   const { user } = useSession()
   const pathname = useLocation({ select: (location) => location.pathname })
@@ -43,6 +46,7 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
   // Action bars fixed to the bottom of a phone screen (form submits) sit above
   // the BottomNav through `pb-above-bottom-nav`, which reads its height here.
   // From `md` the nav is hidden, its height drops to 0 and the bars sit low.
+  // The nav is there for everyone; only its items change with the session.
   useLayoutEffect(() => {
     const shell = shellRef.current
     const bottomNav = bottomNavRef.current
@@ -57,7 +61,7 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
       observer.disconnect()
       shell.style.removeProperty("--bottom-nav-height")
     }
-  }, [isSignedIn])
+  }, [])
 
   return (
     <div
@@ -72,18 +76,22 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
       </a>
       <Header
         search={search}
-        nav={isSignedIn ? <HeaderNav active={active} /> : null}
+        nav={
+          <HeaderNav
+            active={active}
+            isSignedIn={isSignedIn}
+          />
+        }
         actions={
-          isSignedIn ? (
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="max-md:hidden"
-            >
-              <Link to={ROUTES.newEvent}>{t("hobbyhub.nav.add")}</Link>
-            </Button>
-          ) : null
+          // A visitor is sent to sign in and comes back to the form.
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="max-md:hidden"
+          >
+            <Link to={ROUTES.newEvent}>{t("hobbyhub.nav.add")}</Link>
+          </Button>
         }
         notifications={isSignedIn ? <NotificationBell /> : null}
         userMenu={<HeaderMenu />}
@@ -95,16 +103,18 @@ export function AppShell({ children, className, shellClassName, search }: AppShe
       >
         {children}
       </main>
-      {isSignedIn ? (
-        // The nav's raised-button padding lets clicks through to the page;
-        // the wrapper that is measured must not catch them either.
-        <div
-          ref={bottomNavRef}
-          className="pointer-events-none sticky bottom-0 z-40 md:hidden"
-        >
-          <BottomNav active={active} />
-        </div>
-      ) : null}
+      {footer}
+      {/* The nav's raised-button padding lets clicks through to the page;
+          the wrapper that is measured must not catch them either. */}
+      <div
+        ref={bottomNavRef}
+        className="pointer-events-none sticky bottom-0 z-40 md:hidden"
+      >
+        <BottomNav
+          active={active}
+          isSignedIn={isSignedIn}
+        />
+      </div>
     </div>
   )
 }

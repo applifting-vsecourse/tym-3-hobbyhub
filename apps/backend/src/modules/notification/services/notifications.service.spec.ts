@@ -3,6 +3,7 @@ import { NotificationRepository } from '@/modules/notification/repositories/noti
 import { Identity } from '@/shared/auth/domain/identity';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { NotificationEmailsService } from './notification-emails.service';
 import { NotificationsService } from './notifications.service';
 
 const user = { id: 'u1' } as Identity;
@@ -26,11 +27,18 @@ const aNotification = (
 describe('NotificationsService', () => {
   const setup = (): {
     repository: MockProxy<NotificationRepository>;
+    emails: MockProxy<NotificationEmailsService>;
     service: NotificationsService;
   } => {
     const repository = mock<NotificationRepository>();
-    repository.createForRecipients.mockResolvedValue(1);
-    return { repository, service: new NotificationsService(repository) };
+    repository.createForRecipients.mockResolvedValue(['n1']);
+    const emails = mock<NotificationEmailsService>();
+    emails.queueFor.mockResolvedValue();
+    return {
+      repository,
+      emails,
+      service: new NotificationsService(repository, emails),
+    };
   };
 
   describe('the recipient', () => {
@@ -89,6 +97,27 @@ describe('NotificationsService', () => {
         recipientIds: ['organizer', 'co-organizer'],
         actorId: 'applicant',
         eventId: 'e1',
+      });
+    });
+  });
+
+  // F-06.4.
+  describe('a participant who cancelled their seat', () => {
+    it('tells every organizer, with the participant’s words', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyParticipantCancelled({
+        event: { id: 'e1', organizerIds: ['organizer', 'co-organizer'] },
+        participant: { id: 'participant' },
+        message: 'Onemocněl jsem, promiňte.',
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'PARTICIPANT_CANCELLED',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: 'participant',
+        eventId: 'e1',
+        payload: { message: 'Onemocněl jsem, promiňte.' },
       });
     });
   });
@@ -235,7 +264,7 @@ describe('NotificationsService', () => {
   });
 
   it('logs a failed write instead of failing the change that caused it', async () => {
-    const { repository, service } = setup();
+    const { repository, emails, service } = setup();
     repository.createForRecipients.mockRejectedValue(new Error('db down'));
     const error = jest
       .spyOn(Logger.prototype, 'error')
@@ -250,6 +279,42 @@ describe('NotificationsService', () => {
     ).resolves.toBeUndefined();
 
     expect(error).toHaveBeenCalled();
+    expect(emails.queueFor).not.toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  // F-09.5, ADR-0018.
+  describe('the e-mails', () => {
+    it('are made of the rows just written', async () => {
+      const { repository, emails, service } = setup();
+      repository.createForRecipients.mockResolvedValue(['n1', 'n2']);
+
+      await service.notifyNewParticipationRequest({
+        event: { id: 'e1', organizerIds: ['organizer', 'co-organizer'] },
+        applicant: { id: 'applicant' },
+      });
+
+      expect(emails.queueFor).toHaveBeenCalledWith(['n1', 'n2']);
+    });
+
+    it('failing to queue leaves the notifications and the change alone', async () => {
+      const { emails, service } = setup();
+      emails.queueFor.mockRejectedValue(new Error('outbox down'));
+      const error = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.notifyEventCancelled({
+          event: { id: 'e1' },
+          participantIds: ['p1'],
+          applicantIds: [],
+          cancelledBy: { id: 'organizer' },
+        }),
+      ).resolves.toBeUndefined();
+
+      expect(error).toHaveBeenCalled();
+      error.mockRestore();
+    });
   });
 });
