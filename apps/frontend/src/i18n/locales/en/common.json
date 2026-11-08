@@ -8,7 +8,9 @@
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
       "invalidGender": "Choose your gender.",
+      "invalidToken": "The link is invalid or has expired.",
       "passwordTooShort": "The password is too short.",
+      "resetPasswordFailed": "The password could not be set.",
       "signInFailed": "Sign in failed.",
       "signUpFailed": "Sign up failed.",
       "termsNotAccepted": "You need to accept the terms to register.",
@@ -23,6 +25,14 @@
       "gender": "Gender",
       "name": "Name / nickname",
       "password": "Password"
+    },
+    "forgotPassword": {
+      "backToSignIn": "Back to sign in",
+      "description": "Enter the e-mail of your account and we will send you a link to set a new password.",
+      "failed": "The link could not be sent. Please try again.",
+      "sent": "If an account exists for this e-mail, we have sent it a link to set a new password. It is valid for 1 hour.",
+      "submit": "Send link",
+      "title": "Forgot password"
     },
     "gender": {
       "female": "Female",
@@ -39,8 +49,19 @@
       "email": "e.g. john@doe.com",
       "gender": "Select"
     },
+    "resetPassword": {
+      "description": "Choose a new password. After saving, you will be signed out on all devices.",
+      "done": "Your password is set. Sign in with it.",
+      "invalidDescription": "The link is invalid, has been used, or has expired. Request a new one.",
+      "invalidTitle": "The link does not work",
+      "requestNew": "Send a new link",
+      "signIn": "Sign in",
+      "submit": "Save password",
+      "title": "New password"
+    },
     "signIn": {
       "description": "Welcome back to HobbyHub.",
+      "forgotPassword": "Forgot password?",
       "lockoutNote": "After repeated failed attempts we block signing in for a while.",
       "noAccount": "No account?",
       "rememberMe": "Stay signed in",
@@ -1286,6 +1307,13 @@
   },
   "profile": {
     "cancel": "Cancel",
+    "changePassword": {
+      "action": "Change password",
+      "description": "We will e-mail you a link to set a new password. After the change, you will be signed out on all devices and sign in with the new password.",
+      "failed": "The e-mail could not be sent. Please try again.",
+      "sent": "We have e-mailed you a link to set a new password. It is valid for 1 hour.",
+      "title": "Password"
+    },
     "edit": {
       "title": "Edit profile"
     },
