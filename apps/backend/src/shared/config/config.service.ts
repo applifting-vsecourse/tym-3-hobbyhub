@@ -17,9 +17,9 @@ import {
 @Injectable()
 export class Config {
   // basic info
-  readonly name: string = 'Quacker backend';
+  readonly name: string = 'HobbyHub backend';
   readonly description: string =
-    'Backend for Quacker, a social media platform for sharing short messages. Project example for educational purposes.';
+    'Backend for HobbyHub, an app for filling the missing players at sports and hobby events.';
 
   @IsSemVer()
   readonly version: string = '0.1.0';
@@ -76,7 +76,7 @@ export class Config {
 
   @Env('EMAIL_FROM', {
     expose: true,
-    defaultValue: 'Quacker <onboarding@resend.dev>',
+    defaultValue: 'HobbyHub <onboarding@resend.dev>',
   })
   @IsNotEmpty()
   readonly emailFrom!: string;
