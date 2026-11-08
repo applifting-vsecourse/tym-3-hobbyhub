@@ -45,6 +45,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Fails on a new moderate+ advisory in what ships to production, and tells
+      # when an entry under `overrides` in pnpm-workspace.yaml can go: delete it,
+      # and this step stays green once the parent depends on the fixed version.
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=moderate
+
       - name: Create env files
         run: pnpm env:check
 
