@@ -37,7 +37,7 @@ export function GroupMembersPreview({ groupId, members }: GroupMembersPreviewPro
       >
         <h2
           id="group-members-heading"
-          className="typo-h3 text-foreground underline-offset-4 group-hover:underline"
+          className="typo-label-lg text-muted-foreground underline-offset-4 group-hover:text-foreground group-hover:underline"
         >
           {t("groups.manage.membersTitle", { count: members.length })}
         </h2>

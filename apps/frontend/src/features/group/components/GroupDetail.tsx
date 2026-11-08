@@ -57,6 +57,8 @@ export function GroupDetail({
 
       <div className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         {membershipPanel}
+        {/* Beside the membership, not at the foot of a long page. */}
+        {membersPreview}
         {adminPanel}
       </div>
 
@@ -66,8 +68,6 @@ export function GroupDetail({
         </p>
 
         {events}
-
-        {membersPreview}
       </div>
     </div>
   )
