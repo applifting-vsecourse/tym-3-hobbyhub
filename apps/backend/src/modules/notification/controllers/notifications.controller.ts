@@ -25,6 +25,7 @@ import {
   NotificationPageResponseDto,
   NotificationResponseDto,
 } from './dto/notification.response.dto';
+import { ReadAllNotificationsQuery } from './dto/read-all-notifications.query';
 import { notificationsValidationPipe } from './notifications-validation.pipe';
 
 // #152: the signed-in user's own notifications. Whose they are comes from the
@@ -39,17 +40,25 @@ export class NotificationsController {
   constructor(private readonly service: NotificationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'My notifications, newest first' })
+  @ApiOperation({
+    summary: 'My notifications, newest first',
+    description:
+      'Optionally only the read or the unread ones (`read`) and only one kind (`kind`); `total` counts what the filter lets through.',
+  })
   @ApiResponse({ status: 200, type: NotificationPageResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid limit or offset' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid limit, offset, read or kind',
+  })
   async list(
     @User() user: Identity,
     @Query() query: ListNotificationsQuery,
   ): Promise<NotificationPageResponseDto> {
-    const page = await this.service.listMine(user, {
-      limit: query.limit,
-      offset: query.offset,
-    });
+    const page = await this.service.listMine(
+      user,
+      { limit: query.limit, offset: query.offset },
+      { read: query.read, kind: query.kind },
+    );
     return NotificationPageResponseDto.fromDomain(page);
   }
 
@@ -64,14 +73,21 @@ export class NotificationsController {
 
   @Post('read-all')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Mark all my notifications read' })
+  @ApiOperation({
+    summary: 'Mark all my notifications read',
+    description: 'Optionally only those of one kind (`kind`).',
+  })
   @ApiResponse({
     status: 200,
     type: NotificationCountResponseDto,
     description: 'How many were unread until now',
   })
-  async readAll(@User() user: Identity): Promise<NotificationCountResponseDto> {
-    return { count: await this.service.markAllRead(user) };
+  @ApiResponse({ status: 400, description: 'Invalid kind' })
+  async readAll(
+    @User() user: Identity,
+    @Query() query: ReadAllNotificationsQuery,
+  ): Promise<NotificationCountResponseDto> {
+    return { count: await this.service.markAllRead(user, query.kind) };
   }
 
   @Post(':id/read')

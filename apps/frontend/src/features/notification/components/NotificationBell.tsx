@@ -24,10 +24,14 @@ import { useMarkAllNotificationsRead } from "@/features/notification/hooks/useMa
 /** Above this the badge stops counting. */
 const BADGE_MAX = 99
 
+/** The bell shows only what is new. */
+const UNREAD = { read: false }
+
 /**
  * Zvoneček (#152): the number of unread notifications in the header, and on a
- * click the latest ones — a popover from `md`, a bottom drawer on phones —
- * with a way to the page with all of them.
+ * click the unread ones (#175) — a popover from `md`, a bottom drawer on
+ * phones — with a way to the page with all of them. One opened is marked read
+ * and drops out of the list.
  */
 export function NotificationBell() {
   const { t } = useTranslation()
@@ -65,6 +69,7 @@ export function NotificationBell() {
       <Button
         variant="ghost"
         size="sm"
+        className="h-11 md:h-9"
         disabled={markAll.isPending}
         onClick={() =>
           markAll.mutate(undefined, {
@@ -100,15 +105,21 @@ export function NotificationBell() {
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent
           align="end"
-          className="flex w-96 flex-col gap-3 p-3"
+          className="flex w-104 flex-col gap-3 p-3"
         >
           <div className="flex items-center justify-between gap-3 px-3">
-            <h2 className="typo-h3 text-foreground">{t("notifications.title")}</h2>
+            <h2 className="typo-h3 whitespace-nowrap text-foreground">
+              {t("notifications.bellTitle")}
+            </h2>
             {markAllButton}
           </div>
           {isOpen ? (
             <div className="max-h-[60vh] overflow-y-auto">
-              <NotificationList onOpen={close} />
+              <NotificationList
+                filter={UNREAD}
+                empty={t("notifications.bellEmpty")}
+                onOpen={close}
+              />
             </div>
           ) : null}
           {showAll}
@@ -125,13 +136,20 @@ export function NotificationBell() {
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
-          <div className="flex items-center justify-between gap-3">
-            <DrawerTitle>{t("notifications.title")}</DrawerTitle>
+          {/* On a narrow phone the button goes under the title. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <DrawerTitle className="whitespace-nowrap">{t("notifications.bellTitle")}</DrawerTitle>
             {markAllButton}
           </div>
         </DrawerHeader>
         <div className="flex flex-col gap-3 overflow-y-auto px-2 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          {isOpen ? <NotificationList onOpen={close} /> : null}
+          {isOpen ? (
+            <NotificationList
+              filter={UNREAD}
+              empty={t("notifications.bellEmpty")}
+              onOpen={close}
+            />
+          ) : null}
           <div className="px-3">{showAll}</div>
         </div>
       </DrawerContent>
