@@ -95,6 +95,13 @@ export type GroupMember = {
   joinedAt: Date;
 };
 
+// How a hand-over ended when the roles changed between the check and the
+// write: the actor was no longer the owner, or the new owner had left.
+export type TransferOwnershipResult =
+  | 'TRANSFERRED'
+  | 'NOT_OWNER'
+  | 'TARGET_NOT_MEMBER';
+
 // A group seen by one of its members (F-07.8 "Moje skupiny").
 export type MyGroup = Group & { myRole: GroupRole };
 

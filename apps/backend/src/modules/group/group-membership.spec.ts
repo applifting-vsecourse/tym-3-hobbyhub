@@ -81,7 +81,9 @@ describeDb('group membership', () => {
       ],
     });
 
-    await repository.transferOwnership(groupId, owner, member);
+    await expect(
+      repository.transferOwnership(groupId, owner, member),
+    ).resolves.toBe('TRANSFERRED');
 
     await expect(repository.getMemberRole(groupId, owner)).resolves.toBe(
       'ADMIN',
@@ -100,10 +102,43 @@ describeDb('group membership', () => {
 
     await expect(
       repository.transferOwnership(groupId, owner, stranger),
-    ).rejects.toThrow();
+    ).resolves.toBe('TARGET_NOT_MEMBER');
 
     await expect(repository.getMemberRole(groupId, owner)).resolves.toBe(
       'OWNER',
     );
+  });
+
+  it('refuses a hand-over by someone who is no longer the owner', async () => {
+    const owner = await createUser();
+    const first = await createUser();
+    const second = await createUser();
+    await prisma.groupMembership.createMany({
+      data: [
+        { groupId, userId: owner, role: GroupRole.OWNER },
+        { groupId, userId: first, role: GroupRole.MEMBER },
+        { groupId, userId: second, role: GroupRole.MEMBER },
+      ],
+    });
+    await repository.transferOwnership(groupId, owner, first);
+
+    await expect(
+      repository.transferOwnership(groupId, owner, second),
+    ).resolves.toBe('NOT_OWNER');
+
+    await expect(repository.getMemberRole(groupId, first)).resolves.toBe(
+      'OWNER',
+    );
+    await expect(repository.getMemberRole(groupId, second)).resolves.toBe(
+      'MEMBER',
+    );
+  });
+
+  it('reports a role change for someone who is not a member', async () => {
+    const stranger = await createUser();
+
+    await expect(
+      repository.setMemberRole(groupId, stranger, 'ADMIN'),
+    ).resolves.toBeNull();
   });
 });

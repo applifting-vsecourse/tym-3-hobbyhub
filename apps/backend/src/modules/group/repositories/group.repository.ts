@@ -16,8 +16,12 @@ import {
   GroupMember,
   GroupPage,
   MyGroup,
+  TransferOwnershipResult,
 } from '@/modules/group/domain/group';
 import { Injectable } from '@nestjs/common';
+
+// Thrown inside the hand-over transaction only to roll it back.
+class TargetNotMemberError extends Error {}
 
 const include = {
   activity: true,
@@ -148,36 +152,53 @@ export class GroupRepository {
     });
   }
 
+  // `null` when the member left or was removed after the service checked
+  // the roles.
   async setMemberRole(
     groupId: string,
     userId: string,
     role: AssignableGroupRole,
-  ): Promise<GroupMember> {
-    const membership = await this.prisma.groupMembership.update({
-      where: { groupId_userId: { groupId, userId } },
+  ): Promise<GroupMember | null> {
+    const { count } = await this.prisma.groupMembership.updateMany({
+      where: { groupId, userId },
       data: { role },
+    });
+    if (count === 0) return null;
+    const membership = await this.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId, userId } },
       include: memberInclude,
     });
-    return mapMembershipToMember(membership);
+    return membership ? mapMembershipToMember(membership) : null;
   }
 
   // ADR-0007: the old owner stays on as an admin. Demoted first, inside one
   // transaction: `group_membership_one_owner_key` allows one OWNER at a time.
+  // The demotion matches only an OWNER row, so of two hand-overs at once the
+  // second finds the actor already demoted; a new owner who has left in the
+  // meantime rolls the demotion back.
   async transferOwnership(
     groupId: string,
     fromUserId: string,
     toUserId: string,
-  ): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.groupMembership.update({
-        where: { groupId_userId: { groupId, userId: fromUserId } },
-        data: { role: GroupRole.ADMIN },
-      }),
-      this.prisma.groupMembership.update({
-        where: { groupId_userId: { groupId, userId: toUserId } },
-        data: { role: GroupRole.OWNER },
-      }),
-    ]);
+  ): Promise<TransferOwnershipResult> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const demoted = await tx.groupMembership.updateMany({
+          where: { groupId, userId: fromUserId, role: GroupRole.OWNER },
+          data: { role: GroupRole.ADMIN },
+        });
+        if (demoted.count === 0) return 'NOT_OWNER';
+        const promoted = await tx.groupMembership.updateMany({
+          where: { groupId, userId: toUserId },
+          data: { role: GroupRole.OWNER },
+        });
+        if (promoted.count === 0) throw new TargetNotMemberError();
+        return 'TRANSFERRED';
+      });
+    } catch (error) {
+      if (error instanceof TargetNotMemberError) return 'TARGET_NOT_MEMBER';
+      throw error;
+    }
   }
 
   async listGroupsOfUser(userId: string): Promise<MyGroup[]> {

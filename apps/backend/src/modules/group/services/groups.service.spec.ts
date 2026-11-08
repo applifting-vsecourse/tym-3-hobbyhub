@@ -276,9 +276,40 @@ describe('GroupsService', () => {
       expect(repository.setMemberRole).not.toHaveBeenCalled();
     });
 
+    it('reports a member removed after the check as not found', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.setMemberRole.mockResolvedValue(null);
+
+      await expect(
+        service.changeMemberRole('g1', user, 'other', 'ADMIN'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('reports a new owner who left after the check as not found', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.transferOwnership.mockResolvedValue('TARGET_NOT_MEMBER');
+
+      await expect(
+        service.transferOwnership('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('refuses a hand-over when another one was faster', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.transferOwnership.mockResolvedValue('NOT_OWNER');
+
+      await expect(
+        service.transferOwnership('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
     it('lets the owner hand the group over', async () => {
       const { repository, service } = setup();
       repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.transferOwnership.mockResolvedValue('TRANSFERRED');
 
       await service.transferOwnership('g1', user, 'other');
 

@@ -25,6 +25,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+const targetNotMemberException = (): NotFoundException =>
+  new NotFoundException('The user is not a member of this group');
+
+const notAllowedException = (): ForbiddenException =>
+  new ForbiddenException('Your role in the group does not allow this');
+
 @Injectable()
 export class GroupsService {
   constructor(
@@ -117,7 +123,14 @@ export class GroupsService {
       kind: 'setRole',
       role,
     });
-    return this.groupRepository.setMemberRole(groupId, targetUserId, role);
+    const member = await this.groupRepository.setMemberRole(
+      groupId,
+      targetUserId,
+      role,
+    );
+    // The member left, or another admin removed them, since the check.
+    if (!member) throw targetNotMemberException();
+    return member;
   }
 
   // The owner hands the group over and stays on as an admin (ADR-0007).
@@ -129,11 +142,15 @@ export class GroupsService {
     await this.assertMemberAction(groupId, user, targetUserId, {
       kind: 'transferOwnership',
     });
-    await this.groupRepository.transferOwnership(
+    const result = await this.groupRepository.transferOwnership(
       groupId,
       user.id,
       targetUserId,
     );
+    // The roles changed since the check: another hand-over was faster, or
+    // the new owner left.
+    if (result === 'NOT_OWNER') throw notAllowedException();
+    if (result === 'TARGET_NOT_MEMBER') throw targetNotMemberException();
   }
 
   // Someone outside the group gets "not found", as for the other member
@@ -150,9 +167,7 @@ export class GroupsService {
       this.groupRepository.getMemberRole(groupId, targetUserId),
     ]);
     if (!actorRole) throw new NotFoundException('Group not found');
-    if (!targetRole) {
-      throw new NotFoundException('The user is not a member of this group');
-    }
+    if (!targetRole) throw targetNotMemberException();
     const violations = memberActionViolations(
       { userId: user.id, role: actorRole },
       { userId: targetUserId, role: targetRole },
@@ -163,11 +178,7 @@ export class GroupsService {
         'Use leaving the group to act on your own membership',
       );
     }
-    if (violations.includes('NOT_ALLOWED')) {
-      throw new ForbiddenException(
-        'Your role in the group does not allow this',
-      );
-    }
+    if (violations.includes('NOT_ALLOWED')) throw notAllowedException();
   }
 
   // The signed-in user leaves; who leaves comes from the session. The owner
