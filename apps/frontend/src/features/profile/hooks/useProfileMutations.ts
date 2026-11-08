@@ -5,6 +5,7 @@ import { onboardingKeys } from "@/lib/onboarding-keys"
 
 import { profileKeys } from "@/features/profile/api/profileKeys"
 import {
+  removeLocation,
   updateInterests,
   updateLocation,
   updatePrivateDetails,
@@ -35,3 +36,4 @@ export const useUpdateProfile = () => useProfileMutation(updateProfile, { isSess
 export const useUpdatePrivateDetails = () => useProfileMutation(updatePrivateDetails)
 export const useUpdateInterests = () => useProfileMutation(updateInterests)
 export const useUpdateLocation = () => useProfileMutation(updateLocation)
+export const useRemoveLocation = () => useProfileMutation<void>(removeLocation)
