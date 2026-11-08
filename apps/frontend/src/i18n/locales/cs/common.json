@@ -1331,6 +1331,15 @@
       "description": "Soukromá adresa, nikdo další ji neuvidí. Slouží k hledání akcí poblíž.",
       "hasNone": "Zatím nemáte zadanou adresu.",
       "howTo": "Začněte psát ulici (a číslo domu, je-li), nabídneme místa z mapy. Vyberte svůj řádek, díky tomu známe i polohu na mapě.",
+      "notice": "Lokalitu z uživatelů vidíte jen vy. Nezobrazí se přátelům, organizátorům ani členům skupin. Aplikace si neukládá historii polohy a polohu z GPS čte, jen když o to sami požádáte (například u řazení „nejblíž ke mně“), a neukládá ji.",
+      "remove": {
+        "button": "Odstranit lokalitu",
+        "cancel": "Ponechat",
+        "confirm": "Odstranit",
+        "description": "Smažeme vaši adresu, dočasnou polohu i dojezd. Akce poblíž pak neuvidíte, dokud adresu znovu nezadáte.",
+        "error": "Lokalitu se nepodařilo odstranit. Zkuste to prosím znovu.",
+        "title": "Odstranit lokalitu?"
+      },
       "title": "Kde bydlím"
     },
     "private": {
