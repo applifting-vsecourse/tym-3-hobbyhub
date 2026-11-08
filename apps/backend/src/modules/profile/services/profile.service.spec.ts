@@ -180,6 +180,35 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('removeLocation', () => {
+    it('clears the whole location and answers with the profile without it', async () => {
+      const { service, repository, onboardingService } = setup(
+        aRow(),
+        anOnboarding(),
+      );
+      const profile = await service.removeLocation(user);
+      expect(repository.clearLocation).toHaveBeenCalledWith('u1');
+      expect(onboardingService.replaceLocation).not.toHaveBeenCalled();
+      expect(profile.address).toBeNull();
+      expect(profile.travelRadiusKm).toBeNull();
+    });
+
+    it('clears before it reads, so the answer is what is stored', async () => {
+      const { service, repository } = setup();
+      const order: string[] = [];
+      repository.clearLocation.mockImplementation(() => {
+        order.push('clear');
+        return Promise.resolve();
+      });
+      repository.getRow.mockImplementation(() => {
+        order.push('read');
+        return Promise.resolve(aRow());
+      });
+      await service.removeLocation(user);
+      expect(order).toEqual(['clear', 'read']);
+    });
+  });
+
   describe('getPublicProfile', () => {
     const publicRow = {
       id: 'u2',

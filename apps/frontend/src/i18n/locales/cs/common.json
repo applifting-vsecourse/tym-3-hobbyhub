@@ -8,7 +8,9 @@
       "invalidCredentials": "Nesprávný e-mail nebo heslo.",
       "invalidEmail": "Neplatný e-mail.",
       "invalidGender": "Vyberte pohlaví.",
+      "invalidToken": "Odkaz je neplatný nebo už vypršel.",
       "passwordTooShort": "Heslo je příliš krátké.",
+      "resetPasswordFailed": "Heslo se nepodařilo nastavit.",
       "signInFailed": "Přihlášení se nezdařilo.",
       "signUpFailed": "Registrace se nezdařila.",
       "termsNotAccepted": "Bez souhlasu s podmínkami se nelze zaregistrovat.",
@@ -23,6 +25,14 @@
       "gender": "Pohlaví",
       "name": "Jméno / přezdívka",
       "password": "Heslo"
+    },
+    "forgotPassword": {
+      "backToSignIn": "Zpět na přihlášení",
+      "description": "Zadejte e-mail k účtu a pošleme vám odkaz pro nastavení nového hesla.",
+      "failed": "Odkaz se nepodařilo odeslat. Zkuste to prosím znovu.",
+      "sent": "Pokud k tomuto e-mailu existuje účet, poslali jsme na něj odkaz pro nastavení nového hesla. Platí 1 hodinu.",
+      "submit": "Poslat odkaz",
+      "title": "Zapomenuté heslo"
     },
     "gender": {
       "female": "Žena",
@@ -39,8 +49,19 @@
       "email": "např. jan@novak.cz",
       "gender": "Vyberte"
     },
+    "resetPassword": {
+      "description": "Zvolte si nové heslo. Po uložení vás odhlásíme na všech zařízeních.",
+      "done": "Heslo je nastavené. Přihlaste se s ním.",
+      "invalidDescription": "Odkaz je neplatný, už byl použit, nebo vypršel. Vyžádejte si nový.",
+      "invalidTitle": "Odkaz nefunguje",
+      "requestNew": "Poslat nový odkaz",
+      "signIn": "Přihlásit se",
+      "submit": "Uložit heslo",
+      "title": "Nové heslo"
+    },
     "signIn": {
       "description": "Vítejte zpět v HobbyHubu.",
+      "forgotPassword": "Zapomenuté heslo?",
       "lockoutNote": "Po opakovaných neúspěšných pokusech přihlášení na chvíli zablokujeme.",
       "noAccount": "Nemáte účet?",
       "rememberMe": "Zůstat přihlášen",
@@ -1290,6 +1311,13 @@
   },
   "profile": {
     "cancel": "Zrušit",
+    "changePassword": {
+      "action": "Změnit heslo",
+      "description": "Pošleme vám e-mail s odkazem, přes který si nastavíte nové heslo. Po změně vás odhlásíme na všech zařízeních a přihlásíte se novým heslem.",
+      "failed": "E-mail se nepodařilo odeslat. Zkuste to prosím znovu.",
+      "sent": "Poslali jsme vám e-mail s odkazem pro nastavení nového hesla. Platí 1 hodinu.",
+      "title": "Heslo"
+    },
     "edit": {
       "title": "Upravit profil"
     },
@@ -1304,6 +1332,15 @@
       "description": "Soukromá adresa, nikdo další ji neuvidí. Slouží k hledání akcí poblíž.",
       "hasNone": "Zatím nemáte zadanou adresu.",
       "howTo": "Začněte psát ulici (a číslo domu, je-li), nabídneme místa z mapy. Vyberte svůj řádek, díky tomu známe i polohu na mapě.",
+      "notice": "Lokalitu z uživatelů vidíte jen vy. Nezobrazí se přátelům, organizátorům ani členům skupin. Aplikace si neukládá historii polohy a polohu z GPS čte, jen když o to sami požádáte (například u řazení „nejblíž ke mně“), a neukládá ji.",
+      "remove": {
+        "button": "Odstranit lokalitu",
+        "cancel": "Ponechat",
+        "confirm": "Odstranit",
+        "description": "Smažeme vaši adresu, dočasnou polohu i dojezd. Akce poblíž pak neuvidíte, dokud adresu znovu nezadáte.",
+        "error": "Lokalitu se nepodařilo odstranit. Zkuste to prosím znovu.",
+        "title": "Odstranit lokalitu?"
+      },
       "title": "Kde bydlím"
     },
     "private": {

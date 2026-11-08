@@ -17,6 +17,7 @@ import {
   registrationBeforeHook,
   registrationDatabaseHooks,
 } from '@/shared/auth/registration/registration.hooks';
+import { passwordResetCooldown } from '@/shared/auth/verification/password-reset-cooldown';
 import { resendCooldown } from '@/shared/auth/verification/resend-cooldown';
 import { sendOnceAMinute } from '@/shared/auth/verification/send-once-a-minute';
 import { Config } from '@/shared/config/config.service';
@@ -39,28 +40,6 @@ const createAuth = (
     database: prismaAdapter(prismaService, {
       provider: 'postgresql',
     }),
-    emailAndPassword: {
-      enabled: true,
-      sendResetPassword: async ({ user, token }) => {
-        const passwordResetUrl = `${config.frontendUrl}/${config.frontendResetPasswordUrl}?token=${token}`;
-        const html = await renderEmail(ResetPassword, {
-          username: user.name,
-          url: passwordResetUrl,
-        });
-        // F-09.5: through the outbox, critical: retried, and never held
-        // back by the limits for the other e-mails (ADR-0018).
-        await emailOutbox.enqueue([
-          {
-            kind: 'RESET_PASSWORD',
-            critical: true,
-            recipientId: user.id,
-            to: user.email,
-            subject: RESET_PASSWORD_SUBJECT,
-            html,
-          },
-        ]);
-      },
-    },
     user: {
       additionalFields: {
         role: {
@@ -109,6 +88,35 @@ const createAuth = (
     },
     // If change (setup) affects database, must be in core config, in order to be able to run migrations
     ...betterAuthCoreConfig,
+    // F-03.5. Merged into the core options, which the spread above would
+    // otherwise replace.
+    emailAndPassword: {
+      enabled: true,
+      ...betterAuthCoreConfig.emailAndPassword,
+      sendResetPassword: async ({ user, token }) => {
+        // Once a minute per address; a skipped send answers like a made one,
+        // so the endpoint tells nobody whether an address has an account.
+        await sendOnceAMinute(passwordResetCooldown, user.email, async () => {
+          const url = `${config.frontendUrl}/${config.frontendResetPasswordUrl}?token=${encodeURIComponent(token)}`;
+          const html = await renderEmail(ResetPassword, {
+            username: user.name,
+            url,
+          });
+          // F-09.5: through the outbox, critical: retried, and never held
+          // back by the limits for the other e-mails (ADR-0018).
+          await emailOutbox.enqueue([
+            {
+              kind: 'RESET_PASSWORD',
+              critical: true,
+              recipientId: user.id,
+              to: user.email,
+              subject: RESET_PASSWORD_SUBJECT,
+              html,
+            },
+          ]);
+        });
+      },
+    },
     plugins: [...(betterAuthCoreConfig.plugins ?? [])],
   });
 

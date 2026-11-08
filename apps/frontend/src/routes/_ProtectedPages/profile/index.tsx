@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
+import { ChangePassword } from "@/features/auth/components/ChangePassword"
 import { ProfilePrompt } from "@/features/onboarding/components/ProfilePrompt"
 import { profileQueryOptions } from "@/features/profile/api/profileQueryOptions"
 import { ProfileView } from "@/features/profile/components/ProfileView"
@@ -59,10 +60,13 @@ function ProfilePage() {
             </AlertDescription>
           </Alert>
         ) : (
-          <ProfileView
-            profile={profile.data}
-            activityLabel={activityLabel}
-          />
+          <>
+            <ProfileView
+              profile={profile.data}
+              activityLabel={activityLabel}
+            />
+            <ChangePassword />
+          </>
         )}
       </section>
     </>
