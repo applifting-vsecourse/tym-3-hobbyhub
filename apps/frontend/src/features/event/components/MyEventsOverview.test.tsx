@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { act, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -220,6 +220,31 @@ describe("MyEventsOverview", () => {
       renderOverview(list([application]), list([]), vi.fn())
 
       expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
+    })
+
+    it("goes away once the event starts on a page left open", () => {
+      vi.useFakeTimers()
+      try {
+        const startAt = new Date(2026, 9, 22, 19, 0)
+        vi.setSystemTime(new Date(startAt.getTime() - 30_000))
+        render(
+          <MyEventsOverview
+            applications={list([{ status: "APPROVED", event: event({ startAt }) }])}
+            hosted={list([])}
+            activityLabel={(activity) => activity.name}
+            onApplicationAction={vi.fn()}
+          />,
+        )
+        expect(screen.getByRole("button", { name: /Možnosti přihlášky/ })).toBeInTheDocument()
+
+        act(() => {
+          vi.advanceTimersByTime(60_000)
+        })
+
+        expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it("is not there when the page offers no action", () => {

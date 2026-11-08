@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Link } from "@tanstack/react-router"
+import type { ParseKeys } from "i18next"
 import { Ellipsis } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useNow } from "@/hooks/useNow"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { ApplicationStatus, MyApplication } from "@/features/event/api/myEventsSchemas"
@@ -46,10 +48,11 @@ export function applicationActionOf(
   return null
 }
 
-const ACTION_LABELS: Record<ApplicationAction, string> = {
+/** Translation keys of the menu items; a renamed key fails the type-check. */
+const ACTION_LABELS = {
   withdraw: "participationRequests.pending.withdraw",
   cancel: "participationRequests.approved.cancel",
-}
+} as const satisfies Record<ApplicationAction, ParseKeys>
 
 /** What the overview needs to know about one of its two lists. */
 export type MyEventsList<T> = {
@@ -76,8 +79,65 @@ type MyEventsOverviewProps = {
    * it the rows have no menu.
    */
   onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void
-  /** Injectable so "today" is stable in tests. */
+  /**
+   * Injectable so "today" is stable in tests. Without it the overview renews
+   * the time every minute, so a page left open stops offering an action once
+   * its event starts.
+   */
   now?: Date
+}
+
+/**
+ * The row's menu with its one action. The dialog opens only once the menu has
+ * closed and handed focus back to its button: opened from `onSelect`, the
+ * closing menu and the opening dialog fight over focus and the body's
+ * `pointer-events`, which can leave the page unclickable. Non-modal, the menu
+ * does not lock the page at all, so nothing is left to restore.
+ */
+function ApplicationActionMenu({
+  application,
+  action,
+  onAction,
+}: {
+  application: MyApplication
+  action: ApplicationAction
+  onAction: (action: ApplicationAction, application: MyApplication) => void
+}) {
+  const { t } = useTranslation()
+  const isChosenRef = useRef(false)
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={t("myEvents.actions.label", { title: application.event.title })}
+        >
+          <Ellipsis className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={() => {
+          // Runs once the menu is gone, as focus goes back to its button, so
+          // the dialog returns focus to the button when it closes.
+          if (!isChosenRef.current) return
+          isChosenRef.current = false
+          onAction(action, application)
+        }}
+      >
+        <DropdownMenuItem
+          onSelect={() => {
+            isChosenRef.current = true
+          }}
+        >
+          {t(ACTION_LABELS[action])}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 /** The next page loads by itself when the button scrolls into view; the button also works alone. */
@@ -119,9 +179,11 @@ export function MyEventsOverview({
   hosted,
   activityLabel,
   onApplicationAction,
-  now = new Date(),
+  now: fixedNow,
 }: MyEventsOverviewProps) {
   const { t, i18n } = useTranslation()
+  const tickingNow = useNow()
+  const now = fixedNow ?? tickingNow
 
   if (applications.isLoading && hosted.isLoading) {
     return (
@@ -159,37 +221,15 @@ export function MyEventsOverview({
     )
   }
 
-  // The menu sits next to the link, not inside it: a button in an anchor is
-  // not valid HTML, and a tap on it must not open the detail.
-  const actionMenu = (application: MyApplication, action: ApplicationAction) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          // Into the page gutter, like the link's hover area on the left: the
-          // narrow phone row keeps its width for the title.
-          className="mt-3 -mr-3 shrink-0"
-          aria-label={t("myEvents.actions.label", { title: application.event.title })}
-        >
-          <Ellipsis className="size-5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => onApplicationAction?.(action, application)}>
-          {t(ACTION_LABELS[action])}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-
   const row = (event: EventListItem, application?: MyApplication) => {
     const status = application?.status
     const action = application && onApplicationAction ? applicationActionOf(application, now) : null
     return (
+      // The row's top line runs under the menu too; the menu sits centred
+      // beside the row whatever its height.
       <li
         key={event.id}
-        className="flex items-start"
+        className="flex items-center gap-1 border-t border-border"
       >
         <Link
           to="/events/$eventId"
@@ -209,6 +249,7 @@ export function MyEventsOverview({
             // The title next to it says what the photo shows.
             photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
             activity={event.activity.icon}
+            className="border-t-0"
             badge={
               status ? (
                 <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
@@ -216,7 +257,15 @@ export function MyEventsOverview({
             }
           />
         </Link>
-        {application && action ? actionMenu(application, action) : null}
+        {/* Next to the link, not inside it: a button in an anchor is not valid
+            HTML, and a tap on it must not open the detail. */}
+        {application && action && onApplicationAction ? (
+          <ApplicationActionMenu
+            application={application}
+            action={action}
+            onAction={onApplicationAction}
+          />
+        ) : null}
       </li>
     )
   }
