@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Link } from "@tanstack/react-router"
+import { Ellipsis } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -7,6 +8,12 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
@@ -20,6 +27,28 @@ const BADGES: Record<ApplicationStatus, Status> = {
   REJECTED: "rejected",
   WITHDRAWN: "neutral",
   EVENT_CANCELLED: "rejected",
+}
+
+/**
+ * The one way out of an application, offered in the row's menu (#171):
+ * withdrawing a request the organizer has not decided, or cancelling a seat.
+ */
+export type ApplicationAction = "withdraw" | "cancel"
+
+/** Only while the event has not started: after that the server would refuse both. */
+export function applicationActionOf(
+  { status, event }: MyApplication,
+  now: Date,
+): ApplicationAction | null {
+  if (event.startAt <= now) return null
+  if (status === "PENDING") return "withdraw"
+  if (status === "APPROVED") return "cancel"
+  return null
+}
+
+const ACTION_LABELS: Record<ApplicationAction, string> = {
+  withdraw: "participationRequests.pending.withdraw",
+  cancel: "participationRequests.approved.cancel",
 }
 
 /** What the overview needs to know about one of its two lists. */
@@ -42,6 +71,11 @@ type MyEventsOverviewProps = {
   hosted: MyEventsList<EventListItem>
   /** Display name of an event's activity; the activity feature owns the translation. */
   activityLabel: (activity: EventListItem["activity"]) => string
+  /**
+   * Opens the dialog for the row's action, which the page owns (#171). Without
+   * it the rows have no menu.
+   */
+  onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void
   /** Injectable so "today" is stable in tests. */
   now?: Date
 }
@@ -84,6 +118,7 @@ export function MyEventsOverview({
   applications,
   hosted,
   activityLabel,
+  onApplicationAction,
   now = new Date(),
 }: MyEventsOverviewProps) {
   const { t, i18n } = useTranslation()
@@ -124,35 +159,67 @@ export function MyEventsOverview({
     )
   }
 
-  const row = (event: EventListItem, status?: ApplicationStatus) => (
-    <li key={event.id}>
-      <Link
-        to="/events/$eventId"
-        params={{ eventId: event.id }}
-        className="-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        <ScheduleRow
-          time={eventTime(event.startAt, i18n.language)}
-          title={event.title}
-          subtitle={[
-            eventDay(t, event.startAt, now, i18n.language),
-            eventMeta(t, event, activityLabel(event.activity)),
-          ].join(" · ")}
-          taken={event.takenCount}
-          min={event.minParticipants}
-          max={event.maxParticipants}
-          // The title next to it says what the photo shows.
-          photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
-          activity={event.activity.icon}
-          badge={
-            status ? (
-              <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
-            ) : undefined
-          }
-        />
-      </Link>
-    </li>
+  // The menu sits next to the link, not inside it: a button in an anchor is
+  // not valid HTML, and a tap on it must not open the detail.
+  const actionMenu = (application: MyApplication, action: ApplicationAction) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          // Into the page gutter, like the link's hover area on the left: the
+          // narrow phone row keeps its width for the title.
+          className="mt-3 -mr-3 shrink-0"
+          aria-label={t("myEvents.actions.label", { title: application.event.title })}
+        >
+          <Ellipsis className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => onApplicationAction?.(action, application)}>
+          {t(ACTION_LABELS[action])}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
+
+  const row = (event: EventListItem, application?: MyApplication) => {
+    const status = application?.status
+    const action = application && onApplicationAction ? applicationActionOf(application, now) : null
+    return (
+      <li
+        key={event.id}
+        className="flex items-start"
+      >
+        <Link
+          to="/events/$eventId"
+          params={{ eventId: event.id }}
+          className="-ml-3 block min-w-0 flex-1 rounded-lg pr-1 pl-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <ScheduleRow
+            time={eventTime(event.startAt, i18n.language)}
+            title={event.title}
+            subtitle={[
+              eventDay(t, event.startAt, now, i18n.language),
+              eventMeta(t, event, activityLabel(event.activity)),
+            ].join(" · ")}
+            taken={event.takenCount}
+            min={event.minParticipants}
+            max={event.maxParticipants}
+            // The title next to it says what the photo shows.
+            photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
+            activity={event.activity.icon}
+            badge={
+              status ? (
+                <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
+              ) : undefined
+            }
+          />
+        </Link>
+        {application && action ? actionMenu(application, action) : null}
+      </li>
+    )
+  }
 
   // One tab's body: loading, a failed first load, the rows with "load more", or "nothing here".
   const body = <T,>(
@@ -215,8 +282,8 @@ export function MyEventsOverview({
         <TabsTrigger value="hosted">{label(hosted, "hosted")}</TabsTrigger>
       </TabsList>
       <TabsContent value="applications">
-        {body(applications, "myEvents.applications.empty", ({ event, status }) =>
-          row(event, status),
+        {body(applications, "myEvents.applications.empty", (application) =>
+          row(application.event, application),
         )}
       </TabsContent>
       <TabsContent value="hosted">

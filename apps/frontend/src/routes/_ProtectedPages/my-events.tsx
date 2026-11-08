@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   useInfiniteQuery,
   useSuspenseQuery,
@@ -15,7 +16,14 @@ import {
   myApplicationsQueryOptions,
   myHostedEventsQueryOptions,
 } from "@/features/event/api/myEventsQueryOptions"
-import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
+import type { MyApplication } from "@/features/event/api/myEventsSchemas"
+import {
+  MyEventsOverview,
+  type ApplicationAction,
+  type MyEventsList,
+} from "@/features/event/components/MyEventsOverview"
+import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
+import { CancelParticipationSheet } from "@/features/participation-request/components/CancelParticipationSheet"
 
 export const Route = createFileRoute("/_ProtectedPages/my-events")({
   component: MyEventsPage,
@@ -47,11 +55,17 @@ function toList<T>(query: UseInfiniteQueryResult<Pages<T>, Error>): MyEventsList
 // organizes. History of finished events is a later story. The layout around
 // the page sends visitors without a session to the sign-in, so there is one.
 function MyEventsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { data: session } = useSuspenseQuery(authSessionQueryOptions())
   const userId = session?.user.id ?? ""
   const applications = useInfiniteQuery(myApplicationsQueryOptions(userId))
   const hosted = useInfiniteQuery(myHostedEventsQueryOptions(userId))
+  // #171: the row's menu opens the same dialog as the event detail. The
+  // application stays after the sheet closes, so it animates out with its event.
+  const [seatSheet, setSeatSheet] = useState<{
+    application: MyApplication
+    step: ApplicationAction | null
+  } | null>(null)
 
   return (
     <>
@@ -63,9 +77,27 @@ function MyEventsPage() {
             applications={toList(applications)}
             hosted={toList(hosted)}
             activityLabel={(activity) => activityName(t, activity)}
+            onApplicationAction={(step, application) => setSeatSheet({ application, step })}
           />
         </div>
       </section>
+      {seatSheet ? (
+        <CancelParticipationSheet
+          eventId={seatSheet.application.event.id}
+          event={{
+            title: seatSheet.application.event.title,
+            time: eventTime(seatSheet.application.event.startAt, i18n.language),
+            place: [eventPlace(t, seatSheet.application.event), seatSheet.application.event.level]
+              .filter(Boolean)
+              .join(", "),
+            taken: seatSheet.application.event.takenCount,
+            min: seatSheet.application.event.minParticipants,
+            max: seatSheet.application.event.maxParticipants,
+          }}
+          step={seatSheet.step}
+          onStepChange={(step) => setSeatSheet({ ...seatSheet, step })}
+        />
+      ) : null}
     </>
   )
 }

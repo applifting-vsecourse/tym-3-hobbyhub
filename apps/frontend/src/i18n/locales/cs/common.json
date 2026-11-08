@@ -944,6 +944,9 @@
     }
   },
   "myEvents": {
+    "actions": {
+      "label": "Možnosti přihlášky: {{title}}"
+    },
     "applications": {
       "empty": "Na žádnou nadcházející akci nejste přihlášeni."
     },
