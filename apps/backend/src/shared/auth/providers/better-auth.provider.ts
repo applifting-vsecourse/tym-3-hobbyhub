@@ -1,4 +1,7 @@
-import { EmailService } from '@/core/email/interfaces/email-service.interface';
+import {
+  EMAIL_OUTBOX,
+  EmailOutbox,
+} from '@/core/email/outbox/email-outbox.interface';
 import { renderEmail } from '@/core/email/render';
 import {
   RESET_PASSWORD_SUBJECT,
@@ -27,7 +30,7 @@ const VERIFICATION_LINK_TTL_SECONDS = 24 * 60 * 60;
 const createAuth = (
   prismaService: PrismaService,
   config: Config,
-  emailProvider: EmailService,
+  emailOutbox: EmailOutbox,
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
   betterAuth({
@@ -53,7 +56,16 @@ const createAuth = (
         // F-03.2: once a minute per address, the registration's e-mail too.
         await sendOnceAMinute(resendCooldown, user.email, async () => {
           const html = await renderEmail(VerifyEmail, { url });
-          await emailProvider.sendEmail(user.email, VERIFY_EMAIL_SUBJECT, html);
+          await emailOutbox.enqueue([
+            {
+              kind: 'VERIFY_EMAIL',
+              critical: true,
+              recipientId: user.id,
+              to: user.email,
+              subject: VERIFY_EMAIL_SUBJECT,
+              html,
+            },
+          ]);
         });
       },
       sendOnSignUp: true,
@@ -86,12 +98,22 @@ const createAuth = (
         // so the endpoint tells nobody whether an address has an account.
         await sendOnceAMinute(passwordResetCooldown, user.email, async () => {
           const url = `${config.frontendUrl}/${config.frontendResetPasswordUrl}?token=${encodeURIComponent(token)}`;
-          const html = await renderEmail(ResetPassword, { url });
-          await emailProvider.sendEmail(
-            user.email,
-            RESET_PASSWORD_SUBJECT,
-            html,
-          );
+          const html = await renderEmail(ResetPassword, {
+            username: user.name,
+            url,
+          });
+          // F-09.5: through the outbox, critical: retried, and never held
+          // back by the limits for the other e-mails (ADR-0018).
+          await emailOutbox.enqueue([
+            {
+              kind: 'RESET_PASSWORD',
+              critical: true,
+              recipientId: user.id,
+              to: user.email,
+              subject: RESET_PASSWORD_SUBJECT,
+              html,
+            },
+          ]);
         });
       },
     },
@@ -105,9 +127,9 @@ export const betterAuthProvider: Provider = {
   useFactory: (
     prismaService: PrismaService,
     config: Config,
-    emailProvider: EmailService,
-  ) => createAuth(prismaService, config, emailProvider),
-  inject: [PrismaService, Config, 'EmailService'],
+    emailOutbox: EmailOutbox,
+  ) => createAuth(prismaService, config, emailOutbox),
+  inject: [PrismaService, Config, EMAIL_OUTBOX],
 };
 
 export const InjectBetterAuth = Inject('BetterAuth');

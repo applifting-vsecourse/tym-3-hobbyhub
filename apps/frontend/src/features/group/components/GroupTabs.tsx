@@ -4,12 +4,12 @@ import { useTranslation } from "react-i18next"
 import { toggleVariants } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 
-export type GroupTab = "mine" | "discover"
+export type GroupTab = "mine" | "discover" | "requests"
 
-const TABS: GroupTab[] = ["mine", "discover"]
+const TABS: GroupTab[] = ["mine", "discover", "requests"]
 
 /**
- * "Moje skupiny" / "Objevit" — links, because the tab lives in the URL, drawn
+ * "Moje skupiny" / "Objevit" / "Žádosti" — links, because the tab lives in the URL, drawn
  * as the kit's filter chips.
  */
 export function GroupTabs({ active }: { active: GroupTab }) {

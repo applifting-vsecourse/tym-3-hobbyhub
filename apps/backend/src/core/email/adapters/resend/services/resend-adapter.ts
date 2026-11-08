@@ -1,5 +1,8 @@
 import { ResendConfig } from '@/core/email/adapters/resend/interfaces/resend-config.interface';
-import { EmailService } from '@/core/email/interfaces/email-service.interface';
+import {
+  EmailService,
+  SentEmail,
+} from '@/core/email/interfaces/email-service.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
 
@@ -12,8 +15,12 @@ export class ResendAdapter implements EmailService {
     this.client = new Resend(config.apiKey);
   }
 
-  async sendEmail(to: string, subject: string, html: string): Promise<void> {
-    const { error } = await this.client.emails.send({
+  async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<SentEmail> {
+    const { data, error } = await this.client.emails.send({
       from: this.config.from,
       to,
       subject,
@@ -22,7 +29,13 @@ export class ResendAdapter implements EmailService {
 
     if (error) {
       this.logger.error(`Resend delivery failed: ${error.message}`, error);
-      throw new Error(`Resend delivery failed: ${error.message}`);
+      // The HTTP status goes along, so the outbox can tell a refused message
+      // from a temporary failure (isPermanentFailure).
+      throw Object.assign(
+        new Error(`Resend delivery failed: ${error.message}`),
+        { statusCode: error.statusCode },
+      );
     }
+    return { messageId: data?.id ?? null };
   }
 }

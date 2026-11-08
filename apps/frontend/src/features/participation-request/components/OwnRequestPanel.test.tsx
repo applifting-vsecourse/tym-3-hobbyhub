@@ -55,4 +55,46 @@ describe("OwnRequestPanel", () => {
     expect(screen.getByText(text)).toBeInTheDocument()
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
   })
+
+  // F-06.4.
+  it("offers to cancel a seat and says the rule", async () => {
+    const onCancel = vi.fn()
+    render(
+      <OwnRequestPanel
+        view="approved"
+        approvalMode="MANUAL"
+        onWithdraw={vi.fn()}
+        onCancel={onCancel}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        "Účast můžeš zrušit kdykoli před začátkem akce, organizátorovi napíšeš proč.",
+      ),
+    ).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Zrušit účast" }))
+
+    expect(onCancel).toHaveBeenCalledOnce()
+  })
+
+  it("shows a cancelled seat with the way to ask again", () => {
+    render(
+      <OwnRequestPanel
+        view="cancelled"
+        approvalMode="MANUAL"
+        onWithdraw={vi.fn()}
+        rejoinAction={<button type="button">Požádat o účast</button>}
+      />,
+    )
+
+    expect(screen.getByText("Odhlášeno")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Účast na této akci jsi zrušil. Pokud si to rozmyslíš, můžeš o účast požádat znovu.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Požádat o účast" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Zrušit účast" })).not.toBeInTheDocument()
+  })
 })
