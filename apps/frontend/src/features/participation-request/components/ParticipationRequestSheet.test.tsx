@@ -143,6 +143,14 @@ describe("ParticipationRequestSheet", () => {
     )
   })
 
+  it("does not mention approval in the hint when seats are given automatically", async () => {
+    await renderSheet("form", "AUTOMATIC")
+
+    expect(await messageField()).toHaveAccessibleDescription(
+      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, který organizátor uvede.",
+    )
+  })
+
   it("sends the trimmed message and shows the request as sent", async () => {
     requestToJoin.mockResolvedValue({ ...pending, message: "Hraju třetím rokem." })
     await renderSheet("form")

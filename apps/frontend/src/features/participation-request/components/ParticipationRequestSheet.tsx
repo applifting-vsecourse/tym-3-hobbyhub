@@ -167,8 +167,15 @@ function RequestForm({
                 />
               </FormControl>
               {/* F-08.1: one message with the request; anything else is
-                  arranged once the seat is approved (F-06.5). */}
-              <FormDescription>{t("participationRequests.form.messageHint")}</FormDescription>
+                  arranged through the organizer's contact (F-06.5) — after
+                  approval, or straight away when seats are automatic. */}
+              <FormDescription>
+                {t(
+                  approvalMode === "AUTOMATIC"
+                    ? "participationRequests.form.messageHintAutomatic"
+                    : "participationRequests.form.messageHint",
+                )}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
