@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query"
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query"
 
 import { api } from "@/lib/api-client"
 
@@ -47,9 +47,12 @@ export const notificationsQueryOptions = (filter: NotificationListFilter = {}) =
       const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
       return loaded < lastPage.total && lastPage.items.length > 0 ? loaded : undefined
     },
-    // Switching the kind keeps the old rows until the new ones arrive,
-    // instead of flashing a loader.
-    placeholderData: keepPreviousData,
+    // No placeholder from the previous kind: a switched filter shows the
+    // loader, then its own rows or its own error, never the old kind's rows.
+    // A list that failed stays failed until "Zkusit znovu": the page swaps
+    // its loader for the lists, and a list fetching again just by appearing
+    // would bring the loader back, and so on in a circle.
+    retryOnMount: false,
   })
 
 // Polled: a new notification shows on the bell within a minute without a

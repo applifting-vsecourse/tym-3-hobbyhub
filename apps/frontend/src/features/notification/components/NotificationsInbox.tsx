@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react"
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -9,10 +9,7 @@ import { Button } from "@/components/ui/button"
 
 import type { NotificationListFilter } from "@/features/notification/api/notificationKeys"
 import type { NotificationKind } from "@/features/notification/api/notificationSchemas"
-import {
-  notificationsQueryOptions,
-  unreadCountQueryOptions,
-} from "@/features/notification/api/notificationsQueryOptions"
+import { notificationsQueryOptions } from "@/features/notification/api/notificationsQueryOptions"
 import { NotificationKindFilter } from "@/features/notification/components/NotificationKindFilter"
 import { NotificationList } from "@/features/notification/components/NotificationList"
 import { useMarkAllNotificationsRead } from "@/features/notification/hooks/useMarkRead"
@@ -65,7 +62,6 @@ export function NotificationsInbox({ kind, now }: NotificationsInboxProps) {
   // and for one loader while both load.
   const unread = useInfiniteQuery(notificationsQueryOptions(unreadFilter))
   const read = useInfiniteQuery(notificationsQueryOptions(readFilter))
-  const unreadCount = useQuery(unreadCountQueryOptions())
   const markAll = useMarkAllNotificationsRead()
   const newTotal = unread.data?.pages[0]?.total ?? 0
   const scope = kind === undefined ? "empty" : "emptyFiltered"
@@ -75,19 +71,22 @@ export function NotificationsInbox({ kind, now }: NotificationsInboxProps) {
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="typo-h1 text-foreground">{t("notifications.title")}</h1>
-          {(unreadCount.data?.count ?? 0) > 0 ? (
+          {/* Follows "Nové" as the filter shows it, and marks read just that. */}
+          {newTotal > 0 ? (
             <Button
               variant="outline"
               size="sm"
               className="h-11 md:h-9"
               disabled={markAll.isPending}
               onClick={() =>
-                markAll.mutate(undefined, {
+                markAll.mutate(kind, {
                   onError: () => toast.error(t("notifications.markAllReadFailed")),
                 })
               }
             >
-              {t("notifications.markAllRead")}
+              {kind === undefined
+                ? t("notifications.markAllRead")
+                : t("notifications.markKindRead")}
             </Button>
           ) : null}
         </div>

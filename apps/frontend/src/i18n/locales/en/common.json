@@ -977,6 +977,7 @@
     "loading": "Loading notifications…",
     "markAllRead": "Mark all as read",
     "markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+    "markKindRead": "Mark these as read",
     "message": "“{{message}}”",
     "more_one": "Load more ({{count}})",
     "more_other": "Load more ({{count}})",

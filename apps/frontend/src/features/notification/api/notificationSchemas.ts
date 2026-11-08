@@ -17,7 +17,8 @@ export const notificationTypeSchema = z.enum([
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
-// (NOTIFICATION_KINDS). Which types each holds: `lib/notificationKinds.ts`.
+// (NOTIFICATION_KINDS). Which types each holds is the server's business: the
+// client sends the kind, the server filters (`domain/notification.ts`).
 export const notificationKindSchema = z.enum(["requests", "events", "groups", "other"])
 export const NOTIFICATION_KINDS = notificationKindSchema.options
 

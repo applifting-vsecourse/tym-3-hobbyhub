@@ -1,4 +1,5 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useEffect, useRef } from "react"
+import { useInfiniteQuery, useQuery, type RefetchOptions } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 
 import { Loader } from "@/components/hobbyhub/Loader"
@@ -7,7 +8,10 @@ import { Button } from "@/components/ui/button"
 
 import type { NotificationListFilter } from "@/features/notification/api/notificationKeys"
 import type { Notification } from "@/features/notification/api/notificationSchemas"
-import { notificationsQueryOptions } from "@/features/notification/api/notificationsQueryOptions"
+import {
+  notificationsQueryOptions,
+  unreadCountQueryOptions,
+} from "@/features/notification/api/notificationsQueryOptions"
 import { NotificationItem } from "@/features/notification/components/NotificationItem"
 import { useMarkNotificationRead } from "@/features/notification/hooks/useMarkRead"
 
@@ -24,6 +28,41 @@ type NotificationListProps = {
   now?: Date
 }
 
+// The pages are fetched by offset: a notification that arrives between two
+// pages pushes the last row of one page to the top of the next. Each shows once.
+const uniqueById = (notifications: Notification[]): Notification[] => {
+  const seen = new Set<string>()
+  return notifications.filter((notification) => {
+    if (seen.has(notification.id)) return false
+    seen.add(notification.id)
+    return true
+  })
+}
+
+/**
+ * The unread list is the one new notifications land in, and only the number on
+ * the bell is polled. When that number changes, the loaded pages are fetched
+ * again from the first, so the offsets of "Načíst další" count from the fresh
+ * list and nothing is skipped.
+ */
+function useRefetchWhenUnreadCountChanges(
+  filter: NotificationListFilter | undefined,
+  refetch: (options?: RefetchOptions) => Promise<unknown>,
+) {
+  const isUnreadList = filter?.read === false
+  const unreadCount = useQuery({ ...unreadCountQueryOptions(), enabled: isUnreadList })
+  const count = unreadCount.data?.count
+  const seenCount = useRef(count)
+  useEffect(() => {
+    if (!isUnreadList || count === undefined) return
+    if (seenCount.current !== undefined && seenCount.current !== count) {
+      // Joins a refetch already on its way, e.g. the one after marking read.
+      void refetch({ cancelRefetch: false })
+    }
+    seenCount.current = count
+  }, [isUnreadList, count, refetch])
+}
+
 /**
  * The notifications, newest first, with the three states every list has.
  * Opening one marks it read; the link itself takes the user where it leads.
@@ -38,8 +77,9 @@ export function NotificationList({
   const { t } = useTranslation()
   const query = useInfiniteQuery(notificationsQueryOptions(filter))
   const markRead = useMarkNotificationRead()
+  useRefetchWhenUnreadCountChanges(filter, query.refetch)
 
-  const items = query.data?.pages.flatMap((page) => page.items) ?? []
+  const items = uniqueById(query.data?.pages.flatMap((page) => page.items) ?? [])
   const total = query.data?.pages[0]?.total ?? 0
 
   const open = (notification: Notification) => {

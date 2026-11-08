@@ -1,5 +1,6 @@
+import { useState } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { screen, waitFor, within } from "@testing-library/react"
+import { act, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -78,6 +79,56 @@ const renderInbox = (kind?: NotificationKind) =>
   )
 
 const section = async (name: RegExp) => screen.findByRole("region", { name })
+
+// The page with its filter switched from outside, as a click on a chip does
+// through the URL.
+const renderSwitchableInbox = async () => {
+  let switchKind: (kind: NotificationKind) => void = () => undefined
+  function Switchable() {
+    const [kind, setKind] = useState<NotificationKind | undefined>(undefined)
+    switchKind = setKind
+    return (
+      <NotificationsInbox
+        kind={kind}
+        now={now}
+      />
+    )
+  }
+  await renderWithRouter(
+    <QueryClientProvider
+      client={
+        new QueryClient({
+          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+        })
+      }
+    >
+      <Switchable />
+    </QueryClientProvider>,
+  )
+  return {
+    switchTo: (kind: NotificationKind) =>
+      act(async () => {
+        switchKind(kind)
+        await Promise.resolve()
+      }),
+  }
+}
+
+// Every kind answers with these, except the one in `groups`, which answers
+// the way the test needs.
+const serverByKind = (groups: () => Promise<unknown>) => {
+  get.mockImplementation((path: string, options?: Options) => ({
+    json: () => {
+      if (path === "notifications/unread-count") return Promise.resolve({ count: 1 })
+      if (options?.searchParams?.kind === "groups") return groups()
+      const items =
+        options?.searchParams?.read === "true"
+          ? [aNotification("n3", "Šachy", "2030-01-01T11:58:00.000Z")]
+          : [aNotification("n1", "Florbal")]
+      return Promise.resolve({ items, total: items.length })
+    },
+  }))
+}
 
 describe("NotificationsInbox", () => {
   it("shows the new ones above the read ones, with how many are new", async () => {
@@ -162,6 +213,67 @@ describe("NotificationsInbox", () => {
     })
     expect(get).toHaveBeenCalledWith("notifications", {
       searchParams: { limit: "10", offset: "0", read: "true", kind: "events" },
+    })
+  })
+
+  it("shows the loader, not the previous kind's rows, while another kind loads", async () => {
+    serverByKind(() => new Promise(() => undefined))
+    const { switchTo } = await renderSwitchableInbox()
+    expect(
+      within(await section(/^Nové/)).getByRole("link", { name: /Florbal/ }),
+    ).toBeInTheDocument()
+
+    await switchTo("groups")
+
+    expect(await screen.findByText("Načítáme notifikace…")).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Florbal/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Šachy/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: /^Nové/ })).not.toBeInTheDocument()
+  })
+
+  it("shows the error when another kind fails to load", async () => {
+    serverByKind(() => Promise.reject(new Error("down")))
+    const { switchTo } = await renderSwitchableInbox()
+    expect(
+      within(await section(/^Nové/)).getByRole("link", { name: /Florbal/ }),
+    ).toBeInTheDocument()
+
+    await switchTo("groups")
+
+    expect(
+      within(await section(/^Nové/)).getByText("Notifikace se nepodařilo načíst"),
+    ).toBeInTheDocument()
+    expect(
+      within(await section(/^Přečtené/)).getByText("Notifikace se nepodařilo načíst"),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Florbal/ })).not.toBeInTheDocument()
+    expect(within(await section(/^Nové/)).queryByText("1")).not.toBeInTheDocument()
+  })
+
+  it("offers no marking read when the chosen kind has nothing new", async () => {
+    // Unread ones of other kinds exist, the count on the bell says so.
+    serverByKind(() => Promise.resolve({ items: [], total: 0 }))
+    const { switchTo } = await renderSwitchableInbox()
+    expect(
+      await screen.findByRole("button", { name: "Označit vše jako přečtené" }),
+    ).toBeInTheDocument()
+
+    await switchTo("groups")
+
+    expect(
+      within(await section(/^Nové/)).getByText("Žádné nové notifikace tohoto druhu."),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /přečtené/ })).not.toBeInTheDocument()
+  })
+
+  it("marks read only the chosen kind", async () => {
+    server({ unread: [aNotification("n1", "Florbal")], read: [] })
+    await renderInbox("events")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Označit tyto jako přečtené" }))
+
+    expect(post).toHaveBeenCalledWith("notifications/read-all", {
+      searchParams: { kind: "events" },
     })
   })
 

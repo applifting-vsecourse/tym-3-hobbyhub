@@ -995,6 +995,7 @@
     "loading": "Načítáme notifikace…",
     "markAllRead": "Označit vše jako přečtené",
     "markAllReadFailed": "Notifikace se nepodařilo označit jako přečtené. Zkus to znovu.",
+    "markKindRead": "Označit tyto jako přečtené",
     "message": "„{{message}}“",
     "more_few": "Načíst další ({{count}})",
     "more_one": "Načíst další ({{count}})",
