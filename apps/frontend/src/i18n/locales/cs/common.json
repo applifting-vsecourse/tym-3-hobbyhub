@@ -996,22 +996,47 @@
   },
   "notifications": {
     "badgeOverflow": "{{max}}+",
-    "bell": "Upozornění",
-    "bellUnread_few": "Upozornění, {{count}} nepřečtená",
-    "bellUnread_one": "Upozornění, {{count}} nepřečtené",
-    "bellUnread_other": "Upozornění, {{count}} nepřečtených",
+    "bell": "Notifikace",
+    "bellEmpty": "Žádné nové notifikace",
+    "bellTitle": "Nové notifikace",
+    "bellUnread_few": "Notifikace, {{count}} nepřečtené",
+    "bellUnread_one": "Notifikace, {{count}} nepřečtená",
+    "bellUnread_other": "Notifikace, {{count}} nepřečtených",
     "deletedTarget": "smazaná akce",
-    "empty": "Zatím nemáš žádná upozornění. Objeví se tu, jakmile se něco stane kolem tvých akcí a skupin.",
     "justNow": "právě teď",
-    "loadError": "Upozornění se nepodařilo načíst",
-    "loading": "Načítáme upozornění…",
+    "kinds": {
+      "all": "Vše",
+      "events": "Akce",
+      "groups": "Skupiny",
+      "label": "Druh notifikací",
+      "other": "Ostatní",
+      "requests": "Přihlášky"
+    },
+    "loadError": "Notifikace se nepodařilo načíst",
+    "loading": "Načítáme notifikace…",
     "markAllRead": "Označit vše jako přečtené",
-    "markAllReadFailed": "Upozornění se nepodařilo označit jako přečtená. Zkus to znovu.",
+    "markAllReadFailed": "Notifikace se nepodařilo označit jako přečtené. Zkus to znovu.",
+    "markKindRead": "Označit tyto jako přečtené",
     "message": "„{{message}}“",
-    "more_few": "{{count}} další",
-    "more_one": "{{count}} další",
-    "more_other": "{{count}} dalších",
+    "more_few": "Načíst další ({{count}})",
+    "more_one": "Načíst další ({{count}})",
+    "more_other": "Načíst další ({{count}})",
     "retry": "Zkusit znovu",
+    "sections": {
+      "new": {
+        "count_few": "{{count}} nepřečtené",
+        "count_one": "{{count}} nepřečtená",
+        "count_other": "{{count}} nepřečtených",
+        "empty": "Žádné nové notifikace. Objeví se tu, jakmile se něco stane kolem tvých akcí a skupin.",
+        "emptyFiltered": "Žádné nové notifikace tohoto druhu.",
+        "title": "Nové"
+      },
+      "read": {
+        "empty": "Zatím žádné přečtené notifikace. Přesunou se sem ty, které otevřeš nebo označíš jako přečtené.",
+        "emptyFiltered": "Žádné přečtené notifikace tohoto druhu.",
+        "title": "Přečtené"
+      }
+    },
     "showAll": "Zobrazit vše",
     "someone": "Někdo",
     "text": {
@@ -1038,8 +1063,8 @@
       },
       "other": "Novinka k {{title}}"
     },
-    "title": "Upozornění",
-    "unread": "Nepřečtené:"
+    "title": "Notifikace",
+    "unread": "Nepřečtená:"
   },
   "onboarding": {
     "activities": {
