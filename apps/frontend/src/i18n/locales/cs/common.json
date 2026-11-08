@@ -481,7 +481,9 @@
       "members_other": "{{count}} členů",
       "membership": {
         "hasAccount": "Už máte účet?",
+        "isAdmin": "Jste správcem",
         "isMember": "Jste členem",
+        "isOwner": "Jste organizátorem",
         "leave": "Odejít ze skupiny",
         "leaveConfirm": "Odejít",
         "leaveFailed": "Ze skupiny se nepodařilo odejít. Zkuste to prosím znovu.",

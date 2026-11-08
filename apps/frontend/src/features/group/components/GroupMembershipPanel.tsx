@@ -56,9 +56,13 @@ export function GroupMembershipPanel({
 
   let content: ReactNode
   if (view === "member") {
+    // The role says at once what the user may do in the group.
+    let roleText = t("groups.detail.membership.isMember")
+    if (membership.isOwner) roleText = t("groups.detail.membership.isOwner")
+    else if (membership.isAdmin) roleText = t("groups.detail.membership.isAdmin")
     content = (
       <>
-        <StatusBadge status="approved">{t("groups.detail.membership.isMember")}</StatusBadge>
+        <StatusBadge status="approved">{roleText}</StatusBadge>
         {membership.canLeave ? (
           <Button
             variant="outline"

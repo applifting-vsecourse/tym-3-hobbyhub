@@ -364,12 +364,16 @@ describe("GroupDetail", () => {
   })
 
   describe("an admin", () => {
-    it.each(["OWNER", "ADMIN"] as const)(
-      "%s sees the way to the requests and the members",
-      async (role) => {
+    it.each([
+      ["OWNER", "Jste organizátorem"],
+      ["ADMIN", "Jste správcem"],
+    ] as const)(
+      "%s sees their role and the way to the requests and the members",
+      async (role, roleText) => {
         server.role = role
         await renderDetail("u1")
 
+        expect(await screen.findByText(roleText)).toBeVisible()
         expect(await screen.findByRole("link", { name: "Žádosti o členství (2)" })).toHaveAttribute(
           "href",
           "/groups/g1/members?tab=requests",
@@ -385,7 +389,7 @@ describe("GroupDetail", () => {
       server.role = "OWNER"
       await renderDetail("u1")
 
-      expect(await screen.findByText("Jste členem")).toBeVisible()
+      expect(await screen.findByText("Jste organizátorem")).toBeVisible()
       expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
       expect(screen.getByRole("link", { name: "Předat správu" })).toHaveAttribute(
         "href",

@@ -470,7 +470,9 @@
       "members_other": "{{count}} members",
       "membership": {
         "hasAccount": "Already have an account?",
+        "isAdmin": "You are an admin",
         "isMember": "You are a member",
+        "isOwner": "You are the organizer",
         "leave": "Leave group",
         "leaveConfirm": "Leave",
         "leaveFailed": "Could not leave the group. Please try again.",

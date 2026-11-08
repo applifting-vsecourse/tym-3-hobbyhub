@@ -26,32 +26,35 @@ export function GroupMembersPreview({ groupId, members }: GroupMembersPreviewPro
   return (
     <section
       aria-labelledby="group-members-heading"
-      className="flex flex-col gap-3 border-t border-border pt-4"
+      className="border-t border-border pt-4"
     >
-      <h2
-        id="group-members-heading"
-        className="typo-h3 text-foreground"
-      >
-        {t("groups.manage.membersTitle", { count: members.length })}
-      </h2>
+      {/* The heading and the faces are one link: either looks like the way in. */}
       <Link
         to="/groups/$groupId/members"
         params={{ groupId }}
         aria-label={t("groups.manage.membersLink")}
-        className="flex w-fit flex-wrap items-center gap-2 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="group flex w-fit flex-col gap-3 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       >
-        {shown.map((member) => (
-          <ActivityAvatar
-            key={member.userId}
-            avatar={memberAvatar(member.userId)}
-            size="md"
-          />
-        ))}
-        {rest > 0 ? (
-          <span className="typo-label text-muted-foreground">
-            {t("groups.manage.membersMore", { count: rest })}
-          </span>
-        ) : null}
+        <h2
+          id="group-members-heading"
+          className="typo-h3 text-foreground underline-offset-4 group-hover:underline"
+        >
+          {t("groups.manage.membersTitle", { count: members.length })}
+        </h2>
+        <span className="flex flex-wrap items-center gap-2">
+          {shown.map((member) => (
+            <ActivityAvatar
+              key={member.userId}
+              avatar={memberAvatar(member.userId)}
+              size="md"
+            />
+          ))}
+          {rest > 0 ? (
+            <span className="typo-label text-muted-foreground">
+              {t("groups.manage.membersMore", { count: rest })}
+            </span>
+          ) : null}
+        </span>
       </Link>
     </section>
   )
