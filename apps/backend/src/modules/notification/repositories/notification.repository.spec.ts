@@ -96,6 +96,34 @@ describe('NotificationRepository', () => {
     });
   });
 
+  it('marks read every unread one of the recipient', async () => {
+    const { prisma, repository } = setup();
+    prisma.notification.updateMany.mockResolvedValue({ count: 3 } as never);
+    const at = new Date('2030-01-01T12:00:00Z');
+
+    await expect(repository.markAllRead('u1', at)).resolves.toBe(3);
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+      where: { recipientId: 'u1', readAt: null },
+      data: { readAt: at },
+    });
+  });
+
+  it('marks read only the unread ones of a kind', async () => {
+    const { prisma, repository } = setup();
+    prisma.notification.updateMany.mockResolvedValue({ count: 1 } as never);
+    const at = new Date('2030-01-01T12:00:00Z');
+
+    await repository.markAllRead('u1', at, 'groups');
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+      where: {
+        recipientId: 'u1',
+        readAt: null,
+        type: { in: ['GROUP_INVITATION'] },
+      },
+      data: { readAt: at },
+    });
+  });
+
   it('combines both', async () => {
     await expect(whereOf({ read: false, kind: 'groups' })).resolves.toEqual({
       recipientId: 'u1',

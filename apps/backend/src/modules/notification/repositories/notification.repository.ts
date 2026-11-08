@@ -4,6 +4,7 @@ import {
   NewNotification,
   Notification,
   NotificationFilter,
+  NotificationKind,
   NotificationPage,
   NotificationPayload,
   notificationTypesOf,
@@ -41,6 +42,10 @@ const mapToDomain = (row: NotificationRow): Notification => ({
   event: row.event,
   group: row.group,
 });
+
+// A kind is the set of its types; without one, every type.
+const whereKind = (kind?: NotificationKind): Prisma.NotificationWhereInput =>
+  kind === undefined ? {} : { type: { in: [...notificationTypesOf(kind)] } };
 
 @Injectable()
 export class NotificationRepository {
@@ -93,9 +98,7 @@ export class NotificationRepository {
       ...(filter.read === undefined
         ? {}
         : { readAt: filter.read ? { not: null } : null }),
-      ...(filter.kind === undefined
-        ? {}
-        : { type: { in: [...notificationTypesOf(filter.kind)] } }),
+      ...whereKind(filter.kind),
     };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.notification.findMany({
@@ -135,9 +138,13 @@ export class NotificationRepository {
   }
 
   // Returns how many were unread until now.
-  async markAllRead(recipientId: string, at: Date): Promise<number> {
+  async markAllRead(
+    recipientId: string,
+    at: Date,
+    kind?: NotificationKind,
+  ): Promise<number> {
     const { count } = await this.prisma.notification.updateMany({
-      where: { recipientId, readAt: null },
+      where: { recipientId, readAt: null, ...whereKind(kind) },
       data: { readAt: at },
     });
     return count;

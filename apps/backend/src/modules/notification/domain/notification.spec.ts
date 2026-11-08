@@ -3,12 +3,11 @@ import {
   EventWhenAndWhere,
   NOTIFICATION_KINDS,
   NOTIFICATION_TYPES,
-  notificationKindOf,
   notificationTypesOf,
   recipientsExcept,
 } from './notification';
 
-describe('notificationKindOf', () => {
+describe('notificationTypesOf', () => {
   it.each([
     ['NEW_REQUESTS', 'requests'],
     ['REQUEST_DECIDED', 'requests'],
@@ -22,7 +21,6 @@ describe('notificationKindOf', () => {
     ['ONBOARDING_SERIES', 'other'],
     ['MONTHLY_RECOMMENDATION', 'other'],
   ] as const)('files %s under %s', (type, kind) => {
-    expect(notificationKindOf(type)).toBe(kind);
     expect(notificationTypesOf(kind)).toContain(type);
   });
 

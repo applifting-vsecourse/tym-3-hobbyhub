@@ -25,6 +25,7 @@ import {
   NotificationPageResponseDto,
   NotificationResponseDto,
 } from './dto/notification.response.dto';
+import { ReadAllNotificationsQuery } from './dto/read-all-notifications.query';
 import { notificationsValidationPipe } from './notifications-validation.pipe';
 
 // #152: the signed-in user's own notifications. Whose they are comes from the
@@ -72,14 +73,21 @@ export class NotificationsController {
 
   @Post('read-all')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Mark all my notifications read' })
+  @ApiOperation({
+    summary: 'Mark all my notifications read',
+    description: 'Optionally only those of one kind (`kind`).',
+  })
   @ApiResponse({
     status: 200,
     type: NotificationCountResponseDto,
     description: 'How many were unread until now',
   })
-  async readAll(@User() user: Identity): Promise<NotificationCountResponseDto> {
-    return { count: await this.service.markAllRead(user) };
+  @ApiResponse({ status: 400, description: 'Invalid kind' })
+  async readAll(
+    @User() user: Identity,
+    @Query() query: ReadAllNotificationsQuery,
+  ): Promise<NotificationCountResponseDto> {
+    return { count: await this.service.markAllRead(user, query.kind) };
   }
 
   @Post(':id/read')

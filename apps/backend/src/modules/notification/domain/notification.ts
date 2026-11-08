@@ -24,7 +24,7 @@ export const NOTIFICATION_TYPES = [
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 // #175: what the notification page filters by. Every type belongs to exactly
-// one kind; the client mirrors this in `notificationKinds.ts`.
+// one kind; only the server knows which, the client sends the kind.
 export const NOTIFICATION_KINDS = [
   'requests',
   'events',
@@ -49,10 +49,6 @@ export const NOTIFICATION_TYPES_BY_KIND = {
 export const notificationTypesOf = (
   kind: NotificationKind,
 ): readonly NotificationType[] => NOTIFICATION_TYPES_BY_KIND[kind];
-
-export const notificationKindOf = (type: NotificationType): NotificationKind =>
-  NOTIFICATION_KINDS.find((kind) => notificationTypesOf(kind).includes(type)) ??
-  'other';
 
 // Which of the recipient's notifications a page of the list holds. Without
 // `read` both the read and the unread ones, without `kind` every type.

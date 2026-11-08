@@ -96,8 +96,16 @@ describe('NotificationsService', () => {
       const { repository, service } = setup();
       repository.markAllRead.mockResolvedValue(3);
 
-      await expect(service.markAllRead(user, now)).resolves.toBe(3);
-      expect(repository.markAllRead).toHaveBeenCalledWith('u1', now);
+      await expect(service.markAllRead(user, undefined, now)).resolves.toBe(3);
+      expect(repository.markAllRead).toHaveBeenCalledWith('u1', now, undefined);
+    });
+
+    it('marks read only the kind it is given', async () => {
+      const { repository, service } = setup();
+      repository.markAllRead.mockResolvedValue(1);
+
+      await expect(service.markAllRead(user, 'groups', now)).resolves.toBe(1);
+      expect(repository.markAllRead).toHaveBeenCalledWith('u1', now, 'groups');
     });
   });
 
