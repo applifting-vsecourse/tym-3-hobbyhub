@@ -3,6 +3,8 @@ import {
   EventChange,
   NewNotification,
   Notification,
+  NotificationFilter,
+  NotificationKind,
   NotificationPage,
   Page,
   recipientsExcept,
@@ -34,8 +36,12 @@ export class NotificationsService {
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  listMine(user: Identity, page: Page): Promise<NotificationPage> {
-    return this.repository.listOf(user.id, page);
+  listMine(
+    user: Identity,
+    page: Page,
+    filter: NotificationFilter = {},
+  ): Promise<NotificationPage> {
+    return this.repository.listOf(user.id, page, filter);
   }
 
   countUnread(user: Identity): Promise<number> {
@@ -53,8 +59,14 @@ export class NotificationsService {
     return notification;
   }
 
-  markAllRead(user: Identity, now: Date = new Date()): Promise<number> {
-    return this.repository.markAllRead(user.id, now);
+  // Without a kind every unread one; with it only the unread ones of that kind
+  // (#175: the page marks read what its filter shows).
+  markAllRead(
+    user: Identity,
+    kind?: NotificationKind,
+    now: Date = new Date(),
+  ): Promise<number> {
+    return this.repository.markAllRead(user.id, now, kind);
   }
 
   // -------------------------------------------------------------------------
