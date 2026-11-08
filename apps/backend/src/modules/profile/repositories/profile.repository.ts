@@ -9,7 +9,7 @@ export type ProfileRow = {
   image: string | null;
   profileCover: string | null;
   gender: Gender | null;
-  birthDate: Date | null;
+  birthYear: number | null;
 };
 
 export type PublicProfileRow = {
@@ -35,7 +35,7 @@ export class ProfileRepository {
         image: true,
         profileCover: true,
         gender: true,
-        birthDate: true,
+        birthYear: true,
       },
     });
   }
@@ -71,7 +71,7 @@ export class ProfileRepository {
 
   async updatePrivate(
     userId: string,
-    data: { gender: Gender; birthDate: Date },
+    data: { gender: Gender; birthYear: number },
   ): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },

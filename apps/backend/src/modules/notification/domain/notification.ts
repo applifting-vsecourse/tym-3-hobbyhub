@@ -74,6 +74,7 @@ export type NotificationPayload = {
   // REQUEST_DECIDED
   decision?: Decision;
   // REQUEST_DECIDED: the organizer's words, if any (the rejection reason).
+  // PARTICIPANT_CANCELLED: the participant's words, always there.
   message?: string;
   // EVENT_CHANGED
   changes?: EventChange[];

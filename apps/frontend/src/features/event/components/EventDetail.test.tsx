@@ -37,6 +37,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   cancellationReason: null,
   cancellationNote: null,
   group: null,
+  visibility: "PUBLIC",
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1, unknown: 1 } },
   statsMinParticipants: 3,
   ...overrides,
@@ -84,6 +85,18 @@ describe("EventDetail", () => {
     expect(screen.getByText(/80\s*Kč/)).toBeInTheDocument()
     expect(screen.getByText("chybí 3 do minima")).toBeInTheDocument()
     expect(screen.getByText("5 z 10 míst")).toBeInTheDocument()
+  })
+
+  it("says a group-only event is for the group's members (F-07.2)", async () => {
+    await renderDetail({ visibility: "GROUP_ONLY" })
+
+    expect(screen.getByText("Jen pro členy skupiny")).toBeVisible()
+  })
+
+  it("does not label a public event", async () => {
+    await renderDetail()
+
+    expect(screen.queryByText("Jen pro členy skupiny")).not.toBeInTheDocument()
   })
 
   it("keeps the decimals and the note of the contribution", async () => {

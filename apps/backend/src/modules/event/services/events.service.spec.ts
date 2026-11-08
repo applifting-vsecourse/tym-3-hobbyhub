@@ -3,10 +3,13 @@ import { CancellationReasonsService } from '@/modules/cancellation-reason/servic
 import {
   CreateEventData,
   Event,
+  EventDetail,
   EventFacts,
   EventSeatFacts,
+  GROUP_EVENTS_PAGE_SIZE,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
+import { GroupsService } from '@/modules/group/services/groups.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import {
@@ -17,7 +20,10 @@ import {
 import { mock, MockProxy } from 'jest-mock-extended';
 import { EventsService } from './events.service';
 
-const inAnHour = (): Date => new Date(Date.now() + 3600 * 1000);
+// One clock read for every fixture: two `anEvent()` calls must describe the
+// same event, not two a millisecond apart.
+const NOW = Date.now();
+const inAnHour = (): Date => new Date(NOW + 3600 * 1000);
 
 const anEvent = (overrides: Partial<Event> = {}): Event => ({
   id: 'e1',
@@ -30,8 +36,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   approvalMode: 'MANUAL',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
-  publishedAt: new Date(),
-  createdAt: new Date(),
+  publishedAt: new Date(NOW),
+  createdAt: new Date(NOW),
   minParticipants: 8,
   maxParticipants: 12,
   contributionAmount: 80,
@@ -92,6 +98,7 @@ describe('EventsService', () => {
   ): {
     repository: MockProxy<EventRepository>;
     notifications: MockProxy<NotificationsService>;
+    groups: MockProxy<GroupsService>;
     service: EventsService;
   } => {
     const repository = mock<EventRepository>();
@@ -104,14 +111,18 @@ describe('EventsService', () => {
     const reasons = mock<CancellationReasonsService>();
     reasons.isAvailable.mockResolvedValue(isReasonAvailable);
     const notifications = mock<NotificationsService>();
+    const groups = mock<GroupsService>();
+    groups.getMemberRole.mockResolvedValue(null);
     return {
       repository,
       notifications,
+      groups,
       service: new EventsService(
         repository,
         activities,
         reasons,
         notifications,
+        groups,
       ),
     };
   };
@@ -228,13 +239,157 @@ describe('EventsService', () => {
     );
   });
 
-  it('reports a public event that does not exist, or is not public, as not found', async () => {
+  it('reports an event that does not exist, or cannot be shown, as not found', async () => {
     const { repository, service } = setup();
-    repository.getPublicEventById.mockResolvedValue(null);
+    repository.getShowableEventById.mockResolvedValue(null);
 
-    await expect(service.getPublicEvent('nope')).rejects.toBeInstanceOf(
+    await expect(service.getEventDetail('nope')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  describe('a group-only event (F-07.2)', () => {
+    const groupOnly = { visibility: 'GROUP_ONLY' } as EventDetail;
+    const groupFacts: EventFacts = {
+      id: 'e1',
+      status: 'PUBLISHED',
+      visibility: 'GROUP_ONLY',
+      groupId: 'g1',
+      startAt: inAnHour(),
+      endAt: inAnHour(),
+      approvalMode: 'MANUAL',
+      organizerIds: ['organizer'],
+      freeSpots: 3,
+    };
+    const viewer = { id: 'u2' } as Identity;
+
+    it('shows a public event to a visitor without asking the group', async () => {
+      const { repository, groups, service } = setup();
+      const event = { visibility: 'PUBLIC' } as EventDetail;
+      repository.getShowableEventById.mockResolvedValue(event);
+
+      await expect(service.getEventDetail('e1')).resolves.toBe(event);
+      expect(groups.getMemberRole).not.toHaveBeenCalled();
+    });
+
+    it('shows it to a member of the group', async () => {
+      const { repository, groups, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+
+      await expect(service.getEventDetail('e1', viewer)).resolves.toBe(
+        groupOnly,
+      );
+      expect(groups.getMemberRole).toHaveBeenCalledWith('g1', 'u2');
+    });
+
+    it('shows it to someone who left the group but holds a seat', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(true);
+
+      await expect(service.getEventDetail('e1', viewer)).resolves.toBe(
+        groupOnly,
+      );
+      expect(repository.isInvolvedIn).toHaveBeenCalledWith('e1', 'u2');
+    });
+
+    it('shows it to its organizer', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+
+      await expect(
+        service.getEventDetail('e1', { id: 'organizer' } as Identity),
+      ).resolves.toBe(groupOnly);
+    });
+
+    it.each([
+      ['a visitor', undefined],
+      ['someone outside the group', viewer],
+    ])('hides it from %s as not found', async (_name, who) => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+
+      await expect(service.getEventDetail('e1', who)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('gives its seat facts to a member only', async () => {
+      const { repository, groups, service } = setup();
+      const seatFacts = { ...groupFacts, hasSeat: false };
+      repository.getShowableEventSeatFacts.mockResolvedValue(seatFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+
+      await expect(
+        service.getVisibleEventSeatFacts('e1', 'u2'),
+      ).resolves.toBeNull();
+
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+      await expect(service.getVisibleEventSeatFacts('e1', 'u2')).resolves.toBe(
+        seatFacts,
+      );
+    });
+  });
+
+  describe('getGroupEvents (F-07.2)', () => {
+    const page = { items: [], total: 0 };
+    const now = new Date('2030-01-01T12:00:00Z');
+
+    it('gives a member the group-only events too', async () => {
+      const { repository, groups, service } = setup();
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+      repository.getGroupEvents.mockResolvedValue(page);
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 10, now),
+      ).resolves.toBe(page);
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        { period: 'past', visibilities: ['PUBLIC', 'GROUP_ONLY'], now },
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
+      );
+      expect(groups.getPublicGroup).not.toHaveBeenCalled();
+    });
+
+    it('gives anyone else the upcoming public events of a public group', async () => {
+      const { repository, groups, service } = setup();
+      repository.getGroupEvents.mockResolvedValue(page);
+
+      await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
+
+      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1');
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        { period: 'upcoming', visibilities: ['PUBLIC'], now },
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
+      );
+    });
+
+    it('answers not found to a non-member asking for the past', async () => {
+      const { repository, service } = setup();
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
+    });
+
+    it('answers not found for a group without a public page', async () => {
+      const { repository, groups, service } = setup();
+      groups.getPublicGroup.mockRejectedValue(new NotFoundException());
+
+      await expect(
+        service.getGroupEvents('g1', undefined, 'upcoming', 0, now),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateEvent', () => {
@@ -296,8 +451,6 @@ describe('EventsService', () => {
       const { repository, notifications, service } = setup();
       const event = anEvent();
       repository.getEventById.mockResolvedValue(event);
-      // From the same object: `anEvent()` reads the clock, and two reads a
-      // millisecond apart would look like a moved start.
       repository.updateEvent.mockResolvedValue({
         ok: true,
         event: { ...event, title: 'Páteční florbal' },
@@ -558,6 +711,8 @@ describe('EventsService', () => {
     const facts: EventFacts = {
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: inAnHour(),
       endAt: new Date(inAnHour().getTime() + 3600 * 1000),
       approvalMode: 'MANUAL',
@@ -604,6 +759,8 @@ describe('EventsService', () => {
     ): EventSeatFacts => ({
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: inAnHour(),
       endAt: inAnHour(),
       approvalMode: 'MANUAL',
@@ -622,7 +779,7 @@ describe('EventsService', () => {
 
     it('gives the contacts to a person holding a seat', async () => {
       const { repository, service } = setup();
-      repository.getPublicEventSeatFacts.mockResolvedValue(
+      repository.getShowableEventSeatFacts.mockResolvedValue(
         facts({ hasSeat: true }),
       );
       repository.getParticipantInfo.mockResolvedValue(info);
@@ -634,7 +791,7 @@ describe('EventsService', () => {
 
     it('gives them to the organizer without a seat', async () => {
       const { repository, service } = setup();
-      repository.getPublicEventSeatFacts.mockResolvedValue(facts());
+      repository.getShowableEventSeatFacts.mockResolvedValue(facts());
       repository.getParticipantInfo.mockResolvedValue(info);
 
       await expect(
@@ -644,7 +801,7 @@ describe('EventsService', () => {
 
     it('refuses anyone else and never reads the contacts', async () => {
       const { repository, service } = setup();
-      repository.getPublicEventSeatFacts.mockResolvedValue(facts());
+      repository.getShowableEventSeatFacts.mockResolvedValue(facts());
 
       await expect(
         service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
@@ -654,14 +811,14 @@ describe('EventsService', () => {
 
     it('keeps the contacts of a cancelled or finished event to itself', async () => {
       const { repository, service } = setup();
-      repository.getPublicEventSeatFacts.mockResolvedValue(
+      repository.getShowableEventSeatFacts.mockResolvedValue(
         facts({ hasSeat: true, status: 'CANCELLED' }),
       );
       await expect(
         service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
       ).rejects.toBeInstanceOf(ForbiddenException);
 
-      repository.getPublicEventSeatFacts.mockResolvedValue(
+      repository.getShowableEventSeatFacts.mockResolvedValue(
         facts({ hasSeat: true, endAt: new Date(Date.now() - 1000) }),
       );
       await expect(
@@ -672,7 +829,7 @@ describe('EventsService', () => {
 
     it('says not found for an event that is not public', async () => {
       const { repository, service } = setup();
-      repository.getPublicEventSeatFacts.mockResolvedValue(null);
+      repository.getShowableEventSeatFacts.mockResolvedValue(null);
 
       await expect(
         service.getParticipantInfo({ id: 'u2' } as Identity, 'e1'),
@@ -684,6 +841,8 @@ describe('EventsService', () => {
     const facts = (organizerIds: string[]): EventFacts => ({
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: inAnHour(),
       endAt: new Date(inAnHour().getTime() + 3600 * 1000),
       approvalMode: 'MANUAL',
@@ -717,6 +876,8 @@ describe('EventsService', () => {
     const facts: EventFacts = {
       id: 'e1',
       status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
       startAt: inAnHour(),
       endAt: new Date(inAnHour().getTime() + 3600 * 1000),
       approvalMode: 'MANUAL',

@@ -1,5 +1,5 @@
 import { createRootRoute, createRouter, RouterProvider } from "@tanstack/react-router"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -19,17 +19,12 @@ const renderForm = (onSubmit = vi.fn()) => {
   return onSubmit
 }
 
-const pickBirthDate = async (year: number, month: number, day: number) => {
-  const user = userEvent.setup()
-  await user.click(await screen.findByRole("button", { name: /datum narození/i }))
-  const dialog = await screen.findByRole("dialog")
-  // The month dropdown is rendered anew once the year changes, so look it up after.
-  const yearSelect = within(dialog).getAllByRole("combobox")[1]
-  await user.selectOptions(yearSelect!, String(year))
-  const monthSelect = within(dialog).getAllByRole("combobox")[0]
-  await user.selectOptions(monthSelect!, String(month - 1))
-  await user.click(within(dialog).getByRole("button", { name: new RegExp(`^.*\\b${day}\\.`) }))
+const typeBirthYear = async (year: number | string) => {
+  await userEvent.type(await screen.findByLabelText("Rok narození"), String(year))
 }
+
+const ADULTHOOD = /potvrzuji, že je mi alespoň 18 let/i
+const THIS_YEAR = new Date().getFullYear()
 
 const SUBMIT = "Vytvořit účet a pokračovat"
 
@@ -42,22 +37,25 @@ describe("SignUpForm", () => {
     expect(link).toHaveAttribute("target", "_blank")
   })
 
-  it("explains the birth date and gender right at their fields", async () => {
+  it("explains the birth year and gender right at their fields", async () => {
     renderForm()
 
-    expect(await screen.findByLabelText("Datum narození")).toHaveAccessibleDescription(
-      /ověření věku 18\+/,
+    expect(await screen.findByLabelText("Rok narození")).toHaveAccessibleDescription(
+      /stačí rok.*ověření věku 18\+/i,
     )
     expect(screen.getByLabelText("Pohlaví")).toHaveAccessibleDescription(/soukromý údaj/i)
   })
 
-  it("asks for gender, birth date and consent", async () => {
+  it("asks for gender, birth year, the confirmation of adulthood and consent", async () => {
     const onSubmit = renderForm()
 
     await userEvent.click(await screen.findByRole("button", { name: SUBMIT }))
 
     expect(await screen.findByText("Vyberte pohlaví")).toBeInTheDocument()
-    expect(screen.getByText("Vyberte datum narození")).toBeInTheDocument()
+    expect(screen.getByText("Zadejte rok narození")).toBeInTheDocument()
+    expect(
+      screen.getByText("Registrace je možná jen od 18 let, potvrďte svou plnoletost"),
+    ).toBeInTheDocument()
     expect(screen.getByText("Bez souhlasu s podmínkami se nelze zaregistrovat")).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })
@@ -72,7 +70,8 @@ describe("SignUpForm", () => {
     await user.type(screen.getByLabelText("Zopakujte heslo"), "correct-horse")
     await user.click(screen.getByRole("combobox", { name: "Pohlaví" }))
     await user.click(await screen.findByRole("option", { name: "Žena" }))
-    await pickBirthDate(1995, 4, 12)
+    await typeBirthYear(1995)
+    await user.click(screen.getByRole("checkbox", { name: ADULTHOOD }))
     await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
     await user.click(screen.getByRole("button", { name: SUBMIT }))
 
@@ -83,7 +82,8 @@ describe("SignUpForm", () => {
       password: "correct-horse",
       confirmPassword: "correct-horse",
       gender: "FEMALE",
-      birthDate: "1995-04-12",
+      birthYear: 1995,
+      adulthoodConfirmed: true,
       termsAccepted: true,
     })
   })
@@ -110,7 +110,8 @@ describe("SignUpForm", () => {
     await user.type(screen.getByLabelText("Zopakujte heslo"), " correct-horse ")
     await user.click(screen.getByRole("combobox", { name: "Pohlaví" }))
     await user.click(await screen.findByRole("option", { name: "Žena" }))
-    await pickBirthDate(1995, 4, 12)
+    await typeBirthYear(1995)
+    await user.click(screen.getByRole("checkbox", { name: ADULTHOOD }))
     await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
     await user.click(screen.getByRole("button", { name: SUBMIT }))
 
@@ -158,13 +159,56 @@ describe("SignUpForm", () => {
     await vi.waitFor(() => expect(screen.queryByText("Hesla se neshodují")).not.toBeInTheDocument())
   })
 
-  it("does not let someone under 18 register", async () => {
+  it("refuses a year in which nobody can be 18 yet", async () => {
     const onSubmit = renderForm()
 
-    await pickBirthDate(new Date().getFullYear() - 10, 1, 1)
+    await typeBirthYear(THIS_YEAR - 17)
     await userEvent.click(screen.getByRole("button", { name: SUBMIT }))
 
     expect(await screen.findByText("Registrace je možná až od 18 let")).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("lets through the year in which someone turns 18", async () => {
+    renderForm()
+
+    await typeBirthYear(THIS_YEAR - 18)
+    await userEvent.click(screen.getByRole("button", { name: SUBMIT }))
+
+    expect(await screen.findByText("Vyberte pohlaví")).toBeInTheDocument()
+    expect(screen.queryByText("Registrace je možná až od 18 let")).not.toBeInTheDocument()
+    expect(screen.queryByText(/zadejte rok narození/i)).not.toBeInTheDocument()
+  })
+
+  it.each(["1899", "95", String(THIS_YEAR + 1)])("refuses the year %s", async (year) => {
+    const onSubmit = renderForm()
+
+    await typeBirthYear(year)
+    await userEvent.click(screen.getByRole("button", { name: SUBMIT }))
+
+    expect(
+      await screen.findByText("Zadejte rok narození jako čtyřmístné číslo od 1900 do letoška"),
+    ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("does not submit without the confirmation of adulthood", async () => {
+    const onSubmit = renderForm()
+    const user = userEvent.setup()
+
+    await user.type(await screen.findByLabelText("Jméno / přezdívka"), "Jana")
+    await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
+    await user.type(screen.getByLabelText("Heslo"), "correct-horse")
+    await user.type(screen.getByLabelText("Zopakujte heslo"), "correct-horse")
+    await user.click(screen.getByRole("combobox", { name: "Pohlaví" }))
+    await user.click(await screen.findByRole("option", { name: "Žena" }))
+    await typeBirthYear(1995)
+    await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
+    await user.click(screen.getByRole("button", { name: SUBMIT }))
+
+    expect(
+      await screen.findByText("Registrace je možná jen od 18 let, potvrďte svou plnoletost"),
+    ).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 

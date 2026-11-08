@@ -9,6 +9,7 @@ import {
   notificationTypesOf,
   Page,
 } from '@/modules/notification/domain/notification';
+import { NotificationForEmail } from '@/modules/notification/domain/notification-email';
 import { Injectable } from '@nestjs/common';
 
 // The rows the text is made of, besides the notification itself. Only public
@@ -45,10 +46,11 @@ const mapToDomain = (row: NotificationRow): Notification => ({
 export class NotificationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // One row per recipient, all in one write. Returns how many were written.
-  async createForRecipients(data: NewNotification): Promise<number> {
-    if (data.recipientIds.length === 0) return 0;
-    const { count } = await this.prisma.notification.createMany({
+  // One row per recipient, all in one write. Returns the ids of the rows, for
+  // the e-mails made of them (F-09.5).
+  async createForRecipients(data: NewNotification): Promise<string[]> {
+    if (data.recipientIds.length === 0) return [];
+    const rows = await this.prisma.notification.createManyAndReturn({
       data: data.recipientIds.map((recipientId) => ({
         recipientId,
         type: data.type,
@@ -57,8 +59,26 @@ export class NotificationRepository {
         groupId: data.groupId ?? null,
         payload: (data.payload ?? {}) as Prisma.InputJsonObject,
       })),
+      select: { id: true },
     });
-    return count;
+    return rows.map((row) => row.id);
+  }
+
+  // F-09.5: the notifications with what their e-mail needs besides the text:
+  // the recipient's own address, and whether they have verified it.
+  async findForEmail(ids: readonly string[]): Promise<NotificationForEmail[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.notification.findMany({
+      where: { id: { in: [...ids] } },
+      include: {
+        ...include,
+        recipient: { select: { email: true, emailVerified: true } },
+      },
+    });
+    return rows.map((row) => ({
+      ...mapToDomain(row),
+      recipient: row.recipient,
+    }));
   }
 
   // The recipient's notifications, newest first, a page at a time; `total`
