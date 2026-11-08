@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -145,5 +145,70 @@ describe("ActivityCombobox order", () => {
       "Hokej",
       "Chůze",
     ])
+  })
+})
+
+const BALL = { id: "c-ball", name: "Míčové sporty", icon: "micove-sporty", order: 1 }
+const PRECISION = { id: "c-precision", name: "Přesnost a míření", icon: "presnost", order: 3 }
+const GROUPED_OPTIONS: ActivityComboboxOption[] = [
+  { id: "a-lukostrelba", label: "Lukostřelba", icon: "lukostrelba", category: PRECISION },
+  { id: "a-volejbal", label: "Volejbal", icon: "volejbal", category: BALL },
+  { id: "a-fotbal", label: "Fotbal", icon: "fotbal", category: BALL },
+]
+
+const renderGrouped = () => {
+  render(
+    <ActivityCombobox
+      aria-label="Aktivita"
+      options={GROUPED_OPTIONS}
+      value=""
+      onValueChange={vi.fn()}
+      placeholder="Vyberte aktivitu"
+    />,
+  )
+  return userEvent.setup()
+}
+
+describe("ActivityCombobox categories", () => {
+  it("groups the activities under their categories, in category order", async () => {
+    const user = renderGrouped()
+
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+
+    const groups = await screen.findAllByRole("group")
+    expect(
+      groups.map((group) => [
+        group.getAttribute("aria-labelledby") &&
+          document.getElementById(group.getAttribute("aria-labelledby") ?? "")?.textContent,
+        within(group)
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ]),
+    ).toEqual([
+      ["Míčové sporty", ["Fotbal", "Volejbal"]],
+      ["Přesnost a míření", ["Lukostřelba"]],
+    ])
+  })
+
+  it("finds a niche sport by name, without accents", async () => {
+    const user = renderGrouped()
+
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+    await user.type(await screen.findByPlaceholderText("Hledat aktivitu…"), "lukostrelba")
+
+    expect(screen.getByRole("option", { name: "Lukostřelba" })).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "Přesnost a míření" })).toBeInTheDocument()
+    expect(screen.queryByRole("group", { name: "Míčové sporty" })).not.toBeInTheDocument()
+  })
+
+  it("lists every activity of a category when its name is typed", async () => {
+    const user = renderGrouped()
+
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+    await user.type(await screen.findByPlaceholderText("Hledat aktivitu…"), "micove")
+
+    expect(screen.getByRole("option", { name: "Fotbal" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Volejbal" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Lukostřelba" })).not.toBeInTheDocument()
   })
 })

@@ -1,7 +1,12 @@
 import { useTranslation } from "react-i18next"
 
 import { ActivityAvatar, AVATAR_KINDS } from "@/components/hobbyhub/ActivityAvatar"
-import { ACTIVITY_KEYS, ActivityIcon } from "@/components/hobbyhub/ActivityIcon"
+import {
+  ACTIVITY_KEYS,
+  ActivityIcon,
+  CATEGORY_KEYS,
+  CategoryIcon,
+} from "@/components/hobbyhub/ActivityIcon"
 import { ActivityToken } from "@/components/hobbyhub/ActivityToken"
 import { Logo } from "@/components/hobbyhub/Logo"
 
@@ -55,6 +60,24 @@ export function BrandSections() {
             isSelected
           />
         </Example>
+      </ShowcaseSection>
+
+      <ShowcaseSection
+        id="ikony-kategorii"
+        title="Ikony kategorií aktivit"
+        description="14 hlavních kategorií (ADR-0019), kreslené stejně jako ikony aktivit. Aktivita bez vlastní ikony zobrazuje ikonu své kategorie; kategorie Ostatní sdílí ikonu s aktivitou Ostatní."
+      >
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {CATEGORY_KEYS.map((category) => (
+            <li
+              key={category}
+              className="flex items-center gap-3 typo-small text-foreground"
+            >
+              <CategoryIcon category={category} />
+              {t(`hobbyhub.activityCategories.${category}`)}
+            </li>
+          ))}
+        </ul>
       </ShowcaseSection>
 
       <ShowcaseSection

@@ -52,7 +52,11 @@ describeDb('group schema constraints', () => {
     data: Partial<Prisma.GroupUncheckedCreateInput> = {},
   ): Promise<Group> => {
     const category = await tx.activityCategory.create({
-      data: { name: `cat-${unique()}` },
+      data: {
+        name: `cat-${unique()}`,
+        icon: `cat-${unique()}`,
+        order: Math.floor(Math.random() * 2_000_000_000),
+      },
     });
     const activity = await tx.activity.create({
       data: {

@@ -2,7 +2,12 @@ import { useId, useMemo, useState, type ComponentProps } from "react"
 import { CheckIcon, ChevronDownIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import {
+  ActivityIcon,
+  CategoryIcon,
+  isActivityKey,
+  isCategoryKey,
+} from "@/components/hobbyhub/ActivityIcon"
 import {
   Command,
   CommandEmpty,
@@ -14,12 +19,33 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
+/** Main category of an activity (ADR-0019), as the activity lookup sends it. */
+export type ActivityComboboxCategory = {
+  id: string
+  /** Czech name from the server; shown when the key has no translation. */
+  name: string
+  /** Key of the category in `CATEGORIES`: its icon and translation. */
+  icon: string
+  /** Position of the group in the list. */
+  order: number
+}
+
 export type ActivityComboboxOption = {
   id: string
   /** Already translated; shown and searched. */
   label: string
   /** Key of the icon in `ACTIVITIES`; unknown keys get no icon. */
   icon: string
+  /** Groups the list under the category's heading; searched as well. */
+  category?: ActivityComboboxCategory
+}
+
+type OptionGroup = {
+  id: string
+  /** Empty for the options without a category: listed without a heading. */
+  label: string
+  icon: string
+  options: ActivityComboboxOption[]
 }
 
 // "sachy" finds "Šachy": compare without accents or case. Items are keyed by id,
@@ -52,7 +78,8 @@ type ActivityComboboxProps = Omit<ComponentProps<"button">, "value" | "onChange"
  * Výběr aktivity — a combobox over the activity lookup: the trigger looks like
  * a select, the list filters as you type. Filtering is client-side; the whole
  * lookup is already loaded. Forms pick one activity, filters (`isMultiple`) any.
- * Options come in any order; the list shows them alphabetically.
+ * Options come in any order; the list shows them alphabetically, under the
+ * headings of their categories (in category order) when they have one.
  */
 export function ActivityCombobox({
   options,
@@ -81,8 +108,41 @@ export function ActivityCombobox({
   const unknownOptions = chosenIds
     .filter((id) => !options.some((option) => option.id === id))
     .map((id) => ({ id, label: t("hobbyhub.activityCombobox.unknown"), icon: "" }))
-  const listedOptions = [...unknownOptions, ...sortedOptions]
+  const listedOptions: ActivityComboboxOption[] = [...unknownOptions, ...sortedOptions]
   const selected = listedOptions.filter((option) => isChosen(option.id))
+
+  const categoryLabel = (category: ActivityComboboxCategory) =>
+    isCategoryKey(category.icon) ? t(`hobbyhub.activityCategories.${category.icon}`) : category.name
+  // Unknown and uncategorised options first, without a heading; then one group
+  // per category in its order. cmdk hides a group whose options all filter out.
+  const groups = (() => {
+    const byCategory = new Map<string, { order: number; group: OptionGroup }>()
+    const loose: ActivityComboboxOption[] = []
+    for (const option of listedOptions) {
+      const { category } = option
+      if (!category) {
+        loose.push(option)
+        continue
+      }
+      const entry = byCategory.get(category.id) ?? {
+        order: category.order,
+        group: {
+          id: category.id,
+          label: categoryLabel(category),
+          icon: category.icon,
+          options: [],
+        },
+      }
+      entry.group.options.push(option)
+      byCategory.set(category.id, entry)
+    }
+    const categorised = [...byCategory.values()]
+      .sort((a, b) => a.order - b.order)
+      .map(({ group }) => group)
+    return loose.length > 0
+      ? [{ id: "", label: "", icon: "", options: loose }, ...categorised]
+      : categorised
+  })()
   const [onlySelected] = selected.length === 1 ? selected : []
 
   const choose = (id: string) => {
@@ -149,33 +209,54 @@ export function ActivityCombobox({
           <CommandInput placeholder={t("hobbyhub.activityCombobox.search")} />
           <CommandList id={listId}>
             <CommandEmpty>{t("hobbyhub.activityCombobox.noMatch")}</CommandEmpty>
-            <CommandGroup>
-              {listedOptions.map((option) => (
-                <CommandItem
-                  key={option.id}
-                  value={option.id}
-                  keywords={[option.label]}
-                  // cmdk uses `aria-selected` for the highlighted row; the chosen ones carry `aria-checked`.
-                  aria-checked={isChosen(option.id)}
-                  onSelect={() => choose(option.id)}
-                >
-                  {isActivityKey(option.icon) ? (
-                    <ActivityIcon
-                      activity={option.icon}
-                      className="size-5"
+            {groups.map((group) => (
+              <CommandGroup
+                key={group.id}
+                heading={
+                  group.label ? (
+                    // Its own type style on the span: the kit's heading sizes the div.
+                    <span className="flex items-center gap-2 pt-1 typo-title text-foreground">
+                      {isCategoryKey(group.icon) ? (
+                        <CategoryIcon
+                          category={group.icon}
+                          className="size-5"
+                        />
+                      ) : null}
+                      {group.label}
+                    </span>
+                  ) : undefined
+                }
+              >
+                {group.options.map((option) => (
+                  <CommandItem
+                    key={option.id}
+                    value={option.id}
+                    // The category is searched too: "míčové" lists every ball sport.
+                    keywords={group.label ? [option.label, group.label] : [option.label]}
+                    // cmdk uses `aria-selected` for the highlighted row; the chosen ones carry `aria-checked`.
+                    aria-checked={isChosen(option.id)}
+                    onSelect={() => choose(option.id)}
+                    // Indented under the category's heading.
+                    className={group.label ? "pl-8" : undefined}
+                  >
+                    {isActivityKey(option.icon) ? (
+                      <ActivityIcon
+                        activity={option.icon}
+                        className="size-5"
+                      />
+                    ) : null}
+                    {option.label}
+                    <CheckIcon
+                      aria-hidden
+                      className={cn(
+                        "ml-auto size-4",
+                        isChosen(option.id) ? "opacity-100" : "opacity-0",
+                      )}
                     />
-                  ) : null}
-                  {option.label}
-                  <CheckIcon
-                    aria-hidden
-                    className={cn(
-                      "ml-auto size-4",
-                      isChosen(option.id) ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>

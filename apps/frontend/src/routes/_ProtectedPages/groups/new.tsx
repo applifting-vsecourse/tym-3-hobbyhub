@@ -32,6 +32,7 @@ function NewGroupPage() {
         id: activity.id,
         label: activityName(t, activity),
         icon: activity.icon,
+        category: activity.category,
       })),
     [activitiesQuery.data, t],
   )

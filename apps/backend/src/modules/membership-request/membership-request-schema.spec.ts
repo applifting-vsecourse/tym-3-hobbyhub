@@ -64,7 +64,11 @@ describeDb('membership request database rules', () => {
           ),
         );
         const category = await tx.activityCategory.create({
-          data: { name: `cat-${random()}` },
+          data: {
+            name: `cat-${random()}`,
+            icon: `cat-${random()}`,
+            order: Math.floor(Math.random() * 2_000_000_000),
+          },
         });
         const activity = await tx.activity.create({
           data: {
@@ -331,7 +335,11 @@ describeDb('membership request database rules', () => {
       );
       created.userIds.push(owner.id, applicant.id);
       const category = await prisma.activityCategory.create({
-        data: { name: `cat-${random()}` },
+        data: {
+          name: `cat-${random()}`,
+          icon: `cat-${random()}`,
+          order: Math.floor(Math.random() * 2_000_000_000),
+        },
       });
       created.categoryIds.push(category.id);
       const activity = await prisma.activity.create({

@@ -1,4 +1,4 @@
-import { Activity } from '@/modules/activity/domain/activity';
+import { ActivityWithCategory } from '@/modules/activity/domain/activity';
 import { ActivityRepository } from '@/modules/activity/repositories/activity.repository';
 import { Injectable } from '@nestjs/common';
 
@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 export class ActivitiesService {
   constructor(private readonly activityRepository: ActivityRepository) {}
 
-  async getActivities(): Promise<Activity[]> {
+  async getActivities(): Promise<ActivityWithCategory[]> {
     return this.activityRepository.getActiveActivities();
   }
 

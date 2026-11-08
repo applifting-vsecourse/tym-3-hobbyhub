@@ -1,6 +1,12 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Activity as PrismaActivity } from '@/generated/prisma/client';
-import { Activity } from '@/modules/activity/domain/activity';
+import {
+  Activity as PrismaActivity,
+  ActivityCategory as PrismaActivityCategory,
+} from '@/generated/prisma/client';
+import {
+  Activity,
+  ActivityWithCategory,
+} from '@/modules/activity/domain/activity';
 import { Injectable } from '@nestjs/common';
 
 const mapPrismaActivityToDomain = (activity: PrismaActivity): Activity => ({
@@ -11,16 +17,30 @@ const mapPrismaActivityToDomain = (activity: PrismaActivity): Activity => ({
   defaultMaxParticipants: activity.defaultMaxParticipants,
 });
 
+const mapPrismaActivityWithCategoryToDomain = (
+  activity: PrismaActivity & { category: PrismaActivityCategory },
+): ActivityWithCategory => ({
+  ...mapPrismaActivityToDomain(activity),
+  category: {
+    id: activity.category.id,
+    name: activity.category.name,
+    icon: activity.category.icon,
+    order: activity.category.order,
+  },
+});
+
 @Injectable()
 export class ActivityRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getActiveActivities(): Promise<Activity[]> {
+  // Grouped for pickers: categories in their order, activities by name within.
+  async getActiveActivities(): Promise<ActivityWithCategory[]> {
     const activities = await this.prisma.activity.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' },
+      include: { category: true },
+      orderBy: [{ category: { order: 'asc' } }, { name: 'asc' }],
     });
-    return activities.map(mapPrismaActivityToDomain);
+    return activities.map(mapPrismaActivityWithCategoryToDomain);
   }
 
   /** How many of the given ids are activities that are still offered. */

@@ -42,6 +42,7 @@ function LandingPage() {
         id: item.id,
         label: activityName(t, item),
         icon: item.icon,
+        category: item.category,
       })),
     [activitiesQuery.data, t],
   )

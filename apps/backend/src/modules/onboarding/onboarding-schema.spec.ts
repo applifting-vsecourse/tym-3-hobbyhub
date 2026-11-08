@@ -85,7 +85,11 @@ describeDb('onboarding schema constraints', () => {
       inRolledBackTransaction(async (tx) => {
         const user = await createUser(tx, {});
         const category = await tx.activityCategory.create({
-          data: { name: `cat-${Math.random().toString(36).slice(2)}` },
+          data: {
+            name: `cat-${Math.random().toString(36).slice(2)}`,
+            icon: `cat-${Math.random().toString(36).slice(2)}`,
+            order: Math.floor(Math.random() * 2_000_000_000),
+          },
         });
         const activity = await tx.activity.create({
           data: {

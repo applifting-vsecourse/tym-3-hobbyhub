@@ -2,7 +2,10 @@ import { useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
+import {
+  ActivityCombobox,
+  type ActivityComboboxCategory,
+} from "@/components/hobbyhub/ActivityCombobox"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export type ActivityOption = { id: string; name: string; icon: string }
+export type ActivityOption = {
+  id: string
+  name: string
+  icon: string
+  /** From the activity lookup: groups the select by category. */
+  category?: ActivityComboboxCategory
+}
 export type LevelOption = { id: string; name: string }
 
 // A Radix item needs a non-empty value; this one takes the level back.
@@ -70,6 +79,7 @@ export function ActivityPicker({
           id: activity.id,
           label: activityLabel(activity),
           icon: activity.icon,
+          category: activity.category,
         })),
     [activities, activityLabel, value],
   )

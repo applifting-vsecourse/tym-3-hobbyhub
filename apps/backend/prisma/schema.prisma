@@ -159,6 +159,10 @@ enum GroupRole {
 model ActivityCategory {
   id         String     @id @default(cuid())
   name       String     @unique @db.VarChar(100)
+  // Key of the category icon in the frontend (`CATEGORIES` in ActivityIcon.tsx), also its translation key.
+  icon       String     @unique @db.VarChar(50)
+  // Position in pickers and filters (ADR-0019).
+  order      Int        @unique
   activities Activity[]
 
   @@map("activity_category")
