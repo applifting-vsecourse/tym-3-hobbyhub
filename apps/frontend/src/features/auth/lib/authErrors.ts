@@ -16,7 +16,7 @@ export class AuthError extends Error {
 export function authErrorMessage(
   t: TFunction,
   error: unknown,
-  fallback: "signInFailed" | "signUpFailed",
+  fallback: "signInFailed" | "signUpFailed" | "resetPasswordFailed",
 ) {
   if (!(error instanceof AuthError)) return t(`auth.errors.${fallback}`)
   // The rate limiter answers without a code.
@@ -32,6 +32,8 @@ export function authErrorMessage(
       return t("auth.errors.emailNotVerified")
     case "INVALID_EMAIL":
       return t("auth.errors.invalidEmail")
+    case "INVALID_TOKEN":
+      return t("auth.errors.invalidToken")
     case "PASSWORD_TOO_SHORT":
       return t("auth.errors.passwordTooShort")
     // F-03.1 registration rules, checked again by the backend.

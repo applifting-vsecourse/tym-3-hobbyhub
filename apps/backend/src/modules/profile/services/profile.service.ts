@@ -122,4 +122,11 @@ export class ProfileService {
     });
     return this.getProfile(user);
   }
+
+  // #24: removes the home address, the temporary place and the travel radius in
+  // one go.
+  async removeLocation(user: Identity): Promise<Profile> {
+    await this.profileRepository.clearLocation(user.id);
+    return this.getProfile(user);
+  }
 }

@@ -113,6 +113,29 @@ describe('notificationEmailOf', () => {
     });
   });
 
+  // F-09.3 (#59): every e-mail to an applicant or a participant leads to the
+  // event as it is now; only a change and a cancellation are critical, so
+  // nobody comes for nothing.
+  it.each<[NotificationType, Notification['payload'], boolean]>([
+    ['REQUEST_DECIDED', { decision: 'APPROVED' }, false],
+    ['REQUEST_DECIDED', { decision: 'REJECTED', message: MESSAGE }, false],
+    ['EVENT_CHANGED', { changes: ['TIME'] }, true],
+    ['EVENT_CHANGED', { changes: ['PLACE'] }, true],
+    ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }, true],
+    ['EVENT_CANCELLED', {}, true],
+  ])(
+    '%s %j leads to the event detail, critical: %s',
+    (type, payload, critical) => {
+      expect(notificationEmailOf(aNotification({ type, payload }))).toEqual(
+        expect.objectContaining({
+          buttonLabel: 'Zobrazit akci',
+          path: '/events/e1',
+          critical,
+        }),
+      );
+    },
+  );
+
   it('tells a group’s admins and leads to the group’s requests', () => {
     expect(notificationEmailOf(aNotification(aboutGroup))).toEqual(
       expect.objectContaining({
