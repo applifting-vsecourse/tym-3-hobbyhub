@@ -1,5 +1,6 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
 import {
+  AssignableGroupRole,
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
   Group,
@@ -8,6 +9,8 @@ import {
   GroupRole,
   hasGroupAdminRights,
   isPubliclyVisible,
+  MemberAction,
+  memberActionViolations,
   MyGroup,
   NEARBY_GROUPS_LIMIT,
   NearbyGroups,
@@ -17,9 +20,16 @@ import { Identity } from '@/shared/auth/domain/identity';
 import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+const targetNotMemberException = (): NotFoundException =>
+  new NotFoundException('The user is not a member of this group');
+
+const notAllowedException = (): ForbiddenException =>
+  new ForbiddenException('Your role in the group does not allow this');
 
 @Injectable()
 export class GroupsService {
@@ -81,16 +91,99 @@ export class GroupsService {
     return this.groupRepository.listAdminIds(groupId);
   }
 
-  // F-07.3: the member list is for the group's admins only (F-02.5 shows a
-  // visitor the count, never the members).
+  // F-07.3: the member list is for the group's members (visibility matrix);
+  // F-02.5 shows a visitor the count, never the members. Anyone else gets
+  // "not found", as for the admin-only features.
   async listMembers(groupId: string, user: Identity): Promise<GroupMember[]> {
-    await this.getManagedGroup(groupId, user);
+    const role = await this.groupRepository.getMemberRole(groupId, user.id);
+    if (!role) throw new NotFoundException('Group not found');
     return this.groupRepository.listMembers(groupId);
   }
 
+  // F-07.3b: who acts comes from the session. ADR-0007 decides who may do
+  // what to whom (`memberActionViolations`).
+  async removeMember(
+    groupId: string,
+    user: Identity,
+    targetUserId: string,
+  ): Promise<void> {
+    await this.assertMemberAction(groupId, user, targetUserId, {
+      kind: 'remove',
+    });
+    await this.groupRepository.removeMember(groupId, targetUserId);
+  }
+
+  async changeMemberRole(
+    groupId: string,
+    user: Identity,
+    targetUserId: string,
+    role: AssignableGroupRole,
+  ): Promise<GroupMember> {
+    await this.assertMemberAction(groupId, user, targetUserId, {
+      kind: 'setRole',
+      role,
+    });
+    const member = await this.groupRepository.setMemberRole(
+      groupId,
+      targetUserId,
+      role,
+    );
+    // The member left, or another admin removed them, since the check.
+    if (!member) throw targetNotMemberException();
+    return member;
+  }
+
+  // The owner hands the group over and stays on as an admin (ADR-0007).
+  async transferOwnership(
+    groupId: string,
+    user: Identity,
+    targetUserId: string,
+  ): Promise<void> {
+    await this.assertMemberAction(groupId, user, targetUserId, {
+      kind: 'transferOwnership',
+    });
+    const result = await this.groupRepository.transferOwnership(
+      groupId,
+      user.id,
+      targetUserId,
+    );
+    // The roles changed since the check: another hand-over was faster, or
+    // the new owner left.
+    if (result === 'NOT_OWNER') throw notAllowedException();
+    if (result === 'TARGET_NOT_MEMBER') throw targetNotMemberException();
+  }
+
+  // Someone outside the group gets "not found", as for the other member
+  // features; a member without the right gets 403, since they know the
+  // group and its members anyway.
+  private async assertMemberAction(
+    groupId: string,
+    user: Identity,
+    targetUserId: string,
+    action: MemberAction,
+  ): Promise<void> {
+    const [actorRole, targetRole] = await Promise.all([
+      this.groupRepository.getMemberRole(groupId, user.id),
+      this.groupRepository.getMemberRole(groupId, targetUserId),
+    ]);
+    if (!actorRole) throw new NotFoundException('Group not found');
+    if (!targetRole) throw targetNotMemberException();
+    const violations = memberActionViolations(
+      { userId: user.id, role: actorRole },
+      { userId: targetUserId, role: targetRole },
+      action,
+    );
+    if (violations.includes('ACTING_ON_SELF')) {
+      throw new BadRequestException(
+        'Use leaving the group to act on your own membership',
+      );
+    }
+    if (violations.includes('NOT_ALLOWED')) throw notAllowedException();
+  }
+
   // The signed-in user leaves; who leaves comes from the session. The owner
-  // cannot, or the group would be left without one (handing the group over
-  // comes with member management, F-07.3 #48).
+  // cannot, or the group would be left without one: they hand it over first
+  // (`transferOwnership`) and then leave as an admin.
   async leaveGroup(groupId: string, userId: string): Promise<void> {
     const role = await this.groupRepository.getMemberRole(groupId, userId);
     if (!role)

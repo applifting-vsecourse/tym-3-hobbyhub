@@ -31,6 +31,22 @@ describe('ListNotificationsQuery', () => {
   });
 
   it.each([
+    ['true', true],
+    ['false', false],
+  ])('reads read=%s as a boolean', async (read, expected) => {
+    await expect(validate({ read })).resolves.toMatchObject({ read: expected });
+  });
+
+  it('reads the kind', async () => {
+    await expect(validate({ kind: 'events', read: 'false' })).resolves.toEqual({
+      limit: NOTIFICATION_LIST_DEFAULT_LIMIT,
+      offset: 0,
+      kind: 'events',
+      read: false,
+    });
+  });
+
+  it.each([
     ['a limit of 0', { limit: '0' }],
     [
       'a limit over the maximum',
@@ -39,6 +55,10 @@ describe('ListNotificationsQuery', () => {
     ['a negative offset', { offset: '-1' }],
     ['a limit that is not a number', { limit: 'abc' }],
     ['an unknown parameter', { unread: 'true' }],
+    ['read that is not a boolean', { read: 'yes' }],
+    ['read given as a number', { read: '1' }],
+    ['an unknown kind', { kind: 'messages' }],
+    ['a type instead of a kind', { kind: 'EVENT_CHANGED' }],
   ])('refuses %s', async (_, query) => {
     await expect(validate(query)).rejects.toBeInstanceOf(BadRequestException);
   });

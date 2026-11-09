@@ -1,31 +1,32 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
+import { lazy, Suspense, useEffect, useState } from "react"
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import type { TFunction } from "i18next"
-import { CalendarDays, LocateFixed, MapPin, X } from "lucide-react"
+import { LocateFixed } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { AppShell } from "@/app/AppShell"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
-import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
 import { Loader } from "@/components/hobbyhub/Loader"
-import { SearchField } from "@/components/hobbyhub/SearchField"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 import { activityName } from "@/features/activity/activityName"
-import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
 import { eventsMapQueryOptions, eventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
+import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import { EventList } from "@/features/event/components/EventList"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import { useNearMe } from "@/features/event/hooks/useNearMe"
+import { useSearchText } from "@/features/event/hooks/useSearchText"
 import { eventsInBounds, type MapBounds } from "@/features/event/lib/clusterEvents"
 import {
-  EVENT_SEARCH_MAX_LENGTH,
   eventsSearchSchema,
+  filtersFromSearch,
+  hasFilters,
   nonEmpty,
+  searchWithFilters,
 } from "@/features/event/lib/eventsSearch"
 
 // Where the page scrolls to when an event is opened on the map.
@@ -46,19 +47,6 @@ export const Route = createFileRoute("/events/")({
 // (geocoding, F-12.3) and a place to measure from; for now only the visitor's
 // own position sorts the list.
 
-// Typing waits this long before it filters, so a word is not searched letter by letter.
-const SEARCH_DEBOUNCE_MS = 300
-
-// "15. 11. – 30. 11.", "od 15. 11." or "do 30. 11."; nothing without a date.
-const dateRangeLabel = (t: TFunction, language: string, from: string, to: string) => {
-  const formatter = new Intl.DateTimeFormat(language, { day: "numeric", month: "numeric" })
-  const format = (isoDay: string) => formatter.format(new Date(`${isoDay}T00:00`))
-  if (from && to) return t("events.list.filters.dateRange", { from: format(from), to: format(to) })
-  if (from) return t("events.list.filters.dateFrom", { date: format(from) })
-  if (to) return t("events.list.filters.dateTo", { date: format(to) })
-  return ""
-}
-
 // Pages are cut by offset, so an event that moved between two requests can come
 // back on the next page; keep its first appearance.
 const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
@@ -68,12 +56,10 @@ const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
 // Public: browsing events needs no account. On phones one view at a time, from
 // `lg` the list and the map sit side by side.
 function EventsPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [view, setView] = useState<EventsView>("list")
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const navigate = Route.useNavigate()
-  const { activity, q, location, from, to } = Route.useSearch()
-  const activityIds = activity ?? []
+  const { filters, isRangeReversed } = filtersFromSearch(Route.useSearch())
   const nearMe = useNearMe()
   // The part of the map the visitor moved to; the list then shows only its events.
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null)
@@ -87,15 +73,6 @@ function EventsPage() {
       .getElementById(SELECTED_CARD_ID)
       ?.scrollIntoView({ block: "start", behavior: isReduced ? "auto" : "smooth" })
   }, [selectedId])
-  // A range that ends before it starts (a hand-written link) is not asked of the server.
-  const isRangeReversed = from !== undefined && to !== undefined && from > to
-  const filters = {
-    activityIds,
-    search: q ?? "",
-    location: location ?? "",
-    dateFrom: isRangeReversed ? "" : (from ?? ""),
-    dateTo: isRangeReversed ? "" : (to ?? ""),
-  }
   // The previous list stays on screen while the next one loads, so typing does not flash.
   const eventsQuery = useInfiniteQuery({
     ...eventsQueryOptions({ ...filters, near: nearMe.position ?? undefined }),
@@ -114,78 +91,21 @@ function EventsPage() {
     setMapBounds(null)
     setMapFitKey((key) => key + 1)
   }
-  const activitiesQuery = useQuery(activitiesQueryOptions())
-  const activities = activitiesQuery.data ?? []
-  const activityOptions = useMemo(
-    () =>
-      (activitiesQuery.data ?? []).map((item) => ({
-        id: item.id,
-        label: activityName(t, item),
-        icon: item.icon,
-      })),
-    [activitiesQuery.data, t],
-  )
-
-  // The field is what the user typed; the address follows after a pause. The
-  // last text this page put in the address is remembered, so the address
-  // catching up never overwrites what was typed in the meantime.
-  const [searchText, setSearchText] = useState(filters.search)
-  const lastSentSearch = useRef(filters.search)
-  useEffect(() => {
-    // The address changed on its own (back button, a link): show it in the field.
-    if (filters.search === lastSentSearch.current) return
-    lastSentSearch.current = filters.search
-    setSearchText(filters.search)
-  }, [filters.search])
-  useEffect(() => {
-    const next = searchText.trim()
-    if (next === filters.search) return
-    const timer = setTimeout(() => {
-      lastSentSearch.current = next
+  // The field is what the user typed; the address follows after a pause.
+  const activityOptions = useActivityOptions()
+  const [searchText, setSearchText] = useSearchText(
+    filters.search,
+    (next) =>
       void navigate({
         search: (previous) => ({ ...previous, q: nonEmpty(next) }),
         replace: true,
-      })
-    }, SEARCH_DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [searchText, filters.search, navigate])
-
-  const setFilters = (next: {
-    activityIds?: string[]
-    location?: string
-    dateFrom?: string
-    dateTo?: string
-  }) =>
-    void navigate({
-      search: (previous) => ({
-        ...previous,
-        ...(next.activityIds && {
-          activity: next.activityIds.length > 0 ? next.activityIds : undefined,
-        }),
-        ...(next.location !== undefined && { location: nonEmpty(next.location) }),
-        ...(next.dateFrom !== undefined && { from: nonEmpty(next.dateFrom) }),
-        ...(next.dateTo !== undefined && { to: nonEmpty(next.dateTo) }),
       }),
-    })
+  )
   const clearFilters = () => {
     showWholeMap()
     setSearchText("")
     void navigate({ search: {} })
   }
-  // An id from the address that is no activity (retired, mistyped) still gets a
-  // chip, so the filter can always be seen and removed.
-  // They do not wait for the activities request: a failed one must not hide an active filter.
-  const selectedActivities = activityIds.map((id) => ({
-    id,
-    activity: activities.find((item) => item.id === id),
-  }))
-  const isFiltered =
-    activityIds.length > 0 ||
-    filters.search !== "" ||
-    filters.location !== "" ||
-    filters.dateFrom !== "" ||
-    filters.dateTo !== ""
-  const dateLabel = dateRangeLabel(t, i18n.language, filters.dateFrom, filters.dateTo)
 
   return (
     <>
@@ -209,42 +129,17 @@ function EventsPage() {
         >
           <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4">
             <h1 className="typo-h1 text-foreground">{t("events.list.title")}</h1>
-            <div className="flex flex-col gap-3">
-              <SearchField
-                label={t("hobbyhub.search.label")}
-                placeholder={t("events.list.searchPlaceholder")}
-                maxLength={EVENT_SEARCH_MAX_LENGTH}
-                value={searchText}
-                onChange={(event) => setSearchText(event.target.value)}
-                onOpenFilters={() => setIsFiltersOpen(true)}
-              />
-              <FiltersSheet
-                isOpen={isFiltersOpen}
-                onOpenChange={setIsFiltersOpen}
-                value={{
-                  ...EMPTY_FILTERS,
-                  activities: activityIds,
-                  location: filters.location,
-                  dateFrom: filters.dateFrom,
-                  dateTo: filters.dateTo,
-                }}
-                onApply={(applied) =>
-                  setFilters({
-                    activityIds: applied.activities,
-                    location: applied.location,
-                    dateFrom: applied.dateFrom,
-                    dateTo: applied.dateTo,
-                  })
-                }
-                fields={["activity", "when", "location"]}
-                activitiesState={{
-                  isLoading: activitiesQuery.isPending,
-                  error: activitiesQuery.error,
-                  onRetry: () => void activitiesQuery.refetch(),
-                }}
-                activityOptions={activityOptions}
-              />
-              <div className="flex flex-wrap items-center gap-2">
+            <EventFiltersBar
+              filters={filters}
+              isRangeReversed={isRangeReversed}
+              searchText={searchText}
+              onSearchTextChange={setSearchText}
+              activityOptions={activityOptions.options}
+              activitiesState={activityOptions.state}
+              onFiltersChange={(next) =>
+                void navigate({ search: (previous) => searchWithFilters(previous, next) })
+              }
+              leadingChips={
                 <FilterChip
                   pressed={nearMe.position !== null || nearMe.status === "locating"}
                   disabled={nearMe.status === "locating"}
@@ -256,72 +151,8 @@ function EventsPage() {
                   />
                   {t("events.list.nearMe.label")}
                 </FilterChip>
-                {selectedActivities.length > 0 || filters.location || dateLabel ? (
-                  <div
-                    role="group"
-                    aria-label={t("events.list.filters.selected")}
-                    className="flex flex-wrap gap-2"
-                  >
-                    {selectedActivities.map((item) => (
-                      <FilterChip
-                        key={item.id}
-                        pressed
-                        onPressedChange={() =>
-                          setFilters({ activityIds: activityIds.filter((id) => id !== item.id) })
-                        }
-                      >
-                        {item.activity
-                          ? activityName(t, item.activity)
-                          : t("events.list.filters.unknownActivity")}
-                        <X
-                          aria-hidden
-                          className="size-4 text-muted-foreground"
-                        />
-                      </FilterChip>
-                    ))}
-                    {filters.location ? (
-                      <FilterChip
-                        pressed
-                        onPressedChange={() => setFilters({ location: "" })}
-                      >
-                        <MapPin
-                          aria-hidden
-                          className="size-4 text-muted-foreground"
-                        />
-                        {filters.location}
-                        <X
-                          aria-hidden
-                          className="size-4 text-muted-foreground"
-                        />
-                      </FilterChip>
-                    ) : null}
-                    {dateLabel ? (
-                      <FilterChip
-                        pressed
-                        onPressedChange={() => setFilters({ dateFrom: "", dateTo: "" })}
-                      >
-                        <CalendarDays
-                          aria-hidden
-                          className="size-4 text-muted-foreground"
-                        />
-                        {dateLabel}
-                        <X
-                          aria-hidden
-                          className="size-4 text-muted-foreground"
-                        />
-                      </FilterChip>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-              {isRangeReversed ? (
-                <p
-                  role="alert"
-                  className="typo-small text-destructive"
-                >
-                  {t("hobbyhub.filters.dateRangeReversed")}
-                </p>
-              ) : null}
+              }
+            >
               {nearMe.status === "denied" || nearMe.status === "unavailable" ? (
                 <p
                   role="status"
@@ -330,7 +161,7 @@ function EventsPage() {
                   {t(`events.list.nearMe.${nearMe.status}`)}
                 </p>
               ) : null}
-            </div>
+            </EventFiltersBar>
             <ViewToggle
               value={view}
               onValueChange={setView}
@@ -382,7 +213,7 @@ function EventsPage() {
                 hasMore={!eventsOnMap && eventsQuery.hasNextPage && !eventsQuery.isPlaceholderData}
                 isLoadingMore={eventsQuery.isFetchingNextPage}
                 onLoadMore={() => void eventsQuery.fetchNextPage()}
-                isFiltered={isFiltered || eventsOnMap !== null}
+                isFiltered={hasFilters(filters) || eventsOnMap !== null}
                 selectedId={selectedId}
                 onClearFilters={clearFilters}
               />

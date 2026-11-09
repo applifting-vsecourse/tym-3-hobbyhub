@@ -17,6 +17,7 @@ import {
 import type { GroupMembershipState } from "@/features/group/hooks/useGroupMembershipState"
 
 type GroupMembershipPanelProps = {
+  groupId: string
   membership: GroupMembershipState
   groupName: string
   /** Encoded address of this page, so signing in or up returns here. */
@@ -33,6 +34,7 @@ type GroupMembershipPanelProps = {
  * message and sees the request wait for the group's admins.
  */
 export function GroupMembershipPanel({
+  groupId,
   membership,
   groupName,
   from,
@@ -54,9 +56,13 @@ export function GroupMembershipPanel({
 
   let content: ReactNode
   if (view === "member") {
+    // The role says at once what the user may do in the group.
+    let roleText = t("groups.detail.membership.isMember")
+    if (membership.isOwner) roleText = t("groups.detail.membership.isOwner")
+    else if (membership.isAdmin) roleText = t("groups.detail.membership.isAdmin")
     content = (
       <>
-        <StatusBadge status="approved">{t("groups.detail.membership.isMember")}</StatusBadge>
+        <StatusBadge status="approved">{roleText}</StatusBadge>
         {membership.canLeave ? (
           <Button
             variant="outline"
@@ -67,6 +73,18 @@ export function GroupMembershipPanel({
           >
             {t("groups.detail.membership.leave")}
           </Button>
+        ) : null}
+        {membership.isOwner ? (
+          <p className="typo-small text-muted-foreground">
+            {t("groups.detail.membership.ownerCannotLeave")}{" "}
+            <Link
+              to="/groups/$groupId/members"
+              params={{ groupId }}
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              {t("groups.detail.membership.ownerTransferLink")}
+            </Link>
+          </p>
         ) : null}
       </>
     )

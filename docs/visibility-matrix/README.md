@@ -157,7 +157,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Seznam členů: jméno, fotka, role (kdo je vlastník a kdo správce), datum vstupu | ❌                              | ✅   | ✅            | ✅         | ❌          | [#9][9], [#47][47], [#94][94], [PO][po] |
 | Počet čekajících žádostí                                                       | ❌                              | ❌   | ✅            | ✅         | ❌          | [#48][48], [PO][po]                     |
 | Jména žadatelů a jejich zprávy                                                 | ❌                              | ❌   | ✅            | ✅         | ❌          | [#48][48], [PO][po]                     |
-| Zabanovaní členové a důvod                                                     | ❌                              | ❌   | ✅            | ✅         | ❌          | [#94][94], [PO][po]                     |
+| Zabanovaní členové a důvod                                                     | ❌                              | ❌   | ✅            | ✅         | ❌          | [#181][181], [PO][po]                   |
 
 **Soukromá skupina je dohledatelná, ale zavřená.** Skupina, kterou nejde najít, nemůže shánět lidi, a to je důvod, proč produkt existuje. Vidět má jít, že existuje a čemu se věnuje; co se v ní děje, ne.
 
@@ -206,4 +206,5 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [95]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/95
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
+[181]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/181
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174

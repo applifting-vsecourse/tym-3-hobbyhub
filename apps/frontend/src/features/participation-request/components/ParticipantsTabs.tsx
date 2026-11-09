@@ -1,8 +1,6 @@
-import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import { toggleVariants } from "@/components/ui/toggle"
-import { cn } from "@/lib/utils"
+import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 
 export const PARTICIPANTS_TABS = ["requests", "participants"] as const
 export type ParticipantsTab = (typeof PARTICIPANTS_TABS)[number]
@@ -19,29 +17,23 @@ export function ParticipantsTabs({ eventId, active, counts }: ParticipantsTabsPr
   const { t } = useTranslation()
 
   return (
-    <nav
-      aria-label={t("participationRequests.manage.tabsLabel")}
-      className="flex gap-2"
-    >
+    <PageTabs label={t("participationRequests.manage.tabsLabel")}>
       {PARTICIPANTS_TABS.map((tab) => {
-        const isActive = tab === active
         const count = counts[tab]
         return (
-          <Link
+          <PageTab
             key={tab}
             to="/events/$eventId/participants"
             params={{ eventId }}
             search={{ tab }}
-            aria-current={isActive ? "page" : undefined}
-            data-state={isActive ? "on" : "off"}
-            className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
+            isActive={tab === active}
           >
             {count === undefined
               ? t(`participationRequests.manage.tabs.${tab}`)
               : t(`participationRequests.manage.tabs.${tab}Count`, { count })}
-          </Link>
+          </PageTab>
         )
       })}
-    </nav>
+    </PageTabs>
   )
 }

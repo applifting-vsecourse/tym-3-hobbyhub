@@ -11,8 +11,9 @@ const EVENTS_PAGE_SIZE = 20
 const MAP_PAGE_SIZE = 50
 const MAP_MAX_PAGES = 10
 
-// The list and the map ask the server the same question, so they show the same events.
-const filterSearchParams = (filters: EventListFilters, limit: number, offset: number) => {
+// The list and the map ask the server the same question, so they show the same
+// events; "Moje akce" asks its two lists with the same filter too (#177).
+export const filterSearchParams = (filters: EventListFilters, limit: number, offset: number) => {
   const searchParams = new URLSearchParams({ limit: String(limit), offset: String(offset) })
   for (const id of filters.activityIds) searchParams.append("activityIds", id)
   if (filters.search) searchParams.set("search", filters.search)

@@ -11,7 +11,6 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { ProfileModule } from './modules/profile/profile.module';
-import { QuackModule } from './modules/quack/quack.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
 import { AuthModule } from './shared/auth/auth.module';
 import { Config } from './shared/config/config.service';
@@ -20,7 +19,6 @@ const imports = [
   ConfigModule.forRootAsync(Config, { validate: true }),
   AuthModule,
   WelcomeModule,
-  QuackModule,
   ActivityModule,
   CancellationReasonModule,
   EventModule,

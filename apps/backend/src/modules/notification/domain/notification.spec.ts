@@ -1,8 +1,34 @@
 import {
   eventChangesOf,
   EventWhenAndWhere,
+  NOTIFICATION_KINDS,
+  NOTIFICATION_TYPES,
+  notificationTypesOf,
   recipientsExcept,
 } from './notification';
+
+describe('notificationTypesOf', () => {
+  it.each([
+    ['NEW_REQUESTS', 'requests'],
+    ['REQUEST_DECIDED', 'requests'],
+    ['PARTICIPANT_CANCELLED', 'requests'],
+    ['CONFIRMATION_PROMPT', 'requests'],
+    ['SPOT_AVAILABLE', 'requests'],
+    ['EVENT_CHANGED', 'events'],
+    ['EVENT_CANCELLED', 'events'],
+    ['EVENT_BOARD', 'events'],
+    ['GROUP_INVITATION', 'groups'],
+    ['ONBOARDING_SERIES', 'other'],
+    ['MONTHLY_RECOMMENDATION', 'other'],
+  ] as const)('files %s under %s', (type, kind) => {
+    expect(notificationTypesOf(kind)).toContain(type);
+  });
+
+  it('puts every type in exactly one kind', () => {
+    const typesOfKinds = NOTIFICATION_KINDS.flatMap(notificationTypesOf);
+    expect([...typesOfKinds].sort()).toEqual([...NOTIFICATION_TYPES].sort());
+  });
+});
 
 describe('recipientsExcept', () => {
   it('tells everyone once and never the person who caused the event', () => {

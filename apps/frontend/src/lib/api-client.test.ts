@@ -51,7 +51,7 @@ describe("api", () => {
       }),
     )
 
-    const error = await failure(api.post("quacks", { json: {} }).json())
+    const error = await failure(api.post("events", { json: {} }).json())
 
     expect((error as HTTPError).message).toBe(
       "content should not be empty, content must be a string",

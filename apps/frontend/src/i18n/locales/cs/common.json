@@ -481,13 +481,17 @@
       "members_other": "{{count}} členů",
       "membership": {
         "hasAccount": "Už máte účet?",
+        "isAdmin": "Jste správcem",
         "isMember": "Jste členem",
+        "isOwner": "Jste organizátorem",
         "leave": "Odejít ze skupiny",
         "leaveConfirm": "Odejít",
         "leaveFailed": "Ze skupiny se nepodařilo odejít. Zkuste to prosím znovu.",
         "leaveStay": "Zůstat ve skupině",
         "leaveText": "Přestanete být členem skupiny {{name}}. Znovu se můžete přidat pomocí žádosti o členství.",
         "leaveTitle": "Opravdu chcete odejít ze skupiny?",
+        "ownerCannotLeave": "Jako organizátor ze skupiny odejít nemůžete. Nejdřív předejte správu jinému členovi.",
+        "ownerTransferLink": "Předat správu",
         "pendingText": "Žádost čeká, až ji organizátor skupiny vyřídí.",
         "rejectedText": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde.",
         "request": "Požádat o členství",
@@ -548,6 +552,39 @@
       }
     },
     "manage": {
+      "actions": {
+        "cancel": "Zpět",
+        "demote": {
+          "confirm": "Odvolat",
+          "done": "{{name}} už není správcem.",
+          "menu": "Odvolat správce",
+          "text": "{{name}} zůstane ve skupině {{group}} jako člen, ale přijde o práva správce.",
+          "title": "Odvolat správce?"
+        },
+        "failed": "Akci se nepodařilo provést. Seznam členů jsme obnovili, zkuste to prosím znovu.",
+        "makeAdmin": {
+          "confirm": "Jmenovat správcem",
+          "done": "{{name}} je teď správcem.",
+          "menu": "Jmenovat správcem",
+          "text": "{{name}} bude ve skupině {{group}} vyřizovat žádosti o členství a odebírat členy.",
+          "title": "Jmenovat správcem?"
+        },
+        "menuLabel": "Akce pro člena {{name}}",
+        "remove": {
+          "confirm": "Odebrat",
+          "done": "{{name}} už není členem skupiny.",
+          "menu": "Odebrat ze skupiny",
+          "text": "{{name}} přestane být členem skupiny {{group}}. Znovu se může přidat pomocí žádosti o členství.",
+          "title": "Odebrat ze skupiny?"
+        },
+        "transfer": {
+          "confirm": "Předat správu",
+          "done": "Skupinu teď spravuje {{name}}.",
+          "menu": "Předat správu",
+          "text": "{{name}} se stane organizátorem skupiny {{group}}. Vy zůstanete správcem; vrátit to může už jen nový organizátor.",
+          "title": "Předat správu skupiny?"
+        }
+      },
       "adminTitle": "Správa skupiny",
       "approved": "{{name}} je teď členem skupiny.",
       "back": "Zpět na skupinu",
@@ -965,8 +1002,11 @@
     }
   },
   "myEvents": {
+    "actions": {
+      "label": "Možnosti přihlášky: {{title}}"
+    },
     "applications": {
-      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
+      "empty": "Zatím nemáte žádnou přihlášku na akci."
     },
     "empty": {
       "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
@@ -974,10 +1014,11 @@
       "title": "Zatím tu nic není"
     },
     "hosted": {
-      "empty": "Nepořádáte žádnou nadcházející akci."
+      "empty": "Zatím nepořádáte žádnou akci."
     },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
+    "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",
       "EVENT_CANCELLED": "Akce zrušena",
@@ -996,22 +1037,47 @@
   },
   "notifications": {
     "badgeOverflow": "{{max}}+",
-    "bell": "Upozornění",
-    "bellUnread_few": "Upozornění, {{count}} nepřečtená",
-    "bellUnread_one": "Upozornění, {{count}} nepřečtené",
-    "bellUnread_other": "Upozornění, {{count}} nepřečtených",
+    "bell": "Notifikace",
+    "bellEmpty": "Žádné nové notifikace",
+    "bellTitle": "Nové notifikace",
+    "bellUnread_few": "Notifikace, {{count}} nepřečtené",
+    "bellUnread_one": "Notifikace, {{count}} nepřečtená",
+    "bellUnread_other": "Notifikace, {{count}} nepřečtených",
     "deletedTarget": "smazaná akce",
-    "empty": "Zatím nemáš žádná upozornění. Objeví se tu, jakmile se něco stane kolem tvých akcí a skupin.",
     "justNow": "právě teď",
-    "loadError": "Upozornění se nepodařilo načíst",
-    "loading": "Načítáme upozornění…",
+    "kinds": {
+      "all": "Vše",
+      "events": "Akce",
+      "groups": "Skupiny",
+      "label": "Druh notifikací",
+      "other": "Ostatní",
+      "requests": "Přihlášky"
+    },
+    "loadError": "Notifikace se nepodařilo načíst",
+    "loading": "Načítáme notifikace…",
     "markAllRead": "Označit vše jako přečtené",
-    "markAllReadFailed": "Upozornění se nepodařilo označit jako přečtená. Zkus to znovu.",
+    "markAllReadFailed": "Notifikace se nepodařilo označit jako přečtené. Zkus to znovu.",
+    "markKindRead": "Označit tyto jako přečtené",
     "message": "„{{message}}“",
-    "more_few": "{{count}} další",
-    "more_one": "{{count}} další",
-    "more_other": "{{count}} dalších",
+    "more_few": "Načíst další ({{count}})",
+    "more_one": "Načíst další ({{count}})",
+    "more_other": "Načíst další ({{count}})",
     "retry": "Zkusit znovu",
+    "sections": {
+      "new": {
+        "count_few": "{{count}} nepřečtené",
+        "count_one": "{{count}} nepřečtená",
+        "count_other": "{{count}} nepřečtených",
+        "empty": "Žádné nové notifikace. Objeví se tu, jakmile se něco stane kolem tvých akcí a skupin.",
+        "emptyFiltered": "Žádné nové notifikace tohoto druhu.",
+        "title": "Nové"
+      },
+      "read": {
+        "empty": "Zatím žádné přečtené notifikace. Přesunou se sem ty, které otevřeš nebo označíš jako přečtené.",
+        "emptyFiltered": "Žádné přečtené notifikace tohoto druhu.",
+        "title": "Přečtené"
+      }
+    },
     "showAll": "Zobrazit vše",
     "someone": "Někdo",
     "text": {
@@ -1038,8 +1104,8 @@
       },
       "other": "Novinka k {{title}}"
     },
-    "title": "Upozornění",
-    "unread": "Nepřečtené:"
+    "title": "Notifikace",
+    "unread": "Nepřečtená:"
   },
   "onboarding": {
     "activities": {
@@ -1132,6 +1198,8 @@
     "form": {
       "cancel": "Zrušit",
       "hiddenDetails": "Kontakt, poloha, věk ani pohlaví organizátor neuvidí.",
+      "messageHint": "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne po schválení přes kontakt nebo chat, pokud ho organizátor uvede.",
+      "messageHintAutomatic": "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, pokud ho organizátor uvede.",
       "messageLabel": "Zpráva organizátorovi (nepovinné)",
       "messagePlaceholder": "Např. hraju rok, ale s hokejkou ještě začínám…",
       "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků.",
@@ -1380,23 +1448,6 @@
       "privateHint": "Tohle ostatní neuvidí.",
       "privateTitle": "Jen pro vás"
     }
-  },
-  "quacks": {
-    "form": {
-      "label": "Nový quack",
-      "placeholder": "Quackni něco…",
-      "required": "Nejdřív něco napište",
-      "submit": "Quacknout",
-      "tooLong_few": "Maximálně {{count}} znaky",
-      "tooLong_one": "Maximálně {{count}} znak",
-      "tooLong_other": "Maximálně {{count}} znaků"
-    },
-    "list": {
-      "empty": "Zatím žádné quacky. Napište první.",
-      "loadError": "Quacky se nepodařilo načíst",
-      "reload": "Načíst znovu"
-    },
-    "title": "Quacks"
   },
   "terms": {
     "placeholder": "Znění podmínek připravujeme. Provozovatel HobbyHubu ho doplní před spuštěním.",

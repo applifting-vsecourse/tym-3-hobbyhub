@@ -1,4 +1,9 @@
-import { EventFacts, EventSeatFacts, Page } from '@/modules/event/domain/event';
+import {
+  EventFacts,
+  EventFilter,
+  EventSeatFacts,
+  Page,
+} from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import {
@@ -75,14 +80,16 @@ export class ParticipationRequestsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  // F-06.3: a page of the person's own applications to events that are not
-  // over; the overview turns them into one status per event.
+  // F-06.3, #177: a page of the person's own applications, the ones still on
+  // first; the overview turns them into one status per event. The caller has
+  // checked the filter.
   getMyApplicationFacts(
     user: Identity,
     page: Page,
+    filter: EventFilter,
     now: Date = new Date(),
   ): Promise<ApplicationFactsPage> {
-    return this.repository.getApplicationFacts(user.id, now, page);
+    return this.repository.getApplicationFacts(user.id, now, page, filter);
   }
 
   async getMyRequestState(

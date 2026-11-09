@@ -1,3 +1,4 @@
+import { eventFilterOf } from '@/modules/event/controllers/dto/event-filter.query';
 import { MyEventsService } from '@/modules/my-events/services/my-events.service';
 import { User } from '@/shared/auth/decorators/user.decorator';
 import { Identity } from '@/shared/auth/domain/identity';
@@ -23,14 +24,14 @@ import { myEventsValidationPipe } from './my-events-validation.pipe';
 @ApiCookieAuth()
 @UsePipes(myEventsValidationPipe)
 @ApiResponse({ status: 401, description: 'Not signed in' })
-@ApiResponse({ status: 400, description: 'Invalid limit or offset' })
+@ApiResponse({ status: 400, description: 'Invalid limit, offset or filter' })
 export class MyEventsController {
   constructor(private readonly service: MyEventsService) {}
 
   @Get('applications')
   @ApiOperation({
     summary:
-      'Applications to events that are not over, with their state, soonest first',
+      'Applications with their state: waiting and approved ones to events still on first, soonest first; then the rest, latest first',
   })
   @ApiResponse({ status: 200, type: MyApplicationPageResponseDto })
   async applications(
@@ -38,17 +39,18 @@ export class MyEventsController {
     @Query() query: MyEventsPageQuery,
   ): Promise<MyApplicationPageResponseDto> {
     return MyApplicationPageResponseDto.fromDomain(
-      await this.service.getApplications(user, {
-        limit: query.limit,
-        offset: query.offset,
-      }),
+      await this.service.getApplications(
+        user,
+        { limit: query.limit, offset: query.offset },
+        eventFilterOf(query),
+      ),
     );
   }
 
   @Get('hosted')
   @ApiOperation({
     summary:
-      'Published events the user organizes that are not over, soonest first',
+      'Public events the user organizes: the ones still on first, soonest first; then the ones that are over, latest first',
   })
   @ApiResponse({ status: 200, type: MyHostedEventsResponseDto })
   async hosted(
@@ -56,10 +58,11 @@ export class MyEventsController {
     @Query() query: MyEventsPageQuery,
   ): Promise<MyHostedEventsResponseDto> {
     return MyHostedEventsResponseDto.fromDomain(
-      await this.service.getHosted(user, {
-        limit: query.limit,
-        offset: query.offset,
-      }),
+      await this.service.getHosted(
+        user,
+        { limit: query.limit, offset: query.offset },
+        eventFilterOf(query),
+      ),
     );
   }
 }
