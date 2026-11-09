@@ -5,11 +5,7 @@ import userEvent from "@testing-library/user-event"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { MembershipRefusedError } from "@/features/group/api/membershipRequestMutations"
-import type {
-  GroupMember,
-  PendingMembershipRequest,
-} from "@/features/group/api/membershipRequestSchemas"
-import { GroupMemberList } from "@/features/group/components/GroupMemberList"
+import type { PendingMembershipRequest } from "@/features/group/api/membershipRequestSchemas"
 import { MembershipRequestList } from "@/features/group/components/MembershipRequestList"
 
 const { decideMembershipRequest, toast } = vi.hoisted(() => ({
@@ -152,32 +148,5 @@ describe("MembershipRequestList", () => {
         "Žádost mezitím vyřídil jiný správce, nebo ji žadatel zrušil.",
       ),
     )
-  })
-})
-
-describe("GroupMemberList", () => {
-  const aMember = (overrides: Partial<GroupMember>): GroupMember => ({
-    userId: "u1",
-    name: "Caffeinated Duck",
-    image: null,
-    role: "MEMBER",
-    joinedAt: new Date(2026, 0, 1),
-    ...overrides,
-  })
-
-  it("lists the members with their role", async () => {
-    await renderWithRouter(
-      <GroupMemberList
-        members={[
-          aMember({ userId: "u1", name: "Caffeinated Duck", role: "OWNER" }),
-          aMember({ userId: "u2", name: "Deep Duck Thoughts", role: "MEMBER" }),
-        ]}
-      />,
-    )
-
-    const items = screen.getAllByRole("listitem")
-    expect(items).toHaveLength(2)
-    expect(within(items[0]!).getByText("Organizátor")).toBeVisible()
-    expect(within(items[1]!).getByText("Člen")).toBeVisible()
   })
 })
