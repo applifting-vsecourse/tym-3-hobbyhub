@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Link } from "@tanstack/react-router"
+import type { ParseKeys } from "i18next"
+import { Ellipsis } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -7,7 +9,14 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { StatusBadge, type Status } from "@/components/hobbyhub/StatusBadge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useNow } from "@/hooks/useNow"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { ApplicationStatus, MyApplication } from "@/features/event/api/myEventsSchemas"
@@ -21,6 +30,29 @@ const BADGES: Record<ApplicationStatus, Status> = {
   WITHDRAWN: "neutral",
   EVENT_CANCELLED: "rejected",
 }
+
+/**
+ * The one way out of an application, offered in the row's menu (#171):
+ * withdrawing a request the organizer has not decided, or cancelling a seat.
+ */
+export type ApplicationAction = "withdraw" | "cancel"
+
+/** Only while the event has not started: after that the server would refuse both. */
+export function applicationActionOf(
+  { status, event }: MyApplication,
+  now: Date,
+): ApplicationAction | null {
+  if (event.startAt <= now) return null
+  if (status === "PENDING") return "withdraw"
+  if (status === "APPROVED") return "cancel"
+  return null
+}
+
+/** Translation keys of the menu items; a renamed key fails the type-check. */
+const ACTION_LABELS = {
+  withdraw: "participationRequests.pending.withdraw",
+  cancel: "participationRequests.approved.cancel",
+} as const satisfies Record<ApplicationAction, ParseKeys>
 
 /** What the overview needs to know about one of its two lists. */
 export type MyEventsList<T> = {
@@ -42,8 +74,70 @@ type MyEventsOverviewProps = {
   hosted: MyEventsList<EventListItem>
   /** Display name of an event's activity; the activity feature owns the translation. */
   activityLabel: (activity: EventListItem["activity"]) => string
-  /** Injectable so "today" is stable in tests. */
+  /**
+   * Opens the dialog for the row's action, which the page owns (#171). Without
+   * it the rows have no menu.
+   */
+  onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void
+  /**
+   * Injectable so "today" is stable in tests. Without it the overview renews
+   * the time every minute, so a page left open stops offering an action once
+   * its event starts.
+   */
   now?: Date
+}
+
+/**
+ * The row's menu with its one action. The dialog opens only once the menu has
+ * closed and handed focus back to its button: opened from `onSelect`, the
+ * closing menu and the opening dialog fight over focus and the body's
+ * `pointer-events`, which can leave the page unclickable. Non-modal, the menu
+ * does not lock the page at all, so nothing is left to restore.
+ */
+function ApplicationActionMenu({
+  application,
+  action,
+  onAction,
+}: {
+  application: MyApplication
+  action: ApplicationAction
+  onAction: (action: ApplicationAction, application: MyApplication) => void
+}) {
+  const { t } = useTranslation()
+  const isChosenRef = useRef(false)
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={t("myEvents.actions.label", { title: application.event.title })}
+        >
+          <Ellipsis className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={() => {
+          // Runs once the menu is gone, as focus goes back to its button, so
+          // the dialog returns focus to the button when it closes.
+          if (!isChosenRef.current) return
+          isChosenRef.current = false
+          onAction(action, application)
+        }}
+      >
+        <DropdownMenuItem
+          onSelect={() => {
+            isChosenRef.current = true
+          }}
+        >
+          {t(ACTION_LABELS[action])}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 /** The next page loads by itself when the button scrolls into view; the button also works alone. */
@@ -84,9 +178,12 @@ export function MyEventsOverview({
   applications,
   hosted,
   activityLabel,
-  now = new Date(),
+  onApplicationAction,
+  now: fixedNow,
 }: MyEventsOverviewProps) {
   const { t, i18n } = useTranslation()
+  const tickingNow = useNow()
+  const now = fixedNow ?? tickingNow
 
   if (applications.isLoading && hosted.isLoading) {
     return (
@@ -124,35 +221,54 @@ export function MyEventsOverview({
     )
   }
 
-  const row = (event: EventListItem, status?: ApplicationStatus) => (
-    <li key={event.id}>
-      <Link
-        to="/events/$eventId"
-        params={{ eventId: event.id }}
-        className="-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+  const row = (event: EventListItem, application?: MyApplication) => {
+    const status = application?.status
+    const action = application && onApplicationAction ? applicationActionOf(application, now) : null
+    return (
+      // The row's top line runs under the menu too; the menu sits centred
+      // beside the row whatever its height.
+      <li
+        key={event.id}
+        className="flex items-center gap-1 border-t border-border"
       >
-        <ScheduleRow
-          time={eventTime(event.startAt, i18n.language)}
-          title={event.title}
-          subtitle={[
-            eventDay(t, event.startAt, now, i18n.language),
-            eventMeta(t, event, activityLabel(event.activity)),
-          ].join(" · ")}
-          taken={event.takenCount}
-          min={event.minParticipants}
-          max={event.maxParticipants}
-          // The title next to it says what the photo shows.
-          photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
-          activity={event.activity.icon}
-          badge={
-            status ? (
-              <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
-            ) : undefined
-          }
-        />
-      </Link>
-    </li>
-  )
+        <Link
+          to="/events/$eventId"
+          params={{ eventId: event.id }}
+          className="-ml-3 block min-w-0 flex-1 rounded-lg pr-1 pl-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <ScheduleRow
+            time={eventTime(event.startAt, i18n.language)}
+            title={event.title}
+            subtitle={[
+              eventDay(t, event.startAt, now, i18n.language),
+              eventMeta(t, event, activityLabel(event.activity)),
+            ].join(" · ")}
+            taken={event.takenCount}
+            min={event.minParticipants}
+            max={event.maxParticipants}
+            // The title next to it says what the photo shows.
+            photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
+            activity={event.activity.icon}
+            className="border-t-0"
+            badge={
+              status ? (
+                <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
+              ) : undefined
+            }
+          />
+        </Link>
+        {/* Next to the link, not inside it: a button in an anchor is not valid
+            HTML, and a tap on it must not open the detail. */}
+        {application && action && onApplicationAction ? (
+          <ApplicationActionMenu
+            application={application}
+            action={action}
+            onAction={onApplicationAction}
+          />
+        ) : null}
+      </li>
+    )
+  }
 
   // One tab's body: loading, a failed first load, the rows with "load more", or "nothing here".
   const body = <T,>(
@@ -215,8 +331,8 @@ export function MyEventsOverview({
         <TabsTrigger value="hosted">{label(hosted, "hosted")}</TabsTrigger>
       </TabsList>
       <TabsContent value="applications">
-        {body(applications, "myEvents.applications.empty", ({ event, status }) =>
-          row(event, status),
+        {body(applications, "myEvents.applications.empty", (application) =>
+          row(application.event, application),
         )}
       </TabsContent>
       <TabsContent value="hosted">

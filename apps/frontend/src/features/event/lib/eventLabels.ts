@@ -56,6 +56,17 @@ export function eventPlace(
     : [event.placeName, event.district ?? event.city].filter(Boolean).join(", ")
 }
 
+/**
+ * Approximate place and level, as a sheet shows them under the event's title:
+ * "ZŠ Kobylisy, Praha 8, Pokročilí". The level is the catalogue's own name.
+ */
+export function eventPlaceAndLevel(
+  t: TFunction,
+  event: Pick<EventListItem, "venueType" | "placeName" | "district" | "city" | "level">,
+): string {
+  return [eventPlace(t, event), event.level].filter(Boolean).join(", ")
+}
+
 /** Activity, approximate place and level: "Florbal · ZŠ Kobylisy, Praha 8 · Pokročilí". */
 export function eventMeta(t: TFunction, event: EventListItem, activityLabel: string): string {
   return [activityLabel, eventPlace(t, event), event.level].filter(Boolean).join(" · ")

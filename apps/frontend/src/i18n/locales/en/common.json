@@ -985,6 +985,9 @@
     }
   },
   "myEvents": {
+    "actions": {
+      "label": "Application options: {{title}}"
+    },
     "applications": {
       "empty": "You are not signed up for any upcoming event."
     },
