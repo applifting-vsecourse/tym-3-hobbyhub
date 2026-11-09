@@ -25,7 +25,8 @@ function useRefreshAfterDecision(eventId: string, onChange?: () => Promise<unkno
 export function useApproveRequest(eventId: string, onChange?: () => Promise<unknown>) {
   const refresh = useRefreshAfterDecision(eventId, onChange)
   return useMutation({
-    mutationFn: (requestId: string) => approveRequest({ eventId, requestId }),
+    mutationFn: ({ requestId, message }: { requestId: string; message?: string }) =>
+      approveRequest({ eventId, requestId, message }),
     onSettled: refresh,
   })
 }
@@ -33,8 +34,8 @@ export function useApproveRequest(eventId: string, onChange?: () => Promise<unkn
 export function useRejectRequest(eventId: string, onChange?: () => Promise<unknown>) {
   const refresh = useRefreshAfterDecision(eventId, onChange)
   return useMutation({
-    mutationFn: ({ requestId, reason }: { requestId: string; reason?: string }) =>
-      rejectRequest({ eventId, requestId, reason }),
+    mutationFn: ({ requestId, message }: { requestId: string; message?: string }) =>
+      rejectRequest({ eventId, requestId, message }),
     onSettled: refresh,
   })
 }

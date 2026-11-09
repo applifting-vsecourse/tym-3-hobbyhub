@@ -21,13 +21,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateMembershipRequestDto } from './dto/create-membership-request.dto';
+import { DecideMembershipRequestDto } from './dto/decide-membership-request.dto';
 import {
   MEMBERSHIP_DECISION_VIOLATIONS,
   MembershipRequestResponseDto,
   MyMembershipRequestStateResponseDto,
   PendingMembershipRequestResponseDto,
 } from './dto/membership-request.response.dto';
-import { RejectMembershipRequestDto } from './dto/reject-membership-request.dto';
 import { membershipRequestsValidationPipe } from './membership-requests-validation.pipe';
 
 // F-07.3 requests to join a group: the applicant asks and may withdraw, the
@@ -118,15 +118,21 @@ export class MembershipRequestsController {
   @ApiResponse({ status: 200, type: MembershipRequestResponseDto })
   @ApiResponse({
     status: 400,
-    description: `The request cannot be approved now; \`violations\` says why: ${MEMBERSHIP_DECISION_VIOLATIONS.join(', ')}`,
+    description: `Invalid message, or the request cannot be approved now; \`violations\` says why: ${MEMBERSHIP_DECISION_VIOLATIONS.join(', ')}`,
   })
   @ApiResponse({ status: 404, description: 'Not an admin, or no request' })
   async approve(
     @User() user: Identity,
     @Param('groupId') groupId: string,
     @Param('requestId') requestId: string,
+    @Body() body: DecideMembershipRequestDto,
   ): Promise<MembershipRequestResponseDto> {
-    const request = await this.service.approveRequest(user, groupId, requestId);
+    const request = await this.service.approveRequest(
+      user,
+      groupId,
+      requestId,
+      body.message,
+    );
     return MembershipRequestResponseDto.fromDomain(request);
   }
 
@@ -138,20 +144,20 @@ export class MembershipRequestsController {
   @ApiResponse({ status: 200, type: MembershipRequestResponseDto })
   @ApiResponse({
     status: 400,
-    description: `Invalid reason, or the request cannot be rejected now; \`violations\` says why: ${MEMBERSHIP_DECISION_VIOLATIONS.join(', ')}`,
+    description: `Invalid message, or the request cannot be rejected now; \`violations\` says why: ${MEMBERSHIP_DECISION_VIOLATIONS.join(', ')}`,
   })
   @ApiResponse({ status: 404, description: 'Not an admin, or no request' })
   async reject(
     @User() user: Identity,
     @Param('groupId') groupId: string,
     @Param('requestId') requestId: string,
-    @Body() body: RejectMembershipRequestDto,
+    @Body() body: DecideMembershipRequestDto,
   ): Promise<MembershipRequestResponseDto> {
     const request = await this.service.rejectRequest(
       user,
       groupId,
       requestId,
-      body.reason,
+      body.message,
     );
     return MembershipRequestResponseDto.fromDomain(request);
   }

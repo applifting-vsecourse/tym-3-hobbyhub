@@ -44,7 +44,7 @@ const mapToDomain = (
   message: request.message,
   requestedAt: request.requestedAt,
   decidedAt: request.decidedAt,
-  rejectionReason: request.rejectionReason,
+  decisionMessage: request.decisionMessage,
 });
 
 // All the organizer may see of the person asking; the rest of the row stays
@@ -600,6 +600,7 @@ export class ParticipationRequestRepository {
   async approvePending(data: {
     eventId: string;
     requestId: string;
+    message?: string;
     at: Date;
   }): Promise<
     | ParticipationRequest
@@ -627,7 +628,11 @@ export class ParticipationRequestRepository {
       // stopped waiting since the read above.
       const { count } = await tx.participationRequest.updateMany({
         where: { id: request.id, status: RequestStatus.PENDING },
-        data: { status: RequestStatus.APPROVED, decidedAt: data.at },
+        data: {
+          status: RequestStatus.APPROVED,
+          decidedAt: data.at,
+          decisionMessage: data.message ?? null,
+        },
       });
       if (count === 0) return 'NOT_PENDING';
       await takeSeat(tx, data.eventId, request.userId);
@@ -635,6 +640,7 @@ export class ParticipationRequestRepository {
         ...request,
         status: RequestStatus.APPROVED,
         decidedAt: data.at,
+        decisionMessage: data.message ?? null,
       });
     });
   }
@@ -644,7 +650,7 @@ export class ParticipationRequestRepository {
   async rejectPending(data: {
     eventId: string;
     requestId: string;
-    reason?: string;
+    message?: string;
     at: Date;
   }): Promise<ParticipationRequest | null> {
     const { count } = await this.prisma.participationRequest.updateMany({
@@ -656,7 +662,7 @@ export class ParticipationRequestRepository {
       data: {
         status: RequestStatus.REJECTED,
         decidedAt: data.at,
-        rejectionReason: data.reason ?? null,
+        decisionMessage: data.message ?? null,
       },
     });
     if (count === 0) return null;

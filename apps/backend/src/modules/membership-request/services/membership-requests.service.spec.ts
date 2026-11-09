@@ -51,7 +51,7 @@ const aRequest = (
   message: null,
   requestedAt: now,
   decidedAt: null,
-  rejectionReason: null,
+  decisionMessage: null,
   ...overrides,
 });
 
@@ -235,7 +235,7 @@ describe('MembershipRequestsService', () => {
         service.getPendingRequests(user, 'g1'),
       ).rejects.toBeInstanceOf(NotFoundException);
       await expect(
-        service.approveRequest(user, 'g1', 'r1', now),
+        service.approveRequest(user, 'g1', 'r1', undefined, now),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(repository.getPendingRequests).not.toHaveBeenCalled();
       expect(repository.approvePending).not.toHaveBeenCalled();
@@ -246,23 +246,28 @@ describe('MembershipRequestsService', () => {
       repository.getRequest.mockResolvedValue(null);
 
       await expect(
-        service.approveRequest(admin, 'g1', 'r-elsewhere', now),
+        service.approveRequest(admin, 'g1', 'r-elsewhere', undefined, now),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(repository.getRequest).toHaveBeenCalledWith('g1', 'r-elsewhere');
     });
 
-    it('approves a waiting request', async () => {
+    it('approves a waiting request with the message (#153)', async () => {
       const { repository, notifications, service } = setup();
-      const approved = aRequest({ status: 'APPROVED', decidedAt: now });
+      const approved = aRequest({
+        status: 'APPROVED',
+        decidedAt: now,
+        decisionMessage: 'Vítej',
+      });
       repository.getRequest.mockResolvedValue(aRequest());
       repository.approvePending.mockResolvedValue(approved);
 
       await expect(
-        service.approveRequest(admin, 'g1', 'r1', now),
+        service.approveRequest(admin, 'g1', 'r1', 'Vítej', now),
       ).resolves.toBe(approved);
       expect(repository.approvePending).toHaveBeenCalledWith({
         groupId: 'g1',
         requestId: 'r1',
+        message: 'Vítej',
         at: now,
       });
       // ADR-0015: the applicant hears the outcome.
@@ -282,7 +287,7 @@ describe('MembershipRequestsService', () => {
       repository.getRequest.mockResolvedValue(aRequest());
 
       await expect(
-        violationsOf(service.approveRequest(admin, 'g1', 'r1', now)),
+        violationsOf(service.approveRequest(admin, 'g1', 'r1', undefined, now)),
       ).resolves.toEqual(['GROUP_CANCELLED']);
       expect(repository.approvePending).not.toHaveBeenCalled();
     });
@@ -306,7 +311,7 @@ describe('MembershipRequestsService', () => {
       repository.rejectPending.mockResolvedValue(null);
 
       await expect(
-        violationsOf(service.approveRequest(admin, 'g1', 'r1', now)),
+        violationsOf(service.approveRequest(admin, 'g1', 'r1', undefined, now)),
       ).resolves.toEqual(['APPLICANT_IS_MEMBER']);
       await expect(
         violationsOf(service.rejectRequest(admin, 'g1', 'r1', undefined, now)),
@@ -316,12 +321,12 @@ describe('MembershipRequestsService', () => {
       ).not.toHaveBeenCalled();
     });
 
-    it('rejects a waiting request with the reason', async () => {
+    it('rejects a waiting request with the message', async () => {
       const { repository, notifications, service } = setup();
       const rejected = aRequest({
         status: 'REJECTED',
         decidedAt: now,
-        rejectionReason: 'Plno',
+        decisionMessage: 'Plno',
       });
       repository.getRequest.mockResolvedValue(aRequest());
       repository.rejectPending.mockResolvedValue(rejected);
@@ -332,7 +337,7 @@ describe('MembershipRequestsService', () => {
       expect(repository.rejectPending).toHaveBeenCalledWith({
         groupId: 'g1',
         requestId: 'r1',
-        reason: 'Plno',
+        message: 'Plno',
         at: now,
       });
       expect(notifications.notifyMembershipRequestDecided).toHaveBeenCalledWith(

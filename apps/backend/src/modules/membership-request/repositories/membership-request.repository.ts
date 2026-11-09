@@ -24,7 +24,7 @@ const mapToDomain = (request: PrismaMembershipRequest): MembershipRequest => ({
   message: request.message,
   requestedAt: request.requestedAt,
   decidedAt: request.decidedAt,
-  rejectionReason: request.rejectionReason,
+  decisionMessage: request.decisionMessage,
 });
 
 // All the admins may see of the person asking; the rest of the row stays here.
@@ -205,6 +205,7 @@ export class MembershipRequestRepository {
   async approvePending(data: {
     groupId: string;
     requestId: string;
+    message?: string;
     at: Date;
   }): Promise<
     | MembershipRequest
@@ -221,7 +222,11 @@ export class MembershipRequestRepository {
         if (request?.status !== RequestStatus.PENDING) return 'NOT_PENDING';
         const { count } = await tx.membershipRequest.updateMany({
           where: { id: request.id, status: RequestStatus.PENDING },
-          data: { status: RequestStatus.APPROVED, decidedAt: data.at },
+          data: {
+            status: RequestStatus.APPROVED,
+            decidedAt: data.at,
+            decisionMessage: data.message ?? null,
+          },
         });
         if (count === 0) return 'NOT_PENDING';
         await tx.groupMembership.create({
@@ -236,6 +241,7 @@ export class MembershipRequestRepository {
           ...request,
           status: RequestStatus.APPROVED,
           decidedAt: data.at,
+          decisionMessage: data.message ?? null,
         });
       });
     } catch (error) {
@@ -249,7 +255,7 @@ export class MembershipRequestRepository {
   async rejectPending(data: {
     groupId: string;
     requestId: string;
-    reason?: string;
+    message?: string;
     at: Date;
   }): Promise<MembershipRequest | null> {
     const { count } = await this.prisma.membershipRequest.updateMany({
@@ -261,7 +267,7 @@ export class MembershipRequestRepository {
       data: {
         status: RequestStatus.REJECTED,
         decidedAt: data.at,
-        rejectionReason: data.reason ?? null,
+        decisionMessage: data.message ?? null,
       },
     });
     if (count === 0) return null;
