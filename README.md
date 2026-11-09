@@ -1,10 +1,20 @@
-# Quacker — full-stack starter template
+# HobbyHub
 
-Starter template for [4IT580](https://4it580.vse.cz) team projects: a minimal, working full-stack app you fork and grow into your own product.
+HobbyHub helps people fill the missing players for sports and hobby events before the event gets cancelled. An organizer posts an event and says how many people it still needs to reach the minimum; others find the free seats on the map or in the list, ask to join, and the organizer approves them.
+
+Team 3's project for [4IT580](https://4it580.vse.cz), built on the course's full-stack starter template.
 
 **Stack:** React + Vite + TanStack Router/Query + Tailwind/shadcn (frontend) · NestJS + Prisma + PostgreSQL + BetterAuth (backend) · pnpm workspaces.
 
-What's included: working login/signup (BetterAuth — you use it, you don't build it), one worked-example feature (the quack feed: read a list, post a new one — copy its pattern), seeded demo data, example tests, CI. The full demo app this template was trimmed from lives on the `reference/full-app` branch.
+What the app does today:
+
+- **Accounts** — sign-up and login (BetterAuth), onboarding after registration: profile photo and bio, favourite activities with a level, and where you play and how far you'll travel.
+- **Events** — create an event in three steps (what and when, who and how many, details), edit or cancel it; browse upcoming events as a list or on a map, search and filter them, and open a public event detail with participant statistics.
+- **Participation** — ask to join an event; the organizer approves or rejects the requests and sees the participants. A rejected request is final for that event ([ADR-0013](docs/adr/adr-0013.md)).
+- **Groups** — create a group, browse the list of groups, ask to become a member; the group's founder and admins handle the requests and manage members ([ADR-0007](docs/adr/adr-0007.md), [ADR-0014](docs/adr/adr-0014.md)).
+- **Czech and English** — Czech is the default language.
+
+Domain and architecture decisions are recorded in [`docs/adr/`](docs/adr/), wireframes in [`docs/wireframes/`](docs/wireframes/).
 
 ## Prerequisites
 
