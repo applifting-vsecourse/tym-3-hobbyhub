@@ -81,6 +81,14 @@ function LoginPage() {
           errorMessage={error ? authErrorMessage(t, error, "signInFailed") : null}
           onSubmit={handleSubmit}
         />
+        <p className="mt-4 text-center typo-small">
+          <Link
+            to={ROUTES.forgotPassword}
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            {t("auth.signIn.forgotPassword")}
+          </Link>
+        </p>
       </AuthLayout>
     </>
   )

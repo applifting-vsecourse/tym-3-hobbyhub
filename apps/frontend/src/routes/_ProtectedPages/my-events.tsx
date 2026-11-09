@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -28,6 +29,8 @@ import {
   nonEmpty,
   searchWithFilters,
 } from "@/features/event/lib/eventsSearch"
+
+import { ApplicationSheet, type ApplicationSheetState } from "./-my-events/ApplicationSheet"
 
 // The filters of the event list, and the tab: "Přihlášky" is the default and
 // has no param; anything unknown falls back to it.
@@ -99,6 +102,10 @@ function MyEventsPage() {
     setSearchText("")
     void navigate({ search: (previous) => ({ tab: previous.tab }) })
   }
+  const applicationList = toList(applications)
+  // #171: the row's menu opens the same dialog as the event detail. The event
+  // stays chosen after the sheet closes, so it animates out with its content.
+  const [sheet, setSheet] = useState<ApplicationSheetState>({ eventId: null, step: null })
 
   return (
     <>
@@ -107,7 +114,7 @@ function MyEventsPage() {
         <h1 className="typo-h1 text-foreground">{t("myEvents.title")}</h1>
         <div className="mt-6">
           <MyEventsOverview
-            applications={toList(applications)}
+            applications={applicationList}
             hosted={toList(hosted)}
             tab={search.tab ?? "applications"}
             isFiltered={hasFilters(filters)}
@@ -127,9 +134,17 @@ function MyEventsPage() {
               />
             }
             activityLabel={(activity) => activityName(t, activity)}
+            onApplicationAction={(step, application) =>
+              setSheet({ eventId: application.event.id, step })
+            }
           />
         </div>
       </section>
+      <ApplicationSheet
+        applications={applicationList.items}
+        state={sheet}
+        onStepChange={(step) => setSheet((shown) => ({ ...shown, step }))}
+      />
     </>
   )
 }

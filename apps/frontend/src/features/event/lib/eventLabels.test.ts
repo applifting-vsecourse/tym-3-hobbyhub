@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest"
 import { i18n } from "@/i18n"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
-import { eventDay, eventMeta, eventTime, eventWhen } from "@/features/event/lib/eventLabels"
+import {
+  eventDay,
+  eventMeta,
+  eventPlaceAndLevel,
+  eventTime,
+  eventWhen,
+} from "@/features/event/lib/eventLabels"
 
 const t = i18n.t.bind(i18n)
 
@@ -55,6 +61,13 @@ describe("eventWhen", () => {
 
   it("uses the short day further ahead", () => {
     expect(eventWhen(t, new Date(2026, 9, 29, 18, 30), now, "cs")).toBe("čt 29. 10. 18:30")
+  })
+})
+
+describe("eventPlaceAndLevel", () => {
+  it("joins venue, district and level the way a sheet shows them", () => {
+    expect(eventPlaceAndLevel(t, event())).toBe("ZŠ Kobylisy, Praha 8, Pokročilí")
+    expect(eventPlaceAndLevel(t, event({ level: null }))).toBe("ZŠ Kobylisy, Praha 8")
   })
 })
 

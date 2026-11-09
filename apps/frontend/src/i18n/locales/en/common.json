@@ -8,7 +8,9 @@
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
       "invalidGender": "Choose your gender.",
+      "invalidToken": "The link is invalid or has expired.",
       "passwordTooShort": "The password is too short.",
+      "resetPasswordFailed": "The password could not be set.",
       "signInFailed": "Sign in failed.",
       "signUpFailed": "Sign up failed.",
       "termsNotAccepted": "You need to accept the terms to register.",
@@ -23,6 +25,14 @@
       "gender": "Gender",
       "name": "Name / nickname",
       "password": "Password"
+    },
+    "forgotPassword": {
+      "backToSignIn": "Back to sign in",
+      "description": "Enter the e-mail of your account and we will send you a link to set a new password.",
+      "failed": "The link could not be sent. Please try again.",
+      "sent": "If an account exists for this e-mail, we have sent it a link to set a new password. It is valid for 1 hour.",
+      "submit": "Send link",
+      "title": "Forgot password"
     },
     "gender": {
       "female": "Female",
@@ -39,8 +49,19 @@
       "email": "e.g. john@doe.com",
       "gender": "Select"
     },
+    "resetPassword": {
+      "description": "Choose a new password. After saving, you will be signed out on all devices.",
+      "done": "Your password is set. Sign in with it.",
+      "invalidDescription": "The link is invalid, has been used, or has expired. Request a new one.",
+      "invalidTitle": "The link does not work",
+      "requestNew": "Send a new link",
+      "signIn": "Sign in",
+      "submit": "Save password",
+      "title": "New password"
+    },
     "signIn": {
       "description": "Welcome back to HobbyHub.",
+      "forgotPassword": "Forgot password?",
       "lockoutNote": "After repeated failed attempts we block signing in for a while.",
       "noAccount": "No account?",
       "rememberMe": "Stay signed in",
@@ -927,6 +948,9 @@
     }
   },
   "myEvents": {
+    "actions": {
+      "label": "Application options: {{title}}"
+    },
     "applications": {
       "empty": "You have not applied to any event yet."
     },
@@ -960,19 +984,43 @@
   "notifications": {
     "badgeOverflow": "{{max}}+",
     "bell": "Notifications",
+    "bellEmpty": "No new notifications",
+    "bellTitle": "New notifications",
     "bellUnread_one": "Notifications, {{count}} unread",
     "bellUnread_other": "Notifications, {{count}} unread",
     "deletedTarget": "a deleted event",
-    "empty": "No notifications yet. They will show up here once something happens around your events and groups.",
     "justNow": "just now",
+    "kinds": {
+      "all": "All",
+      "events": "Events",
+      "groups": "Groups",
+      "label": "Kind of notifications",
+      "other": "Other",
+      "requests": "Requests"
+    },
     "loadError": "Notifications could not be loaded",
     "loading": "Loading notifications…",
     "markAllRead": "Mark all as read",
     "markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+    "markKindRead": "Mark these as read",
     "message": "“{{message}}”",
-    "more_one": "{{count}} more",
-    "more_other": "{{count}} more",
+    "more_one": "Load more ({{count}})",
+    "more_other": "Load more ({{count}})",
     "retry": "Try again",
+    "sections": {
+      "new": {
+        "count_one": "{{count}} unread",
+        "count_other": "{{count}} unread",
+        "empty": "No new notifications. They will show up here once something happens around your events and groups.",
+        "emptyFiltered": "No new notifications of this kind.",
+        "title": "New"
+      },
+      "read": {
+        "empty": "No read notifications yet. The ones you open or mark as read move here.",
+        "emptyFiltered": "No read notifications of this kind.",
+        "title": "Read"
+      }
+    },
     "showAll": "Show all",
     "someone": "Someone",
     "text": {
@@ -1263,6 +1311,13 @@
   },
   "profile": {
     "cancel": "Cancel",
+    "changePassword": {
+      "action": "Change password",
+      "description": "We will e-mail you a link to set a new password. After the change, you will be signed out on all devices and sign in with the new password.",
+      "failed": "The e-mail could not be sent. Please try again.",
+      "sent": "We have e-mailed you a link to set a new password. It is valid for 1 hour.",
+      "title": "Password"
+    },
     "edit": {
       "title": "Edit profile"
     },
@@ -1277,6 +1332,15 @@
       "description": "A private address, nobody else sees it. It is used to find events nearby.",
       "hasNone": "You have not added an address yet.",
       "howTo": "Start typing your street (and house number, if you like) and we suggest places from the map. Pick your line so we know the position on the map too.",
+      "notice": "Among users, only you can see your location. It is not shown to friends, organizers or group members. The app keeps no history of your location and reads your GPS position only when you ask it to (for example for “nearest to me” sorting), without storing it.",
+      "remove": {
+        "button": "Remove location",
+        "cancel": "Keep it",
+        "confirm": "Remove",
+        "description": "We will delete your address, temporary place and travel radius. You will not see nearby events until you add an address again.",
+        "error": "We could not remove your location. Please try again.",
+        "title": "Remove your location?"
+      },
       "title": "Where I live"
     },
     "private": {
@@ -1317,22 +1381,6 @@
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }
-  },
-  "quacks": {
-    "form": {
-      "label": "New quack",
-      "placeholder": "Quack something...",
-      "required": "Write something first",
-      "submit": "Quack",
-      "tooLong_one": "Keep it under {{count}} character",
-      "tooLong_other": "Keep it under {{count}} characters"
-    },
-    "list": {
-      "empty": "No quacks yet. Post the first one.",
-      "loadError": "Couldn't load quacks",
-      "reload": "Reload"
-    },
-    "title": "Quacks"
   },
   "terms": {
     "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",
