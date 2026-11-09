@@ -1,5 +1,5 @@
 import { CharLength } from '@/core/validation/char-length.decorator';
-import { PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH } from '@/modules/participation-request/domain/participation-request';
+import { PARTICIPATION_REQUEST_DECISION_MESSAGE_MAX_LENGTH } from '@/modules/participation-request/domain/participation-request';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
@@ -8,15 +8,17 @@ import { IsOptional, IsString } from 'class-validator';
 const trimToUndefined = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() || undefined : value;
 
-export class RejectParticipationRequestDto {
+// #153: approving and rejecting both take the same optional message.
+export class DecideParticipationRequestDto {
   @ApiPropertyOptional({
-    description: 'Why the request is rejected; kept, shown to nobody yet',
+    description:
+      'Words for the applicant with the decision, shown to them on the event',
     example: 'Hledáme spíš začátečníky.',
-    maxLength: PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH,
+    maxLength: PARTICIPATION_REQUEST_DECISION_MESSAGE_MAX_LENGTH,
   })
   @Transform(trimToUndefined)
   @IsOptional()
   @IsString()
-  @CharLength(0, PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH)
-  reason?: string;
+  @CharLength(0, PARTICIPATION_REQUEST_DECISION_MESSAGE_MAX_LENGTH)
+  message?: string;
 }

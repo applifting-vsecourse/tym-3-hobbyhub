@@ -32,6 +32,7 @@ const request = {
   status: "PENDING",
   message: "Ahoj",
   requestedAt: "2030-01-01T10:00:00.000Z",
+  decisionMessage: null,
 }
 
 describe("membership request mutations", () => {
@@ -44,20 +45,30 @@ describe("membership request mutations", () => {
     expect(post).toHaveBeenCalledWith("groups/g1/requests", { json: { message: "Ahoj" } })
   })
 
-  it("decides on the request's own path, with the reason of a rejection", async () => {
+  // #153: either decision may carry a message for the applicant.
+  it("decides on the request's own path, with the message", async () => {
     post.mockReturnValue({ json: () => Promise.resolve({ ...request, status: "REJECTED" }) })
 
     await decideMembershipRequest({ groupId: "g1", requestId: "r1", decision: "approve" })
     await decideMembershipRequest({
       groupId: "g1",
       requestId: "r1",
+      decision: "approve",
+      message: "Vítej",
+    })
+    await decideMembershipRequest({
+      groupId: "g1",
+      requestId: "r1",
       decision: "reject",
-      reason: "Plno",
+      message: "Plno",
     })
 
     expect(post).toHaveBeenNthCalledWith(1, "groups/g1/requests/r1/approve", { json: {} })
-    expect(post).toHaveBeenNthCalledWith(2, "groups/g1/requests/r1/reject", {
-      json: { reason: "Plno" },
+    expect(post).toHaveBeenNthCalledWith(2, "groups/g1/requests/r1/approve", {
+      json: { message: "Vítej" },
+    })
+    expect(post).toHaveBeenNthCalledWith(3, "groups/g1/requests/r1/reject", {
+      json: { message: "Plno" },
     })
   })
 

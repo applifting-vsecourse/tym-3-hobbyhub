@@ -480,6 +480,7 @@
       "members_one": "{{count}} člen",
       "members_other": "{{count}} členů",
       "membership": {
+        "decisionMessage": "Zpráva od organizátora",
         "hasAccount": "Už máte účet?",
         "isAdmin": "Jste správcem",
         "isMember": "Jste členem",
@@ -586,9 +587,21 @@
         }
       },
       "adminTitle": "Správa skupiny",
+      "approve": {
+        "cancel": "Zpět",
+        "confirm": "Schválit",
+        "messagePlaceholder": "Např. Vítejte! Hrajeme každé úterý od 18:00.",
+        "text": "{{name}} se stane členem skupiny.",
+        "title": "Schválit žádost?"
+      },
       "approved": "{{name}} je teď členem skupiny.",
       "back": "Zpět na skupinu",
       "decideFailed": "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      "decision": {
+        "messageHint": "Žadatel ji uvidí na stránce skupiny a v upozornění.",
+        "messageLabel": "Zpráva pro žadatele (nepovinné)",
+        "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků."
+      },
       "loadError": "Nepodařilo se načíst",
       "loading": "Načítáme…",
       "membersEmpty": "Skupina zatím nemá žádné členy.",
@@ -606,10 +619,7 @@
       "reject": {
         "cancel": "Zpět",
         "confirm": "Zamítnout",
-        "reasonHint": "Důvod si uložíme. Žadatel ho uvidí, až bude přehled jeho žádostí.",
-        "reasonLabel": "Důvod (nepovinné)",
-        "reasonPlaceholder": "Např. Skupina je teď plná.",
-        "reasonTooLong": "Důvod může mít nejvýš {{count}} znaků.",
+        "messagePlaceholder": "Např. Skupina je teď plná.",
         "text": "{{name}} uvidí zamítnutí na stránce skupiny a do této skupiny už znovu požádat nemůže.",
         "title": "Zamítnout žádost?"
       },
@@ -663,6 +673,7 @@
         "REJECTED": "Zamítnuto {{date}}",
         "WITHDRAWN": "Staženo {{date}}"
       },
+      "decisionMessage": "Zpráva od organizátora",
       "groupCancelledText": "Organizátor skupinu zrušil, žádost už nikdo nevyřídí.",
       "historyEmpty": "Tady se objeví zamítnuté a stažené žádosti.",
       "historyTitle": "Historie",
@@ -672,7 +683,6 @@
       "message": "Vaše zpráva",
       "pendingEmpty": "Žádná žádost nečeká na vyřízení. Skupiny najdete v záložce <discover>Objevit</discover>.",
       "pendingTitle": "Čekající",
-      "rejectionReason": "Důvod zamítnutí",
       "requestedAt": "Podáno {{date}}",
       "status": {
         "APPROVED": "Schváleno",
@@ -1104,7 +1114,7 @@
       "label": "Možnosti přihlášky: {{title}}"
     },
     "applications": {
-      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
+      "empty": "Zatím nemáte žádnou přihlášku na akci."
     },
     "empty": {
       "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
@@ -1112,10 +1122,11 @@
       "title": "Zatím tu nic není"
     },
     "hosted": {
-      "empty": "Nepořádáte žádnou nadcházející akci."
+      "empty": "Zatím nepořádáte žádnou akci."
     },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
+    "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",
       "EVENT_CANCELLED": "Akce zrušena",
@@ -1264,6 +1275,13 @@
     "skipAll": "Přeskočit vše"
   },
   "participationRequests": {
+    "approve": {
+      "cancel": "Nechat čekat",
+      "confirm": "Schválit žádost",
+      "messagePlaceholder": "Např. vezmi si s sebou sálovky",
+      "text": "{{name}} dostane místo na akci.",
+      "title": "Schválit žádost?"
+    },
     "approved": {
       "cancel": "Zrušit účast",
       "description": "Organizátor tvou účast schválil.",
@@ -1292,6 +1310,12 @@
     "cancelled": {
       "description": "Účast na této akci jsi zrušil. Pokud si to rozmyslíš, můžeš o účast požádat znovu."
     },
+    "decision": {
+      "messageHint": "Žadatel ji uvidí u akce a v upozornění.",
+      "messageLabel": "Zpráva pro žadatele (nepovinné)",
+      "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků."
+    },
+    "decisionMessage": "Zpráva od organizátora",
     "form": {
       "cancel": "Zrušit",
       "hiddenDetails": "Kontakt, poloha, věk ani pohlaví organizátor neuvidí.",
@@ -1448,12 +1472,9 @@
     "reject": {
       "cancel": "Nechat čekat",
       "confirm": "Zamítnout žádost",
-      "reasonHint": "Důvod si uložíme, žadateli se zatím nezobrazí.",
-      "reasonLabel": "Důvod (nepovinné)",
-      "reasonPlaceholder": "Např. tentokrát hledáme spíš začátečníky",
-      "reasonTooLong": "Důvod může mít nejvýš {{count}} znaků.",
-      "title": "Zamítnout žádost?",
-      "warning": "{{name}} už o tuhle akci nebude moct požádat znovu."
+      "messagePlaceholder": "Např. tentokrát hledáme spíš začátečníky",
+      "text": "{{name}} už o tuhle akci nebude moct požádat znovu.",
+      "title": "Zamítnout žádost?"
     },
     "rejected": {
       "description": "Organizátor tvou žádost zamítl, novou na tuto akci poslat nemůžeš."

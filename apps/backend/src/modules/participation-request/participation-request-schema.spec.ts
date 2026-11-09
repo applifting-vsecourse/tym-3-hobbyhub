@@ -183,53 +183,54 @@ describeDb('participation request schema constraints', () => {
     ).rejects.toThrow(constraint);
   });
 
-  it('accepts a rejection with and without a reason', async () => {
-    await inRolledBackTransaction(async (tx) => {
-      const ids = await eventAndApplicant(tx);
-      await tx.participationRequest.create({
-        data: {
-          ...ids,
-          status: RequestStatus.REJECTED,
-          decidedAt: new Date(),
-          rejectionReason: 'Hledáme spíš začátečníky.',
-        },
-      });
-      const other = await eventAndApplicant(tx);
-      await tx.participationRequest.create({
-        data: {
-          ...other,
-          status: RequestStatus.REJECTED,
-          decidedAt: new Date(),
-        },
-      });
-    });
-  });
-
-  it.each([RequestStatus.PENDING, RequestStatus.APPROVED])(
-    'rejects a reason on a %s request',
+  // #153, ADR-0019: the message goes with either decision.
+  it.each([RequestStatus.APPROVED, RequestStatus.REJECTED])(
+    'accepts a %s request with and without a message',
     async (status) => {
-      await expect(
-        inRolledBackTransaction(async (tx) => {
-          const ids = await eventAndApplicant(tx);
-          await tx.participationRequest.create({
-            data: {
-              ...ids,
-              status,
-              decidedAt: status === RequestStatus.PENDING ? null : new Date(),
-              rejectionReason: 'Plno',
-            },
-          });
-        }),
-      ).rejects.toThrow('participation_request_rejection_reason_only_rejected');
+      await inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participationRequest.create({
+          data: {
+            ...ids,
+            status,
+            decidedAt: new Date(),
+            decisionMessage: 'Hledáme spíš začátečníky.',
+          },
+        });
+        const other = await eventAndApplicant(tx);
+        await tx.participationRequest.create({
+          data: { ...other, status, decidedAt: new Date() },
+        });
+      });
     },
   );
+
+  it.each([
+    RequestStatus.PENDING,
+    RequestStatus.WITHDRAWN,
+    RequestStatus.CLOSED,
+  ])('rejects a message on a %s request', async (status) => {
+    await expect(
+      inRolledBackTransaction(async (tx) => {
+        const ids = await eventAndApplicant(tx);
+        await tx.participationRequest.create({
+          data: {
+            ...ids,
+            status,
+            decidedAt: status === RequestStatus.PENDING ? null : new Date(),
+            decisionMessage: 'Plno',
+          },
+        });
+      }),
+    ).rejects.toThrow('participation_request_decision_message_only_decided');
+  });
 
   it.each([
     ['spaces', '   '],
     ['line breaks and tabs', '\n\t\r\n'],
     ['non-breaking and ideographic spaces', '\u00a0\u3000\u2009'],
-  ])('rejects a reason of only %s, as trim() does', async (_, reason) => {
-    expect(reason.trim()).toBe('');
+  ])('rejects a message of only %s, as trim() does', async (_, message) => {
+    expect(message.trim()).toBe('');
     await expect(
       inRolledBackTransaction(async (tx) => {
         const ids = await eventAndApplicant(tx);
@@ -238,15 +239,15 @@ describeDb('participation request schema constraints', () => {
             ...ids,
             status: RequestStatus.REJECTED,
             decidedAt: new Date(),
-            rejectionReason: reason,
+            decisionMessage: message,
           },
         });
       }),
-    ).rejects.toThrow('participation_request_rejection_reason_not_blank');
+    ).rejects.toThrow('participation_request_decision_message_not_blank');
   });
 
-  it('accepts a reason of 500 characters and rejects a longer one', async () => {
-    const rejected = (rejectionReason: string): Promise<void> =>
+  it('accepts a message of 500 characters and rejects a longer one', async () => {
+    const rejected = (decisionMessage: string): Promise<void> =>
       inRolledBackTransaction(async (tx) => {
         const ids = await eventAndApplicant(tx);
         await tx.participationRequest.create({
@@ -254,7 +255,7 @@ describeDb('participation request schema constraints', () => {
             ...ids,
             status: RequestStatus.REJECTED,
             decidedAt: new Date(),
-            rejectionReason,
+            decisionMessage,
           },
         });
       });

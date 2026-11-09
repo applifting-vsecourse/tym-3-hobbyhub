@@ -65,7 +65,7 @@ export function BrandSections() {
       <ShowcaseSection
         id="ikony-kategorii"
         title="Ikony kategorií aktivit"
-        description="14 hlavních kategorií (ADR-0019), kreslené stejně jako ikony aktivit. Aktivita bez vlastní ikony zobrazuje ikonu své kategorie; kategorie Ostatní sdílí ikonu s aktivitou Ostatní."
+        description="14 hlavních kategorií (ADR-0020), kreslené stejně jako ikony aktivit. Aktivita bez vlastní ikony zobrazuje ikonu své kategorie; kategorie Ostatní sdílí ikonu s aktivitou Ostatní."
       >
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {CATEGORY_KEYS.map((category) => (

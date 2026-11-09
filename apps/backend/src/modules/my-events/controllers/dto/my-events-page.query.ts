@@ -1,3 +1,4 @@
+import { EventFilterQuery } from '@/modules/event/controllers/dto/event-filter.query';
 import {
   MY_EVENTS_DEFAULT_LIMIT,
   MY_EVENTS_MAX_LIMIT,
@@ -6,7 +7,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
-export class MyEventsPageQuery {
+// A page of one of the two lists, narrowed by the same filter as the public
+// event list (#177).
+export class MyEventsPageQuery extends EventFilterQuery {
   @ApiPropertyOptional({
     default: MY_EVENTS_DEFAULT_LIMIT,
     minimum: 1,

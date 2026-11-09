@@ -1,13 +1,22 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import {
   EventStatus,
-  EventVisibility,
   ParticipationStatus,
   Prisma,
   ParticipationRequest as PrismaParticipationRequest,
   RequestStatus,
 } from '@/generated/prisma/client';
-import { occupancyOf, Page } from '@/modules/event/domain/event';
+import {
+  EventFilter,
+  NO_EVENT_FILTER,
+  occupancyOf,
+  Page,
+} from '@/modules/event/domain/event';
+import {
+  aheadFirstOrder,
+  allOf,
+  eventFilterConditions,
+} from '@/modules/event/repositories/event-list.sql';
 import {
   ApplicantProfile,
   ApplicationFactsPage,
@@ -35,7 +44,7 @@ const mapToDomain = (
   message: request.message,
   requestedAt: request.requestedAt,
   decidedAt: request.decidedAt,
-  rejectionReason: request.rejectionReason,
+  decisionMessage: request.decisionMessage,
 });
 
 // All the organizer may see of the person asking; the rest of the row stays
@@ -154,73 +163,97 @@ export class ParticipationRequestRepository {
     return requests.map(mapToDomain);
   }
 
-  // F-06.3: one page of the events a person has applied to that are not over,
-  // soonest first, with their own seat and requests on each. Hidden, non-public
+  // F-06.3, #177: one page of the events a person has applied to, narrowed by
+  // the filter, with their own seat and requests on each. Hidden, non-public
   // and draft events are left out, as everywhere a person reaches an event.
+  //
+  // Waiting and approved applications to events that are still on come first,
+  // soonest first; everything else (over, rejected, signed off, called off)
+  // follows, latest first. Which is which mirrors `applicationStatusOf`: on a
+  // published event, a seat or a waiting request makes it APPROVED or PENDING.
+  // The database sorts, so offset paging stays stable across pages.
   async getApplicationFacts(
     userId: string,
     now: Date,
     { limit, offset }: Page,
+    filter: EventFilter = NO_EVENT_FILTER,
   ): Promise<ApplicationFactsPage> {
-    const where: Prisma.EventWhereInput = {
-      endAt: { gte: now },
-      status: { in: [EventStatus.PUBLISHED, EventStatus.CANCELLED] },
-      visibility: EventVisibility.PUBLIC,
-      isHidden: false,
-      OR: [
-        { participationRequests: { some: { userId } } },
-        {
-          participations: {
-            some: {
-              userId,
-              status: {
-                in: [
-                  ParticipationStatus.APPROVED,
-                  ParticipationStatus.CANCELLED,
-                ],
-              },
-            },
-          },
-        },
-      ],
-    };
-    const [events, total] = await Promise.all([
-      this.prisma.event.findMany({
-        where,
-        orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
-        skip: offset,
-        take: limit,
-        select: {
-          id: true,
-          status: true,
-          participations: { where: { userId }, select: { status: true } },
-          participationRequests: {
-            where: { userId },
-            select: { status: true },
-          },
-        },
-      }),
-      this.prisma.event.count({ where }),
+    const ownRequest = (status?: RequestStatus): Prisma.Sql =>
+      Prisma.sql`EXISTS (SELECT 1 FROM "participation_request" r
+        WHERE r."eventId" = e."id" AND r."userId" = ${userId}
+        ${status ? Prisma.sql`AND r."status"::text = ${status}` : Prisma.empty})`;
+    const ownSeat = (statuses: ParticipationStatus[]): Prisma.Sql =>
+      Prisma.sql`EXISTS (SELECT 1 FROM "participation" p
+        WHERE p."eventId" = e."id" AND p."userId" = ${userId}
+        AND p."status"::text IN (${Prisma.join(statuses)}))`;
+    const storySeats = [
+      ParticipationStatus.APPROVED,
+      ParticipationStatus.CANCELLED,
+    ];
+    const where = allOf([
+      Prisma.sql`e."status" IN ('PUBLISHED', 'CANCELLED', 'FINISHED')`,
+      Prisma.sql`e."visibility" = 'PUBLIC'`,
+      Prisma.sql`NOT e."isHidden"`,
+      Prisma.sql`(${ownRequest()} OR ${ownSeat(storySeats)})`,
+      ...eventFilterConditions(filter),
     ]);
+    // An approved request without a seat row counts as the seat (ADR-0003).
+    const isAhead = Prisma.sql`(e."status" = 'PUBLISHED' AND e."endAt" >= ${now} AND (
+      ${ownSeat([ParticipationStatus.APPROVED])}
+      OR ${ownRequest(RequestStatus.PENDING)}
+      OR (${ownRequest(RequestStatus.APPROVED)} AND NOT ${ownSeat(storySeats)})))`;
+    const [pageRows, totalRows] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT e."id" FROM "event" e
+        JOIN "activity" a ON a."id" = e."activityId"
+        WHERE ${where}
+        ORDER BY ${aheadFirstOrder(isAhead)}
+        LIMIT ${limit} OFFSET ${offset}`,
+      this.prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT count(*) AS "total" FROM "event" e
+        JOIN "activity" a ON a."id" = e."activityId"
+        WHERE ${where}`,
+    ]);
+    const ids = pageRows.map((row) => row.id);
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        status: true,
+        participations: { where: { userId }, select: { status: true } },
+        participationRequests: {
+          where: { userId },
+          select: { status: true },
+        },
+      },
+    });
+    const byId = new Map(events.map((event) => [event.id, event]));
     return {
-      items: events.map((event) => {
+      items: ids.flatMap((id) => {
+        const event = byId.get(id);
+        if (!event) return [];
         const seat = event.participations[0]?.status;
-        return {
-          eventId: event.id,
-          // The query keeps PUBLISHED and CANCELLED only.
-          eventStatus:
-            event.status === EventStatus.CANCELLED ? 'CANCELLED' : 'PUBLISHED',
-          seat:
-            seat === ParticipationStatus.APPROVED ||
-            seat === ParticipationStatus.CANCELLED
-              ? seat
-              : null,
-          requests: event.participationRequests.map(
-            (request) => request.status,
-          ),
-        };
+        return [
+          {
+            eventId: event.id,
+            // A finished event was on offer like a published one; that it is
+            // over only decides its place in the list.
+            eventStatus:
+              event.status === EventStatus.CANCELLED
+                ? 'CANCELLED'
+                : 'PUBLISHED',
+            seat:
+              seat === ParticipationStatus.APPROVED ||
+              seat === ParticipationStatus.CANCELLED
+                ? seat
+                : null,
+            requests: event.participationRequests.map(
+              (request) => request.status,
+            ),
+          },
+        ];
       }),
-      total,
+      total: Number(totalRows[0]?.total ?? 0),
     };
   }
 
@@ -567,6 +600,7 @@ export class ParticipationRequestRepository {
   async approvePending(data: {
     eventId: string;
     requestId: string;
+    message?: string;
     at: Date;
   }): Promise<
     | ParticipationRequest
@@ -594,7 +628,11 @@ export class ParticipationRequestRepository {
       // stopped waiting since the read above.
       const { count } = await tx.participationRequest.updateMany({
         where: { id: request.id, status: RequestStatus.PENDING },
-        data: { status: RequestStatus.APPROVED, decidedAt: data.at },
+        data: {
+          status: RequestStatus.APPROVED,
+          decidedAt: data.at,
+          decisionMessage: data.message ?? null,
+        },
       });
       if (count === 0) return 'NOT_PENDING';
       await takeSeat(tx, data.eventId, request.userId);
@@ -602,6 +640,7 @@ export class ParticipationRequestRepository {
         ...request,
         status: RequestStatus.APPROVED,
         decidedAt: data.at,
+        decisionMessage: data.message ?? null,
       });
     });
   }
@@ -611,7 +650,7 @@ export class ParticipationRequestRepository {
   async rejectPending(data: {
     eventId: string;
     requestId: string;
-    reason?: string;
+    message?: string;
     at: Date;
   }): Promise<ParticipationRequest | null> {
     const { count } = await this.prisma.participationRequest.updateMany({
@@ -623,7 +662,7 @@ export class ParticipationRequestRepository {
       data: {
         status: RequestStatus.REJECTED,
         decidedAt: data.at,
-        rejectionReason: data.reason ?? null,
+        decisionMessage: data.message ?? null,
       },
     });
     if (count === 0) return null;

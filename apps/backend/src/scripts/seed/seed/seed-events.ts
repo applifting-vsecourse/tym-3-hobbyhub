@@ -11,7 +11,7 @@ import {
 const HOUR_IN_MS = 60 * 60 * 1000;
 const DAY_IN_MS = 24 * HOUR_IN_MS;
 
-// Same catalogue as migration 20261108120000_kategorie_aktivit (ADR-0019).
+// Same catalogue as migration 20261109130000_kategorie_aktivit (ADR-0020).
 // `icon` is the key in the frontend (ActivityIcon.tsx): for a category the key
 // of its icon, for an activity its own key (translation + icon; an activity
 // without its own drawing shows its category's icon).

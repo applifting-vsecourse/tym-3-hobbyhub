@@ -69,7 +69,7 @@ export type EventChange = (typeof EVENT_CHANGES)[number];
 export type NotificationPayload = {
   // REQUEST_DECIDED
   decision?: Decision;
-  // REQUEST_DECIDED: the organizer's words, if any (the rejection reason).
+  // REQUEST_DECIDED: the organizer's or the admins' words, if any (#153).
   // PARTICIPANT_CANCELLED: the participant's words, always there.
   message?: string;
   // EVENT_CHANGED

@@ -1,5 +1,5 @@
-// The activity catalogue after migration 20261108120000_kategorie_aktivit
-// (ADR-0019). Needs a real PostgreSQL with the migrations applied and only runs
+// The activity catalogue after migration 20261109130000_kategorie_aktivit
+// (ADR-0020). Needs a real PostgreSQL with the migrations applied and only runs
 // on request:  DB_TESTS=1 pnpm backend test activity-catalog
 //
 // Read-only: nothing is written. Demo data and other suites may add their own
@@ -27,7 +27,7 @@ const MAIN_CATEGORIES = [
   'ostatni',
 ];
 
-// The 16 activities from before ADR-0019 and where they moved.
+// The 16 activities from before ADR-0020 and where they moved.
 const MOVED_ACTIVITIES: Record<string, string> = {
   fotbal: 'micove-sporty',
   florbal: 'micove-sporty',

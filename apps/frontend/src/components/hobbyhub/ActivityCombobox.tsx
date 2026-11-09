@@ -19,7 +19,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-/** Main category of an activity (ADR-0019), as the activity lookup sends it. */
+/** Main category of an activity (ADR-0020), as the activity lookup sends it. */
 export type ActivityComboboxCategory = {
   id: string
   /** Czech name from the server; shown when the key has no translation. */

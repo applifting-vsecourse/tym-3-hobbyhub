@@ -9,7 +9,7 @@ export type Activity = {
   defaultMaxParticipants: number;
 };
 
-// Main category of activities, e.g. "Míčové sporty" (ADR-0019).
+// Main category of activities, e.g. "Míčové sporty" (ADR-0020).
 export type ActivityCategory = {
   id: string;
   name: string;

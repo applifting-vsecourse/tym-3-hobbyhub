@@ -39,7 +39,7 @@ const aRequest = (
   message: null,
   requestedAt: now,
   decidedAt: null,
-  rejectionReason: null,
+  decisionMessage: null,
   ...overrides,
 });
 
@@ -546,18 +546,23 @@ describe('ParticipationRequestsService', () => {
     });
 
     describe('approveRequest', () => {
-      it('approves the waiting request', async () => {
+      it('approves the waiting request with the message (#153)', async () => {
         const { repository, service } = setup();
         repository.getRequest.mockResolvedValue(aRequest());
-        const approved = aRequest({ status: 'APPROVED', decidedAt: now });
+        const approved = aRequest({
+          status: 'APPROVED',
+          decidedAt: now,
+          decisionMessage: 'Vítej',
+        });
         repository.approvePending.mockResolvedValue(approved);
 
         await expect(
-          service.approveRequest(organizer, 'e1', 'r1', now),
+          service.approveRequest(organizer, 'e1', 'r1', 'Vítej', now),
         ).resolves.toEqual(approved);
         expect(repository.approvePending).toHaveBeenCalledWith({
           eventId: 'e1',
           requestId: 'r1',
+          message: 'Vítej',
           at: now,
         });
       });
@@ -569,7 +574,7 @@ describe('ParticipationRequestsService', () => {
         const approved = aRequest({ status: 'APPROVED', decidedAt: now });
         repository.approvePending.mockResolvedValue(approved);
 
-        await service.approveRequest(organizer, 'e1', 'r1', now);
+        await service.approveRequest(organizer, 'e1', 'r1', undefined, now);
 
         expect(
           notifications.notifyParticipationRequestDecided,
@@ -586,7 +591,9 @@ describe('ParticipationRequestsService', () => {
         repository.getRequest.mockResolvedValue(aRequest());
         repository.approvePending.mockResolvedValue('EVENT_FULL');
 
-        await violationsOf(service.approveRequest(organizer, 'e1', 'r1', now));
+        await violationsOf(
+          service.approveRequest(organizer, 'e1', 'r1', undefined, now),
+        );
 
         expect(
           notifications.notifyParticipationRequestDecided,
@@ -598,7 +605,9 @@ describe('ParticipationRequestsService', () => {
         repository.getRequest.mockResolvedValue(aRequest());
 
         await expect(
-          violationsOf(service.approveRequest(organizer, 'e1', 'r1', now)),
+          violationsOf(
+            service.approveRequest(organizer, 'e1', 'r1', undefined, now),
+          ),
         ).resolves.toEqual(['EVENT_FULL']);
         expect(repository.approvePending).not.toHaveBeenCalled();
       });
@@ -608,7 +617,9 @@ describe('ParticipationRequestsService', () => {
         repository.getRequest.mockResolvedValue(aRequest());
 
         await expect(
-          violationsOf(service.approveRequest(organizer, 'e1', 'r1', now)),
+          violationsOf(
+            service.approveRequest(organizer, 'e1', 'r1', undefined, now),
+          ),
         ).resolves.toEqual(['EVENT_STARTED']);
         expect(repository.approvePending).not.toHaveBeenCalled();
       });
@@ -623,7 +634,9 @@ describe('ParticipationRequestsService', () => {
           repository.approvePending.mockResolvedValue(violation);
 
           await expect(
-            violationsOf(service.approveRequest(organizer, 'e1', 'r1', now)),
+            violationsOf(
+              service.approveRequest(organizer, 'e1', 'r1', undefined, now),
+            ),
           ).resolves.toEqual([violation]);
         },
       );
@@ -633,7 +646,7 @@ describe('ParticipationRequestsService', () => {
         repository.getRequest.mockResolvedValue(null);
 
         await expect(
-          service.approveRequest(organizer, 'e1', 'r1', now),
+          service.approveRequest(organizer, 'e1', 'r1', undefined, now),
         ).rejects.toBeInstanceOf(NotFoundException);
       });
 
@@ -641,20 +654,20 @@ describe('ParticipationRequestsService', () => {
         const { repository, service } = setup();
 
         await expect(
-          service.approveRequest(user, 'e1', 'r1', now),
+          service.approveRequest(user, 'e1', 'r1', undefined, now),
         ).rejects.toBeInstanceOf(NotFoundException);
         expect(repository.getRequest).not.toHaveBeenCalled();
       });
     });
 
     describe('rejectRequest', () => {
-      it('rejects the waiting request with the reason', async () => {
+      it('rejects the waiting request with the message', async () => {
         const { repository, service } = setup();
         repository.getRequest.mockResolvedValue(aRequest());
         const rejected = aRequest({
           status: 'REJECTED',
           decidedAt: now,
-          rejectionReason: 'Plno',
+          decisionMessage: 'Plno',
         });
         repository.rejectPending.mockResolvedValue(rejected);
 
@@ -664,19 +677,19 @@ describe('ParticipationRequestsService', () => {
         expect(repository.rejectPending).toHaveBeenCalledWith({
           eventId: 'e1',
           requestId: 'r1',
-          reason: 'Plno',
+          message: 'Plno',
           at: now,
         });
       });
 
-      // F-09.3, ADR-0015: the applicant hears the outcome, with the reason.
+      // F-09.3, ADR-0015: the applicant hears the outcome, with the message.
       it('tells the applicant about the rejection', async () => {
         const { repository, notifications, service } = setup();
         repository.getRequest.mockResolvedValue(aRequest());
         const rejected = aRequest({
           status: 'REJECTED',
           decidedAt: now,
-          rejectionReason: 'Plno',
+          decisionMessage: 'Plno',
         });
         repository.rejectPending.mockResolvedValue(rejected);
 

@@ -1,4 +1,4 @@
--- Hlavní kategorie aktivit (ADR-0019, Story „Kategorie aktivit 1/3“).
+-- Hlavní kategorie aktivit (ADR-0020, Story „Kategorie aktivit 1/3“).
 -- Sport / Hry / Ostatní nahradí 14 kategorií s ikonou a pořadím, 16 stávajících
 -- aktivit se do nich přesune (stejné id, akce, skupiny ani zájmy se nemění)
 -- a přibude 82 nových aktivit. Všechny inserty jsou idempotentní.

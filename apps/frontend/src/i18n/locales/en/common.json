@@ -469,6 +469,7 @@
       "members_one": "{{count}} member",
       "members_other": "{{count}} members",
       "membership": {
+        "decisionMessage": "Message from the organizer",
         "hasAccount": "Already have an account?",
         "isAdmin": "You are an admin",
         "isMember": "You are a member",
@@ -575,9 +576,21 @@
         }
       },
       "adminTitle": "Group management",
+      "approve": {
+        "cancel": "Back",
+        "confirm": "Approve",
+        "messagePlaceholder": "E.g. Welcome! We play every Tuesday from 6 pm.",
+        "text": "{{name}} will become a member of the group.",
+        "title": "Approve the request?"
+      },
       "approved": "{{name}} is now a member of the group.",
       "back": "Back to the group",
       "decideFailed": "The request could not be decided. Please try again.",
+      "decision": {
+        "messageHint": "The applicant sees it on the group page and in the notification.",
+        "messageLabel": "Message for the applicant (optional)",
+        "messageTooLong": "The message can have at most {{count}} characters."
+      },
       "loadError": "Could not load",
       "loading": "Loading…",
       "membersEmpty": "The group has no members yet.",
@@ -594,10 +607,7 @@
       "reject": {
         "cancel": "Back",
         "confirm": "Reject",
-        "reasonHint": "We keep the reason. The applicant will see it once they get an overview of their requests.",
-        "reasonLabel": "Reason (optional)",
-        "reasonPlaceholder": "E.g. The group is full right now.",
-        "reasonTooLong": "The reason can have at most {{count}} characters.",
+        "messagePlaceholder": "E.g. The group is full right now.",
         "text": "{{name}} will see the rejection on the group page and cannot ask to join this group again.",
         "title": "Reject the request?"
       },
@@ -651,6 +661,7 @@
         "REJECTED": "Rejected {{date}}",
         "WITHDRAWN": "Withdrawn {{date}}"
       },
+      "decisionMessage": "Message from the organizer",
       "groupCancelledText": "The organizer cancelled the group, so nobody will decide this request.",
       "historyEmpty": "Rejected and withdrawn requests will show up here.",
       "historyTitle": "History",
@@ -660,7 +671,6 @@
       "message": "Your message",
       "pendingEmpty": "No request is waiting for a decision. Find groups under <discover>Discover</discover>.",
       "pendingTitle": "Pending",
-      "rejectionReason": "Reason for rejection",
       "requestedAt": "Sent {{date}}",
       "status": {
         "APPROVED": "Approved",
@@ -1087,7 +1097,7 @@
       "label": "Application options: {{title}}"
     },
     "applications": {
-      "empty": "You are not signed up for any upcoming event."
+      "empty": "You have not applied to any event yet."
     },
     "empty": {
       "description": "Once you sign up for an event or post one, you will find it here.",
@@ -1095,10 +1105,11 @@
       "title": "Nothing here yet"
     },
     "hosted": {
-      "empty": "You are not organizing any upcoming event."
+      "empty": "You are not organizing any event yet."
     },
     "loadMore": "Load more",
     "loading": "Loading your events",
+    "sortNote": "Events still ahead of you come first, soonest first. Then past, rejected and cancelled ones, latest first.",
     "status": {
       "APPROVED": "Approved",
       "EVENT_CANCELLED": "Event cancelled",
@@ -1244,6 +1255,13 @@
     "skipAll": "Skip all"
   },
   "participationRequests": {
+    "approve": {
+      "cancel": "Keep it waiting",
+      "confirm": "Approve request",
+      "messagePlaceholder": "E.g. bring indoor shoes",
+      "text": "{{name}} will get a seat at the event.",
+      "title": "Approve the request?"
+    },
     "approved": {
       "cancel": "Cancel my place",
       "description": "The organizer approved your participation.",
@@ -1272,6 +1290,12 @@
     "cancelled": {
       "description": "You cancelled your place at this event. If you change your mind, you can ask to join again."
     },
+    "decision": {
+      "messageHint": "The applicant sees it on the event and in the notification.",
+      "messageLabel": "Message for the applicant (optional)",
+      "messageTooLong": "The message can have at most {{count}} characters."
+    },
+    "decisionMessage": "Message from the organizer",
     "form": {
       "cancel": "Cancel",
       "hiddenDetails": "The organizer will not see your contact details, location, age or gender.",
@@ -1420,12 +1444,9 @@
     "reject": {
       "cancel": "Keep it waiting",
       "confirm": "Reject request",
-      "reasonHint": "We keep the reason; the applicant does not see it for now.",
-      "reasonLabel": "Reason (optional)",
-      "reasonPlaceholder": "E.g. this time we are looking for beginners",
-      "reasonTooLong": "The reason can have at most {{count}} characters.",
-      "title": "Reject the request?",
-      "warning": "{{name}} will not be able to ask to join this event again."
+      "messagePlaceholder": "E.g. this time we are looking for beginners",
+      "text": "{{name}} will not be able to ask to join this event again.",
+      "title": "Reject the request?"
     },
     "rejected": {
       "description": "The organizer rejected your request, you cannot send a new one for this event."

@@ -127,10 +127,11 @@ describe('NotificationsService', () => {
     });
   });
 
-  // F-06.4.
+  // F-06.4; the e-mail F-09.2 (#58).
   describe('a participant who cancelled their seat', () => {
-    it('tells every organizer, with the participant’s words', async () => {
-      const { repository, service } = setup();
+    it('tells every organizer, with the participant’s words, and e-mails them', async () => {
+      const { repository, emails, service } = setup();
+      repository.createForRecipients.mockResolvedValue(['n1', 'n2']);
 
       await service.notifyParticipantCancelled({
         event: { id: 'e1', organizerIds: ['organizer', 'co-organizer'] },
@@ -145,6 +146,7 @@ describe('NotificationsService', () => {
         eventId: 'e1',
         payload: { message: 'Onemocněl jsem, promiňte.' },
       });
+      expect(emails.queueFor).toHaveBeenCalledWith(['n1', 'n2']);
     });
   });
 
@@ -154,7 +156,7 @@ describe('NotificationsService', () => {
 
       await service.notifyParticipationRequestDecided({
         event: { id: 'e1' },
-        request: { userId: 'applicant', rejectionReason: 'Plno.' },
+        request: { userId: 'applicant', decisionMessage: 'Plno.' },
         decision: 'REJECTED',
         decidedBy: { id: 'organizer' },
       });
@@ -168,12 +170,30 @@ describe('NotificationsService', () => {
       });
     });
 
+    // #153: an approval carries the organizer's words too.
+    it('carries the message of an approval', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyParticipationRequestDecided({
+        event: { id: 'e1' },
+        request: { userId: 'applicant', decisionMessage: 'Vítej!' },
+        decision: 'APPROVED',
+        decidedBy: { id: 'organizer' },
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: { decision: 'APPROVED', message: 'Vítej!' },
+        }),
+      );
+    });
+
     it('leaves the message out when there is none', async () => {
       const { repository, service } = setup();
 
       await service.notifyParticipationRequestDecided({
         event: { id: 'e1' },
-        request: { userId: 'applicant', rejectionReason: null },
+        request: { userId: 'applicant', decisionMessage: null },
         decision: 'APPROVED',
         decidedBy: { id: 'organizer' },
       });
@@ -274,7 +294,7 @@ describe('NotificationsService', () => {
 
       await service.notifyMembershipRequestDecided({
         group: { id: 'g1' },
-        request: { userId: 'applicant', rejectionReason: null },
+        request: { userId: 'applicant', decisionMessage: null },
         decision: 'APPROVED',
         decidedBy: { id: 'admin' },
       });

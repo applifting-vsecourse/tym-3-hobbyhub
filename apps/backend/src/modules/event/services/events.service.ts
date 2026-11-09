@@ -9,6 +9,7 @@ import {
   eventChangeViolations,
   EventDetail,
   EventFacts,
+  EventFilter,
   EventListFilter,
   eventListFilterViolations,
   EventListItem,
@@ -87,13 +88,15 @@ export class EventsService {
       : this.eventRepository.getListItemsByIds(ids);
   }
 
-  // F-06.3: a page of what the person organizes and has still ahead.
-  getUpcomingOrganizedEvents(
+  // F-06.3, #177: a page of what the person organizes, what is still ahead
+  // first. The caller has checked the filter.
+  getOrganizedEvents(
     user: Identity,
     page: Page,
+    filter: EventFilter,
     now: Date = new Date(),
   ): Promise<EventListPage> {
-    return this.eventRepository.getUpcomingOrganizedBy(user.id, now, page);
+    return this.eventRepository.getOrganizedBy(user.id, now, page, filter);
   }
 
   async createEvent(user: Identity, data: CreateEventData): Promise<Event> {

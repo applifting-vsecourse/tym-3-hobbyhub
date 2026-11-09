@@ -112,6 +112,7 @@ const pending: MembershipRequest = {
   status: "PENDING",
   message: null,
   requestedAt: new Date(2026, 0, 2),
+  decisionMessage: null,
 }
 
 // What the route does: it owns the session and the sheet, and composes the page.
@@ -298,9 +299,29 @@ describe("GroupDetail", () => {
       expect(screen.getByText(/novou žádost poslat nejde/)).toBeVisible()
       expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
     })
+
+    // #153: what the admins wrote with the rejection.
+    it("reads the message that came with the rejection", async () => {
+      server.request = { ...pending, status: "REJECTED", decisionMessage: "Skupina je plná." }
+      server.violations = ["REJECTED_BEFORE"]
+      await renderDetail("u1")
+
+      expect(await screen.findByText("Zpráva od organizátora")).toBeVisible()
+      expect(screen.getByText("Skupina je plná.")).toBeVisible()
+    })
   })
 
   describe("a member", () => {
+    // #153: the approval message stays under the role.
+    it("reads the message that came with the approval", async () => {
+      server.role = "MEMBER"
+      server.request = { ...pending, status: "APPROVED", decisionMessage: "Vítejte!" }
+      await renderDetail("u1")
+
+      expect(await screen.findByText("Vítejte!")).toBeVisible()
+      expect(screen.getByText("Zpráva od organizátora")).toBeVisible()
+    })
+
     it("sees their state instead of the button", async () => {
       server.role = "MEMBER"
       await renderDetail("u1")

@@ -53,7 +53,7 @@ export const ACTIVITIES = {
   cviceni: { Icon: CviceniIcon },
 } satisfies Record<string, { Icon: SvgComponent }>
 
-/** Main categories of activities (ADR-0019), keyed like `ActivityCategory.icon`. */
+/** Main categories of activities (ADR-0020), keyed like `ActivityCategory.icon`. */
 export const CATEGORIES = {
   "micove-sporty": { Icon: CategoryMicoveSportyIcon },
   "raketove-sporty": { Icon: CategoryRaketoveSportyIcon },
@@ -81,7 +81,7 @@ export const isCategoryKey = (key: string): key is ActivityCategoryKey =>
 
 /**
  * Activities without their own drawing, by category: they show the category's
- * icon. Keys match `Activity.icon` in migration 20261108120000_kategorie_aktivit.
+ * icon. Keys match `Activity.icon` in migration 20261109130000_kategorie_aktivit.
  */
 const SHARED_ICON_ACTIVITIES = {
   "micove-sporty": [

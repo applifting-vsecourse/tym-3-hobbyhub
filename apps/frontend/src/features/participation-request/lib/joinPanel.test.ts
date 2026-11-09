@@ -4,20 +4,52 @@ import type {
   MyRequestState,
   RequestStatus,
 } from "@/features/participation-request/api/participationRequestSchemas"
-import { ownSeatView, refusalOf } from "@/features/participation-request/lib/joinPanel"
+import {
+  decisionMessageOf,
+  ownSeatView,
+  refusalOf,
+} from "@/features/participation-request/lib/joinPanel"
 
 const state = (
   status: RequestStatus | null,
   violations: MyRequestState["violations"] = [],
   seat: MyRequestState["seat"] = null,
+  decisionMessage: string | null = null,
 ): MyRequestState => ({
   request: status
-    ? { id: "r1", eventId: "e1", status, message: null, requestedAt: new Date() }
+    ? {
+        id: "r1",
+        eventId: "e1",
+        status,
+        message: null,
+        requestedAt: new Date(),
+        decisionMessage,
+      }
     : null,
   violations,
   seat,
   cancelViolations: [],
   applicant: { name: "Honza", image: null, bio: null, hasVerifiedEmail: true },
+})
+
+// #153: what the organizer wrote with the decision.
+describe("decisionMessageOf", () => {
+  it.each([
+    state("APPROVED", ["HAS_SEAT"], "APPROVED", "Vítej"),
+    state("REJECTED", ["REJECTED_BEFORE"], null, "Vítej"),
+  ])("quotes the decision the panel shows", (given) => {
+    expect(decisionMessageOf(given, ownSeatView(given))).toBe("Vítej")
+  })
+
+  it.each([
+    // The seat was given back: the approval is history.
+    state("APPROVED", [], "CANCELLED", "Vítej"),
+    // A new request waits; the old decision no longer counts.
+    state("PENDING", ["ALREADY_REQUESTED"], "CANCELLED", null),
+    state("APPROVED", ["HAS_SEAT"], "APPROVED", null),
+  ])("quotes nothing otherwise", (given) => {
+    expect(decisionMessageOf(given, ownSeatView(given))).toBeNull()
+  })
 })
 
 describe("ownSeatView", () => {

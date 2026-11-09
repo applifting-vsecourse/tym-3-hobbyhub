@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import SearchIcon from "@/assets/ui-icons/search.svg?react"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Button } from "@/components/ui/button"
@@ -9,6 +8,7 @@ import { cn } from "@/lib/utils"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
+import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
 /** Id of a row, so the page can scroll to the event that was opened on the map. */
@@ -74,32 +74,7 @@ export function EventList({
   }
 
   if (events.length === 0 && isFiltered) {
-    return (
-      <div
-        role="status"
-        className="flex flex-col items-center gap-3 py-12 text-center"
-      >
-        <div
-          aria-hidden
-          className="flex size-20 items-center justify-center rounded-full bg-accent text-accent-foreground"
-        >
-          <SearchIcon className="size-8" />
-        </div>
-        <h2 className="typo-h3 text-foreground">{t("events.list.emptyFiltered.title")}</h2>
-        <p className="typo-body text-muted-foreground">
-          {t("events.list.emptyFiltered.description")}
-        </p>
-        {onClearFilters ? (
-          <Button
-            variant="outline"
-            className="mt-3 w-full sm:w-auto"
-            onClick={onClearFilters}
-          >
-            {t("events.list.emptyFiltered.clear")}
-          </Button>
-        ) : null}
-      </div>
-    )
+    return <NoMatchingEvents onClearFilters={onClearFilters} />
   }
 
   if (events.length === 0) {

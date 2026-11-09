@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-// Main category of an activity (ADR-0019): pickers group activities under it.
+// Main category of an activity (ADR-0020): pickers group activities under it.
 export const activityCategorySchema = z.object({
   id: z.string(),
   name: z.string(),

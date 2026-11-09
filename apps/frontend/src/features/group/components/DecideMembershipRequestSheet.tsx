@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react"
+import { useId, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
+import type { MembershipDecisionKind } from "@/features/group/api/membershipRequestMutations"
 import {
-  MEMBERSHIP_REJECTION_REASON_MAX,
+  MEMBERSHIP_DECISION_MESSAGE_MAX,
   type PendingMembershipRequest,
 } from "@/features/group/api/membershipRequestSchemas"
 
@@ -29,58 +30,59 @@ const charCount = (value: string) => [...value].length
 
 const createSchema = (t: TFunction) =>
   z.object({
-    reason: z
+    message: z
       .string()
       .trim()
-      .refine((reason) => charCount(reason) <= MEMBERSHIP_REJECTION_REASON_MAX, {
-        message: t("groups.manage.reject.reasonTooLong", {
-          count: MEMBERSHIP_REJECTION_REASON_MAX,
+      .refine((message) => charCount(message) <= MEMBERSHIP_DECISION_MESSAGE_MAX, {
+        message: t("groups.manage.decision.messageTooLong", {
+          count: MEMBERSHIP_DECISION_MESSAGE_MAX,
         }),
       }),
   })
 
 type FormValues = z.infer<ReturnType<typeof createSchema>>
 
-type RejectFormProps = {
+type DecideFormProps = {
   formId: string
+  decision: MembershipDecisionKind
   applicantName: string
   isPending: boolean
-  onSubmit: (reason: string | undefined) => Promise<void>
+  onSubmit: (message: string | undefined) => Promise<void>
 }
 
-function RejectForm({ formId, applicantName, isPending, onSubmit }: RejectFormProps) {
+function DecideForm({ formId, decision, applicantName, isPending, onSubmit }: DecideFormProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { reason: "" },
+    defaultValues: { message: "" },
   })
 
   return (
     <AppForm
       id={formId}
       form={form}
-      onSubmit={(values) => onSubmit(values.reason || undefined)}
+      onSubmit={(values) => onSubmit(values.message || undefined)}
       className="flex flex-col gap-4 pb-1"
     >
       <p className="typo-body text-foreground">
-        {t("groups.manage.reject.text", { name: applicantName })}
+        {t(`groups.manage.${decision}.text`, { name: applicantName })}
       </p>
       <FormField
         control={form.control}
-        name="reason"
+        name="message"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("groups.manage.reject.reasonLabel")}</FormLabel>
+            <FormLabel>{t("groups.manage.decision.messageLabel")}</FormLabel>
             <FormControl>
               <Textarea
                 rows={3}
-                placeholder={t("groups.manage.reject.reasonPlaceholder")}
+                placeholder={t(`groups.manage.${decision}.messagePlaceholder`)}
                 disabled={isPending}
                 {...field}
               />
             </FormControl>
-            <FormDescription>{t("groups.manage.reject.reasonHint")}</FormDescription>
+            <FormDescription>{t("groups.manage.decision.messageHint")}</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -89,32 +91,39 @@ function RejectForm({ formId, applicantName, isPending, onSubmit }: RejectFormPr
   )
 }
 
-type RejectMembershipRequestSheetProps = {
-  /** The request to reject; null when the sheet is closed. */
-  request: PendingMembershipRequest | null
+type DecideMembershipRequestSheetProps = {
+  /** The request to decide and how; null when the sheet is closed. */
+  deciding: { request: PendingMembershipRequest; decision: MembershipDecisionKind } | null
   isPending: boolean
   onClose: () => void
-  /** Rejects with the optional reason; the sheet closes once it resolves. */
-  onReject: (request: PendingMembershipRequest, reason: string | undefined) => Promise<void>
+  /** Decides with the optional message; the sheet closes once it resolves. */
+  onDecide: (message: string | undefined) => Promise<void>
 }
 
-/** Zamítnutí žádosti o členství (F-07.3): final for the group (ADR-0014), with an optional reason. */
-export function RejectMembershipRequestSheet({
-  request,
+/**
+ * Schválení nebo zamítnutí žádosti o členství (F-07.3, #153), with an optional
+ * message for the applicant. A rejection is final for the group (ADR-0014).
+ */
+export function DecideMembershipRequestSheet({
+  deciding,
   isPending,
   onClose,
-  onReject,
-}: RejectMembershipRequestSheetProps) {
+  onDecide,
+}: DecideMembershipRequestSheetProps) {
   const { t } = useTranslation()
   const formId = useId()
+  // While the sheet animates out, it keeps showing the request it closed on.
+  const [shown, setShown] = useState(deciding)
+  if (deciding !== null && deciding !== shown) setShown(deciding)
+  const decision = shown?.decision ?? "reject"
 
   return (
     <ResponsiveSheet
-      isOpen={request !== null}
+      isOpen={deciding !== null}
       onOpenChange={(isOpening) => {
         if (!isOpening) onClose()
       }}
-      title={t("groups.manage.reject.title")}
+      title={t(`groups.manage.${decision}.title`)}
       hasCloseButton
       isFooterScrolling
       footer={
@@ -122,29 +131,30 @@ export function RejectMembershipRequestSheet({
           <Button
             type="submit"
             form={formId}
-            variant="destructive"
+            variant={decision === "reject" ? "destructive" : "default"}
             disabled={isPending}
           >
             {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {t("groups.manage.reject.confirm")}
+            {t(`groups.manage.${decision}.confirm`)}
           </Button>
           <Button
             variant="ghost"
             onClick={onClose}
           >
-            {t("groups.manage.reject.cancel")}
+            {t(`groups.manage.${decision}.cancel`)}
           </Button>
         </>
       }
     >
-      {request ? (
-        <RejectForm
-          // A new request starts with an empty reason.
-          key={request.id}
+      {shown ? (
+        <DecideForm
+          // A new request or decision starts with an empty message.
+          key={`${shown.request.id}-${shown.decision}`}
           formId={formId}
-          applicantName={request.applicant.name}
+          decision={shown.decision}
+          applicantName={shown.request.applicant.name}
           isPending={isPending}
-          onSubmit={(reason) => onReject(request, reason)}
+          onSubmit={onDecide}
         />
       ) : null}
     </ResponsiveSheet>

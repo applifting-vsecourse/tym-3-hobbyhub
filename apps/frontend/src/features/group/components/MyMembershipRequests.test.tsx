@@ -37,7 +37,7 @@ const aRequest = (overrides: Partial<MyMembershipRequest> = {}): MyMembershipReq
   message: null,
   requestedAt: new Date(2026, 10, 2),
   decidedAt: null,
-  rejectionReason: null,
+  decisionMessage: null,
   group: { id: "g1", name: "Čtvrteční florbalisté", isOpen: true },
   ...overrides,
 })
@@ -100,7 +100,7 @@ describe("MyMembershipRequests", () => {
           id: "r2",
           status: "REJECTED",
           decidedAt: new Date(2026, 10, 4),
-          rejectionReason: "Skupina je plná.",
+          decisionMessage: "Skupina je plná.",
           group: { id: "g2", name: "Ranní běžci", isOpen: true },
         }),
         aRequest({

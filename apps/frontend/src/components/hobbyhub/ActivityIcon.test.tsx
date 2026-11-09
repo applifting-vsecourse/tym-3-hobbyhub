@@ -12,7 +12,7 @@ import {
 } from "@/components/hobbyhub/ActivityIcon"
 import { resources } from "@/i18n/resources"
 
-// The catalogue from ADR-0019: 14 categories, 98 activities, 16 of them drawn.
+// The catalogue from ADR-0020: 14 categories, 98 activities, 16 of them drawn.
 describe("activity catalogue in the frontend", () => {
   it("knows the 14 categories and 98 activities", () => {
     expect(CATEGORY_KEYS).toHaveLength(14)

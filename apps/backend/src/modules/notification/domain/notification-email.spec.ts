@@ -94,6 +94,25 @@ describe('notificationEmailOf', () => {
     );
   });
 
+  // F-09.2 (#58).
+  it('tells an organizer a participant cancelled and leads to the event', () => {
+    expect(
+      notificationEmailOf(
+        aNotification({
+          type: 'PARTICIPANT_CANCELLED',
+          payload: { message: MESSAGE },
+        }),
+      ),
+    ).toEqual({
+      subject: 'Účastník se odhlásil z tvé akce',
+      heading: 'Účastník se odhlásil z tvé akce',
+      body: 'Uvolnilo se místo. Kdo to byl a proč, najdeš v přehledu účastníků akce.',
+      buttonLabel: 'Zobrazit akci',
+      path: '/events/e1',
+      critical: false,
+    });
+  });
+
   // F-09.3 (#59): every e-mail to an applicant or a participant leads to the
   // event as it is now; only a change and a cancellation are critical, so
   // nobody comes for nothing.
@@ -155,6 +174,7 @@ describe('notificationEmailOf', () => {
       ['REQUEST_DECIDED', { decision: 'APPROVED', message: MESSAGE }],
       ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }],
       ['EVENT_CANCELLED', {}],
+      ['PARTICIPANT_CANCELLED', { message: MESSAGE }],
     ])('%s %j', (type, payload) => {
       const text = JSON.stringify(
         notificationEmailOf(aNotification({ ...target, type, payload })),

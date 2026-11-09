@@ -15,6 +15,7 @@ import {
   Prisma,
   VenueType,
 } from '@/generated/prisma/client';
+import { applicationStatusOf } from '@/modules/my-events/domain/my-events';
 import { ParticipationRequestRepository } from './participation-request.repository';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
@@ -195,13 +196,6 @@ describeDb('ParticipationRequestRepository', () => {
     });
 
     it.each([
-      [
-        'over',
-        {
-          startAt: new Date('2029-12-29T00:00:00Z'),
-          endAt: new Date('2029-12-30T00:00:00Z'),
-        },
-      ],
       ['hidden', { isHidden: true }],
       ['not public', { visibility: 'PRIVATE' as const }],
       ['a draft', { status: 'DRAFT' as const }],
@@ -219,6 +213,114 @@ describeDb('ParticipationRequestRepository', () => {
       );
 
       expect(result).toEqual({ items: [], total: 0 });
+    });
+
+    // #177: waiting and approved applications to events still on first,
+    // soonest first; everything else after them, latest first.
+    it('puts what is still on first and the rest after it, latest first', async () => {
+      const {
+        eventId: pendingSoon,
+        userIds: [me],
+      } = await eventWith(2, 1);
+      const on = async (
+        day: string,
+        change: Prisma.EventUpdateInput = {},
+      ): Promise<string> => {
+        const { eventId } = await eventWith(2, 0);
+        await prisma.event.update({
+          where: { id: eventId },
+          data: {
+            startAt: new Date(`${day}T18:00:00Z`),
+            endAt: new Date(`${day}T20:00:00Z`),
+            ...change,
+          },
+        });
+        return eventId;
+      };
+      const approvedLate = await on('2030-02-01');
+      const approvedByRequest = await on('2030-03-01');
+      const rejected = await on('2030-01-15');
+      const withdrawn = await on('2030-01-20');
+      const calledOff = await on('2030-01-10', { status: 'CANCELLED' });
+      const seatGivenUp = await on('2030-01-05');
+      const overApproved = await on('2029-12-20');
+      const finished = await on('2029-12-25', { status: 'FINISHED' });
+      const userId = me!;
+      const decided = { decidedAt: before };
+      await prisma.participationRequest.createMany({
+        data: [
+          { eventId: pendingSoon, userId },
+          { eventId: approvedLate, userId, status: 'APPROVED', ...decided },
+          {
+            eventId: approvedByRequest,
+            userId,
+            status: 'APPROVED',
+            ...decided,
+          },
+          { eventId: rejected, userId, status: 'REJECTED', ...decided },
+          { eventId: withdrawn, userId, status: 'WITHDRAWN', ...decided },
+          { eventId: calledOff, userId },
+          { eventId: seatGivenUp, userId, status: 'APPROVED', ...decided },
+          { eventId: overApproved, userId, status: 'APPROVED', ...decided },
+        ],
+      });
+      await prisma.participation.createMany({
+        data: [
+          { eventId: approvedLate, userId, status: 'APPROVED' },
+          { eventId: seatGivenUp, userId, status: 'CANCELLED' },
+          { eventId: overApproved, userId, status: 'APPROVED' },
+          { eventId: finished, userId, status: 'APPROVED' },
+        ],
+      });
+
+      const result = await repository.getApplicationFacts(userId, before, {
+        limit: 20,
+        offset: 0,
+      });
+
+      expect(result.total).toBe(9);
+      expect(
+        result.items.map((item) => [item.eventId, applicationStatusOf(item)]),
+      ).toEqual([
+        [pendingSoon, 'PENDING'],
+        [approvedLate, 'APPROVED'],
+        [approvedByRequest, 'APPROVED'],
+        [withdrawn, 'WITHDRAWN'],
+        [rejected, 'REJECTED'],
+        [calledOff, 'EVENT_CANCELLED'],
+        [seatGivenUp, 'WITHDRAWN'],
+        [finished, 'APPROVED'],
+        [overApproved, 'APPROVED'],
+      ]);
+    });
+
+    it('narrows the events by the filter of the event list', async () => {
+      const {
+        eventId: florbal,
+        userIds: [me],
+      } = await eventWith(2, 1);
+      const { eventId: other } = await eventWith(2, 0);
+      await prisma.event.update({
+        where: { id: florbal },
+        data: { title: 'Večerní florbal' },
+      });
+      await prisma.participationRequest.createMany({
+        data: [
+          { eventId: florbal, userId: me! },
+          { eventId: other, userId: me! },
+        ],
+      });
+
+      const result = await repository.getApplicationFacts(me!, before, page, {
+        activityIds: [],
+        search: 'VECERNI',
+        location: 'praha',
+        dateFrom: '2030-01-01',
+        dateTo: '2030-01-01',
+      });
+
+      expect(result.total).toBe(1);
+      expect(result.items.map((item) => item.eventId)).toEqual([florbal]);
     });
 
     it('leaves out an event where the person only waits on the waitlist', async () => {
@@ -411,6 +513,24 @@ describeDb('ParticipationRequestRepository', () => {
       ).resolves.toEqual([{ userId, status: ParticipationStatus.APPROVED }]);
     });
 
+    // #153: the organizer's words are kept with the approval, and read back.
+    it('keeps the message of the approval', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      const requestId = await pendingOf(eventId, userId!);
+
+      await expect(
+        repository.approvePending({ eventId, requestId, message: 'Vítej', at }),
+      ).resolves.toMatchObject({ decisionMessage: 'Vítej' });
+      await expect(
+        prisma.participationRequest.findUniqueOrThrow({
+          where: { id: requestId },
+        }),
+      ).resolves.toMatchObject({ decisionMessage: 'Vítej' });
+    });
+
     it('gives the last seat to only one of two requests approved at once', async () => {
       const { eventId, userIds } = await eventWith(1, 2);
       const requestIds = await Promise.all(
@@ -576,7 +696,7 @@ describeDb('ParticipationRequestRepository', () => {
   });
 
   describe('rejectPending', () => {
-    it('rejects the waiting request once, with the reason', async () => {
+    it('rejects the waiting request once, with the message', async () => {
       const {
         eventId,
         userIds: [userId],
@@ -586,11 +706,11 @@ describeDb('ParticipationRequestRepository', () => {
       });
 
       await expect(
-        repository.rejectPending({ eventId, requestId, reason: 'Plno', at }),
+        repository.rejectPending({ eventId, requestId, message: 'Plno', at }),
       ).resolves.toMatchObject({
         status: 'REJECTED',
         decidedAt: at,
-        rejectionReason: 'Plno',
+        decisionMessage: 'Plno',
       });
       await expect(
         repository.rejectPending({ eventId, requestId, at }),
