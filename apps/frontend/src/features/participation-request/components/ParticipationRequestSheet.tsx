@@ -5,7 +5,6 @@ import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
@@ -13,7 +12,6 @@ import { AppForm } from "@/components/form/AppForm"
 import { JoinRequestApplicant } from "@/components/hobbyhub/JoinRequestCard"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
-import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -27,52 +25,34 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
-import { CancelRefusedError } from "@/features/participation-request/api/cancelParticipation"
 import {
   PARTICIPATION_REQUEST_MESSAGE_MAX,
   type ApplicantProfile,
   type ApprovalMode,
 } from "@/features/participation-request/api/participationRequestSchemas"
 import { JoinRefusedError } from "@/features/participation-request/api/requestToJoin"
-import { CancelParticipationForm } from "@/features/participation-request/components/CancelParticipationForm"
-import { useCancelParticipation } from "@/features/participation-request/hooks/useCancelParticipation"
+import {
+  CancelParticipationSheet,
+  isSeatSheetStep,
+  type SeatSheetStep,
+} from "@/features/participation-request/components/CancelParticipationSheet"
+import {
+  RequestedEventRow,
+  type RequestedEvent,
+} from "@/features/participation-request/components/RequestedEventRow"
 import { useRequestToJoin } from "@/features/participation-request/hooks/useRequestToJoin"
-import { useWithdrawRequest } from "@/features/participation-request/hooks/useWithdrawRequest"
 import { refusalOf } from "@/features/participation-request/lib/joinPanel"
 
-/** The event as the sheet shows it: one schedule row. */
-export type RequestedEvent = {
-  title: string
-  /** Start time, e.g. "19:00". */
-  time: string
-  /** Place and level, e.g. "ZŠ Kobylisy, Praha 8, Pokročilí". */
-  place: string
-  taken: number
-  min: number
-  max: number
-}
+export type { RequestedEvent }
 
 /**
  * `form` asks, `sent` confirms a request waiting for the organizer, `joined`
- * confirms a seat taken at once (automatic approval), `withdraw` confirms
- * taking a waiting request back, `cancel` gives the seat back with a message
- * to the organizers (F-06.4).
+ * confirms a seat taken at once (automatic approval). `withdraw` and `cancel`
+ * are the two ways out, which `CancelParticipationSheet` shows.
  */
-export type RequestSheetStep = "form" | "sent" | "joined" | "withdraw" | "cancel"
+export type RequestSheetStep = "form" | "sent" | "joined" | SeatSheetStep
 
-function EventRow({ event }: { event: RequestedEvent }) {
-  return (
-    <ScheduleRow
-      time={event.time}
-      title={event.title}
-      subtitle={event.place}
-      taken={event.taken}
-      min={event.min}
-      max={event.max}
-      className="border-t-0"
-    />
-  )
-}
+type RequestStep = Exclude<RequestSheetStep, SeatSheetStep>
 
 // Characters as the server and the database count them: code points, so an
 // emoji is one, and a line break is one too. `trim()` is the server's as well.
@@ -122,7 +102,7 @@ function RequestForm({
   return (
     <div className="flex flex-col gap-4 pb-1">
       <div className="rounded-lg border border-border px-4">
-        <EventRow event={event} />
+        <RequestedEventRow event={event} />
       </div>
 
       <section className="flex flex-col gap-3 rounded-lg bg-muted p-4">
@@ -215,7 +195,7 @@ function SentView({
       <p className="typo-body text-muted-foreground">{text}</p>
       <div className="flex w-full flex-col items-start rounded-lg border border-border px-4 pt-3 text-left">
         <StatusBadge status={status} />
-        <EventRow event={event} />
+        <RequestedEventRow event={event} />
       </div>
     </div>
   )
@@ -253,21 +233,18 @@ export function ParticipationRequestSheet({
 }: ParticipationRequestSheetProps) {
   const { t } = useTranslation()
   const formId = useId()
-  const cancelFormId = useId()
   const requestToJoin = useRequestToJoin(onChange)
-  const withdraw = useWithdrawRequest(onChange)
-  const cancelSeat = useCancelParticipation(onChange)
+  // The way out is its own sheet, shared with the overview of applications (#171).
+  const requestStep = step !== null && !isSeatSheetStep(step) ? step : null
   // While the sheet animates out, it keeps showing the step it closed on.
-  const [shownStep, setShownStep] = useState<RequestSheetStep>(step ?? "form")
-  if (step !== null && step !== shownStep) setShownStep(step)
+  const [shownStep, setShownStep] = useState<RequestStep>(requestStep ?? "form")
+  if (requestStep !== null && requestStep !== shownStep) setShownStep(requestStep)
 
   // A new attempt starts without the error of the last one.
   const { reset: resetRequest } = requestToJoin
-  const { reset: resetCancel } = cancelSeat
   useEffect(() => {
     if (step === "form") resetRequest()
-    if (step === "cancel") resetCancel()
-  }, [step, resetRequest, resetCancel])
+  }, [step, resetRequest])
 
   const close = () => onStepChange(null)
 
@@ -278,33 +255,6 @@ export function ParticipationRequestSheet({
     const request = await requestToJoin.mutateAsync({ eventId, message })
     onStepChange(request.status === "APPROVED" ? "joined" : "sent")
   }
-
-  const confirmWithdraw = async () => {
-    try {
-      await withdraw.mutateAsync(eventId)
-      close()
-      toast.success(t("participationRequests.withdraw.done"))
-    } catch {
-      toast.error(t("participationRequests.withdraw.failed"))
-    }
-  }
-
-  // Throws on failure, so the form keeps its text and stays guarded.
-  const confirmCancel = async (message: string) => {
-    await cancelSeat.mutateAsync({ eventId, message })
-    close()
-    toast.success(t("participationRequests.cancel.done"))
-  }
-
-  const cancelRefusal =
-    cancelSeat.error instanceof CancelRefusedError
-      ? (cancelSeat.error.violations.find((violation) => violation !== "NO_SEAT") ?? "NO_SEAT")
-      : null
-  const cancelErrorMessage = cancelSeat.error
-    ? cancelRefusal
-      ? t(`participationRequests.cancel.refused.${cancelRefusal}`)
-      : t("participationRequests.cancel.failed")
-    : null
 
   const { error } = requestToJoin
   const refusal = error instanceof JoinRefusedError ? refusalOf(error.violations) : null
@@ -318,7 +268,7 @@ export function ParticipationRequestSheet({
         )
     : null
 
-  const steps: Record<RequestSheetStep, { title: string; body: ReactNode; footer: ReactNode }> = {
+  const steps: Record<RequestStep, { title: string; body: ReactNode; footer: ReactNode }> = {
     form: {
       title: t(
         isAutomatic
@@ -405,74 +355,31 @@ export function ParticipationRequestSheet({
         </>
       ),
     },
-    withdraw: {
-      title: t("participationRequests.withdraw.title"),
-      body: (
-        <div className="flex flex-col gap-4 pb-1">
-          <div className="rounded-lg border border-border px-4">
-            <EventRow event={event} />
-          </div>
-          <p className="rounded-lg bg-muted p-4 typo-body text-foreground">
-            {t("participationRequests.withdraw.text")}
-          </p>
-        </div>
-      ),
-      footer: (
-        <>
-          <Button onClick={close}>{t("participationRequests.withdraw.keep")}</Button>
-          <Button
-            variant="outline"
-            disabled={withdraw.isPending}
-            onClick={() => void confirmWithdraw()}
-          >
-            {withdraw.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {t("participationRequests.withdraw.confirm")}
-          </Button>
-        </>
-      ),
-    },
-    cancel: {
-      title: t("participationRequests.cancel.title"),
-      body: (
-        <CancelParticipationForm
-          formId={cancelFormId}
-          eventRow={<EventRow event={event} />}
-          isPending={cancelSeat.isPending}
-          errorMessage={cancelErrorMessage}
-          onSubmit={confirmCancel}
-        />
-      ),
-      footer: (
-        <>
-          <Button onClick={close}>{t("participationRequests.cancel.keep")}</Button>
-          <Button
-            type="submit"
-            form={cancelFormId}
-            variant="outline"
-            disabled={cancelSeat.isPending}
-          >
-            {cancelSeat.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {t("participationRequests.cancel.confirm")}
-          </Button>
-        </>
-      ),
-    },
   }
   const shown = steps[shownStep]
 
   return (
-    <ResponsiveSheet
-      isOpen={step !== null}
-      onOpenChange={(isOpening) => {
-        if (!isOpening) close()
-      }}
-      title={shown.title}
-      footer={shown.footer}
-      hasCloseButton
-      // The form has the message field; its buttons must not cover it.
-      isFooterScrolling={shownStep === "form" || shownStep === "cancel"}
-    >
-      {shown.body}
-    </ResponsiveSheet>
+    <>
+      <ResponsiveSheet
+        isOpen={requestStep !== null}
+        onOpenChange={(isOpening) => {
+          if (!isOpening) close()
+        }}
+        title={shown.title}
+        footer={shown.footer}
+        hasCloseButton
+        // The form has the message field; its buttons must not cover it.
+        isFooterScrolling={shownStep === "form"}
+      >
+        {shown.body}
+      </ResponsiveSheet>
+      <CancelParticipationSheet
+        eventId={eventId}
+        event={event}
+        step={step !== null && isSeatSheetStep(step) ? step : null}
+        onStepChange={onStepChange}
+        onChange={onChange}
+      />
+    </>
   )
 }

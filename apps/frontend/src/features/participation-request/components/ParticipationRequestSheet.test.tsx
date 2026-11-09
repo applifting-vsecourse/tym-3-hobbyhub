@@ -6,7 +6,6 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
 
-import { CancelRefusedError } from "@/features/participation-request/api/cancelParticipation"
 import type { ApprovalMode } from "@/features/participation-request/api/participationRequestSchemas"
 import { JoinRefusedError } from "@/features/participation-request/api/requestToJoin"
 import {
@@ -14,10 +13,9 @@ import {
   type RequestSheetStep,
 } from "@/features/participation-request/components/ParticipationRequestSheet"
 
-const { requestToJoin, withdrawRequest, cancelParticipation, toast } = vi.hoisted(() => ({
+const { requestToJoin, withdrawRequest, toast } = vi.hoisted(() => ({
   requestToJoin: vi.fn(),
   withdrawRequest: vi.fn(),
-  cancelParticipation: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
 }))
 vi.mock("@/features/participation-request/api/requestToJoin", async (importOriginal) => ({
@@ -25,10 +23,6 @@ vi.mock("@/features/participation-request/api/requestToJoin", async (importOrigi
   requestToJoin,
 }))
 vi.mock("@/features/participation-request/api/withdrawRequest", () => ({ withdrawRequest }))
-vi.mock("@/features/participation-request/api/cancelParticipation", async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  cancelParticipation,
-}))
 vi.mock("sonner", () => ({ toast }))
 
 // jsdom has no matchMedia; pretend to be a desktop so the sheet renders as a dialog.
@@ -44,7 +38,6 @@ beforeAll(() => {
 beforeEach(() => {
   requestToJoin.mockReset()
   withdrawRequest.mockReset()
-  cancelParticipation.mockReset()
   toast.success.mockReset()
   toast.error.mockReset()
 })
@@ -287,77 +280,6 @@ describe("ParticipationRequestSheet", () => {
       expect(
         await screen.findByText("Místo se nepodařilo obsadit. Zkus to znovu."),
       ).toBeInTheDocument()
-    })
-  })
-
-  it("keeps the request when the person changes their mind", async () => {
-    await renderSheet("withdraw")
-
-    await userEvent.click(await screen.findByRole("button", { name: "Nechat žádost" }))
-
-    expect(screen.getByText("krok: zavřeno")).toBeInTheDocument()
-    expect(withdrawRequest).not.toHaveBeenCalled()
-  })
-
-  // F-06.4.
-  describe("cancelling the seat", () => {
-    const cancelField = () => screen.findByLabelText("Zpráva organizátorovi")
-
-    it("sends the trimmed message and closes", async () => {
-      cancelParticipation.mockResolvedValue(undefined)
-      await renderSheet("cancel")
-
-      const dialog = await screen.findByRole("dialog", { name: "Zrušit účast?" })
-      expect(within(dialog).getByText("Čtvrteční florbal")).toBeInTheDocument()
-      await userEvent.type(await cancelField(), "  Onemocněl jsem, promiňte.  ")
-      await userEvent.click(within(dialog).getByRole("button", { name: "Zrušit účast" }))
-
-      await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Účast zrušena"))
-      expect(cancelParticipation.mock.calls[0]?.[0]).toEqual({
-        eventId: "e1",
-        message: "Onemocněl jsem, promiňte.",
-      })
-      expect(screen.getByText("krok: zavřeno")).toBeInTheDocument()
-    })
-
-    it.each([
-      ["no message", ""],
-      ["fewer than 10 characters besides whitespace", "   krátce   "],
-    ])("refuses %s before sending", async (_, typed) => {
-      await renderSheet("cancel")
-
-      const dialog = await screen.findByRole("dialog", { name: "Zrušit účast?" })
-      if (typed) await userEvent.type(await cancelField(), typed)
-      await userEvent.click(within(dialog).getByRole("button", { name: "Zrušit účast" }))
-
-      expect(
-        await within(dialog).findByText("Napiš organizátorovi aspoň 10 znaků."),
-      ).toBeInTheDocument()
-      expect(cancelParticipation).not.toHaveBeenCalled()
-    })
-
-    it("says why the server kept the seat, and keeps the dialog open", async () => {
-      cancelParticipation.mockRejectedValue(new CancelRefusedError(["EVENT_STARTED"]))
-      await renderSheet("cancel")
-
-      const dialog = await screen.findByRole("dialog", { name: "Zrušit účast?" })
-      await userEvent.type(await cancelField(), "Onemocněl jsem, promiňte.")
-      await userEvent.click(within(dialog).getByRole("button", { name: "Zrušit účast" }))
-
-      expect(
-        await within(dialog).findByText("Akce už začala, účast už nejde zrušit."),
-      ).toBeInTheDocument()
-      expect(screen.getByText("krok: cancel")).toBeInTheDocument()
-      expect(toast.success).not.toHaveBeenCalled()
-    })
-
-    it("keeps the seat when the person changes their mind", async () => {
-      await renderSheet("cancel")
-
-      await userEvent.click(await screen.findByRole("button", { name: "Nechat účast" }))
-
-      expect(screen.getByText("krok: zavřeno")).toBeInTheDocument()
-      expect(cancelParticipation).not.toHaveBeenCalled()
     })
   })
 })
