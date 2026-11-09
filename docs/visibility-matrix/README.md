@@ -137,7 +137,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Přesné datum narození aplikace nezná.** Drží jen rok, věk ve složení účastníků je proto přesný na rok ([#174][174], [ADR-0016](../adr/adr-0016.md)).
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
 - **Historie akcí**, kde člověk byl a co pořádal, je až pro propojené uživatele. To je hlavní věc, kterou propojení přináší. Jméno organizátora je i tak veřejné přes detail akce ([#8][8]).
-- **Notifikace chodí i e-mailem**, jen příjemci a jen na jeho ověřenou adresu ([#61][61]). E-mail podle pravidla výše říká jen, co se stalo, a odkazem vede do aplikace: nenese jméno původce, název akce ani skupiny, ani zprávu organizátora nebo správce. Detail se ukáže až po přihlášení.
+- **Notifikace chodí i e-mailem**, jen příjemci a jen na jeho ověřenou adresu ([#61][61], [#58][58]). E-mail podle pravidla výše říká jen, co se stalo, a odkazem vede do aplikace: nenese jméno původce, název akce ani skupiny, ani zprávu organizátora, správce nebo účastníka, který zrušil účast. Detail se ukáže až po přihlášení.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec.
 
 ## Skupina
@@ -191,6 +191,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [53]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/53
 [56]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/56
 [57]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/57
+[58]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/58
 [61]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/61
 [64]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/64
 [65]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/65
