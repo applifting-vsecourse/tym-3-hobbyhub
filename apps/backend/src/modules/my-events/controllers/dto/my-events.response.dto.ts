@@ -28,7 +28,8 @@ export class MyApplicationPageResponseDto {
   items!: MyApplicationResponseDto[];
 
   @ApiProperty({
-    description: 'All upcoming applications of the user, not just this page',
+    description:
+      'All applications of the user that match the filter, not just this page',
   })
   total!: number;
 
@@ -53,7 +54,8 @@ export class MyHostedEventsResponseDto {
   items!: EventListItemResponseDto[];
 
   @ApiProperty({
-    description: 'All upcoming events the user organizes, not just this page',
+    description:
+      'All events the user organizes that match the filter, not just this page',
   })
   total!: number;
 

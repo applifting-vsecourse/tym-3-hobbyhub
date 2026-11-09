@@ -1,8 +1,6 @@
-import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import { toggleVariants } from "@/components/ui/toggle"
-import { cn } from "@/lib/utils"
+import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 
 export type GroupManageTab = "members" | "requests"
 
@@ -20,26 +18,18 @@ export function GroupManageTabs({ groupId, active, counts }: GroupManageTabsProp
   const { t } = useTranslation()
 
   return (
-    <nav
-      aria-label={t("groups.manage.tabsLabel")}
-      className="flex gap-2"
-    >
-      {TABS.map((tab) => {
-        const isActive = tab === active
-        return (
-          <Link
-            key={tab}
-            to="/groups/$groupId/members"
-            params={{ groupId }}
-            search={tab === "members" ? {} : { tab }}
-            aria-current={isActive ? "page" : undefined}
-            data-state={isActive ? "on" : "off"}
-            className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
-          >
-            {t(`groups.manage.tabs.${tab}`, { count: counts[tab] ?? 0 })}
-          </Link>
-        )
-      })}
-    </nav>
+    <PageTabs label={t("groups.manage.tabsLabel")}>
+      {TABS.map((tab) => (
+        <PageTab
+          key={tab}
+          to="/groups/$groupId/members"
+          params={{ groupId }}
+          search={tab === "members" ? {} : { tab }}
+          isActive={tab === active}
+        >
+          {t(`groups.manage.tabs.${tab}`, { count: counts[tab] ?? 0 })}
+        </PageTab>
+      ))}
+    </PageTabs>
   )
 }

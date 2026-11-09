@@ -13,7 +13,7 @@ type GroupDetailProps = {
   membershipPanel: ReactNode
   /** For the group's admins only (F-07.3): the way to the requests. */
   adminPanel?: ReactNode
-  /** For the group's admins only (F-07.3): the members. */
+  /** For the group's members only (F-07.3): the members. */
   membersPreview?: ReactNode
   /** Akce skupiny (F-07.2); the event feature owns the list. */
   events?: ReactNode
@@ -21,7 +21,7 @@ type GroupDetailProps = {
 
 /**
  * Public group detail (F-02.5): what a visitor needs to decide about joining.
- * Everyone sees the member count; only the group's admins see the members.
+ * Everyone sees the member count; only the group's members see the members.
  */
 export function GroupDetail({
   group,
@@ -57,6 +57,8 @@ export function GroupDetail({
 
       <div className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         {membershipPanel}
+        {/* Beside the membership, not at the foot of a long page. */}
+        {membersPreview}
         {adminPanel}
       </div>
 
@@ -66,8 +68,6 @@ export function GroupDetail({
         </p>
 
         {events}
-
-        {membersPreview}
       </div>
     </div>
   )

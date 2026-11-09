@@ -1,8 +1,10 @@
-# 4IT580: Frontend
+# HobbyHub Frontend
+
+The web app of [HobbyHub](../../README.md), where people find free seats at sports and hobby events and organizers fill the players they are missing. It covers the landing page with search, sign-up with onboarding, events (list, map, filters, detail, a three-step form for organizers, participation requests) and groups (list, detail, membership requests, member management). The UI is in Czech and English, built from the components in `src/components/hobbyhub/` and the rules in [`DESIGN.md`](../../DESIGN.md); the map uses Mapbox GL.
 
 This app was created using [Vite](https://vitejs.dev/).
 
-It's part of an Applifting educational template that is **free for public use** (see the [LICENSE](../../LICENSE.txt)). Patterns here — data fetching with [ky](https://github.com/sindresorhus/ky), [TanStack Query](https://tanstack.com/query) `queryOptions` + query-key factories, [zod](https://zod.dev/) schemas at the network boundary — follow the [Applifting Frontend Playbook](https://applifting.github.io/frontend-playbook/), kept deliberately small (no codegen, no generated API client) so the moving parts are easy to read.
+It started as part of an Applifting educational template that is **free for public use** (see the [LICENSE](../../LICENSE.txt)). Patterns here — data fetching with [ky](https://github.com/sindresorhus/ky), [TanStack Query](https://tanstack.com/query) `queryOptions` + query-key factories, [zod](https://zod.dev/) schemas at the network boundary — follow the [Applifting Frontend Playbook](https://applifting.github.io/frontend-playbook/), kept deliberately small (no codegen, no generated API client) so the moving parts are easy to read.
 
 ## Local Installation
 

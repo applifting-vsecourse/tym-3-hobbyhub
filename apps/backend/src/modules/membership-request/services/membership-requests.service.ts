@@ -149,11 +149,13 @@ export class MembershipRequestsService {
     return this.repository.getPendingRequests(groupId);
   }
 
-  // F-07.3: the applicant becomes a member and counts towards the group.
+  // F-07.3: the applicant becomes a member and counts towards the group. The
+  // message goes to them (#153).
   async approveRequest(
     user: Identity,
     groupId: string,
     requestId: string,
+    message?: string,
     now: Date = new Date(),
   ): Promise<MembershipRequest> {
     const { group, request } = await this.getDecidable(
@@ -167,6 +169,7 @@ export class MembershipRequestsService {
     const approved = await this.repository.approvePending({
       groupId,
       requestId,
+      message,
       at: now,
     });
     if (typeof approved === 'string') throw violationsError([approved]);
@@ -179,13 +182,13 @@ export class MembershipRequestsService {
     return approved;
   }
 
-  // F-07.3. Final for the group (ADR-0014); the applicant sees the reason in
-  // their overview (F-07.7).
+  // F-07.3. Final for the group (ADR-0014); the applicant sees the message on
+  // the group and in their overview (F-07.7).
   async rejectRequest(
     user: Identity,
     groupId: string,
     requestId: string,
-    reason?: string,
+    message?: string,
     now: Date = new Date(),
   ): Promise<MembershipRequest> {
     const { group, request } = await this.getDecidable(
@@ -199,7 +202,7 @@ export class MembershipRequestsService {
     const rejected = await this.repository.rejectPending({
       groupId,
       requestId,
-      reason,
+      message,
       at: now,
     });
     if (!rejected) throw violationsError(['NOT_PENDING']);

@@ -6,16 +6,22 @@ import {
   Prisma,
   Activity as PrismaActivity,
   Group as PrismaGroup,
+  GroupMembership as PrismaGroupMembership,
 } from '@/generated/prisma/client';
 import {
+  AssignableGroupRole,
   CreateGroupData,
   GroupRole as DomainGroupRole,
   Group,
   GroupMember,
   GroupPage,
   MyGroup,
+  TransferOwnershipResult,
 } from '@/modules/group/domain/group';
 import { Injectable } from '@nestjs/common';
+
+// Thrown inside the hand-over transaction only to roll it back.
+class TargetNotMemberError extends Error {}
 
 const include = {
   activity: true,
@@ -44,6 +50,22 @@ const mapPrismaGroupToDomain = (
     defaultMaxParticipants: group.activity.defaultMaxParticipants,
   },
   memberCount: group._count.memberships,
+});
+
+const memberInclude = {
+  user: { select: { name: true, image: true } },
+} as const;
+
+const mapMembershipToMember = (
+  membership: PrismaGroupMembership & {
+    user: { name: string; image: string | null };
+  },
+): GroupMember => ({
+  userId: membership.userId,
+  name: membership.user.name,
+  image: membership.user.image,
+  role: membership.role,
+  joinedAt: membership.joinedAt,
 });
 
 // Newest first; the id breaks ties so cursor pages never skip or repeat.
@@ -108,16 +130,10 @@ export class GroupRepository {
   async listMembers(groupId: string): Promise<GroupMember[]> {
     const memberships = await this.prisma.groupMembership.findMany({
       where: { groupId },
-      include: { user: { select: { name: true, image: true } } },
+      include: memberInclude,
       orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
     });
-    return memberships.map((membership) => ({
-      userId: membership.userId,
-      name: membership.user.name,
-      image: membership.user.image,
-      role: membership.role,
-      joinedAt: membership.joinedAt,
-    }));
+    return memberships.map(mapMembershipToMember);
   }
 
   // ADR-0015: who is told about a new request to join (the founder and the
@@ -134,6 +150,55 @@ export class GroupRepository {
     await this.prisma.groupMembership.deleteMany({
       where: { groupId, userId },
     });
+  }
+
+  // `null` when the member left or was removed after the service checked
+  // the roles.
+  async setMemberRole(
+    groupId: string,
+    userId: string,
+    role: AssignableGroupRole,
+  ): Promise<GroupMember | null> {
+    const { count } = await this.prisma.groupMembership.updateMany({
+      where: { groupId, userId },
+      data: { role },
+    });
+    if (count === 0) return null;
+    const membership = await this.prisma.groupMembership.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+      include: memberInclude,
+    });
+    return membership ? mapMembershipToMember(membership) : null;
+  }
+
+  // ADR-0007: the old owner stays on as an admin. Demoted first, inside one
+  // transaction: `group_membership_one_owner_key` allows one OWNER at a time.
+  // The demotion matches only an OWNER row, so of two hand-overs at once the
+  // second finds the actor already demoted; a new owner who has left in the
+  // meantime rolls the demotion back.
+  async transferOwnership(
+    groupId: string,
+    fromUserId: string,
+    toUserId: string,
+  ): Promise<TransferOwnershipResult> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const demoted = await tx.groupMembership.updateMany({
+          where: { groupId, userId: fromUserId, role: GroupRole.OWNER },
+          data: { role: GroupRole.ADMIN },
+        });
+        if (demoted.count === 0) return 'NOT_OWNER';
+        const promoted = await tx.groupMembership.updateMany({
+          where: { groupId, userId: toUserId },
+          data: { role: GroupRole.OWNER },
+        });
+        if (promoted.count === 0) throw new TargetNotMemberError();
+        return 'TRANSFERRED';
+      });
+    } catch (error) {
+      if (error instanceof TargetNotMemberError) return 'TARGET_NOT_MEMBER';
+      throw error;
+    }
   }
 
   async listGroupsOfUser(userId: string): Promise<MyGroup[]> {

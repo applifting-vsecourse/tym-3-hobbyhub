@@ -55,6 +55,8 @@ type FiltersSheetProps = {
   activitiesState?: FilterActivitiesState
   /** Which filters the panel shows. A page offers only the ones it applies. */
   fields?: FiltersSheetField[]
+  /** How the page sorts its results; the event list's soonest-first by default. */
+  sortNote?: string
   /** How many events the current draft would show, for the button label. */
   countResults?: (filters: EventFilters) => number
   trigger?: ReactNode
@@ -72,6 +74,7 @@ export function FiltersSheet({
   activityOptions,
   activitiesState,
   fields = ["activity", "when", "location"],
+  sortNote,
   countResults,
   trigger,
 }: FiltersSheetProps) {
@@ -256,7 +259,9 @@ export function FiltersSheet({
             />
           </div>
         ) : null}
-        <p className="typo-small text-muted-foreground">{t("hobbyhub.filters.sortNote")}</p>
+        <p className="typo-small text-muted-foreground">
+          {sortNote ?? t("hobbyhub.filters.sortNote")}
+        </p>
       </div>
     </ResponsiveSheet>
   )

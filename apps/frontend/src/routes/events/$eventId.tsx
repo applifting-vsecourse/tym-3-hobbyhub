@@ -24,7 +24,7 @@ import { EventDetail } from "@/features/event/components/EventDetail"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
 import { ParticipantInfo } from "@/features/event/components/ParticipantInfo"
 import { ShareEventAction } from "@/features/event/components/ShareEventAction"
-import { eventPlace, eventTime } from "@/features/event/lib/eventLabels"
+import { eventPlaceAndLevel, eventTime } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
 import { OrganizerPanel } from "@/features/participation-request/components/OrganizerPanel"
@@ -33,7 +33,7 @@ import {
   ParticipationRequestSheet,
   type RequestSheetStep,
 } from "@/features/participation-request/components/ParticipationRequestSheet"
-import { ownSeatView } from "@/features/participation-request/lib/joinPanel"
+import { decisionMessageOf, ownSeatView } from "@/features/participation-request/lib/joinPanel"
 
 export const Route = createFileRoute("/events/$eventId")({
   component: EventDetailPage,
@@ -245,6 +245,9 @@ function EventDetailPage() {
                       : undefined
                   }
                   rejoinAction={joinAction}
+                  decisionMessage={
+                    myRequestQuery.data ? decisionMessageOf(myRequestQuery.data, ownView) : null
+                  }
                 />
               ) : undefined
             }
@@ -256,9 +259,7 @@ function EventDetailPage() {
             event={{
               title: eventQuery.data.title,
               time: eventTime(eventQuery.data.startAt, i18n.language),
-              place: [eventPlace(t, eventQuery.data), eventQuery.data.level]
-                .filter(Boolean)
-                .join(", "),
+              place: eventPlaceAndLevel(t, eventQuery.data),
               taken: eventQuery.data.takenCount,
               min: eventQuery.data.minParticipants,
               max: eventQuery.data.maxParticipants,

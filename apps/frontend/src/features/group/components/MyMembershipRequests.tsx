@@ -252,15 +252,15 @@ function MyMembershipRequestCard({ request, hasStatus, onWithdraw }: MyMembershi
           {t("groups.myRequests.groupCancelledText")}
         </p>
       ) : null}
-      {request.rejectionReason || request.message ? (
+      {request.decisionMessage || request.message ? (
         <dl className="flex flex-col gap-3">
-          {request.rejectionReason ? (
+          {request.decisionMessage ? (
             <div className="flex flex-col gap-1">
               <dt className="typo-label text-muted-foreground">
-                {t("groups.myRequests.rejectionReason")}
+                {t("groups.myRequests.decisionMessage")}
               </dt>
               <dd className="typo-body break-words whitespace-pre-line text-foreground">
-                {request.rejectionReason}
+                {request.decisionMessage}
               </dd>
             </div>
           ) : null}

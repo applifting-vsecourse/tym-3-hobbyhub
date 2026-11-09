@@ -34,6 +34,7 @@ const approved = {
   status: "APPROVED",
   message: null,
   requestedAt: "2030-01-01T10:00:00.000Z",
+  decisionMessage: null,
 }
 
 describe("decideRequest", () => {
@@ -46,12 +47,25 @@ describe("decideRequest", () => {
     expect(post).toHaveBeenCalledWith("events/e1/requests/r1/approve", { json: {} })
   })
 
-  it("sends the reason with a rejection", async () => {
+  it("sends the message with an approval (#153)", async () => {
+    post.mockReturnValue({
+      json: () => Promise.resolve({ ...approved, decisionMessage: "Vítej" }),
+    })
+
+    await expect(
+      approveRequest({ eventId: "e1", requestId: "r1", message: "Vítej" }),
+    ).resolves.toMatchObject({ decisionMessage: "Vítej" })
+    expect(post).toHaveBeenCalledWith("events/e1/requests/r1/approve", {
+      json: { message: "Vítej" },
+    })
+  })
+
+  it("sends the message with a rejection", async () => {
     post.mockReturnValue({ json: () => Promise.resolve({ ...approved, status: "REJECTED" }) })
 
-    await rejectRequest({ eventId: "e1", requestId: "r1", reason: "Plno" })
+    await rejectRequest({ eventId: "e1", requestId: "r1", message: "Plno" })
 
-    expect(post).toHaveBeenCalledWith("events/e1/requests/r1/reject", { json: { reason: "Plno" } })
+    expect(post).toHaveBeenCalledWith("events/e1/requests/r1/reject", { json: { message: "Plno" } })
   })
 
   it("reads why the server refused from the body ky has already parsed", async () => {
@@ -72,7 +86,7 @@ describe("decideRequest", () => {
   })
 
   it("passes other failures on as they are", async () => {
-    const broken = httpError(400, { message: ["reason must be shorter"] })
+    const broken = httpError(400, { message: ["message must be shorter"] })
     failWith(broken)
 
     await expect(rejectRequest({ eventId: "e1", requestId: "r1" })).rejects.toBe(broken)

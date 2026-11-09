@@ -37,7 +37,7 @@ describe("plurals", () => {
 
   it.each(cases)("%s, count %i", async (language, count, expected) => {
     await i18n.changeLanguage(language)
-    expect(i18n.t("quacks.form.tooLong", { count })).toBe(expected)
+    expect(i18n.t("events.validation.tooLong", { count })).toBe(expected)
     await i18n.changeLanguage("cs")
   })
 

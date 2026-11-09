@@ -5,11 +5,7 @@ import userEvent from "@testing-library/user-event"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { MembershipRefusedError } from "@/features/group/api/membershipRequestMutations"
-import type {
-  GroupMember,
-  PendingMembershipRequest,
-} from "@/features/group/api/membershipRequestSchemas"
-import { GroupMemberList } from "@/features/group/components/GroupMemberList"
+import type { PendingMembershipRequest } from "@/features/group/api/membershipRequestSchemas"
 import { MembershipRequestList } from "@/features/group/components/MembershipRequestList"
 
 const { decideMembershipRequest, toast } = vi.hoisted(() => ({
@@ -38,6 +34,7 @@ const aRequest = (overrides: Partial<PendingMembershipRequest> = {}): PendingMem
   status: "PENDING",
   message: "Hraju třetí rok za firemní tým.",
   requestedAt: new Date(2026, 0, 2),
+  decisionMessage: null,
   applicant: {
     name: "Honza K",
     image: null,
@@ -83,12 +80,17 @@ describe("MembershipRequestList", () => {
     expect(screen.getByText("Po schválení bude 15 členů.")).toBeVisible()
   })
 
-  it("approves a request", async () => {
+  // #153: approving asks too, so the admin can write to the applicant.
+  it("approves a request with a message, after asking", async () => {
     const user = userEvent.setup()
     decideMembershipRequest.mockResolvedValue(aRequest({ status: "APPROVED" }))
     await renderList([aRequest()])
 
     await user.click(screen.getByRole("button", { name: "Schválit" }))
+    const dialog = await screen.findByRole("dialog", { name: "Schválit žádost?" })
+    expect(within(dialog).getByText("Honza K se stane členem skupiny.")).toBeVisible()
+    await user.type(within(dialog).getByLabelText(/Zpráva pro žadatele/), " Vítejte! ")
+    await user.click(within(dialog).getByRole("button", { name: "Schválit" }))
 
     await waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith("Honza K je teď členem skupiny."),
@@ -97,10 +99,12 @@ describe("MembershipRequestList", () => {
       groupId: "g1",
       requestId: "r1",
       decision: "approve",
+      message: "Vítejte!",
     })
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 
-  it("rejects a request with the reason, after asking", async () => {
+  it("rejects a request with the message, after asking", async () => {
     const user = userEvent.setup()
     decideMembershipRequest.mockResolvedValue(aRequest({ status: "REJECTED" }))
     await renderList([aRequest()])
@@ -108,7 +112,7 @@ describe("MembershipRequestList", () => {
     await user.click(screen.getByRole("button", { name: "Zamítnout" }))
     const dialog = await screen.findByRole("dialog")
     expect(within(dialog).getByText(/Honza K uvidí zamítnutí/)).toBeVisible()
-    await user.type(within(dialog).getByLabelText(/Důvod/), "  Skupina je plná  ")
+    await user.type(within(dialog).getByLabelText(/Zpráva pro žadatele/), "  Skupina je plná  ")
     await user.click(within(dialog).getByRole("button", { name: "Zamítnout" }))
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Žádost zamítnuta"))
@@ -116,19 +120,19 @@ describe("MembershipRequestList", () => {
       groupId: "g1",
       requestId: "r1",
       decision: "reject",
-      reason: "Skupina je plná",
+      message: "Skupina je plná",
     })
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 
-  it("keeps the reason when rejecting fails for another reason", async () => {
+  it("keeps the message when rejecting fails for another reason", async () => {
     const user = userEvent.setup()
     decideMembershipRequest.mockRejectedValue(new Error("offline"))
     await renderList([aRequest()])
 
     await user.click(screen.getByRole("button", { name: "Zamítnout" }))
     const dialog = await screen.findByRole("dialog")
-    await user.type(within(dialog).getByLabelText(/Důvod/), "Skupina je plná")
+    await user.type(within(dialog).getByLabelText(/Zpráva pro žadatele/), "Skupina je plná")
     await user.click(within(dialog).getByRole("button", { name: "Zamítnout" }))
 
     await waitFor(() =>
@@ -137,7 +141,7 @@ describe("MembershipRequestList", () => {
       ),
     )
     expect(screen.getByRole("dialog")).toBeVisible()
-    expect(within(dialog).getByLabelText(/Důvod/)).toHaveValue("Skupina je plná")
+    expect(within(dialog).getByLabelText(/Zpráva pro žadatele/)).toHaveValue("Skupina je plná")
   })
 
   it("says what changed when another admin got there first", async () => {
@@ -146,38 +150,14 @@ describe("MembershipRequestList", () => {
     await renderList([aRequest()])
 
     await user.click(screen.getByRole("button", { name: "Schválit" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.click(within(dialog).getByRole("button", { name: "Schválit" }))
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
         "Žádost mezitím vyřídil jiný správce, nebo ji žadatel zrušil.",
       ),
     )
-  })
-})
-
-describe("GroupMemberList", () => {
-  const aMember = (overrides: Partial<GroupMember>): GroupMember => ({
-    userId: "u1",
-    name: "Caffeinated Duck",
-    image: null,
-    role: "MEMBER",
-    joinedAt: new Date(2026, 0, 1),
-    ...overrides,
-  })
-
-  it("lists the members with their role", async () => {
-    await renderWithRouter(
-      <GroupMemberList
-        members={[
-          aMember({ userId: "u1", name: "Caffeinated Duck", role: "OWNER" }),
-          aMember({ userId: "u2", name: "Deep Duck Thoughts", role: "MEMBER" }),
-        ]}
-      />,
-    )
-
-    const items = screen.getAllByRole("listitem")
-    expect(items).toHaveLength(2)
-    expect(within(items[0]!).getByText("Organizátor")).toBeVisible()
-    expect(within(items[1]!).getByText("Člen")).toBeVisible()
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 })

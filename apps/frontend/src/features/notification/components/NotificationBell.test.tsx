@@ -36,8 +36,9 @@ const aNotification = (id: string, readAt: string | null = null) => ({
   changes: [],
 })
 
-// What the API answers, by path: the count for the bell, the first page for
-// the open popover. ky's `get()` has `.json()` on the returned promise itself.
+// What the API answers, by path: the count for the bell, the first page of
+// the unread ones for the open popover. ky's `get()` has `.json()` on the
+// returned promise itself.
 const answer = (count: number, items: unknown[]) =>
   get.mockImplementation((path: string) => ({
     json: () =>
@@ -70,7 +71,7 @@ describe("NotificationBell", () => {
     await renderBell()
 
     expect(
-      await screen.findByRole("button", { name: "Upozornění, 3 nepřečtená" }),
+      await screen.findByRole("button", { name: "Notifikace, 3 nepřečtené" }),
     ).toHaveTextContent("3")
   })
 
@@ -79,26 +80,38 @@ describe("NotificationBell", () => {
     await renderBell()
 
     await waitFor(() => expect(get).toHaveBeenCalledWith("notifications/unread-count"))
-    expect(screen.getByRole("button", { name: "Upozornění" })).toHaveTextContent("")
+    expect(screen.getByRole("button", { name: "Notifikace" })).toHaveTextContent("")
   })
 
-  it("opens the latest notifications with a link to all of them", async () => {
-    answer(1, [aNotification("n1"), aNotification("n2", "2030-01-01T11:58:00.000Z")])
+  it("opens the new notifications with a link to all of them", async () => {
+    answer(2, [aNotification("n1"), aNotification("n2")])
     await renderBell()
 
-    await userEvent.click(await screen.findByRole("button", { name: "Upozornění, 1 nepřečtené" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Notifikace, 2 nepřečtené" }))
 
+    expect(await screen.findByRole("heading", { name: "Nové notifikace" })).toBeInTheDocument()
     const links = await screen.findAllByRole("link", {
       name: /Honza_K žádá o účast na akci Čtvrteční florbal/,
     })
     expect(links).toHaveLength(2)
     expect(links[0]).toHaveAttribute("href", "/events/e1/participants?tab=requests")
-    expect(links[0]).toHaveAccessibleName(/^Nepřečtené:/)
-    expect(links[1]).not.toHaveAccessibleName(/Nepřečtené/)
+    expect(links[0]).toHaveAccessibleName(/^Nepřečtená:/)
     expect(screen.getByRole("link", { name: "Zobrazit vše" })).toHaveAttribute(
       "href",
       "/notifications",
     )
+  })
+
+  it("asks only for the unread ones", async () => {
+    answer(1, [aNotification("n1")])
+    await renderBell()
+
+    await userEvent.click(await screen.findByRole("button", { name: "Notifikace, 1 nepřečtená" }))
+
+    await screen.findByRole("link", { name: /Honza_K žádá/ })
+    expect(get).toHaveBeenCalledWith("notifications", {
+      searchParams: { limit: "10", offset: "0", read: "false" },
+    })
   })
 
   it("marks a notification read when it is opened", async () => {
@@ -107,7 +120,7 @@ describe("NotificationBell", () => {
       json: () => Promise.resolve(aNotification("n1", "2030-01-01T12:00:00Z")),
     })
     await renderBell()
-    await userEvent.click(await screen.findByRole("button", { name: "Upozornění, 1 nepřečtené" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Notifikace, 1 nepřečtená" }))
 
     await userEvent.click(await screen.findByRole("link", { name: /Honza_K žádá/ }))
 
@@ -118,23 +131,25 @@ describe("NotificationBell", () => {
     answer(2, [aNotification("n1"), aNotification("n2")])
     post.mockReturnValue({ json: () => Promise.resolve({ count: 2 }) })
     await renderBell()
-    await userEvent.click(await screen.findByRole("button", { name: "Upozornění, 2 nepřečtená" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Notifikace, 2 nepřečtené" }))
 
     await userEvent.click(await screen.findByRole("button", { name: "Označit vše jako přečtené" }))
 
     expect(post).toHaveBeenCalledWith("notifications/read-all")
   })
 
-  it("tells the user there is nothing yet", async () => {
+  it("says there is nothing new", async () => {
     answer(0, [])
     await renderBell()
     await waitFor(() => expect(get).toHaveBeenCalledWith("notifications/unread-count"))
 
-    await userEvent.click(screen.getByRole("button", { name: "Upozornění" }))
+    await userEvent.click(screen.getByRole("button", { name: "Notifikace" }))
 
-    expect(await screen.findByText(/Zatím nemáš žádná upozornění/)).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Nové notifikace" })).toBeInTheDocument()
+    expect(await screen.findByText("Žádné nové notifikace")).toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: "Označit vše jako přečtené" }),
     ).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Zobrazit vše" })).toBeInTheDocument()
   })
 })

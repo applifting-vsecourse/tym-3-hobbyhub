@@ -3,6 +3,8 @@ import {
   EventChange,
   NewNotification,
   Notification,
+  NotificationFilter,
+  NotificationKind,
   NotificationPage,
   Page,
   recipientsExcept,
@@ -19,7 +21,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 type Who = Pick<Identity, 'id'>;
 type AnEvent = { id: string };
 type AGroup = { id: string };
-type ARequest = { userId: string; rejectionReason: string | null };
+type ARequest = { userId: string; decisionMessage: string | null };
 
 @Injectable()
 export class NotificationsService {
@@ -34,8 +36,12 @@ export class NotificationsService {
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  listMine(user: Identity, page: Page): Promise<NotificationPage> {
-    return this.repository.listOf(user.id, page);
+  listMine(
+    user: Identity,
+    page: Page,
+    filter: NotificationFilter = {},
+  ): Promise<NotificationPage> {
+    return this.repository.listOf(user.id, page, filter);
   }
 
   countUnread(user: Identity): Promise<number> {
@@ -53,8 +59,14 @@ export class NotificationsService {
     return notification;
   }
 
-  markAllRead(user: Identity, now: Date = new Date()): Promise<number> {
-    return this.repository.markAllRead(user.id, now);
+  // Without a kind every unread one; with it only the unread ones of that kind
+  // (#175: the page marks read what its filter shows).
+  markAllRead(
+    user: Identity,
+    kind?: NotificationKind,
+    now: Date = new Date(),
+  ): Promise<number> {
+    return this.repository.markAllRead(user.id, now, kind);
   }
 
   // -------------------------------------------------------------------------
@@ -80,7 +92,8 @@ export class NotificationsService {
   }
 
   // F-06.4: every organizer of the event, with the participant's words, which
-  // a cancellation always has (ADR-0017). The e-mail comes with F-09.2 (#58).
+  // a cancellation always has (ADR-0017). Their e-mail (F-09.2, #58) leaves
+  // the words out, as the visibility matrix asks of every e-mail.
   notifyParticipantCancelled(input: {
     event: AnEvent & { organizerIds: readonly string[] };
     participant: Who;
@@ -115,8 +128,8 @@ export class NotificationsService {
       eventId: input.event.id,
       payload: {
         decision: input.decision,
-        ...(input.request.rejectionReason
-          ? { message: input.request.rejectionReason }
+        ...(input.request.decisionMessage
+          ? { message: input.request.decisionMessage }
           : {}),
       },
     });
@@ -189,8 +202,8 @@ export class NotificationsService {
       groupId: input.group.id,
       payload: {
         decision: input.decision,
-        ...(input.request.rejectionReason
-          ? { message: input.request.rejectionReason }
+        ...(input.request.decisionMessage
+          ? { message: input.request.decisionMessage }
           : {}),
       },
     });

@@ -4,9 +4,12 @@ import { toast } from "sonner"
 
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
 
-import { MembershipRefusedError } from "@/features/group/api/membershipRequestMutations"
+import {
+  MembershipRefusedError,
+  type MembershipDecisionKind,
+} from "@/features/group/api/membershipRequestMutations"
 import type { PendingMembershipRequest } from "@/features/group/api/membershipRequestSchemas"
-import { RejectMembershipRequestSheet } from "@/features/group/components/RejectMembershipRequestSheet"
+import { DecideMembershipRequestSheet } from "@/features/group/components/DecideMembershipRequestSheet"
 import { useDecideMembershipRequest } from "@/features/group/hooks/useMembershipRequestMutations"
 
 type MembershipRequestListProps = {
@@ -24,7 +27,10 @@ export function MembershipRequestList({
 }: MembershipRequestListProps) {
   const { t } = useTranslation()
   const decide = useDecideMembershipRequest()
-  const [rejecting, setRejecting] = useState<PendingMembershipRequest | null>(null)
+  const [deciding, setDeciding] = useState<{
+    request: PendingMembershipRequest
+    decision: MembershipDecisionKind
+  } | null>(null)
 
   // A refusal says what changed meanwhile; anything else is a plain failure.
   const reportFailure = (error: unknown) => {
@@ -40,24 +46,21 @@ export function MembershipRequestList({
     toast.error(refusal ? t(`groups.manage.refused.${refusal}`) : t("groups.manage.decideFailed"))
   }
 
-  const approve = async (request: PendingMembershipRequest) => {
+  const decideWith = async (message: string | undefined) => {
+    if (!deciding) return
+    const { request, decision } = deciding
     try {
-      await decide.mutateAsync({ groupId, requestId: request.id, decision: "approve" })
-      toast.success(t("groups.manage.approved", { name: request.applicant.name }))
-    } catch (error) {
-      reportFailure(error)
-    }
-  }
-
-  const reject = async (request: PendingMembershipRequest, reason: string | undefined) => {
-    try {
-      await decide.mutateAsync({ groupId, requestId: request.id, decision: "reject", reason })
-      setRejecting(null)
-      toast.success(t("groups.manage.rejected"))
+      await decide.mutateAsync({ groupId, requestId: request.id, decision, message })
+      setDeciding(null)
+      toast.success(
+        decision === "approve"
+          ? t("groups.manage.approved", { name: request.applicant.name })
+          : t("groups.manage.rejected"),
+      )
     } catch (error) {
       // A refusal means the request is gone from the list, so the sheet goes
-      // too; after any other failure it stays, with the reason, to try again.
-      if (error instanceof MembershipRefusedError) setRejecting(null)
+      // too; after any other failure it stays, with the message, to try again.
+      if (error instanceof MembershipRefusedError) setDeciding(null)
       reportFailure(error)
     }
   }
@@ -78,18 +81,18 @@ export function MembershipRequestList({
               bio={request.applicant.bio}
               message={request.message}
               outcome={t("groups.manage.outcome", { count: memberCount + 1 })}
-              onApprove={() => void approve(request)}
-              onReject={() => setRejecting(request)}
+              onApprove={() => setDeciding({ request, decision: "approve" })}
+              onReject={() => setDeciding({ request, decision: "reject" })}
               isPending={decide.isPending}
             />
           </li>
         ))}
       </ul>
-      <RejectMembershipRequestSheet
-        request={rejecting}
+      <DecideMembershipRequestSheet
+        deciding={deciding}
         isPending={decide.isPending}
-        onClose={() => setRejecting(null)}
-        onReject={reject}
+        onClose={() => setDeciding(null)}
+        onDecide={decideWith}
       />
     </>
   )

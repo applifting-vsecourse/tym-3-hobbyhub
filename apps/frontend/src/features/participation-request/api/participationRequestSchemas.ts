@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Mirror the server-side DTOs, so the forms can tell the user before sending.
 export const PARTICIPATION_REQUEST_MESSAGE_MAX = 500
-export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX = 500
+export const PARTICIPATION_REQUEST_DECISION_MESSAGE_MAX = 500
 // F-06.4: the participant's required words to the organizers on cancelling.
 export const PARTICIPATION_CANCELLATION_MESSAGE_MIN = 10
 export const PARTICIPATION_CANCELLATION_MESSAGE_MAX = 500
@@ -66,6 +66,8 @@ export const participationRequestSchema = z.object({
   status: requestStatusSchema,
   message: z.string().nullable(),
   requestedAt: z.coerce.date(),
+  /** The organizer's words with an approval or a rejection (#153). */
+  decisionMessage: z.string().nullable(),
 })
 
 export const myRequestStateSchema = z.object({

@@ -2,11 +2,16 @@ import { ActivitiesService } from '@/modules/activity/services/activities.servic
 import {
   DISCOVER_PAGE_SIZE,
   Group,
+  GroupRole,
   NEARBY_GROUPS_LIMIT,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { Identity } from '@/shared/auth/domain/identity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { GroupsService } from './groups.service';
 
@@ -166,19 +171,163 @@ describe('GroupsService', () => {
       );
     });
 
-    it('lists the members to an admin only', async () => {
+    it('lists the members to every member, not to outsiders', async () => {
       const { repository, service } = setup();
-      repository.getGroupById.mockResolvedValue(aGroup());
-      repository.getMemberRole.mockResolvedValue('MEMBER');
+      repository.getMemberRole.mockResolvedValue(null);
 
       await expect(service.listMembers('g1', user)).rejects.toBeInstanceOf(
         NotFoundException,
       );
       expect(repository.listMembers).not.toHaveBeenCalled();
 
-      repository.getMemberRole.mockResolvedValue('ADMIN');
+      repository.getMemberRole.mockResolvedValue('MEMBER');
       repository.listMembers.mockResolvedValue([]);
       await expect(service.listMembers('g1', user)).resolves.toEqual([]);
+    });
+  });
+
+  describe('member management (F-07.3b)', () => {
+    const user = { id: 'me', emailVerified: true } as Identity;
+    const roles = (
+      actor: GroupRole | null,
+      target: GroupRole | null,
+    ): ((groupId: string, userId: string) => Promise<GroupRole | null>) =>
+      jest.fn((_groupId: string, userId: string) =>
+        Promise.resolve(userId === 'me' ? actor : target),
+      );
+
+    it('lets an admin remove a member', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('ADMIN', 'MEMBER'));
+
+      await service.removeMember('g1', user, 'other');
+
+      expect(repository.removeMember).toHaveBeenCalledWith('g1', 'other');
+    });
+
+    it('refuses an admin removing another admin', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('ADMIN', 'ADMIN'));
+
+      await expect(
+        service.removeMember('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.removeMember).not.toHaveBeenCalled();
+    });
+
+    it('answers someone outside the group with not found', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles(null, 'MEMBER'));
+
+      await expect(
+        service.removeMember('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('reports a target who is not a member as not found', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', null));
+
+      await expect(
+        service.changeMemberRole('g1', user, 'other', 'ADMIN'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.setMemberRole).not.toHaveBeenCalled();
+    });
+
+    it('refuses acting on oneself', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockResolvedValue('OWNER');
+
+      await expect(
+        service.removeMember('g1', user, 'me'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.removeMember).not.toHaveBeenCalled();
+    });
+
+    it('lets the owner name an admin', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      const member = {
+        userId: 'other',
+        name: 'Jana',
+        image: null,
+        role: 'ADMIN' as const,
+        joinedAt: new Date('2026-01-01T12:00:00Z'),
+      };
+      repository.setMemberRole.mockResolvedValue(member);
+
+      await expect(
+        service.changeMemberRole('g1', user, 'other', 'ADMIN'),
+      ).resolves.toBe(member);
+      expect(repository.setMemberRole).toHaveBeenCalledWith(
+        'g1',
+        'other',
+        'ADMIN',
+      );
+    });
+
+    it('refuses an admin naming an admin', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('ADMIN', 'MEMBER'));
+
+      await expect(
+        service.changeMemberRole('g1', user, 'other', 'ADMIN'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.setMemberRole).not.toHaveBeenCalled();
+    });
+
+    it('reports a member removed after the check as not found', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.setMemberRole.mockResolvedValue(null);
+
+      await expect(
+        service.changeMemberRole('g1', user, 'other', 'ADMIN'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('reports a new owner who left after the check as not found', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.transferOwnership.mockResolvedValue('TARGET_NOT_MEMBER');
+
+      await expect(
+        service.transferOwnership('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('refuses a hand-over when another one was faster', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.transferOwnership.mockResolvedValue('NOT_OWNER');
+
+      await expect(
+        service.transferOwnership('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('lets the owner hand the group over', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('OWNER', 'MEMBER'));
+      repository.transferOwnership.mockResolvedValue('TRANSFERRED');
+
+      await service.transferOwnership('g1', user, 'other');
+
+      expect(repository.transferOwnership).toHaveBeenCalledWith(
+        'g1',
+        'me',
+        'other',
+      );
+    });
+
+    it('refuses an admin handing the group over', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockImplementation(roles('ADMIN', 'MEMBER'));
+
+      await expect(
+        service.transferOwnership('g1', user, 'other'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repository.transferOwnership).not.toHaveBeenCalled();
     });
   });
 

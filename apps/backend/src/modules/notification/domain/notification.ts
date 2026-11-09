@@ -23,6 +23,40 @@ export const NOTIFICATION_TYPES = [
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
+// #175: what the notification page filters by. Every type belongs to exactly
+// one kind; only the server knows which, the client sends the kind.
+export const NOTIFICATION_KINDS = [
+  'requests',
+  'events',
+  'groups',
+  'other',
+] as const;
+export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
+
+export const NOTIFICATION_TYPES_BY_KIND = {
+  requests: [
+    'NEW_REQUESTS',
+    'REQUEST_DECIDED',
+    'PARTICIPANT_CANCELLED',
+    'CONFIRMATION_PROMPT',
+    'SPOT_AVAILABLE',
+  ],
+  events: ['EVENT_CHANGED', 'EVENT_CANCELLED', 'EVENT_BOARD'],
+  groups: ['GROUP_INVITATION'],
+  other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION'],
+} as const satisfies Record<NotificationKind, readonly NotificationType[]>;
+
+export const notificationTypesOf = (
+  kind: NotificationKind,
+): readonly NotificationType[] => NOTIFICATION_TYPES_BY_KIND[kind];
+
+// Which of the recipient's notifications a page of the list holds. Without
+// `read` both the read and the unread ones, without `kind` every type.
+export type NotificationFilter = {
+  read?: boolean;
+  kind?: NotificationKind;
+};
+
 export const DECISIONS = ['APPROVED', 'REJECTED'] as const;
 export type Decision = (typeof DECISIONS)[number];
 
@@ -35,7 +69,7 @@ export type EventChange = (typeof EVENT_CHANGES)[number];
 export type NotificationPayload = {
   // REQUEST_DECIDED
   decision?: Decision;
-  // REQUEST_DECIDED: the organizer's words, if any (the rejection reason).
+  // REQUEST_DECIDED: the organizer's or the admins' words, if any (#153).
   // PARTICIPANT_CANCELLED: the participant's words, always there.
   message?: string;
   // EVENT_CHANGED

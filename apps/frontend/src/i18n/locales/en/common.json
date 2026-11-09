@@ -469,14 +469,19 @@
       "members_one": "{{count}} member",
       "members_other": "{{count}} members",
       "membership": {
+        "decisionMessage": "Message from the organizer",
         "hasAccount": "Already have an account?",
+        "isAdmin": "You are an admin",
         "isMember": "You are a member",
+        "isOwner": "You are the organizer",
         "leave": "Leave group",
         "leaveConfirm": "Leave",
         "leaveFailed": "Could not leave the group. Please try again.",
         "leaveStay": "Stay in the group",
         "leaveText": "You will no longer be a member of {{name}}. You can join again by requesting membership.",
         "leaveTitle": "Do you really want to leave the group?",
+        "ownerCannotLeave": "As the organizer you cannot leave the group. Hand it over to another member first.",
+        "ownerTransferLink": "Hand over the group",
         "pendingText": "Your request is waiting for the group organizer.",
         "rejectedText": "The organizer rejected your request. You cannot send a new one to this group.",
         "request": "Request membership",
@@ -537,10 +542,55 @@
       }
     },
     "manage": {
+      "actions": {
+        "cancel": "Back",
+        "demote": {
+          "confirm": "Remove role",
+          "done": "{{name}} is no longer an admin.",
+          "menu": "Remove admin role",
+          "text": "{{name}} will stay in {{group}} as a member but lose the admin rights.",
+          "title": "Remove admin role?"
+        },
+        "failed": "The action could not be completed. We have refreshed the member list, please try again.",
+        "makeAdmin": {
+          "confirm": "Make admin",
+          "done": "{{name}} is now an admin.",
+          "menu": "Make admin",
+          "text": "{{name}} will handle membership requests and remove members in {{group}}.",
+          "title": "Make admin?"
+        },
+        "menuLabel": "Actions for {{name}}",
+        "remove": {
+          "confirm": "Remove",
+          "done": "{{name}} is no longer a member.",
+          "menu": "Remove from group",
+          "text": "{{name}} will no longer be a member of {{group}}. They can join again with a membership request.",
+          "title": "Remove from group?"
+        },
+        "transfer": {
+          "confirm": "Hand over",
+          "done": "{{name}} now runs the group.",
+          "menu": "Hand over the group",
+          "text": "{{name}} will become the organizer of {{group}}. You will stay on as an admin; only the new organizer can undo this.",
+          "title": "Hand over the group?"
+        }
+      },
       "adminTitle": "Group management",
+      "approve": {
+        "cancel": "Back",
+        "confirm": "Approve",
+        "messagePlaceholder": "E.g. Welcome! We play every Tuesday from 6 pm.",
+        "text": "{{name}} will become a member of the group.",
+        "title": "Approve the request?"
+      },
       "approved": "{{name}} is now a member of the group.",
       "back": "Back to the group",
       "decideFailed": "The request could not be decided. Please try again.",
+      "decision": {
+        "messageHint": "The applicant sees it on the group page and in the notification.",
+        "messageLabel": "Message for the applicant (optional)",
+        "messageTooLong": "The message can have at most {{count}} characters."
+      },
       "loadError": "Could not load",
       "loading": "Loading…",
       "membersEmpty": "The group has no members yet.",
@@ -557,10 +607,7 @@
       "reject": {
         "cancel": "Back",
         "confirm": "Reject",
-        "reasonHint": "We keep the reason. The applicant will see it once they get an overview of their requests.",
-        "reasonLabel": "Reason (optional)",
-        "reasonPlaceholder": "E.g. The group is full right now.",
-        "reasonTooLong": "The reason can have at most {{count}} characters.",
+        "messagePlaceholder": "E.g. The group is full right now.",
         "text": "{{name}} will see the rejection on the group page and cannot ask to join this group again.",
         "title": "Reject the request?"
       },
@@ -614,6 +661,7 @@
         "REJECTED": "Rejected {{date}}",
         "WITHDRAWN": "Withdrawn {{date}}"
       },
+      "decisionMessage": "Message from the organizer",
       "groupCancelledText": "The organizer cancelled the group, so nobody will decide this request.",
       "historyEmpty": "Rejected and withdrawn requests will show up here.",
       "historyTitle": "History",
@@ -623,7 +671,6 @@
       "message": "Your message",
       "pendingEmpty": "No request is waiting for a decision. Find groups under <discover>Discover</discover>.",
       "pendingTitle": "Pending",
-      "rejectionReason": "Reason for rejection",
       "requestedAt": "Sent {{date}}",
       "status": {
         "APPROVED": "Approved",
@@ -948,8 +995,11 @@
     }
   },
   "myEvents": {
+    "actions": {
+      "label": "Application options: {{title}}"
+    },
     "applications": {
-      "empty": "You are not signed up for any upcoming event."
+      "empty": "You have not applied to any event yet."
     },
     "empty": {
       "description": "Once you sign up for an event or post one, you will find it here.",
@@ -957,10 +1007,11 @@
       "title": "Nothing here yet"
     },
     "hosted": {
-      "empty": "You are not organizing any upcoming event."
+      "empty": "You are not organizing any event yet."
     },
     "loadMore": "Load more",
     "loading": "Loading your events",
+    "sortNote": "Events still ahead of you come first, soonest first. Then past, rejected and cancelled ones, latest first.",
     "status": {
       "APPROVED": "Approved",
       "EVENT_CANCELLED": "Event cancelled",
@@ -980,19 +1031,43 @@
   "notifications": {
     "badgeOverflow": "{{max}}+",
     "bell": "Notifications",
+    "bellEmpty": "No new notifications",
+    "bellTitle": "New notifications",
     "bellUnread_one": "Notifications, {{count}} unread",
     "bellUnread_other": "Notifications, {{count}} unread",
     "deletedTarget": "a deleted event",
-    "empty": "No notifications yet. They will show up here once something happens around your events and groups.",
     "justNow": "just now",
+    "kinds": {
+      "all": "All",
+      "events": "Events",
+      "groups": "Groups",
+      "label": "Kind of notifications",
+      "other": "Other",
+      "requests": "Requests"
+    },
     "loadError": "Notifications could not be loaded",
     "loading": "Loading notifications…",
     "markAllRead": "Mark all as read",
     "markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+    "markKindRead": "Mark these as read",
     "message": "“{{message}}”",
-    "more_one": "{{count}} more",
-    "more_other": "{{count}} more",
+    "more_one": "Load more ({{count}})",
+    "more_other": "Load more ({{count}})",
     "retry": "Try again",
+    "sections": {
+      "new": {
+        "count_one": "{{count}} unread",
+        "count_other": "{{count}} unread",
+        "empty": "No new notifications. They will show up here once something happens around your events and groups.",
+        "emptyFiltered": "No new notifications of this kind.",
+        "title": "New"
+      },
+      "read": {
+        "empty": "No read notifications yet. The ones you open or mark as read move here.",
+        "emptyFiltered": "No read notifications of this kind.",
+        "title": "Read"
+      }
+    },
     "showAll": "Show all",
     "someone": "Someone",
     "text": {
@@ -1082,6 +1157,13 @@
     "skipAll": "Skip all"
   },
   "participationRequests": {
+    "approve": {
+      "cancel": "Keep it waiting",
+      "confirm": "Approve request",
+      "messagePlaceholder": "E.g. bring indoor shoes",
+      "text": "{{name}} will get a seat at the event.",
+      "title": "Approve the request?"
+    },
     "approved": {
       "cancel": "Cancel my place",
       "description": "The organizer approved your participation.",
@@ -1110,9 +1192,17 @@
     "cancelled": {
       "description": "You cancelled your place at this event. If you change your mind, you can ask to join again."
     },
+    "decision": {
+      "messageHint": "The applicant sees it on the event and in the notification.",
+      "messageLabel": "Message for the applicant (optional)",
+      "messageTooLong": "The message can have at most {{count}} characters."
+    },
+    "decisionMessage": "Message from the organizer",
     "form": {
       "cancel": "Cancel",
       "hiddenDetails": "The organizer will not see your contact details, location, age or gender.",
+      "messageHint": "You send this message once, with your request, and cannot edit it later. Everything else is arranged after approval, through the contact or chat, if the organizer provides one.",
+      "messageHintAutomatic": "You send this message once, with your request, and cannot edit it later. Everything else is arranged through the contact or chat, if the organizer provides one.",
       "messageLabel": "Message to the organizer (optional)",
       "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
       "messageTooLong": "The message can have at most {{count}} characters.",
@@ -1256,12 +1346,9 @@
     "reject": {
       "cancel": "Keep it waiting",
       "confirm": "Reject request",
-      "reasonHint": "We keep the reason; the applicant does not see it for now.",
-      "reasonLabel": "Reason (optional)",
-      "reasonPlaceholder": "E.g. this time we are looking for beginners",
-      "reasonTooLong": "The reason can have at most {{count}} characters.",
-      "title": "Reject the request?",
-      "warning": "{{name}} will not be able to ask to join this event again."
+      "messagePlaceholder": "E.g. this time we are looking for beginners",
+      "text": "{{name}} will not be able to ask to join this event again.",
+      "title": "Reject the request?"
     },
     "rejected": {
       "description": "The organizer rejected your request, you cannot send a new one for this event."
@@ -1353,22 +1440,6 @@
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }
-  },
-  "quacks": {
-    "form": {
-      "label": "New quack",
-      "placeholder": "Quack something...",
-      "required": "Write something first",
-      "submit": "Quack",
-      "tooLong_one": "Keep it under {{count}} character",
-      "tooLong_other": "Keep it under {{count}} characters"
-    },
-    "list": {
-      "empty": "No quacks yet. Post the first one.",
-      "loadError": "Couldn't load quacks",
-      "reload": "Reload"
-    },
-    "title": "Quacks"
   },
   "terms": {
     "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",

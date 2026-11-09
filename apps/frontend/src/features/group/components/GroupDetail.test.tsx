@@ -112,6 +112,7 @@ const pending: MembershipRequest = {
   status: "PENDING",
   message: null,
   requestedAt: new Date(2026, 0, 2),
+  decisionMessage: null,
 }
 
 // What the route does: it owns the session and the sheet, and composes the page.
@@ -121,7 +122,10 @@ function Page({ userId }: { userId: string | null }) {
     ...pendingMembershipRequestsQueryOptions(group.id),
     enabled: membership.isAdmin,
   })
-  const members = useQuery({ ...groupMembersQueryOptions(group.id), enabled: membership.isAdmin })
+  const members = useQuery({
+    ...groupMembersQueryOptions(group.id),
+    enabled: membership.view === "member",
+  })
   const [step, setStep] = useState<MembershipSheetStep | null>(null)
   return (
     <>
@@ -130,6 +134,7 @@ function Page({ userId }: { userId: string | null }) {
         activityLabel="Florbal"
         membershipPanel={
           <GroupMembershipPanel
+            groupId={group.id}
             membership={membership}
             groupName={group.name}
             from="%2Fgroups%2Fg1"
@@ -146,7 +151,7 @@ function Page({ userId }: { userId: string | null }) {
           ) : undefined
         }
         membersPreview={
-          membership.isAdmin && members.data ? (
+          membership.view === "member" && members.data ? (
             <GroupMembersPreview
               groupId={group.id}
               members={members.data}
@@ -294,9 +299,29 @@ describe("GroupDetail", () => {
       expect(screen.getByText(/novou žádost poslat nejde/)).toBeVisible()
       expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
     })
+
+    // #153: what the admins wrote with the rejection.
+    it("reads the message that came with the rejection", async () => {
+      server.request = { ...pending, status: "REJECTED", decisionMessage: "Skupina je plná." }
+      server.violations = ["REJECTED_BEFORE"]
+      await renderDetail("u1")
+
+      expect(await screen.findByText("Zpráva od organizátora")).toBeVisible()
+      expect(screen.getByText("Skupina je plná.")).toBeVisible()
+    })
   })
 
   describe("a member", () => {
+    // #153: the approval message stays under the role.
+    it("reads the message that came with the approval", async () => {
+      server.role = "MEMBER"
+      server.request = { ...pending, status: "APPROVED", decisionMessage: "Vítejte!" }
+      await renderDetail("u1")
+
+      expect(await screen.findByText("Vítejte!")).toBeVisible()
+      expect(screen.getByText("Zpráva od organizátora")).toBeVisible()
+    })
+
     it("sees their state instead of the button", async () => {
       server.role = "MEMBER"
       await renderDetail("u1")
@@ -304,6 +329,14 @@ describe("GroupDetail", () => {
       expect(await screen.findByText("Jste členem")).toBeVisible()
       expect(screen.queryByRole("button", { name: "Požádat o členství" })).not.toBeInTheDocument()
       expect(screen.queryByRole("heading", { name: /Správa skupiny/ })).not.toBeInTheDocument()
+    })
+
+    it("sees the members too (visibility matrix), but not the requests", async () => {
+      server.role = "MEMBER"
+      await renderDetail("u1")
+
+      expect(await screen.findByRole("heading", { name: "Členové (9)" })).toBeVisible()
+      expect(screen.queryByRole("link", { name: /Žádosti o členství/ })).not.toBeInTheDocument()
     })
 
     it("asks before leaving, and stays when the user changes their mind", async () => {
@@ -352,12 +385,16 @@ describe("GroupDetail", () => {
   })
 
   describe("an admin", () => {
-    it.each(["OWNER", "ADMIN"] as const)(
-      "%s sees the way to the requests and the members",
-      async (role) => {
+    it.each([
+      ["OWNER", "Jste organizátorem"],
+      ["ADMIN", "Jste správcem"],
+    ] as const)(
+      "%s sees their role and the way to the requests and the members",
+      async (role, roleText) => {
         server.role = role
         await renderDetail("u1")
 
+        expect(await screen.findByText(roleText)).toBeVisible()
         expect(await screen.findByRole("link", { name: "Žádosti o členství (2)" })).toHaveAttribute(
           "href",
           "/groups/g1/members?tab=requests",
@@ -369,12 +406,16 @@ describe("GroupDetail", () => {
       },
     )
 
-    it("does not offer the owner a way out", async () => {
+    it("sends the owner to hand the group over before leaving", async () => {
       server.role = "OWNER"
       await renderDetail("u1")
 
-      expect(await screen.findByText("Jste členem")).toBeVisible()
+      expect(await screen.findByText("Jste organizátorem")).toBeVisible()
       expect(screen.queryByRole("button", { name: "Odejít ze skupiny" })).not.toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "Předat správu" })).toHaveAttribute(
+        "href",
+        "/groups/g1/members",
+      )
     })
   })
 })

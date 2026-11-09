@@ -36,7 +36,7 @@ const aRequest = (
   message: null,
   requestedAt,
   decidedAt: status === 'PENDING' ? null : requestedAt,
-  rejectionReason: null,
+  decisionMessage: null,
 });
 
 describe('joinRuleViolations', () => {
