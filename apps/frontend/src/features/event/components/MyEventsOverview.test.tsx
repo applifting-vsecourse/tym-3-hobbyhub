@@ -1,10 +1,14 @@
-import { render, screen, within } from "@testing-library/react"
+import { act, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { MyApplication } from "@/features/event/api/myEventsSchemas"
-import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
+import {
+  MyEventsOverview,
+  type ApplicationAction,
+  type MyEventsList,
+} from "@/features/event/components/MyEventsOverview"
 
 // Rows link to the detail; the router itself is not under test here.
 vi.mock("@tanstack/react-router", () => ({
@@ -67,12 +71,14 @@ const list = <T,>(items: T[], overrides: Partial<MyEventsList<T>> = {}): MyEvent
 const renderOverview = (
   applications: MyEventsList<MyApplication> = list([]),
   hosted: MyEventsList<EventListItem> = list([]),
+  onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void,
 ) =>
   render(
     <MyEventsOverview
       applications={applications}
       hosted={hosted}
       activityLabel={(activity) => activity.name}
+      onApplicationAction={onApplicationAction}
       now={NOW}
     />,
   )
@@ -177,6 +183,75 @@ describe("MyEventsOverview", () => {
     expect(screen.getByRole("link", { name: /Florbal/ })).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: /znovu|Zkusit/i }))
     expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  // #171: the way out of an application, right from the overview.
+  describe("the row's menu", () => {
+    const started = event({
+      startAt: new Date(2026, 9, 22, 7, 0),
+      endAt: new Date(2026, 9, 22, 9, 0),
+    })
+
+    it("offers to withdraw a waiting request and to cancel a seat", async () => {
+      const onApplicationAction = vi.fn()
+      const waiting = { status: "PENDING", event: event({ id: "e1", title: "Florbal" }) } as const
+      const seated = { status: "APPROVED", event: event({ id: "e2", title: "Deskovky" }) } as const
+      renderOverview(list([waiting, seated]), list([]), onApplicationAction)
+
+      await userEvent.click(screen.getByRole("button", { name: "Možnosti přihlášky: Florbal" }))
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Zrušit žádost" }))
+      expect(onApplicationAction).toHaveBeenLastCalledWith("withdraw", waiting)
+
+      await userEvent.click(screen.getByRole("button", { name: "Možnosti přihlášky: Deskovky" }))
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Zrušit účast" }))
+      expect(onApplicationAction).toHaveBeenLastCalledWith("cancel", seated)
+
+      // The row itself still leads to the detail.
+      expect(screen.getByRole("link", { name: /Deskovky/ })).toHaveAttribute("href", "/events/e2")
+    })
+
+    it.each([
+      ["a rejected request", { status: "REJECTED", event: event() }],
+      ["a seat given back", { status: "WITHDRAWN", event: event() }],
+      ["a cancelled event", { status: "EVENT_CANCELLED", event: event() }],
+      ["a seat on an event that started", { status: "APPROVED", event: started }],
+      ["a request on an event that started", { status: "PENDING", event: started }],
+    ] as const)("has nothing for %s", (_, application) => {
+      renderOverview(list([application]), list([]), vi.fn())
+
+      expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
+    })
+
+    it("goes away once the event starts on a page left open", () => {
+      vi.useFakeTimers()
+      try {
+        const startAt = new Date(2026, 9, 22, 19, 0)
+        vi.setSystemTime(new Date(startAt.getTime() - 30_000))
+        render(
+          <MyEventsOverview
+            applications={list([{ status: "APPROVED", event: event({ startAt }) }])}
+            hosted={list([])}
+            activityLabel={(activity) => activity.name}
+            onApplicationAction={vi.fn()}
+          />,
+        )
+        expect(screen.getByRole("button", { name: /Možnosti přihlášky/ })).toBeInTheDocument()
+
+        act(() => {
+          vi.advanceTimersByTime(60_000)
+        })
+
+        expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it("is not there when the page offers no action", () => {
+      renderOverview(list([{ status: "APPROVED", event: event() }]))
+
+      expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
+    })
   })
 
   it("shows the error of a list that failed on its first load and reloads it", async () => {

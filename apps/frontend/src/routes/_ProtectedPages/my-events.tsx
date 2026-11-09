@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   useInfiniteQuery,
   useSuspenseQuery,
@@ -16,6 +17,8 @@ import {
   myHostedEventsQueryOptions,
 } from "@/features/event/api/myEventsQueryOptions"
 import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
+
+import { ApplicationSheet, type ApplicationSheetState } from "./-my-events/ApplicationSheet"
 
 export const Route = createFileRoute("/_ProtectedPages/my-events")({
   component: MyEventsPage,
@@ -52,6 +55,10 @@ function MyEventsPage() {
   const userId = session?.user.id ?? ""
   const applications = useInfiniteQuery(myApplicationsQueryOptions(userId))
   const hosted = useInfiniteQuery(myHostedEventsQueryOptions(userId))
+  const applicationList = toList(applications)
+  // #171: the row's menu opens the same dialog as the event detail. The event
+  // stays chosen after the sheet closes, so it animates out with its content.
+  const [sheet, setSheet] = useState<ApplicationSheetState>({ eventId: null, step: null })
 
   return (
     <>
@@ -60,12 +67,20 @@ function MyEventsPage() {
         <h1 className="typo-h1 text-foreground">{t("myEvents.title")}</h1>
         <div className="mt-6">
           <MyEventsOverview
-            applications={toList(applications)}
+            applications={applicationList}
             hosted={toList(hosted)}
             activityLabel={(activity) => activityName(t, activity)}
+            onApplicationAction={(step, application) =>
+              setSheet({ eventId: application.event.id, step })
+            }
           />
         </div>
       </section>
+      <ApplicationSheet
+        applications={applicationList.items}
+        state={sheet}
+        onStepChange={(step) => setSheet((shown) => ({ ...shown, step }))}
+      />
     </>
   )
 }

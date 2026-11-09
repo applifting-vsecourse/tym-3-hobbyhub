@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -32,6 +33,8 @@ import {
 } from './dto/group.response.dto';
 import { MyGroupResponseDto } from './dto/my-group.response.dto';
 import { NearbyGroupsResponseDto } from './dto/nearby-groups.response.dto';
+import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
+import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { groupsValidationPipe } from './groups-validation.pipe';
 
 @ApiTags('groups')
@@ -130,12 +133,12 @@ export class GroupsController {
 
   @Get(':id/members')
   @UseGuards(AuthenticatedUserGuard)
-  @ApiOperation({ summary: 'List the members of a group (its admins only)' })
+  @ApiOperation({ summary: 'List the members of a group (its members only)' })
   @ApiResponse({ status: 200, type: [GroupMemberResponseDto] })
   @ApiResponse({ status: 401, description: 'Not signed in' })
   @ApiResponse({
     status: 404,
-    description: 'Group not found, or the user does not manage it',
+    description: 'Group not found, or the user is not a member',
   })
   async members(
     @User() user: Identity,
@@ -143,6 +146,70 @@ export class GroupsController {
   ): Promise<GroupMemberResponseDto[]> {
     const members = await this.groupsService.listMembers(id, user);
     return members.map((member) => GroupMemberResponseDto.fromDomain(member));
+  }
+
+  // F-07.3b member management. ADR-0007 decides who may do what to whom;
+  // a member without the right gets 403, anyone outside the group 404.
+  @Patch(':id/members/:userId')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiOperation({ summary: 'Name or demote an admin (the owner only)' })
+  @ApiResponse({ status: 200, type: GroupMemberResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid role, or oneself' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 403, description: 'The role does not allow it' })
+  @ApiResponse({ status: 404, description: 'Group or member not found' })
+  async changeMemberRole(
+    @User() user: Identity,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() body: UpdateMemberRoleDto,
+  ): Promise<GroupMemberResponseDto> {
+    const member = await this.groupsService.changeMemberRole(
+      id,
+      user,
+      userId,
+      body.role,
+    );
+    return GroupMemberResponseDto.fromDomain(member);
+  }
+
+  @Delete(':id/members/:userId')
+  @UseGuards(AuthenticatedUserGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a member from the group (its admins)' })
+  @ApiResponse({ status: 204, description: 'Removed' })
+  @ApiResponse({ status: 400, description: 'Oneself: leave instead' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 403, description: 'The role does not allow it' })
+  @ApiResponse({ status: 404, description: 'Group or member not found' })
+  async removeMember(
+    @User() user: Identity,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    await this.groupsService.removeMember(id, user, userId);
+  }
+
+  @Post(':id/ownership')
+  @UseGuards(AuthenticatedUserGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Hand the group over to another member (the owner only)',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Handed over; the old owner is an admin',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input, or oneself' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 403, description: 'Not the owner' })
+  @ApiResponse({ status: 404, description: 'Group or member not found' })
+  async transferOwnership(
+    @User() user: Identity,
+    @Param('id') id: string,
+    @Body() body: TransferOwnershipDto,
+  ): Promise<void> {
+    await this.groupsService.transferOwnership(id, user, body.userId);
   }
 
   @Delete(':id/membership')
