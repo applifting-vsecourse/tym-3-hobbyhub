@@ -21,6 +21,8 @@ type OwnRequestPanelProps = {
   onCancel?: () => void
   /** The button to ask again, for someone who cancelled their seat. */
   rejoinAction?: ReactNode
+  /** What the organizer wrote with the approval or the rejection (#153). */
+  decisionMessage?: string | null
 }
 
 const BADGES = {
@@ -37,6 +39,7 @@ export function OwnRequestPanel({
   onWithdraw,
   onCancel,
   rejoinAction,
+  decisionMessage,
 }: OwnRequestPanelProps) {
   const { t } = useTranslation()
 
@@ -51,6 +54,12 @@ export function OwnRequestPanel({
           ? t("participationRequests.approved.descriptionAutomatic")
           : t(`participationRequests.${view}.description`)}
       </p>
+      {decisionMessage ? (
+        <dl className="flex flex-col gap-1">
+          <dt className="typo-label">{t("participationRequests.decisionMessage")}</dt>
+          <dd className="typo-body break-words whitespace-pre-line">{decisionMessage}</dd>
+        </dl>
+      ) : null}
       {view === "pending" ? (
         <Button
           variant="outline"

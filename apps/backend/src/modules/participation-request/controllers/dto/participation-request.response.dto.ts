@@ -61,7 +61,6 @@ export const DECISION_RULE_VIOLATIONS: DecisionRuleViolation[] = [
   'APPLICANT_HAS_SEAT',
 ];
 
-// The rejection reason stays out: nobody sees it in the app yet.
 export class ParticipationRequestResponseDto {
   @ApiProperty()
   id!: string;
@@ -78,6 +77,14 @@ export class ParticipationRequestResponseDto {
   @ApiProperty({ type: String, format: 'date-time' })
   requestedAt!: Date;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "The organizer's words with an approval or a rejection (#153); null otherwise",
+  })
+  decisionMessage!: string | null;
+
   static fromDomain(
     request: ParticipationRequest,
   ): ParticipationRequestResponseDto {
@@ -87,6 +94,7 @@ export class ParticipationRequestResponseDto {
       status: request.status,
       message: request.message,
       requestedAt: request.requestedAt,
+      decisionMessage: request.decisionMessage,
     };
   }
 }
@@ -145,7 +153,7 @@ export class PendingRequestPageResponseDto {
   }
 }
 
-// F-05.6. The rejection reason stays out here too.
+// F-05.6. The organizer's own decision message stays out.
 export class DecidedRequestResponseDto {
   @ApiProperty()
   id!: string;

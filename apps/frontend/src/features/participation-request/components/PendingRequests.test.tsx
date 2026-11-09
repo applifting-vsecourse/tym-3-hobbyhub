@@ -58,6 +58,7 @@ const aRequest = (id: string, name = "Honza_K") => ({
   status: "PENDING",
   message: "Hraju třetí rok za firemní tým.",
   requestedAt: "2029-12-30T10:00:00.000Z",
+  decisionMessage: null,
   userId: `user-${id}`,
   applicant: { name, image: null, bio: "Florbal hraju od školy.", hasVerifiedEmail: true },
 })
@@ -116,8 +117,15 @@ describe("PendingRequests", () => {
     answer([])
 
     await userEvent.click(await screen.findByRole("button", { name: "Schválit" }))
+    const dialog = await screen.findByRole("dialog", { name: "Schválit žádost?" })
+    expect(within(dialog).getByText("Honza_K dostane místo na akci.")).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole("button", { name: "Schválit žádost" }))
 
-    expect(approveRequest).toHaveBeenCalledWith({ eventId: "e1", requestId: "r1" })
+    expect(approveRequest).toHaveBeenCalledWith({
+      eventId: "e1",
+      requestId: "r1",
+      message: undefined,
+    })
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Žádost schválena"))
     expect(
       await screen.findByText(
@@ -126,22 +134,43 @@ describe("PendingRequests", () => {
     ).toBeInTheDocument()
   })
 
-  it("says why an approval was refused", async () => {
+  // #153: the organizer can write to the applicant on approval too.
+  it("approves with a message for the applicant", async () => {
+    answer([aRequest("r1")])
+    approveRequest.mockResolvedValue({})
+    await renderList()
+
+    await userEvent.click(await screen.findByRole("button", { name: "Schválit" }))
+    const dialog = await screen.findByRole("dialog", { name: "Schválit žádost?" })
+    await userEvent.type(
+      within(dialog).getByLabelText("Zpráva pro žadatele (nepovinné)"),
+      " Vezmi si sálovky ",
+    )
+    await userEvent.click(within(dialog).getByRole("button", { name: "Schválit žádost" }))
+
+    expect(approveRequest).toHaveBeenCalledWith({
+      eventId: "e1",
+      requestId: "r1",
+      message: "Vezmi si sálovky",
+    })
+  })
+
+  it("says in the sheet why an approval was refused", async () => {
     answer([aRequest("r1")])
     approveRequest.mockRejectedValue(new DecisionRefusedError(["EVENT_FULL"]))
     await renderList()
     answer([aRequest("r1")])
 
     await userEvent.click(await screen.findByRole("button", { name: "Schválit" }))
+    const dialog = await screen.findByRole("dialog", { name: "Schválit žádost?" })
+    await userEvent.click(within(dialog).getByRole("button", { name: "Schválit žádost" }))
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        "Akce se mezitím zaplnila, žádost už nejde schválit.",
-      ),
-    )
+    expect(
+      await within(dialog).findByText("Akce se mezitím zaplnila, žádost už nejde schválit."),
+    ).toBeInTheDocument()
   })
 
-  it("rejects with the reason after warning that it is final", async () => {
+  it("rejects with the message after warning that it is final", async () => {
     answer([aRequest("r1")])
     rejectRequest.mockResolvedValue({})
     await renderList()
@@ -153,7 +182,7 @@ describe("PendingRequests", () => {
       within(dialog).getByText("Honza_K už o tuhle akci nebude moct požádat znovu."),
     ).toBeInTheDocument()
     await userEvent.type(
-      within(dialog).getByLabelText("Důvod (nepovinné)"),
+      within(dialog).getByLabelText("Zpráva pro žadatele (nepovinné)"),
       "  Hledáme začátečníky ",
     )
     await userEvent.click(within(dialog).getByRole("button", { name: "Zamítnout žádost" }))
@@ -161,13 +190,13 @@ describe("PendingRequests", () => {
     expect(rejectRequest).toHaveBeenCalledWith({
       eventId: "e1",
       requestId: "r1",
-      reason: "Hledáme začátečníky",
+      message: "Hledáme začátečníky",
     })
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Žádost zamítnuta"))
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 
-  it("rejects without a reason, and keeps the request when the sheet is closed", async () => {
+  it("rejects without a message, and keeps the request when the sheet is closed", async () => {
     answer([aRequest("r1")])
     await renderList()
 
@@ -181,18 +210,18 @@ describe("PendingRequests", () => {
     expect(screen.getByRole("heading", { name: "Honza_K" })).toBeInTheDocument()
   })
 
-  it("refuses a reason over 500 characters before sending", async () => {
+  it("refuses a message over 500 characters before sending", async () => {
     answer([aRequest("r1")])
     await renderList()
 
     await userEvent.click(await screen.findByRole("button", { name: "Zamítnout" }))
     const dialog = await screen.findByRole("dialog")
-    const field = within(dialog).getByLabelText("Důvod (nepovinné)")
+    const field = within(dialog).getByLabelText("Zpráva pro žadatele (nepovinné)")
     await userEvent.click(field)
     await userEvent.paste("a".repeat(501))
     await userEvent.click(within(dialog).getByRole("button", { name: "Zamítnout žádost" }))
 
-    expect(await within(dialog).findByText("Důvod může mít nejvýš 500 znaků.")).toBeInTheDocument()
+    expect(await within(dialog).findByText("Zpráva může mít nejvýš 500 znaků.")).toBeInTheDocument()
     expect(rejectRequest).not.toHaveBeenCalled()
   })
 

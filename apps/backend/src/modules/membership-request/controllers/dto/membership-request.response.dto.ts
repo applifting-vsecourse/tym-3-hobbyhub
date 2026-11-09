@@ -45,6 +45,14 @@ export class MembershipRequestResponseDto {
   @ApiProperty({ type: String, format: 'date-time' })
   requestedAt!: Date;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "The admins' words with an approval or a rejection (#153); null otherwise",
+  })
+  decisionMessage!: string | null;
+
   static fromDomain(request: MembershipRequest): MembershipRequestResponseDto {
     return {
       id: request.id,
@@ -52,6 +60,7 @@ export class MembershipRequestResponseDto {
       status: request.status,
       message: request.message,
       requestedAt: request.requestedAt,
+      decisionMessage: request.decisionMessage,
     };
   }
 }

@@ -48,6 +48,7 @@ const pending = {
   status: "PENDING" as const,
   message: null,
   requestedAt: new Date(),
+  decisionMessage: null,
 }
 
 // The page owns the step; this stands in for it.

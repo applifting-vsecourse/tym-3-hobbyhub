@@ -509,6 +509,24 @@ describeDb('ParticipationRequestRepository', () => {
       ).resolves.toEqual([{ userId, status: ParticipationStatus.APPROVED }]);
     });
 
+    // #153: the organizer's words are kept with the approval, and read back.
+    it('keeps the message of the approval', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      const requestId = await pendingOf(eventId, userId!);
+
+      await expect(
+        repository.approvePending({ eventId, requestId, message: 'Vítej', at }),
+      ).resolves.toMatchObject({ decisionMessage: 'Vítej' });
+      await expect(
+        prisma.participationRequest.findUniqueOrThrow({
+          where: { id: requestId },
+        }),
+      ).resolves.toMatchObject({ decisionMessage: 'Vítej' });
+    });
+
     it('gives the last seat to only one of two requests approved at once', async () => {
       const { eventId, userIds } = await eventWith(1, 2);
       const requestIds = await Promise.all(
@@ -674,7 +692,7 @@ describeDb('ParticipationRequestRepository', () => {
   });
 
   describe('rejectPending', () => {
-    it('rejects the waiting request once, with the reason', async () => {
+    it('rejects the waiting request once, with the message', async () => {
       const {
         eventId,
         userIds: [userId],
@@ -684,11 +702,11 @@ describeDb('ParticipationRequestRepository', () => {
       });
 
       await expect(
-        repository.rejectPending({ eventId, requestId, reason: 'Plno', at }),
+        repository.rejectPending({ eventId, requestId, message: 'Plno', at }),
       ).resolves.toMatchObject({
         status: 'REJECTED',
         decidedAt: at,
-        rejectionReason: 'Plno',
+        decisionMessage: 'Plno',
       });
       await expect(
         repository.rejectPending({ eventId, requestId, at }),

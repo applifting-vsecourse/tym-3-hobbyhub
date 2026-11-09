@@ -54,9 +54,9 @@ export class MyMembershipRequestResponseDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    description: "The admins' reason, on a rejection only",
+    description: "The admins' words with an approval or a rejection (#153)",
   })
-  rejectionReason!: string | null;
+  decisionMessage!: string | null;
 
   @ApiProperty({ type: MyMembershipRequestGroupResponseDto })
   group!: MyMembershipRequestGroupResponseDto;
@@ -70,7 +70,7 @@ export class MyMembershipRequestResponseDto {
       message: request.message,
       requestedAt: request.requestedAt,
       decidedAt: request.decidedAt,
-      rejectionReason: request.rejectionReason,
+      decisionMessage: request.decisionMessage,
       group: {
         id: request.group.id,
         name: request.group.name,

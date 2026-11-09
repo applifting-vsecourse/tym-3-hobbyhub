@@ -56,6 +56,30 @@ describe("OwnRequestPanel", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
   })
 
+  // #153: the organizer's words with the decision.
+  it.each(["approved", "rejected"] as const)(
+    "quotes the organizer's message on a %s request",
+    (view) => {
+      render(
+        <OwnRequestPanel
+          view={view}
+          approvalMode="MANUAL"
+          onWithdraw={vi.fn()}
+          decisionMessage="Vezmi si sálovky."
+        />,
+      )
+
+      expect(screen.getByText("Zpráva od organizátora")).toBeInTheDocument()
+      expect(screen.getByText("Vezmi si sálovky.")).toBeInTheDocument()
+    },
+  )
+
+  it("shows no message block without a message", () => {
+    renderPanel("approved")
+
+    expect(screen.queryByText("Zpráva od organizátora")).not.toBeInTheDocument()
+  })
+
   // F-06.4.
   it("offers to cancel a seat and says the rule", async () => {
     const onCancel = vi.fn()

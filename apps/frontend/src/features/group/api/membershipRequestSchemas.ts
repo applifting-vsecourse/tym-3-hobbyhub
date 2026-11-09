@@ -4,7 +4,7 @@ import { groupRoleSchema } from "@/features/group/api/groupSchemas"
 
 // Mirror the server-side DTOs, so the forms can tell the user before sending.
 export const MEMBERSHIP_REQUEST_MESSAGE_MAX = 500
-export const MEMBERSHIP_REJECTION_REASON_MAX = 500
+export const MEMBERSHIP_DECISION_MESSAGE_MAX = 500
 
 export const membershipRequestStatusSchema = z.enum([
   "PENDING",
@@ -34,6 +34,8 @@ export const membershipRequestSchema = z.object({
   status: membershipRequestStatusSchema,
   message: z.string().nullable(),
   requestedAt: z.coerce.date(),
+  /** The admins' words with an approval or a rejection (#153). */
+  decisionMessage: z.string().nullable(),
 })
 
 /** What the admins see of the person asking. */
@@ -76,7 +78,7 @@ export const myMembershipRequestSchema = z.object({
   message: z.string().nullable(),
   requestedAt: z.coerce.date(),
   decidedAt: z.coerce.date().nullable(),
-  rejectionReason: z.string().nullable(),
+  decisionMessage: z.string().nullable(),
   group: z.object({
     id: z.string(),
     name: z.string(),

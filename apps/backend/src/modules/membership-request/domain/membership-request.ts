@@ -2,9 +2,9 @@ import { Group, GroupRole } from '@/modules/group/domain/group';
 import { RequestStatus } from '@/modules/participation-request/domain/participation-request';
 
 // Same limits as the columns `membership_request.message` and
-// `membership_request.rejectionReason`.
+// `membership_request.decisionMessage`.
 export const MEMBERSHIP_REQUEST_MESSAGE_MAX_LENGTH = 500;
-export const MEMBERSHIP_REQUEST_REJECTION_REASON_MAX_LENGTH = 500;
+export const MEMBERSHIP_REQUEST_DECISION_MESSAGE_MAX_LENGTH = 500;
 
 // F-07.3, ADR-0008: the same life cycle as a request to join an event.
 // PENDING waits for the group's admins; APPROVED made the person a member;
@@ -19,9 +19,10 @@ export type MembershipRequest = {
   requestedAt: Date;
   // When it stopped being PENDING, by anyone's hand.
   decidedAt: Date | null;
-  // Optional, only on a rejection (ADR-0008). Only the applicant sees it, in
-  // their overview (F-07.7).
-  rejectionReason: string | null;
+  // The admins' optional words with an approval or a rejection (#153,
+  // ADR-0019). The applicant sees them on the group, in their overview (F-07.7)
+  // and in the notification.
+  decisionMessage: string | null;
 };
 
 // F-07.7: the overview of a person's own requests, newest first.

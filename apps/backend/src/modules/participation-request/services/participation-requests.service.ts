@@ -235,11 +235,12 @@ export class ParticipationRequestsService {
 
   // F-05.7. Approval takes a seat, so the repository checks the seats again
   // under a lock: the read here cannot see another organizer approving at the
-  // same moment.
+  // same moment. The message goes to the applicant (#153).
   async approveRequest(
     user: Identity,
     eventId: string,
     requestId: string,
+    message?: string,
     now: Date = new Date(),
   ): Promise<ParticipationRequest> {
     const { event, request } = await this.getDecidable(
@@ -253,6 +254,7 @@ export class ParticipationRequestsService {
     const approved = await this.repository.approvePending({
       eventId,
       requestId,
+      message,
       at: now,
     });
     if (typeof approved === 'string') throw violationsError([approved]);
@@ -265,12 +267,13 @@ export class ParticipationRequestsService {
     return approved;
   }
 
-  // F-05.7. Final for the event (ADR-0013); the reason is kept, not shown.
+  // F-05.7. Final for the event (ADR-0013); the message goes to the applicant
+  // (#153).
   async rejectRequest(
     user: Identity,
     eventId: string,
     requestId: string,
-    reason?: string,
+    message?: string,
     now: Date = new Date(),
   ): Promise<ParticipationRequest> {
     const { event, request } = await this.getDecidable(
@@ -284,7 +287,7 @@ export class ParticipationRequestsService {
     const rejected = await this.repository.rejectPending({
       eventId,
       requestId,
-      reason,
+      message,
       at: now,
     });
     if (!rejected) throw violationsError(['NOT_PENDING']);

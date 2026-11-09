@@ -21,7 +21,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 type Who = Pick<Identity, 'id'>;
 type AnEvent = { id: string };
 type AGroup = { id: string };
-type ARequest = { userId: string; rejectionReason: string | null };
+type ARequest = { userId: string; decisionMessage: string | null };
 
 @Injectable()
 export class NotificationsService {
@@ -128,8 +128,8 @@ export class NotificationsService {
       eventId: input.event.id,
       payload: {
         decision: input.decision,
-        ...(input.request.rejectionReason
-          ? { message: input.request.rejectionReason }
+        ...(input.request.decisionMessage
+          ? { message: input.request.decisionMessage }
           : {}),
       },
     });
@@ -202,8 +202,8 @@ export class NotificationsService {
       groupId: input.group.id,
       payload: {
         decision: input.decision,
-        ...(input.request.rejectionReason
-          ? { message: input.request.rejectionReason }
+        ...(input.request.decisionMessage
+          ? { message: input.request.decisionMessage }
           : {}),
       },
     });
