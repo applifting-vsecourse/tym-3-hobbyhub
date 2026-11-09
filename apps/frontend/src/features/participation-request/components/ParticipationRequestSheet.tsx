@@ -15,7 +15,14 @@ import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
 import {
@@ -139,6 +146,16 @@ function RequestForm({
                   {...field}
                 />
               </FormControl>
+              {/* F-08.1: one message with the request; anything else is
+                  arranged through the organizer's contact (F-06.5) — after
+                  approval, or straight away when seats are automatic. */}
+              <FormDescription>
+                {t(
+                  approvalMode === "AUTOMATIC"
+                    ? "participationRequests.form.messageHintAutomatic"
+                    : "participationRequests.form.messageHint",
+                )}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
