@@ -275,7 +275,9 @@ model MembershipRequest {
 
   status          RequestStatus @default(PENDING)
   message         String?       @db.VarChar(500)
-  rejectionReason String?       @db.VarChar(500)
+  // #153, ADR-0019: the admins' optional words with the decision, approval
+  // or rejection alike.
+  decisionMessage String?       @db.VarChar(500)
   requestedAt     DateTime      @default(now())
   decidedAt       DateTime?
 
@@ -424,8 +426,9 @@ model ParticipationRequest {
   message         String?       @db.VarChar(500)
   requestedAt     DateTime      @default(now())
   decidedAt       DateTime?
-  // F-05.7 optional, only on REJECTED (ADR-0008). Not shown anywhere yet.
-  rejectionReason String?       @db.VarChar(500)
+  // #153, ADR-0019: the organizer's optional words with the decision, on
+  // APPROVED or REJECTED only.
+  decisionMessage String?       @db.VarChar(500)
 
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String

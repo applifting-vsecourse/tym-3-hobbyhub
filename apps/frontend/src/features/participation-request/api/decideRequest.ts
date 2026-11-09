@@ -15,11 +15,12 @@ export class DecisionRefusedError extends Error {
   }
 }
 
-export type DecisionInput = { eventId: string; requestId: string }
+/** The message, optional either way, goes to the applicant (#153). */
+export type DecisionInput = { eventId: string; requestId: string; message?: string }
 
-async function decide(path: string, body?: { reason?: string }): Promise<ParticipationRequest> {
+async function decide(path: string, message?: string): Promise<ParticipationRequest> {
   try {
-    return participationRequestSchema.parse(await api.post(path, { json: body ?? {} }).json())
+    return participationRequestSchema.parse(await api.post(path, { json: { message } }).json())
   } catch (error) {
     // ky has already read the body into `error.data`; the response itself can
     // no longer be read.
@@ -31,10 +32,10 @@ async function decide(path: string, body?: { reason?: string }): Promise<Partici
   }
 }
 
-export function approveRequest({ eventId, requestId }: DecisionInput) {
-  return decide(`events/${eventId}/requests/${requestId}/approve`)
+export function approveRequest({ eventId, requestId, message }: DecisionInput) {
+  return decide(`events/${eventId}/requests/${requestId}/approve`, message)
 }
 
-export function rejectRequest({ eventId, requestId, reason }: DecisionInput & { reason?: string }) {
-  return decide(`events/${eventId}/requests/${requestId}/reject`, { reason })
+export function rejectRequest({ eventId, requestId, message }: DecisionInput) {
+  return decide(`events/${eventId}/requests/${requestId}/reject`, message)
 }

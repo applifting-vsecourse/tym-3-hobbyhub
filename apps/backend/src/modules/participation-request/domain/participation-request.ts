@@ -5,9 +5,9 @@ import {
 } from '@/modules/event/domain/event';
 
 // Same limits as the columns `participation_request.message` and
-// `participation_request.rejectionReason`.
+// `participation_request.decisionMessage`.
 export const PARTICIPATION_REQUEST_MESSAGE_MAX_LENGTH = 500;
-export const PARTICIPATION_REQUEST_REJECTION_REASON_MAX_LENGTH = 500;
+export const PARTICIPATION_REQUEST_DECISION_MESSAGE_MAX_LENGTH = 500;
 
 // F-06.4, ADR-0017: the participant's required words to the organizers when
 // cancelling a seat. Same limits as the column and CHECK constraints of
@@ -39,8 +39,9 @@ export type ParticipationRequest = {
   requestedAt: Date;
   // When it stopped being PENDING, by anyone's hand.
   decidedAt: Date | null;
-  // Optional, only on a rejection (ADR-0008). Nobody sees it in the app yet.
-  rejectionReason: string | null;
+  // The organizer's optional words with an approval or a rejection (#153,
+  // ADR-0019). The applicant sees them on the event, and in the notification.
+  decisionMessage: string | null;
 };
 
 // What the organizer sees of the person asking (F-05.7): no birth year,

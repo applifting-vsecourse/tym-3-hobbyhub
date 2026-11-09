@@ -54,6 +54,17 @@ export function GroupMembershipPanel({
     }
   }
 
+  const decisionMessage = membership.decisionMessage ? (
+    <dl className="flex flex-col gap-1">
+      <dt className="typo-label text-muted-foreground">
+        {t("groups.detail.membership.decisionMessage")}
+      </dt>
+      <dd className="typo-body break-words whitespace-pre-line text-foreground">
+        {membership.decisionMessage}
+      </dd>
+    </dl>
+  ) : null
+
   let content: ReactNode
   if (view === "member") {
     // The role says at once what the user may do in the group.
@@ -63,6 +74,7 @@ export function GroupMembershipPanel({
     content = (
       <>
         <StatusBadge status="approved">{roleText}</StatusBadge>
+        {decisionMessage}
         {membership.canLeave ? (
           <Button
             variant="outline"
@@ -110,6 +122,7 @@ export function GroupMembershipPanel({
         <p className="typo-small text-muted-foreground">
           {t("groups.detail.membership.rejectedText")}
         </p>
+        {decisionMessage}
       </>
     )
   } else if (view === "canRequest") {

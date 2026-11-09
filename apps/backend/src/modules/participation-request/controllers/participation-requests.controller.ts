@@ -22,6 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateParticipationRequestDto } from './dto/create-participation-request.dto';
+import { DecideParticipationRequestDto } from './dto/decide-participation-request.dto';
 import { ListDecidedRequestsQuery } from './dto/list-decided-requests.query';
 import { ListPendingRequestsQuery } from './dto/list-pending-requests.query';
 import {
@@ -31,7 +32,6 @@ import {
   ParticipationRequestResponseDto,
   PendingRequestPageResponseDto,
 } from './dto/participation-request.response.dto';
-import { RejectParticipationRequestDto } from './dto/reject-participation-request.dto';
 import { participationRequestsValidationPipe } from './participation-requests-validation.pipe';
 
 // F-06.1 requests to join, seen by the applicant, and F-05.7 the organizer's
@@ -148,15 +148,21 @@ export class ParticipationRequestsController {
   @ApiResponse({ status: 200, type: ParticipationRequestResponseDto })
   @ApiResponse({
     status: 400,
-    description: `The request cannot be approved now; \`violations\` says why: ${DECISION_RULE_VIOLATIONS.join(', ')}`,
+    description: `Invalid message, or the request cannot be approved now; \`violations\` says why: ${DECISION_RULE_VIOLATIONS.join(', ')}`,
   })
   @ApiResponse({ status: 404, description: 'Not an organizer, or no request' })
   async approve(
     @User() user: Identity,
     @Param('eventId') eventId: string,
     @Param('requestId') requestId: string,
+    @Body() body: DecideParticipationRequestDto,
   ): Promise<ParticipationRequestResponseDto> {
-    const request = await this.service.approveRequest(user, eventId, requestId);
+    const request = await this.service.approveRequest(
+      user,
+      eventId,
+      requestId,
+      body.message,
+    );
     return ParticipationRequestResponseDto.fromDomain(request);
   }
 
@@ -168,20 +174,20 @@ export class ParticipationRequestsController {
   @ApiResponse({ status: 200, type: ParticipationRequestResponseDto })
   @ApiResponse({
     status: 400,
-    description: `Invalid reason, or the request cannot be rejected now; \`violations\` says why: ${DECISION_RULE_VIOLATIONS.join(', ')}`,
+    description: `Invalid message, or the request cannot be rejected now; \`violations\` says why: ${DECISION_RULE_VIOLATIONS.join(', ')}`,
   })
   @ApiResponse({ status: 404, description: 'Not an organizer, or no request' })
   async reject(
     @User() user: Identity,
     @Param('eventId') eventId: string,
     @Param('requestId') requestId: string,
-    @Body() body: RejectParticipationRequestDto,
+    @Body() body: DecideParticipationRequestDto,
   ): Promise<ParticipationRequestResponseDto> {
     const request = await this.service.rejectRequest(
       user,
       eventId,
       requestId,
-      body.reason,
+      body.message,
     );
     return ParticipationRequestResponseDto.fromDomain(request);
   }
