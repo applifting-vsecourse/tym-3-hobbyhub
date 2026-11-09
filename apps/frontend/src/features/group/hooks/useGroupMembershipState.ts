@@ -50,6 +50,15 @@ export function useGroupMembershipState(
     else view = "canRequest"
   } else view = session.isPending ? "loading" : "visitor"
 
+  // #153: the admins' words with the decision the panel shows. A member who
+  // joined without a request, or left and came back, has nothing to quote.
+  const request = myRequestState?.request
+  let decisionMessage: string | null = null
+  if (view === "member" && request?.status === "APPROVED") decisionMessage = request.decisionMessage
+  else if (view === "rejected" && request?.status === "REJECTED") {
+    decisionMessage = request.decisionMessage
+  }
+
   return {
     view,
     /** OWNER or ADMIN: sees the requests and the members (F-07.3). */
@@ -57,6 +66,8 @@ export function useGroupMembershipState(
     /** The owner stays: a group needs one. They hand it over first (F-07.3b). */
     canLeave: view === "member" && myMembership?.role !== "OWNER",
     isOwner: view === "member" && myMembership?.role === "OWNER",
+    /** What the admins wrote with the approval or the rejection the panel shows. */
+    decisionMessage,
     /** What the server says the admins will see of the user; undefined until known. */
     applicant: myRequestState?.applicant,
     /** Resolves when the user has left; rejects when the server refuses. */

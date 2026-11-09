@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button"
 import { DecisionRefusedError } from "@/features/participation-request/api/decideRequest"
 import type { PendingRequest } from "@/features/participation-request/api/participationRequestSchemas"
 import { pendingRequestsQueryOptions } from "@/features/participation-request/api/pendingRequestsQueryOptions"
-import { RejectRequestSheet } from "@/features/participation-request/components/RejectRequestSheet"
+import {
+  DecideRequestSheet,
+  type RequestDecision,
+} from "@/features/participation-request/components/DecideRequestSheet"
 import {
   useApproveRequest,
   useRejectRequest,
@@ -41,7 +44,11 @@ export function PendingRequests({ event, onChange, now = new Date() }: PendingRe
   const requestsQuery = useInfiniteQuery(pendingRequestsQueryOptions(event.id))
   const approve = useApproveRequest(event.id, onChange)
   const reject = useRejectRequest(event.id, onChange)
-  const [rejecting, setRejecting] = useState<PendingRequest | null>(null)
+  const [deciding, setDeciding] = useState<{
+    request: PendingRequest
+    decision: RequestDecision
+  } | null>(null)
+  const decide = deciding?.decision === "approve" ? approve : reject
 
   const lock = decisionLockOf(event, now)
   const capacity = { taken: event.taken, min: event.min, max: event.max }
@@ -49,24 +56,24 @@ export function PendingRequests({ event, onChange, now = new Date() }: PendingRe
   const refusalMessage = (error: unknown, fallback: string) =>
     error instanceof DecisionRefusedError ? decisionRefusalMessage(t, error.violations) : fallback
 
-  const handleApprove = (request: PendingRequest) =>
-    approve.mutate(request.id, {
-      onSuccess: () => toast.success(t("participationRequests.manage.approved")),
-      onError: (error) =>
-        toast.error(refusalMessage(error, t("participationRequests.manage.approveFailed"))),
-    })
-
-  // Throws on failure, so the form keeps the typed reason; the sheet shows why.
-  const handleReject = async (reason: string | undefined) => {
-    if (!rejecting) return
-    await reject.mutateAsync({ requestId: rejecting.id, reason })
-    setRejecting(null)
-    toast.success(t("participationRequests.manage.rejected"))
+  // Throws on failure, so the form keeps the typed message; the sheet shows why.
+  const handleDecide = async (message: string | undefined) => {
+    if (!deciding) return
+    await decide.mutateAsync({ requestId: deciding.request.id, message })
+    setDeciding(null)
+    toast.success(
+      t(
+        deciding.decision === "approve"
+          ? "participationRequests.manage.approved"
+          : "participationRequests.manage.rejected",
+      ),
+    )
   }
 
-  const closeReject = () => {
-    setRejecting(null)
+  const openDecide = (request: PendingRequest, decision: RequestDecision) => {
+    approve.reset()
     reject.reset()
+    setDeciding({ request, decision })
   }
 
   const items = requestsQuery.data?.pages.flatMap((page) => page.items) ?? []
@@ -130,9 +137,8 @@ export function PendingRequests({ event, onChange, now = new Date() }: PendingRe
                   : {
                       outcome,
                       isApproveDisabled: isFull(capacity),
-                      isPending: approve.isPending && approve.variables === request.id,
-                      onApprove: () => handleApprove(request),
-                      onReject: () => setRejecting(request),
+                      onApprove: () => openDecide(request, "approve"),
+                      onReject: () => openDecide(request, "reject"),
                     })}
               />
             </li>
@@ -181,16 +187,23 @@ export function PendingRequests({ event, onChange, now = new Date() }: PendingRe
         ) : null}
       </h2>
       {content}
-      <RejectRequestSheet
-        request={rejecting}
-        isPending={reject.isPending}
+      <DecideRequestSheet
+        deciding={deciding}
+        isPending={decide.isPending}
         errorMessage={
-          reject.isError
-            ? refusalMessage(reject.error, t("participationRequests.manage.rejectFailed"))
+          decide.isError
+            ? refusalMessage(
+                decide.error,
+                t(
+                  deciding?.decision === "approve"
+                    ? "participationRequests.manage.approveFailed"
+                    : "participationRequests.manage.rejectFailed",
+                ),
+              )
             : null
         }
-        onConfirm={handleReject}
-        onClose={closeReject}
+        onConfirm={handleDecide}
+        onClose={() => setDeciding(null)}
       />
     </section>
   )

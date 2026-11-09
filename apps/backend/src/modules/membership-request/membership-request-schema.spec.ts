@@ -145,17 +145,23 @@ describeDb('membership request database rules', () => {
     });
   });
 
-  it('keeps a reason for rejections only, and never blank', async () => {
+  // #153, ADR-0019: the message goes with either decision.
+  it('keeps a message for decisions only, and never blank', async () => {
     await inRolledBackTransaction(async (fixture) => {
+      await createRequest(fixture, {
+        status: RequestStatus.APPROVED,
+        decidedAt: at,
+        decisionMessage: 'Vítej ve skupině!',
+      });
       await expectRefused(
         fixture.tx,
         () =>
           createRequest(fixture, {
-            status: RequestStatus.APPROVED,
+            status: RequestStatus.WITHDRAWN,
             decidedAt: at,
-            rejectionReason: 'Plno',
+            decisionMessage: 'Plno',
           }),
-        'membership_request_rejection_reason_only_rejected',
+        'membership_request_decision_message_only_decided',
       );
       await expectRefused(
         fixture.tx,
@@ -163,9 +169,9 @@ describeDb('membership request database rules', () => {
           createRequest(fixture, {
             status: RequestStatus.REJECTED,
             decidedAt: at,
-            rejectionReason: '\n\t ',
+            decisionMessage: '\n\t ',
           }),
-        'membership_request_rejection_reason_not_blank',
+        'membership_request_decision_message_not_blank',
       );
       await expectRefused(
         fixture.tx,
@@ -217,7 +223,7 @@ describeDb('membership request database rules', () => {
           status: RequestStatus.REJECTED,
           requestedAt: day(5),
           decidedAt: day(6),
-          rejectionReason: 'Plno',
+          decisionMessage: 'Plno',
         },
       );
       // Waiting on a cancelled group: nobody decides it, so it is history.
@@ -282,7 +288,7 @@ describeDb('membership request database rules', () => {
       expect(history[1]).toMatchObject({
         status: RequestStatus.REJECTED,
         decidedAt: day(6),
-        rejectionReason: 'Plno',
+        decisionMessage: 'Plno',
       });
     });
   });
@@ -380,6 +386,25 @@ describeDb('membership request database rules', () => {
       );
     });
 
+    // #153: the admins' words are kept with the approval, and read back.
+    it('keeps the message of the approval', async () => {
+      const { groupId, requestId } = await waitingRequest();
+
+      await expect(
+        repository.approvePending({
+          groupId,
+          requestId,
+          message: 'Vítej ve skupině!',
+          at,
+        }),
+      ).resolves.toMatchObject({ decisionMessage: 'Vítej ve skupině!' });
+      await expect(
+        prisma.membershipRequest.findUniqueOrThrow({
+          where: { id: requestId },
+        }),
+      ).resolves.toMatchObject({ decisionMessage: 'Vítej ve skupině!' });
+    });
+
     it('approves only once when two admins click at the same moment', async () => {
       const { groupId, requestId } = await waitingRequest();
 
@@ -434,19 +459,19 @@ describeDb('membership request database rules', () => {
       ).resolves.toBeNull();
     });
 
-    it('rejects with the reason and leaves the applicant outside', async () => {
+    it('rejects with the message and leaves the applicant outside', async () => {
       const { groupId, applicantId, requestId } = await waitingRequest();
 
       const rejected = await repository.rejectPending({
         groupId,
         requestId,
-        reason: 'Plno',
+        message: 'Plno',
         at,
       });
 
       expect(rejected).toMatchObject({
         status: 'REJECTED',
-        rejectionReason: 'Plno',
+        decisionMessage: 'Plno',
         decidedAt: at,
       });
       expect(

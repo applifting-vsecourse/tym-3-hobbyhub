@@ -18,6 +18,19 @@ export function ownSeatView({ request, violations, seat }: MyRequestState): OwnS
   return null
 }
 
+/**
+ * The organizer's words with the decision the panel shows (#153), or null. A
+ * seat given back, or one taken without a request, has nothing to quote.
+ */
+export function decisionMessageOf(
+  { request }: MyRequestState,
+  view: OwnSeatView | null,
+): string | null {
+  if (view === "approved" && request?.status === "APPROVED") return request.decisionMessage
+  if (view === "rejected" && request?.status === "REJECTED") return request.decisionMessage
+  return null
+}
+
 // The event's own reasons first: they hold for everyone, so they explain best.
 const REFUSAL_ORDER: JoinRuleViolation[] = [
   "EVENT_CANCELLED",

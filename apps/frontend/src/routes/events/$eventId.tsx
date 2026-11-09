@@ -33,7 +33,7 @@ import {
   ParticipationRequestSheet,
   type RequestSheetStep,
 } from "@/features/participation-request/components/ParticipationRequestSheet"
-import { ownSeatView } from "@/features/participation-request/lib/joinPanel"
+import { decisionMessageOf, ownSeatView } from "@/features/participation-request/lib/joinPanel"
 
 export const Route = createFileRoute("/events/$eventId")({
   component: EventDetailPage,
@@ -245,6 +245,9 @@ function EventDetailPage() {
                       : undefined
                   }
                   rejoinAction={joinAction}
+                  decisionMessage={
+                    myRequestQuery.data ? decisionMessageOf(myRequestQuery.data, ownView) : null
+                  }
                 />
               ) : undefined
             }

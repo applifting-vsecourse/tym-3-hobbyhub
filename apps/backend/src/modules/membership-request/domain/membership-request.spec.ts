@@ -26,7 +26,7 @@ const aRequest = (
   message: null,
   requestedAt: new Date('2030-01-01T12:00:00Z'),
   decidedAt: null,
-  rejectionReason: null,
+  decisionMessage: null,
   ...overrides,
 });
 

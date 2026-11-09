@@ -39,6 +39,7 @@ describe("requestToJoin", () => {
       status: "PENDING",
       message: "Ahoj",
       requestedAt: "2030-01-01T10:00:00.000Z",
+      decisionMessage: null,
     })
 
     await expect(requestToJoin({ eventId: "e1", message: "Ahoj" })).resolves.toMatchObject({
