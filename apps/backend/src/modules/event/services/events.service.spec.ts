@@ -20,7 +20,10 @@ import {
 import { mock, MockProxy } from 'jest-mock-extended';
 import { EventsService } from './events.service';
 
-const inAnHour = (): Date => new Date(Date.now() + 3600 * 1000);
+// One clock read for every fixture: two `anEvent()` calls must describe the
+// same event, not two a millisecond apart.
+const NOW = Date.now();
+const inAnHour = (): Date => new Date(NOW + 3600 * 1000);
 
 const anEvent = (overrides: Partial<Event> = {}): Event => ({
   id: 'e1',
@@ -33,8 +36,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   approvalMode: 'MANUAL',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
-  publishedAt: new Date(),
-  createdAt: new Date(),
+  publishedAt: new Date(NOW),
+  createdAt: new Date(NOW),
   minParticipants: 8,
   maxParticipants: 12,
   contributionAmount: 80,
@@ -448,8 +451,6 @@ describe('EventsService', () => {
       const { repository, notifications, service } = setup();
       const event = anEvent();
       repository.getEventById.mockResolvedValue(event);
-      // From the same object: `anEvent()` reads the clock, and two reads a
-      // millisecond apart would look like a moved start.
       repository.updateEvent.mockResolvedValue({
         ok: true,
         event: { ...event, title: 'Páteční florbal' },
@@ -852,11 +853,12 @@ describe('EventsService', () => {
     it('gives a co-organizer the whole event', async () => {
       const { repository, service } = setup();
       repository.getEventFacts.mockResolvedValue(facts(['u1', 'co']));
-      repository.getEventById.mockResolvedValue(anEvent());
+      const event = anEvent();
+      repository.getEventById.mockResolvedValue(event);
 
       await expect(
         service.getManagedEvent({ id: 'co' } as Identity, 'e1'),
-      ).resolves.toEqual(anEvent());
+      ).resolves.toEqual(event);
     });
 
     it('answers 404 to someone who does not organize it', async () => {

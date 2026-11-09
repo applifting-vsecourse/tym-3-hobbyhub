@@ -110,7 +110,8 @@ export class NotificationPageResponseDto {
   items!: NotificationResponseDto[];
 
   @ApiProperty({
-    description: 'All the recipient’s notifications, not just this page',
+    description:
+      'All the recipient’s notifications the filter lets through, not just this page',
   })
   total!: number;
 

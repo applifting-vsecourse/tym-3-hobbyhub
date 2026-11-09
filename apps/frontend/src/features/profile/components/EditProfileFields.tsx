@@ -36,6 +36,7 @@ import { PhotoError, toWebpDataUrl, type PhotoProblem } from "@/lib/webpImage"
 
 import { GENDERS } from "@/features/profile/api/profileSchemas"
 import { ProfileSection } from "@/features/profile/components/ProfileSection"
+import { RemoveLocation } from "@/features/profile/components/RemoveLocation"
 import type { EditProfileValues } from "@/features/profile/lib/editProfile"
 import { firstSportIcon } from "@/features/profile/lib/firstSport"
 import { BIO_MAX_LENGTH } from "@/features/profile/lib/profileLimits"
@@ -196,7 +197,13 @@ export function InterestsFields({ activities, activityLabel, levels }: Interests
 }
 
 /** Kde bydlím — the private home address, the same one the onboarding asks for. */
-export function LocationFields() {
+export function LocationFields({
+  hasSavedAddress,
+  onRemoved,
+}: {
+  hasSavedAddress: boolean
+  onRemoved: () => void
+}) {
   const { t } = useTranslation()
   const form = useFormContext<EditProfileValues>()
 
@@ -232,6 +239,14 @@ export function LocationFields() {
           </FormItem>
         )}
       />
+      <p className="flex items-start gap-2 typo-small text-muted-foreground">
+        <Lock
+          aria-hidden="true"
+          className="mt-0.5 size-4 shrink-0"
+        />
+        {t("profile.location.notice")}
+      </p>
+      {hasSavedAddress ? <RemoveLocation onRemoved={onRemoved} /> : null}
     </ProfileSection>
   )
 }

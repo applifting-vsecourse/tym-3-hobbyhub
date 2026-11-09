@@ -7,6 +7,11 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
     // Checked by the server whatever the form says; the same limit as the
     // frontend's sign-up schema. Answers with PASSWORD_TOO_SHORT.
     minPasswordLength: 8,
+    // F-03.5: the link from the e-mail works for an hour, once; setting a new
+    // password signs the account out everywhere (the sign-in that follows is
+    // the person's own).
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
   },
   user: {
     additionalFields: {
@@ -66,6 +71,10 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
       // cap on top, per IP (or one shared bucket where no IP is known),
       // against mail bombing.
       '/send-verification-email': { window: 60, max: 30 },
+      // F-03.5: same idea for the reset e-mail (once a minute per address
+      // around the send, coarse cap per IP here) and a cap on guessing tokens.
+      '/request-password-reset': { window: 60, max: 30 },
+      '/reset-password': { window: 15 * 60, max: 10 },
     },
   },
   plugins: [openAPI(), username()],
