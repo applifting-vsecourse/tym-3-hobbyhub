@@ -47,7 +47,7 @@ export const Route = createFileRoute("/groups/$groupId")({
 
 // Public detail (F-02.5): outside the protected pages, so a visitor can open it
 // from an event. A signed-in user asks to join right here (F-07.3), and the
-// group's admins see the requests and members.
+// group's members see the members and its admins the requests.
 function GroupDetailPage() {
   const { groupId } = Route.useParams()
   const { t } = useTranslation()
@@ -75,7 +75,7 @@ function GroupDetailPage() {
   })
   const membersQuery = useQuery({
     ...groupMembersQueryOptions(groupId),
-    enabled: membership.isAdmin,
+    enabled: membership.view === "member",
   })
   // The sheet lives here, not in the panel: sending a request swaps the button
   // for the pending request, and the sheet has to survive that.
@@ -137,6 +137,7 @@ function GroupDetailPage() {
             activityLabel={activityName(t, groupQuery.data.activity)}
             membershipPanel={
               <GroupMembershipPanel
+                groupId={groupId}
                 membership={membership}
                 groupName={groupQuery.data.name}
                 from={encodeRedirectUri(location)}
@@ -169,7 +170,7 @@ function GroupDetailPage() {
               />
             }
             membersPreview={
-              membership.isAdmin && membersQuery.data ? (
+              membership.view === "member" && membersQuery.data ? (
                 <GroupMembersPreview
                   groupId={groupId}
                   members={membersQuery.data}
