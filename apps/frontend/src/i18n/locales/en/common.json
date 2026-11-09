@@ -1140,6 +1140,8 @@
     "form": {
       "cancel": "Cancel",
       "hiddenDetails": "The organizer will not see your contact details, location, age or gender.",
+      "messageHint": "You send this message once, with your request, and cannot edit it later. Everything else is arranged after approval, through the contact or chat, if the organizer provides one.",
+      "messageHintAutomatic": "You send this message once, with your request, and cannot edit it later. Everything else is arranged through the contact or chat, if the organizer provides one.",
       "messageLabel": "Message to the organizer (optional)",
       "messagePlaceholder": "E.g. I have played for a year, but I am still new to the stick…",
       "messageTooLong": "The message can have at most {{count}} characters.",

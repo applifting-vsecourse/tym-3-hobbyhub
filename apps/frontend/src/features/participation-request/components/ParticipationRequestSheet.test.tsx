@@ -127,6 +127,23 @@ describe("ParticipationRequestSheet", () => {
     ).toBeInTheDocument()
   })
 
+  // F-08.1: the message is sent once; the rest is arranged after approval.
+  it("says the message is one-off and how to talk to the organizer later", async () => {
+    await renderSheet("form")
+
+    expect(await messageField()).toHaveAccessibleDescription(
+      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne po schválení přes kontakt nebo chat, pokud ho organizátor uvede.",
+    )
+  })
+
+  it("does not mention approval in the hint when seats are given automatically", async () => {
+    await renderSheet("form", "AUTOMATIC")
+
+    expect(await messageField()).toHaveAccessibleDescription(
+      "Zprávu pošleš jednou se žádostí a později ji upravit nejde. Další domluva proběhne přes kontakt nebo chat, pokud ho organizátor uvede.",
+    )
+  })
+
   it("sends the trimmed message and shows the request as sent", async () => {
     requestToJoin.mockResolvedValue({ ...pending, message: "Hraju třetím rokem." })
     await renderSheet("form")
