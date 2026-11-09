@@ -1,4 +1,9 @@
-import { EventListPage, Page } from '@/modules/event/domain/event';
+import {
+  EventFilter,
+  eventListFilterViolations,
+  EventListPage,
+  Page,
+} from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import {
   applicationStatusOf,
@@ -7,7 +12,14 @@ import {
 } from '@/modules/my-events/domain/my-events';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import { Identity } from '@/shared/auth/domain/identity';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+
+// The same rule between fields as the public list (#177).
+const assertValidFilter = (filter: EventFilter): void => {
+  if (eventListFilterViolations(filter).length > 0) {
+    throw new BadRequestException('dateFrom must not be after dateTo');
+  }
+};
 
 @Injectable()
 export class MyEventsService {
@@ -16,14 +28,17 @@ export class MyEventsService {
     private readonly requestsService: ParticipationRequestsService,
   ) {}
 
-  // One page of the person's applications, soonest event first.
+  // One page of the person's applications: waiting and approved ones to
+  // events still on first, soonest first; then the rest, latest first.
   async getApplications(
     user: Identity,
     page: Page,
+    filter: EventFilter,
     now: Date = new Date(),
   ): Promise<MyApplicationPage> {
+    assertValidFilter(filter);
     const { items: facts, total } =
-      await this.requestsService.getMyApplicationFacts(user, page, now);
+      await this.requestsService.getMyApplicationFacts(user, page, filter, now);
     const events = await this.eventsService.getListItemsByIds(
       facts.map((entry) => entry.eventId),
     );
@@ -37,11 +52,15 @@ export class MyEventsService {
     return { items, total, nextOffset: next < total ? next : null };
   }
 
-  getHosted(
+  // One page of the events the person organizes: the ones still on first,
+  // soonest first; then the ones that are over, latest first.
+  async getHosted(
     user: Identity,
     page: Page,
+    filter: EventFilter,
     now: Date = new Date(),
   ): Promise<EventListPage> {
-    return this.eventsService.getUpcomingOrganizedEvents(user, page, now);
+    assertValidFilter(filter);
+    return await this.eventsService.getOrganizedEvents(user, page, filter, now);
   }
 }

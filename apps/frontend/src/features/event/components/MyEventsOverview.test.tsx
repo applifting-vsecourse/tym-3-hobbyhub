@@ -1,6 +1,8 @@
-import { act, render, screen, within } from "@testing-library/react"
+import { act, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+
+import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { MyApplication } from "@/features/event/api/myEventsSchemas"
@@ -8,29 +10,8 @@ import {
   MyEventsOverview,
   type ApplicationAction,
   type MyEventsList,
+  type MyEventsTab,
 } from "@/features/event/components/MyEventsOverview"
-
-// Rows link to the detail; the router itself is not under test here.
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    params,
-    children,
-    ...props
-  }: {
-    to: string
-    params?: { eventId: string }
-    children: React.ReactNode
-    className?: string
-  }) => (
-    <a
-      href={params ? `/events/${params.eventId}` : to}
-      {...props}
-    >
-      {children}
-    </a>
-  ),
-}))
 
 const NOW = new Date(2026, 9, 22, 8, 0)
 
@@ -68,15 +49,27 @@ const list = <T,>(items: T[], overrides: Partial<MyEventsList<T>> = {}): MyEvent
   ...overrides,
 })
 
+type Options = {
+  tab?: MyEventsTab
+  isFiltered?: boolean
+  onClearFilters?: () => void
+  onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void
+}
+
+// Through a router: the tabs and the rows are links.
 const renderOverview = (
   applications: MyEventsList<MyApplication> = list([]),
   hosted: MyEventsList<EventListItem> = list([]),
-  onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void,
+  { tab = "applications", isFiltered = false, onClearFilters, onApplicationAction }: Options = {},
 ) =>
-  render(
+  renderWithRouter(
     <MyEventsOverview
       applications={applications}
       hosted={hosted}
+      tab={tab}
+      isFiltered={isFiltered}
+      onClearFilters={onClearFilters}
+      filters={<p>filters-slot</p>}
       activityLabel={(activity) => activity.name}
       onApplicationAction={onApplicationAction}
       now={NOW}
@@ -84,8 +77,8 @@ const renderOverview = (
   )
 
 describe("MyEventsOverview", () => {
-  it("shows every application with its state and links to the event", () => {
-    renderOverview(
+  it("shows every application with its state and links to the event", async () => {
+    await renderOverview(
       list([
         { status: "PENDING", event: event({ id: "e1", title: "Florbal" }) },
         { status: "APPROVED", event: event({ id: "e2", title: "Deskovky" }) },
@@ -95,7 +88,7 @@ describe("MyEventsOverview", () => {
       ]),
     )
 
-    const applications = screen.getByRole("tabpanel")
+    const applications = screen.getByRole("list")
     expect(within(applications).getAllByRole("link")).toHaveLength(5)
     for (const label of [
       "Čeká na schválení",
@@ -112,37 +105,79 @@ describe("MyEventsOverview", () => {
     )
   })
 
-  it("shows the totals in the tabs, not the number of loaded rows", () => {
-    renderOverview(
+  it("shows the totals in the tabs, not the number of loaded rows", async () => {
+    await renderOverview(
       list([{ status: "PENDING", event: event() }], { total: 45, hasMore: true }),
       list([event({ id: "h1" })], { total: 12 }),
     )
 
-    expect(screen.getByRole("tab", { name: "Přihlášky (45)" })).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Pořádám (12)" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Přihlášky (45)" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Pořádám (12)" })).toBeInTheDocument()
+  })
+
+  // #177: the tab lives in the URL, so a link can open either one.
+  it("links the tabs to their URL and marks the one on screen", async () => {
+    await renderOverview(list([{ status: "PENDING", event: event() }]), list([event()]))
+
+    const tabs = screen.getByRole("navigation", { name: "Moje akce" })
+    const applications = within(tabs).getByRole("link", { name: /Přihlášky/ })
+    const hosted = within(tabs).getByRole("link", { name: /Pořádám/ })
+    expect(applications).toHaveAttribute("href", "/my-events")
+    expect(applications).toHaveAttribute("aria-current", "page")
+    expect(hosted).toHaveAttribute("href", "/my-events?tab=hosted")
+    expect(hosted).not.toHaveAttribute("aria-current")
   })
 
   it("lists hosted events in their own tab without an application state", async () => {
-    renderOverview(list([]), list([event({ id: "h1", title: "Moje akce" })]))
-
-    await userEvent.click(screen.getByRole("tab", { name: /Pořádám/ }))
-    const hosted = screen.getByRole("tabpanel")
-    expect(within(hosted).getByRole("link", { name: /Moje akce/ })).toHaveAttribute(
-      "href",
-      "/events/h1",
+    await renderOverview(
+      list([{ status: "APPROVED", event: event({ id: "e1", title: "Cizí akce" }) }]),
+      list([event({ id: "h1", title: "Moje akce" })]),
+      { tab: "hosted" },
     )
+
+    expect(screen.getByRole("link", { name: /Pořádám/ })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("link", { name: /Moje akce/ })).toHaveAttribute("href", "/events/h1")
+    expect(screen.queryByRole("link", { name: /Cizí akce/ })).not.toBeInTheDocument()
     expect(screen.queryByText("Schváleno")).not.toBeInTheDocument()
   })
 
   it("says so in a tab that has nothing", async () => {
-    renderOverview(list([{ status: "PENDING", event: event() }]), list([]))
+    await renderOverview(list([{ status: "PENDING", event: event() }]), list([]), {
+      tab: "hosted",
+    })
 
-    await userEvent.click(screen.getByRole("tab", { name: /Pořádám/ }))
-    expect(screen.getByText("Nepořádáte žádnou nadcházející akci.")).toBeInTheDocument()
+    expect(screen.getByText("Zatím nepořádáte žádnou akci.")).toBeInTheDocument()
   })
 
-  it("offers to find an event when there is nothing at all", () => {
-    renderOverview()
+  it("shows the filters with the tabs", async () => {
+    await renderOverview(list([{ status: "PENDING", event: event() }]))
+
+    expect(screen.getByText("filters-slot")).toBeInTheDocument()
+  })
+
+  it("says nothing matches a filter and offers to clear it", async () => {
+    const onClearFilters = vi.fn()
+    await renderOverview(list([]), list([]), { isFiltered: true, onClearFilters })
+
+    // Not "nothing yet": the tabs and the filters stay, so the filter can change.
+    expect(screen.queryByText("Zatím tu nic není")).not.toBeInTheDocument()
+    expect(screen.getByText("filters-slot")).toBeInTheDocument()
+    expect(screen.getByText("Nic nenalezeno")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Vymazat filtry" }))
+    expect(onClearFilters).toHaveBeenCalledOnce()
+  })
+
+  it("marks the rows of the previous filter while the new ones load", async () => {
+    await renderOverview(list([{ status: "PENDING", event: event() }], { isStale: true }))
+
+    expect(screen.getByRole("list").parentElement?.parentElement).toHaveAttribute(
+      "aria-busy",
+      "true",
+    )
+  })
+
+  it("offers to find an event when there is nothing at all", async () => {
+    await renderOverview()
 
     expect(screen.getByText("Zatím tu nic není")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Najít akci" })).toHaveAttribute("href", "/events")
@@ -150,7 +185,7 @@ describe("MyEventsOverview", () => {
 
   it("loads the next page on request and keeps the rows loaded", async () => {
     const onLoadMore = vi.fn()
-    renderOverview(
+    await renderOverview(
       list([{ status: "PENDING", event: event({ title: "Florbal" }) }], {
         total: 30,
         hasMore: true,
@@ -164,15 +199,15 @@ describe("MyEventsOverview", () => {
     expect(screen.getByRole("link", { name: /Florbal/ })).toBeInTheDocument()
   })
 
-  it("hides the button on the last page", () => {
-    renderOverview(list([{ status: "PENDING", event: event() }], { hasMore: false }))
+  it("hides the button on the last page", async () => {
+    await renderOverview(list([{ status: "PENDING", event: event() }], { hasMore: false }))
 
     expect(screen.queryByRole("button", { name: "Načíst další" })).not.toBeInTheDocument()
   })
 
   it("keeps the rows when a later page or a reload fails, and retries that", async () => {
     const onRetry = vi.fn()
-    renderOverview(
+    await renderOverview(
       list([{ status: "PENDING", event: event({ title: "Florbal" }) }], {
         error: new Error("boom"),
         hasMore: true,
@@ -196,7 +231,7 @@ describe("MyEventsOverview", () => {
       const onApplicationAction = vi.fn()
       const waiting = { status: "PENDING", event: event({ id: "e1", title: "Florbal" }) } as const
       const seated = { status: "APPROVED", event: event({ id: "e2", title: "Deskovky" }) } as const
-      renderOverview(list([waiting, seated]), list([]), onApplicationAction)
+      await renderOverview(list([waiting, seated]), list([]), { onApplicationAction })
 
       await userEvent.click(screen.getByRole("button", { name: "Možnosti přihlášky: Florbal" }))
       await userEvent.click(await screen.findByRole("menuitem", { name: "Zrušit žádost" }))
@@ -216,21 +251,23 @@ describe("MyEventsOverview", () => {
       ["a cancelled event", { status: "EVENT_CANCELLED", event: event() }],
       ["a seat on an event that started", { status: "APPROVED", event: started }],
       ["a request on an event that started", { status: "PENDING", event: started }],
-    ] as const)("has nothing for %s", (_, application) => {
-      renderOverview(list([application]), list([]), vi.fn())
+    ] as const)("has nothing for %s", async (_, application) => {
+      await renderOverview(list([application]), list([]), { onApplicationAction: vi.fn() })
 
       expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
     })
 
-    it("goes away once the event starts on a page left open", () => {
-      vi.useFakeTimers()
+    it("goes away once the event starts on a page left open", async () => {
+      // Only the clock and the minute tick are fake, so the router still loads.
+      vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] })
       try {
         const startAt = new Date(2026, 9, 22, 19, 0)
         vi.setSystemTime(new Date(startAt.getTime() - 30_000))
-        render(
+        await renderWithRouter(
           <MyEventsOverview
             applications={list([{ status: "APPROVED", event: event({ startAt }) }])}
             hosted={list([])}
+            tab="applications"
             activityLabel={(activity) => activity.name}
             onApplicationAction={vi.fn()}
           />,
@@ -247,8 +284,8 @@ describe("MyEventsOverview", () => {
       }
     })
 
-    it("is not there when the page offers no action", () => {
-      renderOverview(list([{ status: "APPROVED", event: event() }]))
+    it("is not there when the page offers no action", async () => {
+      await renderOverview(list([{ status: "APPROVED", event: event() }]))
 
       expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
     })
@@ -256,7 +293,10 @@ describe("MyEventsOverview", () => {
 
   it("shows the error of a list that failed on its first load and reloads it", async () => {
     const onReload = vi.fn()
-    renderOverview(list([], { error: new Error("boom"), onReload }), list([event()], { total: 1 }))
+    await renderOverview(
+      list([], { error: new Error("boom"), onReload }),
+      list([event()], { total: 1 }),
+    )
 
     await userEvent.click(screen.getByRole("button", { name: /znovu|Zkusit/i }))
     expect(onReload).toHaveBeenCalledOnce()

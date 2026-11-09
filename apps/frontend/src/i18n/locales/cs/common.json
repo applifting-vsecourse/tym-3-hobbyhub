@@ -1006,7 +1006,7 @@
       "label": "Možnosti přihlášky: {{title}}"
     },
     "applications": {
-      "empty": "Na žádnou nadcházející akci nejste přihlášeni."
+      "empty": "Zatím nemáte žádnou přihlášku na akci."
     },
     "empty": {
       "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
@@ -1014,10 +1014,11 @@
       "title": "Zatím tu nic není"
     },
     "hosted": {
-      "empty": "Nepořádáte žádnou nadcházející akci."
+      "empty": "Zatím nepořádáte žádnou akci."
     },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
+    "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",
       "EVENT_CANCELLED": "Akce zrušena",

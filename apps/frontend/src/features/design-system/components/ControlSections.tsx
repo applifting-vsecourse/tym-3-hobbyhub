@@ -7,6 +7,7 @@ import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
 import { Counter } from "@/components/hobbyhub/Counter"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
+import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 import { PhotoPicker } from "@/components/hobbyhub/PhotoPicker"
 import {
   ProfilePicturePicker,
@@ -213,7 +214,7 @@ export function ControlSections() {
       <ShowcaseSection
         id="filtry"
         title="Vyhledávání, filtr a přepínač"
-        description="Vyhledávání s tlačítkem filtrů, přepínací filtry pod ním a přepínač výpisu mezi mapou a seznamem."
+        description="Vyhledávání s tlačítkem filtrů, přepínací filtry pod ním, přepínač výpisu mezi mapou a seznamem a taby stránky, které žijí v adrese."
       >
         <Example label="Vyhledávání — tlačítko filtrů otevře spodní panel">
           <SearchWithFilters />
@@ -226,6 +227,24 @@ export function ControlSections() {
             value={view}
             onValueChange={setView}
           />
+        </Example>
+        <Example label="Taby stránky v adrese (odkazy, např. /groups?tab=discover)">
+          <PageTabs label="Ukázka tabů stránky">
+            <PageTab
+              to="/groups"
+              search={{}}
+              isActive
+            >
+              Moje skupiny
+            </PageTab>
+            <PageTab
+              to="/groups"
+              search={{ tab: "discover" }}
+              isActive={false}
+            >
+              Objevit
+            </PageTab>
+          </PageTabs>
         </Example>
       </ShowcaseSection>
 
