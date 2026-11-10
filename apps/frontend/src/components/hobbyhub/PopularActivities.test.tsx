@@ -158,6 +158,20 @@ describe("PopularActivities", () => {
     expect(names.at(-1)).toBe("Oblíbená 36")
   })
 
+  it("still adds 20 new tags when the stretched batch reaches another pinned one", async () => {
+    const user = userEvent.setup()
+    // "Oblíbená 36" is the one the batch reaches for in place of "Oblíbená 20".
+    render(<Harness initial={["ranked-20", "ranked-36"]} />)
+
+    await user.click(screen.getByRole("button", { name: `Načíst další (${POPULAR_MORE})` }))
+
+    const names = tagNames()
+    expect(names).toHaveLength(2 + POPULAR_FIRST + POPULAR_MORE)
+    expect(names.at(-1)).toBe("Oblíbená 37")
+    // The first new tag takes the focus.
+    expect(screen.getByRole("button", { name: "Oblíbená 16" })).toHaveFocus()
+  })
+
   it("starts with earlier choices that have no tag on show on top", () => {
     render(<Harness initial={["other-5", "ranked-40"]} />)
 

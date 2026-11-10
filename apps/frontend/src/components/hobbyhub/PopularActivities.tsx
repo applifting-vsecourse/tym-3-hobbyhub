@@ -86,10 +86,16 @@ export function PopularActivities({
   // The new tags take the focus, so a keyboard user carries on where they appear.
   const showMore = () => {
     const firstNew = shown.length
-    // A pinned tag already on show takes no place in the next batch.
-    const shownFromBatch = ordered.slice(shownCount, shownCount + POPULAR_MORE)
-    const skipped = shownFromBatch.filter((activity) => pinnedIds.includes(activity.id)).length
-    setShownCount((count) => count + POPULAR_MORE + skipped)
+    // A pinned tag is already on show, so it takes no place in the next batch:
+    // reach on until the batch has its full count of new tags, or the list ends.
+    let nextCount = shownCount
+    let added = 0
+    for (const activity of ordered.slice(shownCount)) {
+      if (added === POPULAR_MORE) break
+      if (!pinnedIds.includes(activity.id)) added += 1
+      nextCount += 1
+    }
+    setShownCount(nextCount)
     requestAnimationFrame(() => {
       listRef.current?.querySelectorAll("button")[firstNew]?.focus()
     })

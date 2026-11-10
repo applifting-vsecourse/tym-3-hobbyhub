@@ -15,7 +15,7 @@ const DAY_IN_MS = 24 * HOUR_IN_MS;
 // `icon` is the key in the frontend (ActivityIcon.tsx): for a category the key
 // of its icon, for an activity its own key (translation + icon; an activity
 // without its own drawing shows its category's icon).
-const ACTIVITY_CATEGORIES = [
+export const ACTIVITY_CATEGORIES = [
   {
     name: 'Míčové sporty',
     icon: 'micove-sporty',
@@ -223,7 +223,7 @@ const ACTIVITY_CATEGORIES = [
 ];
 
 // Most popular first, as migration 20261109140000_oblibenost_aktivit sets them.
-const POPULAR_ACTIVITY_ICONS = [
+export const POPULAR_ACTIVITY_ICONS = [
   'fotbal',
   'beh',
   'posilovna',
@@ -302,7 +302,9 @@ export async function seedLookups(prisma: PrismaService): Promise<void> {
       const popularityRank = rank > 0 ? rank : null;
       await prisma.activity.upsert({
         where: { name },
-        update: { popularityRank },
+        // An activity already in the database follows the catalog: its category
+        // and icon may have changed since it was created.
+        update: { categoryId, icon, popularityRank },
         create: {
           name,
           icon,

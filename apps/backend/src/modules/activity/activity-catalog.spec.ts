@@ -7,6 +7,25 @@
 import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { ActivityRepository } from '@/modules/activity/repositories/activity.repository';
+import {
+  ACTIVITY_CATEGORIES,
+  POPULAR_ACTIVITY_ICONS,
+} from '@/scripts/seed/seed/seed-events';
+
+type StoredActivity = {
+  icon: string;
+  popularityRank: number | null;
+  category: { icon: string };
+};
+
+// What the comparison with the seed looks at; a missing activity shows as undefined fields.
+const pick = (
+  activity: StoredActivity | undefined,
+): Partial<Omit<StoredActivity, 'category'> & { category: string }> => ({
+  icon: activity?.icon,
+  category: activity?.category.icon,
+  popularityRank: activity?.popularityRank,
+});
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
@@ -129,6 +148,27 @@ describeDb('activity catalogue', () => {
     expect(new Set(ranked.map((activity) => activity.category.icon))).toEqual(
       new Set(MAIN_CATEGORIES.filter((icon) => icon !== 'ostatni')),
     );
+  });
+
+  // The migrations and the seed write the catalogue out separately; they must agree.
+  it('holds every activity of the seed with its icon, category and rank', async () => {
+    const stored = await prisma.activity.findMany({
+      where: { category: { icon: { in: MAIN_CATEGORIES } } },
+      include: { category: true },
+    });
+    const byName = new Map(stored.map((activity) => [activity.name, activity]));
+
+    for (const category of ACTIVITY_CATEGORIES) {
+      for (const { name, icon } of category.activities) {
+        const rank = POPULAR_ACTIVITY_ICONS.indexOf(icon) + 1;
+        expect({ name, ...pick(byName.get(name)) }).toEqual({
+          name,
+          icon,
+          category: category.icon,
+          popularityRank: rank > 0 ? rank : null,
+        });
+      }
+    }
   });
 
   it('refuses a rank that is not positive', async () => {
