@@ -21,6 +21,7 @@ const mapPrismaActivityWithCategoryToDomain = (
   activity: PrismaActivity & { category: PrismaActivityCategory },
 ): ActivityWithCategory => ({
   ...mapPrismaActivityToDomain(activity),
+  popularityRank: activity.popularityRank,
   category: {
     id: activity.category.id,
     name: activity.category.name,

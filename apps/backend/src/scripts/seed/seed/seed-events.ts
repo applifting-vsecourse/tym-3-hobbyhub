@@ -222,6 +222,50 @@ const ACTIVITY_CATEGORIES = [
   },
 ];
 
+// Most popular first, as migration 20261109140000_oblibenost_aktivit sets them.
+const POPULAR_ACTIVITY_ICONS = [
+  'fotbal',
+  'beh',
+  'posilovna',
+  'plavani',
+  'cyklistika',
+  'tenis',
+  'basketbal',
+  'joga',
+  'volejbal',
+  'turistika',
+  'deskove-hry',
+  'badminton',
+  'sachy',
+  'lezeni',
+  'stolni-tenis',
+  'konzolove-hry',
+  'florbal',
+  'lyzovani',
+  'bowling',
+  'box',
+  'salsa',
+  'pub-kviz',
+  'brusleni',
+  'paddleboard',
+  'golf',
+  'unikove-hry',
+  'cviceni',
+  'squash',
+  'lukostrelba',
+  'karate',
+  'inline-brusleni',
+  'ledni-hokej',
+  'sipky',
+  'zumba',
+  'padel',
+  'karetni-hry',
+  'vodactvi',
+  'beach-volejbal',
+  'tymove-esporty',
+  'pilates',
+];
+
 const LEVELS = [
   'Začátečníci',
   'Mírně pokročilí',
@@ -254,15 +298,18 @@ export async function seedLookups(prisma: PrismaService): Promise<void> {
     });
 
     for (const { name, icon, min, max } of category.activities) {
+      const rank = POPULAR_ACTIVITY_ICONS.indexOf(icon) + 1;
+      const popularityRank = rank > 0 ? rank : null;
       await prisma.activity.upsert({
         where: { name },
-        update: {},
+        update: { popularityRank },
         create: {
           name,
           icon,
           categoryId,
           defaultMinParticipants: min,
           defaultMaxParticipants: max,
+          popularityRank,
         },
       });
     }

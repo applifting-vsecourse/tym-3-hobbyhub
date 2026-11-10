@@ -828,10 +828,16 @@
       "zimni-sporty": "Winter and ice sports"
     },
     "activityCombobox": {
+      "andMore": "{{first}} + {{more}}",
+      "back": "Back to categories",
+      "categories": "Categories",
+      "chosenCount_one": "{{count}} chosen",
+      "chosenCount_other": "{{count}} chosen",
+      "description": "Pick a category and an activity in it, or search for the activity.",
+      "done": "Done",
       "noMatch": "No activity matches",
       "search": "Search activities…",
-      "selected_one": "{{count}} activity",
-      "selected_other": "{{count}} activities",
+      "selectAll": "Select all ({{total}})",
       "unknown": "Unknown activity"
     },
     "avatars": {
@@ -877,6 +883,7 @@
       "activitiesRetry": "Try again",
       "activity": "Activity",
       "activityPlaceholder": "All activities",
+      "chosenActivities": "Chosen activities",
       "clear": "Clear",
       "dateFrom": "From date",
       "dateRangeReversed": "The end of the range cannot be before the start.",
@@ -1205,8 +1212,10 @@
       "empty": "No activities are available yet.",
       "levelPlaceholder": "Add level",
       "loadError": "The activities could not be loaded.",
+      "loadMore": "Load more ({{more}})",
       "loading": "Loading activities",
       "pickedTitle": "Your activities",
+      "quickPickTitle": "Quick pick",
       "remove": "Remove {{activity}}",
       "title": "What do you like to play?",
       "validation": {

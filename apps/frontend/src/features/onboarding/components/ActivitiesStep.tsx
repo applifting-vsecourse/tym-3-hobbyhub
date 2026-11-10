@@ -157,6 +157,7 @@ export function ActivitiesStep({
                   levels={levels}
                   value={field.value}
                   onChange={field.onChange}
+                  hasPopular
                 />
                 <FormMessage />
               </FormItem>

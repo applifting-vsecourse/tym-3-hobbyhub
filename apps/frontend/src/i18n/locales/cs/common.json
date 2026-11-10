@@ -842,11 +842,17 @@
       "zimni-sporty": "Zimní a ledové sporty"
     },
     "activityCombobox": {
+      "andMore": "{{first}} + {{more}}",
+      "back": "Zpět na kategorie",
+      "categories": "Kategorie",
+      "chosenCount_few": "{{count}} vybrané",
+      "chosenCount_one": "{{count}} vybraná",
+      "chosenCount_other": "{{count}} vybraných",
+      "description": "Vyberte kategorii a v ní aktivitu, nebo aktivitu vyhledejte.",
+      "done": "Hotovo",
       "noMatch": "Žádná aktivita neodpovídá",
       "search": "Hledat aktivitu…",
-      "selected_few": "{{count}} aktivity",
-      "selected_one": "{{count}} aktivita",
-      "selected_other": "{{count}} aktivit",
+      "selectAll": "Vybrat všechny ({{total}})",
       "unknown": "Neznámá aktivita"
     },
     "avatars": {
@@ -892,6 +898,7 @@
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
+      "chosenActivities": "Vybrané aktivity",
       "clear": "Vymazat",
       "dateFrom": "Od data",
       "dateRangeReversed": "Konec rozsahu nemůže být před začátkem.",
@@ -1225,8 +1232,10 @@
       "empty": "Zatím nejsou k dispozici žádné aktivity.",
       "levelPlaceholder": "Přidat úroveň",
       "loadError": "Aktivity se nepodařilo načíst.",
+      "loadMore": "Načíst další ({{more}})",
       "loading": "Načítáme aktivity",
       "pickedTitle": "Vaše aktivity",
+      "quickPickTitle": "Rychlý výběr",
       "remove": "Odebrat {{activity}}",
       "title": "Co rádi hrajete?",
       "validation": {

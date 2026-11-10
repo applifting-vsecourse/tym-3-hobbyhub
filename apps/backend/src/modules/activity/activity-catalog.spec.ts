@@ -110,4 +110,30 @@ describeDb('activity catalogue', () => {
     const orders = catalogue.map((activity) => activity.category.order);
     expect(orders).toEqual([...orders].sort((a, b) => a - b));
   });
+
+  it('ranks the 40 most popular activities 1–40, football first', async () => {
+    const ranked = await prisma.activity.findMany({
+      where: {
+        popularityRank: { not: null },
+        category: { icon: { in: MAIN_CATEGORIES } },
+      },
+      include: { category: true },
+      orderBy: { popularityRank: 'asc' },
+    });
+
+    expect(ranked.map((activity) => activity.popularityRank)).toEqual(
+      Array.from({ length: 40 }, (_, index) => index + 1),
+    );
+    expect(ranked[0]?.icon).toBe('fotbal');
+    // Every category but "Ostatní" has an activity among them.
+    expect(new Set(ranked.map((activity) => activity.category.icon))).toEqual(
+      new Set(MAIN_CATEGORIES.filter((icon) => icon !== 'ostatni')),
+    );
+  });
+
+  it('refuses a rank that is not positive', async () => {
+    await expect(
+      prisma.$executeRaw`UPDATE "activity" SET "popularityRank" = 0 WHERE "icon" = 'curling'`,
+    ).rejects.toThrow();
+  });
 });

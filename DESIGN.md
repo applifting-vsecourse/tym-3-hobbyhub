@@ -70,6 +70,8 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - Never disable a submit button just because the form is untouched — let the user try and show them what's wrong.
 - Numbers of people are entered with `Counter`, photos with `PhotoPicker`.
 - **Activities are always picked with `ActivityCombobox`** — in forms and in filters alike (`isMultiple` where several may be chosen). Never as a row of chips or pills: the lookup grows to dozens of activities, and chips do not scale. The chosen ones may show as removable chips outside the picker, as on the event list.
+  - **The one exception is the onboarding's "Rychlý výběr"** (`PopularActivities`): under the combobox, the 15 most popular activities as tags, and "Načíst další" adds 20 more. An activity chosen in the combobox that has no tag on show gets one on top. It is a quick first pick for someone who has never seen the app; the combobox above still finds every activity. Nowhere else.
+  - **A chosen activity fills its token with `primary`**: the `ActivityToken` circle turns `bg-primary` with a `primary-foreground` icon, the name goes to `typo-label-lg` and a `text-primary` check sits at the end. Picking an activity is the person's own choice, so it takes `primary` like a taken seat; it also stays clear of the `accent` tint of a highlighted row. The same in the combobox and on the onboarding tags.
 
 ## Phones first
 

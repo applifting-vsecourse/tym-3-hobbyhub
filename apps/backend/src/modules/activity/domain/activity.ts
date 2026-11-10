@@ -19,5 +19,10 @@ export type ActivityCategory = {
   order: number;
 };
 
-// What the activity lookup offers: pickers group activities by category.
-export type ActivityWithCategory = Activity & { category: ActivityCategory };
+// What the activity lookup offers: pickers group activities by category, the
+// onboarding shows the most popular first.
+export type ActivityWithCategory = Activity & {
+  category: ActivityCategory;
+  // Place among the most popular (1 = most popular); null for the rest.
+  popularityRank: number | null;
+};

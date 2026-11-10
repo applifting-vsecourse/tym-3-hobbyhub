@@ -177,6 +177,9 @@ model Activity {
   icon                   String           @db.VarChar(50)
   defaultMinParticipants Int
   defaultMaxParticipants Int
+  // Place among the most popular activities (1 = most popular), shown first in
+  // the onboarding; null for the rest (ADR-0020, dodatek).
+  popularityRank         Int?             @unique
   isActive               Boolean          @default(true)
   events                 Event[]
   groups                 Group[]

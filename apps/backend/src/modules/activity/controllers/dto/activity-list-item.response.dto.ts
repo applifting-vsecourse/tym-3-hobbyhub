@@ -9,12 +9,22 @@ export class ActivityListItemResponseDto extends ActivityResponseDto {
   @ApiProperty({ type: ActivityCategoryResponseDto })
   category!: ActivityCategoryResponseDto;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 1,
+    description:
+      'Place among the most popular activities (1 = most popular), shown first in the onboarding; null for the rest',
+  })
+  popularityRank!: number | null;
+
   static fromDomain(
     activity: ActivityWithCategory,
   ): ActivityListItemResponseDto {
     return {
       ...ActivityResponseDto.fromDomain(activity),
       category: ActivityCategoryResponseDto.fromDomain(activity.category),
+      popularityRank: activity.popularityRank,
     };
   }
 }

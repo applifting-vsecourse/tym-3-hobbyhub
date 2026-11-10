@@ -19,6 +19,8 @@ export const activitySchema = z.object({
   defaultMinParticipants: z.number(),
   defaultMaxParticipants: z.number(),
   category: activityCategorySchema,
+  /** Place among the most popular (1 = most popular); null for the rest. */
+  popularityRank: z.number().nullable(),
 })
 
 export const activitiesSchema = z.array(activitySchema)

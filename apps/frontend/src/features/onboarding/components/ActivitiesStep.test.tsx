@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -60,6 +60,24 @@ describe("ActivitiesStep", () => {
 
     expect(onSkip).toHaveBeenCalledTimes(1)
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("adds and removes an activity with a popular tag", async () => {
+    const onSubmit = await renderStep()
+    const popular = screen.getByRole("region", { name: "Rychlý výběr" })
+
+    await userEvent.click(within(popular).getByRole("button", { name: "Tenis" }))
+    expect(within(popular).getByRole("button", { name: "Tenis" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    )
+    expect(screen.getByRole("region", { name: "Vaše aktivity" })).toHaveTextContent("Tenis")
+
+    await userEvent.click(within(popular).getByRole("button", { name: "Florbal" }))
+    await userEvent.click(within(popular).getByRole("button", { name: "Tenis" }))
+    await userEvent.click(screen.getByRole("button", { name: "Pokračovat" }))
+
+    expect(onSubmit).toHaveBeenCalledWith({ items: [{ activityId: "a1", levelId: null }] })
   })
 
   it("sends an activity without a level, the level is optional", async () => {
