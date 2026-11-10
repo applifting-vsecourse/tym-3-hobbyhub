@@ -1,5 +1,5 @@
 import { useId, useMemo, useRef, useState } from "react"
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, ChevronDownIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import type { ActivityComboboxCategory } from "@/components/hobbyhub/ActivityCombobox"
@@ -144,15 +144,27 @@ export function PopularActivities({
           )
         })}
       </div>
+      {/* A hairline across with the button in its middle: the tags go on below. */}
       {more > 0 ? (
-        <Button
-          type="button"
-          variant="outline"
-          className="self-start"
-          onClick={showMore}
-        >
-          {t("onboarding.activities.loadMore", { more })}
-        </Button>
+        <div className="flex items-center gap-3 pt-1">
+          <span
+            aria-hidden
+            className="h-px flex-1 bg-border"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full border-ring bg-card text-accent-foreground"
+            onClick={showMore}
+          >
+            <ChevronDownIcon aria-hidden />
+            {t("onboarding.activities.loadMore", { more })}
+          </Button>
+          <span
+            aria-hidden
+            className="h-px flex-1 bg-border"
+          />
+        </div>
       ) : null}
     </section>
   )
