@@ -42,6 +42,15 @@ jobs:
           context: .
           file: apps/backend/Dockerfile.deploy
           push: true
+          # Mail (F-09.5, ADR-0018) comes in at build time: Coolify's own
+          # variables are fixed by the course. Unset = e-mails only logged.
+          build-args: |
+            SMTP_HOST=${{ vars.SMTP_HOST }}
+            SMTP_PORT=${{ vars.SMTP_PORT || '465' }}
+            SMTP_SECURE=${{ vars.SMTP_SECURE || 'true' }}
+            SMTP_FROM=${{ vars.SMTP_FROM }}
+            SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
           tags: ${{ env.REGISTRY }}/${{ steps.slug.outputs.slug }}-backend:latest
       - name: Build & push frontend
         uses: docker/build-push-action@v6
