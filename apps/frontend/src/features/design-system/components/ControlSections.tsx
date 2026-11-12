@@ -9,6 +9,7 @@ import { Counter } from "@/components/hobbyhub/Counter"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 import { PhotoPicker } from "@/components/hobbyhub/PhotoPicker"
+import { PopularActivities } from "@/components/hobbyhub/PopularActivities"
 import {
   ProfilePicturePicker,
   type ProfilePicture,
@@ -51,12 +52,31 @@ const BUTTON_TYPES = [
 
 const FILTERS = ["Chybí lidé", "Vítáni nováčci", "Tento týden"]
 
+const BALL = { id: "micove-sporty", name: "Míčové sporty", icon: "micove-sporty", order: 1 }
+const PRECISION = { id: "presnost", name: "Přesnost a míření", icon: "presnost", order: 3 }
+const BOARD = {
+  id: "deskovky",
+  name: "Deskové a karetní hry",
+  icon: "deskove-a-karetni-hry",
+  order: 11,
+}
+
 const ACTIVITY_OPTIONS = [
-  { id: "florbal", label: "Florbal", icon: "florbal" },
-  { id: "sachy", label: "Šachy", icon: "sachy" },
-  { id: "volejbal", label: "Volejbal", icon: "volejbal" },
-  { id: "deskove-hry", label: "Deskové hry", icon: "deskove-hry" },
+  { id: "florbal", label: "Florbal", icon: "florbal", category: BALL },
+  { id: "volejbal", label: "Volejbal", icon: "volejbal", category: BALL },
+  { id: "lukostrelba", label: "Lukostřelba", icon: "lukostrelba", category: PRECISION },
+  { id: "sipky", label: "Šipky", icon: "sipky", category: PRECISION },
+  { id: "sachy", label: "Šachy", icon: "sachy", category: BOARD },
+  { id: "deskove-hry", label: "Deskové hry", icon: "deskove-hry", category: BOARD },
 ]
+
+const POPULAR_EXAMPLE = ACTIVITY_OPTIONS.map((option, index) => ({
+  id: option.id,
+  name: option.label,
+  icon: option.icon,
+  category: option.category,
+  popularityRank: index + 1,
+}))
 
 function UnsavedChangesExample() {
   const form = useForm({ defaultValues: { note: "" } })
@@ -94,6 +114,41 @@ function ActivityComboboxExample() {
         placeholder="Vyberte aktivitu"
       />
     </div>
+  )
+}
+
+function ActivityFilterExample() {
+  const [activities, setActivities] = useState<string[]>(["florbal"])
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="ds-activities">Aktivity ve filtru (jde vybrat i celou kategorii)</Label>
+      <ActivityCombobox
+        id="ds-activities"
+        isMultiple
+        options={ACTIVITY_OPTIONS}
+        value={activities}
+        onValueChange={setActivities}
+        placeholder="Všechny aktivity"
+      />
+    </div>
+  )
+}
+
+function PopularActivitiesExample() {
+  const [chosen, setChosen] = useState<string[]>(["volejbal"])
+
+  return (
+    <PopularActivities
+      activities={POPULAR_EXAMPLE}
+      activityLabel={(activity) => activity.name}
+      chosenIds={chosen}
+      onToggle={(id) =>
+        setChosen((current) =>
+          current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+        )
+      }
+    />
   )
 }
 
@@ -292,6 +347,8 @@ export function ControlSections() {
             />
           </div>
           <ActivityComboboxExample />
+          <ActivityFilterExample />
+          <PopularActivitiesExample />
           <UnsavedChangesExample />
           <PhotoPickerExample />
           <ProfilePicturePickerExample />

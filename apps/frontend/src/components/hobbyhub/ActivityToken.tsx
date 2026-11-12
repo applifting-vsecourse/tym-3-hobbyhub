@@ -29,7 +29,8 @@ export function ActivityToken({
       <ActivityIcon
         activity={activity}
         label={label}
-        className="size-5"
+        // The circle's colour, not a list row's muted icon colour (the kit greys untinted icons).
+        className="size-5 text-current"
       />
     </span>
   )

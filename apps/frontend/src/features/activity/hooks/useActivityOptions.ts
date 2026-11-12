@@ -21,6 +21,7 @@ export function useActivityOptions(): {
         id: item.id,
         label: activityName(t, item),
         icon: item.icon,
+        category: item.category,
       })),
     [query.data, t],
   )

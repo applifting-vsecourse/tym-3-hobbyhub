@@ -2,8 +2,12 @@ import { useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
+import {
+  ActivityCombobox,
+  type ActivityComboboxCategory,
+} from "@/components/hobbyhub/ActivityCombobox"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { PopularActivities } from "@/components/hobbyhub/PopularActivities"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -13,7 +17,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export type ActivityOption = { id: string; name: string; icon: string }
+export type ActivityOption = {
+  id: string
+  name: string
+  icon: string
+  /** From the activity lookup: groups the select by category. */
+  category?: ActivityComboboxCategory
+  /** From the activity lookup: the most popular come first as tags. */
+  popularityRank?: number | null
+}
 export type LevelOption = { id: string; name: string }
 
 // A Radix item needs a non-empty value; this one takes the level back.
@@ -45,6 +57,8 @@ type ActivityPickerProps = {
   onChange: (value: PickedActivity[]) => void
   /** Off where the level is not asked (the profile); a level already chosen is kept. */
   hasLevels?: boolean
+  /** The onboarding's quick pick: the most popular activities as tags under the select. */
+  hasPopular?: boolean
 }
 
 /**
@@ -59,6 +73,7 @@ export function ActivityPicker({
   value,
   onChange,
   hasLevels = true,
+  hasPopular = false,
 }: ActivityPickerProps) {
   const { t } = useTranslation()
 
@@ -70,6 +85,7 @@ export function ActivityPicker({
           id: activity.id,
           label: activityLabel(activity),
           icon: activity.icon,
+          category: activity.category,
         })),
     [activities, activityLabel, value],
   )
@@ -83,6 +99,8 @@ export function ActivityPicker({
     if (added) setAnnouncement(t("onboarding.activities.added", { activity: activityLabel(added) }))
   }
   const remove = (id: string) => onChange(value.filter((item) => item.activityId !== id))
+  const toggle = (id: string) =>
+    value.some((item) => item.activityId === id) ? remove(id) : add(id)
   const setLevel = (id: string, levelId: string | null) =>
     onChange(value.map((item) => (item.activityId === id ? { ...item, levelId } : item)))
 
@@ -113,6 +131,15 @@ export function ActivityPicker({
           <p className="typo-small text-muted-foreground">{t("onboarding.activities.allPicked")}</p>
         ) : null}
       </div>
+
+      {hasPopular ? (
+        <PopularActivities
+          activities={activities}
+          activityLabel={activityLabel}
+          chosenIds={value.map((item) => item.activityId)}
+          onToggle={toggle}
+        />
+      ) : null}
 
       <p
         role="status"

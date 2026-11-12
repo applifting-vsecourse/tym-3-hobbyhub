@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 
 import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
@@ -42,6 +42,37 @@ describe("FiltersSheet", () => {
       location: "",
     })
     expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("lists the chosen activities as tags that remove themselves", async () => {
+    const user = userEvent.setup()
+    const onApply = vi.fn()
+    render(
+      <FiltersSheet
+        isOpen
+        onOpenChange={vi.fn()}
+        value={{ ...EMPTY_FILTERS, activities: ["volejbal", "tenis"] }}
+        onApply={onApply}
+        fields={["activity"]}
+      />,
+    )
+
+    const chosen = screen.getByRole("group", { name: "Vybrané aktivity" })
+    expect(
+      within(chosen)
+        .getAllByRole("button")
+        .map((tag) => tag.textContent),
+    ).toEqual(["Volejbal", "Tenis"])
+
+    await user.click(within(chosen).getByRole("button", { name: "Volejbal" }))
+    expect(
+      within(chosen)
+        .getAllByRole("button")
+        .map((tag) => tag.textContent),
+    ).toEqual(["Tenis"])
+
+    await user.click(screen.getByRole("button", { name: /Zobrazit/ }))
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ activities: ["tenis"] }))
   })
 
   it("fills the dates from a quick choice and refuses a reversed range", async () => {
@@ -104,7 +135,7 @@ describe("FiltersSheet", () => {
 
     await user.click(screen.getByRole("option", { name: "Šachy" }))
     await user.keyboard("{Escape}")
-    expect(combobox).toHaveTextContent("2 aktivity")
+    expect(combobox).toHaveTextContent("Florbal + 1")
 
     await user.click(screen.getByRole("button", { name: "Zobrazit výsledky" }))
     expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ activities: ["a1", "a2"] }))

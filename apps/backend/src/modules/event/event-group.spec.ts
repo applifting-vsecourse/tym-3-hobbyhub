@@ -73,7 +73,11 @@ describeDb('EventRepository: group events', () => {
   const aGroup = async (): Promise<GroupFixture> => {
     const organizerId = await aUser();
     const category = await prisma.activityCategory.create({
-      data: { name: `cat-${random()}` },
+      data: {
+        name: `cat-${random()}`,
+        icon: `cat-${random()}`,
+        order: Math.floor(Math.random() * 2_000_000_000),
+      },
     });
     created.categoryIds.push(category.id);
     const activity = await prisma.activity.create({

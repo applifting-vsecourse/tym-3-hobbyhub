@@ -12,9 +12,29 @@ globalThis.ResizeObserver ??= class {
   disconnect = () => undefined
 }
 
-// jsdom has no pointer capture or scrollIntoView; Radix Select calls both.
+// jsdom has no matchMedia; render the computer layout unless a test says otherwise
+// (it can replace window.matchMedia, as the phone cases of ActivityCombobox do).
+if (typeof window.matchMedia !== "function") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string): MediaQueryList => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  })
+}
+
+// jsdom has no pointer capture or scrollIntoView; Radix Select calls both, the
+// vaul drawer captures the pointer when it is pressed.
 const elementStubs = {
   hasPointerCapture: () => false,
+  setPointerCapture: () => undefined,
   releasePointerCapture: () => undefined,
   scrollIntoView: () => undefined,
 }

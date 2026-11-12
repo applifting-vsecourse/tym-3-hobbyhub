@@ -53,7 +53,11 @@ describeDb('public event list search', () => {
           },
         });
         const category = await tx.activityCategory.create({
-          data: { name: `cat-${suffix}` },
+          data: {
+            name: `cat-${suffix}`,
+            icon: `cat-${suffix}`,
+            order: Math.floor(Math.random() * 2_000_000_000),
+          },
         });
         const activityIds: string[] = [];
         for (const [index, name] of ['Šachy', 'Tenis', 'Florbal'].entries()) {
