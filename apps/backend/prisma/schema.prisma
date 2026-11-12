@@ -577,7 +577,6 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  issuer                String?
   password              String?   @db.Text
   createdAt             DateTime
   updatedAt             DateTime
