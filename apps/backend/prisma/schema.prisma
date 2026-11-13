@@ -15,13 +15,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  user
-  admin
-
-  @@map("user_role")
-}
-
 // ---------------------------------------------------------------------------
 // Doménový model (wiki: Domenovy-model). Names follow the model; derived
 // attributes ("/freeSpots", "/approvedCount", …) are computed in code.
@@ -607,6 +600,87 @@ model RateLimit {
   @@map("rate_limit")
 }
 
+// ---------------------------------------------------------------------------
+// ADR-0010, #238: the administrator is a separate account with its own sign-in,
+// a second BetterAuth instance (`shared/admin-auth/`) on these tables. An
+// administrator has no row in `User`: no profile, events or requests.
+// ---------------------------------------------------------------------------
+
+model Administrator {
+  id            String         @id
+  name          String
+  email         String
+  emailVerified Boolean        @default(false)
+  image         String?        @db.Text
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      AdminSession[]
+  accounts      AdminAccount[]
+
+  @@unique([email])
+  @@map("administrator")
+}
+
+// `userId` keeps BetterAuth's field name: it points to `Administrator`.
+model AdminSession {
+  id            String        @id
+  expiresAt     DateTime
+  token         String        @db.VarChar(255)
+  createdAt     DateTime
+  updatedAt     DateTime
+  ipAddress     String?       @db.VarChar(45)
+  userAgent     String?       @db.Text
+  userId        String
+  administrator Administrator @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("admin_session")
+}
+
+model AdminAccount {
+  id                    String        @id
+  accountId             String
+  providerId            String
+  userId                String
+  administrator         Administrator @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?       @db.Text
+  refreshToken          String?       @db.Text
+  idToken               String?       @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  issuer                String?
+  password              String?       @db.Text
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("admin_account")
+}
+
+model AdminVerification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("admin_verification")
+}
+
+// Its own table: the limiter's key is IP + path, and the paths are the same as
+// the users' (`/sign-in/email`), so a shared table would share the limit.
+model AdminRateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("admin_rate_limit")
+}
+
 model User {
   id            String    @id
   name          String
@@ -617,7 +691,6 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  role          UserRole  @default(user)
 
   username        String? @db.VarChar(50)
   displayUsername String? @db.VarChar(50)

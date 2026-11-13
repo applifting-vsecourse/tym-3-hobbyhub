@@ -17,6 +17,8 @@
     "start:debug": "prisma generate && nest start --path tsconfig.dev.json --env-file .env --debug --watch",
     "start:prod": "NODE_ENV=\"production\" node dist/main",
     "seed": "prisma generate && ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/seed/seed.script.ts",
+    "admin:create": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/admin/create-administrator.script.ts",
+    "admin:create:prod": "node dist/scripts/admin/create-administrator.script",
     "migrate": "prisma migrate deploy",
     "start:migrate:prod": "prisma migrate deploy && npm run start:prod",
     "lint:check": "eslint \"src/**/*.ts\"",
@@ -91,6 +93,7 @@
   "jest": {
     "moduleFileExtensions": [
       "js",
+      "mjs",
       "json",
       "ts",
       "tsx"
@@ -101,7 +104,16 @@
     ],
     "testRegex": "\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)sx?$": "ts-jest"
+      "^.+\\.(t|j)sx?$": "ts-jest",
+      "^.+\\.mjs$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "allowJs": true,
+            "target": "es2022"
+          }
+        }
+      ]
     },
     "collectCoverageFrom": [
       "**/*.ts"
@@ -126,6 +138,9 @@
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
-    }
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/\\.pnpm/(?!(better-auth|@better-auth|better-call|@better-fetch|jose|nanostores|rou3|defu|uncrypto|@noble|zod|kysely)[@+])"
+    ]
   }
 }

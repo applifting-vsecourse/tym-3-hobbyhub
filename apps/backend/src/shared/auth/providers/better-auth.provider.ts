@@ -40,16 +40,6 @@ const createAuth = (
     database: prismaAdapter(prismaService, {
       provider: 'postgresql',
     }),
-    user: {
-      additionalFields: {
-        role: {
-          type: 'string',
-          required: true,
-          defaultValue: 'user',
-          input: false,
-        },
-      },
-    },
     trustedOrigins: [config.frontendUrl],
     emailVerification: {
       sendVerificationEmail: async ({ user, url }) => {

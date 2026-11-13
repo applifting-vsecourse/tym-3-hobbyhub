@@ -15,14 +15,8 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
   },
   user: {
     additionalFields: {
-      role: {
-        type: 'string',
-        required: true,
-        defaultValue: 'user',
-        input: false,
-      },
       // F-03.1. Required at sign-up by the registration hook, nullable in the
-      // database for accounts created another way (seeded admin, later Google).
+      // database for accounts created another way (later Google).
       // Never returned: they only feed aggregated statistics (F-06.7).
       gender: {
         type: 'string',
