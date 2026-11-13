@@ -1,6 +1,9 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
 import { CancellationReasonsService } from '@/modules/cancellation-reason/services/cancellation-reasons.service';
 import {
+  AdminEventDetail,
+  AdminEventListItem,
+  AdminUserEvents,
   CancelEventData,
   canSeeEvent,
   CreateEventData,
@@ -30,6 +33,10 @@ import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { eventChangesOf } from '@/modules/notification/domain/notification';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
+import {
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
@@ -389,5 +396,23 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
     return event;
+  }
+
+  // #238: the administration sees every event (visibility matrix: Superadmin).
+  async listEventsForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<AdminEventListItem>> {
+    return this.eventRepository.listForAdministration(query);
+  }
+
+  async getEventForAdministration(id: string): Promise<AdminEventDetail> {
+    const detail = await this.eventRepository.getAdministrationDetail(id);
+    if (!detail) throw new NotFoundException('Event not found');
+    return detail;
+  }
+
+  // #238: the events of a person, for the user detail in the administration.
+  getUserEventsForAdministration(userId: string): Promise<AdminUserEvents> {
+    return this.eventRepository.getUserEventsForAdministration(userId);
   }
 }

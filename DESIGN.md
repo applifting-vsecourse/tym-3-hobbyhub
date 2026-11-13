@@ -29,7 +29,8 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - **Cards are for separable items in a list** — an event, a join request, a search result. They are not page sections and not layout tools.
 - **Never nest a card inside a card.** If content needs grouping inside a card, use spacing, a hairline divider or a tinted band (like the roster band on `EventCard`).
 - **A page is not a card.** Page content sits on `background` in a centred column (`max-w-2xl` for reading, `max-w-4xl` for wide layouts, `max-w-6xl` for discovery screens like the landing page, where event cards sit three across), not inside a floating panel. The header is always `max-w-6xl`, whatever the column under it: its navigation sits on the right and must stay put between pages. The `Hero` is the one coloured section surface, and a screen has at most one. The landing page is the one exception: its last section, the invitation to groups, sits on the same dashed `accent` surface as `YourSeat` — the surface that invites the visitor in — a screen's height below the hero, so the two are never on screen together.
-- **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands.
+- **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands. The administration (`/admin/*`) keeps its own chrome, `AdminShell`, instead of the user one.
+- **Tables are for the administration only.** A list of records to scan and compare (users, events, groups in `/admin`) is the kit's `Table` from `md` up; below `md` each row stacks into lines separated by a hairline, never into a card. The rest of the app lists items as cards or rows, not tables.
 - Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
 
 ## Spacing

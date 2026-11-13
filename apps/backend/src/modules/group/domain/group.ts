@@ -116,3 +116,10 @@ export type GroupPage = {
   items: Group[];
   nextCursor: string | null;
 };
+
+// #238: a group in the administration, with everyone in it. Private and
+// cancelled groups too (visibility matrix: Superadmin).
+export type AdminGroupDetail = {
+  group: Group;
+  members: GroupMember[];
+};

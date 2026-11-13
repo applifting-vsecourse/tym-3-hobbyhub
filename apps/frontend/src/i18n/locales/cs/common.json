@@ -1,4 +1,213 @@
 {
+  "admin": {
+    "administratorStatus": {
+      "ACTIVE": "Aktivní",
+      "DEACTIVATED": "Odebraný",
+      "INVITED": "Pozvaný"
+    },
+    "administrators": {
+      "actionFailed": "Akce se nepodařila. Zkuste to prosím znovu.",
+      "actions": "Akce",
+      "byOn": "{{name}}, {{date}}",
+      "cancelInvitation": "Zrušit pozvánku",
+      "createdAt": "Založen",
+      "createdBy": "Přidal(a)",
+      "deactivate": "Odebrat",
+      "deactivated": "{{name}} už do administrace nemá přístup.",
+      "deactivatedBy": "Odebral(a)",
+      "email": "E-mail",
+      "fromServer": "server",
+      "intro": "Správci se zvou e-mailem a heslo si nastaví sami. Sebe odebrat nelze a vždy zůstane aspoň jeden aktivní správce.",
+      "invite": "Přidat správce",
+      "invited": "Pozvánka odešla na {{email}}.",
+      "lastActive": "Poslední aktivní správce",
+      "name": "Jméno",
+      "reactivate": "Obnovit přístup",
+      "reactivated": "{{name}} dostal(a) novou pozvánku, staré heslo už neplatí.",
+      "resend": "Poslat pozvánku znovu",
+      "resent": "Nová pozvánka pro {{name}} odešla, předchozí odkaz už nefunguje.",
+      "status": "Stav",
+      "thatIsYou": "To jste vy",
+      "title": "Správci"
+    },
+    "deactivate": {
+      "cancel": "Zrušit",
+      "confirm": "Odebrat",
+      "failed": "Správce se nepodařilo odebrat. Zkuste to prosím znovu.",
+      "lastActive": "Mezitím zbyl jen jeden aktivní správce, toho odebrat nelze.",
+      "text": "{{name}} okamžitě přijde o přístup do administrace a bude odhlášen(a) na všech zařízeních. Přístup jde později obnovit novou pozvánkou.",
+      "title": "Odebrat správce {{name}}?"
+    },
+    "event": {
+      "address": "Přesná adresa",
+      "basics": "Základní údaje",
+      "cancellation": "Důvod zrušení",
+      "capacity": "Obsazenost",
+      "capacityValue": "{{approved}} schválených, {{min}}–{{max}} míst",
+      "contact": "Kontakt pro účastníky",
+      "description": "Popis",
+      "externalChat": "Externí chat",
+      "group": "Skupina",
+      "noParticipants": "Na akci zatím nikdo není.",
+      "participants": "Účastníci",
+      "waitlistPosition": "{{status}}, {{position}}. v pořadí"
+    },
+    "eventStatus": {
+      "CANCELLED": "Zrušená",
+      "DRAFT": "Koncept",
+      "FINISHED": "Proběhlá",
+      "NOT_HELD": "Nekonala se",
+      "PUBLISHED": "Zveřejněná"
+    },
+    "eventVisibility": {
+      "GROUP_ONLY": "Jen pro skupinu",
+      "PRIVATE": "Soukromá",
+      "PUBLIC": "Veřejná"
+    },
+    "events": {
+      "activity": "Aktivita",
+      "empty": "Zatím tu nejsou žádné akce.",
+      "hidden": "Skrytá",
+      "name": "Název",
+      "organizer": "Organizátor",
+      "search": "Hledat podle názvu",
+      "startAt": "Termín",
+      "state": "Stav",
+      "title": "Akce"
+    },
+    "forgotPassword": {
+      "description": "Zadejte e-mail svého účtu správce a pošleme vám odkaz pro nastavení nového hesla.",
+      "sent": "Pokud k tomuto e-mailu existuje aktivní účet správce, poslali jsme na něj odkaz pro nastavení nového hesla. Platí 1 hodinu.",
+      "title": "Zapomenuté heslo správce"
+    },
+    "gender": {
+      "FEMALE": "Žena",
+      "MALE": "Muž"
+    },
+    "group": {
+      "basics": "Základní údaje",
+      "joinedAt": "Ve skupině od",
+      "location": "Lokalita",
+      "members_few": "{{count}} členové",
+      "members_one": "{{count}} člen",
+      "members_other": "{{count}} členů",
+      "message": "Zpráva",
+      "noRequests": "Žádná žádost nečeká.",
+      "requestedAt": "Podána",
+      "requests": "Čekající žádosti o členství",
+      "role": "Role",
+      "schedule": "Obvyklý termín"
+    },
+    "groupRole": {
+      "ADMIN": "Správce skupiny",
+      "MEMBER": "Člen",
+      "OWNER": "Zakladatel"
+    },
+    "groupStatus": {
+      "ACTIVE": "Aktivní",
+      "CANCELLED": "Zrušená"
+    },
+    "groups": {
+      "activity": "Aktivita",
+      "createdAt": "Založena",
+      "empty": "Zatím tu nejsou žádné skupiny.",
+      "memberCount": "Členů",
+      "name": "Název",
+      "private": "Soukromá",
+      "search": "Hledat podle názvu",
+      "state": "Stav",
+      "title": "Skupiny"
+    },
+    "invite": {
+      "deactivated": "Tento správce byl odebrán. Najděte ho v seznamu a obnovte mu přístup.",
+      "description": "Kolega dostane e-mail s odkazem, kde si nastaví heslo. Odkaz platí 72 hodin.",
+      "email": "E-mail",
+      "emailInvalid": "Neplatný e-mail",
+      "emailRequired": "Zadejte e-mail",
+      "failed": "Pozvánku se nepodařilo poslat. Zkuste to prosím znovu.",
+      "name": "Jméno",
+      "nameRequired": "Zadejte jméno",
+      "nameTooLong": "Jméno je příliš dlouhé",
+      "submit": "Poslat pozvánku",
+      "taken": "Tento e-mail už správci patří.",
+      "title": "Přidat správce"
+    },
+    "list": {
+      "next": "Další",
+      "noMatch": "Hledání nic nenašlo.",
+      "pages": "Stránky výpisu",
+      "previous": "Předchozí",
+      "range": "{{from}}–{{to}} z {{total}}"
+    },
+    "loadFailed": "Data se nepodařilo načíst.",
+    "loading": "Načítáme…",
+    "nav": {
+      "administrators": "Správci",
+      "events": "Akce",
+      "groups": "Skupiny",
+      "label": "Navigace administrace",
+      "users": "Uživatelé"
+    },
+    "no": "Ne",
+    "none": "—",
+    "participationStatus": {
+      "APPROVED": "Schválený",
+      "ATTENDED": "Zúčastnil se",
+      "CANCELLED": "Odhlášený",
+      "DECLINED": "Odmítl pozvání",
+      "INVITED": "Pozvaný",
+      "NO_SHOW": "Nedorazil",
+      "WAITLISTED": "Náhradník"
+    },
+    "retry": "Zkusit znovu",
+    "setPassword": {
+      "description": "Zvolte si heslo do administrace, aspoň {{minimum}} znaků. Po uložení vás odhlásíme na všech zařízeních.",
+      "done": "Heslo je nastavené. Přihlaste se s ním do administrace.",
+      "invalidDescription": "Odkaz je neplatný, už byl použit, nebo vypršel. Pozvánku vám pošle znovu kolega, nový odkaz na heslo si vyžádáte sami.",
+      "signIn": "Přihlásit se do administrace",
+      "title": "Nastavení hesla správce"
+    },
+    "signIn": {
+      "description": "Administrace HobbyHubu má vlastní účty, oddělené od běžných uživatelů.",
+      "footer": "Účet správce zakládá provoz aplikace, registrace tu není.",
+      "title": "Přihlášení správce"
+    },
+    "signOut": {
+      "failed": "Odhlášení se nezdařilo.",
+      "label": "Odhlásit"
+    },
+    "title": "Administrace",
+    "user": {
+      "account": "Účet",
+      "address": "Bydliště",
+      "bio": "O mně",
+      "birthYear": "Rok narození",
+      "gender": "Pohlaví",
+      "interests": "Zájmy",
+      "noOrganized": "Žádné akce nepořádá.",
+      "noParticipations": "Na žádné akci nemá místo.",
+      "organized": "Pořádané akce",
+      "participations": "Účast na akcích",
+      "profile": "Profil"
+    },
+    "userStatus": {
+      "ACTIVE": "Aktivní",
+      "BLOCKED": "Zablokovaný",
+      "DELETED": "Smazaný",
+      "RESTRICTED": "Omezený"
+    },
+    "users": {
+      "createdAt": "Registrace",
+      "email": "E-mail",
+      "emailVerified": "Ověřený e-mail",
+      "empty": "Zatím tu nejsou žádní uživatelé.",
+      "name": "Jméno",
+      "search": "Hledat podle jména nebo e-mailu",
+      "status": "Stav",
+      "title": "Uživatelé"
+    },
+    "yes": "Ano"
+  },
   "auth": {
     "back": "Zpět",
     "errors": {
@@ -94,6 +303,7 @@
       "genderRequired": "Vyberte pohlaví",
       "nameRequired": "Zadejte jméno nebo přezdívku",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
+      "passwordMinLength": "Heslo musí mít alespoň {{minimum}} znaků",
       "passwordRequired": "Zadejte heslo",
       "passwordsMismatch": "Hesla se neshodují",
       "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",

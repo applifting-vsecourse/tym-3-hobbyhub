@@ -15,13 +15,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  user
-  admin
-
-  @@map("user_role")
-}
-
 // ---------------------------------------------------------------------------
 // Doménový model (wiki: Domenovy-model). Names follow the model; derived
 // attributes ("/freeSpots", "/approvedCount", …) are computed in code.
@@ -491,6 +484,8 @@ enum EmailKind {
   VERIFY_EMAIL
   RESET_PASSWORD
   NOTIFICATION
+  // ADR-0021: a new administrator sets their password.
+  ADMIN_INVITATION
 }
 
 enum EmailDeliveryStatus {
@@ -526,12 +521,16 @@ model EmailDelivery {
   html      String @db.Text
 
   // Whose e-mail it is: the per-recipient cap counts by it. Their e-mails go
-  // with their account.
-  recipient      User          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  recipientId    String
+  // with their account. Exactly one of a user and an administrator (ADR-0021,
+  // CHECK email_delivery_one_recipient in the migration); an administrator's
+  // e-mails are all critical, so the cap never counts them.
+  recipient       User?          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId     String?
+  administrator   Administrator? @relation(fields: [administratorId], references: [id], onDelete: Cascade)
+  administratorId String?
   // At most one e-mail per notification; the record stays when it goes.
-  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
-  notificationId String?       @unique
+  notification    Notification?  @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  notificationId  String?        @unique
 
   attempts          Int              @default(0)
   nextAttemptAt     DateTime         @default(now())
@@ -607,6 +606,99 @@ model RateLimit {
   @@map("rate_limit")
 }
 
+// ---------------------------------------------------------------------------
+// ADR-0010, #238: the administrator is a separate account with its own sign-in,
+// a second BetterAuth instance (`shared/admin-auth/`) on these tables. An
+// administrator has no row in `User`: no profile, events or requests.
+// ---------------------------------------------------------------------------
+
+model Administrator {
+  id            String         @id
+  name          String
+  email         String
+  emailVerified Boolean        @default(false)
+  image         String?        @db.Text
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      AdminSession[]
+  accounts      AdminAccount[]
+
+  // ADR-0021: who invited them; null for the first one (seed, admin:create).
+  createdById               String?
+  createdBy                 Administrator?  @relation("AdministratorCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAdministrators     Administrator[] @relation("AdministratorCreatedBy")
+  // ADR-0021: removed by a colleague, never deleted. Both or neither (CHECK
+  // administrator_deactivation_all_or_nothing in the migration).
+  deactivatedAt             DateTime?
+  deactivatedById           String?
+  deactivatedBy             Administrator?  @relation("AdministratorDeactivatedBy", fields: [deactivatedById], references: [id], onDelete: Restrict)
+  deactivatedAdministrators Administrator[] @relation("AdministratorDeactivatedBy")
+  emailDeliveries           EmailDelivery[]
+
+  @@unique([email])
+  @@map("administrator")
+}
+
+// `userId` keeps BetterAuth's field name: it points to `Administrator`.
+model AdminSession {
+  id            String        @id
+  expiresAt     DateTime
+  token         String        @db.VarChar(255)
+  createdAt     DateTime
+  updatedAt     DateTime
+  ipAddress     String?       @db.VarChar(45)
+  userAgent     String?       @db.Text
+  userId        String
+  administrator Administrator @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("admin_session")
+}
+
+model AdminAccount {
+  id                    String        @id
+  accountId             String
+  providerId            String
+  userId                String
+  administrator         Administrator @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?       @db.Text
+  refreshToken          String?       @db.Text
+  idToken               String?       @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  issuer                String?
+  password              String?       @db.Text
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("admin_account")
+}
+
+model AdminVerification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("admin_verification")
+}
+
+// Its own table: the limiter's key is IP + path, and the paths are the same as
+// the users' (`/sign-in/email`), so a shared table would share the limit.
+model AdminRateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("admin_rate_limit")
+}
+
 model User {
   id            String    @id
   name          String
@@ -617,7 +709,6 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  role          UserRole  @default(user)
 
   username        String? @db.VarChar(50)
   displayUsername String? @db.VarChar(50)

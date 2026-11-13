@@ -10,7 +10,6 @@ export type SessionUser = {
   name: string
   // The organizer sees it next to a request to join (F-06.1).
   emailVerified: boolean
-  role?: string
 }
 
 export type Session = {
@@ -25,9 +24,7 @@ export const authSessionQueryOptions = () =>
       if (error) throw new Error(error.message ?? "Failed to load session")
       if (!data?.user) return null
 
-      const user = data.user as typeof data.user & {
-        role?: string | null
-      }
+      const user = data.user
 
       return {
         user: {
@@ -35,7 +32,6 @@ export const authSessionQueryOptions = () =>
           email: user.email,
           name: user.name,
           emailVerified: user.emailVerified,
-          role: user.role ?? undefined,
         },
       }
     },

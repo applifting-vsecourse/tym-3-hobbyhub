@@ -350,4 +350,33 @@ describe('MembershipRequestsService', () => {
       );
     });
   });
+
+  // #238: the administration reads the requests of any group.
+  describe('getPendingRequestsForAdministration', () => {
+    it('reads the requests without asking who manages the group', async () => {
+      const { repository, groups, service } = setup();
+      groups.getGroupForAdministration.mockResolvedValue({
+        group: aGroup(),
+        members: [],
+      });
+      repository.getPendingRequests.mockResolvedValue([]);
+
+      await expect(
+        service.getPendingRequestsForAdministration('g1'),
+      ).resolves.toEqual([]);
+      expect(groups.getManagedGroup).not.toHaveBeenCalled();
+    });
+
+    it('is not found for an unknown group', async () => {
+      const { repository, groups, service } = setup();
+      groups.getGroupForAdministration.mockRejectedValue(
+        new NotFoundException('Group not found'),
+      );
+
+      await expect(
+        service.getPendingRequestsForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getPendingRequests).not.toHaveBeenCalled();
+    });
+  });
 });

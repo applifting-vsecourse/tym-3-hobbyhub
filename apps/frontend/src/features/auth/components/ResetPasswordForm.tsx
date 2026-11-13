@@ -14,10 +14,20 @@ import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageCh
 
 import { PasswordInput } from "@/features/auth/components/PasswordInput"
 
-// The same limit as sign-up; the server checks it again.
-const createSchema = (t: TFunction) =>
+// The same limit as sign-up; the server checks it again. Administrators need
+// a longer one (#237), which they pass as `minLength`.
+const USER_PASSWORD_MIN_LENGTH = 8
+
+const createSchema = (t: TFunction, minLength: number) =>
   z.object({
-    password: z.string().min(8, t("auth.validation.passwordMin")),
+    password: z
+      .string()
+      .min(
+        minLength,
+        minLength === USER_PASSWORD_MIN_LENGTH
+          ? t("auth.validation.passwordMin")
+          : t("auth.validation.passwordMinLength", { minimum: minLength }),
+      ),
   })
 
 export type ResetPasswordFormValues = z.infer<ReturnType<typeof createSchema>>
@@ -26,12 +36,18 @@ type ResetPasswordFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
   readonly onSubmit: (values: ResetPasswordFormValues) => void | Promise<void>
+  readonly minLength?: number
 }
 
 /** F-03.5: the new password; "Zobrazit" in the field stands in for a repeat field. */
-export function ResetPasswordForm({ isLoading, errorMessage, onSubmit }: ResetPasswordFormProps) {
+export function ResetPasswordForm({
+  isLoading,
+  errorMessage,
+  onSubmit,
+  minLength = USER_PASSWORD_MIN_LENGTH,
+}: ResetPasswordFormProps) {
   const { t } = useTranslation()
-  const schema = useMemo(() => createSchema(t), [t])
+  const schema = useMemo(() => createSchema(t, minLength), [t, minLength])
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(schema),
     defaultValues: { password: "" },

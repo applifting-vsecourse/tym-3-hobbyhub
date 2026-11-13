@@ -1,6 +1,7 @@
 import { ConfigModule } from '@applifting-io/nestjs-decorated-config';
 import { Module } from '@nestjs/common';
 import { ActivityModule } from './modules/activity/activity.module';
+import { AdministratorModule } from './modules/administrator/administrator.module';
 import { CancellationReasonModule } from './modules/cancellation-reason/cancellation-reason.module';
 import { EventModule } from './modules/event/event.module';
 import { GroupModule } from './modules/group/group.module';
@@ -12,12 +13,16 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
+import { AdminAuthModule } from './shared/admin-auth/admin-auth.module';
 import { AuthModule } from './shared/auth/auth.module';
 import { Config } from './shared/config/config.service';
 
 const imports = [
   ConfigModule.forRootAsync(Config, { validate: true }),
   AuthModule,
+  // ADR-0010, #238: the administrators' sign-in, mounted in main.ts.
+  AdminAuthModule,
+  AdministratorModule,
   WelcomeModule,
   ActivityModule,
   CancellationReasonModule,

@@ -1,5 +1,11 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Gender } from '@/generated/prisma/client';
+import { Gender, Prisma } from '@/generated/prisma/client';
+import { AdminUserListItem } from '@/modules/profile/domain/profile';
+import {
+  ADMIN_PAGE_SIZE,
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Injectable } from '@nestjs/common';
 
 export type ProfileRow = {
@@ -19,6 +25,15 @@ export type PublicProfileRow = {
   image: string | null;
   profileCover: string | null;
 };
+
+const accountSelect = {
+  id: true,
+  name: true,
+  email: true,
+  emailVerified: true,
+  status: true,
+  createdAt: true,
+} as const;
 
 // Trusts the layers above: it validates nothing, it only reads and writes.
 @Injectable()
@@ -105,6 +120,39 @@ export class ProfileRepository {
         travelRadiusKm: null,
         updatedAt: new Date(),
       },
+    });
+  }
+
+  // #238: every account for the administration, newest first, by name or
+  // e-mail.
+  async listForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<AdminUserListItem>> {
+    const where: Prisma.UserWhereInput = query.search
+      ? {
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { email: { contains: query.search, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+    const [items, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: accountSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        skip: query.offset,
+        take: ADMIN_PAGE_SIZE,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+    return { items, total };
+  }
+
+  getAccount(userId: string): Promise<AdminUserListItem | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: accountSelect,
     });
   }
 }

@@ -1,4 +1,6 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
+import { createAdministrator } from '@/shared/admin-auth/create-administrator';
+import { AdminAuth } from '@/shared/admin-auth/providers/admin-auth.provider';
 import { BetterAuth } from '@/shared/auth/providers/better-auth.provider';
 import { Config } from '@/shared/config/config.service';
 import { createUser } from './create-user';
@@ -10,6 +12,7 @@ export const seedDatabase = async (
   prisma: PrismaService,
   config: Config,
   betterAuth: BetterAuth,
+  adminAuth: AdminAuth,
 ): Promise<void> => {
   const auth = betterAuth;
 
@@ -21,12 +24,14 @@ export const seedDatabase = async (
       `Database already has ${existingUsers} user(s) — not touching users. ` +
         'Run `pnpm backend db:reset` to wipe and start over.',
     );
+    await seedAdministrator(adminAuth, config);
     // Lookups, example events and groups are additive, so an existing database
     // gets them too (they skip themselves when already there).
     await seedLookups(prisma);
-    // Administrators run the platform, they do not take part in events.
+    // Databases seeded before #238 still have the old admin as a `User`
+    // ("Admin (Delete in Prod)"); it does not take part in example events.
     const users = await prisma.user.findMany({
-      where: { role: 'user' },
+      where: { email: { not: config.superadminEmail } },
       orderBy: { createdAt: 'asc' },
     });
     await seedEvents(prisma, users);
@@ -38,22 +43,12 @@ export const seedDatabase = async (
   // Drop existing database data from all tables
   try {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE "group_membership", "group", "participation", "event", "activity", "activity_category", "level", "cancellation_reason", "session", "account", "verification", "user" RESTART IDENTITY CASCADE;',
+      'TRUNCATE TABLE "group_membership", "group", "participation", "event", "activity", "activity_category", "level", "cancellation_reason", "session", "account", "verification", "user", "admin_session", "admin_account", "admin_verification", "administrator" RESTART IDENTITY CASCADE;',
     );
   } catch (error) {
     console.error('Error truncating tables:', error);
   }
-
-  console.log('Creating superadmin user');
-
-  // Create a superadmin user. This should be delete in prod app
-  await createUser(prisma, auth, {
-    email: config.superadminEmail,
-    password: config.superadminPassword,
-    name: 'Admin (Delete in Prod)',
-    username: 'superadmin',
-    role: 'admin',
-  });
+  await seedAdministrator(adminAuth, config);
 
   console.log('Creating example users');
 
@@ -128,4 +123,22 @@ export const seedDatabase = async (
     freshDuckling,
     lostGosling,
   ]);
+};
+
+// ADR-0010, #238: the administrator is its own account, not a `User`.
+// Skips itself when the address is already there.
+const seedAdministrator = async (
+  adminAuth: AdminAuth,
+  config: Config,
+): Promise<void> => {
+  const { created } = await createAdministrator(adminAuth, {
+    email: config.superadminEmail,
+    password: config.superadminPassword,
+    name: 'Správce',
+  });
+  console.log(
+    created
+      ? `Created administrator ${config.superadminEmail}`
+      : `Administrator ${config.superadminEmail} already exists`,
+  );
 };

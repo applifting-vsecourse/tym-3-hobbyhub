@@ -4,6 +4,7 @@ import { EmailService } from '@/core/email/interfaces/email-service.interface';
 import { EMAIL_OUTBOX } from '@/core/email/outbox/email-outbox.interface';
 import { ImmediateEmailOutbox } from '@/core/email/outbox/immediate-email-outbox';
 import { PrismaService } from '@/core/prisma/prisma.service';
+import { adminAuthProvider } from '@/shared/admin-auth/providers/admin-auth.provider';
 import { betterAuthProvider } from '@/shared/auth/providers/better-auth.provider';
 import { Config } from '@/shared/config/config.service';
 import { ConfigModule } from '@applifting-io/nestjs-decorated-config';
@@ -32,6 +33,7 @@ import { SeedService } from './seed.service';
       inject: ['EmailService'],
     },
     betterAuthProvider,
+    adminAuthProvider,
     SeedService,
   ],
 })

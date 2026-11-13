@@ -226,4 +226,13 @@ export class MembershipRequestsService {
     if (!request) throw new NotFoundException('Request not found');
     return { group, request };
   }
+
+  // #238: the requests waiting on any group, for the administration
+  // (visibility matrix: Superadmin sees the applicants and their messages).
+  async getPendingRequestsForAdministration(
+    groupId: string,
+  ): Promise<PendingMembershipRequest[]> {
+    await this.groupsService.getGroupForAdministration(groupId);
+    return this.repository.getPendingRequests(groupId);
+  }
 }

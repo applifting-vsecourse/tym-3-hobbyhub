@@ -18,6 +18,11 @@ import {
   MyGroup,
   TransferOwnershipResult,
 } from '@/modules/group/domain/group';
+import {
+  ADMIN_PAGE_SIZE,
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Injectable } from '@nestjs/common';
 
 // Thrown inside the hand-over transaction only to roll it back.
@@ -270,5 +275,25 @@ export class GroupRepository {
       user.temporaryLocationValidUntil > now &&
       Boolean(user.temporaryCity?.trim());
     return isTemporaryValid ? user.temporaryCity : user.homeCity;
+  }
+
+  // #238: every group for the administration, newest first, by name.
+  async listForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<Group>> {
+    const where: Prisma.GroupWhereInput = query.search
+      ? { name: { contains: query.search, mode: 'insensitive' } }
+      : {};
+    const [groups, total] = await Promise.all([
+      this.prisma.group.findMany({
+        where,
+        include,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        skip: query.offset,
+        take: ADMIN_PAGE_SIZE,
+      }),
+      this.prisma.group.count({ where }),
+    ]);
+    return { items: groups.map(mapPrismaGroupToDomain), total };
   }
 }

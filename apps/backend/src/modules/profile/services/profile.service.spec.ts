@@ -10,7 +10,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ProfileService } from './profile.service';
 
-const user = new Identity('u1', 'jana@example.com', 'Jana', 'user', true);
+const user = new Identity('u1', 'jana@example.com', 'Jana', true);
 
 const aRow = (overrides: Partial<ProfileRow> = {}): ProfileRow => ({
   name: 'Jana',
@@ -48,6 +48,7 @@ describe('ProfileService', () => {
     repository.getRow.mockResolvedValue(row);
     const onboardingService = mock<OnboardingService>();
     onboardingService.getOnboarding.mockResolvedValue(onboarding);
+    onboardingService.getOnboardingOf.mockResolvedValue(onboarding);
     return {
       repository,
       onboardingService,
@@ -240,6 +241,42 @@ describe('ProfileService', () => {
       await expect(service.getPublicProfile('nobody')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  // #238: the account and the private profile fields, for the administration.
+  describe('getUserForAdministration', () => {
+    const account = {
+      id: 'u2',
+      name: 'Petr',
+      email: 'petr@example.com',
+      emailVerified: false,
+      status: 'ACTIVE' as const,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    };
+
+    it('puts the account and the whole profile together', async () => {
+      const { repository, onboardingService, service } = setup();
+      repository.getAccount.mockResolvedValue(account);
+
+      const detail = await service.getUserForAdministration('u2');
+
+      expect(detail.account).toBe(account);
+      expect(detail.profile).toMatchObject({
+        gender: 'FEMALE',
+        birthYear: 1990,
+      });
+      expect(repository.getRow).toHaveBeenCalledWith('u2');
+      expect(onboardingService.getOnboardingOf).toHaveBeenCalledWith('u2');
+    });
+
+    it('is not found for an unknown user', async () => {
+      const { repository, service } = setup();
+      repository.getAccount.mockResolvedValue(null);
+
+      await expect(
+        service.getUserForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

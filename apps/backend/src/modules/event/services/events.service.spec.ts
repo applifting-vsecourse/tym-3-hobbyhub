@@ -974,4 +974,35 @@ describe('EventsService', () => {
       expect(repository.updateExternalOccupiedSpots).not.toHaveBeenCalled();
     });
   });
+
+  // #238: the administration sees any event, hidden and drafts too, so the
+  // only "not found" is an event that does not exist.
+  describe('getEventForAdministration', () => {
+    it('is not found for an unknown event', async () => {
+      const { repository, service } = setup();
+      repository.getAdministrationDetail.mockResolvedValue(null);
+
+      await expect(
+        service.getEventForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('passes the search and page to the repository', async () => {
+      const { repository, service } = setup();
+      repository.listForAdministration.mockResolvedValue({
+        items: [],
+        total: 0,
+      });
+
+      await service.listEventsForAdministration({
+        search: 'florbal',
+        offset: 20,
+      });
+
+      expect(repository.listForAdministration).toHaveBeenCalledWith({
+        search: 'florbal',
+        offset: 20,
+      });
+    });
+  });
 });

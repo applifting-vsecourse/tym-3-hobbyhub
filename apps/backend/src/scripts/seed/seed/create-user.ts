@@ -1,5 +1,5 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { User, UserRole } from '@/generated/prisma/client';
+import { User } from '@/generated/prisma/client';
 import { BetterAuth } from '@/shared/auth/providers/better-auth.provider';
 import { Gender } from '@/shared/auth/registration/registration';
 
@@ -8,7 +8,6 @@ type CreateUserParams = {
   password: string;
   name: string;
   username: string;
-  role?: string;
   // F-03.1 registration fields; seeded people do not need distinct values.
   gender?: Gender;
   birthYear?: number;
@@ -24,7 +23,6 @@ export async function createUser(
     password,
     name,
     username,
-    role,
     gender = 'MALE',
     birthYear = 1990,
   } = params;
@@ -52,12 +50,10 @@ export async function createUser(
     throw new Error(`Failed to create user with email: ${email}`);
   }
 
-  // assign a role to the user directly
   await prisma.user.update({
     where: { id: user.id },
     data: {
       username,
-      role: role as UserRole,
       // Demo accounts must be able to join and publish (F-03.2).
       emailVerified: true,
     },

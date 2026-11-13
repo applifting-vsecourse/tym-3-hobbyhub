@@ -28,7 +28,12 @@ export class OnboardingService {
   ) {}
 
   async getOnboarding(user: Identity): Promise<Onboarding> {
-    const onboarding = await this.onboardingRepository.getOnboarding(user.id);
+    return this.getOnboardingOf(user.id);
+  }
+
+  // #238: also for the administration, which reads anyone's profile.
+  async getOnboardingOf(userId: string): Promise<Onboarding> {
+    const onboarding = await this.onboardingRepository.getOnboarding(userId);
     if (!onboarding) throw new NotFoundException('User not found');
     return onboarding;
   }
