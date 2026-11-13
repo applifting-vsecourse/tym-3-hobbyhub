@@ -330,10 +330,26 @@
         "title": "Nic nenalezeno"
       },
       "filters": {
+        "capacity": {
+          "from": "Kapacita od {{value}}",
+          "range": "Kapacita {{from}}–{{to}}",
+          "to": "Kapacita do {{value}}"
+        },
         "dateFrom": "od {{date}}",
         "dateRange": "{{from}} – {{to}}",
         "dateTo": "do {{date}}",
+        "duration": {
+          "from": "od {{value}} h",
+          "range": "{{from}}–{{to}} h",
+          "to": "do {{value}} h"
+        },
+        "freeSpots": "Volná místa",
         "open": "Filtry",
+        "price": {
+          "from": "od {{value}} Kč",
+          "range": "{{from}}–{{to}} Kč",
+          "to": "do {{value}} Kč"
+        },
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
       },
@@ -898,13 +914,41 @@
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
+      "capacity": "Kolik lidí se vejde (počet míst)",
       "chosenActivities": "Vybrané aktivity",
       "clear": "Vymazat",
       "dateFrom": "Od data",
       "dateRangeReversed": "Konec rozsahu nemůže být před začátkem.",
       "dateTo": "Do data",
+      "duration": "Jak dlouho akce trvá (hodiny)",
+      "freeSpots": "Jen s volnými místy",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
+      "preset": {
+        "capacity": {
+          "from13": "13 a více",
+          "from7To12": "7–12 lidí",
+          "upTo6": "Do 6 lidí"
+        },
+        "custom": "Vlastní",
+        "duration": {
+          "from1To2": "1–2 h",
+          "from2To4": "2–4 h",
+          "from4": "4 h a více",
+          "upTo1": "Do 1 h"
+        },
+        "price": {
+          "free": "Zdarma",
+          "from300": "300 Kč a více",
+          "upTo100": "Do 100 Kč",
+          "upTo300": "Do 300 Kč"
+        }
+      },
+      "price": "Cena za místo (Kč)",
+      "rangeFrom": "Od",
+      "rangeInvalid": "Zadejte číslo v povoleném rozsahu (kapacita celé číslo do 500, délka do 744 h).",
+      "rangeReversed": "Hodnota „Od“ nesmí být větší než „Do“.",
+      "rangeTo": "Do",
       "results_few": "Zobrazit {{count}} akce",
       "results_one": "Zobrazit {{count}} akci",
       "results_other": "Zobrazit {{count}} akcí",

@@ -41,6 +41,7 @@ import {
   aheadFirstOrder,
   allOf,
   eventFilterConditions,
+  eventListRangeConditions,
 } from './event-list.sql';
 
 // Approved participations are the only ones that take a seat (ADR-0009).
@@ -88,6 +89,7 @@ const listCondition = (now: Date, filter: EventListFilter): Prisma.Sql =>
     Prisma.sql`NOT e."isHidden"`,
     Prisma.sql`e."endAt" > ${now}`,
     ...eventFilterConditions(filter),
+    ...eventListRangeConditions(filter),
   ]);
 
 // F-07.2: what may be shown to someone, depending on who they are: public or

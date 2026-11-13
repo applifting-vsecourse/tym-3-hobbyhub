@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   EVENT_SEARCH_MAX_LENGTH,
+  eventsListSearchSchema,
   eventsSearchSchema,
   filtersFromSearch,
   hasFilters,
@@ -66,6 +67,13 @@ describe("filtersFromSearch", () => {
         location: "Brno",
         dateFrom: "2026-11-01",
         dateTo: "",
+        freeSpotsOnly: false,
+        priceFrom: "",
+        priceTo: "",
+        hoursFrom: "",
+        hoursTo: "",
+        capacityFrom: "",
+        capacityTo: "",
       },
       isRangeReversed: false,
     })
@@ -75,7 +83,39 @@ describe("filtersFromSearch", () => {
       location: "",
       dateFrom: "",
       dateTo: "",
+      freeSpotsOnly: false,
+      priceFrom: "",
+      priceTo: "",
+      hoursFrom: "",
+      hoursTo: "",
+      capacityFrom: "",
+      capacityTo: "",
     })
+  })
+
+  it("reads the number ranges and the free-spot switch (#214)", () => {
+    const { filters } = filtersFromSearch({
+      free: true,
+      priceFrom: 0,
+      priceTo: 200,
+      hoursFrom: 1,
+      capacityTo: 12,
+    })
+    expect(filters).toMatchObject({
+      freeSpotsOnly: true,
+      priceFrom: "0",
+      priceTo: "200",
+      hoursFrom: "1",
+      hoursTo: "",
+      capacityFrom: "",
+      capacityTo: "12",
+    })
+  })
+
+  it("does not ask for a number range that is reversed, and says so", () => {
+    const { filters, isRangeReversed } = filtersFromSearch({ priceFrom: 300, priceTo: 100 })
+    expect(isRangeReversed).toBe(true)
+    expect([filters.priceFrom, filters.priceTo]).toEqual(["", ""])
   })
 
   it("does not ask for a range that ends before it starts, and says so", () => {
@@ -104,6 +144,18 @@ describe("searchWithFilters", () => {
     })
   })
 
+  it("writes the ranges and the switch, and drops them when emptied (#214)", () => {
+    expect(
+      searchWithFilters({}, { freeSpotsOnly: true, priceFrom: "0", priceTo: "200", hoursTo: "3" }),
+    ).toEqual({ free: true, priceFrom: 0, priceTo: 200, hoursTo: 3 })
+    expect(
+      searchWithFilters(
+        { free: true, priceFrom: 0, capacityTo: 9 },
+        { freeSpotsOnly: false, priceFrom: "", capacityTo: "" },
+      ),
+    ).toEqual({ free: undefined, priceFrom: undefined, capacityTo: undefined })
+  })
+
   it("drops a filter that was emptied", () => {
     expect(
       searchWithFilters(
@@ -114,6 +166,41 @@ describe("searchWithFilters", () => {
   })
 })
 
+describe("eventsListSearchSchema", () => {
+  it("takes the ranges as numbers or text and drops what is not a number", () => {
+    expect(
+      eventsListSearchSchema.parse({
+        priceFrom: 100,
+        priceTo: "abc",
+        free: "true",
+        capacityTo: "12",
+      }),
+    ).toMatchObject({ priceFrom: 100, priceTo: undefined, free: true, capacityTo: 12 })
+  })
+
+  it("drops what the server would refuse (#214)", () => {
+    expect(
+      eventsListSearchSchema.parse({
+        capacityFrom: 2.5,
+        capacityTo: "1000",
+        hoursTo: 745,
+        priceTo: -5,
+        hoursFrom: "744",
+      }),
+    ).toMatchObject({
+      capacityFrom: undefined,
+      capacityTo: undefined,
+      hoursTo: undefined,
+      priceTo: undefined,
+      hoursFrom: 744,
+    })
+  })
+
+  it("is not offered to the pages that do not apply the ranges", () => {
+    expect(eventsSearchSchema.parse({ priceFrom: "100" })).not.toHaveProperty("priceFrom")
+  })
+})
+
 describe("hasFilters", () => {
   it("is false only when nothing narrows the list", () => {
     const none = filtersFromSearch({}).filters
@@ -121,5 +208,7 @@ describe("hasFilters", () => {
     expect(hasFilters({ ...none, search: "x" })).toBe(true)
     expect(hasFilters({ ...none, activityIds: ["a1"] })).toBe(true)
     expect(hasFilters({ ...none, dateTo: "2026-11-30" })).toBe(true)
+    expect(hasFilters({ ...none, freeSpotsOnly: true })).toBe(true)
+    expect(hasFilters({ ...none, capacityFrom: "4" })).toBe(true)
   })
 })

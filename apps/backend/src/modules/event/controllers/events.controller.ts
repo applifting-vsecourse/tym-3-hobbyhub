@@ -60,6 +60,13 @@ export class EventsController {
       { limit: query.limit, offset: query.offset },
       {
         ...eventFilterOf(query),
+        onlyWithFreeSpots: query.onlyWithFreeSpots,
+        priceFrom: query.priceFrom,
+        priceTo: query.priceTo,
+        durationHoursFrom: query.durationHoursFrom,
+        durationHoursTo: query.durationHoursTo,
+        capacityFrom: query.capacityFrom,
+        capacityTo: query.capacityTo,
         near:
           query.lat !== undefined && query.lng !== undefined
             ? { latitude: query.lat, longitude: query.lng }

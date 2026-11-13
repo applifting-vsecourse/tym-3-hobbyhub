@@ -29,6 +29,60 @@ describe('ListEventsQuery', () => {
     expect(query.location).toBe('Praha 8');
   });
 
+  it('takes the number ranges and the free-seat switch', async () => {
+    const query = await validate({
+      onlyWithFreeSpots: 'true',
+      priceFrom: '0',
+      priceTo: '200.50',
+      durationHoursFrom: '1',
+      durationHoursTo: '3',
+      capacityFrom: '4',
+      capacityTo: '12',
+    });
+    expect(query).toMatchObject({
+      onlyWithFreeSpots: true,
+      priceFrom: 0,
+      priceTo: 200.5,
+      durationHoursFrom: 1,
+      durationHoursTo: 3,
+      capacityFrom: 4,
+      capacityTo: 12,
+    });
+  });
+
+  it('takes the free-seat switch however it is written', async () => {
+    expect(
+      (await validate({ onlyWithFreeSpots: 'TRUE' })).onlyWithFreeSpots,
+    ).toBe(true);
+    expect((await validate({ onlyWithFreeSpots: '1' })).onlyWithFreeSpots).toBe(
+      true,
+    );
+    expect((await validate({ onlyWithFreeSpots: '0' })).onlyWithFreeSpots).toBe(
+      false,
+    );
+    await expect(
+      validate({ onlyWithFreeSpots: 'maybe' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('reads a blank number as no value, not as 0', async () => {
+    const query = await validate({ priceFrom: '', capacityTo: '' });
+    expect(query.priceFrom).toBeUndefined();
+    expect(query.capacityTo).toBeUndefined();
+  });
+
+  it('refuses negative, fractional-capacity and non-numeric values', async () => {
+    await expect(validate({ priceFrom: '-1' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(validate({ capacityFrom: '2.5' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(validate({ durationHoursTo: 'long' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
   it('takes a range of days', async () => {
     const query = await validate({
       dateFrom: '2026-11-15',

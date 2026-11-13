@@ -381,15 +381,36 @@ export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
 // The zone in which "a day" is read by the date filter: where the events are.
 export const EVENT_LIST_TIME_ZONE = 'Europe/Prague';
 
-export type EventListFilterViolation = 'DATE_FROM_AFTER_DATE_TO';
+export type EventListFilterViolation =
+  | 'DATE_FROM_AFTER_DATE_TO'
+  | 'PRICE_FROM_AFTER_PRICE_TO'
+  | 'DURATION_FROM_AFTER_DURATION_TO'
+  | 'CAPACITY_FROM_AFTER_CAPACITY_TO';
+
+// The limits of the number ranges of the public list (#214): sanity caps that
+// keep the query sensible, not business rules.
+export const EVENT_LIST_MAX_DURATION_HOURS = 24 * 31;
+
+const reversed = (from?: number, to?: number): boolean =>
+  from !== undefined && to !== undefined && from > to;
 
 // Rules between the fields of the list filter. ISO dates compare as text.
 export const eventListFilterViolations = (
-  filter: Pick<EventFilter, 'dateFrom' | 'dateTo'>,
-): EventListFilterViolation[] =>
-  filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
-    ? ['DATE_FROM_AFTER_DATE_TO']
-    : [];
+  filter: Pick<EventFilter, 'dateFrom' | 'dateTo'> & Partial<EventListRanges>,
+): EventListFilterViolation[] => [
+  ...(filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
+    ? (['DATE_FROM_AFTER_DATE_TO'] as const)
+    : []),
+  ...(reversed(filter.priceFrom, filter.priceTo)
+    ? (['PRICE_FROM_AFTER_PRICE_TO'] as const)
+    : []),
+  ...(reversed(filter.durationHoursFrom, filter.durationHoursTo)
+    ? (['DURATION_FROM_AFTER_DURATION_TO'] as const)
+    : []),
+  ...(reversed(filter.capacityFrom, filter.capacityTo)
+    ? (['CAPACITY_FROM_AFTER_CAPACITY_TO'] as const)
+    : []),
+];
 
 // TODO(F-02.1b #91): `location` is plain text for now. A radius filter needs
 // every event to have coordinates (geocoding, F-12.3), and similar spellings
@@ -415,7 +436,23 @@ export type EventFilter = {
   dateTo?: string;
 };
 
-export type EventListFilter = EventFilter & { near?: GeoPoint };
+// What only the public list can be narrowed by besides the `EventFilter` (#214);
+// every range is inclusive and either end may be left open.
+// `price` is the contribution per seat in CZK (an event without one costs 0),
+// `duration` is hours from start to end, `capacity` is how many people the event
+// holds in all, and `onlyWithFreeSpots` keeps the events that still have a seat.
+export type EventListRanges = {
+  onlyWithFreeSpots?: boolean;
+  priceFrom?: number;
+  priceTo?: number;
+  durationHoursFrom?: number;
+  durationHoursTo?: number;
+  capacityFrom?: number;
+  capacityTo?: number;
+};
+
+export type EventListFilter = EventFilter &
+  EventListRanges & { near?: GeoPoint };
 
 export const NO_EVENT_FILTER: EventFilter = { activityIds: [] };
 
