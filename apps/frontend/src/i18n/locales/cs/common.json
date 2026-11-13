@@ -117,6 +117,10 @@
         "signIn": "Přihlásit se a poslat nový",
         "title": "Odkaz už nefunguje"
       },
+      "prompt": {
+        "description": "Poslali jsme ti odkaz na {{email}}. Dokud ho nepotvrdíš, nemůžeš zveřejňovat akce ani zakládat skupiny a upozornění ti nechodí e-mailem. Nedorazil? Pošli si nový.",
+        "title": "Dokonči ověření e-mailu"
+      },
       "resend": "Poslat e-mail znovu",
       "resendFailed": "E-mail se nepodařilo odeslat. Zkus to znovu.",
       "resendIn": "Poslat znovu za {{seconds}} s",
