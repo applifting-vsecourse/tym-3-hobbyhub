@@ -1,8 +1,12 @@
 import { SMTPAdapter } from './smtp-adapter';
 
 const sendMail = jest.fn();
+const createTransport = jest.fn<{ sendMail: jest.Mock }, [unknown]>(() => ({
+  sendMail,
+}));
 jest.mock('nodemailer', () => ({
-  createTransport: (): { sendMail: jest.Mock } => ({ sendMail }),
+  createTransport: (options: unknown): { sendMail: jest.Mock } =>
+    createTransport(options),
 }));
 
 const config = {
@@ -14,7 +18,20 @@ const config = {
 };
 
 describe('SMTPAdapter', () => {
-  beforeEach(() => sendMail.mockReset());
+  beforeEach(() => {
+    sendMail.mockReset();
+    createTransport.mockClear();
+  });
+
+  // On port 587 the connection starts unencrypted; without this, a stripped
+  // STARTTLS offer would send the password and the e-mail in plain text.
+  it('refuses to send over an unencrypted connection', () => {
+    new SMTPAdapter({ ...config, port: 587, secure: false });
+
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({ secure: false, requireTLS: true }),
+    );
+  });
 
   it('sends from the user name when no sender is set', async () => {
     await new SMTPAdapter(config).sendEmail('a@example.com', 'Hi', '<p>x</p>');
