@@ -117,6 +117,10 @@
         "signIn": "Sign in to send a new one",
         "title": "This link no longer works"
       },
+      "prompt": {
+        "description": "We sent a link to {{email}}. Until you confirm it, you cannot publish events or found groups, and notifications do not reach you by email. Didn't arrive? Send yourself a new one.",
+        "title": "Finish verifying your email"
+      },
       "resend": "Send the email again",
       "resendFailed": "The email could not be sent. Please try again.",
       "resendIn": "Send again in {{seconds}} s",
