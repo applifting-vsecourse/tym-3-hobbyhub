@@ -86,6 +86,7 @@ Two things worth knowing:
 
 - **You set exactly two URLs**, `BACKEND_URL` and `FRONTEND_URL`. The backend uses them for CORS, BetterAuth trusted origins and password-reset links; the frontend's API URL is derived from `BACKEND_URL`. Point them at the real domains or the backend rejects the browser.
 - **The frontend bakes its API URL in at build time** (`VITE_*` are build args, not runtime env), so changing `BACKEND_URL` needs a rebuild, not just a restart.
+- **E-mail settings come from GitHub, not Coolify.** Coolify's variables are fixed by the course, so `deploy.yml` bakes them into the backend image: repository variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` and secrets `SMTP_USERNAME`, `SMTP_PASSWORD` (Settings → Secrets and variables → Actions). Without `SMTP_HOST` the backend only logs e-mails. Anyone who can pull the image can read the password.
 - **Production migrates but does not seed** — the container runs `prisma migrate deploy` then starts. A fresh deployment has an empty database, so the first account is created through the sign-up form. The lookup tables (activities, levels, cancellation reasons) are data migrations, so they are there from the first deployment; demo events and groups for testing come from a one-off data migration too (issue #120), attached to whoever has signed up by then.
 
 ## When something goes wrong

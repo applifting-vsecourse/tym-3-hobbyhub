@@ -15,6 +15,10 @@ export class SMTPAdapter implements EmailService {
       host: config.host,
       port: config.port,
       secure: config.secure,
+      // With `secure: false` (port 587) the connection starts in plain text
+      // and STARTTLS upgrades it only if the server offers it, so someone on
+      // the way could strip the offer. Refuse to send without encryption.
+      requireTLS: true,
       auth: {
         user: config.user,
         pass: config.pass,
