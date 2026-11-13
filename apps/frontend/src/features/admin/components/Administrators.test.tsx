@@ -97,7 +97,8 @@ describe("Administrators", () => {
       rowOf("Petr Svoboda").getByRole("button", { name: "Poslat pozvánku znovu" }),
     ).toBeEnabled()
     expect(rowOf("Eva Malá").getByText("Odebraný")).toBeInTheDocument()
-    expect(rowOf("Eva Malá").getByText(/^Jana Nováková, /)).toBeInTheDocument()
+    // Jana added her and removed her: both columns name her.
+    expect(rowOf("Eva Malá").getAllByText(/^Jana Nováková, /)).toHaveLength(2)
     expect(rowOf("Eva Malá").getByRole("button", { name: "Obnovit přístup" })).toBeEnabled()
   })
 
