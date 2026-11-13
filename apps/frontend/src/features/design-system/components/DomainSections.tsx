@@ -6,6 +6,7 @@ import florbalPhoto from "@/assets/event-photos/florbal.jpg"
 import volejbalPhoto from "@/assets/event-photos/volejbal.jpg"
 import vyletPhoto from "@/assets/event-photos/vylet.jpg"
 import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
+import { AdminTable } from "@/components/hobbyhub/AdminTable"
 import { BottomNav } from "@/components/hobbyhub/BottomNav"
 import { ChatShare } from "@/components/hobbyhub/ChatShare"
 import { EventCard } from "@/components/hobbyhub/EventCard"
@@ -23,10 +24,16 @@ import { Seat } from "@/components/hobbyhub/Seat"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 import { ShareEventDemo } from "@/features/design-system/components/SheetDemos"
 import { Example, ShowcaseSection } from "@/features/design-system/components/ShowcaseSection"
+
+const ADMIN_TABLE_EXAMPLE = [
+  { name: "Jana Nováková", email: "jana@example.com", isBlocked: false },
+  { name: "Petr Svoboda", email: "petr@example.com", isBlocked: true },
+]
 
 const CAPACITY_EXAMPLES = [
   { label: "7 z 10", taken: 7, min: 10 },
@@ -398,6 +405,31 @@ export function DomainSections() {
         description="Dolní lišta má vystouplé tlačítko s logem „Přidat“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti. Návštěvník má jen Objevovat, Přidat a Skupiny."
       >
         <BottomNavExample />
+      </ShowcaseSection>
+
+      <ShowcaseSection
+        id="tabulka-administrace"
+        title="Tabulka administrace"
+        description="Jen pro administraci (/admin). Od šířky md hustá tabulka, pod ní se každý řádek rozloží do popisků a hodnot oddělených linkou, nikdy do karty. Administrace má vlastní hlavičku AdminShell místo AppShell."
+      >
+        <AdminTable
+          label="Uživatelé (ukázka)"
+          rows={ADMIN_TABLE_EXAMPLE}
+          rowKey={(row) => row.email}
+          primary={{ key: "name", header: "Jméno", cell: (row) => row.name }}
+          columns={[
+            { key: "email", header: "E-mail", cell: (row) => row.email },
+            {
+              key: "status",
+              header: "Stav",
+              cell: (row) => (
+                <Badge variant={row.isBlocked ? "destructive" : "secondary"}>
+                  {row.isBlocked ? "Zablokovaný" : "Aktivní"}
+                </Badge>
+              ),
+            },
+          ]}
+        />
       </ShowcaseSection>
 
       <ShowcaseSection

@@ -1,4 +1,155 @@
 {
+  "admin": {
+    "administrators": {
+      "createdAt": "Created",
+      "email": "E-mail",
+      "howToAdd": "New administrators are created by the app's operators with admin:create on the server.",
+      "name": "Name",
+      "title": "Administrators"
+    },
+    "event": {
+      "address": "Exact address",
+      "basics": "Basics",
+      "cancellation": "Cancellation reason",
+      "capacity": "Occupancy",
+      "capacityValue": "{{approved}} approved, {{min}}–{{max}} seats",
+      "contact": "Contact for participants",
+      "description": "Description",
+      "externalChat": "External chat",
+      "group": "Group",
+      "noParticipants": "Nobody is on the event yet.",
+      "participants": "Participants",
+      "waitlistPosition": "{{status}}, number {{position}} in line"
+    },
+    "eventStatus": {
+      "CANCELLED": "Cancelled",
+      "DRAFT": "Draft",
+      "FINISHED": "Finished",
+      "NOT_HELD": "Not held",
+      "PUBLISHED": "Published"
+    },
+    "eventVisibility": {
+      "GROUP_ONLY": "Group only",
+      "PRIVATE": "Private",
+      "PUBLIC": "Public"
+    },
+    "events": {
+      "activity": "Activity",
+      "empty": "There are no events yet.",
+      "hidden": "Hidden",
+      "name": "Title",
+      "organizer": "Organizer",
+      "search": "Search by title",
+      "startAt": "Date",
+      "state": "Status",
+      "title": "Events"
+    },
+    "gender": {
+      "FEMALE": "Female",
+      "MALE": "Male"
+    },
+    "group": {
+      "basics": "Basics",
+      "joinedAt": "Member since",
+      "location": "Location",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "message": "Message",
+      "noRequests": "No request is waiting.",
+      "requestedAt": "Sent",
+      "requests": "Pending requests to join",
+      "role": "Role",
+      "schedule": "Usual schedule"
+    },
+    "groupRole": {
+      "ADMIN": "Group admin",
+      "MEMBER": "Member",
+      "OWNER": "Founder"
+    },
+    "groupStatus": {
+      "ACTIVE": "Active",
+      "CANCELLED": "Cancelled"
+    },
+    "groups": {
+      "activity": "Activity",
+      "createdAt": "Founded",
+      "empty": "There are no groups yet.",
+      "memberCount": "Members",
+      "name": "Name",
+      "private": "Private",
+      "search": "Search by name",
+      "state": "Status",
+      "title": "Groups"
+    },
+    "list": {
+      "next": "Next",
+      "noMatch": "The search found nothing.",
+      "pages": "List pages",
+      "previous": "Previous",
+      "range": "{{from}}–{{to}} of {{total}}"
+    },
+    "loadFailed": "The data could not be loaded.",
+    "loading": "Loading…",
+    "nav": {
+      "administrators": "Administrators",
+      "events": "Events",
+      "groups": "Groups",
+      "label": "Administration navigation",
+      "users": "Users"
+    },
+    "no": "No",
+    "none": "—",
+    "participationStatus": {
+      "APPROVED": "Approved",
+      "ATTENDED": "Attended",
+      "CANCELLED": "Cancelled",
+      "DECLINED": "Declined the invitation",
+      "INVITED": "Invited",
+      "NO_SHOW": "No-show",
+      "WAITLISTED": "Substitute"
+    },
+    "retry": "Try again",
+    "signIn": {
+      "description": "The HobbyHub administration has its own accounts, separate from the users' ones.",
+      "footer": "Administrator accounts are created by the app's operators; there is no sign-up here.",
+      "title": "Administrator sign-in"
+    },
+    "signOut": {
+      "failed": "Signing out failed.",
+      "label": "Sign out"
+    },
+    "title": "Administration",
+    "user": {
+      "account": "Account",
+      "address": "Home",
+      "bio": "About",
+      "birthYear": "Year of birth",
+      "gender": "Gender",
+      "interests": "Interests",
+      "noOrganized": "Organizes no events.",
+      "noParticipations": "Holds no seat on any event.",
+      "organized": "Organized events",
+      "participations": "Event participation",
+      "profile": "Profile"
+    },
+    "userStatus": {
+      "ACTIVE": "Active",
+      "BLOCKED": "Blocked",
+      "DELETED": "Deleted",
+      "RESTRICTED": "Restricted"
+    },
+    "users": {
+      "createdAt": "Signed up",
+      "email": "E-mail",
+      "emailVerified": "Verified e-mail",
+      "empty": "There are no users yet.",
+      "name": "Name",
+      "search": "Search by name or e-mail",
+      "status": "Status",
+      "title": "Users"
+    },
+    "yes": "Yes"
+  },
   "auth": {
     "back": "Back",
     "errors": {

@@ -16,4 +16,11 @@ export const ROUTES = {
   profile: "/profile",
   profileEdit: "/profile/edit",
   onboarding: "/onboarding",
+  // ADR-0010, #238: the administration, its own sign-in and shell.
+  admin: "/admin",
+  adminLogin: "/admin/login",
+  adminUsers: "/admin/users",
+  adminEvents: "/admin/events",
+  adminGroups: "/admin/groups",
+  adminAdministrators: "/admin/administrators",
 } as const
