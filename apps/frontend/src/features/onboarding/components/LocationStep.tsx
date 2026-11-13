@@ -130,6 +130,7 @@ export function LocationStep({
                 <>
                   <FormControl>
                     <AddressSearch
+                      isStreetAllowed
                       value={field.value?.label ?? ""}
                       placeholder={t("onboarding.location.addressPlaceholder")}
                       onSelect={(selected) =>

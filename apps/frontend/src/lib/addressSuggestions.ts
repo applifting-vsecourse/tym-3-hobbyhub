@@ -18,6 +18,7 @@ const responseSchema = z.object({
   features: z.array(
     z.object({
       properties: z.object({
+        feature_type: z.string().optional(),
         name: z.string(),
         full_address: z.string().optional(),
         place_formatted: z.string().optional(),
@@ -53,10 +54,14 @@ export type AddressSuggestion = {
   longitude: number
 }
 
-export function toSuggestion({ properties }: Feature): AddressSuggestion {
+/** A suggestion as the geocoder returns it; `isStreet` marks a whole street, without a house number. */
+export type AddressSuggestionItem = AddressSuggestion & { isStreet: boolean }
+
+export function toSuggestion({ properties }: Feature): AddressSuggestionItem {
   const { context } = properties
   const street = context.address?.name ?? context.street?.name ?? properties.name
   return {
+    isStreet: properties.feature_type === "street",
     label: properties.full_address ?? [properties.name, properties.place_formatted].join(", "),
     street,
     city: context.place?.name ?? context.locality?.name ?? "",
@@ -71,23 +76,27 @@ export function toSuggestion({ properties }: Feature): AddressSuggestion {
 export const hasAddressSuggestions = () => env.VITE_MAPBOX_TOKEN !== undefined
 
 /**
- * `isStreetAllowed` also suggests a whole street, for a home address typed
- * without a house number; an event's place still needs the exact address.
+ * The geocoder suggests an exact address only once a house number is typed, so
+ * until then streets are asked for too; with a number only exact addresses, so
+ * streets do not take their places. Whether a street can be picked as it is, is
+ * up to the caller (`isStreet`).
  */
-export const addressSuggestionsQueryOptions = (
-  query: string,
-  language: string,
-  isStreetAllowed = false,
-) =>
-  queryOptions({
-    queryKey: ["geo", "address-suggestions", language, query, isStreetAllowed] as const,
+const typesFor = (query: string) => (/\d/.test(query) ? "address" : "address,street")
+
+export const addressSuggestionsQueryOptions = (query: string, language: string) => {
+  // The geocoder takes "cs", not a regional "cs-CZ".
+  const bareLanguage = language.split("-")[0] ?? language
+  return queryOptions({
+    queryKey: ["geo", "address-suggestions", bareLanguage, query] as const,
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams({
         q: query,
-        types: isStreetAllowed ? "address,street" : "address",
+        types: typesFor(query),
+        // Nearest to the user first: the same street name exists in many towns.
+        proximity: "ip",
         autocomplete: "true",
         country: COUNTRIES,
-        language,
+        language: bareLanguage,
         limit: String(MAX_SUGGESTIONS),
         access_token: env.VITE_MAPBOX_TOKEN ?? "",
       })
@@ -99,3 +108,4 @@ export const addressSuggestionsQueryOptions = (
     // The same text gives the same suggestions for a while; typing back and forth is free.
     staleTime: 5 * 60 * 1000,
   })
+}

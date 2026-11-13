@@ -22,13 +22,16 @@ vi.mock("@/components/hobbyhub/AddressSearch", () => ({
     value,
     placeholder,
     onSelect,
+    isStreetAllowed,
   }: {
     value: string
     placeholder: string
     onSelect: (address: typeof suggestion) => void
+    isStreetAllowed?: boolean
   }) => (
     <button
       type="button"
+      data-street-allowed={isStreetAllowed ? "yes" : "no"}
       onClick={() => onSelect(suggestion)}
     >
       {value || placeholder}
@@ -70,6 +73,14 @@ const renderStep = async (...args: Parameters<typeof stepFor>) => {
 }
 
 describe("LocationStep", () => {
+  it("lets a street be picked as it is, since a home location needs no house number", async () => {
+    await renderStep()
+    expect(screen.getByRole("button", { name: /Vyberte|adres|Začněte/i })).toHaveAttribute(
+      "data-street-allowed",
+      "yes",
+    )
+  })
+
   it("starts the range at 25 km", async () => {
     await renderStep()
 

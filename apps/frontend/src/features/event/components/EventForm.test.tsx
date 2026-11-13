@@ -336,8 +336,43 @@ describe("EventForm address suggestions", () => {
     const [requested] = vi.mocked(fetch).mock.calls.at(-1) ?? []
     const url = new URL(requested as string)
     expect(url.searchParams.get("q")).toBe("Chabařo")
-    expect(url.searchParams.get("types")).toBe("address")
+    expect(url.searchParams.get("types")).toBe("address,street")
     expect(url.searchParams.get("country")).toBe("cz,sk")
+  })
+
+  it("fills what a street knows and leaves the house number to type", async () => {
+    const street = {
+      properties: {
+        feature_type: "street",
+        name: "Chabařovická",
+        full_address: "Chabařovická, 182 00 Praha, Česko",
+        context: {
+          street: { name: "Chabařovická" },
+          postcode: { name: "182 00" },
+          place: { name: "Praha" },
+          country: { name: "Česko" },
+        },
+        coordinates: { latitude: 50.13, longitude: 14.44 },
+      },
+    }
+    vi.mocked(fetch).mockResolvedValue(Response.json({ features: [street] }))
+    const { user } = await renderForm()
+
+    await user.click(screen.getByRole("combobox", { name: "Najít adresu" }))
+    await user.type(screen.getByPlaceholderText("Ulice a číslo, město"), "Chabařo")
+    await user.click(await screen.findByRole("option", { name: /Chabařovická, 182 00 Praha/ }))
+
+    expect(screen.getByLabelText("Ulice a číslo")).toHaveValue("Chabařovická ")
+    expect(screen.getByText(/Ulice je vyplněná/)).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Najít adresu" })).toHaveTextContent(
+      "Chabařovická, 182 00 Praha, Česko",
+    )
+    expect(screen.getByLabelText("Město")).toHaveValue("Praha")
+    expect(screen.getByLabelText("PSČ")).toHaveValue("182 00")
+    await vi.waitFor(() => expect(screen.getByLabelText("Ulice a číslo")).toHaveFocus())
+    expect(
+      screen.queryByText("Poloha adresy je uložená, akce se ukáže na mapě."),
+    ).not.toBeInTheDocument()
   })
 
   it("forgets the position once the address is edited by hand", async () => {

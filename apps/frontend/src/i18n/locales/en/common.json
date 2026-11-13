@@ -289,6 +289,7 @@
       "address": "Place",
       "addressHint": "Pick the address from the suggestions so the event shows on the map. The fields below fill in by themselves.",
       "addressLocated": "The address position is saved, the event will show on the map.",
+      "addressStreetPicked": "The street is filled in. Add the house number, or pick the whole address so the event shows on the map.",
       "cancel": "Cancel",
       "contactsHint": "Only people with a confirmed seat, and you, see the chat and contact.",
       "continue": "Continue",

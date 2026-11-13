@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { toSuggestion } from "@/lib/addressSuggestions"
+import { addressSuggestionsQueryOptions, toSuggestion } from "@/lib/addressSuggestions"
 
-const feature = (context: Record<string, unknown> = {}) =>
+const feature = (context: Record<string, unknown> = {}, featureType = "address") =>
   ({
     properties: {
+      feature_type: featureType,
       name: "Chabařovická 4",
       full_address: "Chabařovická 4, 182 00 Praha, Česko",
       place_formatted: "182 00 Praha, Česko",
@@ -22,6 +23,7 @@ const feature = (context: Record<string, unknown> = {}) =>
 describe("toSuggestion", () => {
   it("splits an address into the fields of the forms and keeps the position", () => {
     expect(toSuggestion(feature())).toEqual({
+      isStreet: false,
       label: "Chabařovická 4, 182 00 Praha, Česko",
       street: "Chabařovická 4",
       city: "Praha",
@@ -49,5 +51,41 @@ describe("toSuggestion", () => {
       properties: { ...base.properties, full_address: undefined },
     })
     expect(suggestion.label).toBe("Chabařovická 4, 182 00 Praha, Česko")
+  })
+
+  it("marks a whole street, which has no house number", () => {
+    expect(toSuggestion(feature({}, "street")).isStreet).toBe(true)
+  })
+})
+
+describe("addressSuggestionsQueryOptions", () => {
+  const ask = async (language: string) => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ features: [] }))
+    vi.stubGlobal("fetch", fetchMock)
+    const options = addressSuggestionsQueryOptions("Vodičkova", language)
+    await (options.queryFn as (context: { signal: AbortSignal }) => Promise<unknown>)({
+      signal: new AbortController().signal,
+    })
+    return new URL(fetchMock.mock.calls[0]?.[0] as string).searchParams
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it("also asks for streets, since an address only appears once a house number is typed", async () => {
+    expect((await ask("cs")).get("types")).toBe("address,street")
+  })
+
+  it("asks for nearby places first, as the same street name is in many towns", async () => {
+    expect((await ask("cs")).get("proximity")).toBe("ip")
+  })
+
+  it("keeps the cached suggestions of a regional and a bare language together", () => {
+    expect(addressSuggestionsQueryOptions("Vodičkova", "cs-CZ").queryKey).toEqual(
+      addressSuggestionsQueryOptions("Vodičkova", "cs").queryKey,
+    )
+  })
+
+  it("sends the bare language, not a regional one the geocoder does not take", async () => {
+    expect((await ask("cs-CZ")).get("language")).toBe("cs")
   })
 })
