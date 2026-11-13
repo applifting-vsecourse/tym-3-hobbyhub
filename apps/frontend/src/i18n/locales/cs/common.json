@@ -1,11 +1,42 @@
 {
   "admin": {
+    "administratorStatus": {
+      "ACTIVE": "Aktivní",
+      "DEACTIVATED": "Odebraný",
+      "INVITED": "Pozvaný"
+    },
     "administrators": {
+      "actionFailed": "Akce se nepodařila. Zkuste to prosím znovu.",
+      "actions": "Akce",
+      "byOn": "{{name}}, {{date}}",
+      "cancelInvitation": "Zrušit pozvánku",
       "createdAt": "Založen",
+      "createdBy": "Přidal(a)",
+      "deactivate": "Odebrat",
+      "deactivated": "{{name}} už do administrace nemá přístup.",
+      "deactivatedBy": "Odebral(a)",
       "email": "E-mail",
-      "howToAdd": "Nového správce zakládá provoz aplikace příkazem admin:create na serveru.",
+      "fromServer": "server",
+      "intro": "Správci se zvou e-mailem a heslo si nastaví sami. Sebe odebrat nelze a vždy zůstane aspoň jeden aktivní správce.",
+      "invite": "Přidat správce",
+      "invited": "Pozvánka odešla na {{email}}.",
+      "lastActive": "Poslední aktivní správce",
       "name": "Jméno",
+      "reactivate": "Obnovit přístup",
+      "reactivated": "{{name}} dostal(a) novou pozvánku, staré heslo už neplatí.",
+      "resend": "Poslat pozvánku znovu",
+      "resent": "Nová pozvánka pro {{name}} odešla, předchozí odkaz už nefunguje.",
+      "status": "Stav",
+      "thatIsYou": "To jste vy",
       "title": "Správci"
+    },
+    "deactivate": {
+      "cancel": "Zrušit",
+      "confirm": "Odebrat",
+      "failed": "Správce se nepodařilo odebrat. Zkuste to prosím znovu.",
+      "lastActive": "Mezitím zbyl jen jeden aktivní správce, toho odebrat nelze.",
+      "text": "{{name}} okamžitě přijde o přístup do administrace a bude odhlášen(a) na všech zařízeních. Přístup jde později obnovit novou pozvánkou.",
+      "title": "Odebrat správce {{name}}?"
     },
     "event": {
       "address": "Přesná adresa",
@@ -43,6 +74,11 @@
       "startAt": "Termín",
       "state": "Stav",
       "title": "Akce"
+    },
+    "forgotPassword": {
+      "description": "Zadejte e-mail svého účtu správce a pošleme vám odkaz pro nastavení nového hesla.",
+      "sent": "Pokud k tomuto e-mailu existuje aktivní účet správce, poslali jsme na něj odkaz pro nastavení nového hesla. Platí 1 hodinu.",
+      "title": "Zapomenuté heslo správce"
     },
     "gender": {
       "FEMALE": "Žena",
@@ -82,6 +118,20 @@
       "state": "Stav",
       "title": "Skupiny"
     },
+    "invite": {
+      "deactivated": "Tento správce byl odebrán. Najděte ho v seznamu a obnovte mu přístup.",
+      "description": "Kolega dostane e-mail s odkazem, kde si nastaví heslo. Odkaz platí 72 hodin.",
+      "email": "E-mail",
+      "emailInvalid": "Neplatný e-mail",
+      "emailRequired": "Zadejte e-mail",
+      "failed": "Pozvánku se nepodařilo poslat. Zkuste to prosím znovu.",
+      "name": "Jméno",
+      "nameRequired": "Zadejte jméno",
+      "nameTooLong": "Jméno je příliš dlouhé",
+      "submit": "Poslat pozvánku",
+      "taken": "Tento e-mail už správci patří.",
+      "title": "Přidat správce"
+    },
     "list": {
       "next": "Další",
       "noMatch": "Hledání nic nenašlo.",
@@ -110,6 +160,13 @@
       "WAITLISTED": "Náhradník"
     },
     "retry": "Zkusit znovu",
+    "setPassword": {
+      "description": "Zvolte si heslo do administrace, aspoň {{minimum}} znaků. Po uložení vás odhlásíme na všech zařízeních.",
+      "done": "Heslo je nastavené. Přihlaste se s ním do administrace.",
+      "invalidDescription": "Odkaz je neplatný, už byl použit, nebo vypršel. Pozvánku vám pošle znovu kolega, nový odkaz na heslo si vyžádáte sami.",
+      "signIn": "Přihlásit se do administrace",
+      "title": "Nastavení hesla správce"
+    },
     "signIn": {
       "description": "Administrace HobbyHubu má vlastní účty, oddělené od běžných uživatelů.",
       "footer": "Účet správce zakládá provoz aplikace, registrace tu není.",
@@ -246,6 +303,7 @@
       "genderRequired": "Vyberte pohlaví",
       "nameRequired": "Zadejte jméno nebo přezdívku",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
+      "passwordMinLength": "Heslo musí mít alespoň {{minimum}} znaků",
       "passwordRequired": "Zadejte heslo",
       "passwordsMismatch": "Hesla se neshodují",
       "termsRequired": "Bez souhlasu s podmínkami se nelze zaregistrovat",
