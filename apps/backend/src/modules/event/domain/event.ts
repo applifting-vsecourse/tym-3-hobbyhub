@@ -536,3 +536,52 @@ export const contactKindOf = (value: string): ContactKind | null => {
     return 'phone';
   return null;
 };
+
+// #238: an event as the administration lists it. Every event, whatever its
+// status, visibility or moderation (the visibility matrix: Superadmin).
+export type AdminEventListItem = {
+  id: string;
+  title: string;
+  status: EventStatus;
+  visibility: EventVisibility;
+  isHidden: boolean;
+  startAt: Date;
+  createdAt: Date;
+  activityName: string;
+  organizer: { id: string; name: string };
+  group: { id: string; name: string } | null;
+};
+
+// Everyone who holds or waits for a seat, with the state of it.
+export type AdminEventParticipant = {
+  userId: string;
+  name: string;
+  status:
+    | 'APPROVED'
+    | 'WAITLISTED'
+    | 'CANCELLED'
+    | 'ATTENDED'
+    | 'NO_SHOW'
+    | 'INVITED'
+    | 'DECLINED';
+  waitlistPosition: number | null;
+};
+
+export type AdminEventDetail = {
+  event: Event;
+  isHidden: boolean;
+  organizer: { id: string; name: string; email: string };
+  group: { id: string; name: string } | null;
+  participants: AdminEventParticipant[];
+};
+
+// #238: a person's events in the administration's user detail: what they
+// organize (main or co-organizer) and where they hold or held a seat.
+export type AdminUserEvents = {
+  organized: AdminEventListItem[];
+  participations: (AdminEventListItem & {
+    participationStatus: AdminEventParticipant['status'];
+  })[];
+};
+
+export const ADMIN_USER_EVENTS_LIMIT = 50;

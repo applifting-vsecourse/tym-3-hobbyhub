@@ -1,5 +1,6 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
 import {
+  AdminGroupDetail,
   AssignableGroupRole,
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
@@ -16,6 +17,10 @@ import {
   NearbyGroups,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
+import {
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import {
@@ -222,5 +227,19 @@ export class GroupsService {
       DISCOVER_PAGE_SIZE,
       cursor,
     );
+  }
+
+  // #238: the administration sees every group (visibility matrix: Superadmin).
+  listGroupsForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<Group>> {
+    return this.groupRepository.listForAdministration(query);
+  }
+
+  async getGroupForAdministration(id: string): Promise<AdminGroupDetail> {
+    const group = await this.groupRepository.getGroupById(id);
+    if (!group) throw new NotFoundException('Group not found');
+    const members = await this.groupRepository.listMembers(id);
+    return { group, members };
   }
 }

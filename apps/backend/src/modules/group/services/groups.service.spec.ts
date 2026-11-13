@@ -438,4 +438,29 @@ describe('GroupsService', () => {
       undefined,
     );
   });
+
+  // #238: private and cancelled groups too.
+  describe('getGroupForAdministration', () => {
+    it('returns a private group with its members', async () => {
+      const { repository, service } = setup();
+      const group = aGroup({ visibility: 'PRIVATE', status: 'CANCELLED' });
+      repository.getGroupById.mockResolvedValue(group);
+      repository.listMembers.mockResolvedValue([]);
+
+      await expect(service.getGroupForAdministration('g1')).resolves.toEqual({
+        group,
+        members: [],
+      });
+    });
+
+    it('is not found for an unknown group', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(null);
+
+      await expect(
+        service.getGroupForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.listMembers).not.toHaveBeenCalled();
+    });
+  });
 });
