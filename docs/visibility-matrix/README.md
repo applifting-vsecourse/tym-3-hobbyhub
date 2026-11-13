@@ -37,7 +37,7 @@ Platí pro všechny tabulky, ať se řádek týká akce, skupiny nebo profilu.
 
 ## Superadmin
 
-Správce aplikace ([#70][70], [#71][71], [#72][72]) je v každé tabulce samostatný sloupec, ne nepsaná výjimka. Vidí všechny akce, skupiny a profily včetně konceptů a soukromých a může blokovat uživatele, akce i skupiny. Dvě hranice:
+Správce aplikace ([#70][70], [#71][71], [#72][72]) je v každé tabulce samostatný sloupec, ne nepsaná výjimka. Je to samostatný účet s odděleným přihlášením do administrace, ne role běžného uživatele ([ADR-0010](../adr/adr-0010.md)); co vidí, dostává jen přes administrační API a v běžné aplikaci nic navíc neuvidí. Vidí všechny akce, skupiny a profily včetně konceptů a soukromých a může blokovat uživatele, akce i skupiny. Dvě hranice:
 
 - **Soukromý obsah nevidí automaticky.** Slovní hodnocení a zprávy mezi uživateli vidí jen na základě nahlášení ([#64][64], [#73][73]) a jen to, co nahlášení popisuje. V tabulkách „jen na report“.
 - **Každý přístup superadmina k soukromému obsahu se zaznamenává.**
