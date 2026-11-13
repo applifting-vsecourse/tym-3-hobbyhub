@@ -484,6 +484,8 @@ enum EmailKind {
   VERIFY_EMAIL
   RESET_PASSWORD
   NOTIFICATION
+  // ADR-0021: a new administrator sets their password.
+  ADMIN_INVITATION
 }
 
 enum EmailDeliveryStatus {
@@ -519,12 +521,16 @@ model EmailDelivery {
   html      String @db.Text
 
   // Whose e-mail it is: the per-recipient cap counts by it. Their e-mails go
-  // with their account.
-  recipient      User          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  recipientId    String
+  // with their account. Exactly one of a user and an administrator (ADR-0021,
+  // CHECK email_delivery_one_recipient in the migration); an administrator's
+  // e-mails are all critical, so the cap never counts them.
+  recipient       User?          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId     String?
+  administrator   Administrator? @relation(fields: [administratorId], references: [id], onDelete: Cascade)
+  administratorId String?
   // At most one e-mail per notification; the record stays when it goes.
-  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
-  notificationId String?       @unique
+  notification    Notification?  @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  notificationId  String?        @unique
 
   attempts          Int              @default(0)
   nextAttemptAt     DateTime         @default(now())
@@ -616,6 +622,18 @@ model Administrator {
   updatedAt     DateTime
   sessions      AdminSession[]
   accounts      AdminAccount[]
+
+  // ADR-0021: who invited them; null for the first one (seed, admin:create).
+  createdById               String?
+  createdBy                 Administrator?  @relation("AdministratorCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAdministrators     Administrator[] @relation("AdministratorCreatedBy")
+  // ADR-0021: removed by a colleague, never deleted. Both or neither (CHECK
+  // administrator_deactivation_all_or_nothing in the migration).
+  deactivatedAt             DateTime?
+  deactivatedById           String?
+  deactivatedBy             Administrator?  @relation("AdministratorDeactivatedBy", fields: [deactivatedById], references: [id], onDelete: Restrict)
+  deactivatedAdministrators Administrator[] @relation("AdministratorDeactivatedBy")
+  emailDeliveries           EmailDelivery[]
 
   @@unique([email])
   @@map("administrator")
