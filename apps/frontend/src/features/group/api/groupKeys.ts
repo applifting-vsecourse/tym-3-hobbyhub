@@ -1,12 +1,21 @@
 import type { MyMembershipRequestSection } from "@/features/group/api/membershipRequestSchemas"
 
+/** What narrows the discover list; empty text and no activities are no filter. */
+export type DiscoverGroupsFilters = {
+  activityIds: string[]
+  search: string
+  location: string
+}
+
 export const groupKeys = {
   all: () => ["groups"] as const,
   lists: () => [...groupKeys.all(), "list"] as const,
   mine: () => [...groupKeys.lists(), "mine"] as const,
   nearby: () => [...groupKeys.lists(), "nearby"] as const,
   // A signed-in viewer does not see their own groups, a visitor sees them all.
-  discover: (viewerId: string | null) => [...groupKeys.lists(), "discover", viewerId] as const,
+  // The filters are part of the key: each narrowing is its own list.
+  discover: (viewerId: string | null, filters: DiscoverGroupsFilters) =>
+    [...groupKeys.lists(), "discover", viewerId, filters] as const,
   // F-07.7, per user like `myRequest`. A list, so asking, withdrawing and a
   // decision refresh it with the others.
   myRequests: (userId: string, section: MyMembershipRequestSection) =>

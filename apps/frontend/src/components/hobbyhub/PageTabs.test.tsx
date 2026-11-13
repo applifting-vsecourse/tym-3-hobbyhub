@@ -18,7 +18,7 @@ describe("PageTabs", () => {
         </PageTab>
         <PageTab
           to="/groups"
-          search={{ tab: "discover" }}
+          search={{ tab: "mine" }}
           isActive
         >
           Druhý
@@ -33,6 +33,6 @@ describe("PageTabs", () => {
     expect(first).toHaveAttribute("data-state", "off")
     expect(second).toHaveAttribute("aria-current", "page")
     expect(second).toHaveAttribute("data-state", "on")
-    expect(second).toHaveAttribute("href", "/groups?tab=discover")
+    expect(second).toHaveAttribute("href", "/groups?tab=mine")
   })
 })

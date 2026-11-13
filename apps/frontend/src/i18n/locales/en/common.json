@@ -515,6 +515,11 @@
       "create": "New group",
       "discoverEmpty": "Public groups you are not in yet will appear here. There are none so far.",
       "discoverEmptyVisitor": "There are no public groups yet.",
+      "emptyFiltered": {
+        "clear": "Clear filters",
+        "description": "No group matches this selection yet. Try another search, place or activity.",
+        "title": "Nothing found"
+      },
       "loadError": "Could not load groups",
       "loadMore": "Load more",
       "loadMoreError": "Could not load more groups. Please try again.",
@@ -529,6 +534,8 @@
         "MEMBER": "Member",
         "OWNER": "Organiser"
       },
+      "searchPlaceholder": "Name, place or activity",
+      "sortNote": "Results are sorted from the newest group.",
       "tabs": {
         "discover": "Discover",
         "mine": "My groups",

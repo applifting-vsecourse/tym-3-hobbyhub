@@ -526,6 +526,11 @@
       "create": "Nová skupina",
       "discoverEmpty": "Tady uvidíte veřejné skupiny, ve kterých ještě nejste. Zatím žádná není.",
       "discoverEmptyVisitor": "Zatím tu není žádná veřejná skupina.",
+      "emptyFiltered": {
+        "clear": "Vymazat filtry",
+        "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
+        "title": "Nic nenalezeno"
+      },
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",
@@ -540,6 +545,8 @@
         "MEMBER": "Člen",
         "OWNER": "Organizátor"
       },
+      "searchPlaceholder": "Název, místo nebo aktivita",
+      "sortNote": "Výsledky řadíme od nejnovější skupiny.",
       "tabs": {
         "discover": "Objevit",
         "mine": "Moje skupiny",
