@@ -47,7 +47,11 @@ describeDb('group lists', () => {
     try {
       await prisma.$transaction(async (tx) => {
         const category = await tx.activityCategory.create({
-          data: { name: `cat-${unique()}` },
+          data: {
+            name: `cat-${unique()}`,
+            icon: `cat-${unique()}`,
+            order: Math.floor(Math.random() * 2_000_000_000),
+          },
         });
         const activity = await tx.activity.create({
           data: {

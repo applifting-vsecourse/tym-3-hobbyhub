@@ -1,4 +1,5 @@
 import { useId, useMemo, useState, type ReactNode } from "react"
+import { X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -186,6 +187,34 @@ export function FiltersSheet({
                 placeholder={t("hobbyhub.filters.activityPlaceholder")}
               />
             )}
+            {/* The chosen ones as tags, each removed by one tap before the results are shown. */}
+            {draft.activities.length > 0 ? (
+              <div
+                role="group"
+                aria-label={t("hobbyhub.filters.chosenActivities")}
+                className="flex flex-wrap gap-2 pt-1.5"
+              >
+                {draft.activities.map((id) => (
+                  <FilterChip
+                    key={id}
+                    pressed
+                    onPressedChange={() =>
+                      setDraft((current) => ({
+                        ...current,
+                        activities: current.activities.filter((chosen) => chosen !== id),
+                      }))
+                    }
+                  >
+                    {options.find((option) => option.id === id)?.label ??
+                      t("hobbyhub.activityCombobox.unknown")}
+                    <X
+                      aria-hidden
+                      className="size-4 text-muted-foreground"
+                    />
+                  </FilterChip>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
 

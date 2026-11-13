@@ -33,6 +33,7 @@ function NewEventPage() {
         id: activity.id,
         label: activityName(t, activity),
         icon: activity.icon,
+        category: activity.category,
         defaultMinParticipants: activity.defaultMinParticipants,
         defaultMaxParticipants: activity.defaultMaxParticipants,
       })),

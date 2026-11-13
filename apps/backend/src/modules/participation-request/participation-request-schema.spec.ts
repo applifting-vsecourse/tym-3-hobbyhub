@@ -59,7 +59,11 @@ describeDb('participation request schema constraints', () => {
       ),
     );
     const category = await tx.activityCategory.create({
-      data: { name: `cat-${random()}` },
+      data: {
+        name: `cat-${random()}`,
+        icon: `cat-${random()}`,
+        order: Math.floor(Math.random() * 2_000_000_000),
+      },
     });
     const activity = await tx.activity.create({
       data: {

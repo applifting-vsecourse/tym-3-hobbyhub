@@ -37,7 +37,11 @@ describeDb('group membership', () => {
 
   beforeEach(async () => {
     const category = await prisma.activityCategory.create({
-      data: { name: `cat-${unique()}` },
+      data: {
+        name: `cat-${unique()}`,
+        icon: `cat-${unique()}`,
+        order: Math.floor(Math.random() * 2_000_000_000),
+      },
     });
     categoryId = category.id;
     const activity = await prisma.activity.create({
