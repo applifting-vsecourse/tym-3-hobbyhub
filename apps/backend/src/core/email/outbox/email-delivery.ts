@@ -6,19 +6,25 @@ export const EMAIL_KINDS = [
   'VERIFY_EMAIL',
   'RESET_PASSWORD',
   'NOTIFICATION',
+  // ADR-0021: a new administrator sets their password.
+  'ADMIN_INVITATION',
 ] as const;
 export type EmailKind = (typeof EMAIL_KINDS)[number];
 
 export const EMAIL_SKIP_REASONS = ['UNVERIFIED', 'RECIPIENT_CAP'] as const;
 export type EmailSkipReason = (typeof EMAIL_SKIP_REASONS)[number];
 
+// Whose e-mail it is: a user's, or an administrator's (ADR-0021), never both.
+export type EmailRecipient =
+  | { recipientId: string; administratorId?: never }
+  | { administratorId: string; recipientId?: never };
+
 // What the places that send an e-mail hand to the outbox: rendered already,
 // so a retry sends exactly what was meant.
-export type OutgoingEmail = {
+export type OutgoingEmail = EmailRecipient & {
   kind: EmailKind;
   // Goes first, and may use the reserve of the daily budget.
   critical: boolean;
-  recipientId: string;
   to: string;
   subject: string;
   html: string;
@@ -33,7 +39,8 @@ export type OutgoingEmail = {
 export type DueEmail = {
   id: string;
   critical: boolean;
-  recipientId: string;
+  // Null for an administrator's e-mail, which the per-recipient cap skips.
+  recipientId: string | null;
   to: string;
   subject: string;
   html: string;

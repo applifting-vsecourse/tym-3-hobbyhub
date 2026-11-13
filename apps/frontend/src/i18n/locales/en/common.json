@@ -1,11 +1,42 @@
 {
   "admin": {
+    "administratorStatus": {
+      "ACTIVE": "Active",
+      "DEACTIVATED": "Removed",
+      "INVITED": "Invited"
+    },
     "administrators": {
+      "actionFailed": "That did not work. Please try again.",
+      "actions": "Actions",
+      "byOn": "{{name}}, {{date}}",
+      "cancelInvitation": "Cancel the invitation",
       "createdAt": "Created",
+      "createdBy": "Added by",
+      "deactivate": "Remove",
+      "deactivated": "{{name}} no longer has access to the administration.",
+      "deactivatedBy": "Removed by",
       "email": "E-mail",
-      "howToAdd": "New administrators are created by the app's operators with admin:create on the server.",
+      "fromServer": "server",
+      "intro": "Administrators are invited by e-mail and set their own password. Nobody can remove themselves, and at least one active administrator always stays.",
+      "invite": "Add an administrator",
+      "invited": "The invitation went to {{email}}.",
+      "lastActive": "The last active administrator",
       "name": "Name",
+      "reactivate": "Give access back",
+      "reactivated": "{{name}} got a new invitation; the old password no longer works.",
+      "resend": "Send the invitation again",
+      "resent": "A new invitation for {{name}} went out; the previous link no longer works.",
+      "status": "Status",
+      "thatIsYou": "That is you",
       "title": "Administrators"
+    },
+    "deactivate": {
+      "cancel": "Cancel",
+      "confirm": "Remove",
+      "failed": "The administrator could not be removed. Please try again.",
+      "lastActive": "Only one active administrator is left now, and they cannot be removed.",
+      "text": "{{name}} loses access to the administration at once and is signed out on every device. Access can be given back later with a new invitation.",
+      "title": "Remove administrator {{name}}?"
     },
     "event": {
       "address": "Exact address",
@@ -44,6 +75,11 @@
       "state": "Status",
       "title": "Events"
     },
+    "forgotPassword": {
+      "description": "Enter the e-mail of your administrator account and we will send you a link to set a new password.",
+      "sent": "If an active administrator account exists for this e-mail, we have sent it a link to set a new password. It is valid for 1 hour.",
+      "title": "Administrator password reset"
+    },
     "gender": {
       "FEMALE": "Female",
       "MALE": "Male"
@@ -81,6 +117,20 @@
       "state": "Status",
       "title": "Groups"
     },
+    "invite": {
+      "deactivated": "This administrator was removed. Find them in the list and give their access back.",
+      "description": "Your colleague gets an e-mail with a link to set their password. The link is valid for 72 hours.",
+      "email": "E-mail",
+      "emailInvalid": "Invalid e-mail",
+      "emailRequired": "Enter an e-mail",
+      "failed": "The invitation could not be sent. Please try again.",
+      "name": "Name",
+      "nameRequired": "Enter a name",
+      "nameTooLong": "The name is too long",
+      "submit": "Send invitation",
+      "taken": "This e-mail already belongs to an administrator.",
+      "title": "Add an administrator"
+    },
     "list": {
       "next": "Next",
       "noMatch": "The search found nothing.",
@@ -109,6 +159,13 @@
       "WAITLISTED": "Substitute"
     },
     "retry": "Try again",
+    "setPassword": {
+      "description": "Choose a password for the administration, at least {{minimum}} characters. After saving, you will be signed out on all devices.",
+      "done": "Your password is set. Sign in to the administration with it.",
+      "invalidDescription": "The link is invalid, has been used, or has expired. A colleague can send the invitation again; you can request a new password link yourself.",
+      "signIn": "Sign in to the administration",
+      "title": "Set your administrator password"
+    },
     "signIn": {
       "description": "The HobbyHub administration has its own accounts, separate from the users' ones.",
       "footer": "Administrator accounts are created by the app's operators; there is no sign-up here.",
@@ -245,6 +302,7 @@
       "genderRequired": "Choose your gender",
       "nameRequired": "Enter your name or a nickname",
       "passwordMin": "Password must be at least 8 characters",
+      "passwordMinLength": "Password must be at least {{minimum}} characters",
       "passwordRequired": "Password is required",
       "passwordsMismatch": "Passwords do not match",
       "termsRequired": "You need to accept the terms to register",

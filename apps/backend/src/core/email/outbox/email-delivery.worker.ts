@@ -113,7 +113,8 @@ export class EmailDeliveryWorker
   // Abuse protection: someone who requests and withdraws over and over must
   // not flood the organizer's inbox. Over the cap the bell still has it.
   private async overRecipientCap(email: DueEmail, now: Date): Promise<boolean> {
-    if (email.critical) return false;
+    // An administrator's e-mails are all critical; the cap counts users only.
+    if (email.critical || email.recipientId === null) return false;
     const sentLastHour = await this.repository.countNonCriticalSentToSince(
       email.recipientId,
       new Date(now.getTime() - HOUR_MS),

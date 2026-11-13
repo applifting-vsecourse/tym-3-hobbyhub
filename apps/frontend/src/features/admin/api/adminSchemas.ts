@@ -165,10 +165,39 @@ export const adminGroupRequestSchema = z.object({
 })
 export type AdminGroupRequest = z.infer<typeof adminGroupRequestSchema>
 
+/** Like the server's `ADMINISTRATOR_NAME_MAX_LENGTH`. */
+export const ADMINISTRATOR_NAME_MAX_LENGTH = 100
+/** Like the server's `ADMIN_PASSWORD_MIN_LENGTH`. */
+export const ADMIN_PASSWORD_MIN_LENGTH = 12
+
+export const administratorStatusSchema = z.enum(["INVITED", "ACTIVE", "DEACTIVATED"])
+export type AdministratorStatus = z.infer<typeof administratorStatusSchema>
+
 export const administratorSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
   createdAt: z.coerce.date(),
+  status: administratorStatusSchema,
+  createdBy: refSchema.nullable(),
+  deactivatedAt: z.coerce.date().nullable(),
+  deactivatedBy: refSchema.nullable(),
 })
 export type Administrator = z.infer<typeof administratorSchema>
+
+// #237, ADR-0021: why the server refused a change to an administrator.
+export const administratorViolationSchema = z.enum([
+  "ALREADY_ADMINISTRATOR",
+  "DEACTIVATED_ADMINISTRATOR",
+  "NOT_INVITED",
+  "SELF",
+  "ALREADY_DEACTIVATED",
+  "LAST_ACTIVE",
+  "NOT_DEACTIVATED",
+])
+export type AdministratorViolation = z.infer<typeof administratorViolationSchema>
+
+// The body of a refusal (400, or 409 for an address taken).
+export const administratorRefusalSchema = z.object({
+  violations: z.array(administratorViolationSchema),
+})

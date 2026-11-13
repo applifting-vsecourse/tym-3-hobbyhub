@@ -37,4 +37,23 @@ describe("ResetPasswordForm", () => {
 
     expect(onSubmit).toHaveBeenCalledWith({ password: "dlouhe-heslo-1" }, expect.anything())
   })
+
+  // #237: administrators need a longer password than users.
+  it("holds an administrator to the longer minimum it is given", async () => {
+    const onSubmit = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <ResetPasswordForm
+        minLength={12}
+        isLoading={false}
+        onSubmit={onSubmit}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("Heslo"), "jedenáctka1")
+    await user.click(screen.getByRole("button", { name: "Uložit heslo" }))
+
+    expect(await screen.findByText("Heslo musí mít alespoň 12 znaků")).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
 })
