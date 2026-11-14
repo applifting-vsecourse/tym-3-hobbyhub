@@ -43,6 +43,10 @@ export const profileSchema = z.object({
   birthYear: z.number().int().nullable(),
   interests: z.array(interestSchema),
   address: homeAddressSchema.nullable(),
+  /** #227: friends see the past events. Only I see this switch. */
+  friendsSeeEventHistory: z.boolean(),
+  /** #227: friends see the upcoming events and my name in an event's detail. */
+  friendsSeeUpcomingEvents: z.boolean(),
 })
 
 export type Profile = z.infer<typeof profileSchema>
@@ -71,4 +75,9 @@ export type UpdateProfileInput = {
 export type UpdatePrivateDetailsInput = {
   gender: (typeof GENDERS)[number]
   birthYear: number
+}
+
+export type UpdateFriendVisibilityInput = {
+  friendsSeeEventHistory: boolean
+  friendsSeeUpcomingEvents: boolean
 }

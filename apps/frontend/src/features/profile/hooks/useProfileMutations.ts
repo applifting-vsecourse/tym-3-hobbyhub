@@ -6,6 +6,7 @@ import { onboardingKeys } from "@/lib/onboarding-keys"
 import { profileKeys } from "@/features/profile/api/profileKeys"
 import {
   removeLocation,
+  updateFriendVisibility,
   updateInterests,
   updateLocation,
   updatePrivateDetails,
@@ -34,6 +35,7 @@ function useProfileMutation<TInput>(
 
 export const useUpdateProfile = () => useProfileMutation(updateProfile, { isSessionAffected: true })
 export const useUpdatePrivateDetails = () => useProfileMutation(updatePrivateDetails)
+export const useUpdateFriendVisibility = () => useProfileMutation(updateFriendVisibility)
 export const useUpdateInterests = () => useProfileMutation(updateInterests)
 export const useUpdateLocation = () => useProfileMutation(updateLocation)
 export const useRemoveLocation = () => useProfileMutation<void>(removeLocation)

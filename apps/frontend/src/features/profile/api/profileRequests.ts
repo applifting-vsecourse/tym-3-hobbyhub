@@ -5,6 +5,7 @@ import {
   publicProfileSchema,
   type HomeAddress,
   type SaveInterestsInput,
+  type UpdateFriendVisibilityInput,
   type UpdatePrivateDetailsInput,
   type UpdateProfileInput,
 } from "@/features/profile/api/profileSchemas"
@@ -19,6 +20,9 @@ export const updateProfile = async (input: UpdateProfileInput) =>
 
 export const updatePrivateDetails = async (input: UpdatePrivateDetailsInput) =>
   profileSchema.parse(await api.put("profile/private", { json: input }).json())
+
+export const updateFriendVisibility = async (input: UpdateFriendVisibilityInput) =>
+  profileSchema.parse(await api.put("profile/friend-visibility", { json: input }).json())
 
 export const updateInterests = async (input: SaveInterestsInput) =>
   profileSchema.parse(await api.put("profile/activities", { json: input }).json())

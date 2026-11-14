@@ -29,6 +29,8 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
     latitude: 50.09,
     longitude: 14.44,
   },
+  friendsSeeEventHistory: true,
+  friendsSeeUpcomingEvents: false,
   ...overrides,
 })
 

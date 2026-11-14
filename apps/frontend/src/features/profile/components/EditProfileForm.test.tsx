@@ -14,6 +14,7 @@ const requests = vi.hoisted(() => ({
   updateLocation: vi.fn(),
   removeLocation: vi.fn(),
   updatePrivateDetails: vi.fn(),
+  updateFriendVisibility: vi.fn(),
 }))
 vi.mock("@/features/profile/api/profileRequests", () => requests)
 
@@ -27,6 +28,8 @@ const profile: Profile = {
   birthYear: 1990,
   interests: [{ activity: { id: "a1", name: "Florbal", icon: "florbal" }, level: null }],
   address: null,
+  friendsSeeEventHistory: true,
+  friendsSeeUpcomingEvents: false,
 }
 
 const renderForm = (shown: Profile = profile) =>
@@ -80,6 +83,51 @@ describe("EditProfileForm", () => {
     expect(requests.updateInterests).not.toHaveBeenCalled()
     expect(requests.updateLocation).not.toHaveBeenCalled()
     expect(requests.updatePrivateDetails).not.toHaveBeenCalled()
+    expect(requests.updateFriendVisibility).not.toHaveBeenCalled()
+  })
+
+  describe("what friends see (#227)", () => {
+    const history = () => screen.getByRole("switch", { name: "Přátelé vidí moji historii akcí" })
+    const upcoming = () => screen.getByRole("switch", { name: "Přátelé vidí moje budoucí akce" })
+
+    it("shows the history on and the upcoming events off by default", async () => {
+      await renderForm()
+
+      expect(history()).toBeChecked()
+      expect(upcoming()).not.toBeChecked()
+    })
+
+    it("shows what was saved", async () => {
+      await renderForm({ ...profile, friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true })
+
+      expect(history()).not.toBeChecked()
+      expect(upcoming()).toBeChecked()
+    })
+
+    it("saves both switches only with Uložit, and nothing else", async () => {
+      await renderForm()
+
+      await userEvent.click(upcoming())
+      expect(upcoming()).toBeChecked()
+      expect(requests.updateFriendVisibility).not.toHaveBeenCalled()
+
+      await userEvent.click(screen.getByRole("button", { name: "Uložit" }))
+
+      await waitFor(() => expect(requests.updateFriendVisibility).toHaveBeenCalled())
+      expect(requests.updateFriendVisibility.mock.calls[0]?.[0]).toEqual({
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: true,
+      })
+      expect(requests.updateProfile).not.toHaveBeenCalled()
+      expect(requests.updatePrivateDetails).not.toHaveBeenCalled()
+    })
+
+    it("toggles a switch from its label", async () => {
+      await renderForm()
+
+      await userEvent.click(screen.getByText("Přátelé vidí moji historii akcí"))
+      expect(history()).not.toBeChecked()
+    })
   })
 
   it("refuses an empty nickname and says why", async () => {

@@ -14,12 +14,14 @@ import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageCh
 
 import type { Profile } from "@/features/profile/api/profileSchemas"
 import {
+  FriendVisibilityFields,
   InterestsFields,
   LocationFields,
   PrivateFields,
   PublicFields,
 } from "@/features/profile/components/EditProfileFields"
 import {
+  useUpdateFriendVisibility,
   useUpdateInterests,
   useUpdateLocation,
   useUpdatePrivateDetails,
@@ -64,6 +66,7 @@ export function EditProfileForm({
   const updateInterests = useUpdateInterests()
   const updateLocation = useUpdateLocation()
   const updatePrivate = useUpdatePrivateDetails()
+  const updateFriendVisibility = useUpdateFriendVisibility()
 
   useRevalidateOnLanguageChange(form)
 
@@ -115,6 +118,17 @@ export function EditProfileForm({
         })
         done = { ...done, gender: values.gender, birthYear: values.birthYear }
       }
+      if (
+        values.friendsSeeEventHistory !== done.friendsSeeEventHistory ||
+        values.friendsSeeUpcomingEvents !== done.friendsSeeUpcomingEvents
+      ) {
+        const visibility = {
+          friendsSeeEventHistory: values.friendsSeeEventHistory,
+          friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
+        }
+        await updateFriendVisibility.mutateAsync(visibility)
+        done = { ...done, ...visibility }
+      }
     } catch (error) {
       setSaved(done)
       setHasSaveError(true)
@@ -129,7 +143,8 @@ export function EditProfileForm({
     updateProfile.isPending ||
     updateInterests.isPending ||
     updateLocation.isPending ||
-    updatePrivate.isPending
+    updatePrivate.isPending ||
+    updateFriendVisibility.isPending
 
   return (
     <AppForm
@@ -151,6 +166,7 @@ export function EditProfileForm({
         }}
       />
       <PrivateFields />
+      <FriendVisibilityFields />
 
       {hasSaveError ? (
         <Alert variant="destructive">
