@@ -9,6 +9,7 @@ import {
   adminGroupPageSchema,
   adminGroupRequestSchema,
   administratorSchema,
+  adminUserBlocksSchema,
   adminUserDetailSchema,
   adminUserEventsSchema,
   adminUserPageSchema,
@@ -35,6 +36,14 @@ export const adminUserQueryOptions = (id: string) =>
   queryOptions({
     queryKey: adminKeys.user(id),
     queryFn: async () => adminUserDetailSchema.parse(await adminApi.get(`users/${id}`).json()),
+  })
+
+// #239: who the person is blocked from.
+export const adminUserBlocksQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: adminKeys.userBlocks(id),
+    queryFn: async () =>
+      adminUserBlocksSchema.parse(await adminApi.get(`users/${id}/blocks`).json()),
   })
 
 export const adminUserEventsQueryOptions = (id: string) =>

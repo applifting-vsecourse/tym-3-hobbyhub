@@ -13,6 +13,7 @@ import {
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
 import { NotificationEmailsService } from '@/modules/notification/services/notification-emails.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 // What the places where something happens know, and hand over (ADR-0015):
@@ -31,22 +32,32 @@ export class NotificationsService {
   constructor(
     private readonly repository: NotificationRepository,
     private readonly emails: NotificationEmailsService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   // -------------------------------------------------------------------------
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  listMine(
+  // #239: without what people blocked from the user caused.
+  async listMine(
     user: Identity,
     page: Page,
     filter: NotificationFilter = {},
   ): Promise<NotificationPage> {
-    return this.repository.listOf(user.id, page, filter);
+    return this.repository.listOf(
+      user.id,
+      page,
+      filter,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
-  countUnread(user: Identity): Promise<number> {
-    return this.repository.countUnread(user.id);
+  async countUnread(user: Identity): Promise<number> {
+    return this.repository.countUnread(
+      user.id,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // Someone else's notification does not exist for the user: 404, never 403.
@@ -275,7 +286,18 @@ export class NotificationsService {
     if (data.recipientIds.length === 0) return;
     let ids: string[];
     try {
-      ids = await this.repository.createForRecipients(data);
+      // #239: nobody hears from someone blocked from them.
+      const hidden = data.actorId
+        ? await this.blocks.hiddenFrom(data.actorId)
+        : [];
+      const recipientIds = data.recipientIds.filter(
+        (id) => !hidden.includes(id),
+      );
+      if (recipientIds.length === 0) return;
+      ids = await this.repository.createForRecipients({
+        ...data,
+        recipientIds,
+      });
     } catch (error) {
       // The change that caused the notification is saved already; failing
       // the request now would tell the user it did not happen.

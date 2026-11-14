@@ -8,9 +8,18 @@ import {
 } from '@/modules/participation-request/domain/participation-request';
 import { ParticipationRequestRepository } from '@/modules/participation-request/repositories/participation-request.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ParticipationRequestsService } from './participation-requests.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const user = { id: 'u1' } as Identity;
 const now = new Date('2030-01-01T12:00:00Z');
@@ -96,6 +105,7 @@ describe('ParticipationRequestsService', () => {
         repository,
         events,
         notifications,
+        noBlocks(),
       ),
     };
   };
@@ -418,7 +428,11 @@ describe('ParticipationRequestsService', () => {
           service.getPendingRequests(organizer, 'e1', page),
         ).resolves.toEqual(pending);
         expect(events.getOrganizedEvent).toHaveBeenCalledWith('e1', organizer);
-        expect(repository.getPendingRequests).toHaveBeenCalledWith('e1', page);
+        expect(repository.getPendingRequests).toHaveBeenCalledWith(
+          'e1',
+          page,
+          [],
+        );
       });
 
       it('lets a co-organizer see them too', async () => {
@@ -485,6 +499,7 @@ describe('ParticipationRequestsService', () => {
             'e1',
             status,
             page,
+            [],
           );
         },
       );
@@ -531,6 +546,7 @@ describe('ParticipationRequestsService', () => {
             'e1',
             status,
             page,
+            [],
           );
         },
       );

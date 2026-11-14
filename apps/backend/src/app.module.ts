@@ -12,6 +12,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { UserBlockModule } from './modules/user-block/user-block.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
 import { AdminAuthModule } from './shared/admin-auth/admin-auth.module';
 import { AuthModule } from './shared/auth/auth.module';
@@ -31,6 +32,7 @@ const imports = [
   LevelModule,
   OnboardingModule,
   ProfileModule,
+  UserBlockModule,
   EventModule,
   ParticipationRequestModule,
   MyEventsModule,

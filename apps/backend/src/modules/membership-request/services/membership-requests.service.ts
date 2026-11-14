@@ -16,6 +16,7 @@ import {
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   Injectable,
@@ -60,13 +61,14 @@ export class MembershipRequestsService {
     private readonly repository: MembershipRequestRepository,
     private readonly groupsService: GroupsService,
     private readonly notificationsService: NotificationsService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   async getMyRequestState(
     user: Identity,
     groupId: string,
   ): Promise<MyMembershipRequestState> {
-    await this.groupsService.getPublicGroup(groupId);
+    await this.groupsService.getPublicGroup(groupId, user);
     const [role, requests, applicant] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
@@ -100,7 +102,8 @@ export class MembershipRequestsService {
     groupId: string,
     message?: string,
   ): Promise<MembershipRequest> {
-    const group = await this.groupsService.getPublicGroup(groupId);
+    // #239: no request to the group of an owner blocked from the applicant.
+    const group = await this.groupsService.getPublicGroup(groupId, user);
     const [role, requests] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
@@ -146,7 +149,10 @@ export class MembershipRequestsService {
     groupId: string,
   ): Promise<PendingMembershipRequest[]> {
     await this.groupsService.getManagedGroup(groupId, user);
-    return this.repository.getPendingRequests(groupId);
+    return this.repository.getPendingRequests(
+      groupId,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // F-07.3: the applicant becomes a member and counts towards the group. The
@@ -234,5 +240,15 @@ export class MembershipRequestsService {
   ): Promise<PendingMembershipRequest[]> {
     await this.groupsService.getGroupForAdministration(groupId);
     return this.repository.getPendingRequests(groupId);
+  }
+
+  // #239, ADR-0022: called by the administration once two people are blocked
+  // from each other. Nobody is told: the block must not show.
+  closeBlockedPair(
+    a: string,
+    b: string,
+    now: Date = new Date(),
+  ): Promise<void> {
+    return this.repository.closeBlockedPair(a, b, now);
   }
 }

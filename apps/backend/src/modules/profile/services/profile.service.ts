@@ -20,6 +20,7 @@ import {
 } from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { Gender } from '@/shared/auth/registration/registration';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   Injectable,
@@ -31,6 +32,7 @@ export class ProfileService {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly onboardingService: OnboardingService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   async getProfile(user: Identity): Promise<Profile> {
@@ -57,8 +59,15 @@ export class ProfileService {
 
   // F-04.2: another person's profile: only what the visibility matrix lets any
   // signed-in person see. The e-mail is never part of it.
-  async getPublicProfile(userId: string): Promise<PublicProfile> {
-    const row = await this.profileRepository.getPublicRow(userId);
+  // #239: the profile of someone blocked from the viewer does not exist.
+  async getPublicProfile(
+    userId: string,
+    viewer: Identity,
+  ): Promise<PublicProfile> {
+    const hidden = await this.blocks.hiddenFor(viewer.id);
+    const row = hidden.includes(userId)
+      ? null
+      : await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
     return {
       id: row.id,

@@ -6,9 +6,18 @@ import {
   ProfileRow,
 } from '@/modules/profile/repositories/profile.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ProfileService } from './profile.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const user = new Identity('u1', 'jana@example.com', 'Jana', true);
 
@@ -52,7 +61,7 @@ describe('ProfileService', () => {
     return {
       repository,
       onboardingService,
-      service: new ProfileService(repository, onboardingService),
+      service: new ProfileService(repository, onboardingService, noBlocks()),
     };
   };
 
@@ -224,7 +233,7 @@ describe('ProfileService', () => {
       const { service, repository, onboardingService } = setup();
       repository.getPublicRow.mockResolvedValue(publicRow);
       onboardingService.getInterestsOf.mockResolvedValue([]);
-      const profile = await service.getPublicProfile('u2');
+      const profile = await service.getPublicProfile('u2', user);
       expect(Object.keys(profile).sort()).toEqual([
         'bio',
         'cover',
@@ -238,7 +247,7 @@ describe('ProfileService', () => {
     it('answers not found for a user that does not exist', async () => {
       const { service, repository } = setup();
       repository.getPublicRow.mockResolvedValue(null);
-      await expect(service.getPublicProfile('nobody')).rejects.toThrow(
+      await expect(service.getPublicProfile('nobody', user)).rejects.toThrow(
         NotFoundException,
       );
     });

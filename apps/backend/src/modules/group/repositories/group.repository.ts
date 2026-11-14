@@ -81,10 +81,23 @@ const orderBy = [
 
 // Groups a stranger may find: public, not cancelled, and not ones they are in.
 // A visitor (no userId) is in none, so they find every such group.
-const discoverableBy = (userId?: string): Prisma.GroupWhereInput => ({
+const discoverableBy = (
+  userId?: string,
+  hiddenOwnerIds: string[] = [],
+): Prisma.GroupWhereInput => ({
   visibility: GroupVisibility.PUBLIC,
   status: GroupStatus.ACTIVE,
   ...(userId ? { memberships: { none: { userId } } } : {}),
+  // #239: a group whose owner is blocked from the viewer does not exist.
+  ...(hiddenOwnerIds.length > 0
+    ? {
+        NOT: {
+          memberships: {
+            some: { role: GroupRole.OWNER, userId: { in: hiddenOwnerIds } },
+          },
+        },
+      }
+    : {}),
 });
 
 @Injectable()
@@ -132,13 +145,31 @@ export class GroupRepository {
 
   // F-07.3: the owner first, then admins and members, each by who joined
   // first. The `group_role` enum sorts in that order.
-  async listMembers(groupId: string): Promise<GroupMember[]> {
+  async listMembers(
+    groupId: string,
+    // #239: members blocked from the one asking are left out.
+    hiddenUserIds: string[] = [],
+  ): Promise<GroupMember[]> {
     const memberships = await this.prisma.groupMembership.findMany({
-      where: { groupId },
+      where: {
+        groupId,
+        ...(hiddenUserIds.length > 0
+          ? { userId: { notIn: hiddenUserIds } }
+          : {}),
+      },
       include: memberInclude,
       orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
     });
     return memberships.map(mapMembershipToMember);
+  }
+
+  // #239: whose group it is.
+  async getOwnerId(groupId: string): Promise<string | null> {
+    const owner = await this.prisma.groupMembership.findFirst({
+      where: { groupId, role: GroupRole.OWNER },
+      select: { userId: true },
+    });
+    return owner?.userId ?? null;
   }
 
   // ADR-0015: who is told about a new request to join (the founder and the
@@ -225,10 +256,11 @@ export class GroupRepository {
     userId: string,
     city: string,
     limit: number,
+    hiddenOwnerIds: string[] = [],
   ): Promise<Group[]> {
     const groups = await this.prisma.group.findMany({
       where: {
-        ...discoverableBy(userId),
+        ...discoverableBy(userId, hiddenOwnerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
       include,
@@ -242,9 +274,10 @@ export class GroupRepository {
     userId: string | undefined,
     pageSize: number,
     cursor?: string,
+    hiddenOwnerIds: string[] = [],
   ): Promise<GroupPage> {
     const groups = await this.prisma.group.findMany({
-      where: discoverableBy(userId),
+      where: discoverableBy(userId, hiddenOwnerIds),
       include,
       orderBy,
       // One extra row tells whether another page exists.
@@ -295,5 +328,31 @@ export class GroupRepository {
       this.prisma.group.count({ where }),
     ]);
     return { items: groups.map(mapPrismaGroupToDomain), total };
+  }
+
+  // #239, ADR-0022: one of two blocked people leaves, as a plain member, the
+  // groups the other owns or runs. Where both run the group, both stay.
+  async removeBlockedPair(a: string, b: string): Promise<void> {
+    await this.prisma.$transaction(
+      [
+        [a, b],
+        [b, a],
+      ].map(([managerId, userId]) =>
+        this.prisma.groupMembership.deleteMany({
+          where: {
+            userId,
+            role: GroupRole.MEMBER,
+            group: {
+              memberships: {
+                some: {
+                  userId: managerId,
+                  role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+                },
+              },
+            },
+          },
+        }),
+      ),
+    );
   }
 }

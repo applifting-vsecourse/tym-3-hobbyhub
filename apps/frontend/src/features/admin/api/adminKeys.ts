@@ -7,6 +7,7 @@ export const adminKeys = {
     [...adminKeys.all(), "users", { search, offset }] as const,
   user: (id: string) => [...adminKeys.all(), "user", id] as const,
   userEvents: (id: string) => [...adminKeys.user(id), "events"] as const,
+  userBlocks: (id: string) => [...adminKeys.user(id), "blocks"] as const,
   events: (search: string, offset: number) =>
     [...adminKeys.all(), "events", { search, offset }] as const,
   event: (id: string) => [...adminKeys.all(), "event", id] as const,

@@ -815,10 +815,13 @@ export class EventRepository {
       period,
       visibilities,
       now,
+      hiddenOrganizerIds = [],
     }: {
       period: GroupEventsPeriod;
       visibilities: GroupEventListItem['visibility'][];
       now: Date;
+      // #239: people whose events do not exist for the one asking.
+      hiddenOrganizerIds?: string[];
     },
     { limit, offset }: Page,
   ): Promise<GroupEventPage> {
@@ -828,6 +831,12 @@ export class EventRepository {
       isHidden: false,
       visibility: { in: visibilities },
       endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+      ...(hiddenOrganizerIds.length > 0
+        ? {
+            organizerId: { notIn: hiddenOrganizerIds },
+            coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
+          }
+        : {}),
     };
     const direction = period === 'upcoming' ? 'asc' : 'desc';
     const [events, total] = await Promise.all([

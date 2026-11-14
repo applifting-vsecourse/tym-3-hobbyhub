@@ -462,6 +462,9 @@ export type EventFilter = {
   // `EVENT_LIST_TIME_ZONE`; either end may be left open.
   dateFrom?: string;
   dateTo?: string;
+  // #239, ADR-0022: people whose events do not exist for the one asking
+  // (`UserBlockVisibility.hiddenFor`); never from the request.
+  hiddenOrganizerIds?: string[];
 };
 
 export type EventListFilter = EventFilter & { near?: GeoPoint };

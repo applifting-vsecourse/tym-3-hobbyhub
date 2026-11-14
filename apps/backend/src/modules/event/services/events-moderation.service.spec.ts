@@ -10,9 +10,18 @@ import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { EventsService } from './events.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 // #239, ADR-0022: an administrator hides an event and brings it back.
 
@@ -61,6 +70,7 @@ describe('EventsService – moderation (#239)', () => {
         mock<CancellationReasonsService>(),
         notifications,
         mock<GroupsService>(),
+        noBlocks(),
       ),
     };
   };

@@ -25,6 +25,7 @@ import {
 } from '@/modules/participation-request/domain/participation-request';
 import { ParticipationRequestRepository } from '@/modules/participation-request/repositories/participation-request.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   Injectable,
@@ -79,18 +80,23 @@ export class ParticipationRequestsService {
     private readonly repository: ParticipationRequestRepository,
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   // F-06.3, #177: a page of the person's own applications, the ones still on
   // first; the overview turns them into one status per event. The caller has
   // checked the filter.
-  getMyApplicationFacts(
+  // #239: without the events of people blocked from them.
+  async getMyApplicationFacts(
     user: Identity,
     page: Page,
     filter: EventFilter,
     now: Date = new Date(),
   ): Promise<ApplicationFactsPage> {
-    return this.repository.getApplicationFacts(user.id, now, page, filter);
+    return this.repository.getApplicationFacts(user.id, now, page, {
+      ...filter,
+      hiddenOrganizerIds: await this.blocks.hiddenFor(user.id),
+    });
   }
 
   async getMyRequestState(
@@ -208,7 +214,11 @@ export class ParticipationRequestsService {
     page: Page,
   ): Promise<PendingRequestPage> {
     await this.eventsService.getOrganizedEvent(eventId, user);
-    return this.repository.getPendingRequests(eventId, page);
+    return this.repository.getPendingRequests(
+      eventId,
+      page,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // F-05.6, F-06.4: who has a seat and who gave it back, for the event's
@@ -220,7 +230,12 @@ export class ParticipationRequestsService {
     page: Page,
   ): Promise<ParticipantPage> {
     await this.eventsService.getOrganizedEvent(eventId, user);
-    return this.repository.getParticipants(eventId, status, page);
+    return this.repository.getParticipants(
+      eventId,
+      status,
+      page,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // F-05.6: the rejected and withdrawn requests, for the event's organizers.
@@ -231,7 +246,12 @@ export class ParticipationRequestsService {
     page: Page,
   ): Promise<DecidedRequestPage> {
     await this.eventsService.getOrganizedEvent(eventId, user);
-    return this.repository.getDecidedRequests(eventId, status, page);
+    return this.repository.getDecidedRequests(
+      eventId,
+      status,
+      page,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // F-05.7. Approval takes a seat, so the repository checks the seats again
@@ -323,5 +343,15 @@ export class ParticipationRequestsService {
     );
     if (!event) throw new NotFoundException('Event not found');
     return event;
+  }
+
+  // #239, ADR-0022: called by the administration once two people are blocked
+  // from each other. Nobody is told: the block must not show.
+  detachBlockedPair(
+    a: string,
+    b: string,
+    now: Date = new Date(),
+  ): Promise<void> {
+    return this.repository.detachBlockedPair(a, b, now);
   }
 }
