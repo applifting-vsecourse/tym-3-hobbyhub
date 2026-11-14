@@ -5,6 +5,7 @@ import { GroupModule } from '@/modules/group/group.module';
 import { NotificationModule } from '@/modules/notification/notification.module';
 import { AdminAuthModule } from '@/shared/admin-auth/admin-auth.module';
 import { AuthModule } from '@/shared/auth/auth.module';
+import { UserBlockVisibilityModule } from '@/shared/user-block/user-block.module';
 import { Module } from '@nestjs/common';
 import { AdminEventsController } from './controllers/admin-events.controller';
 import { AdminUserEventsController } from './controllers/admin-user-events.controller';
@@ -15,6 +16,7 @@ import { EventsService } from './services/events.service';
 
 @Module({
   imports: [
+    UserBlockVisibilityModule,
     AuthModule,
     AdminAuthModule,
     PrismaModule,

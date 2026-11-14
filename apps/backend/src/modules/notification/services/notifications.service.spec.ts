@@ -1,10 +1,19 @@
 import { Notification } from '@/modules/notification/domain/notification';
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { NotificationEmailsService } from './notification-emails.service';
 import { NotificationsService } from './notifications.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const user = { id: 'u1' } as Identity;
 const now = new Date('2030-01-01T12:00:00Z');
@@ -37,7 +46,7 @@ describe('NotificationsService', () => {
     return {
       repository,
       emails,
-      service: new NotificationsService(repository, emails),
+      service: new NotificationsService(repository, emails, noBlocks()),
     };
   };
 
@@ -54,6 +63,7 @@ describe('NotificationsService', () => {
         'u1',
         { limit: 20, offset: 0 },
         {},
+        [],
       );
     });
 
@@ -71,6 +81,7 @@ describe('NotificationsService', () => {
         'u1',
         { limit: 10, offset: 10 },
         { read: false, kind: 'events' },
+        [],
       );
     });
 

@@ -46,6 +46,13 @@ const words = (text?: string): string[] =>
     .split(/\s+/)
     .filter(Boolean);
 
+// #239, ADR-0022: nobody of these organizes the event, neither as its
+// organizer nor as a co-organizer.
+export const notOrganizedBy = (userIds: string[]): Prisma.Sql =>
+  Prisma.sql`(e."organizerId" NOT IN (${Prisma.join(userIds)}) AND NOT EXISTS (
+    SELECT 1 FROM "_EventCoOrganizers" c
+    WHERE c."A" = e."id" AND c."B" IN (${Prisma.join(userIds)})))`;
+
 // Every word of a text has to match somewhere, so "volejbal praha" finds the
 // activity in one column and the city in another. Nothing set is no condition.
 export const eventFilterConditions = ({
@@ -54,7 +61,11 @@ export const eventFilterConditions = ({
   location,
   dateFrom,
   dateTo,
+  hiddenOrganizerIds = [],
 }: EventFilter): Prisma.Sql[] => [
+  ...(hiddenOrganizerIds.length > 0
+    ? [notOrganizedBy(hiddenOrganizerIds)]
+    : []),
   ...(activityIds.length > 0
     ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
     : []),

@@ -43,6 +43,7 @@ import {
 } from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
@@ -110,6 +111,7 @@ export class EventsService {
     private readonly cancellationReasonsService: CancellationReasonsService,
     private readonly notificationsService: NotificationsService,
     private readonly groupsService: GroupsService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   // F-06.3: the cards of events another module already picked.
@@ -296,15 +298,20 @@ export class EventsService {
     return event;
   }
 
+  // #239: without the events of people blocked from the one asking.
   async getUpcomingPublicEvents(
     page: Page,
     filter: EventListFilter = { activityIds: [] },
     now: Date = new Date(),
+    viewer?: Identity,
   ): Promise<EventListPage> {
     if (eventListFilterViolations(filter).length > 0) {
       throw new BadRequestException('dateFrom must not be after dateTo');
     }
-    return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
+    return this.eventRepository.getUpcomingPublicEvents(now, page, {
+      ...filter,
+      hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
+    });
   }
 
   // F-06.5: the exact address and the contacts, for the organizers and the
@@ -339,6 +346,10 @@ export class EventsService {
       (await this.eventRepository.getShowableEventById(id)) ??
       (viewer ? await this.getHiddenEventOfOrganizer(id, viewer) : null);
     if (!event) throw new NotFoundException('Event not found');
+    // #239: an event of someone blocked from the viewer does not exist.
+    if (viewer && (await this.isOrganizedByHidden(id, viewer.id))) {
+      throw new NotFoundException('Event not found');
+    }
     if (event.visibility !== 'PUBLIC') {
       const facts = await this.eventRepository.getEventFacts(id);
       if (!facts || !(await this.canSee(facts, viewer?.id))) {
@@ -346,6 +357,18 @@ export class EventsService {
       }
     }
     return event;
+  }
+
+  private async isOrganizedByHidden(
+    eventId: string,
+    viewerId: string,
+  ): Promise<boolean> {
+    const hidden = await this.blocks.hiddenFor(viewerId);
+    if (hidden.length === 0) return false;
+    const facts = await this.eventRepository.getEventFacts(eventId);
+    return (
+      facts !== null && facts.organizerIds.some((id) => hidden.includes(id))
+    );
   }
 
   private async getHiddenEventOfOrganizer(
@@ -366,7 +389,15 @@ export class EventsService {
       id,
       userId,
     );
-    return facts && (await this.canSee(facts, userId)) ? facts : null;
+    if (!facts) return null;
+    // #239: no request to, nor seat on, an event of someone blocked from them.
+    const hidden = await this.blocks.hiddenFor(userId);
+    if (
+      facts.organizerIds.some((organizerId) => hidden.includes(organizerId))
+    ) {
+      return null;
+    }
+    return (await this.canSee(facts, userId)) ? facts : null;
   }
 
   // F-07.2: the events of a group on its page. Everyone who may see the group
@@ -383,8 +414,9 @@ export class EventsService {
       ? await this.groupsService.getMemberRole(groupId, viewer.id)
       : null;
     if (!role) {
-      // Throws "not found" for a group that has no public page.
-      await this.groupsService.getPublicGroup(groupId);
+      // Throws "not found" for a group that has no public page, and for
+      // one whose owner is blocked from the viewer (#239).
+      await this.groupsService.getPublicGroup(groupId, viewer);
       if (period === 'past') throw new NotFoundException('Group not found');
     }
     return this.eventRepository.getGroupEvents(
@@ -393,6 +425,7 @@ export class EventsService {
         period,
         visibilities: role ? ['PUBLIC', 'GROUP_ONLY'] : ['PUBLIC'],
         now,
+        hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
       },
       { limit: GROUP_EVENTS_PAGE_SIZE, offset },
     );

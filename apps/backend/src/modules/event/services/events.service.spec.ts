@@ -12,6 +12,7 @@ import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
@@ -19,6 +20,14 @@ import {
 } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { EventsService } from './events.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 // One clock read for every fixture: two `anEvent()` calls must describe the
 // same event, not two a millisecond apart.
@@ -125,6 +134,7 @@ describe('EventsService', () => {
         reasons,
         notifications,
         groups,
+        noBlocks(),
       ),
     };
   };
@@ -216,7 +226,7 @@ describe('EventsService', () => {
     expect(repository.getUpcomingPublicEvents).toHaveBeenCalledWith(
       now,
       { limit: 20, offset: 0 },
-      { activityIds: ['a1'] },
+      { activityIds: ['a1'], hiddenOrganizerIds: [] },
     );
   });
 
@@ -355,7 +365,12 @@ describe('EventsService', () => {
       ).resolves.toBe(page);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
-        { period: 'past', visibilities: ['PUBLIC', 'GROUP_ONLY'], now },
+        {
+          period: 'past',
+          visibilities: ['PUBLIC', 'GROUP_ONLY'],
+          now,
+          hiddenOrganizerIds: [],
+        },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
       );
       expect(groups.getPublicGroup).not.toHaveBeenCalled();
@@ -367,10 +382,15 @@ describe('EventsService', () => {
 
       await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
 
-      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1');
+      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1', undefined);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
-        { period: 'upcoming', visibilities: ['PUBLIC'], now },
+        {
+          period: 'upcoming',
+          visibilities: ['PUBLIC'],
+          now,
+          hiddenOrganizerIds: [],
+        },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
       );
     });

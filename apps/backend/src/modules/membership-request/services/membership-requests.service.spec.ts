@@ -7,9 +7,18 @@ import {
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { MembershipRequestsService } from './membership-requests.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const user = { id: 'u1' } as Identity;
 const admin = { id: 'admin' } as Identity;
@@ -91,7 +100,12 @@ describe('MembershipRequestsService', () => {
       repository,
       groups,
       notifications,
-      service: new MembershipRequestsService(repository, groups, notifications),
+      service: new MembershipRequestsService(
+        repository,
+        groups,
+        notifications,
+        noBlocks(),
+      ),
     };
   };
 
