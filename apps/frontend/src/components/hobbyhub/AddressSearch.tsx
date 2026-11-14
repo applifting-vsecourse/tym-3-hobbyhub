@@ -16,11 +16,31 @@ import {
   addressSuggestionsQueryOptions,
   MIN_ADDRESS_QUERY_LENGTH,
   type AddressSuggestion,
+  type AddressSuggestionItem,
 } from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 // Typing waits this long before it asks, so an address is not searched letter by letter.
 const TYPING_PAUSE_MS = 300
+
+// The address as the forms store it, without the geocoder's marker of a whole street.
+const toAddress = ({
+  label,
+  street,
+  city,
+  postalCode,
+  country,
+  latitude,
+  longitude,
+}: AddressSuggestionItem): AddressSuggestion => ({
+  label,
+  street,
+  city,
+  postalCode,
+  country,
+  latitude,
+  longitude,
+})
 
 type AddressSearchProps = {
   /** The line of the address that was picked, or "" while none is. */
@@ -28,8 +48,15 @@ type AddressSearchProps = {
   onSelect: (address: AddressSuggestion) => void
   /** Shown on the trigger while nothing is picked. */
   placeholder: string
-  /** Also suggest streets without a house number. */
+  /** A street without a house number can be picked as it is (a home address). */
   isStreetAllowed?: boolean
+  /**
+   * What happens to a street picked without a house number when it is not
+   * allowed as it is. Without it such streets are not suggested at all.
+   */
+  onSelectStreet?: (street: AddressSuggestion) => void
+  /** Called as the list closes after a street was picked, to take over the focus. */
+  onCloseAutoFocus?: (event: Event) => void
   className?: string
   id?: string
 }
@@ -44,6 +71,8 @@ export function AddressSearch({
   onSelect,
   placeholder,
   isStreetAllowed = false,
+  onSelectStreet,
+  onCloseAutoFocus,
   className,
   id,
 }: AddressSearchProps) {
@@ -58,12 +87,14 @@ export function AddressSearch({
     return () => clearTimeout(timer)
   }, [text])
 
-  const suggestions = useQuery(
-    addressSuggestionsQueryOptions(asked, i18n.language, isStreetAllowed),
-  )
+  const suggestions = useQuery(addressSuggestionsQueryOptions(asked, i18n.language))
   const isTooShort = text.trim().length < MIN_ADDRESS_QUERY_LENGTH
   // The previous text's suggestions are not offered for the new text.
   const isCurrent = asked === text.trim()
+  const canPickStreet = isStreetAllowed || onSelectStreet !== undefined
+  const shown = (suggestions.data ?? []).filter(
+    (suggestion) => canPickStreet || !suggestion.isStreet,
+  )
 
   return (
     <Popover
@@ -99,6 +130,7 @@ export function AddressSearch({
       </PopoverTrigger>
       <PopoverContent
         align="start"
+        onCloseAutoFocus={onCloseAutoFocus}
         className="w-(--radix-popover-trigger-width) p-0"
       >
         {/* The geocoder ranks the suggestions, so cmdk must not filter or re-sort them. */}
@@ -131,12 +163,16 @@ export function AddressSearch({
               <>
                 <CommandEmpty>{t("geo.address.noMatch")}</CommandEmpty>
                 <CommandGroup>
-                  {(suggestions.data ?? []).map((suggestion) => (
+                  {shown.map((suggestion) => (
                     <CommandItem
-                      key={`${suggestion.label}:${suggestion.latitude}:${suggestion.longitude}`}
+                      key={`${suggestion.isStreet}:${suggestion.label}:${suggestion.latitude}:${suggestion.longitude}`}
                       value={suggestion.label}
                       onSelect={() => {
-                        onSelect(suggestion)
+                        if (suggestion.isStreet && !isStreetAllowed) {
+                          onSelectStreet?.(toAddress(suggestion))
+                        } else {
+                          onSelect(toAddress(suggestion))
+                        }
                         setIsOpen(false)
                       }}
                     >

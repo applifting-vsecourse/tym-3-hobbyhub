@@ -295,6 +295,7 @@
       "address": "Místo",
       "addressHint": "Vyberte adresu z nabídky, ať se akce ukáže na mapě. Pole níže se vyplní samy.",
       "addressLocated": "Poloha adresy je uložená, akce se ukáže na mapě.",
+      "addressStreetPicked": "Ulice je vyplněná. Dopište číslo domu, nebo vyberte celou adresu, ať se akce ukáže na mapě.",
       "cancel": "Zrušit",
       "contactsHint": "Chat a kontakt uvidí jen lidé s potvrzenou účastí a vy.",
       "continue": "Pokračovat",

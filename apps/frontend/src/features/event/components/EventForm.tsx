@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type ComponentProps, type ReactNode } from "react"
+import { useId, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
 import { ChevronLeft, Loader2, MapPin } from "lucide-react"
@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
-import { hasAddressSuggestions } from "@/lib/addressSuggestions"
+import { hasAddressSuggestions, type AddressSuggestion } from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 import {
@@ -741,6 +741,12 @@ function AddressPicker() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
   const [pickedLabel, setPickedLabel] = useState("")
+  // A street was picked and its house number is still to be typed.
+  const [pickedStreet, setPickedStreet] = useState<Pick<
+    AddressSuggestion,
+    "label" | "street" | "city" | "postalCode"
+  > | null>(null)
+  const shouldFocusStreet = useRef(false)
   const [street, city, postalCode, latitude, positionOf] = useWatch({
     control: form.control,
     name: ["street", "city", "postalCode", "latitude", "positionOf"],
@@ -748,25 +754,54 @@ function AddressPicker() {
   if (!hasAddressSuggestions()) return null
 
   const isLocated = latitude !== null && positionOf === addressKey({ street, city, postalCode })
+  // The street stays shown while the number is typed after it, until another place is typed.
+  const isStreetShown =
+    !isLocated &&
+    pickedStreet !== null &&
+    street.startsWith(pickedStreet.street) &&
+    city === pickedStreet.city &&
+    postalCode === pickedStreet.postalCode
   const options = { shouldDirty: true, shouldTouch: true, shouldValidate: true }
+
+  /** Fills the address fields; `position` is where the address is, or null while it has no house number. */
+  const fillAddress = (
+    address: Pick<AddressSuggestion, "street" | "city" | "postalCode" | "country">,
+    position: Pick<AddressSuggestion, "latitude" | "longitude"> | null,
+  ) => {
+    form.setValue("street", address.street, options)
+    form.setValue("city", address.city, options)
+    form.setValue("postalCode", address.postalCode, options)
+    if (address.country) form.setValue("country", address.country, options)
+    form.setValue("latitude", position?.latitude ?? null, options)
+    form.setValue("longitude", position?.longitude ?? null, options)
+    form.setValue("positionOf", position ? addressKey(address) : "", options)
+  }
 
   return (
     <div className="space-y-2">
       <Label htmlFor="event-address-search">{t("events.fields.addressSearch")}</Label>
       <AddressSearch
         id="event-address-search"
-        value={isLocated ? pickedLabel : ""}
+        value={isLocated ? pickedLabel : isStreetShown ? pickedStreet.label : ""}
         placeholder={t("events.placeholders.addressSearch")}
+        // A street alone fills what it knows; the house number is left to type, and
+        // the event is not on the map until the address is whole.
+        onSelectStreet={(address) => {
+          fillAddress({ ...address, street: `${address.street} ` }, null)
+          setPickedStreet(address)
+          shouldFocusStreet.current = true
+        }}
+        // The list hands the focus back to its button as it closes; the street is next.
+        onCloseAutoFocus={(event) => {
+          if (!shouldFocusStreet.current) return
+          shouldFocusStreet.current = false
+          event.preventDefault()
+          form.setFocus("street")
+        }}
         onSelect={(address) => {
-          const key = addressKey(address)
+          fillAddress(address, address)
           setPickedLabel(address.label)
-          form.setValue("street", address.street, options)
-          form.setValue("city", address.city, options)
-          form.setValue("postalCode", address.postalCode, options)
-          if (address.country) form.setValue("country", address.country, options)
-          form.setValue("latitude", address.latitude, options)
-          form.setValue("longitude", address.longitude, options)
-          form.setValue("positionOf", key, options)
+          setPickedStreet(null)
         }}
       />
       <p className="flex items-center gap-1.5 typo-small text-muted-foreground">
@@ -779,7 +814,7 @@ function AddressPicker() {
             {t("events.form.addressLocated")}
           </>
         ) : (
-          t("events.form.addressHint")
+          t(isStreetShown ? "events.form.addressStreetPicked" : "events.form.addressHint")
         )}
       </p>
     </div>
