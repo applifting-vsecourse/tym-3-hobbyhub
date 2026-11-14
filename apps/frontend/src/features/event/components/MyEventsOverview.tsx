@@ -20,7 +20,11 @@ import { useNow } from "@/hooks/useNow"
 import { cn } from "@/lib/utils"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
-import type { ApplicationStatus, MyApplication } from "@/features/event/api/myEventsSchemas"
+import type {
+  ApplicationStatus,
+  HostedEvent,
+  MyApplication,
+} from "@/features/event/api/myEventsSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
 import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
@@ -78,7 +82,8 @@ export type MyEventsList<T> = {
 
 type MyEventsOverviewProps = {
   applications: MyEventsList<MyApplication>
-  hosted: MyEventsList<EventListItem>
+  /** The organizer's own events; `isHidden` marks one an administrator hid (#239). */
+  hosted: MyEventsList<EventListItem & Partial<Pick<HostedEvent, "isHidden">>>
   /** The list on screen, from the URL. */
   tab: MyEventsTab
   /** Search and filters of both lists, shown under the tabs. */
@@ -277,7 +282,10 @@ export function MyEventsOverview({
     )
   }
 
-  const row = (event: EventListItem, application?: MyApplication) => {
+  const row = (
+    event: EventListItem & Partial<Pick<HostedEvent, "isHidden">>,
+    application?: MyApplication,
+  ) => {
     const status = application?.status
     const action = application && onApplicationAction ? applicationActionOf(application, now) : null
     return (
@@ -309,6 +317,9 @@ export function MyEventsOverview({
             badge={
               status ? (
                 <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
+              ) : event.isHidden ? (
+                // #239: only the organizer still sees it; the detail says why.
+                <StatusBadge status="neutral">{t("myEvents.hidden")}</StatusBadge>
               ) : undefined
             }
           />

@@ -116,6 +116,10 @@ export const adminEventDetailSchema = z.object({
     cancellationNote: z.string().nullable(),
   }),
   isHidden: z.boolean(),
+  /** #239: why, when and by whom; `hiddenBy` is null for events hidden before ADR-0022. */
+  hiddenReason: z.string().nullable(),
+  hiddenAt: z.coerce.date().nullable(),
+  hiddenBy: refSchema.nullable(),
   organizer: refSchema.extend({ email: z.string() }),
   group: refSchema.nullable(),
   participants: z.array(
@@ -200,4 +204,19 @@ export type AdministratorViolation = z.infer<typeof administratorViolationSchema
 // The body of a refusal (400, or 409 for an address taken).
 export const administratorRefusalSchema = z.object({
   violations: z.array(administratorViolationSchema),
+})
+
+// #239: the limits of HideEventDto; the server checks them again.
+export const EVENT_HIDDEN_REASON_MIN_LENGTH = 10
+export const EVENT_HIDDEN_REASON_MAX_LENGTH = 500
+
+export const eventModerationViolationSchema = z.enum([
+  "EVENT_IS_DRAFT",
+  "EVENT_ALREADY_HIDDEN",
+  "EVENT_NOT_HIDDEN",
+])
+export type EventModerationViolation = z.infer<typeof eventModerationViolationSchema>
+
+export const eventModerationRefusalSchema = z.object({
+  violations: z.array(eventModerationViolationSchema),
 })

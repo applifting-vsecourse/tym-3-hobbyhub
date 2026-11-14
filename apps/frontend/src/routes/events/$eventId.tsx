@@ -54,14 +54,18 @@ function EventDetailPage() {
   })
   const myRequestQuery = useQuery({
     ...myRequestQueryOptions(eventId, user?.id ?? ""),
-    enabled: user !== null,
+    enabled: user !== null && eventQuery.data?.hiddenReason == null,
   })
 
   const ownView = myRequestQuery.data ? ownSeatView(myRequestQuery.data) : null
   // F-06.5: the exact place and the contacts go to the organizer and to people
   // with a seat, while the event is on. The server decides again.
   const event = eventQuery.data
+  // #239: an event an administrator hid is shown only to its organizers, and
+  // it is not run until it is back: no seats, no requests, no contacts.
+  const isHidden = event?.hiddenReason != null
   const hasInfoRight =
+    !isHidden &&
     user !== null &&
     (ownView === "approved" || ownView === "organizer") &&
     event?.status === "PUBLISHED" &&
@@ -189,7 +193,10 @@ function EventDetailPage() {
               user?.id === eventQuery.data.organizerId &&
               eventQuery.data.status === "PUBLISHED" &&
               eventQuery.data.startAt > new Date() ? (
-                <OrganizerActions event={eventQuery.data} />
+                <OrganizerActions
+                  event={eventQuery.data}
+                  canEdit={!isHidden}
+                />
               ) : null
             }
             participantInfo={
@@ -231,7 +238,7 @@ function EventDetailPage() {
               )
             }
             ownRequest={
-              ownView === "organizer" ? (
+              isHidden ? undefined : ownView === "organizer" ? (
                 <OrganizerPanel eventId={eventId} />
               ) : ownView ? (
                 <OwnRequestPanel

@@ -141,6 +141,30 @@
     },
     "loadFailed": "Data se nepodařilo načíst.",
     "loading": "Načítáme…",
+    "moderation": {
+      "cancel": "Zrušit",
+      "changedMeanwhile": "Akci mezitím změnil jiný správce. Údaje níže jsou aktuální.",
+      "draft": "Koncept nikdo nevidí, skrýt ho nejde.",
+      "failed": "Akci se nepodařilo změnit. Zkuste to prosím znovu.",
+      "hidden": "Akce je skrytá",
+      "hiddenAt": "Skryto",
+      "hiddenBy": "Skryl(a)",
+      "hide": "Skrýt akci",
+      "hideDescription": "Akce zmizí všem kromě organizátorů. Organizátoři uvidí důvod, účastníci, žadatelé a náhradníci jen to, že akce byla odstraněna. Akci jde později zase odkrýt.",
+      "hideSubmit": "Skrýt akci",
+      "hideTitle": "Skrýt akci {{title}}",
+      "reason": "Důvod",
+      "reasonLabel": "Důvod skrytí",
+      "reasonTooLong": "Důvod může mít nejvýš 500 znaků",
+      "reasonTooShort": "Napište důvod, aspoň 10 znaků",
+      "restore": "Odkrýt akci",
+      "restoreSubmit": "Odkrýt",
+      "restoreText": "Akce se vrátí do výpisů. Organizátoři, účastníci, žadatelé a náhradníci dostanou upozornění.",
+      "restoreTitle": "Odkrýt akci {{title}}?",
+      "restored": "Akce je znovu vidět",
+      "title": "Skrytí akce",
+      "visible": "Akci vidí každý, komu ji pravidla ukazují."
+    },
     "nav": {
       "administrators": "Správci",
       "events": "Akce",
@@ -422,6 +446,11 @@
       "equipment": "Vybavení",
       "groupOnly": "Jen pro členy skupiny",
       "hasAccount": "Už máš účet?",
+      "hidden": {
+        "badge": "Skrytá správcem",
+        "seats": "Dokud je akce skrytá, nikdo nový se nepřihlásí a žádosti počkají.",
+        "text": "Správce akci skryl, takže ji kromě organizátorů nikdo nevidí. Důvod: {{reason}}"
+      },
       "hiddenInfo": "Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti.",
       "join": "Obsadit místo",
       "linkLabel": "Odkaz",
@@ -1342,6 +1371,7 @@
       "find": "Najít akci",
       "title": "Zatím tu nic není"
     },
+    "hidden": "Skrytá správcem",
     "hosted": {
       "empty": "Zatím nepořádáte žádnou akci."
     },
@@ -1391,6 +1421,7 @@
     "more_few": "Načíst další ({{count}})",
     "more_one": "Načíst další ({{count}})",
     "more_other": "Načíst další ({{count}})",
+    "reason": "Důvod: {{reason}}",
     "retry": "Zkusit znovu",
     "sections": {
       "new": {
@@ -1416,6 +1447,11 @@
         "PLACE": "Akce {{title}} má nové místo",
         "TIME": "Akce {{title}} má nový čas"
       },
+      "EVENT_HIDDEN": {
+        "organizer": "Správce skryl tvoji akci {{title}}",
+        "participant": "Akce {{title}} byla odstraněna správcem"
+      },
+      "EVENT_RESTORED": "Akce {{title}} je zpět",
       "NEW_REQUESTS": {
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"

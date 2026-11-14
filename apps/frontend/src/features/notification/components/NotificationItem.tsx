@@ -83,6 +83,16 @@ function TargetLink({
           {children}
         </Link>
       )
+    case "myEvents":
+      return (
+        <Link
+          to="/my-events"
+          className={className}
+          onClick={onClick}
+        >
+          {children}
+        </Link>
+      )
   }
 }
 
@@ -118,6 +128,11 @@ export function NotificationItem({
         {notification.message ? (
           <span className="typo-small break-words whitespace-pre-line text-muted-foreground">
             {t("notifications.message", { message: notification.message })}
+          </span>
+        ) : null}
+        {notification.reason ? (
+          <span className="typo-small break-words whitespace-pre-line text-muted-foreground">
+            {t("notifications.reason", { reason: notification.reason })}
           </span>
         ) : null}
         <span className="typo-caption text-muted-foreground">

@@ -140,6 +140,30 @@
     },
     "loadFailed": "The data could not be loaded.",
     "loading": "Loading…",
+    "moderation": {
+      "cancel": "Cancel",
+      "changedMeanwhile": "Another administrator changed the event meanwhile. The details below are up to date.",
+      "draft": "Nobody sees a draft, so it cannot be hidden.",
+      "failed": "The event could not be changed. Please try again.",
+      "hidden": "The event is hidden",
+      "hiddenAt": "Hidden",
+      "hiddenBy": "Hidden by",
+      "hide": "Hide event",
+      "hideDescription": "The event disappears for everyone but its organizers. The organizers see the reason; participants, applicants and the waitlist only learn that it was removed. You can bring it back later.",
+      "hideSubmit": "Hide event",
+      "hideTitle": "Hide the event {{title}}",
+      "reason": "Reason",
+      "reasonLabel": "Reason for hiding",
+      "reasonTooLong": "The reason can be at most 500 characters",
+      "reasonTooShort": "Write a reason of at least 10 characters",
+      "restore": "Bring event back",
+      "restoreSubmit": "Bring back",
+      "restoreText": "The event returns to the lists. Organizers, participants, applicants and the waitlist are notified.",
+      "restoreTitle": "Bring back the event {{title}}?",
+      "restored": "The event is visible again",
+      "title": "Hiding the event",
+      "visible": "Everyone the rules show it to can see the event."
+    },
     "nav": {
       "administrators": "Administrators",
       "events": "Events",
@@ -420,6 +444,11 @@
       "equipment": "Equipment",
       "groupOnly": "Group members only",
       "hasAccount": "Already have an account?",
+      "hidden": {
+        "badge": "Hidden by an administrator",
+        "seats": "While the event is hidden, nobody new can join and requests wait.",
+        "text": "An administrator hid the event, so nobody but its organizers can see it. Reason: {{reason}}"
+      },
       "hiddenInfo": "You'll see the exact address and the organizer's contact once your seat is confirmed.",
       "join": "Take a seat",
       "linkLabel": "Link",
@@ -1324,6 +1353,7 @@
       "find": "Find an event",
       "title": "Nothing here yet"
     },
+    "hidden": "Hidden by an administrator",
     "hosted": {
       "empty": "You are not organizing any event yet."
     },
@@ -1371,6 +1401,7 @@
     "message": "“{{message}}”",
     "more_one": "Load more ({{count}})",
     "more_other": "Load more ({{count}})",
+    "reason": "Reason: {{reason}}",
     "retry": "Try again",
     "sections": {
       "new": {
@@ -1395,6 +1426,11 @@
         "PLACE": "The event {{title}} has a new place",
         "TIME": "The event {{title}} has a new time"
       },
+      "EVENT_HIDDEN": {
+        "organizer": "An administrator hid your event {{title}}",
+        "participant": "The event {{title}} was removed by an administrator"
+      },
+      "EVENT_RESTORED": "The event {{title}} is back",
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
