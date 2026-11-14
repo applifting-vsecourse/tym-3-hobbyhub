@@ -238,6 +238,56 @@ describe('NotificationsService', () => {
     });
   });
 
+  describe('an event an administrator hid or brought back (#239)', () => {
+    const people = {
+      event: { id: 'e1' },
+      organizerIds: ['organizer', 'co-organizer'],
+      participantIds: ['p1', 'organizer'],
+      applicantIds: ['a1'],
+      waitlistedIds: ['w1', 'p1'],
+    };
+
+    it('tells the organizers why, the others only that it is gone', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyEventHidden({ ...people, reason: 'Spam a reklama.' });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_HIDDEN',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: null,
+        eventId: 'e1',
+        payload: { reason: 'Spam a reklama.' },
+      });
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_HIDDEN',
+        recipientIds: ['p1', 'a1', 'w1'],
+        actorId: null,
+        eventId: 'e1',
+      });
+    });
+
+    it('tells the same people it is back, with no reason', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyEventRestored(people);
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_RESTORED',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: null,
+        eventId: 'e1',
+        payload: {},
+      });
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_RESTORED',
+        recipientIds: ['p1', 'a1', 'w1'],
+        actorId: null,
+        eventId: 'e1',
+      });
+    });
+  });
+
   describe('a cancelled event', () => {
     it('tells the participants and the people still waiting', async () => {
       const { repository, service } = setup();

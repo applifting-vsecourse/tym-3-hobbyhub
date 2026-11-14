@@ -14,6 +14,8 @@ export const notificationTypeSchema = z.enum([
   "MONTHLY_RECOMMENDATION",
   "EVENT_CHANGED",
   "EVENT_CANCELLED",
+  "EVENT_HIDDEN",
+  "EVENT_RESTORED",
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
@@ -36,6 +38,8 @@ export const notificationSchema = z.object({
   decision: decisionSchema.nullable(),
   message: z.string().nullable(),
   changes: z.array(eventChangeSchema),
+  /** EVENT_HIDDEN: why an administrator hid it; only the organizers' copy has it (#239). */
+  reason: z.string().nullable(),
 })
 
 export const notificationPageSchema = z.object({

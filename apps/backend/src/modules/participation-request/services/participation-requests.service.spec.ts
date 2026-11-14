@@ -25,6 +25,7 @@ const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   approvalMode: 'MANUAL',
   organizerIds: ['organizer'],
   freeSpots: 2,
+  isHidden: false,
   hasSeat: false,
   ...overrides,
 });

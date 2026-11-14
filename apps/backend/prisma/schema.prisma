@@ -61,6 +61,9 @@ enum NotificationType {
   // F-09.3: a change of time or place, and a cancellation, of an event one goes to.
   EVENT_CHANGED
   EVENT_CANCELLED
+  // #239, ADR-0022: an administrator hid the event, or brought it back.
+  EVENT_HIDDEN
+  EVENT_RESTORED
 
   @@map("notification_type")
 }
@@ -330,15 +333,22 @@ model Event {
   contributionNote              String?  @db.VarChar(200)
 
   // F-05.2 / F-05.4 private event via an invitation link.
-  inviteToken     String? @unique @db.VarChar(100)
+  inviteToken     String?        @unique @db.VarChar(100)
   // F-06.5 link to an external group chat.
-  externalChatUrl String? @db.Text
+  externalChatUrl String?        @db.Text
   // F-06.5 how to reach the organizer, shown to APPROVED participants only.
-  contact         String? @db.VarChar(200)
+  contact         String?        @db.VarChar(200)
   // Shown to APPROVED participants only.
-  onlineUrl       String? @db.Text
-  // F-11.3, F-11.4 hidden by an administrator.
-  isHidden        Boolean @default(false)
+  onlineUrl       String?        @db.Text
+  // F-11.3, #239 hidden by an administrator (ADR-0022): when and why go
+  // together with the flag, who is known for everything hidden through the
+  // administration (CHECK event_hidden_all_or_nothing in the migration). The
+  // reason is shown to the organizers and the administration.
+  isHidden        Boolean        @default(false)
+  hiddenAt        DateTime?
+  hiddenReason    String?        @db.VarChar(500)
+  hiddenBy        Administrator? @relation("EventHiddenBy", fields: [hiddenById], references: [id], onDelete: Restrict)
+  hiddenById      String?
 
   // Model datatype `Location`, stored as columns. The address is all-or-nothing
   // (see the CHECK constraints in the migration); an ONLINE event has none.
@@ -634,6 +644,10 @@ model Administrator {
   deactivatedBy             Administrator?  @relation("AdministratorDeactivatedBy", fields: [deactivatedById], references: [id], onDelete: Restrict)
   deactivatedAdministrators Administrator[] @relation("AdministratorDeactivatedBy")
   emailDeliveries           EmailDelivery[]
+  // ADR-0022: what they did. Administrators are deactivated, never deleted.
+  hiddenEvents              Event[]         @relation("EventHiddenBy")
+  userBlocks                UserBlock[]
+  auditLogEntries           AuditLogEntry[]
 
   @@unique([email])
   @@map("administrator")
@@ -764,8 +778,10 @@ model User {
 
   interests UserActivity[]
 
-  blockedUsers User[] @relation("UserBlocks")
-  blockedBy    User[] @relation("UserBlocks")
+  // ADR-0022: blocks this user made (#65) or an administrator made between
+  // this user and someone else (#239).
+  blocks    UserBlock[] @relation("UserBlockBlocker")
+  blockedBy UserBlock[] @relation("UserBlockBlocked")
 
   organizedEvents       Event[]                @relation("EventOrganizer")
   coOrganizedEvents     Event[]                @relation("EventCoOrganizers")
@@ -780,4 +796,48 @@ model User {
   @@unique([email])
   @@unique([username])
   @@map("user")
+}
+
+// #239, ADR-0022: two users who must not see each other. A row an
+// administrator made (`createdBy` set, with a reason) applies both ways and is
+// stored once, with the smaller id as the blocker (CHECK
+// user_block_admin_ordered in the migration). A row a user makes (#65, not
+// built yet) applies one way: the blocker's content does not exist for the
+// blocked.
+model UserBlock {
+  id String @id @default(cuid())
+
+  blocker     User           @relation("UserBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockerId   String
+  blocked     User           @relation("UserBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockedId   String
+  createdBy   Administrator? @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String?
+  // Seen by the administration only; 10–500 characters, set exactly when an
+  // administrator made the block (CHECK in the migration).
+  reason      String?        @db.VarChar(500)
+  createdAt   DateTime       @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("user_block")
+}
+
+// ADR-0010, ADR-0022: what an administrator did, kept as evidence. The target
+// is generic (`targetType` + `targetId`), not a relation: it may be anything
+// and must outlive it.
+model AuditLogEntry {
+  id String @id @default(cuid())
+
+  admin       Administrator @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  adminId     String
+  action      String        @db.VarChar(50)
+  targetType  String        @db.VarChar(50)
+  targetId    String
+  description String?       @db.VarChar(500)
+  createdAt   DateTime      @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_log_entry")
 }

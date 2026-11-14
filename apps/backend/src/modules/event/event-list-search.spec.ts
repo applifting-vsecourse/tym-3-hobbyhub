@@ -9,6 +9,13 @@ import { EventStatus, Prisma, VenueType } from '@/generated/prisma/client';
 import { EventListPage } from './domain/event';
 import { EventRepository } from './repositories/event.repository';
 
+// ADR-0022: hidden means since when and why (CHECK event_hidden_all_or_nothing).
+const HIDDEN = {
+  isHidden: true,
+  hiddenAt: new Date('2030-01-01T00:00:00Z'),
+  hiddenReason: 'Skryto správcem v testu.',
+} as const;
+
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
 class Rollback extends Error {}
@@ -234,7 +241,7 @@ describeDb('public event list search', () => {
     await withEvents(
       [
         {},
-        { isHidden: true },
+        HIDDEN,
         { status: EventStatus.DRAFT },
         {
           startAt: new Date('2020-01-01T18:00:00Z'),

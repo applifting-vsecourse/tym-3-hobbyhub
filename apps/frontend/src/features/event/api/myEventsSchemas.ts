@@ -2,6 +2,19 @@ import { z } from "zod"
 
 import { eventListItemSchema } from "@/features/event/api/eventSchemas"
 
+/** An event the person organizes; only this list holds one an administrator hid (#239). */
+export const hostedEventSchema = eventListItemSchema.extend({
+  isHidden: z.boolean(),
+})
+
+export type HostedEvent = z.infer<typeof hostedEventSchema>
+
+export const hostedEventsPageSchema = z.object({
+  items: z.array(hostedEventSchema),
+  /** All events the person organizes that match the filter, not just this page. */
+  total: z.number(),
+})
+
 // WITHDRAWN: the person cancelled the request or gave up the seat.
 // EVENT_CANCELLED: the organizer called the event off.
 export const applicationStatusSchema = z.enum([

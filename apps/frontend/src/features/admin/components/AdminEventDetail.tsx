@@ -1,15 +1,94 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { AdminTable } from "@/components/hobbyhub/AdminTable"
+import { Button } from "@/components/ui/button"
 
 import { adminEventQueryOptions } from "@/features/admin/api/adminQueryOptions"
 import type { AdminEventDetail as Detail } from "@/features/admin/api/adminSchemas"
+import { useHideEvent, useRestoreEvent } from "@/features/admin/api/eventModerationMutations"
 import { EventBadges } from "@/features/admin/components/AdminEvents"
 import { AdminFacts, AdminSection } from "@/features/admin/components/AdminFacts"
 import { AdminLink } from "@/features/admin/components/AdminLink"
 import { AdminState } from "@/features/admin/components/AdminState"
+import { HideEventSheet } from "@/features/admin/components/HideEventSheet"
+import { RestoreEventSheet } from "@/features/admin/components/RestoreEventSheet"
 import { useAdminFormat } from "@/features/admin/lib/format"
+
+/**
+ * #239: hide the event from everyone but its organizers, or bring it back.
+ * A draft is seen by nobody, so it has nothing to hide.
+ */
+function EventModeration({ detail }: { detail: Detail }) {
+  const { t } = useTranslation()
+  const format = useAdminFormat()
+  const [sheet, setSheet] = useState<"hide" | "restore" | null>(null)
+  const hide = useHideEvent(detail.event.id)
+  const restore = useRestoreEvent(detail.event.id)
+  if (detail.event.status === "DRAFT") return null
+
+  const open = (next: "hide" | "restore") => {
+    hide.reset()
+    restore.reset()
+    setSheet(next)
+  }
+
+  return (
+    <AdminSection title={t("admin.moderation.title")}>
+      {detail.isHidden ? (
+        <AdminFacts
+          facts={[
+            { label: t("admin.moderation.reason"), value: detail.hiddenReason },
+            {
+              label: t("admin.moderation.hiddenAt"),
+              value: detail.hiddenAt ? format.dateTime(detail.hiddenAt) : null,
+            },
+            { label: t("admin.moderation.hiddenBy"), value: detail.hiddenBy?.name ?? null },
+          ]}
+        />
+      ) : (
+        <p className="typo-body text-muted-foreground">{t("admin.moderation.visible")}</p>
+      )}
+      <div>
+        <Button
+          variant="outline"
+          onClick={() => open(detail.isHidden ? "restore" : "hide")}
+        >
+          {detail.isHidden ? t("admin.moderation.restore") : t("admin.moderation.hide")}
+        </Button>
+      </div>
+      <HideEventSheet
+        isOpen={sheet === "hide"}
+        onOpenChange={(isOpen) => setSheet(isOpen ? "hide" : null)}
+        title={detail.event.title}
+        isPending={hide.isPending}
+        error={hide.error}
+        onSubmit={async (values) => {
+          await hide.mutateAsync(values)
+          setSheet(null)
+          toast.success(t("admin.moderation.hidden"))
+        }}
+      />
+      <RestoreEventSheet
+        isOpen={sheet === "restore"}
+        onOpenChange={(isOpen) => setSheet(isOpen ? "restore" : null)}
+        title={detail.event.title}
+        isPending={restore.isPending}
+        error={restore.error}
+        onConfirm={() =>
+          restore.mutate(undefined, {
+            onSuccess: () => {
+              setSheet(null)
+              toast.success(t("admin.moderation.restored"))
+            },
+          })
+        }
+      />
+    </AdminSection>
+  )
+}
 
 /** #238: the whole event, hidden and drafts too (visibility matrix: Superadmin). */
 export function AdminEventDetail({ eventId }: { eventId: string }) {
@@ -81,6 +160,8 @@ export function AdminEventDetail({ eventId }: { eventId: string }) {
           ]}
         />
       </AdminSection>
+
+      <EventModeration detail={query.data} />
 
       <AdminSection title={t("admin.event.description")}>
         <p className="typo-body whitespace-pre-line text-foreground">{event.description}</p>

@@ -132,6 +132,23 @@ export class AdminEventDetailResponseDto {
   @ApiProperty({ description: 'Hidden by an administrator' })
   isHidden!: boolean;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Why it was hidden (#239)',
+  })
+  hiddenReason!: string | null;
+
+  @ApiProperty({ type: Date, nullable: true })
+  hiddenAt!: Date | null;
+
+  @ApiProperty({
+    type: AdminRefResponseDto,
+    nullable: true,
+    description: 'Null for an event hidden before ADR-0022',
+  })
+  hiddenBy!: AdminRefResponseDto | null;
+
   @ApiProperty({ type: AdminEventOrganizerResponseDto })
   organizer!: AdminEventOrganizerResponseDto;
 
@@ -145,6 +162,12 @@ export class AdminEventDetailResponseDto {
     return {
       event: EventResponseDto.fromDomain(detail.event),
       isHidden: detail.isHidden,
+      hiddenReason: detail.event.hiddenReason,
+      hiddenAt: detail.hiddenAt,
+      hiddenBy: detail.hiddenBy && {
+        id: detail.hiddenBy.id,
+        name: detail.hiddenBy.name,
+      },
       organizer: {
         id: detail.organizer.id,
         name: detail.organizer.name,

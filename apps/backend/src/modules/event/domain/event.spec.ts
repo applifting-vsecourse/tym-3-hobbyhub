@@ -2,10 +2,12 @@ import {
   canSeeEvent,
   eventChangeViolations,
   eventListFilterViolations,
+  eventModerationViolations,
   eventRuleViolations,
   externalSpotsViolations,
   foldForSearch,
   isOrganizerOf,
+  moderationConcernsPeople,
   occupancyOf,
 } from '@/modules/event/domain/event';
 
@@ -163,6 +165,7 @@ describe('eventChangeViolations', () => {
     startAt: later,
     externalOccupiedSpots: 4,
     approvedCount: 3,
+    isHidden: false,
   };
 
   it('lets a future event be edited', () => {
@@ -368,6 +371,7 @@ describe('externalSpotsViolations', () => {
     startAt: new Date('2026-10-24T12:00:00Z'),
     maxParticipants: 10,
     approvedCount: 6,
+    isHidden: false,
   };
 
   it('allows the outside seats up to the seats left by the approved', () => {
@@ -395,5 +399,100 @@ describe('externalSpotsViolations', () => {
     expect(externalSpotsViolations({ ...event, ...change }, 1, now)).toEqual([
       'EVENT_NOT_CHANGEABLE',
     ]);
+  });
+});
+
+describe('eventModerationViolations (#239)', () => {
+  it('hides a published, cancelled or finished event', () => {
+    for (const status of ['PUBLISHED', 'CANCELLED', 'FINISHED'] as const) {
+      expect(
+        eventModerationViolations({ status, isHidden: false }, 'HIDE'),
+      ).toEqual([]);
+    }
+  });
+
+  it('does not hide a draft, which nobody sees anyway', () => {
+    expect(
+      eventModerationViolations({ status: 'DRAFT', isHidden: false }, 'HIDE'),
+    ).toEqual(['EVENT_IS_DRAFT']);
+  });
+
+  it('does not hide an event twice', () => {
+    expect(
+      eventModerationViolations(
+        { status: 'PUBLISHED', isHidden: true },
+        'HIDE',
+      ),
+    ).toEqual(['EVENT_ALREADY_HIDDEN']);
+  });
+
+  it('brings back only a hidden event', () => {
+    expect(
+      eventModerationViolations(
+        { status: 'PUBLISHED', isHidden: true },
+        'RESTORE',
+      ),
+    ).toEqual([]);
+    expect(
+      eventModerationViolations(
+        { status: 'PUBLISHED', isHidden: false },
+        'RESTORE',
+      ),
+    ).toEqual(['EVENT_NOT_HIDDEN']);
+  });
+});
+
+describe('moderationConcernsPeople (#239)', () => {
+  const now = new Date('2030-01-01T12:00:00Z');
+  const later = new Date('2030-01-01T14:00:00Z');
+  const earlier = new Date('2030-01-01T10:00:00Z');
+
+  it('concerns the people of an event still on', () => {
+    expect(
+      moderationConcernsPeople({ status: 'PUBLISHED', endAt: later }, now),
+    ).toBe(true);
+  });
+
+  it('concerns nobody once it is over or called off', () => {
+    expect(
+      moderationConcernsPeople({ status: 'PUBLISHED', endAt: earlier }, now),
+    ).toBe(false);
+    expect(
+      moderationConcernsPeople({ status: 'CANCELLED', endAt: later }, now),
+    ).toBe(false);
+  });
+});
+
+describe('a hidden event (#239)', () => {
+  const later = new Date('2030-01-01T14:00:00Z');
+  const now = new Date('2030-01-01T12:00:00Z');
+  const hidden = {
+    status: 'PUBLISHED' as const,
+    venueType: 'PUBLIC_VENUE' as const,
+    startAt: later,
+    maxParticipants: 10,
+    approvedCount: 2,
+    isHidden: true,
+  };
+
+  it('cannot be edited', () => {
+    expect(
+      eventChangeViolations(
+        hidden,
+        {
+          kind: 'update',
+          maxParticipants: 10,
+          externalOccupiedSpots: 0,
+          venueType: 'PUBLIC_VENUE',
+          hasLocation: true,
+        },
+        now,
+      ),
+    ).toEqual(['EVENT_HIDDEN']);
+    expect(externalSpotsViolations(hidden, 1, now)).toEqual(['EVENT_HIDDEN']);
+  });
+
+  it('can still be cancelled by its organizer', () => {
+    expect(eventChangeViolations(hidden, { kind: 'cancel' }, now)).toEqual([]);
   });
 });

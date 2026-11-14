@@ -7,6 +7,10 @@ export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
 export const EVENT_EQUIPMENT_MAX_LENGTH = 500;
 export const EVENT_CONTRIBUTION_NOTE_MAX_LENGTH = 200;
 export const EVENT_CANCELLATION_NOTE_MAX_LENGTH = 500;
+// #239, ADR-0022: why an administrator hid an event (CHECK
+// event_hidden_reason_length in the migration).
+export const EVENT_HIDDEN_REASON_MIN_LENGTH = 10;
+export const EVENT_HIDDEN_REASON_MAX_LENGTH = 500;
 export const EVENT_CHAT_URL_MAX_LENGTH = 500;
 export const EVENT_CONTACT_MAX_LENGTH = 200;
 // Decimal(10, 2)
@@ -115,6 +119,10 @@ export type Event = Occupancy & {
   organizerId: string;
   cancellationReason: string | null;
   cancellationNote: string | null;
+  // #239, ADR-0022: hidden by an administrator, and why. Only the organizers
+  // and the administration ever see the reason.
+  isHidden: boolean;
+  hiddenReason: string | null;
 };
 
 // What the rules about an event's seats need to know: who runs it, when and in
@@ -131,6 +139,8 @@ export type EventFacts = {
   // The organizer and the co-organizers.
   organizerIds: string[];
   freeSpots: number;
+  // #239: a hidden event exists only for its organizers, who cannot run it.
+  isHidden: boolean;
 };
 
 // F-07.2: who may see an event that is not a draft and not hidden by a
@@ -272,6 +282,7 @@ export type CancelEventData = {
 };
 
 export type EventChangeViolation =
+  | 'EVENT_HIDDEN'
   | 'EVENT_NOT_CHANGEABLE'
   | 'EVENT_NOT_CANCELLABLE'
   | 'MAX_BELOW_OCCUPIED'
@@ -283,9 +294,13 @@ const hasStarted = (event: Pick<Event, 'startAt'>, now: Date): boolean =>
   event.startAt.getTime() <= now.getTime();
 
 // F-05.10: a draft or published event can be edited until it starts; only a
-// published one can be cancelled, and not once it has started either.
+// published one can be cancelled, and not once it has started either. One an
+// administrator hid can be cancelled, not edited (ADR-0022).
 export const eventChangeViolations = (
-  event: Pick<Event, 'status' | 'startAt' | 'approvedCount' | 'venueType'>,
+  event: Pick<
+    Event,
+    'status' | 'startAt' | 'approvedCount' | 'venueType' | 'isHidden'
+  >,
   change:
     | {
         kind: 'update';
@@ -302,6 +317,7 @@ export const eventChangeViolations = (
       ? []
       : ['EVENT_NOT_CANCELLABLE'];
   }
+  if (event.isHidden) return ['EVENT_HIDDEN'];
   const changeable =
     (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
     !hasStarted(event, now);
@@ -335,14 +351,15 @@ export const eventChangeViolations = (
 export const externalSpotsViolations = (
   event: Pick<
     Event,
-    'status' | 'startAt' | 'maxParticipants' | 'approvedCount'
+    'status' | 'startAt' | 'maxParticipants' | 'approvedCount' | 'isHidden'
   >,
   externalOccupiedSpots: number,
   now: Date,
 ): Extract<
   EventChangeViolation,
-  'EVENT_NOT_CHANGEABLE' | 'MAX_BELOW_OCCUPIED'
+  'EVENT_HIDDEN' | 'EVENT_NOT_CHANGEABLE' | 'MAX_BELOW_OCCUPIED'
 >[] => {
+  if (event.isHidden) return ['EVENT_HIDDEN'];
   const changeable =
     (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
     !hasStarted(event, now);
@@ -358,6 +375,38 @@ export type EventAudience = {
   participantIds: string[];
   applicantIds: string[];
 };
+
+// #239, ADR-0022: who hiding an event, or bringing it back, concerns: the
+// audience of a change plus the people on the waitlist, and the organizers.
+export type HiddenEventAudience = EventAudience & {
+  waitlistedIds: string[];
+  organizerIds: string[];
+};
+
+// #239, ADR-0022: an administrator hides any event but a draft, and brings
+// back only a hidden one.
+export type EventModeration = 'HIDE' | 'RESTORE';
+export type EventModerationViolation =
+  'EVENT_IS_DRAFT' | 'EVENT_ALREADY_HIDDEN' | 'EVENT_NOT_HIDDEN';
+
+export const eventModerationViolations = (
+  event: Pick<Event, 'status' | 'isHidden'>,
+  moderation: EventModeration,
+): EventModerationViolation[] => {
+  if (moderation === 'RESTORE') {
+    return event.isHidden ? [] : ['EVENT_NOT_HIDDEN'];
+  }
+  if (event.status === 'DRAFT') return ['EVENT_IS_DRAFT'];
+  return event.isHidden ? ['EVENT_ALREADY_HIDDEN'] : [];
+};
+
+// Only people who still expect the event hear that it went or came back: not
+// for one that is over or was called off.
+export const moderationConcernsPeople = (
+  event: Pick<Event, 'status' | 'endAt'>,
+  now: Date,
+): boolean =>
+  event.status === 'PUBLISHED' && event.endAt.getTime() > now.getTime();
 
 // What a guarded write reports: the changed event, or the rule that no longer
 // held when the write was made.
@@ -449,6 +498,8 @@ export type EventListItem = {
   maxParticipants: number;
   // Approved and attended people plus those the organizer brought along.
   takenCount: number;
+  // #239: only the organizer's own list ever holds a hidden event.
+  isHidden: boolean;
 };
 
 export type EventListPage = { items: EventListItem[]; total: number };
@@ -517,6 +568,9 @@ export type EventDetail = EventListItem & {
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;
+  // #239: set only when an organizer opens their event an administrator hid;
+  // nobody else ever gets a hidden event.
+  hiddenReason: string | null;
 };
 
 export type ContactKind = 'email' | 'phone';
@@ -570,6 +624,10 @@ export type AdminEventParticipant = {
 export type AdminEventDetail = {
   event: Event;
   isHidden: boolean;
+  // #239: when and by whom; the reason is on `event`. Null for an event
+  // hidden before ADR-0022.
+  hiddenAt: Date | null;
+  hiddenBy: { id: string; name: string } | null;
   organizer: { id: string; name: string; email: string };
   group: { id: string; name: string } | null;
   participants: AdminEventParticipant[];

@@ -16,6 +16,7 @@ const aNotification = (overrides: Partial<Notification> = {}): Notification => (
   decision: null,
   message: null,
   changes: [],
+  reason: null,
   ...overrides,
 })
 
@@ -61,6 +62,21 @@ describe("notificationText", () => {
       "Honza_K zrušil(a) svoji účast na akci Čtvrteční florbal",
     ],
     [
+      "an event hidden from its participant (#239)",
+      aNotification({ type: "EVENT_HIDDEN", actor: null }),
+      "Akce Čtvrteční florbal byla odstraněna správcem",
+    ],
+    [
+      "an event hidden from its organizer (#239)",
+      aNotification({ type: "EVENT_HIDDEN", actor: null, reason: "Nabízí placené služby." }),
+      "Správce skryl tvoji akci Čtvrteční florbal",
+    ],
+    [
+      "an event brought back (#239)",
+      aNotification({ type: "EVENT_RESTORED", actor: null }),
+      "Akce Čtvrteční florbal je zpět",
+    ],
+    [
       "a type without words of its own",
       aNotification({ type: "SPOT_AVAILABLE" }),
       "Novinka k Čtvrteční florbal",
@@ -101,6 +117,23 @@ describe("notificationTarget", () => {
     "PARTICIPANT_CANCELLED",
   ] as const)("sends the participant to the event for %s", (type) => {
     expect(notificationTarget(aNotification({ type }))).toEqual({ kind: "event", eventId: "e1" })
+  })
+
+  // #239: the event no longer exists for them, only for its organizers.
+  it("sends a participant of a hidden event to their own events", () => {
+    expect(notificationTarget(aNotification({ type: "EVENT_HIDDEN" }))).toEqual({
+      kind: "myEvents",
+    })
+  })
+
+  it("sends the organizer of a hidden event to the event, where the reason is", () => {
+    expect(
+      notificationTarget(aNotification({ type: "EVENT_HIDDEN", reason: "Nabízí placené služby." })),
+    ).toEqual({ kind: "event", eventId: "e1" })
+    expect(notificationTarget(aNotification({ type: "EVENT_RESTORED" }))).toEqual({
+      kind: "event",
+      eventId: "e1",
+    })
   })
 
   it("sends the applicant to the group once decided", () => {

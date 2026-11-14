@@ -51,6 +51,8 @@ Blokování ([#65][65]) mění viditelnost napříč celou aplikací, proto je v
 
 Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tabulce žádostí je proto mezi ostatními.
 
+**Blokace dvojice správcem** ([#239][239], [ADR-0022](../adr/adr-0022.md)) platí oběma směry: oba jsou pro sebe navzájem ve sloupci Zablokovaný. Navíc se navzájem nevidí ani v seznamech účastníků a členů cizích akcí a skupin. Že blokace existuje a proč, vidí jen superadmin; nikdo z dvojice se to nedozví.
+
 ## Akce
 
 - **Návštěvník:** není přihlášený.
@@ -88,7 +90,8 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 - **Kontakt na organizátora** je text, který organizátor sám vyplní, nikdy e-mail jeho účtu. Veškerá komunikace jde přes aplikaci; kontakt mimo ni je rozhodnutí organizátora, ne vedlejší efekt přihlášky.
 - **Jmenný seznam účastníků vidí ostatní účastníci.** Je to sdílená aktivita a lidé mají právo vědět, s kým někam jdou; organizátor je navíc všechny schválil. Proto se jim nezobrazuje složení účastníků: u malé skupiny jde z agregátu a jmen dopočítat konkrétní člověk.
 - **Placená propagace musí být viditelně označená.** Neoznačená placená propagace klame člověka, který si v aplikaci hledá partu.
-- **Akce zablokovaná správcem** se pro všechny kromě organizátora a superadmina chová, jako by neexistovala.
+- **Akce zablokovaná správcem** se pro všechny kromě organizátora a superadmina chová, jako by neexistovala ([#239][239], [ADR-0022](../adr/adr-0022.md)). Organizátor ji dál vidí v detailu a v Moje akce i s důvodem.
+- **Upozornění na skrytí a odkrytí akce** dostanou organizátoři, schválení účastníci, žadatelé a náhradníci. Důvod nese jen upozornění organizátorů. Ostatní vidí v aplikaci jen název akce, kterou znali, a že ji správce odstranil, bez odkazu na ni; e-mail podle pravidla výše nenese ani název.
 
 ## Žádosti o účast a o členství
 
@@ -131,6 +134,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | E-mailová adresa                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                                    |
 | Placené členství                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                               |
 | Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [#61][61], [PO][po]            |
+| Blokace dvojice, kterou zadal správce, a její důvod                | ❌  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#239][239], [ADR-0022](../adr/adr-0022.md)                       |
 
 - **Veřejný profil** je jméno a příjmení, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
 - **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
@@ -207,4 +211,5 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
 [181]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/181
+[239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174

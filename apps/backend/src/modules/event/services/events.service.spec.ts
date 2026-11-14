@@ -44,6 +44,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   contributionNote: null,
   contact: null,
   externalChatUrl: null,
+  isHidden: false,
+  hiddenReason: null,
   location: {
     street: 'Chabařovická 4',
     city: 'Praha 8',
@@ -260,6 +262,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['organizer'],
       freeSpots: 3,
+      isHidden: false,
     };
     const viewer = { id: 'u2' } as Identity;
 
@@ -718,6 +721,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['organizer', 'co-organizer'],
       freeSpots: 3,
+      isHidden: false,
     };
 
     it.each(['organizer', 'co-organizer'])(
@@ -766,6 +770,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['u1'],
       freeSpots: 3,
+      isHidden: false,
       hasSeat: false,
       ...overrides,
     });
@@ -848,6 +853,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds,
       freeSpots: 8,
+      isHidden: false,
     });
 
     it('gives a co-organizer the whole event', async () => {
@@ -884,6 +890,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['u1'],
       freeSpots: 2,
+      isHidden: false,
     };
     const violationsOf = async (
       promise: Promise<unknown>,

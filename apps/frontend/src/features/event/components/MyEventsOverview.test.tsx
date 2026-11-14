@@ -141,6 +141,21 @@ describe("MyEventsOverview", () => {
     expect(screen.queryByText("Schváleno")).not.toBeInTheDocument()
   })
 
+  // #239: the organizer still has the event an administrator hid.
+  it("marks a hosted event an administrator hid", async () => {
+    await renderOverview(
+      list([]),
+      list([
+        { ...event({ id: "h1", title: "Skrytá" }), isHidden: true },
+        { ...event({ id: "h2", title: "Viditelná" }), isHidden: false },
+      ]),
+      { tab: "hosted" },
+    )
+
+    expect(screen.getByRole("link", { name: /Skrytá/ })).toHaveTextContent("Skrytá správcem")
+    expect(screen.getByRole("link", { name: /Viditelná/ })).not.toHaveTextContent("Skrytá správcem")
+  })
+
   it("says so in a tab that has nothing", async () => {
     await renderOverview(list([{ status: "PENDING", event: event() }]), list([]), {
       tab: "hosted",

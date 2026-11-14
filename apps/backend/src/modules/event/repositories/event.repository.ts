@@ -30,6 +30,7 @@ import {
   GroupEventListItem,
   GroupEventPage,
   GroupEventsPeriod,
+  HiddenEventAudience,
   INVOLVED_PARTICIPATION_STATUSES,
   MIN_STATS_PARTICIPANTS,
   NO_EVENT_FILTER,
@@ -45,6 +46,7 @@ import {
   AdminListQuery,
   AdminPage,
 } from '@/shared/admin-auth/domain/administration';
+import { recordAuditLogEntry } from '@/shared/audit-log/audit-log';
 import { Injectable } from '@nestjs/common';
 import {
   aheadFirstOrder,
@@ -152,6 +154,7 @@ const eventFactsSelect = {
   maxParticipants: true,
   externalOccupiedSpots: true,
   organizerId: true,
+  isHidden: true,
   coOrganizers: { select: { id: true } },
   participations: {
     where: { status: ParticipationStatus.APPROVED },
@@ -183,6 +186,7 @@ const mapEventFacts = (event: EventFactsRow): EventFacts => {
       ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
     ],
     freeSpots,
+    isHidden: event.isHidden,
   };
 };
 
@@ -235,6 +239,7 @@ export const mapPrismaEventToListItem = (
   minParticipants: event.minParticipants,
   maxParticipants: event.maxParticipants,
   takenCount: event._count.participations + event.externalOccupiedSpots,
+  isHidden: event.isHidden,
 });
 
 // The address is all-or-nothing (CHECK in the migration), so one column
@@ -285,6 +290,8 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   organizerId: event.organizerId,
   cancellationReason: event.cancellationReason?.name ?? null,
   cancellationNote: event.cancellationNote,
+  isHidden: event.isHidden,
+  hiddenReason: event.hiddenReason,
   ...occupancyOf({
     minParticipants: event.minParticipants,
     maxParticipants: event.maxParticipants,
@@ -485,6 +492,75 @@ export class EventRepository {
     };
   }
 
+  // #239: who hiding the event concerns, the waitlist and organizers too.
+  async getHiddenEventAudience(eventId: string): Promise<HiddenEventAudience> {
+    const [audience, waitlisted, event] = await Promise.all([
+      this.getEventAudience(eventId),
+      this.prisma.participation.findMany({
+        where: { eventId, status: ParticipationStatus.WAITLISTED },
+        select: { userId: true },
+      }),
+      this.prisma.event.findUniqueOrThrow({
+        where: { id: eventId },
+        select: { organizerId: true, coOrganizers: { select: { id: true } } },
+      }),
+    ]);
+    return {
+      ...audience,
+      waitlistedIds: waitlisted.map((row) => row.userId),
+      organizerIds: [
+        event.organizerId,
+        ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
+      ],
+    };
+  }
+
+  // #239, ADR-0022: an administrator hides an event, or brings it back, and
+  // the audit log records it in the same transaction. Matches only an event
+  // in the expected state, so two administrators at once cannot both act.
+  async setHidden(
+    id: string,
+    change:
+      | { kind: 'HIDE'; adminId: string; reason: string; at: Date }
+      | { kind: 'RESTORE'; adminId: string },
+  ): Promise<Event | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.event.updateMany({
+        where:
+          change.kind === 'HIDE'
+            ? { id, isHidden: false, status: { not: EventStatus.DRAFT } }
+            : { id, isHidden: true },
+        data:
+          change.kind === 'HIDE'
+            ? {
+                isHidden: true,
+                hiddenAt: change.at,
+                hiddenReason: change.reason,
+                hiddenById: change.adminId,
+              }
+            : {
+                isHidden: false,
+                hiddenAt: null,
+                hiddenReason: null,
+                hiddenById: null,
+              },
+      });
+      if (count === 0) return null;
+      await recordAuditLogEntry(tx, {
+        adminId: change.adminId,
+        action: change.kind === 'HIDE' ? 'EVENT_HIDDEN' : 'EVENT_RESTORED',
+        targetType: 'EVENT',
+        targetId: id,
+        description: change.kind === 'HIDE' ? change.reason : undefined,
+      });
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id },
+        include,
+      });
+      return mapPrismaEventToDomain(event);
+    });
+  }
+
   async getEventById(id: string): Promise<Event | null> {
     const event = await this.prisma.event.findUnique({
       where: { id },
@@ -573,10 +649,10 @@ export class EventRepository {
     { limit, offset }: Page,
     filter: EventFilter = NO_EVENT_FILTER,
   ): Promise<EventListPage> {
+    // A hidden event stays on the organizer's own list (ADR-0022).
     const where = allOf([
       Prisma.sql`e."status" IN ('PUBLISHED', 'FINISHED')`,
       Prisma.sql`e."visibility" = 'PUBLIC'`,
-      Prisma.sql`NOT e."isHidden"`,
       Prisma.sql`(e."organizerId" = ${userId} OR EXISTS (
         SELECT 1 FROM "_EventCoOrganizers" c
         WHERE c."A" = e."id" AND c."B" = ${userId}))`,
@@ -605,8 +681,24 @@ export class EventRepository {
   // event that was cancelled or is over stays reachable, so a shared link
   // still explains what happened.
   async getShowableEventById(id: string): Promise<EventDetail | null> {
+    return this.getDetailWhere({ id, ...SHOWABLE_EVENT });
+  }
+
+  // #239, ADR-0022: the same detail of an event an administrator hid, with the
+  // reason. Only for its organizers; the service checks who asks.
+  async getHiddenEventDetail(id: string): Promise<EventDetail | null> {
+    return this.getDetailWhere({
+      id,
+      ...SHOWABLE_EVENT,
+      isHidden: true,
+    });
+  }
+
+  private async getDetailWhere(
+    where: Prisma.EventWhereInput,
+  ): Promise<EventDetail | null> {
     const event = await this.prisma.event.findFirst({
-      where: { id, ...SHOWABLE_EVENT },
+      where,
       include: {
         activity: true,
         level: true,
@@ -656,6 +748,7 @@ export class EventRepository {
         listItem.takenCount,
       ),
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
+      hiddenReason: event.isHidden ? event.hiddenReason : null,
     };
   }
 
@@ -829,6 +922,7 @@ export class EventRepository {
         ...include,
         organizer: { select: { id: true, name: true, email: true } },
         group: { select: { id: true, name: true } },
+        hiddenBy: { select: { id: true, name: true } },
         participations: {
           select: {
             userId: true,
@@ -848,6 +942,8 @@ export class EventRepository {
     return {
       event: mapPrismaEventToDomain(row),
       isHidden: row.isHidden,
+      hiddenAt: row.hiddenAt,
+      hiddenBy: row.hiddenBy,
       organizer: row.organizer,
       group: row.group,
       participants: row.participations.map((participation) => ({

@@ -220,6 +220,14 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   })
   statsMinParticipants!: number;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Why an administrator hid the event (#239). Only its organizers ever get a hidden event; null for everyone else',
+  })
+  hiddenReason!: string | null;
+
   static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
@@ -239,6 +247,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
         ? ParticipantStatsResponseDto.fromDomain(event.stats)
         : null,
       statsMinParticipants: event.statsMinParticipants,
+      hiddenReason: event.hiddenReason,
     };
   }
 }

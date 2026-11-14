@@ -13,10 +13,14 @@ export type NotificationTarget =
   | { kind: "event"; eventId: string }
   | { kind: "groupRequests"; groupId: string }
   | { kind: "group"; groupId: string }
+  | { kind: "myEvents" }
   | null
 
 export function notificationTarget(notification: Notification): NotificationTarget {
   const { type, event, group } = notification
+  // #239: a hidden event exists only for its organizers, whose copy carries
+  // the reason; everyone else goes to their own events.
+  if (type === "EVENT_HIDDEN" && notification.reason === null) return { kind: "myEvents" }
   if (event) {
     return type === "NEW_REQUESTS"
       ? { kind: "eventRequests", eventId: event.id }
@@ -51,6 +55,12 @@ export function notificationText(t: TFunction, notification: Notification): stri
     }
     case "EVENT_CANCELLED":
       return t("notifications.text.EVENT_CANCELLED", { title })
+    case "EVENT_HIDDEN":
+      return notification.reason === null
+        ? t("notifications.text.EVENT_HIDDEN.participant", { title })
+        : t("notifications.text.EVENT_HIDDEN.organizer", { title })
+    case "EVENT_RESTORED":
+      return t("notifications.text.EVENT_RESTORED", { title })
     case "PARTICIPANT_CANCELLED":
       return t("notifications.text.PARTICIPANT_CANCELLED", { name, title })
     default:
