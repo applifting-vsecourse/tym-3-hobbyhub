@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import DiscoverIcon from "@/assets/ui-icons/nav-discover.svg?react"
+import FriendsIcon from "@/assets/ui-icons/nav-friends.svg?react"
 import GroupsIcon from "@/assets/ui-icons/nav-groups.svg?react"
 import MyEventsIcon from "@/assets/ui-icons/nav-my-events.svg?react"
-import ProfileIcon from "@/assets/ui-icons/nav-profile.svg?react"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { NavLink } from "@/components/NavLink"
 import { NAV_TARGETS, navPlacesFor, type NavPlace, type NavSection } from "@/lib/navigation"
@@ -16,14 +16,14 @@ const ICONS: Record<NavPlace, ComponentType<SVGProps<SVGSVGElement>>> = {
   discover: DiscoverIcon,
   "my-events": MyEventsIcon,
   groups: GroupsIcon,
-  profile: ProfileIcon,
+  friends: FriendsIcon,
 }
 
 const NAV_LABELS = {
   discover: "hobbyhub.nav.discover",
   "my-events": "hobbyhub.nav.myEvents",
   groups: "hobbyhub.nav.groups",
-  profile: "hobbyhub.nav.profile",
+  friends: "hobbyhub.nav.friends",
 } as const
 
 type BottomNavProps = {

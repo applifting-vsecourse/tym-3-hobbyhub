@@ -431,6 +431,21 @@
     "label": "Footer",
     "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
   },
+  "friends": {
+    "empty": {
+      "findPeople": "Find people",
+      "friends": "Nobody here yet. Once someone accepts your friend request, you will see them here.",
+      "requests": "Nothing here yet. Friend requests people send you will show up here.",
+      "search": "Nothing here yet. Soon you will be able to find people by nickname or by first and last name."
+    },
+    "tabs": {
+      "friends": "Friends",
+      "label": "Parts of the Friends section",
+      "requests": "Requests",
+      "search": "Find people"
+    },
+    "title": "Friends"
+  },
   "geo": {
     "address": {
       "error": "Couldn't load addresses. Please try again.",
@@ -926,10 +941,10 @@
     "nav": {
       "add": "Add",
       "discover": "Discover",
+      "friends": "Friends",
       "groups": "Groups",
       "label": "Main navigation",
       "myEvents": "My events",
-      "profile": "Profile",
       "skipToContent": "Skip to content",
       "withNewRequests": "{{label}}, new requests"
     },
@@ -1490,6 +1505,14 @@
     },
     "edit": {
       "title": "Edit profile"
+    },
+    "friendVisibility": {
+      "description": "Friends will see the events where your place is approved and the events you organize. Not pending applications, waitlist places or cancelled events.",
+      "history": "Friends see my event history",
+      "historyHint": "Past events on your profile.",
+      "title": "What friends see",
+      "upcoming": "Friends see my upcoming events",
+      "upcomingHint": "Upcoming events on your profile and your name in an event's detail."
     },
     "interests": {
       "description": "Sports and activities you enjoy, and how well you play them. We show them on your profile.",

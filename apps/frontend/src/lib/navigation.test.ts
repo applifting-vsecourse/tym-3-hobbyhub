@@ -9,12 +9,13 @@ describe("navSectionForPath", () => {
     ["/groups/new", "groups"],
     ["/groups/abc-123", "groups"],
     ["/my-events", "my-events"],
-    ["/profile", "profile"],
+    ["/friends", "friends"],
   ] as const)("%s highlights %s", (pathname, section) => {
     expect(navSectionForPath(pathname)).toBe(section)
   })
 
-  it.each(["/", "/terms", "/login", "/eventsy"])("%s highlights nothing", (pathname) => {
+  // Profil is in the avatar menu, not a section of the navigation (#227).
+  it.each(["/", "/terms", "/login", "/eventsy", "/profile", "/profile/edit"])("%s highlights nothing", (pathname) => {
     expect(navSectionForPath(pathname)).toBeNull()
   })
 })
