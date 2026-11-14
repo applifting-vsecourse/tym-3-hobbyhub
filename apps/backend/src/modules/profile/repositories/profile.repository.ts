@@ -10,6 +10,8 @@ export type ProfileRow = {
   profileCover: string | null;
   gender: Gender | null;
   birthYear: number | null;
+  friendsSeeEventHistory: boolean;
+  friendsSeeUpcomingEvents: boolean;
 };
 
 export type PublicProfileRow = {
@@ -36,6 +38,8 @@ export class ProfileRepository {
         profileCover: true,
         gender: true,
         birthYear: true,
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: true,
       },
     });
   }
@@ -72,6 +76,20 @@ export class ProfileRepository {
   async updatePrivate(
     userId: string,
     data: { gender: Gender; birthYear: number },
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { ...data, updatedAt: new Date() },
+    });
+  }
+
+  // #227: what friends may see of the user's events.
+  async updateFriendVisibility(
+    userId: string,
+    data: {
+      friendsSeeEventHistory: boolean;
+      friendsSeeUpcomingEvents: boolean;
+    },
   ): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },

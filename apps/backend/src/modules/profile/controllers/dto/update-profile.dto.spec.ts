@@ -1,6 +1,7 @@
 import { profileValidationPipe } from '@/modules/profile/controllers/profile-validation.pipe';
 import { BadRequestException } from '@nestjs/common';
 import {
+  UpdateFriendVisibilityDto,
   UpdatePrivateDetailsDto,
   UpdateProfileDto,
 } from './update-profile.dto';
@@ -60,6 +61,33 @@ describe('UpdatePrivateDetailsDto', () => {
   ])('refuses %j', async (body) => {
     await expect(
       validate(UpdatePrivateDetailsDto, body),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('UpdateFriendVisibilityDto', () => {
+  it('accepts both switches', async () => {
+    await expect(
+      validate(UpdateFriendVisibilityDto, {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      }),
+    ).resolves.toMatchObject({
+      friendsSeeEventHistory: false,
+      friendsSeeUpcomingEvents: true,
+    });
+  });
+
+  it.each([
+    [{}],
+    [{ friendsSeeEventHistory: true }],
+    [{ friendsSeeUpcomingEvents: false }],
+    [{ friendsSeeEventHistory: 'true', friendsSeeUpcomingEvents: false }],
+    [{ friendsSeeEventHistory: true, friendsSeeUpcomingEvents: 1 }],
+    [{ friendsSeeEventHistory: null, friendsSeeUpcomingEvents: false }],
+  ])('refuses %j', async (body) => {
+    await expect(
+      validate(UpdateFriendVisibilityDto, body),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

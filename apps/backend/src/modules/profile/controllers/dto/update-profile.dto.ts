@@ -10,6 +10,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -79,4 +80,20 @@ export class UpdatePrivateDetailsDto {
   @IsInt()
   @Min(OLDEST_BIRTH_YEAR)
   birthYear!: number;
+}
+
+// #227: what friends may see of the user's events. Both are sent every time.
+export class UpdateFriendVisibilityDto {
+  @ApiProperty({
+    description: 'Friends see the past events. Default true.',
+  })
+  @IsBoolean()
+  friendsSeeEventHistory!: boolean;
+
+  @ApiProperty({
+    description:
+      "Friends see the upcoming events and the user's name in an event's detail. Default false.",
+  })
+  @IsBoolean()
+  friendsSeeUpcomingEvents!: boolean;
 }

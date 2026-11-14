@@ -1,3 +1,4 @@
+import { FriendVisibility } from '@/modules/friendship/domain/friendship';
 import {
   HomeAddress,
   InterestInput,
@@ -42,6 +43,10 @@ export class ProfileService {
       interests: onboarding.interests,
       address: onboarding.address,
       travelRadiusKm: onboarding.travelRadiusKm,
+      friendVisibility: {
+        friendsSeeEventHistory: row.friendsSeeEventHistory,
+        friendsSeeUpcomingEvents: row.friendsSeeUpcomingEvents,
+      },
     };
   }
 
@@ -100,6 +105,18 @@ export class ProfileService {
     await this.profileRepository.updatePrivate(user.id, {
       gender: data.gender,
       birthYear: data.birthYear,
+    });
+    return this.getProfile(user);
+  }
+
+  // #227: both switches at once. They only take effect for friends (#226).
+  async updateFriendVisibility(
+    user: Identity,
+    visibility: FriendVisibility,
+  ): Promise<Profile> {
+    await this.profileRepository.updateFriendVisibility(user.id, {
+      friendsSeeEventHistory: visibility.friendsSeeEventHistory,
+      friendsSeeUpcomingEvents: visibility.friendsSeeUpcomingEvents,
     });
     return this.getProfile(user);
   }

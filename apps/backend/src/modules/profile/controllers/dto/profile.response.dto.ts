@@ -49,6 +49,18 @@ export class ProfileResponseDto {
   @ApiProperty({ type: HomeAddressResponseDto, nullable: true })
   address!: HomeAddressResponseDto | null;
 
+  @ApiProperty({
+    description:
+      'Private: whether friends see the past events (approved participations and organized events)',
+  })
+  friendsSeeEventHistory!: boolean;
+
+  @ApiProperty({
+    description:
+      "Private: whether friends see the upcoming events, and the user's name in an event's detail",
+  })
+  friendsSeeUpcomingEvents!: boolean;
+
   static fromDomain(profile: Profile): ProfileResponseDto {
     return {
       name: profile.name,
@@ -65,6 +77,9 @@ export class ProfileResponseDto {
           : null,
       })),
       address: profile.address ? { ...profile.address } : null,
+      friendsSeeEventHistory: profile.friendVisibility.friendsSeeEventHistory,
+      friendsSeeUpcomingEvents:
+        profile.friendVisibility.friendsSeeUpcomingEvents,
     };
   }
 }

@@ -20,6 +20,8 @@ const aRow = (overrides: Partial<ProfileRow> = {}): ProfileRow => ({
   profileCover: null,
   gender: 'FEMALE',
   birthYear: 1990,
+  friendsSeeEventHistory: true,
+  friendsSeeUpcomingEvents: false,
   ...overrides,
 });
 
@@ -120,6 +122,33 @@ describe('ProfileService', () => {
       expect(repository.updatePublic).toHaveBeenCalledWith('u1', {
         image: null,
       });
+    });
+  });
+
+  it('reports what friends may see of the events', async () => {
+    const { service } = setup(
+      aRow({ friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true }),
+    );
+    await expect(service.getProfile(user)).resolves.toMatchObject({
+      friendVisibility: {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      },
+    });
+  });
+
+  describe('updateFriendVisibility', () => {
+    it('saves both switches for the signed-in user and returns the profile', async () => {
+      const { service, repository } = setup();
+      await service.updateFriendVisibility(user, {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      });
+      expect(repository.updateFriendVisibility).toHaveBeenCalledWith('u1', {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      });
+      expect(repository.getRow).toHaveBeenCalledWith('u1');
     });
   });
 

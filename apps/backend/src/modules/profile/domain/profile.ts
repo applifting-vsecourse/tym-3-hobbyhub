@@ -1,3 +1,4 @@
+import { FriendVisibility } from '@/modules/friendship/domain/friendship';
 import { Interest } from '@/modules/onboarding/domain/onboarding';
 import {
   birthYearViolation,
@@ -45,6 +46,8 @@ export type Profile = {
   interests: Interest[];
   address: HomeLocation | null;
   travelRadiusKm: number | null;
+  // #227: what friends may see of the user's events. Only the owner sees it.
+  friendVisibility: FriendVisibility;
 };
 
 /**
