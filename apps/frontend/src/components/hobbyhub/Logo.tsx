@@ -10,7 +10,7 @@ const LOGOS = {
   symbol: { Svg: LogoSymbol, className: "h-16 w-auto" },
   wordmark: { Svg: LogoWordmark, className: "h-16 w-auto" },
   "app-icon": { Svg: LogoAppIcon, className: "size-24" },
-  /** The app-icon pawns without their tile, for a primary surface (the "Přidat" button). */
+  /** The app-icon pawns without their tile, for a primary surface (the "Přidat akci" button). */
   mark: { Svg: LogoMark, className: "size-24" },
 } as const
 

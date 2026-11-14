@@ -924,8 +924,8 @@
       "selected": "Selected event, {{count}} missing"
     },
     "nav": {
-      "add": "Add",
-      "discover": "Discover",
+      "add": "Add event",
+      "discover": "Events",
       "groups": "Groups",
       "label": "Main navigation",
       "myEvents": "My events",
