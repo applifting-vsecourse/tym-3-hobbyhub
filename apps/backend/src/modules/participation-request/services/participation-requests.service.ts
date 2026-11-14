@@ -40,6 +40,7 @@ const VIOLATION_MESSAGES: Record<Violation, string> = {
   EVENT_FINISHED: 'The event is over',
   EVENT_STARTED: 'The event has already started',
   EVENT_FULL: 'The event is full',
+  EVENT_HIDDEN: 'The event was hidden by an administrator',
   IS_ORGANIZER: 'The organizer cannot ask to join their own event',
   HAS_SEAT: 'You already have a seat at this event',
   ALREADY_REQUESTED: 'You have already asked to join this event',

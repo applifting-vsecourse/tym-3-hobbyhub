@@ -17,6 +17,9 @@ import {
   eventListFilterViolations,
   EventListItem,
   EventListPage,
+  EventModeration,
+  EventModerationViolation,
+  eventModerationViolations,
   EventRuleViolation,
   eventRuleViolations,
   EventSeatFacts,
@@ -25,6 +28,7 @@ import {
   GroupEventPage,
   GroupEventsPeriod,
   isOrganizerOf,
+  moderationConcernsPeople,
   Page,
   ParticipantEventInfo,
   UpdateEventData,
@@ -57,6 +61,7 @@ const VIOLATION_MESSAGES: Record<EventRuleViolation, string> = {
 };
 
 const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
+  EVENT_HIDDEN: 'An event hidden by an administrator cannot be edited',
   EVENT_NOT_CHANGEABLE: 'The event has started or can no longer be edited',
   EVENT_NOT_CANCELLABLE: 'Only an event that has not started can be cancelled',
   MAX_BELOW_OCCUPIED: 'maxParticipants must not be below the occupied seats',
@@ -64,6 +69,25 @@ const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
   LOCATION_REQUIRED: 'location is required for an event at a place',
   LOCATION_NOT_ALLOWED: 'an online event has no location',
 };
+
+const MODERATION_VIOLATION_MESSAGES: Record<EventModerationViolation, string> =
+  {
+    EVENT_IS_DRAFT: 'A draft is not public and cannot be hidden',
+    EVENT_ALREADY_HIDDEN: 'The event is already hidden',
+    EVENT_NOT_HIDDEN: 'The event is not hidden',
+  };
+
+const moderationViolationsError = (
+  violations: EventModerationViolation[],
+): BadRequestException =>
+  new BadRequestException({
+    statusCode: 400,
+    error: 'Bad Request',
+    message: violations.map(
+      (violation) => MODERATION_VIOLATION_MESSAGES[violation],
+    ),
+    violations,
+  });
 
 // Messages plus the codes, so the client can say why in its language.
 const changeViolationsError = (
@@ -308,9 +332,12 @@ export class EventsService {
 
   // The detail: what a visitor may see, nothing of the organizer's private
   // data. A group-only event (F-07.2) only for those `canSeeEvent` lets in;
-  // to anyone else it does not exist.
+  // to anyone else it does not exist. One an administrator hid exists only
+  // for its organizers, who also see why (ADR-0022).
   async getEventDetail(id: string, viewer?: Identity): Promise<EventDetail> {
-    const event = await this.eventRepository.getShowableEventById(id);
+    const event =
+      (await this.eventRepository.getShowableEventById(id)) ??
+      (viewer ? await this.getHiddenEventOfOrganizer(id, viewer) : null);
     if (!event) throw new NotFoundException('Event not found');
     if (event.visibility !== 'PUBLIC') {
       const facts = await this.eventRepository.getEventFacts(id);
@@ -319,6 +346,15 @@ export class EventsService {
       }
     }
     return event;
+  }
+
+  private async getHiddenEventOfOrganizer(
+    id: string,
+    viewer: Identity,
+  ): Promise<EventDetail | null> {
+    const facts = await this.eventRepository.getEventFacts(id);
+    if (!facts?.isHidden || !isOrganizerOf(facts, viewer.id)) return null;
+    return this.eventRepository.getHiddenEventDetail(id);
   }
 
   // F-06.1: null when there is no such event this person may see.
@@ -409,6 +445,57 @@ export class EventsService {
     const detail = await this.eventRepository.getAdministrationDetail(id);
     if (!detail) throw new NotFoundException('Event not found');
     return detail;
+  }
+
+  // #239, ADR-0022: an administrator hides an event (with a reason) or brings
+  // it back; the audit log records it with the change. Who expects the event
+  // hears about it, unless it is over or was called off.
+  async moderateEvent(
+    admin: { id: string },
+    id: string,
+    moderation:
+      | { kind: Extract<EventModeration, 'HIDE'>; reason: string }
+      | { kind: Extract<EventModeration, 'RESTORE'> },
+    now: Date = new Date(),
+  ): Promise<AdminEventDetail> {
+    const event = await this.getEvent(id);
+    const violations = eventModerationViolations(event, moderation.kind);
+    if (violations.length > 0) throw moderationViolationsError(violations);
+    const changed = await this.eventRepository.setHidden(
+      id,
+      moderation.kind === 'HIDE'
+        ? {
+            kind: 'HIDE',
+            adminId: admin.id,
+            reason: moderation.reason.trim(),
+            at: now,
+          }
+        : { kind: 'RESTORE', adminId: admin.id },
+    );
+    // Another administrator got there first.
+    if (!changed) {
+      throw moderationViolationsError(
+        moderation.kind === 'HIDE'
+          ? ['EVENT_ALREADY_HIDDEN']
+          : ['EVENT_NOT_HIDDEN'],
+      );
+    }
+    if (moderationConcernsPeople(changed, now)) {
+      const audience = await this.eventRepository.getHiddenEventAudience(id);
+      if (moderation.kind === 'HIDE') {
+        await this.notificationsService.notifyEventHidden({
+          event: changed,
+          ...audience,
+          reason: changed.hiddenReason ?? moderation.reason,
+        });
+      } else {
+        await this.notificationsService.notifyEventRestored({
+          event: changed,
+          ...audience,
+        });
+      }
+    }
+    return this.getEventForAdministration(id);
   }
 
   // #238: the events of a person, for the user detail in the administration.

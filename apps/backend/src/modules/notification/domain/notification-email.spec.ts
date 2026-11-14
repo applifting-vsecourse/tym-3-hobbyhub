@@ -186,6 +186,55 @@ describe('notificationEmailOf', () => {
     });
   });
 
+  describe('an event an administrator hid (#239)', () => {
+    it('tells an organizer, without the reason, and leads to the event', () => {
+      const email = notificationEmailOf(
+        aNotification({
+          type: 'EVENT_HIDDEN',
+          actor: null,
+          payload: { reason: 'Nabízí placené služby.' },
+        }),
+      );
+
+      expect(email).toEqual(
+        expect.objectContaining({
+          subject: 'Tvoji akci skryl správce',
+          path: '/events/e1',
+          critical: true,
+        }),
+      );
+      expect(JSON.stringify(email)).not.toContain('Nabízí placené služby.');
+    });
+
+    it('tells a participant it is gone and leads to their own events', () => {
+      const email = notificationEmailOf(
+        aNotification({ type: 'EVENT_HIDDEN', actor: null }),
+      );
+
+      expect(email).toEqual(
+        expect.objectContaining({
+          subject: 'Akce, kterou máš v přehledu, byla odstraněna',
+          path: '/my-events',
+        }),
+      );
+      expect(JSON.stringify(email)).not.toContain(EVENT_TITLE);
+    });
+
+    it('tells everyone when it is back', () => {
+      expect(
+        notificationEmailOf(
+          aNotification({ type: 'EVENT_RESTORED', actor: null }),
+        ),
+      ).toEqual(
+        expect.objectContaining({
+          subject: 'Akce, kterou máš v přehledu, je zpět',
+          path: '/events/e1',
+          critical: false,
+        }),
+      );
+    });
+  });
+
   it('has no e-mail for a type nothing creates yet', () => {
     expect(
       notificationEmailOf(aNotification({ type: 'SPOT_AVAILABLE' })),

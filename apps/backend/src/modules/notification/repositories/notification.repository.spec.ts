@@ -92,7 +92,15 @@ describe('NotificationRepository', () => {
   it('turns a kind into its types', async () => {
     await expect(whereOf({ kind: 'events' })).resolves.toEqual({
       recipientId: 'u1',
-      type: { in: ['EVENT_CHANGED', 'EVENT_CANCELLED', 'EVENT_BOARD'] },
+      type: {
+        in: [
+          'EVENT_CHANGED',
+          'EVENT_CANCELLED',
+          'EVENT_HIDDEN',
+          'EVENT_RESTORED',
+          'EVENT_BOARD',
+        ],
+      },
     });
   });
 

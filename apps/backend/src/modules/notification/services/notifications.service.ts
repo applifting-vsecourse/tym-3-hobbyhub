@@ -6,6 +6,7 @@ import {
   NotificationFilter,
   NotificationKind,
   NotificationPage,
+  NotificationPayload,
   Page,
   recipientsExcept,
 } from '@/modules/notification/domain/notification';
@@ -168,6 +169,67 @@ export class NotificationsService {
         input.cancelledBy.id,
       ),
       actorId: input.cancelledBy.id,
+      eventId: input.event.id,
+    });
+  }
+
+  // #239, ADR-0022: an administrator hid the event, or brought it back. The
+  // organizers hear why it was hidden; the participants, the people waiting
+  // for a decision and the waitlist only that it is gone or back. Nobody is
+  // the actor: an administrator is not a user.
+  async notifyEventHidden(input: {
+    event: AnEvent;
+    organizerIds: readonly string[];
+    participantIds: readonly string[];
+    applicantIds: readonly string[];
+    waitlistedIds: readonly string[];
+    reason: string;
+  }): Promise<void> {
+    await this.notifyModeration('EVENT_HIDDEN', input, {
+      reason: input.reason,
+    });
+  }
+
+  async notifyEventRestored(input: {
+    event: AnEvent;
+    organizerIds: readonly string[];
+    participantIds: readonly string[];
+    applicantIds: readonly string[];
+    waitlistedIds: readonly string[];
+  }): Promise<void> {
+    await this.notifyModeration('EVENT_RESTORED', input, {});
+  }
+
+  private async notifyModeration(
+    type: 'EVENT_HIDDEN' | 'EVENT_RESTORED',
+    input: {
+      event: AnEvent;
+      organizerIds: readonly string[];
+      participantIds: readonly string[];
+      applicantIds: readonly string[];
+      waitlistedIds: readonly string[];
+    },
+    organizerPayload: NotificationPayload,
+  ): Promise<void> {
+    const organizerIds = recipientsExcept(input.organizerIds, null);
+    await this.record({
+      type,
+      recipientIds: organizerIds,
+      actorId: null,
+      eventId: input.event.id,
+      payload: organizerPayload,
+    });
+    await this.record({
+      type,
+      recipientIds: recipientsExcept(
+        [
+          ...input.participantIds,
+          ...input.applicantIds,
+          ...input.waitlistedIds,
+        ],
+        null,
+      ).filter((id) => !organizerIds.includes(id)),
+      actorId: null,
       eventId: input.event.id,
     });
   }

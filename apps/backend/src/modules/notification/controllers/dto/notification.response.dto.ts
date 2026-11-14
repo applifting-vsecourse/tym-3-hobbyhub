@@ -89,6 +89,14 @@ export class NotificationResponseDto {
   })
   changes!: EventChange[];
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'EVENT_HIDDEN: why an administrator hid the event; only the organizers’ copy carries it (#239)',
+  })
+  reason!: string | null;
+
   static fromDomain(notification: Notification): NotificationResponseDto {
     return {
       id: notification.id,
@@ -101,6 +109,7 @@ export class NotificationResponseDto {
       decision: notification.payload.decision ?? null,
       message: notification.payload.message ?? null,
       changes: notification.payload.changes ?? [],
+      reason: notification.payload.reason ?? null,
     };
   }
 }

@@ -20,6 +20,8 @@ export const NOTIFICATION_TYPES = [
   'MONTHLY_RECOMMENDATION',
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
+  'EVENT_HIDDEN',
+  'EVENT_RESTORED',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -41,7 +43,13 @@ export const NOTIFICATION_TYPES_BY_KIND = {
     'CONFIRMATION_PROMPT',
     'SPOT_AVAILABLE',
   ],
-  events: ['EVENT_CHANGED', 'EVENT_CANCELLED', 'EVENT_BOARD'],
+  events: [
+    'EVENT_CHANGED',
+    'EVENT_CANCELLED',
+    'EVENT_HIDDEN',
+    'EVENT_RESTORED',
+    'EVENT_BOARD',
+  ],
   groups: ['GROUP_INVITATION'],
   other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION'],
 } as const satisfies Record<NotificationKind, readonly NotificationType[]>;
@@ -74,6 +82,9 @@ export type NotificationPayload = {
   message?: string;
   // EVENT_CHANGED
   changes?: EventChange[];
+  // EVENT_HIDDEN, to the organizers only: why the administrator hid it
+  // (ADR-0022). Everyone else learns only that it is gone.
+  reason?: string;
 };
 
 export type NotificationPerson = { id: string; name: string };
