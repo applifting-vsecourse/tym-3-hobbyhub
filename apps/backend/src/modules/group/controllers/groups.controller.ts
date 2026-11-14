@@ -103,7 +103,11 @@ export class GroupsController {
     @Query() query: DiscoverGroupsQueryDto,
   ): Promise<GroupPageResponseDto> {
     return GroupPageResponseDto.fromDomain(
-      await this.groupsService.discoverGroups(user, query.cursor),
+      await this.groupsService.discoverGroups(user, query.cursor, {
+        activityIds: query.activityIds,
+        search: query.search,
+        location: query.location,
+      }),
     );
   }
 

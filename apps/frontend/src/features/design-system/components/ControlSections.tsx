@@ -283,21 +283,21 @@ export function ControlSections() {
             onValueChange={setView}
           />
         </Example>
-        <Example label="Taby stránky v adrese (odkazy, např. /groups?tab=discover)">
+        <Example label="Taby stránky v adrese (odkazy, např. /groups?tab=mine)">
           <PageTabs label="Ukázka tabů stránky">
             <PageTab
               to="/groups"
               search={{}}
               isActive
             >
-              Moje skupiny
+              Objevit
             </PageTab>
             <PageTab
               to="/groups"
-              search={{ tab: "discover" }}
+              search={{ tab: "mine" }}
               isActive={false}
             >
-              Objevit
+              Moje skupiny
             </PageTab>
           </PageTabs>
         </Example>

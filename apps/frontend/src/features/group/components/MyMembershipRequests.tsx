@@ -81,7 +81,7 @@ export function MyMembershipRequests({ userId }: { userId: string }) {
               discover: (
                 <Link
                   to="/groups"
-                  search={{ tab: "discover" }}
+                  search={{}}
                   className={linkClassName}
                 />
               ),

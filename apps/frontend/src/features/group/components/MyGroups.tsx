@@ -49,7 +49,7 @@ export function MyGroups({ activityLabel }: { activityLabel: ActivityLabel }) {
                 discover: (
                   <Link
                     to="/groups"
-                    search={{ tab: "discover" }}
+                    search={{}}
                     className={linkClassName}
                   />
                 ),

@@ -2,8 +2,9 @@ import { Prisma } from '@/generated/prisma/client';
 import {
   EVENT_LIST_TIME_ZONE,
   EventFilter,
-  foldForSearch,
 } from '@/modules/event/domain/event';
+import { searchWords } from '@/shared/search/fold-for-search';
+import { containsInAny } from '@/shared/search/folded-search';
 
 // The filter of an event listing (`EventFilter`) as SQL, written once for every
 // list that offers it: the public list and a person's own overview (F-06.3,
@@ -17,22 +18,6 @@ import {
 // typo like "Brnoo". Similarity search (e.g. pg_trgm `similarity`, ranked by
 // closeness) belongs here, and so does a radius filter once every event has
 // coordinates (geocoding on save, F-12.3).
-// The database folds like `foldForSearch` does, but only for the diacritics of
-// Czech and Slovak (no `unaccent` extension needed); other accents, such as
-// "è", are not matched.
-const FOLD_FROM = 'áäčďéěíĺľňóôöŕřšťúůüýž';
-const FOLD_TO = 'aacdeeillnooorrstuuuyz';
-
-// True when `needle` is part of any of the columns, ignoring case and diacritics.
-const containsInAny = (columns: Prisma.Sql[], needle: string): Prisma.Sql =>
-  Prisma.join(
-    columns.map(
-      (column) =>
-        Prisma.sql`strpos(translate(lower(coalesce(${column}, '')), ${FOLD_FROM}, ${FOLD_TO}), ${needle}) > 0`,
-    ),
-    ' OR ',
-  );
-
 // A private venue is someone's home: its name is never matched, like it is
 // never shown.
 const PLACE_COLUMNS = [
@@ -40,11 +25,6 @@ const PLACE_COLUMNS = [
   Prisma.sql`e."locationCity"`,
   Prisma.sql`e."locationDistrict"`,
 ];
-
-const words = (text?: string): string[] =>
-  foldForSearch(text ?? '')
-    .split(/\s+/)
-    .filter(Boolean);
 
 // Every word of a text has to match somewhere, so "volejbal praha" finds the
 // activity in one column and the city in another. Nothing set is no condition.
@@ -70,14 +50,14 @@ export const eventFilterConditions = ({
         Prisma.sql`e."startAt" < ((${dateTo}::date + 1)::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
       ]
     : []),
-  ...words(search).map(
+  ...searchWords(search).map(
     (word) =>
       Prisma.sql`(${containsInAny(
         [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
         word,
       )})`,
   ),
-  ...words(location).map(
+  ...searchWords(location).map(
     (word) => Prisma.sql`(${containsInAny(PLACE_COLUMNS, word)})`,
   ),
 ];

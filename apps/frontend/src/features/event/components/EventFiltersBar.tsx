@@ -9,6 +9,7 @@ import {
   EMPTY_FILTERS,
   FiltersSheet,
   type FilterActivitiesState,
+  type FiltersSheetField,
 } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 
@@ -41,6 +42,10 @@ type EventFiltersBarProps = {
   activityOptions: ActivityComboboxOption[]
   /** Loading and error of the activities, so the panel can say why there is no picker. */
   activitiesState: FilterActivitiesState
+  /** The filters the panel offers; all of them by default. */
+  fields?: FiltersSheetField[]
+  /** Hint of the search field; the event list's by default. */
+  searchPlaceholder?: string
   /** How the page sorts its results, said in the panel; the event list's by default. */
   sortNote?: string
   /** Chips the page adds in front of the chosen filters, e.g. "Nejblíž mně". */
@@ -62,6 +67,8 @@ export function EventFiltersBar({
   onFiltersChange,
   activityOptions,
   activitiesState,
+  fields = ["activity", "when", "location"],
+  searchPlaceholder,
   sortNote,
   leadingChips,
   children,
@@ -82,7 +89,7 @@ export function EventFiltersBar({
     <div className="flex flex-col gap-3">
       <SearchField
         label={t("hobbyhub.search.label")}
-        placeholder={t("events.list.searchPlaceholder")}
+        placeholder={searchPlaceholder ?? t("events.list.searchPlaceholder")}
         maxLength={EVENT_SEARCH_MAX_LENGTH}
         value={searchText}
         onChange={(event) => onSearchTextChange(event.target.value)}
@@ -106,7 +113,7 @@ export function EventFiltersBar({
             dateTo: applied.dateTo,
           })
         }
-        fields={["activity", "when", "location"]}
+        fields={fields}
         sortNote={sortNote}
         activitiesState={activitiesState}
         activityOptions={activityOptions}

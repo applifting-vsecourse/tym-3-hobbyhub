@@ -419,9 +419,7 @@ export type EventListFilter = EventFilter & { near?: GeoPoint };
 
 export const NO_EVENT_FILTER: EventFilter = { activityIds: [] };
 
-// The form a text is compared in: lower case, no diacritics, no outer spaces.
-export const foldForSearch = (text: string): string =>
-  text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+export { foldForSearch } from '@/shared/search/fold-for-search';
 
 // What a row in the event list needs. The address is deliberately only
 // approximate: the street never leaves the server here, and the name and the

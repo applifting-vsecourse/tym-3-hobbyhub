@@ -181,6 +181,69 @@ describeDb('group lists', () => {
     );
   });
 
+  it('narrows the discover list by text, place and activity', async () => {
+    await inRolledBackTransaction(async ({ repository, createGroup }) => {
+      const brno = await createGroup({
+        name: 'Volejbal pro všechny',
+        locationName: 'Brno-střed',
+      });
+      const praha = await createGroup({
+        name: 'Florbal',
+        locationName: 'Praha 8',
+      });
+      const page = (
+        filter: Parameters<typeof repository.listDiscoverableGroups>[3],
+      ): Promise<string[]> =>
+        repository
+          .listDiscoverableGroups(undefined, 50, undefined, filter)
+          .then(({ items }) => items.map((group) => group.id));
+
+      const byName = await page({ activityIds: [], search: 'VOLEJ' });
+      expect(byName).toContain(brno);
+      expect(byName).not.toContain(praha);
+
+      const byPlace = await page({ activityIds: [], location: 'praha' });
+      expect(byPlace).toContain(praha);
+      expect(byPlace).not.toContain(brno);
+
+      const both = await page({
+        activityIds: [],
+        search: 'florbal',
+        location: 'brno',
+      });
+      expect(both).not.toContain(brno);
+      expect(both).not.toContain(praha);
+
+      // Diacritics and case do not matter, like in the event list.
+      const folded = await page({ activityIds: [], location: 'BRNO-STRED' });
+      expect(folded).toContain(brno);
+
+      expect(await page({ activityIds: ['no-such-activity'] })).toEqual([]);
+
+      // A searched list pages like the plain one: no gaps, no repeats.
+      const second = await createGroup({
+        name: 'Volejbal pod sítí',
+        locationName: 'Brno',
+      });
+      const found: string[] = [];
+      let cursor: string | undefined;
+      do {
+        const next = await repository.listDiscoverableGroups(
+          undefined,
+          1,
+          cursor,
+          { activityIds: [], search: 'volejbal' },
+        );
+        found.push(...next.items.map((group) => group.id));
+        cursor = next.nextCursor ?? undefined;
+      } while (cursor);
+      expect(found.filter((id) => [brno, second].includes(id)).sort()).toEqual(
+        [brno, second].sort(),
+      );
+      expect(new Set(found).size).toBe(found.length);
+    });
+  });
+
   it('pages newest first without gaps or repeats, even on equal dates', async () => {
     await inRolledBackTransaction(async ({ repository, createGroup }) => {
       // Three share a date, so only the id keeps their order stable.

@@ -106,6 +106,20 @@ export type MyGroup = Group & { myRole: GroupRole };
 export const NEARBY_GROUPS_LIMIT = 6;
 export const DISCOVER_PAGE_SIZE = 20;
 
+export const GROUP_LIST_SEARCH_MAX_LENGTH = 100;
+export const GROUP_LIST_LOCATION_MAX_LENGTH = 100;
+export const GROUP_LIST_MAX_ACTIVITY_FILTERS = 50;
+
+// What narrows the discover list, like the event list's filter. Nothing set is
+// no condition.
+export type GroupDiscoverFilter = {
+  activityIds: string[];
+  /** Part of the name, place or activity. */
+  search?: string;
+  /** Part of the place. */
+  location?: string;
+};
+
 export type NearbyGroups = {
   // The place the search used; null when the user has not set one.
   city: string | null;

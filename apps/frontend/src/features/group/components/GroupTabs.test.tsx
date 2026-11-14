@@ -11,13 +11,20 @@ describe("GroupTabs", () => {
 
     const mine = screen.getByRole("link", { name: "Moje skupiny" })
     const discover = screen.getByRole("link", { name: "Objevit" })
-    expect(mine).toHaveAttribute("href", "/groups")
+    expect(mine).toHaveAttribute("href", "/groups?tab=mine")
     expect(mine).not.toHaveAttribute("aria-current")
-    expect(discover).toHaveAttribute("href", "/groups?tab=discover")
+    expect(discover).toHaveAttribute("href", "/groups")
     expect(discover).toHaveAttribute("aria-current", "page")
     expect(screen.getByRole("link", { name: "Žádosti" })).toHaveAttribute(
       "href",
       "/groups?tab=requests",
     )
+  })
+
+  it("lists Objevit first", async () => {
+    await renderWithRouter(<GroupTabs active="mine" />)
+
+    const names = screen.getAllByRole("link").map((link) => link.textContent)
+    expect(names).toEqual(["Objevit", "Moje skupiny", "Žádosti"])
   })
 })
