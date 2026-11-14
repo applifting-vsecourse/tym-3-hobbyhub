@@ -220,3 +220,22 @@ export type EventModerationViolation = z.infer<typeof eventModerationViolationSc
 export const eventModerationRefusalSchema = z.object({
   violations: z.array(eventModerationViolationSchema),
 })
+
+// #239: who a person is blocked from, by an administrator (ADR-0022).
+export const USER_BLOCK_REASON_MIN_LENGTH = 10
+export const USER_BLOCK_REASON_MAX_LENGTH = 500
+
+export const adminUserBlockSchema = z.object({
+  otherUser: refSchema,
+  reason: z.string(),
+  createdAt: z.coerce.date(),
+  createdBy: refSchema.nullable(),
+})
+export type AdminUserBlock = z.infer<typeof adminUserBlockSchema>
+export const adminUserBlocksSchema = z.array(adminUserBlockSchema)
+
+export const userBlockViolationSchema = z.enum(["SAME_USER", "ALREADY_BLOCKED", "NOT_BLOCKED"])
+export type UserBlockViolation = z.infer<typeof userBlockViolationSchema>
+export const userBlockRefusalSchema = z.object({
+  violations: z.array(userBlockViolationSchema),
+})
