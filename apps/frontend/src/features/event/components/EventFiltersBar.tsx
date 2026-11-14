@@ -9,6 +9,7 @@ import {
   EMPTY_FILTERS,
   FiltersSheet,
   type FilterActivitiesState,
+  type FiltersSheetField,
 } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 
@@ -28,6 +29,19 @@ const dateRangeLabel = (t: TFunction, language: string, from: string, to: string
   return ""
 }
 
+/** "100–200 Kč", "od 100 Kč" or "do 200 Kč"; nothing without either end. */
+const rangeLabel = (
+  t: TFunction,
+  kind: "price" | "duration" | "capacity",
+  from: string,
+  to: string,
+) => {
+  if (from && to) return t(`events.list.filters.${kind}.range`, { from, to })
+  if (from) return t(`events.list.filters.${kind}.from`, { value: from })
+  if (to) return t(`events.list.filters.${kind}.to`, { value: to })
+  return ""
+}
+
 type EventFiltersBarProps = {
   /** The filters in the address. */
   filters: EventFilterValues
@@ -37,6 +51,8 @@ type EventFiltersBarProps = {
   searchText: string
   onSearchTextChange: (text: string) => void
   onFiltersChange: (next: EventFilterChange) => void
+  /** Which filters the panel offers; the public list adds the ranges of #214. */
+  fields?: FiltersSheetField[]
   /** The activities to pick from, translated; the activity feature owns them. */
   activityOptions: ActivityComboboxOption[]
   /** Loading and error of the activities, so the panel can say why there is no picker. */
@@ -63,6 +79,7 @@ export function EventFiltersBar({
   activityOptions,
   activitiesState,
   sortNote,
+  fields = ["activity", "when", "location"],
   leadingChips,
   children,
 }: EventFiltersBarProps) {
@@ -76,7 +93,30 @@ export function EventFiltersBar({
     label: activityOptions.find((option) => option.id === id)?.label,
   }))
   const dateLabel = dateRangeLabel(t, i18n.language, filters.dateFrom, filters.dateTo)
-  const hasChips = selectedActivities.length > 0 || filters.location !== "" || dateLabel !== ""
+  // The number ranges as chips; one that is not set has no label and no chip.
+  const rangeChips: { key: string; label: string; clear: EventFilterChange }[] = [
+    {
+      key: "price",
+      label: rangeLabel(t, "price", filters.priceFrom, filters.priceTo),
+      clear: { priceFrom: "", priceTo: "" },
+    },
+    {
+      key: "duration",
+      label: rangeLabel(t, "duration", filters.hoursFrom, filters.hoursTo),
+      clear: { hoursFrom: "", hoursTo: "" },
+    },
+    {
+      key: "capacity",
+      label: rangeLabel(t, "capacity", filters.capacityFrom, filters.capacityTo),
+      clear: { capacityFrom: "", capacityTo: "" },
+    },
+  ]
+  const hasChips =
+    selectedActivities.length > 0 ||
+    filters.location !== "" ||
+    dateLabel !== "" ||
+    filters.freeSpotsOnly ||
+    rangeChips.some(({ label }) => label !== "")
 
   return (
     <div className="flex flex-col gap-3">
@@ -97,6 +137,13 @@ export function EventFiltersBar({
           location: filters.location,
           dateFrom: filters.dateFrom,
           dateTo: filters.dateTo,
+          freeSpotsOnly: filters.freeSpotsOnly,
+          priceFrom: filters.priceFrom,
+          priceTo: filters.priceTo,
+          hoursFrom: filters.hoursFrom,
+          hoursTo: filters.hoursTo,
+          capacityFrom: filters.capacityFrom,
+          capacityTo: filters.capacityTo,
         }}
         onApply={(applied) =>
           onFiltersChange({
@@ -104,9 +151,22 @@ export function EventFiltersBar({
             location: applied.location,
             dateFrom: applied.dateFrom,
             dateTo: applied.dateTo,
+            ...(fields.includes("freeSpots") && { freeSpotsOnly: applied.freeSpotsOnly }),
+            ...(fields.includes("price") && {
+              priceFrom: applied.priceFrom,
+              priceTo: applied.priceTo,
+            }),
+            ...(fields.includes("duration") && {
+              hoursFrom: applied.hoursFrom,
+              hoursTo: applied.hoursTo,
+            }),
+            ...(fields.includes("capacity") && {
+              capacityFrom: applied.capacityFrom,
+              capacityTo: applied.capacityTo,
+            }),
           })
         }
-        fields={["activity", "when", "location"]}
+        fields={fields}
         sortNote={sortNote}
         activitiesState={activitiesState}
         activityOptions={activityOptions}
@@ -169,6 +229,33 @@ export function EventFiltersBar({
                   />
                 </FilterChip>
               ) : null}
+              {filters.freeSpotsOnly ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ freeSpotsOnly: false })}
+                >
+                  {t("events.list.filters.freeSpots")}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {rangeChips.map(({ key, label, clear }) =>
+                label ? (
+                  <FilterChip
+                    key={key}
+                    pressed
+                    onPressedChange={() => onFiltersChange(clear)}
+                  >
+                    {label}
+                    <X
+                      aria-hidden
+                      className="size-4 text-muted-foreground"
+                    />
+                  </FilterChip>
+                ) : null,
+              )}
             </div>
           ) : null}
         </div>

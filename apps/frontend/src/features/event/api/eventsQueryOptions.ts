@@ -20,6 +20,13 @@ export const filterSearchParams = (filters: EventListFilters, limit: number, off
   if (filters.location) searchParams.set("location", filters.location)
   if (filters.dateFrom) searchParams.set("dateFrom", filters.dateFrom)
   if (filters.dateTo) searchParams.set("dateTo", filters.dateTo)
+  if (filters.freeSpotsOnly) searchParams.set("onlyWithFreeSpots", "true")
+  if (filters.priceFrom) searchParams.set("priceFrom", filters.priceFrom)
+  if (filters.priceTo) searchParams.set("priceTo", filters.priceTo)
+  if (filters.hoursFrom) searchParams.set("durationHoursFrom", filters.hoursFrom)
+  if (filters.hoursTo) searchParams.set("durationHoursTo", filters.hoursTo)
+  if (filters.capacityFrom) searchParams.set("capacityFrom", filters.capacityFrom)
+  if (filters.capacityTo) searchParams.set("capacityTo", filters.capacityTo)
   if (filters.near) {
     searchParams.set("lat", String(filters.near.latitude))
     searchParams.set("lng", String(filters.near.longitude))

@@ -14,6 +14,17 @@ export type EventListFilters = {
   dateFrom?: string
   /** Last day (YYYY-MM-DD) an event starts on; empty means no upper bound. */
   dateTo?: string
+  /** Only events that still have a free seat (#214). */
+  freeSpotsOnly?: boolean
+  /** Contribution per seat in CZK, inclusive; empty means no bound (#214). */
+  priceFrom?: string
+  priceTo?: string
+  /** Hours from start to end, inclusive; empty means no bound. */
+  hoursFrom?: string
+  hoursTo?: string
+  /** How many people the event holds, inclusive; empty means no bound. */
+  capacityFrom?: string
+  capacityTo?: string
   /** Sort nearest first from here; otherwise soonest first. */
   near?: NearPoint
 }

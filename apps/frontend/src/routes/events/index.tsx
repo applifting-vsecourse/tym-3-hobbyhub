@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 
 import { AppShell } from "@/app/AppShell"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
+import type { FiltersSheetField } from "@/components/hobbyhub/FiltersSheet"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
@@ -22,7 +23,7 @@ import { useNearMe } from "@/features/event/hooks/useNearMe"
 import { useSearchText } from "@/features/event/hooks/useSearchText"
 import { eventsInBounds, type MapBounds } from "@/features/event/lib/clusterEvents"
 import {
-  eventsSearchSchema,
+  eventsListSearchSchema,
   filtersFromSearch,
   hasFilters,
   nonEmpty,
@@ -37,9 +38,20 @@ const EventsMap = lazy(() =>
   import("@/features/event/components/EventsMap").then((module) => ({ default: module.EventsMap })),
 )
 
+// The public list offers the ranges of #214 on top of what "Moje akce" has.
+const EVENT_LIST_FILTER_FIELDS: FiltersSheetField[] = [
+  "activity",
+  "when",
+  "location",
+  "freeSpots",
+  "price",
+  "duration",
+  "capacity",
+]
+
 export const Route = createFileRoute("/events/")({
   component: EventsPage,
-  validateSearch: eventsSearchSchema,
+  validateSearch: eventsListSearchSchema,
 })
 
 // TODO(F-02.1b #91): `location` and `q` are plain text matches. Similar
@@ -136,6 +148,7 @@ function EventsPage() {
               onSearchTextChange={setSearchText}
               activityOptions={activityOptions.options}
               activitiesState={activityOptions.state}
+              fields={EVENT_LIST_FILTER_FIELDS}
               onFiltersChange={(next) =>
                 void navigate({ search: (previous) => searchWithFilters(previous, next) })
               }

@@ -152,6 +152,29 @@ describe('eventListFilterViolations', () => {
       }),
     ).toEqual(['DATE_FROM_AFTER_DATE_TO']);
   });
+
+  it('refuses reversed price, duration and capacity ranges', () => {
+    expect(
+      eventListFilterViolations({
+        priceFrom: 200,
+        priceTo: 100,
+        durationHoursFrom: 3,
+        durationHoursTo: 1,
+        capacityFrom: 10,
+        capacityTo: 5,
+      }),
+    ).toEqual([
+      'PRICE_FROM_AFTER_PRICE_TO',
+      'DURATION_FROM_AFTER_DURATION_TO',
+      'CAPACITY_FROM_AFTER_CAPACITY_TO',
+    ]);
+  });
+
+  it('accepts equal and half-open number ranges', () => {
+    expect(
+      eventListFilterViolations({ priceFrom: 0, priceTo: 0, capacityFrom: 4 }),
+    ).toEqual([]);
+  });
 });
 
 describe('eventChangeViolations', () => {

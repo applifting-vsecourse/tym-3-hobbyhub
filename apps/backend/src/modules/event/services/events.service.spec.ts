@@ -230,6 +230,22 @@ describe('EventsService', () => {
     expect(repository.getUpcomingPublicEvents).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { priceFrom: 300, priceTo: 100 },
+    { durationHoursFrom: 3, durationHoursTo: 1 },
+    { capacityFrom: 12, capacityTo: 4 },
+  ])('refuses a number range that ends before it starts: %j', async (range) => {
+    const { repository, service } = setup();
+
+    await expect(
+      service.getUpcomingPublicEvents(
+        { limit: 20, offset: 0 },
+        { activityIds: [], ...range },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.getUpcomingPublicEvents).not.toHaveBeenCalled();
+  });
+
   it('reports a missing event as not found', async () => {
     const { repository, service } = setup();
     repository.getEventById.mockResolvedValue(null);

@@ -330,10 +330,26 @@
         "title": "Nothing found"
       },
       "filters": {
+        "capacity": {
+          "from": "Capacity from {{value}}",
+          "range": "Capacity {{from}}–{{to}}",
+          "to": "Capacity up to {{value}}"
+        },
         "dateFrom": "from {{date}}",
         "dateRange": "{{from}} – {{to}}",
         "dateTo": "to {{date}}",
+        "duration": {
+          "from": "from {{value}} h",
+          "range": "{{from}}–{{to}} h",
+          "to": "up to {{value}} h"
+        },
+        "freeSpots": "Free spots",
         "open": "Filters",
+        "price": {
+          "from": "from {{value}} CZK",
+          "range": "{{from}}–{{to}} CZK",
+          "to": "up to {{value}} CZK"
+        },
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
@@ -887,13 +903,41 @@
       "activitiesRetry": "Try again",
       "activity": "Activity",
       "activityPlaceholder": "All activities",
+      "capacity": "How many people fit (spots)",
       "chosenActivities": "Chosen activities",
       "clear": "Clear",
       "dateFrom": "From date",
       "dateRangeReversed": "The end of the range cannot be before the start.",
       "dateTo": "To date",
+      "duration": "How long it lasts (hours)",
+      "freeSpots": "Only with free spots",
       "location": "Location",
       "locationPlaceholder": "Prague 8",
+      "preset": {
+        "capacity": {
+          "from13": "13 and more",
+          "from7To12": "7–12 people",
+          "upTo6": "Up to 6 people"
+        },
+        "custom": "Custom",
+        "duration": {
+          "from1To2": "1–2 h",
+          "from2To4": "2–4 h",
+          "from4": "4 h and more",
+          "upTo1": "Up to 1 h"
+        },
+        "price": {
+          "free": "Free",
+          "from300": "300 CZK and more",
+          "upTo100": "Up to 100 CZK",
+          "upTo300": "Up to 300 CZK"
+        }
+      },
+      "price": "Price per spot (CZK)",
+      "rangeFrom": "From",
+      "rangeInvalid": "Enter a number within the allowed range (capacity a whole number up to 500, length up to 744 h).",
+      "rangeReversed": "\"From\" must not be greater than \"To\".",
+      "rangeTo": "To",
       "results_one": "Show {{count}} event",
       "results_other": "Show {{count}} events",
       "showResults": "Show results",
