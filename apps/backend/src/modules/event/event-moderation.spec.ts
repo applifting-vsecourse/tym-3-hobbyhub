@@ -133,7 +133,10 @@ describeDb('event moderation in the database (#239)', () => {
 
   describe('setHidden', () => {
     it('hides the event with who, when and why, and records it', async () => {
-      const [adminId, eventId] = [await anAdministrator(), await anEvent(await aUser())];
+      const [adminId, eventId] = [
+        await anAdministrator(),
+        await anEvent(await aUser()),
+      ];
 
       const event = await repository.setHidden(eventId, {
         kind: 'HIDE',
@@ -211,7 +214,10 @@ describeDb('event moderation in the database (#239)', () => {
           orderBy: { createdAt: 'asc' },
           select: { action: true },
         }),
-      ).resolves.toEqual([{ action: 'EVENT_HIDDEN' }, { action: 'EVENT_RESTORED' }]);
+      ).resolves.toEqual([
+        { action: 'EVENT_HIDDEN' },
+        { action: 'EVENT_RESTORED' },
+      ]);
     });
   });
 
@@ -226,24 +232,27 @@ describeDb('event moderation in the database (#239)', () => {
     });
 
     await expect(repository.getShowableEventById(eventId)).resolves.toBeNull();
-    await expect(repository.getHiddenEventDetail(eventId)).resolves.toMatchObject(
-      { id: eventId, hiddenReason: REASON },
-    );
+    await expect(
+      repository.getHiddenEventDetail(eventId),
+    ).resolves.toMatchObject({ id: eventId, hiddenReason: REASON });
   });
 
   it('gives a visible event no hidden detail and no reason', async () => {
     const eventId = await anEvent(await aUser());
 
     await expect(repository.getHiddenEventDetail(eventId)).resolves.toBeNull();
-    await expect(repository.getShowableEventById(eventId)).resolves.toMatchObject(
-      { id: eventId, hiddenReason: null },
-    );
+    await expect(
+      repository.getShowableEventById(eventId),
+    ).resolves.toMatchObject({ id: eventId, hiddenReason: null });
   });
 
   describe('the rules the database keeps', () => {
     it.each([
       ['hidden without a reason', { isHidden: true, hiddenAt: now }],
-      ['a reason without being hidden', { hiddenReason: REASON, hiddenAt: now }],
+      [
+        'a reason without being hidden',
+        { hiddenReason: REASON, hiddenAt: now },
+      ],
       [
         'a reason under 10 characters',
         { isHidden: true, hiddenAt: now, hiddenReason: 'Spam' },
@@ -262,10 +271,20 @@ describeDb('event moderation in the database (#239)', () => {
       const adminId = await anAdministrator();
       const [a, b] = [await aUser(), await aUser()].sort();
 
-      await aBlock({ blockerId: a, blockedId: b, createdById: adminId, reason: REASON });
+      await aBlock({
+        blockerId: a,
+        blockedId: b,
+        createdById: adminId,
+        reason: REASON,
+      });
 
       await expect(
-        aBlock({ blockerId: b, blockedId: a, createdById: adminId, reason: REASON }),
+        aBlock({
+          blockerId: b,
+          blockedId: a,
+          createdById: adminId,
+          reason: REASON,
+        }),
       ).rejects.toThrow();
     });
 
