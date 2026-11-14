@@ -25,27 +25,24 @@ describe("AppShell", () => {
     const navs = screen.getAllByRole("navigation", { name: "Hlavní navigace" })
     expect(navs).toHaveLength(2)
     expect(screen.getAllByRole("link", { name: "Moje akce" })).toHaveLength(2)
-    expect(screen.getAllByRole("link", { name: "Přidat" })).not.toHaveLength(0)
+    expect(screen.getAllByRole("link", { name: "Přidat akci" })).not.toHaveLength(0)
     expect(screen.getByRole("button", { name: "zvoneček" })).toBeInTheDocument()
     expect(screen.getByRole("main")).toHaveTextContent("obsah")
   })
 
-  it("gives a visitor Objevovat, Přidat and Skupiny, without the bell (#151)", async () => {
+  it("gives a visitor Akce, Přidat akci and Skupiny, without the bell (#151)", async () => {
     session(null)
     await renderWithRouter(<AppShell>obsah</AppShell>)
 
     const navs = screen.getAllByRole("navigation", { name: "Hlavní navigace" })
     expect(navs).toHaveLength(2)
     for (const nav of navs) {
-      expect(within(nav).getByRole("link", { name: "Objevovat" })).toHaveAttribute(
-        "href",
-        "/events",
-      )
+      expect(within(nav).getByRole("link", { name: "Akce" })).toHaveAttribute("href", "/events")
       expect(within(nav).getByRole("link", { name: "Skupiny" })).toHaveAttribute("href", "/groups")
       expect(within(nav).queryByRole("link", { name: "Moje akce" })).not.toBeInTheDocument()
       expect(within(nav).queryByRole("link", { name: "Profil" })).not.toBeInTheDocument()
     }
-    expect(screen.getAllByRole("link", { name: "Přidat" })).not.toHaveLength(0)
+    expect(screen.getAllByRole("link", { name: "Přidat akci" })).not.toHaveLength(0)
     expect(screen.queryByRole("button", { name: "zvoneček" })).not.toBeInTheDocument()
     expect(screen.getByRole("main")).toHaveTextContent("obsah")
   })

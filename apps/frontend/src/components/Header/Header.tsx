@@ -8,7 +8,7 @@ type HeaderProps = {
   // Auth-aware menu (sign-in CTA / user dropdown). Passed as a slot so
   // `components/` doesn't have to import from `features/auth`.
   userMenu: ReactNode
-  // Main navigation (desktop) and the actions next to the switchers ("Přidat").
+  // Main navigation (desktop) and the actions next to the switchers ("Přidat akci").
   // Slots for the same reason: whether they show depends on the session.
   nav?: ReactNode
   actions?: ReactNode

@@ -354,7 +354,7 @@
 
 /*
  * Bottom padding of an action bar fixed to the bottom of a phone screen. Under
- * the BottomNav it clears the whole nav, raised "Přidat" button included
+ * the BottomNav it clears the whole nav, raised "Přidat akci" button included
  * (AppShell measures it into --bottom-nav-height), so the bar's own background
  * runs on behind the nav. Without the nav (from `md`) it only clears the home
  * indicator.
