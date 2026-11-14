@@ -138,6 +138,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
 - **Historie akcí**, kde člověk byl a co pořádal, je až pro propojené uživatele. To je hlavní věc, kterou propojení přináší. Jméno organizátora je i tak veřejné přes detail akce ([#8][8]).
 - **Notifikace chodí i e-mailem**, jen příjemci a jen na jeho ověřenou adresu ([#61][61], [#58][58]). E-mail podle pravidla výše říká jen, co se stalo, a odkazem vede do aplikace: nenese jméno původce, název akce ani skupiny, ani zprávu organizátora, správce nebo účastníka, který zrušil účast. Detail se ukáže až po přihlášení.
+- **Připomínka před začátkem akce** ([#233][233], [ADR-0021](../adr/adr-0021.md)) chodí 24 a 2 hodiny před začátkem účastníkům se schváleným místem a organizátorům (hlavnímu i spoluorganizátorům). Ve zvonečku nese název akce a začátek, organizátorům navíc obsazenost (obsazeno z kapacity, kolik chybí do minima), kterou vidí už v přehledu účastníků. E-mail podle pravidla výše říká jen „akce se blíží“: bez názvu, času, místa i počtů.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec.
 
 ## Skupina
@@ -208,3 +209,4 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
 [181]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/181
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
+[233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233
