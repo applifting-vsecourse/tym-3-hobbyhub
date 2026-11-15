@@ -10,10 +10,15 @@ export const AUDIT_ACTIONS = [
   'EVENT_RESTORED',
   'USERS_BLOCKED',
   'USERS_UNBLOCKED',
+  // ADR-0023: the queue of reports; taking a report over and handing it to a
+  // colleague are both REPORT_ASSIGNED.
+  'REPORT_ASSIGNED',
+  'REPORT_RESOLVED',
+  'REPORT_REOPENED',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-export const AUDIT_TARGET_TYPES = ['EVENT', 'USER'] as const;
+export const AUDIT_TARGET_TYPES = ['EVENT', 'USER', 'REPORT'] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 export type AuditLogEntryInput = {

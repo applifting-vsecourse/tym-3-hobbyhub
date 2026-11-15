@@ -22,6 +22,7 @@ export const NOTIFICATION_TYPES = [
   'EVENT_CANCELLED',
   'EVENT_HIDDEN',
   'EVENT_RESTORED',
+  'REPORT_RESOLVED',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -51,7 +52,7 @@ export const NOTIFICATION_TYPES_BY_KIND = {
     'EVENT_BOARD',
   ],
   groups: ['GROUP_INVITATION'],
-  other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION'],
+  other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION', 'REPORT_RESOLVED'],
 } as const satisfies Record<NotificationKind, readonly NotificationType[]>;
 
 export const notificationTypesOf = (
