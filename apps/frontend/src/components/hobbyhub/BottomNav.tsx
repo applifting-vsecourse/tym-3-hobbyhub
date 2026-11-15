@@ -29,7 +29,7 @@ const NAV_LABELS = {
 type BottomNavProps = {
   /** The highlighted section; `null` on pages that belong to none (the landing page). */
   readonly active: NavSection | null
-  /** A visitor gets Objevovat, Přidat and Skupiny only (#151). */
+  /** A visitor gets Akce, Přidat akci and Skupiny only (#151). */
   readonly isSignedIn: boolean
   readonly hasNewRequests?: boolean
   readonly className?: string
@@ -72,7 +72,7 @@ function NavItem({ place, isActive, hasDot }: NavItemProps) {
 
 /**
  * Spodní navigace (vzhled Soupiska) — the sections of the viewer around a
- * raised logo button "Přidat" in the middle that starts a new event: four for
+ * raised logo button "Přidat akci" in the middle that starts a new event: four for
  * a signed-in user, two for a visitor. Přihlášky and Pořádám are merged into
  * Moje akce. Positioning (sticky to the bottom) is the shell's job.
  */
@@ -84,7 +84,7 @@ export function BottomNav({
 }: BottomNavProps) {
   const { t } = useTranslation()
   const places = navPlacesFor(isSignedIn)
-  // "Přidat" splits the places evenly: two and two, or one and one.
+  // "Přidat akci" splits the places evenly: two and two, or one and one.
   const middle = Math.ceil(places.length / 2)
   const renderItem = (place: NavPlace) => (
     <NavItem

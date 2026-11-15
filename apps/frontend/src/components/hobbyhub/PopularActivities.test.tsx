@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 
@@ -168,8 +168,10 @@ describe("PopularActivities", () => {
     const names = tagNames()
     expect(names).toHaveLength(2 + POPULAR_FIRST + POPULAR_MORE)
     expect(names.at(-1)).toBe("Oblíbená 37")
-    // The first new tag takes the focus.
-    expect(screen.getByRole("button", { name: "Oblíbená 16" })).toHaveFocus()
+    // The first new tag takes the focus, on the next animation frame.
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Oblíbená 16" })).toHaveFocus()
+    })
   })
 
   it("starts with earlier choices that have no tag on show on top", () => {

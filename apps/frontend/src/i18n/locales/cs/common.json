@@ -956,8 +956,8 @@
       "selected": "Vybraná akce, chybí {{count}}"
     },
     "nav": {
-      "add": "Přidat",
-      "discover": "Objevovat",
+      "add": "Přidat akci",
+      "discover": "Akce",
       "friends": "Přátelé",
       "groups": "Skupiny",
       "label": "Hlavní navigace",

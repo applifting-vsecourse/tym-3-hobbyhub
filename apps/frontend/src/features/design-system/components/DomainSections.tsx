@@ -395,7 +395,7 @@ export function DomainSections() {
       <ShowcaseSection
         id="navigace"
         title="Spodní navigace"
-        description="Dolní lišta má vystouplé tlačítko s logem „Přidat“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti. Návštěvník má jen Objevovat, Přidat a Skupiny."
+        description="Dolní lišta má vystouplé tlačítko s logem „Přidat akci“. Přihlášky a Pořádám jsou sloučené do Moje akce; tečka značí nové žádosti. Návštěvník má jen Akce, Přidat akci a Skupiny."
       >
         <BottomNavExample />
       </ShowcaseSection>
