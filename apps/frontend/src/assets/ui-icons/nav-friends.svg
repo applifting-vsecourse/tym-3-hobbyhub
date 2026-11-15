@@ -2,6 +2,6 @@
 <g id="Frame">
 <path id="Vector" d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H6C4.93913 15 3.92172 15.4214 3.17157 16.1716C2.42143 16.9217 2 17.9391 2 19V21" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
 <path id="Vector_2" d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_3" d="M16 11L18 13L22 9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Heart" d="M21.5 11.6C22.096 11.016 22.7 10.316 22.7 9.4A2.2 2.2 0 0 0 20.5 7.2C19.796 7.2 19.3 7.4 18.7 8C18.1 7.4 17.604 7.2 16.9 7.2A2.2 2.2 0 0 0 14.7 9.4C14.7 10.32 15.3 11.02 15.9 11.6L18.7 14.4Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </svg>
