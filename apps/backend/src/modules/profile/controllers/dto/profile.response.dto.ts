@@ -1,8 +1,8 @@
+import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
 import {
   FRIEND_RELATIONS,
   FriendRelation,
 } from '@/modules/friendship/domain/friendship';
-import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
 import { LevelResponseDto } from '@/modules/level/controllers/dto/level.response.dto';
 import {
   HomeAddressResponseDto,
