@@ -1,5 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
 import { reportsValidationPipe } from '@/modules/report/controllers/reports-validation.pipe';
+import { BadRequestException } from '@nestjs/common';
 import { CreateReportDto } from './create-report.dto';
 import { ReportResponseDto } from './report.response.dto';
 
