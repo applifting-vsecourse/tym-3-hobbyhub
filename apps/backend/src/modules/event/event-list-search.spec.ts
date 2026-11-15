@@ -6,7 +6,7 @@
 import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { EventStatus, Prisma, VenueType } from '@/generated/prisma/client';
-import { EventListPage } from './domain/event';
+import { EventListPage, EventListRanges } from './domain/event';
 import { EventRepository } from './repositories/event.repository';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
@@ -111,7 +111,7 @@ describeDb('public event list search', () => {
 
   const search = (
     repository: EventRepository,
-    filter: {
+    filter: EventListRanges & {
       search?: string;
       location?: string;
       activityIds?: string[];
@@ -157,6 +157,58 @@ describeDb('public event list search', () => {
         expect(
           mine(await search(repository, { dateTo: '2030-01-04' })),
         ).toEqual([early]);
+      },
+    );
+  });
+
+  it('narrows by price, duration, capacity and free seats (#214)', async () => {
+    const start = (day: number): Date => new Date(`2030-01-0${day}T18:00:00Z`);
+    const hours = (day: number, h: number): Date =>
+      new Date(start(day).getTime() + h * 3600 * 1000);
+    await withEvents(
+      [
+        // free, 2 hours, holds 8, has room
+        { startAt: start(1), endAt: hours(1, 2) },
+        // 150 CZK, 4 hours, holds 12, full through people outside the app
+        {
+          startAt: start(2),
+          endAt: hours(2, 4),
+          contributionAmount: 150,
+          maxParticipants: 12,
+          externalOccupiedSpots: 12,
+        },
+        // 500 CZK, 1 hour, holds 4
+        {
+          startAt: start(3),
+          endAt: hours(3, 1),
+          contributionAmount: 500,
+          minParticipants: 2,
+          maxParticipants: 4,
+        },
+      ],
+      async (repository, [free, full, small]) => {
+        const found = async (filter: EventListRanges): Promise<string[]> =>
+          (await search(repository, { search: MARK, ...filter })).sort();
+        const ids = (...list: string[]): string[] => list.sort();
+        expect(await found({ priceTo: 0 })).toEqual(ids(free));
+        expect(await found({ priceFrom: 100, priceTo: 200 })).toEqual(
+          ids(full),
+        );
+        expect(await found({ priceFrom: 150 })).toEqual(ids(full, small));
+        expect(
+          await found({ durationHoursFrom: 2, durationHoursTo: 4 }),
+        ).toEqual(ids(free, full));
+        expect(await found({ durationHoursTo: 1 })).toEqual(ids(small));
+        expect(await found({ capacityFrom: 8, capacityTo: 12 })).toEqual(
+          ids(free, full),
+        );
+        expect(await found({ onlyWithFreeSpots: true })).toEqual(
+          ids(free, small),
+        );
+        expect(await found({ onlyWithFreeSpots: false })).toEqual(
+          ids(free, full, small),
+        );
+        expect(await found({ priceFrom: 1000 })).toEqual([]);
       },
     );
   });
