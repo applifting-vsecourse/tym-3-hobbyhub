@@ -306,7 +306,9 @@ export class EventsService {
     viewer?: Identity,
   ): Promise<EventListPage> {
     if (eventListFilterViolations(filter).length > 0) {
-      throw new BadRequestException('dateFrom must not be after dateTo');
+      throw new BadRequestException(
+        'A range must not start after it ends (dateFrom/dateTo, priceFrom/priceTo, durationHoursFrom/durationHoursTo, capacityFrom/capacityTo)',
+      );
     }
     return this.eventRepository.getUpcomingPublicEvents(now, page, {
       ...filter,
