@@ -41,6 +41,8 @@ type EventDetailProps = {
    * Absent for everyone else, who is told when they appear instead.
    */
   participantInfo?: ReactNode
+  /** "Nahlásit akci" (#240), for a signed-in person who does not organize it. */
+  reportAction?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -80,6 +82,7 @@ export function EventDetail({
   shareAction,
   ownRequest,
   participantInfo,
+  reportAction,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -336,6 +339,8 @@ export function EventDetail({
             </p>
           )}
         </section>
+
+        {reportAction ? <div className="border-t border-border pt-4">{reportAction}</div> : null}
       </div>
     </div>
   )

@@ -57,6 +57,21 @@ const renderDetail = (overrides: Partial<EventDetailData> = {}, isOrganizerLinke
   )
 
 describe("EventDetail", () => {
+  // #240: the page decides who may report; the detail only places it.
+  it("shows the report action when the page hands one in", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event()}
+        activityLabel="Florbal"
+        joinAction={null}
+        reportAction={<button type="button">Nahlásit akci</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Nahlásit akci" })).toBeInTheDocument()
+  })
+
   it("links the organizer to their profile", async () => {
     await renderDetail({ organizerId: "org-1", organizerName: "Jana" }, true)
 

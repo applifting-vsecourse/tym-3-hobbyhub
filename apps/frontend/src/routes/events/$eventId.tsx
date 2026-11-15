@@ -34,6 +34,7 @@ import {
   type RequestSheetStep,
 } from "@/features/participation-request/components/ParticipationRequestSheet"
 import { decisionMessageOf, ownSeatView } from "@/features/participation-request/lib/joinPanel"
+import { ReportAction } from "@/features/report/components/ReportAction"
 
 export const Route = createFileRoute("/events/$eventId")({
   component: EventDetailPage,
@@ -70,6 +71,15 @@ function EventDetailPage() {
     (ownView === "approved" || ownView === "organizer") &&
     event?.status === "PUBLISHED" &&
     event.endAt > new Date()
+  // #240: anyone signed in may report an event they do not organize. Wait
+  // for their own request: it is what tells a co-organizer apart.
+  const canReport =
+    user !== null &&
+    event !== undefined &&
+    !isHidden &&
+    user.id !== event.organizerId &&
+    myRequestQuery.isSuccess &&
+    ownView !== "organizer"
   const infoQuery = useQuery({
     ...participantInfoQueryOptions(eventId, user?.id ?? ""),
     enabled: hasInfoRight,
@@ -188,6 +198,14 @@ function EventDetailPage() {
               ) : null
             }
             shareAction={<ShareEventAction event={eventQuery.data} />}
+            reportAction={
+              canReport ? (
+                <ReportAction
+                  target={{ type: "EVENT", id: eventId }}
+                  targetName={eventQuery.data.title}
+                />
+              ) : undefined
+            }
             organizerActions={
               // F-05.10: only the organizer, and only until the event starts.
               user?.id === eventQuery.data.organizerId &&

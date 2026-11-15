@@ -1468,6 +1468,7 @@
         "group": "{{name}} asks to join the group {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
+      "REPORT_RESOLVED": "We have dealt with your report. Thank you for helping keep HobbyHub safe.",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Your request to join the event {{title}} was approved",
@@ -1827,6 +1828,42 @@
       "noBirthYear": "You have not added your year of birth yet",
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
+    }
+  },
+  "reports": {
+    "done": "Thank you, we have passed your report to the administrators. We will let you know once they deal with it.",
+    "errors": {
+      "alreadyReported": "You have reported this already. We will let you know once the administrators deal with it.",
+      "failed": "The report could not be sent. Please try again.",
+      "notAllowed": "You cannot report this.",
+      "notFound": "This is no longer on HobbyHub.",
+      "unknownReason": "The chosen reason no longer exists. Please choose another one."
+    },
+    "event": {
+      "action": "Report event",
+      "description": "You are reporting the event {{name}}. Only the HobbyHub administrators see the report; the organizer will not learn of it.",
+      "textPlaceholder": "E.g. the description promises free entry, but the organizer asks for a payment in advance.",
+      "title": "Report event"
+    },
+    "form": {
+      "back": "Back",
+      "reason": "Reason",
+      "reasonPlaceholder": "Choose a reason",
+      "reasonRequired": "Choose why you are reporting this.",
+      "reasonsFailed": "The reasons could not be loaded.",
+      "reasonsRetry": "Try again",
+      "submit": "Send report",
+      "text": "What happened",
+      "textTooLong_one": "Keep it under {{count}} character",
+      "textTooLong_other": "Keep it under {{count}} characters",
+      "textTooShort_one": "Write at least {{count}} character.",
+      "textTooShort_other": "Write at least {{count}} characters."
+    },
+    "user": {
+      "action": "Report user",
+      "description": "You are reporting {{name}}. A report is also a request to block: the administrators decide whether to block the two of you from each other. The reported person will learn neither of the report nor of a block.",
+      "textPlaceholder": "E.g. repeated messages after the event, despite being asked to stop.",
+      "title": "Report user"
     }
   },
   "terms": {

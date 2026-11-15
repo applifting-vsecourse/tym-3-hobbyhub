@@ -1489,6 +1489,7 @@
         "group": "{{name}} žádá o členství ve skupině {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} zrušil(a) svoji účast na akci {{title}}",
+      "REPORT_RESOLVED": "Tvoje nahlášení jsme vyřídili. Děkujeme, že pomáháš udržet HobbyHub bezpečný.",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Tvoje žádost o účast na akci {{title}} byla schválena",
@@ -1856,6 +1857,44 @@
       "noBirthYear": "Rok narození jste zatím nezadali",
       "privateHint": "Tohle ostatní neuvidí.",
       "privateTitle": "Jen pro vás"
+    }
+  },
+  "reports": {
+    "done": "Děkujeme, nahlášení jsme předali správcům. Dáme ti vědět, až ho vyřídí.",
+    "errors": {
+      "alreadyReported": "Tohle už máš nahlášené. Dáme ti vědět, až to správci vyřídí.",
+      "failed": "Nahlášení se nepodařilo odeslat. Zkus to prosím znovu.",
+      "notAllowed": "Tohle nahlásit nemůžeš.",
+      "notFound": "Tohle už v HobbyHubu není.",
+      "unknownReason": "Vybraný důvod už neexistuje. Vyber prosím jiný."
+    },
+    "event": {
+      "action": "Nahlásit akci",
+      "description": "Nahlašuješ akci {{name}}. Nahlášení uvidí jen správci HobbyHubu, organizátor se o něm nedozví.",
+      "textPlaceholder": "Např. popis slibuje vstup zdarma, ale organizátor chce platbu předem na účet.",
+      "title": "Nahlásit akci"
+    },
+    "form": {
+      "back": "Zpět",
+      "reason": "Důvod",
+      "reasonPlaceholder": "Vyber důvod",
+      "reasonRequired": "Vyber důvod nahlášení.",
+      "reasonsFailed": "Důvody se nepodařilo načíst.",
+      "reasonsRetry": "Zkusit znovu",
+      "submit": "Odeslat nahlášení",
+      "text": "Co se stalo",
+      "textTooLong_few": "Maximálně {{count}} znaky",
+      "textTooLong_one": "Maximálně {{count}} znak",
+      "textTooLong_other": "Maximálně {{count}} znaků",
+      "textTooShort_few": "Napiš aspoň {{count}} znaky.",
+      "textTooShort_one": "Napiš aspoň {{count}} znak.",
+      "textTooShort_other": "Napiš aspoň {{count}} znaků."
+    },
+    "user": {
+      "action": "Nahlásit uživatele",
+      "description": "Nahlašuješ uživatele {{name}}. Nahlášení je zároveň žádost o blokaci: správci posoudí, jestli vás zablokují, abyste se navzájem neviděli. Nahlášený se o nahlášení ani o blokaci nedozví.",
+      "textPlaceholder": "Např. opakované zprávy po akci, i přes prosbu, ať toho nechá.",
+      "title": "Nahlásit uživatele"
     }
   },
   "terms": {

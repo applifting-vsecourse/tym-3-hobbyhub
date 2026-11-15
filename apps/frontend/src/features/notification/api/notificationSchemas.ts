@@ -16,6 +16,8 @@ export const notificationTypeSchema = z.enum([
   "EVENT_CANCELLED",
   "EVENT_HIDDEN",
   "EVENT_RESTORED",
+  // #240: a report the recipient filed was dealt with; says nothing of how.
+  "REPORT_RESOLVED",
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
