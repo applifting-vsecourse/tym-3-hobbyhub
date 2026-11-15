@@ -161,18 +161,21 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Admin skupiny:** role `ADMIN` a `OWNER`.
 - **Superadmin** a **Zablokovaný** (koho vlastník skupiny zablokoval): viz výše.
 
-| Pole                                                                           | Návštěvník, přihlášený, žadatel | Člen | Admin skupiny | Superadmin | Zablokovaný | Zdroj                                   |
-| ------------------------------------------------------------------------------ | ------------------------------- | ---- | ------------- | ---------- | ----------- | --------------------------------------- |
-| Název, popis, aktivita, lokalita, obvyklý termín, počet členů                  | ✅                              | ✅   | ✅            | ✅         | ❌          | [#9][9], [#95][95]                      |
-| Že soukromá skupina existuje: název, popis, aktivita, lokalita                 | ✅                              | ✅   | ✅            | ✅         | ❌          | [#93][93], [PO][po]                     |
-| Veřejná skupina: nadcházející veřejné akce                                     | ✅                              | ✅   | ✅            | ✅         | ❌          | [#9][9], [#47][47]                      |
-| Soukromá skupina: akce, členové, dění                                          | ❌                              | ✅   | ✅            | ✅         | ❌          | [#93][93], [PO][po]                     |
-| Akce jen pro skupinu                                                           | ❌                              | ✅   | ✅            | ✅         | ❌          | [#47][47]                               |
-| Minulé akce skupiny                                                            | ❌                              | ✅   | ✅            | ✅         | ❌          | [#47][47]                               |
-| Seznam členů: jméno, fotka, role (kdo je vlastník a kdo správce), datum vstupu | ❌                              | ✅   | ✅            | ✅         | ❌          | [#9][9], [#47][47], [#94][94], [PO][po] |
-| Počet čekajících žádostí                                                       | ❌                              | ❌   | ✅            | ✅         | ❌          | [#48][48], [PO][po]                     |
-| Jména žadatelů a jejich zprávy                                                 | ❌                              | ❌   | ✅            | ✅         | ❌          | [#48][48], [PO][po]                     |
-| Zabanovaní členové a důvod                                                     | ❌                              | ❌   | ✅            | ✅         | ❌          | [#181][181], [PO][po]                   |
+| Pole                                                                           | Návštěvník, přihlášený, žadatel | Člen        | Admin skupiny | Superadmin  | Zablokovaný | Zdroj                                   |
+| ------------------------------------------------------------------------------ | ------------------------------- | ----------- | ------------- | ----------- | ----------- | --------------------------------------- |
+| Název, popis, aktivita, lokalita, obvyklý termín, počet členů                  | ✅                              | ✅          | ✅            | ✅          | ❌          | [#9][9], [#95][95]                      |
+| Že soukromá skupina existuje: název, popis, aktivita, lokalita                 | ✅                              | ✅          | ✅            | ✅          | ❌          | [#93][93], [PO][po]                     |
+| Veřejná skupina: nadcházející veřejné akce                                     | ✅                              | ✅          | ✅            | ✅          | ❌          | [#9][9], [#47][47]                      |
+| Soukromá skupina: akce, členové, dění                                          | ❌                              | ✅          | ✅            | ✅          | ❌          | [#93][93], [PO][po]                     |
+| Akce jen pro skupinu                                                           | ❌                              | ✅          | ✅            | ✅          | ❌          | [#47][47]                               |
+| Minulé akce skupiny                                                            | ❌                              | ✅          | ✅            | ✅          | ❌          | [#47][47]                               |
+| Seznam členů: jméno, fotka, role (kdo je vlastník a kdo správce), datum vstupu | ❌                              | ✅          | ✅            | ✅          | ❌          | [#9][9], [#47][47], [#94][94], [PO][po] |
+| U každého člena stav přátelství se mnou                                        | ❌                              | jen se mnou | jen se mnou   | jen se mnou | ❌          | [#225][225]                             |
+| Počet čekajících žádostí                                                       | ❌                              | ❌          | ✅            | ✅          | ❌          | [#48][48], [PO][po]                     |
+| Jména žadatelů a jejich zprávy                                                 | ❌                              | ❌          | ✅            | ✅          | ❌          | [#48][48], [PO][po]                     |
+| Zabanovaní členové a důvod                                                     | ❌                              | ❌          | ✅            | ✅          | ❌          | [#181][181], [PO][po]                   |
+
+**Členové vedou na svůj profil** ([#225][225]). U každého člena kromě sebe vidí člen stav přátelství s ním, jen ze své strany („Přítel“, „Žádost odeslána“, „Žádá vás“), a komu nic z toho neplatí, tomu může rovnou poslat žádost o přátelství. Cizí přátelství mezi dvěma jinými členy nevidí nikdo.
 
 **Soukromá skupina je dohledatelná, ale zavřená.** Skupina, kterou nejde najít, nemůže shánět lidi, a to je důvod, proč produkt existuje. Vidět má jít, že existuje a čemu se věnuje; co se v ní děje, ne.
 

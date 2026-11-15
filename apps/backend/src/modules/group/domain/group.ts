@@ -1,4 +1,5 @@
 import { Activity } from '@/modules/activity/domain/activity';
+import { FriendRelation } from '@/modules/friendship/domain/friendship';
 
 export const GROUP_NAME_MIN_LENGTH = 3;
 export const GROUP_NAME_MAX_LENGTH = 80;
@@ -93,6 +94,12 @@ export type GroupMember = {
   image: string | null;
   role: GroupRole;
   joinedAt: Date;
+};
+
+/** #225: a member as another member sees them in the list, with their friendship. */
+export type GroupMemberListItem = GroupMember & {
+  /** The viewer's relation to the member; `none` for the viewer themselves. */
+  relation: FriendRelation;
 };
 
 // How a hand-over ended when the roles changed between the check and the

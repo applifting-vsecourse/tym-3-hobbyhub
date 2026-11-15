@@ -54,6 +54,27 @@ export class FriendshipService {
   }
 
   /**
+   * #225: where the viewer stands with each of the people, in one go (the
+   * members of a group). Nobody has a relation with themselves.
+   */
+  async relationsWith(
+    viewerId: string,
+    otherIds: readonly string[],
+  ): Promise<Map<string, FriendRelation>> {
+    const others = otherIds.filter((id) => id !== viewerId);
+    const stored = await this.friendshipRepository.findRelationsWith(
+      viewerId,
+      others,
+    );
+    return new Map(
+      otherIds.map((id): [string, FriendRelation] => {
+        const between = stored.get(id);
+        return [id, between ? relationOf(viewerId, between) : 'none'];
+      }),
+    );
+  }
+
+  /**
    * #225: a page of people whose name or username contains the text, each
    * with the viewer's relation to them. The text arrives trimmed and long
    * enough (the DTO).

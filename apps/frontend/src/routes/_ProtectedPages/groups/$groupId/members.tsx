@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { HTTPError } from "@/lib/api-client"
 
 import { useSession } from "@/features/auth/hooks/useSession"
+import { MemberFriendship } from "@/features/friendship/components/MemberFriendship"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
 import { hasGroupAdminRights } from "@/features/group/api/groupSchemas"
@@ -144,6 +145,15 @@ function GroupMembersPage() {
             groupName={groupQuery.data?.name ?? ""}
             members={membersQuery.data ?? []}
             me={me}
+            // #225: ask a member for friendship right here, or see where it stands.
+            renderFriendship={(member) => (
+              <MemberFriendship
+                userId={member.userId}
+                name={member.name}
+                relation={member.relation}
+                reload={() => membersQuery.refetch()}
+              />
+            )}
           />
         )}
       </section>

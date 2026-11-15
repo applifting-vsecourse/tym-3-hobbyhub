@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 
 import { groupKeys } from "@/features/group/api/groupKeys"
 import {
-  groupMemberSchema,
+  groupMemberListItemSchema,
   myMembershipRequestPageSchema,
   myMembershipRequestStateSchema,
   pendingMembershipRequestSchema,
@@ -54,5 +54,5 @@ export const groupMembersQueryOptions = (groupId: string) =>
   queryOptions({
     queryKey: groupKeys.members(groupId),
     queryFn: async () =>
-      z.array(groupMemberSchema).parse(await api.get(`groups/${groupId}/members`).json()),
+      z.array(groupMemberListItemSchema).parse(await api.get(`groups/${groupId}/members`).json()),
   })

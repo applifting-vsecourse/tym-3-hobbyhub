@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -5,7 +6,7 @@ import userEvent from "@testing-library/user-event"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { GroupRole } from "@/features/group/api/groupSchemas"
-import type { GroupMember } from "@/features/group/api/membershipRequestSchemas"
+import type { GroupMemberListItem } from "@/features/group/api/membershipRequestSchemas"
 import { GroupMemberList } from "@/features/group/components/GroupMemberList"
 
 const { changeMemberRole, removeMember, transferOwnership, toast } = vi.hoisted(() => ({
@@ -38,12 +39,13 @@ beforeEach(() => {
   toast.success.mockReset()
 })
 
-const aMember = (overrides: Partial<GroupMember>): GroupMember => ({
+const aMember = (overrides: Partial<GroupMemberListItem>): GroupMemberListItem => ({
   userId: "u1",
   name: "Caffeinated Duck",
   image: null,
   role: "MEMBER",
   joinedAt: new Date(2026, 0, 1),
+  relation: "none",
   ...overrides,
 })
 
@@ -53,7 +55,10 @@ const members = [
   aMember({ userId: "member", name: "Deep Duck Thoughts", role: "MEMBER" }),
 ]
 
-const renderList = (me?: { userId: string; role: GroupRole }) =>
+const renderList = (
+  me?: { userId: string; role: GroupRole },
+  renderFriendship?: (member: GroupMemberListItem) => ReactNode,
+) =>
   renderWithRouter(
     <QueryClientProvider client={new QueryClient()}>
       <GroupMemberList
@@ -61,6 +66,7 @@ const renderList = (me?: { userId: string; role: GroupRole }) =>
         groupName="Čtvrteční florbalisté"
         members={members}
         me={me}
+        renderFriendship={renderFriendship}
       />
     </QueryClientProvider>,
   )
@@ -171,5 +177,25 @@ describe("GroupMemberList", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Akci se nepodařilo provést")
     expect(screen.getByRole("dialog")).toBeVisible()
+  })
+
+  // #225: from a group to a member's profile, where a friend request goes.
+  it("leads from each member to their profile", async () => {
+    await renderList({ userId: "member", role: "MEMBER" })
+
+    expect(screen.getByRole("link", { name: /Quackmaster/ })).toHaveAttribute(
+      "href",
+      "/profile/admin",
+    )
+  })
+
+  it("shows my friendship with every member but me", async () => {
+    await renderList({ userId: "member", role: "MEMBER" }, (member) => (
+      <span>{`friendship:${member.userId}:${member.relation}`}</span>
+    ))
+
+    expect(screen.getByText("friendship:owner:none")).toBeInTheDocument()
+    expect(screen.getByText("friendship:admin:none")).toBeInTheDocument()
+    expect(screen.queryByText(/friendship:member/)).toBeNull()
   })
 })

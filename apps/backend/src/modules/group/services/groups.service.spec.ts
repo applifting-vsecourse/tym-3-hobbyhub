@@ -1,7 +1,10 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
+import { FriendRelation } from '@/modules/friendship/domain/friendship';
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import {
   DISCOVER_PAGE_SIZE,
   Group,
+  GroupMember,
   GroupRole,
   NEARBY_GROUPS_LIMIT,
 } from '@/modules/group/domain/group';
@@ -48,9 +51,20 @@ describe('GroupsService', () => {
     const repository = mock<GroupRepository>();
     const activities = mock<ActivitiesService>();
     activities.isAvailable.mockResolvedValue(isActivityAvailable);
+    const friendship = mock<FriendshipService>();
+    friendship.relationsWith.mockImplementation((_viewerId, ids) =>
+      Promise.resolve(
+        new Map(
+          ids.map((id): [string, FriendRelation] => [
+            id,
+            id === 'friend' ? 'friends' : 'none',
+          ]),
+        ),
+      ),
+    );
     return {
       repository,
-      service: new GroupsService(repository, activities),
+      service: new GroupsService(repository, activities, friendship),
     };
   };
 
@@ -183,6 +197,27 @@ describe('GroupsService', () => {
       repository.getMemberRole.mockResolvedValue('MEMBER');
       repository.listMembers.mockResolvedValue([]);
       await expect(service.listMembers('g1', user)).resolves.toEqual([]);
+    });
+
+    // #225: the list says where the viewer stands with each member.
+    it("gives each member the viewer's friendship to them", async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockResolvedValue('MEMBER');
+      const member = (userId: string): GroupMember => ({
+        userId,
+        name: userId,
+        image: null,
+        role: 'MEMBER',
+        joinedAt: new Date('2026-11-01T10:00:00Z'),
+      });
+      repository.listMembers.mockResolvedValue([
+        member('friend'),
+        member('stranger'),
+      ]);
+      await expect(service.listMembers('g1', user)).resolves.toEqual([
+        expect.objectContaining({ userId: 'friend', relation: 'friends' }),
+        expect.objectContaining({ userId: 'stranger', relation: 'none' }),
+      ]);
     });
   });
 

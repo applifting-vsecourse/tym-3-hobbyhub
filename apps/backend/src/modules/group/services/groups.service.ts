@@ -1,10 +1,12 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import {
   AssignableGroupRole,
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
   Group,
   GroupMember,
+  GroupMemberListItem,
   GroupPage,
   GroupRole,
   hasGroupAdminRights,
@@ -36,6 +38,7 @@ export class GroupsService {
   constructor(
     private readonly groupRepository: GroupRepository,
     private readonly activitiesService: ActivitiesService,
+    private readonly friendshipService: FriendshipService,
   ) {}
 
   async createGroup(user: Identity, data: CreateGroupData): Promise<Group> {
@@ -94,10 +97,23 @@ export class GroupsService {
   // F-07.3: the member list is for the group's members (visibility matrix);
   // F-02.5 shows a visitor the count, never the members. Anyone else gets
   // "not found", as for the admin-only features.
-  async listMembers(groupId: string, user: Identity): Promise<GroupMember[]> {
+  // #225: each member with the viewer's friendship to them, so the list can
+  // offer a friend request or show where one stands.
+  async listMembers(
+    groupId: string,
+    user: Identity,
+  ): Promise<GroupMemberListItem[]> {
     const role = await this.groupRepository.getMemberRole(groupId, user.id);
     if (!role) throw new NotFoundException('Group not found');
-    return this.groupRepository.listMembers(groupId);
+    const members = await this.groupRepository.listMembers(groupId);
+    const relations = await this.friendshipService.relationsWith(
+      user.id,
+      members.map((member) => member.userId),
+    );
+    return members.map((member) => ({
+      ...member,
+      relation: relations.get(member.userId) ?? 'none',
+    }));
   }
 
   // F-07.3b: who acts comes from the session. ADR-0007 decides who may do

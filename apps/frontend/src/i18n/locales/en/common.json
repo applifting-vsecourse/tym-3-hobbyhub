@@ -436,7 +436,10 @@
       "error": "The request could not be sent. Please try again.",
       "received": "This person is asking you to be friends.",
       "send": "Ask to be friends",
+      "sendShort": "Ask",
+      "sendShortLabel": "Ask {{name}} to be friends",
       "sending": "Sending the request…",
+      "sendingShort": "Sending…",
       "sent": "Request sent"
     },
     "empty": {

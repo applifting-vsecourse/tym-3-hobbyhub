@@ -443,7 +443,10 @@
       "error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
       "received": "Tento uživatel vás žádá o přátelství.",
       "send": "Požádat o přátelství",
+      "sendShort": "Požádat",
+      "sendShortLabel": "Požádat {{name}} o přátelství",
       "sending": "Odesíláme žádost…",
+      "sendingShort": "Odesíláme…",
       "sent": "Žádost odeslána"
     },
     "empty": {

@@ -101,6 +101,28 @@ describe('FriendshipService', () => {
     });
   });
 
+  describe('relationsWith', () => {
+    it("answers each person's relation, and none for oneself", async () => {
+      const { repository, service } = setup();
+      repository.findRelationsWith.mockResolvedValue(
+        new Map<string, StoredRelation>([
+          ['u2', { isFriend: true, pendingRequest: null }],
+          ['u3', { isFriend: false, pendingRequest: { senderId: 'u3' } }],
+        ]),
+      );
+      const relations = await service.relationsWith('u1', ['u1', 'u2', 'u3']);
+      expect(Object.fromEntries(relations)).toEqual({
+        u1: 'none',
+        u2: 'friends',
+        u3: 'request_received',
+      });
+      expect(repository.findRelationsWith).toHaveBeenCalledWith('u1', [
+        'u2',
+        'u3',
+      ]);
+    });
+  });
+
   describe('search', () => {
     it('asks for one row more than a page, for the viewer and the text', async () => {
       const { repository, service } = setup();

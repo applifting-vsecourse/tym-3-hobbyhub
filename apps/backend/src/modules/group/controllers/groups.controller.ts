@@ -25,7 +25,10 @@ import {
 } from '@nestjs/swagger';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { DiscoverGroupsQueryDto } from './dto/discover-groups.query.dto';
-import { GroupMemberResponseDto } from './dto/group-member.response.dto';
+import {
+  GroupMemberListItemResponseDto,
+  GroupMemberResponseDto,
+} from './dto/group-member.response.dto';
 import { GroupPageResponseDto } from './dto/group-page.response.dto';
 import {
   GroupMembershipResponseDto,
@@ -134,7 +137,7 @@ export class GroupsController {
   @Get(':id/members')
   @UseGuards(AuthenticatedUserGuard)
   @ApiOperation({ summary: 'List the members of a group (its members only)' })
-  @ApiResponse({ status: 200, type: [GroupMemberResponseDto] })
+  @ApiResponse({ status: 200, type: [GroupMemberListItemResponseDto] })
   @ApiResponse({ status: 401, description: 'Not signed in' })
   @ApiResponse({
     status: 404,
@@ -143,9 +146,11 @@ export class GroupsController {
   async members(
     @User() user: Identity,
     @Param('id') id: string,
-  ): Promise<GroupMemberResponseDto[]> {
+  ): Promise<GroupMemberListItemResponseDto[]> {
     const members = await this.groupsService.listMembers(id, user);
-    return members.map((member) => GroupMemberResponseDto.fromDomain(member));
+    return members.map((member) =>
+      GroupMemberListItemResponseDto.fromListItem(member),
+    );
   }
 
   // F-07.3b member management. ADR-0007 decides who may do what to whom;

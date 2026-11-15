@@ -11,10 +11,12 @@ const withQueries = (ui: ReactNode) =>
 
 describe("FriendsSection", () => {
   it("offers the three tabs in order, each kept in the URL", async () => {
-    await withQueries(<FriendsSection
+    await withQueries(
+      <FriendsSection
         tab="search"
         search={{ text: "", typed: "", onTypedChange: () => undefined }}
-      />)
+      />,
+    )
 
     expect(screen.getByRole("heading", { level: 1, name: "Přátelé" })).toBeInTheDocument()
     const tabs = screen.getByRole("navigation", { name: "Části sekce Přátelé" })
@@ -32,10 +34,12 @@ describe("FriendsSection", () => {
 
   // #225: the search tab has the search, not an explanation.
   it("offers the search on its tab, without a link to itself", async () => {
-    await withQueries(<FriendsSection
+    await withQueries(
+      <FriendsSection
         tab="search"
         search={{ text: "", typed: "", onTypedChange: () => undefined }}
-      />)
+      />,
+    )
 
     expect(
       screen.getByRole("searchbox", { name: "Hledat lidi podle jména nebo přezdívky" }),
