@@ -6,4 +6,6 @@ export interface SMTPConfig {
   pass: string;
   /** The sender; the user name when omitted (Gmail), needed where it is not an address (Mailjet). */
   from?: string;
+  /** Accept a self-signed certificate (local Mailpit); encryption stays required. */
+  allowSelfSigned?: boolean;
 }

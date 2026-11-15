@@ -1,6 +1,7 @@
 import {
   Decision,
   EventChange,
+  EventReminderKind,
   NewNotification,
   Notification,
   NotificationFilter,
@@ -8,6 +9,7 @@ import {
   NotificationPage,
   Page,
   recipientsExcept,
+  ReminderOccupancy,
 } from '@/modules/notification/domain/notification';
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
 import { NotificationEmailsService } from '@/modules/notification/services/notification-emails.service';
@@ -169,6 +171,42 @@ export class NotificationsService {
       ),
       actorId: input.cancelledBy.id,
       eventId: input.event.id,
+    });
+  }
+
+  // #233, ADR-0021: the event starts in a day or in 2 hours. The organizers
+  // (co-organizers included) get their own version, with how full the event
+  // is; someone who organizes and has a seat gets only that one. Nobody
+  // caused it, so there is no actor.
+  async notifyEventReminder(input: {
+    event: AnEvent;
+    reminder: EventReminderKind;
+    startAt: Date;
+    organizerIds: readonly string[];
+    participantIds: readonly string[];
+    occupancy: ReminderOccupancy;
+  }): Promise<void> {
+    const organizerIds = recipientsExcept(input.organizerIds, null);
+    const startsAt = input.startAt.toISOString();
+    await this.record({
+      type: 'HOSTED_EVENT_REMINDER',
+      recipientIds: organizerIds,
+      actorId: null,
+      eventId: input.event.id,
+      payload: {
+        reminder: input.reminder,
+        startsAt,
+        occupancy: input.occupancy,
+      },
+    });
+    await this.record({
+      type: 'EVENT_REMINDER',
+      recipientIds: recipientsExcept(input.participantIds, null).filter(
+        (id) => !organizerIds.includes(id),
+      ),
+      actorId: null,
+      eventId: input.event.id,
+      payload: { reminder: input.reminder, startsAt },
     });
   }
 

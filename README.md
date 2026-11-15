@@ -54,7 +54,7 @@ The ports are deliberately odd — 3050, 4050, and Postgres on 5433 rather than 
 | `lostgosling@example.com`      | `password7`     |
 | `admin@example.com`            | `adminpassword` |
 
-Verification/reset emails are printed to the backend terminal (console mailer) unless you configure Resend or SMTP (Mailjet) in `apps/backend/.env`.
+Locally, every email lands in **Mailpit at http://localhost:8025**, a local inbox that `pnpm dev` starts with the database. Nothing leaves your machine. `apps/backend/.env.example` points SMTP at it (`SMTP_HOST=localhost`, `SMTP_PORT=1025`, `SMTP_ALLOW_SELF_SIGNED=true` for Mailpit's self-signed STARTTLS certificate, accepted only with `NODE_ENV=development`). An `apps/backend/.env` created before Mailpit keeps its old values: copy the `SMTP_*` lines over to use it. With `SMTP_HOST` empty, emails are only printed to the backend terminal (console mailer).
 
 Every email — verification, password reset and each notification — is first a row in the `email_delivery` table; a poller in the backend sends it within a few seconds, retries temporary failures and records the outcome (ADR-0018). To see why an email did not arrive, look at its row (`status`, `lastError`, `skipReason`), e.g. in `pnpm backend prisma:studio`.
 

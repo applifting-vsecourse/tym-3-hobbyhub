@@ -271,6 +271,66 @@ describe('NotificationsService', () => {
     });
   });
 
+  describe('a reminder before the start (#233)', () => {
+    const occupancy = {
+      occupiedSpots: 7,
+      maxParticipants: 12,
+      missingToMinimum: 1,
+    };
+    const startAt = new Date('2030-01-02T17:00:00Z');
+
+    it('tells the organizers how full it is and the participants when it starts', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyEventReminder({
+        event: { id: 'e1' },
+        reminder: 'DAY',
+        startAt,
+        organizerIds: ['organizer', 'co-organizer'],
+        participantIds: ['p1', 'organizer', 'p2'],
+        occupancy,
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'HOSTED_EVENT_REMINDER',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: null,
+        eventId: 'e1',
+        payload: {
+          reminder: 'DAY',
+          startsAt: '2030-01-02T17:00:00.000Z',
+          occupancy,
+        },
+      });
+      // The organizer with a seat gets only their own version.
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_REMINDER',
+        recipientIds: ['p1', 'p2'],
+        actorId: null,
+        eventId: 'e1',
+        payload: { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+      });
+    });
+
+    it('writes no participant reminder for an event nobody joined', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyEventReminder({
+        event: { id: 'e1' },
+        reminder: 'TWO_HOURS',
+        startAt,
+        organizerIds: ['organizer'],
+        participantIds: [],
+        occupancy,
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledTimes(1);
+      expect(repository.createForRecipients).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'HOSTED_EVENT_REMINDER' }),
+      );
+    });
+  });
+
   describe('a group', () => {
     it('tells the founder and the admins about a new request', async () => {
       const { repository, service } = setup();
