@@ -1,7 +1,6 @@
 import { profileValidationPipe } from '@/modules/profile/controllers/profile-validation.pipe';
 import { BadRequestException } from '@nestjs/common';
 import {
-  UpdateFriendVisibilityDto,
   UpdatePrivateDetailsDto,
   UpdateProfileDto,
 } from './update-profile.dto';
@@ -51,43 +50,42 @@ describe('UpdatePrivateDetailsDto', () => {
     ).resolves.toBeDefined();
   });
 
+  // #227: the switches come in the same request, alone or with the details.
+  it.each([
+    [{ friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true }],
+    [
+      {
+        gender: 'FEMALE',
+        birthYear: 1990,
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: false,
+      },
+    ],
+  ])('accepts the switches %j', async (body) => {
+    await expect(
+      validate(UpdatePrivateDetailsDto, body),
+    ).resolves.toMatchObject(body);
+  });
+
   it.each([
     [{ gender: 'OTHER', birthYear: 1990 }],
     [{ gender: 'MALE', birthYear: '1990' }],
     [{ gender: 'MALE', birthYear: 1990.5 }],
     [{ gender: 'MALE', birthYear: 1899 }],
     [{ gender: 'MALE', birthDate: '1990-05-17' }],
+    // Half of a pair.
     [{ gender: 'MALE' }],
-  ])('refuses %j', async (body) => {
-    await expect(
-      validate(UpdatePrivateDetailsDto, body),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-});
-
-describe('UpdateFriendVisibilityDto', () => {
-  it('accepts both switches', async () => {
-    await expect(
-      validate(UpdateFriendVisibilityDto, {
-        friendsSeeEventHistory: false,
-        friendsSeeUpcomingEvents: true,
-      }),
-    ).resolves.toMatchObject({
-      friendsSeeEventHistory: false,
-      friendsSeeUpcomingEvents: true,
-    });
-  });
-
-  it.each([
-    [{}],
+    [{ birthYear: 1990 }],
     [{ friendsSeeEventHistory: true }],
     [{ friendsSeeUpcomingEvents: false }],
+    [{ gender: 'MALE', birthYear: 1990, friendsSeeEventHistory: true }],
+    // The switches are booleans.
     [{ friendsSeeEventHistory: 'true', friendsSeeUpcomingEvents: false }],
     [{ friendsSeeEventHistory: true, friendsSeeUpcomingEvents: 1 }],
     [{ friendsSeeEventHistory: null, friendsSeeUpcomingEvents: false }],
   ])('refuses %j', async (body) => {
     await expect(
-      validate(UpdateFriendVisibilityDto, body),
+      validate(UpdatePrivateDetailsDto, body),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

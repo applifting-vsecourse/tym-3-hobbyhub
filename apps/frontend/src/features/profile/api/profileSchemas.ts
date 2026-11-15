@@ -72,12 +72,14 @@ export type UpdateProfileInput = {
   cover?: string | null
 }
 
+/**
+ * `PUT /profile/private`: the gender with the year of birth, (#227) the two
+ * switches of what friends see, or both, saved in one write. Each pair is sent
+ * whole or not at all; the server refuses half of one.
+ */
 export type UpdatePrivateDetailsInput = {
-  gender: (typeof GENDERS)[number]
-  birthYear: number
-}
-
-export type UpdateFriendVisibilityInput = {
-  friendsSeeEventHistory: boolean
-  friendsSeeUpcomingEvents: boolean
+  gender?: (typeof GENDERS)[number]
+  birthYear?: number
+  friendsSeeEventHistory?: boolean
+  friendsSeeUpcomingEvents?: boolean
 }

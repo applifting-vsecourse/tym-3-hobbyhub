@@ -73,22 +73,15 @@ export class ProfileRepository {
     });
   }
 
+  // The private details and (#227) what friends may see of the user's
+  // events: whatever of them is given, in one update.
   async updatePrivate(
     userId: string,
-    data: { gender: Gender; birthYear: number },
-  ): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { ...data, updatedAt: new Date() },
-    });
-  }
-
-  // #227: what friends may see of the user's events.
-  async updateFriendVisibility(
-    userId: string,
     data: {
-      friendsSeeEventHistory: boolean;
-      friendsSeeUpcomingEvents: boolean;
+      gender?: Gender;
+      birthYear?: number;
+      friendsSeeEventHistory?: boolean;
+      friendsSeeUpcomingEvents?: boolean;
     },
   ): Promise<void> {
     await this.prisma.user.update({

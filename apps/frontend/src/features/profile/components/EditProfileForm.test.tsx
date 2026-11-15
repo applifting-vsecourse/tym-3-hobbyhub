@@ -14,7 +14,6 @@ const requests = vi.hoisted(() => ({
   updateLocation: vi.fn(),
   removeLocation: vi.fn(),
   updatePrivateDetails: vi.fn(),
-  updateFriendVisibility: vi.fn(),
 }))
 vi.mock("@/features/profile/api/profileRequests", () => requests)
 
@@ -83,7 +82,6 @@ describe("EditProfileForm", () => {
     expect(requests.updateInterests).not.toHaveBeenCalled()
     expect(requests.updateLocation).not.toHaveBeenCalled()
     expect(requests.updatePrivateDetails).not.toHaveBeenCalled()
-    expect(requests.updateFriendVisibility).not.toHaveBeenCalled()
   })
 
   describe("what friends see (#227)", () => {
@@ -113,17 +111,34 @@ describe("EditProfileForm", () => {
 
       await userEvent.click(upcoming())
       expect(upcoming()).toBeChecked()
-      expect(requests.updateFriendVisibility).not.toHaveBeenCalled()
+      expect(requests.updatePrivateDetails).not.toHaveBeenCalled()
 
       await userEvent.click(screen.getByRole("button", { name: "Uložit" }))
 
-      await waitFor(() => expect(requests.updateFriendVisibility).toHaveBeenCalled())
-      expect(requests.updateFriendVisibility.mock.calls[0]?.[0]).toEqual({
+      await waitFor(() => expect(requests.updatePrivateDetails).toHaveBeenCalled())
+      expect(requests.updatePrivateDetails.mock.calls[0]?.[0]).toEqual({
         friendsSeeEventHistory: true,
         friendsSeeUpcomingEvents: true,
       })
       expect(requests.updateProfile).not.toHaveBeenCalled()
-      expect(requests.updatePrivateDetails).not.toHaveBeenCalled()
+    })
+
+    it("saves the switches together with a corrected gender in one request", async () => {
+      await renderForm()
+
+      await userEvent.click(history())
+      await userEvent.click(screen.getByRole("combobox", { name: "Pohlaví" }))
+      await userEvent.click(await screen.findByRole("option", { name: "Muž" }))
+      await userEvent.click(screen.getByRole("button", { name: "Uložit" }))
+
+      await waitFor(() => expect(requests.updatePrivateDetails).toHaveBeenCalled())
+      expect(requests.updatePrivateDetails).toHaveBeenCalledTimes(1)
+      expect(requests.updatePrivateDetails.mock.calls[0]?.[0]).toEqual({
+        gender: "MALE",
+        birthYear: 1990,
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: false,
+      })
     })
 
     it("toggles a switch from its label", async () => {

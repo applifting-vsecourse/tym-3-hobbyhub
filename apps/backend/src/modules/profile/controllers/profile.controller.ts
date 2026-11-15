@@ -26,7 +26,6 @@ import {
 } from './dto/profile.response.dto';
 import { UpdateProfileLocationDto } from './dto/update-profile-location.dto';
 import {
-  UpdateFriendVisibilityDto,
   UpdatePrivateDetailsDto,
   UpdateProfileDto,
 } from './dto/update-profile.dto';
@@ -52,8 +51,8 @@ export class ProfileController {
     );
   }
 
-  // Declared after `GET /profile`; `private`, `friend-visibility`, `activities`
-  // and `location` are PUT routes, so the id cannot swallow them.
+  // Declared after `GET /profile`; `private`, `activities` and `location` are
+  // PUT routes, so the id cannot swallow them.
   @Get(':userId')
   @ApiOperation({ summary: "Another person's public profile" })
   @ApiResponse({ status: 200, type: PublicProfileResponseDto })
@@ -81,32 +80,32 @@ export class ProfileController {
   }
 
   @Put('private')
-  @ApiOperation({ summary: 'Correct the private gender and year of birth' })
+  @ApiOperation({
+    summary:
+      'Correct the private gender and year of birth, and choose what my friends see of my events',
+  })
   @ApiResponse({ status: 200, type: ProfileResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid input or under 18' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input, half of a pair, or under 18',
+  })
   async updatePrivate(
     @User() user: Identity,
     @Body() body: UpdatePrivateDetailsDto,
   ): Promise<ProfileResponseDto> {
     return ProfileResponseDto.fromDomain(
-      await this.profileService.updatePrivate(user, body),
-    );
-  }
-
-  @Put('friend-visibility')
-  @ApiOperation({
-    summary: 'Choose what my friends see of my events (history, upcoming)',
-  })
-  @ApiResponse({ status: 200, type: ProfileResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
-  async updateFriendVisibility(
-    @User() user: Identity,
-    @Body() body: UpdateFriendVisibilityDto,
-  ): Promise<ProfileResponseDto> {
-    return ProfileResponseDto.fromDomain(
-      await this.profileService.updateFriendVisibility(user, {
-        friendsSeeEventHistory: body.friendsSeeEventHistory,
-        friendsSeeUpcomingEvents: body.friendsSeeUpcomingEvents,
+      await this.profileService.updatePrivate(user, {
+        ...(body.gender !== undefined &&
+          body.birthYear !== undefined && {
+            details: { gender: body.gender, birthYear: body.birthYear },
+          }),
+        ...(body.friendsSeeEventHistory !== undefined &&
+          body.friendsSeeUpcomingEvents !== undefined && {
+            friendVisibility: {
+              friendsSeeEventHistory: body.friendsSeeEventHistory,
+              friendsSeeUpcomingEvents: body.friendsSeeUpcomingEvents,
+            },
+          }),
       }),
     );
   }

@@ -21,7 +21,6 @@ import {
   PublicFields,
 } from "@/features/profile/components/EditProfileFields"
 import {
-  useUpdateFriendVisibility,
   useUpdateInterests,
   useUpdateLocation,
   useUpdatePrivateDetails,
@@ -66,7 +65,6 @@ export function EditProfileForm({
   const updateInterests = useUpdateInterests()
   const updateLocation = useUpdateLocation()
   const updatePrivate = useUpdatePrivateDetails()
-  const updateFriendVisibility = useUpdateFriendVisibility()
 
   useRevalidateOnLanguageChange(form)
 
@@ -107,27 +105,31 @@ export function EditProfileForm({
         await updateLocation.mutateAsync({ street, city, postalCode, country, latitude, longitude })
         done = { ...done, address: values.address }
       }
-      if (
+      // The private details and what friends see (#227) go in one request,
+      // which the server saves in one write: never one without the other.
+      const details =
         values.gender &&
         values.birthYear &&
         (values.gender !== done.gender || values.birthYear !== done.birthYear)
-      ) {
-        await updatePrivate.mutateAsync({
-          gender: values.gender,
-          birthYear: Number(values.birthYear.trim()),
-        })
-        done = { ...done, gender: values.gender, birthYear: values.birthYear }
-      }
-      if (
+          ? { gender: values.gender, birthYear: values.birthYear }
+          : null
+      const visibility =
         values.friendsSeeEventHistory !== done.friendsSeeEventHistory ||
         values.friendsSeeUpcomingEvents !== done.friendsSeeUpcomingEvents
-      ) {
-        const visibility = {
-          friendsSeeEventHistory: values.friendsSeeEventHistory,
-          friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
-        }
-        await updateFriendVisibility.mutateAsync(visibility)
-        done = { ...done, ...visibility }
+          ? {
+              friendsSeeEventHistory: values.friendsSeeEventHistory,
+              friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
+            }
+          : null
+      if (details || visibility) {
+        await updatePrivate.mutateAsync({
+          ...(details && {
+            gender: details.gender,
+            birthYear: Number(details.birthYear.trim()),
+          }),
+          ...visibility,
+        })
+        done = { ...done, ...details, ...visibility }
       }
     } catch (error) {
       setSaved(done)
@@ -143,8 +145,7 @@ export function EditProfileForm({
     updateProfile.isPending ||
     updateInterests.isPending ||
     updateLocation.isPending ||
-    updatePrivate.isPending ||
-    updateFriendVisibility.isPending
+    updatePrivate.isPending
 
   return (
     <AppForm

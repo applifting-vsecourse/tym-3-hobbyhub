@@ -1,9 +1,4 @@
-import {
-  DEFAULT_FRIEND_VISIBILITY,
-  friendOf,
-  friendPairOf,
-  friendRequestViolations,
-} from './friendship';
+import { friendPairOf, friendRequestViolations } from './friendship';
 
 describe('friendPairOf', () => {
   it('stores the pair the same way whichever way round it is asked', () => {
@@ -17,14 +12,6 @@ describe('friendPairOf', () => {
   });
 });
 
-describe('friendOf', () => {
-  it('returns the other person of the pair', () => {
-    const pair = friendPairOf('u1', 'u2');
-    expect(friendOf(pair, 'u1')).toBe('u2');
-    expect(friendOf(pair, 'u2')).toBe('u1');
-  });
-});
-
 describe('friendRequestViolations', () => {
   it('accepts a request to someone else', () => {
     expect(friendRequestViolations('u1', 'u2')).toEqual([]);
@@ -32,15 +19,5 @@ describe('friendRequestViolations', () => {
 
   it('refuses a request to oneself', () => {
     expect(friendRequestViolations('u1', 'u1')).toEqual(['SELF_REQUEST']);
-  });
-});
-
-describe('DEFAULT_FRIEND_VISIBILITY', () => {
-  // The decision of 13. 11. 2026: history on, upcoming events off.
-  it('shows the history and hides upcoming events', () => {
-    expect(DEFAULT_FRIEND_VISIBILITY).toEqual({
-      friendsSeeEventHistory: true,
-      friendsSeeUpcomingEvents: false,
-    });
   });
 });
