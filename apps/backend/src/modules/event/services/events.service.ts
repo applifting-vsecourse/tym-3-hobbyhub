@@ -359,6 +359,19 @@ export class EventsService {
     return event;
   }
 
+  // #240, ADR-0023: who organizes an event the viewer may report, which is
+  // any event whose detail they may open. Anything else does not exist for
+  // them, the same 404 as the detail.
+  async getVisibleEventOrganizerIds(
+    id: string,
+    viewer: Identity,
+  ): Promise<readonly string[]> {
+    await this.getEventDetail(id, viewer);
+    const facts = await this.eventRepository.getEventFacts(id);
+    if (!facts) throw new NotFoundException('Event not found');
+    return facts.organizerIds;
+  }
+
   private async isOrganizedByHidden(
     eventId: string,
     viewerId: string,

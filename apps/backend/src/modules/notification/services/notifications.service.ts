@@ -245,6 +245,17 @@ export class NotificationsService {
     });
   }
 
+  // #240, ADR-0023: a report the user filed was dealt with. It names neither
+  // the target nor the outcome, so it gives away no block between two people
+  // and nothing of what the administrator did. Nobody is the actor.
+  notifyReportResolved(input: { reporterId: string }): Promise<void> {
+    return this.record({
+      type: 'REPORT_RESOLVED',
+      recipientIds: [input.reporterId],
+      actorId: null,
+    });
+  }
+
   // F-07.3: the group's founder and admins (ADR-0007).
   notifyNewMembershipRequest(input: {
     group: AGroup;

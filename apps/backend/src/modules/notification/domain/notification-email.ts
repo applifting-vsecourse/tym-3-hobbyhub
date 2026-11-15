@@ -175,6 +175,22 @@ const groupDraft = (
  * The e-mail of a notification, or null when it has none: a type nothing
  * creates yet (F-05.8, F-05.9 …), or the event or group is gone.
  */
+// #240, ADR-0023: about neither an event nor a group. Only that the report was
+// dealt with: not what it was about, nor how.
+const standaloneDraft = (notification: Notification): Draft | null => {
+  switch (notification.type) {
+    case 'REPORT_RESOLVED':
+      return {
+        heading: 'Tvoje nahlášení jsme vyřídili',
+        body: 'Děkujeme, že pomáháš udržet HobbyHub bezpečný. Správce tvoje nahlášení prošel a vyřídil.',
+        buttonLabel: 'Zobrazit upozornění',
+        path: '/notifications',
+      };
+    default:
+      return null;
+  }
+};
+
 export const notificationEmailOf = (
   notification: Notification,
 ): NotificationEmailContent | null => {
@@ -182,7 +198,7 @@ export const notificationEmailOf = (
     ? eventDraft(notification, notification.event.id)
     : notification.group
       ? groupDraft(notification, notification.group.id)
-      : null;
+      : standaloneDraft(notification);
   if (!draft) return null;
   return {
     ...draft,

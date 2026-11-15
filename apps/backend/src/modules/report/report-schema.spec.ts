@@ -155,9 +155,9 @@ describeDb('reports in the database (#240)', () => {
     const targetUserId = await aUser();
     const targetEventId = await anEvent(targetUserId);
 
-    await expect(report({ reporterId, targetEventId })).resolves.toMatchObject(
-      { status: ReportStatus.NEW },
-    );
+    await expect(report({ reporterId, targetEventId })).resolves.toMatchObject({
+      status: ReportStatus.NEW,
+    });
     await expect(report({ reporterId, targetUserId })).resolves.toMatchObject({
       status: ReportStatus.NEW,
     });
@@ -268,9 +268,9 @@ describeDb('reports in the database (#240)', () => {
         resolutionNote: NOTE,
       },
     });
-    await expect(report({ reporterId, targetUserId })).resolves.toMatchObject(
-      { status: ReportStatus.NEW },
-    );
+    await expect(report({ reporterId, targetUserId })).resolves.toMatchObject({
+      status: ReportStatus.NEW,
+    });
   });
 
   it('keeps one open report per reporter and event, but others may report it too', async () => {
