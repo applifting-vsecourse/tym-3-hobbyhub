@@ -54,6 +54,18 @@ function TargetLink({
           {children}
         </Link>
       )
+    case "eventParticipants":
+      return (
+        <Link
+          to="/events/$eventId/participants"
+          params={{ eventId: target.eventId }}
+          search={{ tab: "participants" }}
+          className={className}
+          onClick={onClick}
+        >
+          {children}
+        </Link>
+      )
     case "event":
       return (
         <Link
@@ -202,7 +214,7 @@ export function NotificationItem({
           )}
         >
           {isUnread ? <span className="sr-only">{t("notifications.unread")} </span> : null}
-          {notificationText(t, notification)}
+          {notificationText(t, notification, { now, locale: i18n.language })}
         </span>
         {notification.message ? (
           <span className="typo-small break-words whitespace-pre-line text-muted-foreground">

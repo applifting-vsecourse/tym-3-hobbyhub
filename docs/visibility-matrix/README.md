@@ -155,6 +155,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Historie akcí**, kde člověk byl a co pořádal, je až pro přátele. To je hlavní věc, kterou přátelství přináší. Jméno organizátora je i tak veřejné přes detail akce ([#8][8]).
 - **„Jen když povolil“**: historii řídí přepínač „Přátelé vidí moji historii akcí“ (výchozí zapnuto), nadcházející akce přepínač „Přátelé vidí moje budoucí akce“ (výchozí vypnuto). Když je přepínač vypnutý, část na profilu vůbec není, ani hláška, že ji dotyčný skryl. Kdo má jen čekající žádost o přátelství, je pro tuto tabulku **přihlášený**, ne přítel.
 - **Notifikace chodí i e-mailem**, jen příjemci a jen na jeho ověřenou adresu ([#61][61], [#58][58]). E-mail podle pravidla výše říká jen, co se stalo, a odkazem vede do aplikace: nenese jméno původce, název akce ani skupiny, ani zprávu organizátora, správce nebo účastníka, který zrušil účast. Detail se ukáže až po přihlášení.
+- **Připomínka před začátkem akce** ([#233][233], [ADR-0021](../adr/adr-0021.md)) chodí 24 a 2 hodiny před začátkem účastníkům se schváleným místem a organizátorům (hlavnímu i spoluorganizátorům). Ve zvonečku nese název akce a začátek, organizátorům navíc obsazenost (obsazeno z kapacity, kolik chybí do minima), kterou vidí už v přehledu účastníků. E-mail podle pravidla výše říká jen „akce se blíží“: bez názvu, času, místa i počtů.
 - **Žádost o přátelství** ([#228][228]) přijde příjemci jako upozornění v aplikaci se jménem žadatele (to vidí i na jeho profilu) a e-mailem jen „Máš novou žádost o přátelství“, bez jména, s odkazem na záložku Žádosti. Nejvýš 3 takové za hodinu od téhož člověka, další přijdou tiše. Zrušená žádost upozornění odstraní, odeslaný e-mail ne. Přijetí žádosti dostane žadatel jen jako upozornění v aplikaci, bez e-mailu; zamítnutí nedostane nikdo.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec.
 
@@ -233,3 +234,4 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [226]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/226
 [227]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/227
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
+[233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233

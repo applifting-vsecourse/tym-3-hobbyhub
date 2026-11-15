@@ -68,11 +68,24 @@ enum NotificationType {
   // F-09.3: a change of time or place, and a cancellation, of an event one goes to.
   EVENT_CHANGED
   EVENT_CANCELLED
+  // #233, ADR-0021: the event one goes to, or organizes, starts soon.
+  EVENT_REMINDER
+  HOSTED_EVENT_REMINDER
   // #228, ADR-0023: someone asks to be friends; the request was accepted.
   FRIEND_REQUEST
   FRIEND_REQUEST_ACCEPTED
 
   @@map("notification_type")
+}
+
+// #233, ADR-0021: which reminder before the start of an event.
+enum EventReminderKind {
+  // 24 hours before the start.
+  DAY
+  // 2 hours before the start.
+  TWO_HOURS
+
+  @@map("event_reminder_kind")
 }
 
 enum EventStatus {
@@ -387,6 +400,7 @@ model Event {
   group                 Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
   groupId               String?
   notifications         Notification[]
+  reminders             EventReminder[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -423,6 +437,24 @@ model Participation {
   @@index([userId])
   @@index([eventId, status])
   @@map("participation")
+}
+
+// #233, ADR-0021: a reminder that went out for an event. The poller inserts
+// the row before it sends: whoever fails to insert it sends nothing, so a
+// reminder goes once per start, and again when the start moves.
+model EventReminder {
+  id String @id @default(cuid())
+
+  kind         EventReminderKind
+  // The start the reminder was for; a moved event gets new reminders.
+  eventStartAt DateTime
+  sentAt       DateTime          @default(now())
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  @@unique([eventId, kind, eventStartAt])
+  @@map("event_reminder")
 }
 
 // F-06.1 request to join an event (ADR-0003). It takes no seat; the

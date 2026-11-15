@@ -27,10 +27,13 @@ export type NotificationEmailContent = {
 };
 
 // Someone who goes would come for nothing without these, so they go first
-// and may use the reserve of the daily budget.
+// and may use the reserve of the daily budget. A reminder (#233) is worth
+// nothing once it is late, so it goes first too (ADR-0021).
 export const CRITICAL_NOTIFICATION_TYPES: readonly NotificationType[] = [
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
+  'EVENT_REMINDER',
+  'HOSTED_EVENT_REMINDER',
 ];
 
 const changedHeading = (changes: EventChange[]): string => {
@@ -90,6 +93,24 @@ const eventDraft = (
         path: eventPath,
       };
     }
+    // #233: no title, time or place; they are behind the button. Nor "zítra"
+    // or "za 2 hodiny": a late reminder may go after an outage, and the
+    // e-mail may be read later still (ADR-0021).
+    case 'EVENT_REMINDER':
+      return {
+        heading: 'Akce, na kterou jdeš, se blíží',
+        body: 'Kdy a kde se akce koná, najdeš v jejím detailu.',
+        buttonLabel: 'Zobrazit akci',
+        path: eventPath,
+      };
+    // #233: the organizers; how full it is stays in the app, like the names.
+    case 'HOSTED_EVENT_REMINDER':
+      return {
+        heading: 'Tvoje akce se blíží',
+        body: 'Kolik lidí přijde, najdeš v přehledu účastníků akce.',
+        buttonLabel: 'Zobrazit účastníky',
+        path: `${eventPath}/participants?tab=participants`,
+      };
     case 'EVENT_CANCELLED':
       return {
         heading: 'Akce, na kterou jdeš, byla zrušena',

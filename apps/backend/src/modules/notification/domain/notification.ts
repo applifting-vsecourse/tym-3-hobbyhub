@@ -20,6 +20,8 @@ export const NOTIFICATION_TYPES = [
   'MONTHLY_RECOMMENDATION',
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
+  'EVENT_REMINDER',
+  'HOSTED_EVENT_REMINDER',
   'FRIEND_REQUEST',
   'FRIEND_REQUEST_ACCEPTED',
 ] as const;
@@ -46,7 +48,13 @@ export const NOTIFICATION_TYPES_BY_KIND = {
     'FRIEND_REQUEST',
     'FRIEND_REQUEST_ACCEPTED',
   ],
-  events: ['EVENT_CHANGED', 'EVENT_CANCELLED', 'EVENT_BOARD'],
+  events: [
+    'EVENT_CHANGED',
+    'EVENT_CANCELLED',
+    'EVENT_BOARD',
+    'EVENT_REMINDER',
+    'HOSTED_EVENT_REMINDER',
+  ],
   groups: ['GROUP_INVITATION'],
   other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION'],
 } as const satisfies Record<NotificationKind, readonly NotificationType[]>;
@@ -69,6 +77,18 @@ export type Decision = (typeof DECISIONS)[number];
 export const EVENT_CHANGES = ['TIME', 'PLACE'] as const;
 export type EventChange = (typeof EVENT_CHANGES)[number];
 
+// #233, ADR-0021: which reminder before the start: 24 hours, or 2 hours. The
+// same values as the `event_reminder_kind` enum.
+export const EVENT_REMINDERS = ['DAY', 'TWO_HOURS'] as const;
+export type EventReminderKind = (typeof EVENT_REMINDERS)[number];
+
+// HOSTED_EVENT_REMINDER: how full the event was when the reminder went out.
+export type ReminderOccupancy = {
+  occupiedSpots: number;
+  maxParticipants: number;
+  missingToMinimum: number;
+};
+
 // What the text needs besides the linked rows. Every field is optional; which
 // ones a type carries is written next to each `notify…` method of the service.
 export type NotificationPayload = {
@@ -79,6 +99,13 @@ export type NotificationPayload = {
   message?: string;
   // EVENT_CHANGED
   changes?: EventChange[];
+  // EVENT_REMINDER, HOSTED_EVENT_REMINDER
+  reminder?: EventReminderKind;
+  // EVENT_REMINDER, HOSTED_EVENT_REMINDER: the start the reminder was for, an
+  // ISO date (JSON has no dates).
+  startsAt?: string;
+  // HOSTED_EVENT_REMINDER
+  occupancy?: ReminderOccupancy;
 };
 
 export type NotificationPerson = { id: string; name: string };

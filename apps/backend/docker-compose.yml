@@ -14,3 +14,20 @@ services:
       timeout: 3s
       retries: 20
       start_period: 10s
+
+  # A local inbox: every e-mail the backend sends ends up here, readable at
+  # http://localhost:8025. Nothing leaves the machine.
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    restart: always
+    environment:
+      # The SMTP adapter refuses to send without encryption (requireTLS), so
+      # Mailpit offers STARTTLS with a self-signed certificate it makes on
+      # start; the backend accepts it only with SMTP_ALLOW_SELF_SIGNED.
+      MP_SMTP_TLS_CERT: sans:localhost
+      MP_SMTP_TLS_KEY: sans:localhost
+      # Any user name and password will do.
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+    ports:
+      - 1025:1025
+      - 8025:8025

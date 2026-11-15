@@ -32,6 +32,7 @@ const aFriendRequest = (
   decision: null,
   message: null,
   changes: [],
+  reminder: null,
   ...overrides,
 })
 
