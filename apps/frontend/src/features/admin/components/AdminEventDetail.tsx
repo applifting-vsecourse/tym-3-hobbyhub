@@ -13,6 +13,7 @@ import { EventBadges } from "@/features/admin/components/AdminEvents"
 import { AdminFacts, AdminSection } from "@/features/admin/components/AdminFacts"
 import { AdminLink } from "@/features/admin/components/AdminLink"
 import { AdminState } from "@/features/admin/components/AdminState"
+import { AdminEventReports } from "@/features/admin/components/AdminTargetReports"
 import { HideEventSheet } from "@/features/admin/components/HideEventSheet"
 import { RestoreEventSheet } from "@/features/admin/components/RestoreEventSheet"
 import { useAdminFormat } from "@/features/admin/lib/format"
@@ -21,7 +22,7 @@ import { useAdminFormat } from "@/features/admin/lib/format"
  * #239: hide the event from everyone but its organizers, or bring it back.
  * A draft is seen by nobody, so it has nothing to hide.
  */
-function EventModeration({ detail }: { detail: Detail }) {
+export function EventModeration({ detail }: { detail: Detail }) {
   const { t } = useTranslation()
   const format = useAdminFormat()
   const [sheet, setSheet] = useState<"hide" | "restore" | null>(null)
@@ -162,6 +163,8 @@ export function AdminEventDetail({ eventId }: { eventId: string }) {
       </AdminSection>
 
       <EventModeration detail={query.data} />
+
+      <AdminEventReports eventId={eventId} />
 
       <AdminSection title={t("admin.event.description")}>
         <p className="typo-body whitespace-pre-line text-foreground">{event.description}</p>

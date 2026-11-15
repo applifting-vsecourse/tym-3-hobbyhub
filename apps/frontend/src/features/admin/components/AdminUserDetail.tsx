@@ -13,6 +13,7 @@ import { EventBadges } from "@/features/admin/components/AdminEvents"
 import { AdminFacts, AdminSection } from "@/features/admin/components/AdminFacts"
 import { AdminLink } from "@/features/admin/components/AdminLink"
 import { AdminState } from "@/features/admin/components/AdminState"
+import { AdminUserReports } from "@/features/admin/components/AdminTargetReports"
 import { AdminUserBlocks } from "@/features/admin/components/AdminUserBlocks"
 import { UserStatusBadge } from "@/features/admin/components/AdminUsers"
 import { useAdminFormat } from "@/features/admin/lib/format"
@@ -78,6 +79,8 @@ export function AdminUserDetail({ userId }: { userId: string }) {
       </AdminSection>
 
       <AdminUserBlocks user={{ id: userId, name: account.name }} />
+
+      <AdminUserReports userId={userId} />
 
       <UserEvents userId={userId} />
     </div>

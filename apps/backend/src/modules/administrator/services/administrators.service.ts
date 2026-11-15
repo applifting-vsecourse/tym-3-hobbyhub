@@ -1,5 +1,6 @@
 import {
   AdministratorListItem,
+  AdministratorRef,
   DeactivationViolation,
   deactivationViolations,
   InvitationViolation,
@@ -62,6 +63,15 @@ export class AdministratorsService {
 
   listAdministrators(): Promise<AdministratorListItem[]> {
     return this.repository.listAdministrators();
+  }
+
+  // #240, ADR-0023: someone a report can be handed to: one who can sign in.
+  // Null for anyone else, invited and deactivated alike.
+  async getActiveAdministrator(id: string): Promise<AdministratorRef | null> {
+    const administrator = await this.repository.getAdministrator(id);
+    return administrator?.status === 'ACTIVE'
+      ? { id: administrator.id, name: administrator.name }
+      : null;
   }
 
   async invite(

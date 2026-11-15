@@ -19,5 +19,7 @@ import { ProfileService } from './services/profile.service';
   ],
   controllers: [ProfileController, AdminUsersController],
   providers: [ProfileService, ProfileRepository],
+  // #240: a report of a user needs a profile the reporter may see.
+  exports: [ProfileService],
 })
 export class ProfileModule {}

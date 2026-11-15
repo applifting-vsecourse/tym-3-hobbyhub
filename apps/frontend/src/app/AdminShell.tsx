@@ -1,15 +1,19 @@
 import type { ReactNode } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import { Header } from "@/components/Header/Header"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
+import { newReportsCountQueryOptions } from "@/features/admin/api/reportQueryOptions"
 import { useAdminSession } from "@/features/admin/hooks/useAdminSession"
 import { useAdminSignOut } from "@/features/admin/hooks/useAdminSignOut"
 
 const SECTIONS = [
+  { to: ROUTES.adminReports, label: "admin.nav.reports" },
   { to: ROUTES.adminUsers, label: "admin.nav.users" },
   { to: ROUTES.adminEvents, label: "admin.nav.events" },
   { to: ROUTES.adminGroups, label: "admin.nav.groups" },
@@ -26,6 +30,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
   const { administrator } = useAdminSession()
   const signOut = useAdminSignOut()
+  // #240: how many reports nobody has taken up yet, next to "Nahlášení".
+  const newReports = useQuery({ ...newReportsCountQueryOptions(), enabled: administrator !== null })
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -68,6 +74,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 activeProps={{ className: "font-medium text-foreground", "aria-current": "page" }}
               >
                 {t(section.label)}
+                {section.to === ROUTES.adminReports && newReports.data ? (
+                  <>
+                    <Badge
+                      variant="pending"
+                      className="ml-2"
+                      aria-hidden
+                    >
+                      {newReports.data}
+                    </Badge>{" "}
+                    <span className="sr-only">
+                      {t("admin.nav.newReports", { count: newReports.data })}
+                    </span>
+                  </>
+                ) : null}
               </Link>
             ))}
           </nav>

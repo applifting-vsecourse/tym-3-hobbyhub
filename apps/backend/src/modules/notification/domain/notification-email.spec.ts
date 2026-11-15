@@ -235,6 +235,28 @@ describe('notificationEmailOf', () => {
     });
   });
 
+  // #240, ADR-0023: only that the report was dealt with, never about what or
+  // how: it must not give away a block between two people.
+  it('tells a reporter their report was dealt with, and nothing more', () => {
+    const content = notificationEmailOf(
+      aNotification({
+        type: 'REPORT_RESOLVED',
+        actor: null,
+        event: null,
+        group: null,
+      }),
+    );
+
+    expect(content).toEqual({
+      subject: 'Tvoje nahlášení jsme vyřídili',
+      heading: 'Tvoje nahlášení jsme vyřídili',
+      body: 'Děkujeme, že pomáháš udržet HobbyHub bezpečný. Správce tvoje nahlášení prošel a vyřídil.',
+      buttonLabel: 'Zobrazit upozornění',
+      path: '/notifications',
+      critical: false,
+    });
+  });
+
   it('has no e-mail for a type nothing creates yet', () => {
     expect(
       notificationEmailOf(aNotification({ type: 'SPOT_AVAILABLE' })),

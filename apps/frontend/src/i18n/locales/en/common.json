@@ -201,6 +201,9 @@
       "events": "Events",
       "groups": "Groups",
       "label": "Administration navigation",
+      "newReports_one": "{{count}} new report",
+      "newReports_other": "{{count}} new reports",
+      "reports": "Reports",
       "users": "Users"
     },
     "no": "No",
@@ -213,6 +216,110 @@
       "INVITED": "Invited",
       "NO_SHOW": "No-show",
       "WAITLISTED": "Substitute"
+    },
+    "reports": {
+      "aboutEvent": "Reports about the event",
+      "aboutUser": "Reports about the user",
+      "assign": {
+        "administrator": "Administrator",
+        "description": "The chosen administrator becomes responsible.",
+        "noColleagues": "Nobody to hand it to: there is no other active administrator.",
+        "pickRequired": "Choose an administrator",
+        "placeholder": "Choose an administrator",
+        "submit": "Hand over",
+        "title": "Hand the report over"
+      },
+      "assignee": "Responsible",
+      "basics": "Report",
+      "createdAt": "Received",
+      "detailTitle": {
+        "EVENT": "Report of the event {{name}}",
+        "USER": "Report of {{name}}"
+      },
+      "empty": "No open reports. New ones appear here as soon as someone sends them.",
+      "filedByUser": "Reports filed",
+      "filter": {
+        "anyTarget": "Events and users",
+        "mine": "Only mine",
+        "status": "State",
+        "statuses": {
+          "ALL": "All",
+          "IN_PROGRESS": "In progress",
+          "NEW": "New",
+          "OPEN": "Open",
+          "RESOLVED": "Resolved"
+        },
+        "target": "What is reported",
+        "targets": {
+          "EVENT": "Events",
+          "USER": "Users"
+        }
+      },
+      "history": {
+        "ASSIGNED": "Assigned to {{assignee}} · {{admin}}",
+        "CREATED": "Received from {{reporter}}",
+        "REOPENED": "Reopened · {{admin}}",
+        "RESOLVED": "Resolved · {{admin}}",
+        "title": "History"
+      },
+      "intervention": {
+        "blockPair": "Block the pair",
+        "pairText": "A report of a user is a request to block: once blocked, {{reporter}} and {{target}} no longer see each other. Neither of them learns of the block.",
+        "pairTitle": "Blocking the pair"
+      },
+      "noMatch": "No report matches the filter.",
+      "noneAboutEvent": "Nobody has reported this event.",
+      "noneAboutUser": "Nobody has reported this user.",
+      "noneFiledByUser": "The user has reported nothing.",
+      "otherOpenEmpty": "There are no other open reports about the same target.",
+      "otherOpenTitle": "Other open reports about the same target",
+      "otherOpen_one": "+{{count}} more open",
+      "otherOpen_other": "+{{count}} more open",
+      "reason": "Reason",
+      "refused": {
+        "ALREADY_ASSIGNED": "The chosen administrator has the report already.",
+        "ALREADY_RESOLVED": "The report is resolved already.",
+        "ASSIGNEE_NOT_ACTIVE": "The chosen administrator no longer has access to the administration.",
+        "CHANGED": "A colleague changed the report meanwhile. The page shows where it stands now.",
+        "NOT_RESOLVED": "The report is not resolved; there is nothing to reopen."
+      },
+      "reporter": "Reported by",
+      "resolutionNote": "Resolution note",
+      "resolve": {
+        "description": "Only administrators see the note. The reporter is told the report was dealt with, not how.",
+        "note": "Resolution note",
+        "notePlaceholder": "E.g. the pair was blocked; the behaviour matches other reports too.",
+        "noteTooLong": "The note can be at most 500 characters",
+        "noteTooShort": "Write a note of at least 10 characters",
+        "submit": "Resolve",
+        "title": "Resolve the report"
+      },
+      "resolvedAt": "Resolved",
+      "state": "State",
+      "status": {
+        "IN_PROGRESS": "In progress",
+        "NEW": "New",
+        "RESOLVED": "Resolved"
+      },
+      "stepFailed": "The step failed. Please try again.",
+      "steps": {
+        "handOver": "Hand to a colleague",
+        "handedOver": "Report handed over.",
+        "reopen": "Reopen",
+        "reopened": "The report is open again.",
+        "resolve": "Resolve",
+        "resolved": "Report resolved.",
+        "take": "Take over",
+        "taken": "The report is in your hands.",
+        "title": "Handling"
+      },
+      "target": "Target",
+      "targetType": {
+        "EVENT": "Event",
+        "USER": "User"
+      },
+      "text": "What happened",
+      "title": "Reports"
     },
     "retry": "Try again",
     "setPassword": {
@@ -1468,6 +1575,7 @@
         "group": "{{name}} asks to join the group {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
+      "REPORT_RESOLVED": "We have dealt with your report. Thank you for helping keep HobbyHub safe.",
       "REQUEST_DECIDED": {
         "event": {
           "APPROVED": "Your request to join the event {{title}} was approved",
@@ -1827,6 +1935,42 @@
       "noBirthYear": "You have not added your year of birth yet",
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
+    }
+  },
+  "reports": {
+    "done": "Thank you, we have passed your report to the administrators. We will let you know once they deal with it.",
+    "errors": {
+      "alreadyReported": "You have reported this already. We will let you know once the administrators deal with it.",
+      "failed": "The report could not be sent. Please try again.",
+      "notAllowed": "You cannot report this.",
+      "notFound": "This is no longer on HobbyHub.",
+      "unknownReason": "The chosen reason no longer exists. Please choose another one."
+    },
+    "event": {
+      "action": "Report event",
+      "description": "You are reporting the event {{name}}. Only the HobbyHub administrators see the report; the organizer will not learn of it.",
+      "textPlaceholder": "E.g. the description promises free entry, but the organizer asks for a payment in advance.",
+      "title": "Report event"
+    },
+    "form": {
+      "back": "Back",
+      "reason": "Reason",
+      "reasonPlaceholder": "Choose a reason",
+      "reasonRequired": "Choose why you are reporting this.",
+      "reasonsFailed": "The reasons could not be loaded.",
+      "reasonsRetry": "Try again",
+      "submit": "Send report",
+      "text": "What happened",
+      "textTooLong_one": "Keep it under {{count}} character",
+      "textTooLong_other": "Keep it under {{count}} characters",
+      "textTooShort_one": "Write at least {{count}} character.",
+      "textTooShort_other": "Write at least {{count}} characters."
+    },
+    "user": {
+      "action": "Report user",
+      "description": "You are reporting {{name}}. A report is also a request to block: the administrators decide whether to block the two of you from each other. The reported person will learn neither of the report nor of a block.",
+      "textPlaceholder": "E.g. repeated messages after the event, despite being asked to stop.",
+      "title": "Report user"
     }
   },
   "terms": {

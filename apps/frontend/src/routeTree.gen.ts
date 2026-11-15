@@ -43,6 +43,8 @@ import { Route as AdminAdminPagesEventsIndexRouteImport } from './routes/admin/_
 import { Route as AdminAdminPagesEventsEventIdRouteImport } from './routes/admin/_AdminPages/events/$eventId'
 import { Route as AdminAdminPagesGroupsIndexRouteImport } from './routes/admin/_AdminPages/groups/index'
 import { Route as AdminAdminPagesGroupsGroupIdRouteImport } from './routes/admin/_AdminPages/groups/$groupId'
+import { Route as AdminAdminPagesReportsIndexRouteImport } from './routes/admin/_AdminPages/reports/index'
+import { Route as AdminAdminPagesReportsReportIdRouteImport } from './routes/admin/_AdminPages/reports/$reportId'
 import { Route as AdminAdminPagesUsersIndexRouteImport } from './routes/admin/_AdminPages/users/index'
 import { Route as AdminAdminPagesUsersUserIdRouteImport } from './routes/admin/_AdminPages/users/$userId'
 
@@ -228,6 +230,18 @@ const AdminAdminPagesGroupsGroupIdRoute =
     path: '/groups/$groupId',
     getParentRoute: () => AdminAdminPagesRoute,
   } as any)
+const AdminAdminPagesReportsIndexRoute =
+  AdminAdminPagesReportsIndexRouteImport.update({
+    id: '/reports/',
+    path: '/reports/',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesReportsReportIdRoute =
+  AdminAdminPagesReportsReportIdRouteImport.update({
+    id: '/reports/$reportId',
+    path: '/reports/$reportId',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
 const AdminAdminPagesUsersIndexRoute =
   AdminAdminPagesUsersIndexRouteImport.update({
     id: '/users/',
@@ -273,9 +287,11 @@ export interface FileRoutesByFullPath {
   '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
   '/admin/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
   '/admin/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
+  '/admin/reports/$reportId': typeof AdminAdminPagesReportsReportIdRoute
   '/admin/users/$userId': typeof AdminAdminPagesUsersUserIdRoute
   '/admin/events/': typeof AdminAdminPagesEventsIndexRoute
   '/admin/groups/': typeof AdminAdminPagesGroupsIndexRoute
+  '/admin/reports/': typeof AdminAdminPagesReportsIndexRoute
   '/admin/users/': typeof AdminAdminPagesUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -309,9 +325,11 @@ export interface FileRoutesByTo {
   '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
   '/admin/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
   '/admin/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
+  '/admin/reports/$reportId': typeof AdminAdminPagesReportsReportIdRoute
   '/admin/users/$userId': typeof AdminAdminPagesUsersUserIdRoute
   '/admin/events': typeof AdminAdminPagesEventsIndexRoute
   '/admin/groups': typeof AdminAdminPagesGroupsIndexRoute
+  '/admin/reports': typeof AdminAdminPagesReportsIndexRoute
   '/admin/users': typeof AdminAdminPagesUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -348,9 +366,11 @@ export interface FileRoutesById {
   '/_ProtectedPages/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
   '/admin/_AdminPages/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
   '/admin/_AdminPages/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
+  '/admin/_AdminPages/reports/$reportId': typeof AdminAdminPagesReportsReportIdRoute
   '/admin/_AdminPages/users/$userId': typeof AdminAdminPagesUsersUserIdRoute
   '/admin/_AdminPages/events/': typeof AdminAdminPagesEventsIndexRoute
   '/admin/_AdminPages/groups/': typeof AdminAdminPagesGroupsIndexRoute
+  '/admin/_AdminPages/reports/': typeof AdminAdminPagesReportsIndexRoute
   '/admin/_AdminPages/users/': typeof AdminAdminPagesUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -387,9 +407,11 @@ export interface FileRouteTypes {
     | '/groups/$groupId/members'
     | '/admin/events/$eventId'
     | '/admin/groups/$groupId'
+    | '/admin/reports/$reportId'
     | '/admin/users/$userId'
     | '/admin/events/'
     | '/admin/groups/'
+    | '/admin/reports/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -423,9 +445,11 @@ export interface FileRouteTypes {
     | '/groups/$groupId/members'
     | '/admin/events/$eventId'
     | '/admin/groups/$groupId'
+    | '/admin/reports/$reportId'
     | '/admin/users/$userId'
     | '/admin/events'
     | '/admin/groups'
+    | '/admin/reports'
     | '/admin/users'
   id:
     | '__root__'
@@ -461,9 +485,11 @@ export interface FileRouteTypes {
     | '/_ProtectedPages/groups/$groupId/members'
     | '/admin/_AdminPages/events/$eventId'
     | '/admin/_AdminPages/groups/$groupId'
+    | '/admin/_AdminPages/reports/$reportId'
     | '/admin/_AdminPages/users/$userId'
     | '/admin/_AdminPages/events/'
     | '/admin/_AdminPages/groups/'
+    | '/admin/_AdminPages/reports/'
     | '/admin/_AdminPages/users/'
   fileRoutesById: FileRoutesById
 }
@@ -727,6 +753,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminPagesGroupsGroupIdRouteImport
       parentRoute: typeof AdminAdminPagesRoute
     }
+    '/admin/_AdminPages/reports/': {
+      id: '/admin/_AdminPages/reports/'
+      path: '/reports'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AdminAdminPagesReportsIndexRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/reports/$reportId': {
+      id: '/admin/_AdminPages/reports/$reportId'
+      path: '/reports/$reportId'
+      fullPath: '/admin/reports/$reportId'
+      preLoaderRoute: typeof AdminAdminPagesReportsReportIdRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
     '/admin/_AdminPages/users/': {
       id: '/admin/_AdminPages/users/'
       path: '/users'
@@ -783,9 +823,11 @@ interface AdminAdminPagesRouteChildren {
   AdminAdminPagesIndexRoute: typeof AdminAdminPagesIndexRoute
   AdminAdminPagesEventsEventIdRoute: typeof AdminAdminPagesEventsEventIdRoute
   AdminAdminPagesGroupsGroupIdRoute: typeof AdminAdminPagesGroupsGroupIdRoute
+  AdminAdminPagesReportsReportIdRoute: typeof AdminAdminPagesReportsReportIdRoute
   AdminAdminPagesUsersUserIdRoute: typeof AdminAdminPagesUsersUserIdRoute
   AdminAdminPagesEventsIndexRoute: typeof AdminAdminPagesEventsIndexRoute
   AdminAdminPagesGroupsIndexRoute: typeof AdminAdminPagesGroupsIndexRoute
+  AdminAdminPagesReportsIndexRoute: typeof AdminAdminPagesReportsIndexRoute
   AdminAdminPagesUsersIndexRoute: typeof AdminAdminPagesUsersIndexRoute
 }
 
@@ -794,9 +836,11 @@ const AdminAdminPagesRouteChildren: AdminAdminPagesRouteChildren = {
   AdminAdminPagesIndexRoute: AdminAdminPagesIndexRoute,
   AdminAdminPagesEventsEventIdRoute: AdminAdminPagesEventsEventIdRoute,
   AdminAdminPagesGroupsGroupIdRoute: AdminAdminPagesGroupsGroupIdRoute,
+  AdminAdminPagesReportsReportIdRoute: AdminAdminPagesReportsReportIdRoute,
   AdminAdminPagesUsersUserIdRoute: AdminAdminPagesUsersUserIdRoute,
   AdminAdminPagesEventsIndexRoute: AdminAdminPagesEventsIndexRoute,
   AdminAdminPagesGroupsIndexRoute: AdminAdminPagesGroupsIndexRoute,
+  AdminAdminPagesReportsIndexRoute: AdminAdminPagesReportsIndexRoute,
   AdminAdminPagesUsersIndexRoute: AdminAdminPagesUsersIndexRoute,
 }
 

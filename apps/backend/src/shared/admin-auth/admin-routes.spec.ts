@@ -34,6 +34,8 @@ describe('admin routes', () => {
       'AdminEventsController',
       'AdminGroupsController',
       'AdminMembershipRequestsController',
+      'AdminReportsController',
+      'AdminTargetReportsController',
       'AdminUserBlocksController',
       'AdminUserEventsController',
       'AdminUsersController',

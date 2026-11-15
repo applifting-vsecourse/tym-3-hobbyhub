@@ -77,6 +77,11 @@ describe("notificationText", () => {
       "Akce Čtvrteční florbal je zpět",
     ],
     [
+      "a report dealt with, naming neither the target nor the outcome (#240)",
+      aNotification({ type: "REPORT_RESOLVED", actor: null, event: null }),
+      "Tvoje nahlášení jsme vyřídili. Děkujeme, že pomáháš udržet HobbyHub bezpečný.",
+    ],
+    [
       "a type without words of its own",
       aNotification({ type: "SPOT_AVAILABLE" }),
       "Novinka k Čtvrteční florbal",
@@ -117,6 +122,13 @@ describe("notificationTarget", () => {
     "PARTICIPANT_CANCELLED",
   ] as const)("sends the participant to the event for %s", (type) => {
     expect(notificationTarget(aNotification({ type }))).toEqual({ kind: "event", eventId: "e1" })
+  })
+
+  // #240: the reporter has no page of their reports; there is nowhere to go.
+  it("leads a dealt-with report nowhere", () => {
+    expect(
+      notificationTarget(aNotification({ type: "REPORT_RESOLVED", actor: null, event: null })),
+    ).toBeNull()
   })
 
   // #239: the event no longer exists for them, only for its organizers.

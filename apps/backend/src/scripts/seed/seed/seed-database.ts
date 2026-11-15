@@ -7,6 +7,7 @@ import { createUser } from './create-user';
 import { seedEvents, seedLookups } from './seed-events';
 import { seedGroups } from './seed-groups';
 import { seedMembershipRequests } from './seed-membership-requests';
+import { seedReports } from './seed-reports';
 
 export const seedDatabase = async (
   prisma: PrismaService,
@@ -37,6 +38,7 @@ export const seedDatabase = async (
     await seedEvents(prisma, users);
     await seedGroups(prisma, users);
     await seedMembershipRequests(prisma, users);
+    await seedReports(prisma, users);
     return;
   }
 
@@ -123,6 +125,7 @@ export const seedDatabase = async (
     freshDuckling,
     lostGosling,
   ]);
+  await seedReports(prisma, exampleUsers);
 };
 
 // ADR-0010, #238: the administrator is its own account, not a `User`.

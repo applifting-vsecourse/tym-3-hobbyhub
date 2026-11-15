@@ -14,5 +14,7 @@ import { AdministratorsService } from './services/administrators.service';
   controllers: [AdministratorsController],
   // Inviting needs the e-mail outbox from the app's global MailModule.
   providers: [AdministratorsService, AdministratorRepository, AdminInvitations],
+  // #240: whom a report can be handed to.
+  exports: [AdministratorsService],
 })
 export class AdministratorModule {}

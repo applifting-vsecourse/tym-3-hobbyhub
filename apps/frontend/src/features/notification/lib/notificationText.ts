@@ -63,6 +63,9 @@ export function notificationText(t: TFunction, notification: Notification): stri
       return t("notifications.text.EVENT_RESTORED", { title })
     case "PARTICIPANT_CANCELLED":
       return t("notifications.text.PARTICIPANT_CANCELLED", { name, title })
+    // #240: neither what was reported nor what the administrator did.
+    case "REPORT_RESOLVED":
+      return t("notifications.text.REPORT_RESOLVED")
     default:
       // Types without a trigger yet (F-05.8, F-05.9, F-07.4…): a plain line
       // rather than nothing, should a row of theirs ever appear.

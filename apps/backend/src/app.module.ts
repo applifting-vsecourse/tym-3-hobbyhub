@@ -12,6 +12,8 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { ReportReasonModule } from './modules/report-reason/report-reason.module';
+import { ReportModule } from './modules/report/report.module';
 import { UserBlockModule } from './modules/user-block/user-block.module';
 import { WelcomeModule } from './modules/welcome/welcome.module';
 import { AdminAuthModule } from './shared/admin-auth/admin-auth.module';
@@ -38,6 +40,8 @@ const imports = [
   MyEventsModule,
   MembershipRequestModule,
   NotificationModule,
+  ReportReasonModule,
+  ReportModule,
 ];
 
 @Module({
