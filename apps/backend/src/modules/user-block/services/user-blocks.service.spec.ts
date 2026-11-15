@@ -116,14 +116,31 @@ describe('UserBlocksService', () => {
       expect(repository.createAdminBlock).not.toHaveBeenCalled();
     });
 
-    it('refuses a pair blocked already and undoes nothing', async () => {
-      const { repository, participationRequests, service } = setup();
+    it('refuses a pair blocked already, but finishes undoing the ties', async () => {
+      const {
+        repository,
+        participationRequests,
+        membershipRequests,
+        groups,
+        service,
+      } = setup();
       repository.createAdminBlock.mockResolvedValue(false);
 
       await expect(
         service.block(admin, 'u1', 'u2', REASON, NOW),
       ).rejects.toBeInstanceOf(BadRequestException);
-      expect(participationRequests.detachBlockedPair).not.toHaveBeenCalled();
+      // A clean-up that failed after the block was written runs again.
+      expect(participationRequests.detachBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
+      expect(membershipRequests.closeBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
+      expect(groups.removeBlockedPair).toHaveBeenCalledWith('u1', 'u2');
     });
   });
 

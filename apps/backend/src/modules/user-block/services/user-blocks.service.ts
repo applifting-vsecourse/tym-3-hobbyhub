@@ -49,6 +49,9 @@ export class UserBlocksService {
 
   // The block first, so nothing new ties the two together while the old ties
   // are undone. Those go quietly: neither of them may learn of the block.
+  // The ties are undone even when the pair is blocked already, so blocking
+  // again finishes a clean-up that failed halfway; undoing them twice is
+  // harmless.
   async block(
     admin: AdminIdentity,
     userId: string,
@@ -66,15 +69,8 @@ export class UserBlocksService {
       adminId: admin.id,
       reason: reason.trim(),
     });
+    await this.undoTies(userId, otherUserId, now);
     if (!created) throw violationsError(['ALREADY_BLOCKED']);
-
-    await this.participationRequests.detachBlockedPair(
-      userId,
-      otherUserId,
-      now,
-    );
-    await this.membershipRequests.closeBlockedPair(userId, otherUserId, now);
-    await this.groups.removeBlockedPair(userId, otherUserId);
     return this.repository.listAdminBlocksOf(userId);
   }
 
@@ -90,6 +86,12 @@ export class UserBlocksService {
       adminId: admin.id,
     });
     if (!removed) throw violationsError(['NOT_BLOCKED']);
+  }
+
+  private async undoTies(a: string, b: string, now: Date): Promise<void> {
+    await this.participationRequests.detachBlockedPair(a, b, now);
+    await this.membershipRequests.closeBlockedPair(a, b, now);
+    await this.groups.removeBlockedPair(a, b);
   }
 
   private async assertUsersExist(ids: string[]): Promise<void> {
