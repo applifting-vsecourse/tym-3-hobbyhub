@@ -117,6 +117,10 @@
         "signIn": "Sign in to send a new one",
         "title": "This link no longer works"
       },
+      "prompt": {
+        "description": "We sent a link to {{email}}. Until you confirm it, you cannot publish events or found groups, and notifications do not reach you by email. Didn't arrive? Send yourself a new one.",
+        "title": "Finish verifying your email"
+      },
       "resend": "Send the email again",
       "resendFailed": "The email could not be sent. Please try again.",
       "resendIn": "Send again in {{seconds}} s",
@@ -928,8 +932,8 @@
       "selected": "Selected event, {{count}} missing"
     },
     "nav": {
-      "add": "Add",
-      "discover": "Discover",
+      "add": "Add event",
+      "discover": "Events",
       "groups": "Groups",
       "label": "Main navigation",
       "myEvents": "My events",
@@ -1183,12 +1187,23 @@
     },
     "showAll": "Show all",
     "someone": "Someone",
+    "startsWhen": "{{day}} at {{time}}",
     "text": {
       "EVENT_CANCELLED": "The event {{title}} was cancelled",
       "EVENT_CHANGED": {
         "BOTH": "The event {{title}} has a new time and place",
         "PLACE": "The event {{title}} has a new place",
         "TIME": "The event {{title}} has a new time"
+      },
+      "EVENT_REMINDER": {
+        "started": "{{title}} started {{when}}",
+        "upcoming": "{{title}} starts {{when}}"
+      },
+      "HOSTED_EVENT_REMINDER": {
+        "belowMinimum_one": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participant short of the minimum",
+        "belowMinimum_other": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participants short of the minimum",
+        "started": "Your event {{title}} started {{when}}",
+        "upcoming": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken"
       },
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",

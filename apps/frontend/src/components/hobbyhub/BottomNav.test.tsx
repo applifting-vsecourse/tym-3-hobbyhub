@@ -15,9 +15,9 @@ describe("BottomNav", () => {
     const nav = screen.getByRole("navigation", { name: "Hlavní navigace" })
     expect(nav).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Skupiny" })).toHaveAttribute("aria-current", "page")
-    expect(screen.getByRole("link", { name: "Objevovat" })).not.toHaveAttribute("aria-current")
-    expect(screen.getByRole("link", { name: "Objevovat" })).toHaveAttribute("href", "/events")
-    expect(screen.getByRole("link", { name: "Přidat" })).toHaveAttribute("href", "/events/new")
+    expect(screen.getByRole("link", { name: "Akce" })).not.toHaveAttribute("aria-current")
+    expect(screen.getByRole("link", { name: "Akce" })).toHaveAttribute("href", "/events")
+    expect(screen.getByRole("link", { name: "Přidat akci" })).toHaveAttribute("href", "/events/new")
     expect(screen.queryAllByRole("button")).toHaveLength(0)
   })
 
@@ -29,8 +29,11 @@ describe("BottomNav", () => {
       />,
     )
 
-    expect(screen.getByRole("link", { name: "Přidat" })).toHaveAttribute("aria-current", "page")
-    expect(screen.getByRole("link", { name: "Objevovat" })).not.toHaveAttribute("aria-current")
+    expect(screen.getByRole("link", { name: "Přidat akci" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    )
+    expect(screen.getByRole("link", { name: "Akce" })).not.toHaveAttribute("aria-current")
   })
 
   it("highlights nothing on pages outside the sections", async () => {
@@ -59,7 +62,7 @@ describe("BottomNav", () => {
     )
   })
 
-  it("gives a visitor Objevovat, Přidat and Skupiny, in that order (#151)", async () => {
+  it("gives a visitor Akce, Přidat akci and Skupiny, in that order (#151)", async () => {
     await renderWithRouter(
       <BottomNav
         active="discover"
@@ -68,7 +71,7 @@ describe("BottomNav", () => {
     )
 
     const links = screen.getAllByRole("link")
-    expect(links.map((link) => link.textContent)).toEqual(["Objevovat", "Přidat", "Skupiny"])
+    expect(links.map((link) => link.textContent)).toEqual(["Akce", "Přidat akci", "Skupiny"])
     expect(links[0]).toHaveAttribute("aria-current", "page")
     expect(links[1]).toHaveAttribute("href", "/events/new")
     expect(screen.queryByRole("link", { name: "Moje akce" })).not.toBeInTheDocument()

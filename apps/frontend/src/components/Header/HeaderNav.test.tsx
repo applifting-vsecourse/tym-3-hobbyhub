@@ -13,7 +13,7 @@ describe("HeaderNav", () => {
     )
 
     const links = screen.getAllByRole("link")
-    expect(links.map((link) => link.textContent)).toEqual(["Objevovat", "Moje akce", "Skupiny"])
+    expect(links.map((link) => link.textContent)).toEqual(["Akce", "Moje akce", "Skupiny"])
     expect(links[0]).toHaveAttribute("aria-current", "page")
     expect(links[1]).toHaveAttribute("href", "/my-events")
     expect(links[2]).toHaveAttribute("href", "/groups")
@@ -28,7 +28,7 @@ describe("HeaderNav", () => {
     )
 
     const links = screen.getAllByRole("link")
-    expect(links.map((link) => link.textContent)).toEqual(["Objevovat", "Skupiny"])
+    expect(links.map((link) => link.textContent)).toEqual(["Akce", "Skupiny"])
     expect(links[0]).toHaveAttribute("href", "/events")
     expect(links[1]).toHaveAttribute("aria-current", "page")
   })

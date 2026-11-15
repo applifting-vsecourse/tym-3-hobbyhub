@@ -136,6 +136,55 @@ describe('notificationEmailOf', () => {
     },
   );
 
+  // #233, ADR-0021: a reminder says only that the event is near, not what,
+  // where or when: a late one may go after an outage, so neither "zítra" nor
+  // "za 2 hodiny" would hold. Both versions are critical; late is worthless.
+  it.each<Notification['payload']>([
+    { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+    { reminder: 'TWO_HOURS', startsAt: '2030-01-02T17:00:00.000Z' },
+  ])('reminds a participant %j that the event is near', (payload) => {
+    const content = notificationEmailOf(
+      aNotification({ type: 'EVENT_REMINDER', payload }),
+    );
+
+    expect(JSON.stringify(content)).not.toMatch(/zítra|hodin/);
+    expect(content).toEqual(
+      expect.objectContaining({
+        subject: 'Akce, na kterou jdeš, se blíží',
+        buttonLabel: 'Zobrazit akci',
+        path: '/events/e1',
+        critical: true,
+      }),
+    );
+  });
+
+  it('reminds an organizer and leads to the participants, without the numbers', () => {
+    const content = notificationEmailOf(
+      aNotification({
+        type: 'HOSTED_EVENT_REMINDER',
+        payload: {
+          reminder: 'TWO_HOURS',
+          startsAt: '2030-01-02T17:00:00.000Z',
+          occupancy: {
+            occupiedSpots: 7,
+            maxParticipants: 12,
+            missingToMinimum: 1,
+          },
+        },
+      }),
+    );
+
+    expect(content).toEqual(
+      expect.objectContaining({
+        subject: 'Tvoje akce se blíží',
+        buttonLabel: 'Zobrazit účastníky',
+        path: '/events/e1/participants?tab=participants',
+        critical: true,
+      }),
+    );
+    expect(JSON.stringify(content)).not.toMatch(/\b(7|12)\b/);
+  });
+
   it('tells a group’s admins and leads to the group’s requests', () => {
     expect(notificationEmailOf(aNotification(aboutGroup))).toEqual(
       expect.objectContaining({
@@ -175,6 +224,14 @@ describe('notificationEmailOf', () => {
       ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }],
       ['EVENT_CANCELLED', {}],
       ['PARTICIPANT_CANCELLED', { message: MESSAGE }],
+      [
+        'EVENT_REMINDER',
+        { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+      ],
+      [
+        'HOSTED_EVENT_REMINDER',
+        { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+      ],
     ])('%s %j', (type, payload) => {
       const text = JSON.stringify(
         notificationEmailOf(aNotification({ ...target, type, payload })),
