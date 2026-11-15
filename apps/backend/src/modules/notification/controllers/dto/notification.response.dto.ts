@@ -3,6 +3,8 @@ import {
   DECISIONS,
   EVENT_CHANGES,
   EventChange,
+  FRIEND_REQUEST_STATUSES,
+  FriendRequestStatus,
   Notification,
   NOTIFICATION_TYPES,
   NotificationPage,
@@ -32,6 +34,17 @@ class NotificationGroupDto {
 
   @ApiProperty()
   name!: string;
+}
+
+class NotificationFriendRequestDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({
+    enum: FRIEND_REQUEST_STATUSES,
+    description: 'Where the request stands now; the buttons only while PENDING',
+  })
+  status!: FriendRequestStatus;
 }
 
 // The type and the data; the client writes the sentence (ADR-0015). The
@@ -69,6 +82,13 @@ export class NotificationResponseDto {
   group!: NotificationGroupDto | null;
 
   @ApiProperty({
+    type: NotificationFriendRequestDto,
+    nullable: true,
+    description: 'FRIEND_REQUEST: the request it is about',
+  })
+  friendRequest!: NotificationFriendRequestDto | null;
+
+  @ApiProperty({
     enum: DECISIONS,
     nullable: true,
     description: 'REQUEST_DECIDED: how the request ended',
@@ -98,6 +118,7 @@ export class NotificationResponseDto {
       actor: notification.actor,
       event: notification.event,
       group: notification.group,
+      friendRequest: notification.friendRequest,
       decision: notification.payload.decision ?? null,
       message: notification.payload.message ?? null,
       changes: notification.payload.changes ?? [],

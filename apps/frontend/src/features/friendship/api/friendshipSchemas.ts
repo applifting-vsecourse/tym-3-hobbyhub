@@ -31,3 +31,28 @@ export const friendSearchPageSchema = z.object({
 })
 
 export const friendRelationResponseSchema = z.object({ relation: friendRelationSchema })
+
+/** #228: a request waiting for my decision, with the sender's public profile only. */
+export const receivedFriendRequestSchema = z.object({
+  id: z.string(),
+  requestedAt: z.coerce.date(),
+  sender: z.object({
+    id: z.string(),
+    name: z.string(),
+    nickname: z.string().nullable(),
+    image: z.string().nullable(),
+  }),
+})
+
+export type ReceivedFriendRequest = z.infer<typeof receivedFriendRequestSchema>
+
+export const receivedFriendRequestPageSchema = z.object({
+  items: z.array(receivedFriendRequestSchema),
+  /** All the requests waiting for me: the number on the tab. */
+  total: z.number().int(),
+  /** Where the next page starts; null on the last one. */
+  nextOffset: z.number().int().nullable(),
+})
+
+/** #228: what I do with a request someone sent me. */
+export type FriendRequestDecision = "accept" | "reject"

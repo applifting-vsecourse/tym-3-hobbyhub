@@ -143,16 +143,19 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | E-mailová adresa                                                   | ✅  | ❌         | ❌          | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                                    |
 | Placené členství                                                   | ✅  | ❌         | ❌          | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                               |
 | Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌          | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [#61][61], [PO][po]            |
+| Žádosti o přátelství, které mi přišly a čekají                     | ✅  | ❌         | ❌          | ❌               | ❌                   | ❌                      | ❌            | ❌          | [#228][228], [ADR-0023](../adr/adr-0023.md)                       |
 
 - **Veřejný profil** je jméno a příjmení, přezdívka (uživatelské jméno, když ho člověk má), fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
 - **Vyhledání lidí** ([#225][225]) najde člověka podle části jména nebo přezdívky, nikdy podle e-mailu, a ve výsledku vrací jen jméno, přezdívku, fotku a stav přátelství se mnou. Nevrací mě samotného, zablokované ani smazané účty a nikdy celkový počet nalezených, aby nešel stáhnout seznam všech uživatelů. Hledá se od 2 znaků, po 20 výsledcích.
 - **„Jen se mnou“** u stavu přátelství: každý vidí jen svůj vztah k dotyčnému („Žádost odeslána“, „Chce se spřátelit“, „Přítel“). Nikdo třetí nepozná, že si dva jiní lidé poslali žádost nebo jsou přátelé. Zamítnutí je tiché: žadatel ho nepozná a vidí znovu „Požádat o přátelství“.
+- **Žádosti o přátelství, které mi přišly** ([#228][228]): vidí je jen příjemce, v záložce Přátelé → Žádosti a v upozornění. U každé jen veřejný profil odesílatele (jméno, přezdívka, fotka) a kdy přišla, nikdy jeho e-mail. Žádosti od zablokovaných a smazaných účtů se nezobrazují. Kolik jich čeká, vidí jen příjemce. Přehled žádostí, které jsem odeslal, v této verzi není; žadatel vidí stav jen na profilu příjemce.
 - **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
 - **Přesné datum narození aplikace nezná.** Drží jen rok, věk ve složení účastníků je proto přesný na rok ([#174][174], [ADR-0016](../adr/adr-0016.md)).
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
 - **Historie akcí**, kde člověk byl a co pořádal, je až pro přátele. To je hlavní věc, kterou přátelství přináší. Jméno organizátora je i tak veřejné přes detail akce ([#8][8]).
 - **„Jen když povolil“**: historii řídí přepínač „Přátelé vidí moji historii akcí“ (výchozí zapnuto), nadcházející akce přepínač „Přátelé vidí moje budoucí akce“ (výchozí vypnuto). Když je přepínač vypnutý, část na profilu vůbec není, ani hláška, že ji dotyčný skryl. Kdo má jen čekající žádost o přátelství, je pro tuto tabulku **přihlášený**, ne přítel.
 - **Notifikace chodí i e-mailem**, jen příjemci a jen na jeho ověřenou adresu ([#61][61], [#58][58]). E-mail podle pravidla výše říká jen, co se stalo, a odkazem vede do aplikace: nenese jméno původce, název akce ani skupiny, ani zprávu organizátora, správce nebo účastníka, který zrušil účast. Detail se ukáže až po přihlášení.
+- **Žádost o přátelství** ([#228][228]) přijde příjemci jako upozornění v aplikaci se jménem žadatele (to vidí i na jeho profilu) a e-mailem jen „Máš novou žádost o přátelství“, bez jména, s odkazem na záložku Žádosti. Nejvýš 3 takové za hodinu od téhož člověka, další přijdou tiše. Zrušená žádost upozornění odstraní, odeslaný e-mail ne. Přijetí žádosti dostane žadatel jen jako upozornění v aplikaci, bez e-mailu; zamítnutí nedostane nikdo.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec.
 
 ## Skupina
@@ -226,6 +229,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
 [181]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/181
 [225]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/225
+[228]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/228
 [226]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/226
 [227]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/227
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174

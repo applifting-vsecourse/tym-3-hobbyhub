@@ -3,6 +3,7 @@ import { Prisma } from '@/generated/prisma/client';
 import {
   friendPairOf,
   FriendRequest,
+  ReceivedFriendRequest,
 } from '@/modules/friendship/domain/friendship';
 import { Injectable } from '@nestjs/common';
 
@@ -19,6 +20,9 @@ export type StoredRelation = {
   isFriend: boolean;
   pendingRequest: { senderId: string } | null;
 };
+
+/** Accounts a request can reach and whose requests still count. */
+const REACHABLE_STATUSES = ['ACTIVE', 'RESTRICTED'] as const;
 
 /** The second request for a pair lost the race (friend_request_one_pending_per_pair). */
 export class PendingRequestExistsError extends Error {}
@@ -146,7 +150,7 @@ export class FriendshipRepository {
   /** Whether a request can be sent to the person: the account exists and is not blocked or deleted. */
   async isReachable(userId: string): Promise<boolean> {
     const user = await this.prisma.user.findFirst({
-      where: { id: userId, status: { in: ['ACTIVE', 'RESTRICTED'] } },
+      where: { id: userId, status: { in: [...REACHABLE_STATUSES] } },
       select: { id: true },
     });
     return user !== null;
@@ -155,12 +159,15 @@ export class FriendshipRepository {
   /**
    * #225: a new pending request. The database keeps one pending request per
    * pair in either direction; losing that race throws `PendingRequestExistsError`.
+   * Returns the id of the request (#228 links its notification to it).
    */
-  async createRequest(senderId: string, recipientId: string): Promise<void> {
+  async createRequest(senderId: string, recipientId: string): Promise<string> {
     try {
-      await this.prisma.friendRequest.create({
+      const request = await this.prisma.friendRequest.create({
         data: { senderId, recipientId },
+        select: { id: true },
       });
+      return request.id;
     } catch (error) {
       if (isUniqueViolation(error)) throw new PendingRequestExistsError();
       throw error;
@@ -184,17 +191,122 @@ export class FriendshipRepository {
   /**
    * #225: the sender takes back their pending request to the recipient. Only
    * a request still pending changes, so one decided meanwhile stays decided;
-   * answers whether there was one.
+   * returns the id of the withdrawn request, or null when there was none.
    */
-  async withdrawPendingRequest(
+  withdrawPendingRequest(
     senderId: string,
     recipientId: string,
     now: Date,
-  ): Promise<boolean> {
-    const { count } = await this.prisma.friendRequest.updateMany({
-      where: { senderId, recipientId, status: 'PENDING' },
-      data: { status: 'WITHDRAWN', decidedAt: now },
+  ): Promise<string | null> {
+    return this.closePendingRequest(senderId, recipientId, 'WITHDRAWN', now);
+  }
+
+  /**
+   * #228: the recipient rejects the pending request from the sender. Like
+   * withdrawing, only a request still pending changes; returns its id, or
+   * null when there was none.
+   */
+  rejectPendingRequest(
+    senderId: string,
+    recipientId: string,
+    now: Date,
+  ): Promise<string | null> {
+    return this.closePendingRequest(senderId, recipientId, 'REJECTED', now);
+  }
+
+  /**
+   * #228: the recipient accepts the pending request from the sender. In one
+   * transaction the request becomes ACCEPTED and the pair becomes friends;
+   * a request no longer pending (decided or withdrawn meanwhile, the other
+   * of two decisions at once) changes nothing and gives null.
+   */
+  acceptPendingRequest(
+    senderId: string,
+    recipientId: string,
+    now: Date,
+  ): Promise<string | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const [accepted] = await tx.friendRequest.updateManyAndReturn({
+        where: { senderId, recipientId, status: 'PENDING' },
+        data: { status: 'ACCEPTED', decidedAt: now },
+        select: { id: true },
+      });
+      if (!accepted) return null;
+      const pair = friendPairOf(senderId, recipientId);
+      // Already friends cannot happen next to a pending request (#225 checks
+      // it before sending); should it, the pair stays as it is.
+      await tx.friendship.upsert({
+        where: { userAId_userBId: pair },
+        create: pair,
+        update: {},
+      });
+      return accepted.id;
     });
-    return count > 0;
+  }
+
+  /**
+   * #228: the requests waiting for the recipient, newest first, `limit` from
+   * `offset`, and how many there are. Requests from a blocked or deleted
+   * account are left out, as the search leaves the account out.
+   */
+  async listReceivedRequests(
+    recipientId: string,
+    offset: number,
+    limit: number,
+  ): Promise<{ items: ReceivedFriendRequest[]; total: number }> {
+    const where: Prisma.FriendRequestWhereInput = {
+      recipientId,
+      status: 'PENDING',
+      sender: { status: { in: [...REACHABLE_STATUSES] } },
+    };
+    const [rows, total] = await Promise.all([
+      this.prisma.friendRequest.findMany({
+        where,
+        orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
+        skip: offset,
+        take: limit,
+        select: {
+          id: true,
+          requestedAt: true,
+          sender: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              displayUsername: true,
+              image: true,
+            },
+          },
+        },
+      }),
+      this.prisma.friendRequest.count({ where }),
+    ]);
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        requestedAt: row.requestedAt,
+        sender: {
+          id: row.sender.id,
+          name: row.sender.name,
+          nickname: row.sender.displayUsername ?? row.sender.username,
+          image: row.sender.image,
+        },
+      })),
+      total,
+    };
+  }
+
+  private async closePendingRequest(
+    senderId: string,
+    recipientId: string,
+    status: 'WITHDRAWN' | 'REJECTED',
+    now: Date,
+  ): Promise<string | null> {
+    const [closed] = await this.prisma.friendRequest.updateManyAndReturn({
+      where: { senderId, recipientId, status: 'PENDING' },
+      data: { status, decidedAt: now },
+      select: { id: true },
+    });
+    return closed?.id ?? null;
   }
 }

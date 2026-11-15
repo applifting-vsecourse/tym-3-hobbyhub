@@ -21,6 +21,7 @@ const aNotification = (
   actor: { id: 'u2', name: 'Honza' },
   event: { id: 'e1', title: 'Čtvrteční florbal' },
   group: null,
+  friendRequest: null,
   ...overrides,
 });
 
@@ -306,6 +307,84 @@ describe('NotificationsService', () => {
         groupId: 'g1',
         payload: { decision: 'APPROVED' },
       });
+    });
+  });
+
+  describe('a friend request (#228)', () => {
+    it('tells the recipient, linked to the request', async () => {
+      const { repository, emails, service } = setup();
+
+      await service.notifyFriendRequest({
+        request: { id: 'fr1' },
+        sender: { id: 'sender' },
+        recipientId: 'recipient',
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'FRIEND_REQUEST',
+        recipientIds: ['recipient'],
+        actorId: 'sender',
+        friendRequestId: 'fr1',
+      });
+      expect(emails.queueFor).toHaveBeenCalledWith(['n1']);
+    });
+
+    it('tells the sender the request was accepted', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyFriendRequestAccepted({
+        request: { id: 'fr1' },
+        senderId: 'sender',
+        acceptedBy: { id: 'recipient' },
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'FRIEND_REQUEST_ACCEPTED',
+        recipientIds: ['sender'],
+        actorId: 'recipient',
+        friendRequestId: 'fr1',
+      });
+    });
+
+    it('removes the notifications of a withdrawn request', async () => {
+      const { repository, service } = setup();
+      repository.deleteOfFriendRequest.mockResolvedValue(1);
+
+      await service.removeFriendRequestNotifications({ id: 'fr1' });
+
+      expect(repository.deleteOfFriendRequest).toHaveBeenCalledWith('fr1');
+    });
+
+    it('marks the notification of a decided request read', async () => {
+      const { repository, service } = setup();
+      repository.markReadOfFriendRequest.mockResolvedValue(1);
+
+      await service.markFriendRequestNotificationRead(
+        { id: 'recipient' },
+        { id: 'fr1' },
+        now,
+      );
+
+      expect(repository.markReadOfFriendRequest).toHaveBeenCalledWith(
+        'recipient',
+        'fr1',
+        now,
+      );
+    });
+
+    it('logs a failed removal instead of failing the withdrawal', async () => {
+      const { repository, service } = setup();
+      repository.deleteOfFriendRequest.mockRejectedValue(new Error('db down'));
+      const error = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.removeFriendRequestNotifications({ id: 'fr1' }),
+      ).resolves.toBeUndefined();
+
+      expect(error).toHaveBeenCalled();
+      error.mockRestore();
     });
   });
 

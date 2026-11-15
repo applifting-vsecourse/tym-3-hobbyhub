@@ -20,6 +20,8 @@ export const NOTIFICATION_TYPES = [
   'MONTHLY_RECOMMENDATION',
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
+  'FRIEND_REQUEST',
+  'FRIEND_REQUEST_ACCEPTED',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -40,6 +42,9 @@ export const NOTIFICATION_TYPES_BY_KIND = {
     'PARTICIPANT_CANCELLED',
     'CONFIRMATION_PROMPT',
     'SPOT_AVAILABLE',
+    // #228: a friend request and its acceptance are requests too.
+    'FRIEND_REQUEST',
+    'FRIEND_REQUEST_ACCEPTED',
   ],
   events: ['EVENT_CHANGED', 'EVENT_CANCELLED', 'EVENT_BOARD'],
   groups: ['GROUP_INVITATION'],
@@ -80,6 +85,22 @@ export type NotificationPerson = { id: string; name: string };
 export type NotificationEvent = { id: string; title: string };
 export type NotificationGroup = { id: string; name: string };
 
+// #228: the states of a friend request, as the friendship module has them
+// (ADR-0023). This module imports no other one, so it keeps its own copy.
+export const FRIEND_REQUEST_STATUSES = [
+  'PENDING',
+  'ACCEPTED',
+  'REJECTED',
+  'WITHDRAWN',
+] as const;
+export type FriendRequestStatus = (typeof FRIEND_REQUEST_STATUSES)[number];
+// FRIEND_REQUEST: the request it is about and where it stands now, so the
+// bell shows the buttons only while it waits.
+export type NotificationFriendRequest = {
+  id: string;
+  status: FriendRequestStatus;
+};
+
 export type Notification = {
   id: string;
   type: NotificationType;
@@ -92,6 +113,7 @@ export type Notification = {
   actor: NotificationPerson | null;
   event: NotificationEvent | null;
   group: NotificationGroup | null;
+  friendRequest: NotificationFriendRequest | null;
 };
 
 export type NotificationPage = { items: Notification[]; total: number };
@@ -105,6 +127,7 @@ export type NewNotification = {
   actorId: string | null;
   eventId?: string;
   groupId?: string;
+  friendRequestId?: string;
   payload?: NotificationPayload;
 };
 

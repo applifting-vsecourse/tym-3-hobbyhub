@@ -460,6 +460,26 @@
       "request_received": "Chce se spřátelit",
       "request_sent": "Žádost odeslána"
     },
+    "requests": {
+      "accept": "Přijmout",
+      "acceptLabel": "Přijmout žádost o přátelství od {{name}}",
+      "accepting": "Přijímáme…",
+      "decideError": "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      "error": "Žádosti se nepodařilo načíst.",
+      "list": "Žádosti o přátelství",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další žádosti se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Načítáme žádosti…",
+      "loadingMore": "Načítáme…",
+      "nicknameAndWhen": "{{nickname}} · {{when}}",
+      "reject": "Zamítnout",
+      "rejectLabel": "Zamítnout žádost o přátelství od {{name}}",
+      "rejecting": "Zamítáme…",
+      "retry": "Zkusit znovu",
+      "waiting_few": "{{count}} nevyřízené žádosti",
+      "waiting_one": "{{count}} nevyřízená žádost",
+      "waiting_other": "{{count}} nevyřízených žádostí"
+    },
     "search": {
       "error": "Vyhledávání se nepovedlo.",
       "hint_few": "Napište aspoň {{count}} znaky jména nebo přezdívky.",
@@ -1216,6 +1236,10 @@
     "bellUnread_one": "Notifikace, {{count}} nepřečtená",
     "bellUnread_other": "Notifikace, {{count}} nepřečtených",
     "deletedTarget": "smazaná akce",
+    "friendRequest": {
+      "ACCEPTED": "Přijato",
+      "REJECTED": "Zamítnuto"
+    },
     "justNow": "právě teď",
     "kinds": {
       "all": "Vše",
@@ -1259,6 +1283,8 @@
         "PLACE": "Akce {{title}} má nové místo",
         "TIME": "Akce {{title}} má nový čas"
       },
+      "FRIEND_REQUEST": "{{name}} vás žádá o přátelství",
+      "FRIEND_REQUEST_ACCEPTED": "{{name}} přijal(a) vaši žádost o přátelství",
       "NEW_REQUESTS": {
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"

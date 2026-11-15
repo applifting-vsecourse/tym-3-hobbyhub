@@ -13,10 +13,15 @@ export type NotificationTarget =
   | { kind: "event"; eventId: string }
   | { kind: "groupRequests"; groupId: string }
   | { kind: "group"; groupId: string }
+  | { kind: "profile"; userId: string }
   | null
 
 export function notificationTarget(notification: Notification): NotificationTarget {
-  const { type, event, group } = notification
+  const { type, event, group, actor } = notification
+  // #228: a friend request and its acceptance lead to the other person.
+  if (type === "FRIEND_REQUEST" || type === "FRIEND_REQUEST_ACCEPTED") {
+    return actor ? { kind: "profile", userId: actor.id } : null
+  }
   if (event) {
     return type === "NEW_REQUESTS"
       ? { kind: "eventRequests", eventId: event.id }
@@ -53,6 +58,10 @@ export function notificationText(t: TFunction, notification: Notification): stri
       return t("notifications.text.EVENT_CANCELLED", { title })
     case "PARTICIPANT_CANCELLED":
       return t("notifications.text.PARTICIPANT_CANCELLED", { name, title })
+    case "FRIEND_REQUEST":
+      return t("notifications.text.FRIEND_REQUEST", { name })
+    case "FRIEND_REQUEST_ACCEPTED":
+      return t("notifications.text.FRIEND_REQUEST_ACCEPTED", { name })
     default:
       // Types without a trigger yet (F-05.8, F-05.9, F-07.4…): a plain line
       // rather than nothing, should a row of theirs ever appear.

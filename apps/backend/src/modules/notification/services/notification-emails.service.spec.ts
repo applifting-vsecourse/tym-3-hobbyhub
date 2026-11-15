@@ -29,6 +29,7 @@ const aNotification = (
   actor: { id: 'u2', name: 'Honza' },
   event: { id: 'e1', title: 'Čtvrteční florbal' },
   group: null,
+  friendRequest: null,
   recipient: { email: 'jana@example.com', emailVerified: true },
   ...overrides,
 });

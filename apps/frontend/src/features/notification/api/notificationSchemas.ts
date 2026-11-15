@@ -14,6 +14,8 @@ export const notificationTypeSchema = z.enum([
   "MONTHLY_RECOMMENDATION",
   "EVENT_CHANGED",
   "EVENT_CANCELLED",
+  "FRIEND_REQUEST",
+  "FRIEND_REQUEST_ACCEPTED",
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
@@ -25,6 +27,9 @@ export const NOTIFICATION_KINDS = notificationKindSchema.options
 export const decisionSchema = z.enum(["APPROVED", "REJECTED"])
 export const eventChangeSchema = z.enum(["TIME", "PLACE"])
 
+// #228: the friend request a notification is about, and where it stands now.
+export const friendRequestStatusSchema = z.enum(["PENDING", "ACCEPTED", "REJECTED", "WITHDRAWN"])
+
 export const notificationSchema = z.object({
   id: z.string(),
   type: notificationTypeSchema,
@@ -33,6 +38,7 @@ export const notificationSchema = z.object({
   actor: z.object({ id: z.string(), name: z.string() }).nullable(),
   event: z.object({ id: z.string(), title: z.string() }).nullable(),
   group: z.object({ id: z.string(), name: z.string() }).nullable(),
+  friendRequest: z.object({ id: z.string(), status: friendRequestStatusSchema }).nullable(),
   decision: decisionSchema.nullable(),
   message: z.string().nullable(),
   changes: z.array(eventChangeSchema),

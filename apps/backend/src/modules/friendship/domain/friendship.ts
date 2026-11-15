@@ -154,3 +154,31 @@ export function friendRequestViolations(
 ): FriendRequestViolation[] {
   return senderId === recipientId ? ['SELF_REQUEST'] : [];
 }
+
+// #228: the requests waiting for the recipient's decision, newest first, a
+// page of 20 at a time. The total is the number on the tab „Žádosti“.
+export const RECEIVED_FRIEND_REQUESTS_PAGE_SIZE = 20;
+
+/**
+ * One request waiting for my decision, with only what the sender's public
+ * profile shows (the visibility matrix), never their e-mail.
+ */
+export type ReceivedFriendRequest = {
+  id: string;
+  requestedAt: Date;
+  sender: {
+    id: string;
+    name: string;
+    /** The username, when the person has one. */
+    nickname: string | null;
+    image: string | null;
+  };
+};
+
+export type ReceivedFriendRequestPage = {
+  items: ReceivedFriendRequest[];
+  /** All the requests waiting for me, not just this page. */
+  total: number;
+  /** Where the next page starts; null on the last one. */
+  nextOffset: number | null;
+};

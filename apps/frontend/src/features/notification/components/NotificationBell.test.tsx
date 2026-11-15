@@ -31,6 +31,7 @@ const aNotification = (id: string, readAt: string | null = null) => ({
   actor: { id: "u2", name: "Honza_K" },
   event: { id: "e1", title: "Čtvrteční florbal" },
   group: null,
+  friendRequest: null,
   decision: null,
   message: null,
   changes: [],

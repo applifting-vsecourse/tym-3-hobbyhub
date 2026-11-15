@@ -453,6 +453,25 @@
       "request_received": "Wants to be friends",
       "request_sent": "Request sent"
     },
+    "requests": {
+      "accept": "Accept",
+      "acceptLabel": "Accept the friend request from {{name}}",
+      "accepting": "Accepting…",
+      "decideError": "The request could not be handled. Please try again.",
+      "error": "The requests could not be loaded.",
+      "list": "Friend requests",
+      "loadMore": "Load more",
+      "loadMoreError": "More requests could not be loaded. Try again.",
+      "loading": "Loading the requests…",
+      "loadingMore": "Loading…",
+      "nicknameAndWhen": "{{nickname}} · {{when}}",
+      "reject": "Decline",
+      "rejectLabel": "Decline the friend request from {{name}}",
+      "rejecting": "Declining…",
+      "retry": "Try again",
+      "waiting_one": "{{count}} request waiting",
+      "waiting_other": "{{count}} requests waiting"
+    },
     "search": {
       "error": "The search failed.",
       "hint_one": "Type at least {{count}} character of a name or nickname.",
@@ -1197,6 +1216,10 @@
     "bellUnread_one": "Notifications, {{count}} unread",
     "bellUnread_other": "Notifications, {{count}} unread",
     "deletedTarget": "a deleted event",
+    "friendRequest": {
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Declined"
+    },
     "justNow": "just now",
     "kinds": {
       "all": "All",
@@ -1238,6 +1261,8 @@
         "PLACE": "The event {{title}} has a new place",
         "TIME": "The event {{title}} has a new time"
       },
+      "FRIEND_REQUEST": "{{name}} is asking you to be friends",
+      "FRIEND_REQUEST_ACCEPTED": "{{name}} accepted your friend request",
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"

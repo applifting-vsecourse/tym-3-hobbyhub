@@ -34,6 +34,7 @@ const renderAction = async (relation: FriendRelation) => {
     <QueryClientProvider client={client}>
       <FriendRelationAction
         userId="u2"
+        userName="Libor"
         relation={relation}
         reload={reload}
       />
@@ -87,11 +88,60 @@ describe("FriendRelationAction", () => {
     expect(screen.queryByRole("button", { name: "Požádat o přátelství" })).toBeNull()
   })
 
-  it("says the person asks me, with no way to ask back", async () => {
-    await renderAction("request_received")
+  describe("a request the person sent me (#228)", () => {
+    it("says the person asks me and offers to accept or reject, not to ask back", async () => {
+      await renderAction("request_received")
 
-    expect(await screen.findByText("Tento uživatel vás žádá o přátelství.")).toBeInTheDocument()
-    expect(screen.queryByRole("button")).toBeNull()
+      expect(await screen.findByText("Tento uživatel vás žádá o přátelství.")).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Zamítnout žádost o přátelství od Libor" }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Požádat o přátelství" })).toBeNull()
+    })
+
+    it.each([
+      ["Přijmout", "accept"],
+      ["Zamítnout", "reject"],
+    ])("%s decides the request and reloads the profile", async (label, decision) => {
+      post.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "friends" }) })
+      const { reload } = await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: `${label} žádost o přátelství od Libor` }),
+      )
+
+      expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
+      await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+      expect(screen.queryByRole("alert")).toBeNull()
+    })
+
+    it("only reloads when the request was decided elsewhere meanwhile (409)", async () => {
+      failWith(409)
+      const { reload } = await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+      )
+
+      await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+      expect(screen.queryByRole("alert")).toBeNull()
+    })
+
+    it("says so when the decision failed", async () => {
+      failWith(500)
+      await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Zamítnout žádost o přátelství od Libor" }),
+      )
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      )
+    })
   })
 
   it("marks a friend, with no request button", async () => {
