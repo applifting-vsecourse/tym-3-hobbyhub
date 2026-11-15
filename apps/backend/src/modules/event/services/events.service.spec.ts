@@ -350,6 +350,19 @@ describe('EventsService', () => {
       );
     });
 
+    it('loads the facts once for the organizers of an event a member may report', async () => {
+      const { repository, groups, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+
+      await expect(
+        service.getVisibleEventOrganizerIds('e1', viewer),
+      ).resolves.toEqual(['organizer']);
+      expect(repository.getEventFacts).toHaveBeenCalledTimes(1);
+    });
+
     it('gives its seat facts to a member only', async () => {
       const { repository, groups, service } = setup();
       const seatFacts = { ...groupFacts, hasSeat: false };

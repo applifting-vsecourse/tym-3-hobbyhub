@@ -344,21 +344,7 @@ export class EventsService {
   // to anyone else it does not exist. One an administrator hid exists only
   // for its organizers, who also see why (ADR-0022).
   async getEventDetail(id: string, viewer?: Identity): Promise<EventDetail> {
-    const event =
-      (await this.eventRepository.getShowableEventById(id)) ??
-      (viewer ? await this.getHiddenEventOfOrganizer(id, viewer) : null);
-    if (!event) throw new NotFoundException('Event not found');
-    // #239: an event of someone blocked from the viewer does not exist.
-    if (viewer && (await this.isOrganizedByHidden(id, viewer.id))) {
-      throw new NotFoundException('Event not found');
-    }
-    if (event.visibility !== 'PUBLIC') {
-      const facts = await this.eventRepository.getEventFacts(id);
-      if (!facts || !(await this.canSee(facts, viewer?.id))) {
-        throw new NotFoundException('Event not found');
-      }
-    }
-    return event;
+    return (await this.loadVisibleEvent(id, viewer)).event;
   }
 
   // #240, ADR-0023: who organizes an event the viewer may report, which is
@@ -368,31 +354,53 @@ export class EventsService {
     id: string,
     viewer: Identity,
   ): Promise<readonly string[]> {
-    await this.getEventDetail(id, viewer);
-    const facts = await this.eventRepository.getEventFacts(id);
+    const { loadFacts } = await this.loadVisibleEvent(id, viewer);
+    const facts = await loadFacts();
     if (!facts) throw new NotFoundException('Event not found');
     return facts.organizerIds;
   }
 
-  private async isOrganizedByHidden(
-    eventId: string,
-    viewerId: string,
-  ): Promise<boolean> {
-    const hidden = await this.blocks.hiddenFor(viewerId);
-    if (hidden.length === 0) return false;
-    const facts = await this.eventRepository.getEventFacts(eventId);
-    return (
-      facts !== null && facts.organizerIds.some((id) => hidden.includes(id))
-    );
-  }
-
-  private async getHiddenEventOfOrganizer(
+  // The detail with the checks of `getEventDetail`. The facts are loaded at
+  // most once, and only when a check needs them; the caller may ask for them
+  // too through `loadFacts`.
+  private async loadVisibleEvent(
     id: string,
-    viewer: Identity,
-  ): Promise<EventDetail | null> {
-    const facts = await this.eventRepository.getEventFacts(id);
-    if (!facts?.isHidden || !isOrganizerOf(facts, viewer.id)) return null;
-    return this.eventRepository.getHiddenEventDetail(id);
+    viewer?: Identity,
+  ): Promise<{
+    event: EventDetail;
+    loadFacts: () => Promise<EventFacts | null>;
+  }> {
+    let facts: Promise<EventFacts | null> | undefined;
+    const loadFacts = (): Promise<EventFacts | null> =>
+      (facts ??= this.eventRepository.getEventFacts(id));
+    const notFound = (): NotFoundException =>
+      new NotFoundException('Event not found');
+
+    let event = await this.eventRepository.getShowableEventById(id);
+    if (!event && viewer) {
+      const hiddenEvent = await loadFacts();
+      if (hiddenEvent?.isHidden && isOrganizerOf(hiddenEvent, viewer.id)) {
+        event = await this.eventRepository.getHiddenEventDetail(id);
+      }
+    }
+    if (!event) throw notFound();
+    // #239: an event of someone blocked from the viewer does not exist.
+    if (viewer) {
+      const hidden = await this.blocks.hiddenFor(viewer.id);
+      if (hidden.length > 0) {
+        const organizerIds = (await loadFacts())?.organizerIds ?? [];
+        if (organizerIds.some((organizerId) => hidden.includes(organizerId))) {
+          throw notFound();
+        }
+      }
+    }
+    if (event.visibility !== 'PUBLIC') {
+      const current = await loadFacts();
+      if (!current || !(await this.canSee(current, viewer?.id))) {
+        throw notFound();
+      }
+    }
+    return { event, loadFacts };
   }
 
   // F-06.1: null when there is no such event this person may see.
