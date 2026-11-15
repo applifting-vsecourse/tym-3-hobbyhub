@@ -443,8 +443,8 @@
       "error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
       "received": "Tento uživatel vás žádá o přátelství.",
       "send": "Požádat o přátelství",
-      "sendShort": "Požádat",
-      "sendShortLabel": "Požádat {{name}} o přátelství",
+      "sendShort": "Spřátelit",
+      "sendShortLabel": "Spřátelit: {{name}}",
       "sending": "Odesíláme žádost…",
       "sendingShort": "Odesíláme…",
       "sent": "Žádost odeslána"
@@ -457,14 +457,14 @@
     "nickname": "@{{nickname}}",
     "relation": {
       "friends": "Přítel",
-      "request_received": "Žádá vás",
+      "request_received": "Chce se spřátelit",
       "request_sent": "Žádost odeslána"
     },
     "search": {
       "error": "Vyhledávání se nepovedlo.",
-      "hint_few": "Napište aspoň {{count}} znaky jména nebo přezdívky. Podle e-mailu hledat nejde.",
-      "hint_one": "Napište aspoň {{count}} znak jména nebo přezdívky. Podle e-mailu hledat nejde.",
-      "hint_other": "Napište aspoň {{count}} znaků jména nebo přezdívky. Podle e-mailu hledat nejde.",
+      "hint_few": "Napište aspoň {{count}} znaky jména nebo přezdívky.",
+      "hint_one": "Napište aspoň {{count}} znak jména nebo přezdívky.",
+      "hint_other": "Napište aspoň {{count}} znaků jména nebo přezdívky.",
       "label": "Hledat lidi podle jména nebo přezdívky",
       "loadMore": "Načíst další",
       "loadMoreError": "Další lidi se nepodařilo načíst. Zkuste to znovu.",
@@ -481,7 +481,15 @@
       "requests": "Žádosti",
       "search": "Vyhledat uživatele"
     },
-    "title": "Přátelé"
+    "title": "Přátelé",
+    "withdraw": {
+      "button": "Zrušit žádost",
+      "confirm": "Zrušit žádost",
+      "error": "Žádost se nepodařilo zrušit. Zkuste to prosím znovu.",
+      "keep": "Ponechat",
+      "text": "Žádost o přátelství zmizí. Požádat můžete znovu kdykoli.",
+      "title": "Zrušit žádost o přátelství?"
+    }
   },
   "geo": {
     "address": {

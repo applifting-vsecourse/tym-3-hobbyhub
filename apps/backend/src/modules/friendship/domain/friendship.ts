@@ -5,13 +5,16 @@ export const FRIEND_REQUEST_STATUSES = [
   'PENDING',
   'ACCEPTED',
   'REJECTED',
+  // #225: the sender took it back before it was decided.
+  'WITHDRAWN',
 ] as const;
 
 export type FriendRequestStatus = (typeof FRIEND_REQUEST_STATUSES)[number];
 
 /**
- * One person asks another to become friends. A rejected request stays as a
- * record but does not stop a new one between the same two people (#225).
+ * One person asks another to become friends. A rejected or withdrawn request
+ * stays as a record but does not stop a new one between the same two people
+ * (#225).
  */
 export type FriendRequest = {
   id: string;
@@ -120,6 +123,27 @@ export type FriendSearchPage = {
   /** Where the next page starts; null on the last one. */
   nextOffset: number | null;
 };
+
+// #225: a person may ask the same person again and again (a rejection is
+// silent, a request can be withdrawn), so the recipient is told about at most
+// 3 requests from the same sender within an hour; any more arrive silently and
+// wait in the section Přátelé. #228 sends the notification by this rule.
+export const FRIEND_REQUEST_NOTIFY_LIMIT = 3;
+export const FRIEND_REQUEST_NOTIFY_WINDOW_MS = 60 * 60 * 1000;
+
+/** Since when earlier requests count towards the limit of a request made `now`. */
+export function friendRequestNotifyWindowStart(now: Date): Date {
+  return new Date(now.getTime() - FRIEND_REQUEST_NOTIFY_WINDOW_MS);
+}
+
+/**
+ * Whether the recipient is told about a new request, from how many requests
+ * the same sender made to them within the hour before it (whatever became of
+ * them: withdrawn ones count too, or withdrawing would get round the limit).
+ */
+export function isFriendRequestNotified(earlierInWindow: number): boolean {
+  return earlierInWindow < FRIEND_REQUEST_NOTIFY_LIMIT;
+}
 
 export type FriendRequestViolation = 'SELF_REQUEST';
 

@@ -44,8 +44,8 @@ describe("FriendSearch", () => {
   it.each(["", "n"])("asks for 2 characters and searches nothing for %j", async (text) => {
     await renderSearch(text)
 
-    expect(screen.getByText(/Napište aspoň 2 znaky jména nebo přezdívky/)).toBeInTheDocument()
-    expect(screen.getByText(/Podle e-mailu hledat nejde/)).toBeInTheDocument()
+    expect(screen.getByText("Napište aspoň 2 znaky jména nebo přezdívky.")).toBeInTheDocument()
+    expect(screen.queryByText(/e-mail/)).toBeNull()
     expect(get).not.toHaveBeenCalled()
   })
 
@@ -83,7 +83,7 @@ describe("FriendSearch", () => {
     ])
     expect(links[0]).toHaveTextContent("Jana Nováková@janca_n")
     expect(links[1]).toHaveTextContent("Žádost odeslána")
-    expect(links[2]).toHaveTextContent("Žádá vás")
+    expect(links[2]).toHaveTextContent("Chce se spřátelit")
     expect(links[3]).toHaveTextContent("Přítel")
     expect(get).toHaveBeenCalledWith("friends/search", { searchParams: { q: "nov" } })
     expect(screen.queryByRole("button", { name: "Načíst další" })).toBeNull()

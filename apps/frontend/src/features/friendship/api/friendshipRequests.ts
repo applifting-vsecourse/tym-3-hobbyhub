@@ -21,3 +21,19 @@ export async function sendFriendRequest(recipientId: string): Promise<FriendRela
     throw error
   }
 }
+
+/**
+ * #225: takes back my pending request to the person. A 409 means there was
+ * none any more (decided meanwhile): the caller reloads the real state (`null`).
+ */
+export async function withdrawFriendRequest(recipientId: string): Promise<FriendRelation | null> {
+  try {
+    const response = friendRelationResponseSchema.parse(
+      await api.delete(`friends/requests/${encodeURIComponent(recipientId)}`).json(),
+    )
+    return response.relation
+  } catch (error) {
+    if (error instanceof HTTPError && error.response.status === 409) return null
+    throw error
+  }
+}

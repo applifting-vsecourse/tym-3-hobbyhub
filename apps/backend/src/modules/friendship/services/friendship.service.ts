@@ -2,8 +2,10 @@ import {
   FRIEND_SEARCH_PAGE_SIZE,
   FriendRelation,
   FriendRequest,
+  friendRequestNotifyWindowStart,
   friendRequestViolations,
   FriendSearchPage,
+  isFriendRequestNotified,
   relationOf,
 } from '@/modules/friendship/domain/friendship';
 import {
@@ -18,8 +20,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+/** #225: a request just sent, and whether its recipient is to be told (#228). */
+export type SentFriendRequest = {
+  relation: FriendRelation;
+  /** False past the limit of requests from the same sender within an hour. */
+  notifyRecipient: boolean;
+};
+
 // #227, #225, ADR-0023: what other modules ask about friendships, searching
-// people and sending a request. #228 adds deciding requests, #226 the list of
+// people, sending a request and withdrawing it. #228 adds deciding requests, #226 the list of
 // friends.
 @Injectable()
 export class FriendshipService {
@@ -120,7 +129,7 @@ export class FriendshipService {
   async sendRequest(
     sender: Identity,
     recipientId: string,
-  ): Promise<FriendRelation> {
+  ): Promise<SentFriendRequest> {
     const violations = friendRequestViolations(sender.id, recipientId);
     if (violations.length > 0) throw new BadRequestException(violations);
     if (!(await this.friendshipRepository.isReachable(recipientId))) {
@@ -137,6 +146,11 @@ export class FriendshipService {
     ) {
       throw new ConflictException(['REQUEST_PENDING']);
     }
+    const earlierInWindow = await this.friendshipRepository.countRequestsSince(
+      sender.id,
+      recipientId,
+      friendRequestNotifyWindowStart(new Date()),
+    );
     try {
       await this.friendshipRepository.createRequest(sender.id, recipientId);
     } catch (error) {
@@ -146,6 +160,32 @@ export class FriendshipService {
       }
       throw error;
     }
-    return 'request_sent';
+    // #228 notifies the recipient when `notifyRecipient`; any more requests
+    // within the hour wait silently in the section Přátelé.
+    return {
+      relation: 'request_sent',
+      notifyRecipient: isFriendRequestNotified(earlierInWindow),
+    };
+  }
+
+  /**
+   * #225: the signed-in person takes back their pending request to the
+   * recipient. Refused to oneself (400); 409 when there is no pending request
+   * from them (never sent, or decided meanwhile), so the client reloads the
+   * real state. #228 removes the recipient's notification of it.
+   */
+  async withdrawRequest(
+    sender: Identity,
+    recipientId: string,
+  ): Promise<FriendRelation> {
+    const violations = friendRequestViolations(sender.id, recipientId);
+    if (violations.length > 0) throw new BadRequestException(violations);
+    const withdrawn = await this.friendshipRepository.withdrawPendingRequest(
+      sender.id,
+      recipientId,
+      new Date(),
+    );
+    if (!withdrawn) throw new ConflictException(['NO_PENDING_REQUEST']);
+    return 'none';
   }
 }

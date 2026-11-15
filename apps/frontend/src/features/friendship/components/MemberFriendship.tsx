@@ -18,7 +18,7 @@ type MemberFriendshipProps = {
 }
 
 /**
- * #225: in a list of people (the members of a group), a small "Požádat" for
+ * #225: in a list of people (the members of a group), a small "Spřátelit" for
  * someone I have no relation with; otherwise the badge of where we stand.
  */
 export function MemberFriendship({ userId, name, relation, reload }: MemberFriendshipProps) {

@@ -89,6 +89,7 @@ describeDb('friendship schema constraints', () => {
       ['PENDING with a decision date', 'PENDING', new Date()],
       ['ACCEPTED without a decision date', 'ACCEPTED', null],
       ['REJECTED without a decision date', 'REJECTED', null],
+      ['WITHDRAWN without a decision date', 'WITHDRAWN', null],
     ] as const)(
       'rejects %s (friend_request_decided_at)',
       async (_case, status, decidedAt) => {
@@ -126,7 +127,7 @@ describeDb('friendship schema constraints', () => {
       ).rejects.toThrow(/Unique constraint failed/);
     });
 
-    it.each(['REJECTED', 'ACCEPTED'] as const)(
+    it.each(['REJECTED', 'ACCEPTED', 'WITHDRAWN'] as const)(
       'allows a new pending request after a %s one',
       async (status) => {
         await inRolledBackTransaction(async (tx) => {
@@ -316,6 +317,91 @@ describeDb('friendship schema constraints', () => {
           `A_a ${token}`,
         ]);
         expect(await search(tx, viewer, `%${token}`)).toEqual([]);
+      });
+    });
+  });
+
+  // #225: withdrawing and counting requests run on the database itself.
+  describe('withdrawPendingRequest and countRequestsSince', () => {
+    const repositoryOf = (tx: Prisma.TransactionClient): FriendshipRepository =>
+      new FriendshipRepository(tx as unknown as PrismaService);
+
+    it('withdraws only my pending request, never one sent to me', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const other = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: other, recipientId: me },
+        });
+        const repository = repositoryOf(tx);
+        await expect(
+          repository.withdrawPendingRequest(me, other, new Date()),
+        ).resolves.toBe(false);
+        expect(
+          await tx.friendRequest.findFirstOrThrow({
+            where: { senderId: other },
+          }),
+        ).toMatchObject({ status: 'PENDING', decidedAt: null });
+      });
+    });
+
+    it('withdraws my pending request, which then stops no new one', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const other = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: me, recipientId: other },
+        });
+        const repository = repositoryOf(tx);
+        const now = new Date();
+        await expect(
+          repository.withdrawPendingRequest(me, other, now),
+        ).resolves.toBe(true);
+        expect(
+          await tx.friendRequest.findFirstOrThrow({ where: { senderId: me } }),
+        ).toMatchObject({ status: 'WITHDRAWN', decidedAt: now });
+        await repository.createRequest(me, other);
+      });
+    });
+
+    it('counts every request of the sender to the recipient since then', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const other = await createUser(tx);
+        const third = await createUser(tx);
+        const decided = { decidedAt: new Date() };
+        await tx.friendRequest.createMany({
+          data: [
+            {
+              senderId: me,
+              recipientId: other,
+              status: 'WITHDRAWN',
+              ...decided,
+            },
+            {
+              senderId: me,
+              recipientId: other,
+              status: 'REJECTED',
+              ...decided,
+            },
+            {
+              senderId: me,
+              recipientId: other,
+              status: 'WITHDRAWN',
+              requestedAt: new Date('2020-01-01T00:00:00Z'),
+              ...decided,
+            },
+            { senderId: other, recipientId: me },
+            { senderId: me, recipientId: third },
+          ],
+        });
+        await expect(
+          repositoryOf(tx).countRequestsSince(
+            me,
+            other,
+            new Date(Date.now() - 60 * 60 * 1000),
+          ),
+        ).resolves.toBe(2);
       });
     });
   });

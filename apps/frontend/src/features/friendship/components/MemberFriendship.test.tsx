@@ -42,8 +42,8 @@ describe("MemberFriendship", () => {
     post.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "request_sent" }) })
     const { reload } = await renderRow("none")
 
-    const button = screen.getByRole("button", { name: "Požádat Libor o přátelství" })
-    expect(button).toHaveTextContent("Požádat")
+    const button = screen.getByRole("button", { name: "Spřátelit: Libor" })
+    expect(button).toHaveTextContent("Spřátelit")
     await userEvent.click(button)
 
     expect(post).toHaveBeenCalledWith("friends/requests", { json: { recipientId: "u2" } })
@@ -55,7 +55,7 @@ describe("MemberFriendship", () => {
     post.mockReturnValueOnce({ json: () => Promise.reject(new Error("down")) })
     await renderRow("none")
 
-    await userEvent.click(screen.getByRole("button", { name: "Požádat Libor o přátelství" }))
+    await userEvent.click(screen.getByRole("button", { name: "Spřátelit: Libor" }))
 
     await vi.waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
@@ -66,7 +66,7 @@ describe("MemberFriendship", () => {
 
   it.each([
     ["request_sent", "Žádost odeslána"],
-    ["request_received", "Žádá vás"],
+    ["request_received", "Chce se spřátelit"],
     ["friends", "Přítel"],
   ] as const)("shows %s as a badge, with no button", async (relation, label) => {
     await renderRow(relation)

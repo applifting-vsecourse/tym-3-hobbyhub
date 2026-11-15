@@ -453,6 +453,8 @@ enum FriendRequestStatus {
   PENDING
   ACCEPTED
   REJECTED
+  // #225: the sender took the request back before it was decided.
+  WITHDRAWN
 
   @@map("friend_request_status")
 }

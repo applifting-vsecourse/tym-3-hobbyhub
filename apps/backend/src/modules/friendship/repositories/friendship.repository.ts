@@ -166,4 +166,35 @@ export class FriendshipRepository {
       throw error;
     }
   }
+
+  /**
+   * #225: how many requests the sender made to the recipient since `since`,
+   * whatever became of them (pending, decided or withdrawn).
+   */
+  countRequestsSince(
+    senderId: string,
+    recipientId: string,
+    since: Date,
+  ): Promise<number> {
+    return this.prisma.friendRequest.count({
+      where: { senderId, recipientId, requestedAt: { gte: since } },
+    });
+  }
+
+  /**
+   * #225: the sender takes back their pending request to the recipient. Only
+   * a request still pending changes, so one decided meanwhile stays decided;
+   * answers whether there was one.
+   */
+  async withdrawPendingRequest(
+    senderId: string,
+    recipientId: string,
+    now: Date,
+  ): Promise<boolean> {
+    const { count } = await this.prisma.friendRequest.updateMany({
+      where: { senderId, recipientId, status: 'PENDING' },
+      data: { status: 'WITHDRAWN', decidedAt: now },
+    });
+    return count > 0;
+  }
 }

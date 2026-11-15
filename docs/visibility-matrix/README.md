@@ -146,7 +146,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 
 - **Veřejný profil** je jméno a příjmení, přezdívka (uživatelské jméno, když ho člověk má), fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
 - **Vyhledání lidí** ([#225][225]) najde člověka podle části jména nebo přezdívky, nikdy podle e-mailu, a ve výsledku vrací jen jméno, přezdívku, fotku a stav přátelství se mnou. Nevrací mě samotného, zablokované ani smazané účty a nikdy celkový počet nalezených, aby nešel stáhnout seznam všech uživatelů. Hledá se od 2 znaků, po 20 výsledcích.
-- **„Jen se mnou“** u stavu přátelství: každý vidí jen svůj vztah k dotyčnému („Žádost odeslána“, „Žádá vás“, „Přítel“). Nikdo třetí nepozná, že si dva jiní lidé poslali žádost nebo jsou přátelé. Zamítnutí je tiché: žadatel ho nepozná a vidí znovu „Požádat o přátelství“.
+- **„Jen se mnou“** u stavu přátelství: každý vidí jen svůj vztah k dotyčnému („Žádost odeslána“, „Chce se spřátelit“, „Přítel“). Nikdo třetí nepozná, že si dva jiní lidé poslali žádost nebo jsou přátelé. Zamítnutí je tiché: žadatel ho nepozná a vidí znovu „Požádat o přátelství“.
 - **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
 - **Přesné datum narození aplikace nezná.** Drží jen rok, věk ve složení účastníků je proto přesný na rok ([#174][174], [ADR-0016](../adr/adr-0016.md)).
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
@@ -175,7 +175,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Jména žadatelů a jejich zprávy                                                 | ❌                              | ❌          | ✅            | ✅          | ❌          | [#48][48], [PO][po]                     |
 | Zabanovaní členové a důvod                                                     | ❌                              | ❌          | ✅            | ✅          | ❌          | [#181][181], [PO][po]                   |
 
-**Členové vedou na svůj profil** ([#225][225]). U každého člena kromě sebe vidí člen stav přátelství s ním, jen ze své strany („Přítel“, „Žádost odeslána“, „Žádá vás“), a komu nic z toho neplatí, tomu může rovnou poslat žádost o přátelství. Cizí přátelství mezi dvěma jinými členy nevidí nikdo.
+**Členové vedou na svůj profil** ([#225][225]). U každého člena kromě sebe vidí člen stav přátelství s ním, jen ze své strany („Přítel“, „Žádost odeslána“, „Chce se spřátelit“), a komu nic z toho neplatí, tomu může rovnou poslat žádost o přátelství. Cizí přátelství mezi dvěma jinými členy nevidí nikdo.
 
 **Soukromá skupina je dohledatelná, ale zavřená.** Skupina, kterou nejde najít, nemůže shánět lidi, a to je důvod, proč produkt existuje. Vidět má jít, že existuje a čemu se věnuje; co se v ní děje, ne.
 

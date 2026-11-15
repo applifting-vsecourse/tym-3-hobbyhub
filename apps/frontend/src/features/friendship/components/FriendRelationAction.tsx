@@ -1,10 +1,12 @@
-import { Check, Clock, Heart, UserPlus } from "lucide-react"
+import { Clock, Mail, UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import FriendHeartIcon from "@/assets/ui-icons/heart.svg?react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
+import { WithdrawFriendRequest } from "@/features/friendship/components/WithdrawFriendRequest"
 import { useSendFriendRequest } from "@/features/friendship/hooks/useSendFriendRequest"
 
 type FriendRelationActionProps = {
@@ -17,7 +19,8 @@ type FriendRelationActionProps = {
 
 /**
  * #225: under the bio of someone's profile, what I can do about friendship.
- * No relation: ask. Asked: a disabled "Žádost odeslána". They ask me: a note,
+ * No relation: ask. Asked: a disabled "Žádost odeslána" and "Zrušit žádost".
+ * They ask me: a note,
  * to which #228 adds Přijmout and Zamítnout. Friends: the "Přítel" badge, to
  * which #226 adds removing the friend.
  */
@@ -50,20 +53,26 @@ export function FriendRelationAction({ userId, relation, reload }: FriendRelatio
       )
     case "request_sent":
       return (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full md:w-fit"
-          disabled
-        >
-          <Clock aria-hidden />
-          {t("friends.action.sent")}
-        </Button>
+        <div className="flex flex-col gap-2 md:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full md:w-fit"
+            disabled
+          >
+            <Clock aria-hidden />
+            {t("friends.action.sent")}
+          </Button>
+          <WithdrawFriendRequest
+            userId={userId}
+            reload={reload}
+          />
+        </div>
       )
     case "request_received":
       return (
         <p className="flex items-center gap-3 rounded-lg bg-accent px-4 py-3 typo-body text-accent-foreground">
-          <Heart
+          <Mail
             aria-hidden
             className="size-5 shrink-0"
           />
@@ -76,7 +85,7 @@ export function FriendRelationAction({ userId, relation, reload }: FriendRelatio
           variant="success"
           className="px-3 py-1"
         >
-          <Check aria-hidden />
+          <FriendHeartIcon aria-hidden />
           {t("friends.relation.friends")}
         </Badge>
       )

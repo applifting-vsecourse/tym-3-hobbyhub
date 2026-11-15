@@ -199,14 +199,44 @@ describe('FriendshipService', () => {
       context.repository.isReachable.mockResolvedValue(true);
       context.repository.areFriends.mockResolvedValue(false);
       context.repository.findPendingRequestBetween.mockResolvedValue(null);
+      context.repository.countRequestsSince.mockResolvedValue(0);
       return context;
     };
 
+    afterEach(() => jest.useRealTimers());
+
     it('creates the request from the signed-in user', async () => {
       const { repository, service } = reachableStranger();
-      await expect(service.sendRequest(me, 'u2')).resolves.toBe('request_sent');
+      await expect(service.sendRequest(me, 'u2')).resolves.toEqual({
+        relation: 'request_sent',
+        notifyRecipient: true,
+      });
       expect(repository.createRequest).toHaveBeenCalledWith('u1', 'u2');
     });
+
+    // The recipient hears of at most 3 requests from the same sender an hour.
+    it.each([
+      [0, true],
+      [2, true],
+      [3, false],
+      [7, false],
+    ])(
+      'with %i earlier requests within the hour, notifies the recipient: %p',
+      async (earlier, notifyRecipient) => {
+        jest.useFakeTimers().setSystemTime(new Date('2026-11-15T12:00:00Z'));
+        const { repository, service } = reachableStranger();
+        repository.countRequestsSince.mockResolvedValue(earlier);
+        await expect(service.sendRequest(me, 'u2')).resolves.toMatchObject({
+          notifyRecipient,
+        });
+        expect(repository.countRequestsSince).toHaveBeenCalledWith(
+          'u1',
+          'u2',
+          new Date('2026-11-15T11:00:00Z'),
+        );
+        expect(repository.createRequest).toHaveBeenCalled();
+      },
+    );
 
     it('refuses a request to oneself', async () => {
       const { repository, service } = reachableStranger();
@@ -261,6 +291,36 @@ describe('FriendshipService', () => {
       const failure = new Error('db down');
       repository.createRequest.mockRejectedValue(failure);
       await expect(service.sendRequest(me, 'u2')).rejects.toBe(failure);
+    });
+  });
+
+  describe('withdrawRequest', () => {
+    it('takes back my pending request, leaving no relation', async () => {
+      const { repository, service } = setup();
+      repository.withdrawPendingRequest.mockResolvedValue(true);
+      await expect(service.withdrawRequest(me, 'u2')).resolves.toBe('none');
+      expect(repository.withdrawPendingRequest).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        expect.any(Date),
+      );
+    });
+
+    // Never sent, already decided, or it is the other one asking me.
+    it('answers a conflict when I have no pending request to the person', async () => {
+      const { repository, service } = setup();
+      repository.withdrawPendingRequest.mockResolvedValue(false);
+      await expect(service.withdrawRequest(me, 'u2')).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+    });
+
+    it('refuses oneself, without asking', async () => {
+      const { repository, service } = setup();
+      await expect(service.withdrawRequest(me, 'u1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.withdrawPendingRequest).not.toHaveBeenCalled();
     });
   });
 });

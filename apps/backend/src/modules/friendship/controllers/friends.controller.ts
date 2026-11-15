@@ -5,9 +5,11 @@ import { AuthenticatedUserGuard } from '@/shared/auth/guards/authenticated-user.
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
   UseGuards,
@@ -27,7 +29,8 @@ import { SearchFriendsQuery } from './dto/search-friends.query';
 import { SendFriendRequestDto } from './dto/send-friend-request.dto';
 import { friendsValidationPipe } from './friends-validation.pipe';
 
-// #225, ADR-0023: finding people and asking them to become friends. Who acts
+// #225, ADR-0023: finding people, asking them to become friends and taking
+// the request back. Who acts
 // is the signed-in user, never an id from the request.
 @ApiTags('friends')
 @Controller('friends')
@@ -69,11 +72,30 @@ export class FriendsController {
     @User() user: Identity,
     @Body() body: SendFriendRequestDto,
   ): Promise<FriendRelationResponseDto> {
+    const sent = await this.friendshipService.sendRequest(
+      user,
+      body.recipientId,
+    );
+    return { relation: sent.relation };
+  }
+
+  @Delete('requests/:recipientId')
+  @ApiOperation({
+    summary: 'Withdraw my pending friend request to this person',
+  })
+  @ApiResponse({ status: 200, type: FriendRelationResponseDto })
+  @ApiResponse({ status: 400, description: 'To oneself' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({
+    status: 409,
+    description: 'No pending request from me (never sent, or decided)',
+  })
+  async withdrawRequest(
+    @User() user: Identity,
+    @Param('recipientId') recipientId: string,
+  ): Promise<FriendRelationResponseDto> {
     return {
-      relation: await this.friendshipService.sendRequest(
-        user,
-        body.recipientId,
-      ),
+      relation: await this.friendshipService.withdrawRequest(user, recipientId),
     };
   }
 }

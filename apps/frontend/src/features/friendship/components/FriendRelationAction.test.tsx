@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { screen } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -9,14 +9,14 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRelationAction } from "@/features/friendship/components/FriendRelationAction"
 
-const { post } = vi.hoisted(() => ({ post: vi.fn() }))
+const { post, del } = vi.hoisted(() => ({ post: vi.fn(), del: vi.fn() }))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  api: { post },
+  api: { post, delete: del },
 }))
 
-const failWith = (status: number) =>
-  post.mockReturnValueOnce({
+const failWith = (status: number, method = post) =>
+  method.mockReturnValueOnce({
     json: () =>
       Promise.reject(
         new HTTPError(
@@ -43,7 +43,10 @@ const renderAction = async (relation: FriendRelation) => {
 }
 
 describe("FriendRelationAction", () => {
-  beforeEach(() => post.mockReset())
+  beforeEach(() => {
+    post.mockReset()
+    del.mockReset()
+  })
 
   it("asks the person and reloads the profile, which then says the request was sent", async () => {
     post.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "request_sent" }) })
@@ -96,5 +99,58 @@ describe("FriendRelationAction", () => {
 
     expect(await screen.findByText("Přítel")).toBeInTheDocument()
     expect(screen.queryByRole("button")).toBeNull()
+  })
+
+  describe("withdrawing a sent request (#225)", () => {
+    const openSheet = async () => {
+      await userEvent.click(await screen.findByRole("button", { name: "Zrušit žádost" }))
+      return screen.findByRole("dialog", { name: "Zrušit žádost o přátelství?" })
+    }
+
+    it("asks first and keeps the request when I change my mind", async () => {
+      await renderAction("request_sent")
+
+      const dialog = await openSheet()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Ponechat" }))
+
+      expect(del).not.toHaveBeenCalled()
+      expect(screen.getByRole("button", { name: "Žádost odeslána" })).toBeDisabled()
+    })
+
+    it("takes the request back and reloads the profile", async () => {
+      del.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "none" }) })
+      const { reload } = await renderAction("request_sent")
+
+      const dialog = await openSheet()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Zrušit žádost" }))
+
+      expect(del).toHaveBeenCalledWith("friends/requests/u2")
+      await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+    })
+
+    // Decided meanwhile: the reload shows how it ended, without an error.
+    it("only reloads when there was no request to take back any more", async () => {
+      failWith(409, del)
+      const { reload } = await renderAction("request_sent")
+
+      const dialog = await openSheet()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Zrušit žádost" }))
+
+      await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+      expect(screen.queryByRole("alert")).toBeNull()
+    })
+
+    it("says so in the sheet when it fails", async () => {
+      failWith(500, del)
+      await renderAction("request_sent")
+
+      const dialog = await openSheet()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Zrušit žádost" }))
+
+      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+        "Žádost se nepodařilo zrušit",
+      )
+    })
   })
 })

@@ -436,8 +436,8 @@
       "error": "The request could not be sent. Please try again.",
       "received": "This person is asking you to be friends.",
       "send": "Ask to be friends",
-      "sendShort": "Ask",
-      "sendShortLabel": "Ask {{name}} to be friends",
+      "sendShort": "Add Friend",
+      "sendShortLabel": "Add Friend: {{name}}",
       "sending": "Sending the request…",
       "sendingShort": "Sending…",
       "sent": "Request sent"
@@ -450,13 +450,13 @@
     "nickname": "@{{nickname}}",
     "relation": {
       "friends": "Friend",
-      "request_received": "Asks you",
+      "request_received": "Wants to be friends",
       "request_sent": "Request sent"
     },
     "search": {
       "error": "The search failed.",
-      "hint_one": "Type at least {{count}} character of a name or nickname. Searching by e-mail is not possible.",
-      "hint_other": "Type at least {{count}} characters of a name or nickname. Searching by e-mail is not possible.",
+      "hint_one": "Type at least {{count}} character of a name or nickname.",
+      "hint_other": "Type at least {{count}} characters of a name or nickname.",
       "label": "Search people by name or nickname",
       "loadMore": "Load more",
       "loadMoreError": "More people could not be loaded. Try again.",
@@ -473,7 +473,15 @@
       "requests": "Requests",
       "search": "Find people"
     },
-    "title": "Friends"
+    "title": "Friends",
+    "withdraw": {
+      "button": "Cancel request",
+      "confirm": "Cancel request",
+      "error": "The request could not be cancelled. Please try again.",
+      "keep": "Keep it",
+      "text": "The friend request will disappear. You can ask again at any time.",
+      "title": "Cancel the friend request?"
+    }
   },
   "geo": {
     "address": {

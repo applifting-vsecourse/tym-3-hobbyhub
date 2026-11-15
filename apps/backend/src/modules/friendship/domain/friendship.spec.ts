@@ -2,9 +2,29 @@ import {
   DEFAULT_FRIEND_VISIBILITY,
   friendOf,
   friendPairOf,
+  friendRequestNotifyWindowStart,
   friendRequestViolations,
+  isFriendRequestNotified,
   relationOf,
 } from './friendship';
+
+describe('isFriendRequestNotified', () => {
+  // #225: the recipient hears of the first 3 requests from a sender an hour.
+  it.each([
+    [0, true],
+    [2, true],
+    [3, false],
+    [10, false],
+  ])('after %i earlier requests: %p', (earlier, notified) => {
+    expect(isFriendRequestNotified(earlier)).toBe(notified);
+  });
+
+  it('counts the hour before the new request', () => {
+    expect(
+      friendRequestNotifyWindowStart(new Date('2026-11-15T12:30:00Z')),
+    ).toEqual(new Date('2026-11-15T11:30:00Z'));
+  });
+});
 
 describe('relationOf', () => {
   it('has no relation without a friendship or a pending request', () => {
