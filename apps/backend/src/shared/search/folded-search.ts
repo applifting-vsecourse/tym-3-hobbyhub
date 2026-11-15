@@ -1,6 +1,7 @@
 import { Prisma } from '@/generated/prisma/client';
 
-// The SQL side of the free-text matching in `fold-for-search.ts`.
+// The SQL side of the free-text matching in `fold-for-search.ts`. Builds Prisma
+// SQL, so only repositories call it; everything else uses `fold-for-search.ts`.
 
 // The database folds like `foldForSearch` does, but only for the diacritics of
 // Czech and Slovak (no `unaccent` extension needed); other accents, such as

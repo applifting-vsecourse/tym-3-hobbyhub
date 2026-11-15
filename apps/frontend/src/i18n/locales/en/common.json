@@ -534,6 +534,7 @@
         "MEMBER": "Member",
         "OWNER": "Organiser"
       },
+      "searchLabel": "Search groups",
       "searchPlaceholder": "Name, place or activity",
       "sortNote": "Results are sorted from the newest group.",
       "tabs": {

@@ -2,13 +2,13 @@ import type { ReactNode } from "react"
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 
+import { NoMatchingResults } from "@/components/hobbyhub/NoMatchingResults"
 import { Button } from "@/components/ui/button"
 
 import type { DiscoverGroupsFilters } from "@/features/group/api/groupKeys"
 import { discoverGroupsQueryOptions } from "@/features/group/api/groupListQueryOptions"
 import { GroupCard, type ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupGrid } from "@/features/group/components/GroupGrid"
-import { NoMatchingGroups } from "@/features/group/components/NoMatchingGroups"
 
 type DiscoverGroupsProps = {
   /** The signed-in user, or null for a visitor, who sees every public group. */
@@ -74,7 +74,12 @@ export function DiscoverGroups({
           )}
           empty={
             isFiltered ? (
-              <NoMatchingGroups onClearFilters={onClearFilters} />
+              <NoMatchingResults
+                title={t("groups.list.emptyFiltered.title")}
+                description={t("groups.list.emptyFiltered.description")}
+                clearLabel={t("groups.list.emptyFiltered.clear")}
+                onClearFilters={onClearFilters}
+              />
             ) : viewerId ? (
               t("groups.list.discoverEmpty")
             ) : (

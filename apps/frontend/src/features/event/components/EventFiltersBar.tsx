@@ -44,6 +44,8 @@ type EventFiltersBarProps = {
   activitiesState: FilterActivitiesState
   /** The filters the panel offers; all of them by default. */
   fields?: FiltersSheetField[]
+  /** Accessible name of the search field; the event list's by default. */
+  searchLabel?: string
   /** Hint of the search field; the event list's by default. */
   searchPlaceholder?: string
   /** How the page sorts its results, said in the panel; the event list's by default. */
@@ -68,6 +70,7 @@ export function EventFiltersBar({
   activityOptions,
   activitiesState,
   fields = ["activity", "when", "location"],
+  searchLabel,
   searchPlaceholder,
   sortNote,
   leadingChips,
@@ -88,7 +91,7 @@ export function EventFiltersBar({
   return (
     <div className="flex flex-col gap-3">
       <SearchField
-        label={t("hobbyhub.search.label")}
+        label={searchLabel ?? t("hobbyhub.search.label")}
         placeholder={searchPlaceholder ?? t("events.list.searchPlaceholder")}
         maxLength={EVENT_SEARCH_MAX_LENGTH}
         value={searchText}

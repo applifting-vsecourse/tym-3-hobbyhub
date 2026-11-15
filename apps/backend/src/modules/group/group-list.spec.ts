@@ -244,6 +244,58 @@ describeDb('group lists', () => {
     });
   });
 
+  it('pages a search for a signed-in user past groups it must not show', async () => {
+    await inRolledBackTransaction(
+      async ({ repository, createUser, createGroup }) => {
+        const me = await createUser();
+        const other = await createUser();
+        // Newer than the matches, so a page cut before the exclusions would
+        // fill up with groups that are dropped afterwards.
+        const newer = new Date('2099-01-01T00:00:00Z');
+        const hidden = [
+          await createGroup({ name: 'Zzhledat moje', createdAt: newer }, [
+            { user: me, role: GroupRole.OWNER },
+          ]),
+          await createGroup(
+            {
+              name: 'Zzhledat soukromá',
+              createdAt: newer,
+              visibility: GroupVisibility.PRIVATE,
+            },
+            [{ user: other, role: GroupRole.OWNER }],
+          ),
+          await createGroup({
+            name: 'Zzhledat zrušená',
+            createdAt: newer,
+            status: GroupStatus.CANCELLED,
+          }),
+        ];
+        const first = await createGroup({ name: 'Zzhledat první' });
+        const second = await createGroup({ name: 'Zzhledat druhá' });
+
+        const found: string[] = [];
+        let cursor: string | undefined;
+        do {
+          const page = await repository.listDiscoverableGroups(
+            me.id,
+            1,
+            cursor,
+            {
+              activityIds: [],
+              search: 'zzhledat',
+            },
+          );
+          expect(page.items.length).toBeLessThanOrEqual(1);
+          found.push(...page.items.map((group) => group.id));
+          cursor = page.nextCursor ?? undefined;
+        } while (cursor);
+
+        expect([...found].sort()).toEqual([first, second].sort());
+        for (const id of hidden) expect(found).not.toContain(id);
+      },
+    );
+  });
+
   it('pages newest first without gaps or repeats, even on equal dates', async () => {
     await inRolledBackTransaction(async ({ repository, createGroup }) => {
       // Three share a date, so only the id keeps their order stable.

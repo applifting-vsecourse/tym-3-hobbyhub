@@ -545,6 +545,7 @@
         "MEMBER": "Člen",
         "OWNER": "Organizátor"
       },
+      "searchLabel": "Hledat skupiny",
       "searchPlaceholder": "Název, místo nebo aktivita",
       "sortNote": "Výsledky řadíme od nejnovější skupiny.",
       "tabs": {

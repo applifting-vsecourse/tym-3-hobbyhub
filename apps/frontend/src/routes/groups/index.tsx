@@ -85,6 +85,7 @@ function DiscoverTab({
           activityOptions={activityOptions.options}
           activitiesState={activityOptions.state}
           fields={["activity", "location"]}
+          searchLabel={t("groups.list.searchLabel")}
           searchPlaceholder={t("groups.list.searchPlaceholder")}
           sortNote={t("groups.list.sortNote")}
         />
