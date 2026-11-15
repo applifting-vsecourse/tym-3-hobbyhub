@@ -1581,6 +1581,7 @@
     },
     "showAll": "Zobrazit vše",
     "someone": "Někdo",
+    "startsWhen": "{{day}} v {{time}}",
     "text": {
       "EVENT_CANCELLED": "Akce {{title}} byla zrušena",
       "EVENT_CHANGED": {
@@ -1592,7 +1593,18 @@
         "organizer": "Správce skryl tvoji akci {{title}}",
         "participant": "Akce {{title}} byla odstraněna správcem"
       },
+      "EVENT_REMINDER": {
+        "started": "Akce {{title}} začala {{when}}",
+        "upcoming": "Akce {{title}} začíná {{when}}"
+      },
       "EVENT_RESTORED": "Akce {{title}} je zpět",
+      "HOSTED_EVENT_REMINDER": {
+        "belowMinimum_few": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastníci",
+        "belowMinimum_one": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastník",
+        "belowMinimum_other": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastníků",
+        "started": "Tvoje akce {{title}} začala {{when}}",
+        "upcoming": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}"
+      },
       "NEW_REQUESTS": {
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"

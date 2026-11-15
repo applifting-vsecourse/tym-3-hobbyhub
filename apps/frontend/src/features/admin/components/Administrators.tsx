@@ -28,7 +28,7 @@ const STATUS_BADGE: Record<AdministratorStatus, "success" | "pending" | "seconda
 }
 
 /**
- * #237, ADR-0021: who runs the platform. Administrators invite colleagues by
+ * #237, ADR-0024: who runs the platform. Administrators invite colleagues by
  * e-mail, take their access away and give it back. Nobody removes
  * themselves, and the last active administrator stays.
  */

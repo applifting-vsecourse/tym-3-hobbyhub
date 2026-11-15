@@ -17,7 +17,7 @@ import { Config } from '@/shared/config/config.service';
 import { Injectable } from '@nestjs/common';
 
 /**
- * ADR-0021: the invitation is BetterAuth's password-reset token, issued here
+ * ADR-0024: the invitation is BetterAuth's password-reset token, issued here
  * for 72 hours instead of the hour "Zapomenuté heslo" gets. Setting the
  * password through it creates the credential an invited administrator lacks.
  * Revoking the older links is the caller's job.

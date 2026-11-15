@@ -1,4 +1,4 @@
-// #238, ADR-0010, ADR-0021: an administrator as the administration manages
+// #238, ADR-0010, ADR-0024: an administrator as the administration manages
 // them.
 
 export type AdministratorStatus = 'INVITED' | 'ACTIVE' | 'DEACTIVATED';
@@ -17,7 +17,7 @@ export type AdministratorListItem = {
 };
 
 /**
- * ADR-0021: deactivated wins; otherwise invited until they set a password.
+ * ADR-0024: deactivated wins; otherwise invited until they set a password.
  * Stored is only what makes it up, never the status itself.
  */
 export const administratorStatusOf = (facts: {
@@ -62,7 +62,7 @@ export type DeactivationViolation =
   'SELF' | 'ALREADY_DEACTIVATED' | 'LAST_ACTIVE';
 
 /**
- * ADR-0021: nobody removes themselves, and the last active administrator
+ * ADR-0024: nobody removes themselves, and the last active administrator
  * stays (an invited one does not count: they cannot sign in yet).
  */
 export const deactivationViolations = (

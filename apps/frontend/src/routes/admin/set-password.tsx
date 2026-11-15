@@ -15,7 +15,7 @@ import { ADMIN_PASSWORD_MIN_LENGTH } from "@/features/admin/api/adminSchemas"
 import { AdminAuthError, useAdminResetPassword } from "@/features/admin/hooks/useAdminSignIn"
 import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm"
 
-// ADR-0021: the link in the invitation (72 hours) and in "Zapomenuté heslo"
+// ADR-0024: the link in the invitation (72 hours) and in "Zapomenuté heslo"
 // (1 hour) ends here with `token`. Both work once; the server checks it.
 const setPasswordSearchSchema = z.object({
   token: z.string().optional(),

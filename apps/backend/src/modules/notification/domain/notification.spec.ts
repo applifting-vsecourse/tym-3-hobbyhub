@@ -17,6 +17,8 @@ describe('notificationTypesOf', () => {
     ['EVENT_CHANGED', 'events'],
     ['EVENT_CANCELLED', 'events'],
     ['EVENT_BOARD', 'events'],
+    ['EVENT_REMINDER', 'events'],
+    ['HOSTED_EVENT_REMINDER', 'events'],
     ['GROUP_INVITATION', 'groups'],
     ['ONBOARDING_SERIES', 'other'],
     ['MONTHLY_RECOMMENDATION', 'other'],

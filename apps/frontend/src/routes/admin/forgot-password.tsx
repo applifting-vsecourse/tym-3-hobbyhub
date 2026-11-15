@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminAuthError, useAdminRequestPasswordReset } from "@/features/admin/hooks/useAdminSignIn"
 import { ForgotPasswordForm } from "@/features/auth/components/ForgotPasswordForm"
 
-// ADR-0021, "Zapomenuté heslo" of the administration. The answer is the same
+// ADR-0024, "Zapomenuté heslo" of the administration. The answer is the same
 // whether the address belongs to an administrator, a deactivated one or
 // nobody, so the page cannot be used to find out.
 export const Route = createFileRoute("/admin/forgot-password")({

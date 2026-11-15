@@ -17,6 +17,7 @@ const aNotification = (overrides: Partial<Notification> = {}): Notification => (
   message: null,
   changes: [],
   reason: null,
+  reminder: null,
   ...overrides,
 })
 
@@ -96,6 +97,81 @@ describe("notificationText", () => {
     )
   })
 
+  // #233: the day and time as the reader sees them now, in local time.
+  describe("a reminder before the start", () => {
+    const startsAt = new Date(2030, 0, 2, 18, 0)
+    const dayBefore = new Date(2030, 0, 1, 18, 5)
+    const sameDay = new Date(2030, 0, 2, 16, 5)
+    const occupancy = { occupiedSpots: 7, maxParticipants: 12, missingToMinimum: 0 }
+    const reminderOf = (
+      type: "EVENT_REMINDER" | "HOSTED_EVENT_REMINDER",
+      overrides: Partial<NonNullable<Notification["reminder"]>> = {},
+    ) =>
+      aNotification({
+        type,
+        actor: null,
+        reminder: {
+          kind: "DAY",
+          startsAt,
+          occupancy: type === "HOSTED_EVENT_REMINDER" ? occupancy : null,
+          ...overrides,
+        },
+      })
+
+    it.each([
+      ["a day before", dayBefore, "Akce Čtvrteční florbal začíná zítra v 18:00"],
+      ["on the day", sameDay, "Akce Čtvrteční florbal začíná dnes v 18:00"],
+      [
+        "once it started",
+        new Date(2030, 0, 3, 9, 0),
+        "Akce Čtvrteční florbal začala včera v 18:00",
+      ],
+    ])("tells a participant %s", (_, now, expected) => {
+      expect(notificationText(i18n.t, reminderOf("EVENT_REMINDER"), { now })).toBe(expected)
+    })
+
+    it("names the day further off", () => {
+      expect(
+        notificationText(i18n.t, reminderOf("EVENT_REMINDER"), { now: new Date(2029, 11, 30, 9) }),
+      ).toBe("Akce Čtvrteční florbal začíná st 2. 1. v 18:00")
+    })
+
+    it("tells an organizer how full it is", () => {
+      expect(
+        notificationText(i18n.t, reminderOf("HOSTED_EVENT_REMINDER"), { now: dayBefore }),
+      ).toBe("Tvoje akce Čtvrteční florbal začíná zítra v 18:00, obsazeno 7 z 12")
+    })
+
+    it.each([
+      [1, "chybí 1 účastník"],
+      [3, "chybí 3 účastníci"],
+      [5, "chybí 5 účastníků"],
+    ])("tells an organizer %i missing to the minimum", (missing, expected) => {
+      const notification = reminderOf("HOSTED_EVENT_REMINDER", {
+        occupancy: { ...occupancy, missingToMinimum: missing },
+      })
+      expect(notificationText(i18n.t, notification, { now: sameDay })).toBe(
+        `Tvoje akce Čtvrteční florbal začíná dnes v 18:00, obsazeno 7 z 12, do minima ${expected}`,
+      )
+    })
+
+    it("leaves the numbers out once it started", () => {
+      expect(
+        notificationText(i18n.t, reminderOf("HOSTED_EVENT_REMINDER"), {
+          now: new Date(2030, 0, 2, 19, 0),
+        }),
+      ).toBe("Tvoje akce Čtvrteční florbal začala dnes v 18:00")
+    })
+
+    it("follows the language", async () => {
+      await i18n.changeLanguage("en")
+      expect(
+        notificationText(i18n.t, reminderOf("EVENT_REMINDER"), { now: dayBefore, locale: "en" }),
+      ).toMatch(/^Čtvrteční florbal starts tomorrow at 0?6:00\sPM$/)
+      await i18n.changeLanguage("cs")
+    })
+  })
+
   it("follows the language", async () => {
     await i18n.changeLanguage("en")
     expect(notificationText(i18n.t, aNotification({ type: "EVENT_CANCELLED" }))).toBe(
@@ -143,6 +219,17 @@ describe("notificationTarget", () => {
       notificationTarget(aNotification({ type: "EVENT_HIDDEN", reason: "Nabízí placené služby." })),
     ).toEqual({ kind: "event", eventId: "e1" })
     expect(notificationTarget(aNotification({ type: "EVENT_RESTORED" }))).toEqual({
+      kind: "event",
+      eventId: "e1",
+    })
+  })
+
+  it("sends the organizers to the participants before the start (#233)", () => {
+    expect(notificationTarget(aNotification({ type: "HOSTED_EVENT_REMINDER" }))).toEqual({
+      kind: "eventParticipants",
+      eventId: "e1",
+    })
+    expect(notificationTarget(aNotification({ type: "EVENT_REMINDER" }))).toEqual({
       kind: "event",
       eventId: "e1",
     })

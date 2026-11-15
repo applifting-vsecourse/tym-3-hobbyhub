@@ -10,7 +10,7 @@ import {
 } from '@/core/email/templates/admin-reset-password';
 import { Config } from '@/shared/config/config.service';
 
-// ADR-0021: an invitation and a password reset are the same link, BetterAuth's
+// ADR-0024: an invitation and a password reset are the same link, BetterAuth's
 // `reset-password` token: setting a password through it also creates the
 // missing credential of an invited administrator.
 export const ADMIN_INVITATION_TTL_SECONDS = 72 * 60 * 60;

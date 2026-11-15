@@ -99,6 +99,8 @@ describe('NotificationRepository', () => {
           'EVENT_HIDDEN',
           'EVENT_RESTORED',
           'EVENT_BOARD',
+          'EVENT_REMINDER',
+          'HOSTED_EVENT_REMINDER',
         ],
       },
     });

@@ -34,7 +34,7 @@ export class AdministratorResponseDto {
 
   @ApiProperty({
     enum: STATUSES,
-    description: 'INVITED until they set a password (ADR-0021)',
+    description: 'INVITED until they set a password (ADR-0024)',
   })
   status!: AdministratorStatus;
 

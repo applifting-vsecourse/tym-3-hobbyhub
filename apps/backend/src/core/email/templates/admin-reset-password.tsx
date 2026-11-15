@@ -13,7 +13,7 @@ import {
 export const ADMIN_RESET_PASSWORD_SUBJECT =
   'Obnova hesla do administrace HobbyHubu';
 
-// ADR-0021: "Zapomenuté heslo" on the administrators' sign-in.
+// ADR-0024: "Zapomenuté heslo" on the administrators' sign-in.
 export interface AdminResetPasswordProps {
   url: string;
 }

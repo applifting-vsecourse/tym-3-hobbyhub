@@ -159,7 +159,7 @@ export class AdministratorRepository {
 
   /**
    * Back from deactivation without the old password: it is deleted, with any
-   * session and link, so only a new invitation lets them in (ADR-0021).
+   * session and link, so only a new invitation lets them in (ADR-0024).
    */
   async reactivate(id: string, now: Date): Promise<boolean> {
     return this.prisma.$transaction(async (tx) => {

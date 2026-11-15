@@ -35,6 +35,7 @@ const aNotification = (id: string, readAt: string | null = null) => ({
   message: null,
   changes: [],
   reason: null,
+  reminder: null,
 })
 
 // What the API answers, by path: the count for the bell, the first page of

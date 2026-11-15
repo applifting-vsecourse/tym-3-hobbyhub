@@ -19,6 +19,9 @@ export class SMTPAdapter implements EmailService {
       // and STARTTLS upgrades it only if the server offers it, so someone on
       // the way could strip the offer. Refuse to send without encryption.
       requireTLS: true,
+      // Locally, Mailpit's certificate is self-signed; the connection is
+      // still encrypted, only the certificate is not checked.
+      ...(config.allowSelfSigned ? { tls: { rejectUnauthorized: false } } : {}),
       auth: {
         user: config.user,
         pass: config.pass,

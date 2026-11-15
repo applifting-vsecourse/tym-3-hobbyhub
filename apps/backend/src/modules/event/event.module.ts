@@ -11,7 +11,9 @@ import { AdminEventsController } from './controllers/admin-events.controller';
 import { AdminUserEventsController } from './controllers/admin-user-events.controller';
 import { EventsController } from './controllers/events.controller';
 import { GroupEventsController } from './controllers/group-events.controller';
+import { EventReminderRepository } from './repositories/event-reminder.repository';
 import { EventRepository } from './repositories/event.repository';
+import { EventRemindersService } from './services/event-reminders.service';
 import { EventsService } from './services/events.service';
 
 @Module({
@@ -32,7 +34,13 @@ import { EventsService } from './services/events.service';
     AdminEventsController,
     AdminUserEventsController,
   ],
-  providers: [EventsService, EventRepository],
+  providers: [
+    EventsService,
+    EventRepository,
+    // #233, ADR-0021: reminders before the start, sent by a poller.
+    EventRemindersService,
+    EventReminderRepository,
+  ],
   exports: [EventsService],
 })
 export class EventModule {}

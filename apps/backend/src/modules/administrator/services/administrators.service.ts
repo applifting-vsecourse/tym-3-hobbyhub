@@ -53,7 +53,7 @@ const refused = (violations: Violation[]): BadRequestException =>
     ...violationsBody(violations),
   });
 
-// #237, ADR-0021: administrators invite, deactivate and reactivate each other.
+// #237, ADR-0024: administrators invite, deactivate and reactivate each other.
 @Injectable()
 export class AdministratorsService {
   constructor(

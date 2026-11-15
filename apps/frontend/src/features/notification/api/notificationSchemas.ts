@@ -18,6 +18,8 @@ export const notificationTypeSchema = z.enum([
   "EVENT_RESTORED",
   // #240: a report the recipient filed was dealt with; says nothing of how.
   "REPORT_RESOLVED",
+  "EVENT_REMINDER",
+  "HOSTED_EVENT_REMINDER",
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
@@ -28,6 +30,20 @@ export const NOTIFICATION_KINDS = notificationKindSchema.options
 
 export const decisionSchema = z.enum(["APPROVED", "REJECTED"])
 export const eventChangeSchema = z.enum(["TIME", "PLACE"])
+
+// #233: which reminder before the start, the start it was for, and for the
+// organizers how full the event was when it went out.
+export const reminderSchema = z.object({
+  kind: z.enum(["DAY", "TWO_HOURS"]),
+  startsAt: z.coerce.date(),
+  occupancy: z
+    .object({
+      occupiedSpots: z.number(),
+      maxParticipants: z.number(),
+      missingToMinimum: z.number(),
+    })
+    .nullable(),
+})
 
 export const notificationSchema = z.object({
   id: z.string(),
@@ -42,6 +58,7 @@ export const notificationSchema = z.object({
   changes: z.array(eventChangeSchema),
   /** EVENT_HIDDEN: why an administrator hid it; only the organizers' copy has it (#239). */
   reason: z.string().nullable(),
+  reminder: reminderSchema.nullable(),
 })
 
 export const notificationPageSchema = z.object({

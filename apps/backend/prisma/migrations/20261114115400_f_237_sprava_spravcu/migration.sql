@@ -1,4 +1,4 @@
--- #237, ADR-0021: administrators invite and deactivate each other; their
+-- #237, ADR-0024: administrators invite and deactivate each other; their
 -- e-mails (invitation, password recovery) go through the outbox too.
 
 -- AlterEnum

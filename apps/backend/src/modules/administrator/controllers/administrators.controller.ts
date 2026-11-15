@@ -24,7 +24,7 @@ import { AdministratorResponseDto } from './dto/administrator.response.dto';
 import { InviteAdministratorDto } from './dto/invite-administrator.dto';
 
 // #238, #237: who runs the platform. Administrators invite, deactivate and
-// reactivate each other (ADR-0021); the first one comes from `admin:create`.
+// reactivate each other (ADR-0024); the first one comes from `admin:create`.
 @ApiTags('admin')
 @Controller('admin/administrators')
 @ApiCookieAuth()

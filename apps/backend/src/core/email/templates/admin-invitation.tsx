@@ -12,7 +12,7 @@ import {
 
 export const ADMIN_INVITATION_SUBJECT = 'Pozvánka do administrace HobbyHubu';
 
-// ADR-0021: a colleague added you as an administrator. Only the link, as the
+// ADR-0024: a colleague added you as an administrator. Only the link, as the
 // visibility matrix allows for setting a password: not who invited you.
 export interface AdminInvitationProps {
   url: string;

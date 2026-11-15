@@ -1,5 +1,6 @@
 import { ConfigModule } from '@applifting-io/nestjs-decorated-config';
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ActivityModule } from './modules/activity/activity.module';
 import { AdministratorModule } from './modules/administrator/administrator.module';
 import { CancellationReasonModule } from './modules/cancellation-reason/cancellation-reason.module';
@@ -22,6 +23,8 @@ import { Config } from './shared/config/config.service';
 
 const imports = [
   ConfigModule.forRootAsync(Config, { validate: true }),
+  // ADR-0021: jobs on a fixed rhythm (`@Cron`), such as the event reminders.
+  ScheduleModule.forRoot(),
   AuthModule,
   // ADR-0010, #238: the administrators' sign-in, mounted in main.ts.
   AdminAuthModule,

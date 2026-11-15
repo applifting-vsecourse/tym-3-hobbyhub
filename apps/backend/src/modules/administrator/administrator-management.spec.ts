@@ -1,4 +1,4 @@
-// #237, ADR-0021: administrators invite, deactivate and reactivate each other,
+// #237, ADR-0024: administrators invite, deactivate and reactivate each other,
 // against a real PostgreSQL and BetterAuth's own endpoints. On request:
 //   DB_TESTS=1 pnpm backend test administrator-management
 import 'dotenv/config';

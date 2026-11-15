@@ -6,7 +6,7 @@ export const EMAIL_KINDS = [
   'VERIFY_EMAIL',
   'RESET_PASSWORD',
   'NOTIFICATION',
-  // ADR-0021: a new administrator sets their password.
+  // ADR-0024: a new administrator sets their password.
   'ADMIN_INVITATION',
 ] as const;
 export type EmailKind = (typeof EMAIL_KINDS)[number];
@@ -14,7 +14,7 @@ export type EmailKind = (typeof EMAIL_KINDS)[number];
 export const EMAIL_SKIP_REASONS = ['UNVERIFIED', 'RECIPIENT_CAP'] as const;
 export type EmailSkipReason = (typeof EMAIL_SKIP_REASONS)[number];
 
-// Whose e-mail it is: a user's, or an administrator's (ADR-0021), never both.
+// Whose e-mail it is: a user's, or an administrator's (ADR-0024), never both.
 export type EmailRecipient =
   | { recipientId: string; administratorId?: never }
   | { administratorId: string; recipientId?: never };

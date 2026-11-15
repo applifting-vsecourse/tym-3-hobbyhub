@@ -189,7 +189,7 @@ export const administratorSchema = z.object({
 })
 export type Administrator = z.infer<typeof administratorSchema>
 
-// #237, ADR-0021: why the server refused a change to an administrator.
+// #237, ADR-0024: why the server refused a change to an administrator.
 export const administratorViolationSchema = z.enum([
   "ALREADY_ADMINISTRATOR",
   "DEACTIVATED_ADMINISTRATOR",

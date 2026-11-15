@@ -29,7 +29,7 @@ export const createAdminAuth = (
   emailOutbox?: EmailOutbox,
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) => {
-  // ADR-0021: a deactivated administrator neither signs in nor gets a link.
+  // ADR-0024: a deactivated administrator neither signs in nor gets a link.
   const isDeactivated = async (administratorId: string): Promise<boolean> => {
     const administrator = await prismaService.administrator.findUnique({
       where: { id: administratorId },
@@ -54,7 +54,7 @@ export const createAdminAuth = (
       // Administrators come from the seed and `admin:create`, never sign up.
       disableSignUp: true,
       minPasswordLength: ADMIN_PASSWORD_MIN_LENGTH,
-      // ADR-0021, "Zapomenuté heslo": an hour, like the users' link. The
+      // ADR-0024, "Zapomenuté heslo": an hour, like the users' link. The
       // invitation issues the same token for 72 hours itself.
       resetPasswordTokenExpiresIn: ADMIN_RESET_PASSWORD_TTL_SECONDS,
       revokeSessionsOnPasswordReset: true,
