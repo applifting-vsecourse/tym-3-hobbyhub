@@ -146,21 +146,6 @@ describe('ProfileService', () => {
     });
   });
 
-  describe('updateFriendVisibility', () => {
-    it('saves both switches for the signed-in user and returns the profile', async () => {
-      const { service, repository } = setup();
-      await service.updateFriendVisibility(user, {
-        friendsSeeEventHistory: false,
-        friendsSeeUpcomingEvents: true,
-      });
-      expect(repository.updateFriendVisibility).toHaveBeenCalledWith('u1', {
-        friendsSeeEventHistory: false,
-        friendsSeeUpcomingEvents: true,
-      });
-      expect(repository.getRow).toHaveBeenCalledWith('u1');
-    });
-  });
-
   describe('updatePrivate', () => {
     const now = new Date('2026-11-03T10:00:00Z');
 
@@ -168,7 +153,7 @@ describe('ProfileService', () => {
       const { service, repository } = setup();
       await service.updatePrivate(
         user,
-        { gender: 'MALE', birthYear: 1985 },
+        { details: { gender: 'MALE', birthYear: 1985 } },
         now,
       );
       expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
@@ -177,12 +162,68 @@ describe('ProfileService', () => {
       });
     });
 
-    it('refuses someone under 18', async () => {
+    // #227: the switches alone, for an account without the details too.
+    it('saves both switches and returns the profile', async () => {
+      const { service, repository } = setup();
+      await service.updatePrivate(user, {
+        friendVisibility: {
+          friendsSeeEventHistory: false,
+          friendsSeeUpcomingEvents: true,
+        },
+      });
+      expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      });
+      expect(repository.getRow).toHaveBeenCalledWith('u1');
+    });
+
+    // One write, so the form never saves only half of what it sent.
+    it('saves the details and the switches in one write', async () => {
+      const { service, repository } = setup();
+      await service.updatePrivate(
+        user,
+        {
+          details: { gender: 'FEMALE', birthYear: 1990 },
+          friendVisibility: {
+            friendsSeeEventHistory: true,
+            friendsSeeUpcomingEvents: true,
+          },
+        },
+        now,
+      );
+      expect(repository.updatePrivate).toHaveBeenCalledTimes(1);
+      expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
+        gender: 'FEMALE',
+        birthYear: 1990,
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: true,
+      });
+    });
+
+    it('refuses someone under 18, switches and all', async () => {
       const { service, repository } = setup();
       await expect(
-        service.updatePrivate(user, { gender: 'MALE', birthYear: 2009 }, now),
+        service.updatePrivate(
+          user,
+          {
+            details: { gender: 'MALE', birthYear: 2009 },
+            friendVisibility: {
+              friendsSeeEventHistory: false,
+              friendsSeeUpcomingEvents: false,
+            },
+          },
+          now,
+        ),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(repository.updatePrivate).not.toHaveBeenCalled();
+    });
+
+    it('writes nothing for an empty request', async () => {
+      const { service, repository } = setup();
+      await service.updatePrivate(user, {});
+      expect(repository.updatePrivate).not.toHaveBeenCalled();
+      expect(repository.getRow).toHaveBeenCalledWith('u1');
     });
   });
 
