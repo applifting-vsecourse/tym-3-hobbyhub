@@ -1,4 +1,4 @@
-// Database constraints of friendships and friend requests (#227, ADR-0021).
+// Database constraints of friendships and friend requests (#227, ADR-0023).
 // Like event-schema.spec.ts, the suite needs a real PostgreSQL with the
 // migrations applied and only runs on request:
 //   DB_TESTS=1 pnpm backend test friendship-schema

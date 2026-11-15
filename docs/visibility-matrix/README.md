@@ -5,7 +5,7 @@
 
 Kdo co v aplikaci vidí. Platí pro UI i API: co role nemá vidět, nesmí přijít ani v odpovědi API.
 
-Viditelnost je daná rolí a vztahem k záznamu tak, jak ji popisuje matice. Jedinou výjimkou jsou **dva přepínače pro přátele** ([#227][227], [ADR-0021](../adr/adr-0021.md)), které si každý nastaví na úpravě svého profilu:
+Viditelnost je daná rolí a vztahem k záznamu tak, jak ji popisuje matice. Jedinou výjimkou jsou **dva přepínače pro přátele** ([#227][227], [ADR-0023](../adr/adr-0023.md)), které si každý nastaví na úpravě svého profilu:
 
 - **„Přátelé vidí moji historii akcí“**, výchozí zapnuto: proběhlé akce na profilu.
 - **„Přátelé vidí moje budoucí akce“**, výchozí vypnuto: nadcházející akce na profilu a jméno v detailu akce.
@@ -135,7 +135,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ❌               | ✅                   | ✅                      | ✅            | ❌          | [#32][32], [PO][po]                                               |
 | Historie akcí: proběhlé akce se schválenou účastí a pořádané       | ✅  | ❌         | ❌         | jen když povolil | ❌                   | ❌                      | ✅            | ❌          | [#56][56], [#227][227], [PO][po]                                  |
 | Nadcházející akce: se schválenou účastí a pořádané                 | ✅  | ❌         | ❌         | jen když povolil | ❌                   | ❌                      | ✅            | ❌          | [#227][227], [#226][226]                                          |
-| Nastavení, co z akcí vidí přátelé (dva přepínače)                  | ✅  | ❌         | ❌         | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#227][227], [ADR-0021](../adr/adr-0021.md)                       |
+| Nastavení, co z akcí vidí přátelé (dva přepínače)                  | ✅  | ❌         | ❌         | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#227][227], [ADR-0023](../adr/adr-0023.md)                       |
 | Slovní hodnocení, která obdržel                                    | ✅  | ❌         | ❌         | ❌               | ❌                   | ❌                      | jen na report | ❌          | [#44][44], [PO][po]                                               |
 | Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#24][24], [#67][67], [PO][po]                                    |
 | Rok narození, věk, pohlaví                                         | ✅  | ❌         | ❌         | ❌               | ❌                   | ❌                      | ✅            | ❌          | [#12][12], [#18][18], [#19][19], [#32][32], [#174][174], [PO][po] |
