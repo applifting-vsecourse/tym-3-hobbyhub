@@ -6,11 +6,16 @@ import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 import { Badge } from "@/components/ui/badge"
 
 import { receivedFriendRequestsQueryOptions } from "@/features/friendship/api/friendshipQueryOptions"
-import type { FriendsTab } from "@/features/friendship/lib/friendsSearch"
+import {
+  DEFAULT_FRIENDS_TAB,
+  FRIENDS_TABS,
+  type FriendsTab,
+} from "@/features/friendship/lib/friendsSearch"
 
 /**
- * "Vyhledat uživatele" / "Přátelé" / "Žádosti": the tab lives in the URL,
- * "search" without a param. "Žádosti" carries how many requests wait (#228).
+ * "Vyhledat uživatele" / "Přátelé" / "Žádosti", in the order of `FRIENDS_TABS`:
+ * the tab lives in the URL, the default one without a param. "Žádosti"
+ * carries how many requests wait (#228).
  */
 export function FriendsTabs({ active }: { active: FriendsTab }) {
   const { t } = useTranslation()
@@ -20,33 +25,22 @@ export function FriendsTabs({ active }: { active: FriendsTab }) {
 
   return (
     <PageTabs label={t("friends.tabs.label")}>
-      <PageTab
-        to={ROUTES.friends}
-        search={{}}
-        isActive={active === "search"}
-      >
-        {t("friends.tabs.search")}
-      </PageTab>
-      <PageTab
-        to={ROUTES.friends}
-        search={{ tab: "friends" }}
-        isActive={active === "friends"}
-      >
-        {t("friends.tabs.friends")}
-      </PageTab>
-      <PageTab
-        to={ROUTES.friends}
-        search={{ tab: "requests" }}
-        isActive={active === "requests"}
-      >
-        {t("friends.tabs.requests")}
-        {waiting > 0 ? (
-          <Badge className="min-w-5 justify-center px-1.5">
-            <span aria-hidden>{waiting}</span>
-            <span className="sr-only">{t("friends.requests.waiting", { count: waiting })}</span>
-          </Badge>
-        ) : null}
-      </PageTab>
+      {FRIENDS_TABS.map((tab) => (
+        <PageTab
+          key={tab}
+          to={ROUTES.friends}
+          search={tab === DEFAULT_FRIENDS_TAB ? {} : { tab }}
+          isActive={active === tab}
+        >
+          {t(`friends.tabs.${tab}`)}
+          {tab === "requests" && waiting > 0 ? (
+            <Badge className="min-w-5 justify-center px-1.5">
+              <span aria-hidden>{waiting}</span>
+              <span className="sr-only">{t("friends.requests.waiting", { count: waiting })}</span>
+            </Badge>
+          ) : null}
+        </PageTab>
+      ))}
     </PageTabs>
   )
 }

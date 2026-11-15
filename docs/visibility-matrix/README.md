@@ -54,6 +54,7 @@ Blokování ([#65][65]) mění viditelnost napříč celou aplikací, proto je v
 
 - Obsah toho, kdo mě zablokoval, pro mě **neexistuje**: nevidím jeho akce ve výpisu ani ve vyhledávání, nedostanu se na ně odkazem, nevidím jeho profil ani jeho skupiny a nedostávám jeho notifikace.
 - **Nedozvím se, že jsem zablokovaný.** Obsah se chová, jako by nebyl, ne jako by byl zamčený.
+- **Blokování ruší přátelství** ([#227][227], [ADR-0023](../adr/adr-0023.md)): zablokovaný přestane být přítelem, čekající žádosti mezi oběma zmizí a novou žádnou stranou poslat nejde. Přítel proto nikdy nevidí akce toho, kdo ho zablokoval.
 
 Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tabulce žádostí je proto mezi ostatními.
 

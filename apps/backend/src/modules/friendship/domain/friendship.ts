@@ -41,15 +41,10 @@ export type FriendPair = {
  * never pending requests, waitlist places or cancelled events.
  */
 export type FriendVisibility = {
-  /** Past events on the profile. Shown by default. */
+  /** Past events on the profile. Shown by default (the column's DEFAULT). */
   friendsSeeEventHistory: boolean;
   /** Upcoming events on the profile and the name in an event's detail. Hidden by default. */
   friendsSeeUpcomingEvents: boolean;
-};
-
-export const DEFAULT_FRIEND_VISIBILITY: FriendVisibility = {
-  friendsSeeEventHistory: true,
-  friendsSeeUpcomingEvents: false,
 };
 
 /**
@@ -61,11 +56,6 @@ export function friendPairOf(oneId: string, otherId: string): FriendPair {
   return oneId < otherId
     ? { userAId: oneId, userBId: otherId }
     : { userAId: otherId, userBId: oneId };
-}
-
-/** The friend of `userId` in a stored pair. */
-export function friendOf(pair: FriendPair, userId: string): string {
-  return pair.userAId === userId ? pair.userBId : pair.userAId;
 }
 
 /**

@@ -36,10 +36,9 @@ describe("FiltersSheet", () => {
 
     await user.click(screen.getByRole("button", { name: "Zobrazit 3 akce" }))
     expect(onApply).toHaveBeenCalledWith({
+      ...EMPTY_FILTERS,
       activities: ["volejbal"],
       dateFrom: "2026-11-15",
-      dateTo: "",
-      location: "",
     })
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })

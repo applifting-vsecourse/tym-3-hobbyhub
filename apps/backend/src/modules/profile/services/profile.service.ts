@@ -103,33 +103,31 @@ export class ProfileService {
     return this.getProfile(user);
   }
 
+  // The private details and (#227) what friends see, whichever of the two
+  // came, in one write: the edit form never saves only half of them. The
+  // switches only take effect for friends (#226).
   async updatePrivate(
     user: Identity,
-    data: { gender: Gender; birthYear: number },
+    data: {
+      details?: { gender: Gender; birthYear: number };
+      friendVisibility?: FriendVisibility;
+    },
     now = new Date(),
   ): Promise<Profile> {
-    const violations = privateDetailsViolations(
-      data.gender,
-      data.birthYear,
-      now,
-    );
-    if (violations.length > 0) throw new BadRequestException(violations);
-    await this.profileRepository.updatePrivate(user.id, {
-      gender: data.gender,
-      birthYear: data.birthYear,
-    });
-    return this.getProfile(user);
-  }
-
-  // #227: both switches at once. They only take effect for friends (#226).
-  async updateFriendVisibility(
-    user: Identity,
-    visibility: FriendVisibility,
-  ): Promise<Profile> {
-    await this.profileRepository.updateFriendVisibility(user.id, {
-      friendsSeeEventHistory: visibility.friendsSeeEventHistory,
-      friendsSeeUpcomingEvents: visibility.friendsSeeUpcomingEvents,
-    });
+    if (data.details) {
+      const violations = privateDetailsViolations(
+        data.details.gender,
+        data.details.birthYear,
+        now,
+      );
+      if (violations.length > 0) throw new BadRequestException(violations);
+    }
+    if (data.details || data.friendVisibility) {
+      await this.profileRepository.updatePrivate(user.id, {
+        ...data.details,
+        ...data.friendVisibility,
+      });
+    }
     return this.getProfile(user);
   }
 
