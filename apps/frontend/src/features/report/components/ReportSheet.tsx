@@ -128,7 +128,6 @@ export function ReportSheet({
       <AppForm
         id={formId}
         form={form}
-        isGuarded={false}
         className="space-y-4"
         onSubmit={onSubmit}
       >

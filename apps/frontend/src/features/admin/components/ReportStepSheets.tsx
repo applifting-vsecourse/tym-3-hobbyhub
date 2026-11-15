@@ -228,8 +228,6 @@ export function ResolveReportSheet({
           await onSubmit({ note: values.note.trim() })
           form.reset()
         }}
-        // A sentence in a sheet the administrator opened on purpose.
-        isGuarded={false}
         className="flex flex-col gap-4 pb-1"
       >
         {errorMessage ? (

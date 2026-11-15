@@ -42,6 +42,16 @@ describe("HideEventSheet (#239)", () => {
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
+  it("asks before a half-typed reason is left behind", async () => {
+    const user = userEvent.setup()
+    const { navigateAway } = await renderSheet()
+
+    await user.type(screen.getByLabelText("Důvod skrytí"), "Nabízí placené")
+    void navigateAway()
+
+    expect(await screen.findByText("Opustit stránku?")).toBeInTheDocument()
+  })
+
   it("says when another administrator was faster", async () => {
     await renderSheet({ error: new EventModerationRefusedError(["EVENT_ALREADY_HIDDEN"]) })
 

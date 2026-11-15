@@ -109,8 +109,6 @@ export function BlockUserSheet({
           })
           form.reset()
         }}
-        // One pick and a sentence in a sheet the administrator opened on purpose.
-        isGuarded={false}
         className="flex flex-col gap-4 pb-1"
       >
         {errorMessage ? (
