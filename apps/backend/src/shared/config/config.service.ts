@@ -107,6 +107,14 @@ export class Config {
   @IsOptional()
   readonly smtpFrom?: string;
 
+  // Local development only: accept the self-signed certificate of Mailpit's
+  // STARTTLS (apps/backend/docker-compose.yml). Encryption stays required;
+  // only the certificate is not checked. Allowed with NODE_ENV=development
+  // alone, see `allowSelfSignedSmtp`.
+  @Env('SMTP_ALLOW_SELF_SIGNED', { expose: true, defaultValue: false })
+  @IsBoolean()
+  readonly smtpAllowSelfSigned!: boolean;
+
   // F-09.5, ADR-0018: the outbox's limits. How many e-mails may go in any 24
   // hours: the provider's daily limit (Mailjet's free plan: 200).
   @Env('EMAIL_DAILY_LIMIT', { expose: true, defaultValue: 200 })

@@ -117,6 +117,10 @@
         "signIn": "Přihlásit se a poslat nový",
         "title": "Odkaz už nefunguje"
       },
+      "prompt": {
+        "description": "Poslali jsme ti odkaz na {{email}}. Dokud ho nepotvrdíš, nemůžeš zveřejňovat akce ani zakládat skupiny a upozornění ti nechodí e-mailem. Nedorazil? Pošli si nový.",
+        "title": "Dokonči ověření e-mailu"
+      },
       "resend": "Poslat e-mail znovu",
       "resendFailed": "E-mail se nepodařilo odeslat. Zkus to znovu.",
       "resendIn": "Poslat znovu za {{seconds}} s",
@@ -938,8 +942,8 @@
       "selected": "Vybraná akce, chybí {{count}}"
     },
     "nav": {
-      "add": "Přidat",
-      "discover": "Objevovat",
+      "add": "Přidat akci",
+      "discover": "Akce",
       "groups": "Skupiny",
       "label": "Hlavní navigace",
       "myEvents": "Moje akce",
@@ -1196,12 +1200,24 @@
     },
     "showAll": "Zobrazit vše",
     "someone": "Někdo",
+    "startsWhen": "{{day}} v {{time}}",
     "text": {
       "EVENT_CANCELLED": "Akce {{title}} byla zrušena",
       "EVENT_CHANGED": {
         "BOTH": "Akce {{title}} má nový čas i místo",
         "PLACE": "Akce {{title}} má nové místo",
         "TIME": "Akce {{title}} má nový čas"
+      },
+      "EVENT_REMINDER": {
+        "started": "Akce {{title}} začala {{when}}",
+        "upcoming": "Akce {{title}} začíná {{when}}"
+      },
+      "HOSTED_EVENT_REMINDER": {
+        "belowMinimum_few": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastníci",
+        "belowMinimum_one": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastník",
+        "belowMinimum_other": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastníků",
+        "started": "Tvoje akce {{title}} začala {{when}}",
+        "upcoming": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}"
       },
       "NEW_REQUESTS": {
         "event": "{{name}} žádá o účast na akci {{title}}",
