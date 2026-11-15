@@ -9,6 +9,8 @@ import {
   adminSetPasswordUrl,
   enqueueAdminPasswordEmail,
 } from '@/shared/admin-auth/password-links';
+import { ResendCooldown } from '@/shared/auth/verification/resend-cooldown';
+import { sendOnceAMinute } from '@/shared/auth/verification/send-once-a-minute';
 import { Config } from '@/shared/config/config.service';
 import { Inject, Provider } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
@@ -16,6 +18,11 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError } from 'better-auth/api';
 
 export const ADMIN_AUTH_BASE_PATH = '/api/admin-auth';
+
+// Like the users' F-03.5 cooldown, counted apart from it: the reset e-mail is
+// critical and skips the per-recipient cap (ADR-0018), so without this only
+// the per-IP cap would stop a flood to one administrator's address.
+const adminPasswordResetCooldown = new ResendCooldown();
 
 // ADR-0010, #238: the administrator's sign-in, a second BetterAuth instance on
 // its own tables, cookie and path. Nothing here touches `User`: an admin
@@ -63,11 +70,14 @@ export const createAdminAuth = (
         // belongs to an administrator, or to a deactivated one.
         if (await isDeactivated(user.id)) return;
         if (!emailOutbox) throw new Error('No e-mail outbox to send through');
-        await enqueueAdminPasswordEmail(
-          emailOutbox,
-          'reset',
-          user,
-          adminSetPasswordUrl(config, token),
+        // Once a minute per address; a skipped send answers like a made one.
+        await sendOnceAMinute(adminPasswordResetCooldown, user.email, () =>
+          enqueueAdminPasswordEmail(
+            emailOutbox,
+            'reset',
+            user,
+            adminSetPasswordUrl(config, token),
+          ),
         );
       },
     },

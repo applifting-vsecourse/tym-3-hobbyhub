@@ -238,6 +238,19 @@ describeDb('administrator management', () => {
     ).toBe(200);
   });
 
+  it('e-mails one address a forgotten-password link at most once a minute', async () => {
+    const administrator = await anActiveAdministrator();
+
+    for (let i = 0; i < 3; i += 1) {
+      expect(
+        (await post('/request-password-reset', { email: administrator.email }))
+          .status,
+      ).toBe(200);
+    }
+
+    expect(sent).toHaveLength(1);
+  });
+
   it('refuses in the database to have a deactivation without its author', async () => {
     const administrator = await anActiveAdministrator();
 
