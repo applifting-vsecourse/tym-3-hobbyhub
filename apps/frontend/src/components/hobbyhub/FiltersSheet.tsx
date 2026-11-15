@@ -123,6 +123,7 @@ type RangeFieldProps = {
  */
 function RangeField({ kind, label, from, to, step, onChange }: RangeFieldProps) {
   const { t } = useTranslation()
+  const rangeId = useId()
   const presets: readonly RangePreset[] = RANGE_PRESETS[kind]
   const matches = (preset: RangePreset) => preset.from === from && preset.to === to
   const hasCustomValue = (from !== "" || to !== "") && !presets.some(matches)
@@ -163,28 +164,33 @@ function RangeField({ kind, label, from, to, step, onChange }: RangeFieldProps) 
       </div>
       {isCustomShown ? (
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={RANGE_LIMITS[kind].max}
-            step={step}
-            aria-label={`${label}: ${t("hobbyhub.filters.rangeFrom")}`}
-            placeholder={t("hobbyhub.filters.rangeFrom")}
-            value={from}
-            onChange={(event) => type({ from: event.target.value, to })}
-          />
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={RANGE_LIMITS[kind].max}
-            step={step}
-            aria-label={`${label}: ${t("hobbyhub.filters.rangeTo")}`}
-            placeholder={t("hobbyhub.filters.rangeTo")}
-            value={to}
-            onChange={(event) => type({ from, to: event.target.value })}
-          />
+          {(["from", "to"] as const).map((end) => (
+            <div
+              key={end}
+              className="flex min-w-0 flex-col gap-1.5"
+            >
+              <Label htmlFor={`${rangeId}-${end}`}>
+                {t(end === "from" ? "hobbyhub.filters.rangeFrom" : "hobbyhub.filters.rangeTo")}
+              </Label>
+              <Input
+                id={`${rangeId}-${end}`}
+                type="number"
+                inputMode={RANGE_LIMITS[kind].isInteger ? "numeric" : "decimal"}
+                min={0}
+                max={RANGE_LIMITS[kind].max}
+                step={step}
+                aria-label={`${label}: ${t(end === "from" ? "hobbyhub.filters.rangeFrom" : "hobbyhub.filters.rangeTo")}`}
+                value={end === "from" ? from : to}
+                onChange={(event) =>
+                  type(
+                    end === "from"
+                      ? { from: event.target.value, to }
+                      : { from, to: event.target.value },
+                  )
+                }
+              />
+            </div>
+          ))}
         </div>
       ) : null}
     </fieldset>
@@ -292,6 +298,8 @@ export function FiltersSheet({
       onOpenChange={onOpenChange}
       trigger={trigger}
       title={t("hobbyhub.filters.title")}
+      // The panel has fields to type in; a pinned button would cover the focused one above the keyboard.
+      isFooterScrolling
       headerAction={
         <Button
           variant="ghost"
@@ -511,7 +519,10 @@ export function FiltersSheet({
             className="typo-small text-destructive"
           >
             {isNumberInvalid
-              ? t("hobbyhub.filters.rangeInvalid")
+              ? t("hobbyhub.filters.rangeInvalid", {
+                  capacity: RANGE_LIMITS.capacity.max,
+                  hours: RANGE_LIMITS.duration.max,
+                })
               : t("hobbyhub.filters.rangeReversed")}
           </p>
         ) : null}

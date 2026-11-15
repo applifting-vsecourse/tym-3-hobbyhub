@@ -1,4 +1,4 @@
-import { Prisma } from '@/generated/prisma/client';
+import { ParticipationStatus, Prisma } from '@/generated/prisma/client';
 import {
   EVENT_LIST_TIME_ZONE,
   EventFilter,
@@ -83,6 +83,14 @@ export const eventFilterConditions = ({
   ),
 ];
 
+// The people who actually take a seat: approved, or already attended an event
+// that is over. The list cards count them and the free-seat filter below reads
+// the same statuses, so the two cannot drift apart.
+export const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
+  ParticipationStatus.APPROVED,
+  ParticipationStatus.ATTENDED,
+];
+
 // The number ranges and the free-seat switch of the public list (#214). A seat
 // is taken by an approved or attended person and by someone outside the app, the
 // same count the list cards show. An event without a contribution costs 0.
@@ -102,7 +110,7 @@ export const eventListRangeConditions = ({
       ? [
           Prisma.sql`e."maxParticipants" - e."externalOccupiedSpots" - (
             SELECT count(*) FROM "participation" p
-            WHERE p."eventId" = e."id" AND p."status" IN ('APPROVED', 'ATTENDED')
+            WHERE p."eventId" = e."id" AND p."status" IN (${Prisma.join(LIST_TAKEN_STATUSES)})
           ) > 0`,
         ]
       : []),

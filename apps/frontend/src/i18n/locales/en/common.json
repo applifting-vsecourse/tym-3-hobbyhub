@@ -346,9 +346,9 @@
         "freeSpots": "Free spots",
         "open": "Filters",
         "price": {
-          "from": "from {{value}} CZK",
-          "range": "{{from}}–{{to}} CZK",
-          "to": "up to {{value}} CZK"
+          "from": "from {{value}}",
+          "range": "{{from}}–{{to}}",
+          "to": "up to {{value}}"
         },
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
@@ -935,7 +935,7 @@
       },
       "price": "Price per spot (CZK)",
       "rangeFrom": "From",
-      "rangeInvalid": "Enter a number within the allowed range (capacity a whole number up to 500, length up to 744 h).",
+      "rangeInvalid": "Enter a number within the allowed range (capacity a whole number up to {{capacity}}, length up to {{hours}} h).",
       "rangeReversed": "\"From\" must not be greater than \"To\".",
       "rangeTo": "To",
       "results_one": "Show {{count}} event",

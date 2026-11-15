@@ -13,6 +13,7 @@ import {
 } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 
+import { formatContribution } from "@/features/event/lib/eventDateTime"
 import {
   EVENT_SEARCH_MAX_LENGTH,
   type EventFilterChange,
@@ -29,16 +30,27 @@ const dateRangeLabel = (t: TFunction, language: string, from: string, to: string
   return ""
 }
 
-/** "100–200 Kč", "od 100 Kč" or "do 200 Kč"; nothing without either end. */
+/**
+ * "100–200 Kč", "od 100 Kč" or "do 200 Kč"; nothing without either end. The
+ * numbers go through `Intl` ("1,5 h", "2 500 Kč"), not as they sit in the address.
+ */
 const rangeLabel = (
   t: TFunction,
+  language: string,
   kind: "price" | "duration" | "capacity",
   from: string,
   to: string,
 ) => {
-  if (from && to) return t(`events.list.filters.${kind}.range`, { from, to })
-  if (from) return t(`events.list.filters.${kind}.from`, { value: from })
-  if (to) return t(`events.list.filters.${kind}.to`, { value: to })
+  const plain = new Intl.NumberFormat(language, { maximumFractionDigits: 2 })
+  const number = (value: string) => plain.format(Number(value))
+  // The price carries the currency once, after the last number.
+  const last = (value: string) =>
+    kind === "price" ? formatContribution(Number(value), language) : number(value)
+  if (from && to) {
+    return t(`events.list.filters.${kind}.range`, { from: number(from), to: last(to) })
+  }
+  if (from) return t(`events.list.filters.${kind}.from`, { value: last(from) })
+  if (to) return t(`events.list.filters.${kind}.to`, { value: last(to) })
   return ""
 }
 
@@ -97,17 +109,17 @@ export function EventFiltersBar({
   const rangeChips: { key: string; label: string; clear: EventFilterChange }[] = [
     {
       key: "price",
-      label: rangeLabel(t, "price", filters.priceFrom, filters.priceTo),
+      label: rangeLabel(t, i18n.language, "price", filters.priceFrom, filters.priceTo),
       clear: { priceFrom: "", priceTo: "" },
     },
     {
       key: "duration",
-      label: rangeLabel(t, "duration", filters.hoursFrom, filters.hoursTo),
+      label: rangeLabel(t, i18n.language, "duration", filters.hoursFrom, filters.hoursTo),
       clear: { hoursFrom: "", hoursTo: "" },
     },
     {
       key: "capacity",
-      label: rangeLabel(t, "capacity", filters.capacityFrom, filters.capacityTo),
+      label: rangeLabel(t, i18n.language, "capacity", filters.capacityFrom, filters.capacityTo),
       clear: { capacityFrom: "", capacityTo: "" },
     },
   ]

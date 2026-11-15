@@ -93,12 +93,20 @@ describe("EventFiltersBar", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Volná místa" }))
     expect(onFiltersChange).toHaveBeenLastCalledWith({ freeSpotsOnly: false })
-    await userEvent.click(screen.getByRole("button", { name: "0–200 Kč" }))
+    await userEvent.click(screen.getByRole("button", { name: /^0–200\sKč$/ }))
     expect(onFiltersChange).toHaveBeenLastCalledWith({ priceFrom: "", priceTo: "" })
     await userEvent.click(screen.getByRole("button", { name: "od 1 h" }))
     expect(onFiltersChange).toHaveBeenLastCalledWith({ hoursFrom: "", hoursTo: "" })
     await userEvent.click(screen.getByRole("button", { name: "Kapacita do 12" }))
     expect(onFiltersChange).toHaveBeenLastCalledWith({ capacityFrom: "", capacityTo: "" })
+  })
+
+  it("writes the numbers of the chips the way the language does (1,5 h, 2 500 Kč)", () => {
+    renderBar({ priceTo: "2500", hoursFrom: "1.5", hoursTo: "3", capacityFrom: "1000" })
+
+    expect(screen.getByRole("button", { name: /^do 2\s500\sKč$/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "1,5–3 h" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /^Kapacita od 1\s000$/ })).toBeInTheDocument()
   })
 
   it("applies the ready-made choices picked in the panel (#214)", async () => {

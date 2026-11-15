@@ -350,9 +350,9 @@
         "freeSpots": "Volná místa",
         "open": "Filtry",
         "price": {
-          "from": "od {{value}} Kč",
-          "range": "{{from}}–{{to}} Kč",
-          "to": "do {{value}} Kč"
+          "from": "od {{value}}",
+          "range": "{{from}}–{{to}}",
+          "to": "do {{value}}"
         },
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
@@ -950,7 +950,7 @@
       },
       "price": "Cena za místo (Kč)",
       "rangeFrom": "Od",
-      "rangeInvalid": "Zadejte číslo v povoleném rozsahu (kapacita celé číslo do 500, délka do 744 h).",
+      "rangeInvalid": "Zadejte číslo v povoleném rozsahu (kapacita celé číslo do {{capacity}}, délka do {{hours}} h).",
       "rangeReversed": "Hodnota „Od“ nesmí být větší než „Do“.",
       "rangeTo": "Do",
       "results_few": "Zobrazit {{count}} akce",
