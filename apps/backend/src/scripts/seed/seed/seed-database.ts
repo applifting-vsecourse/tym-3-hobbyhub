@@ -50,7 +50,6 @@ export const seedDatabase = async (
   await createUser(prisma, auth, {
     email: config.superadminEmail,
     password: config.superadminPassword,
-    name: 'Admin (Delete in Prod)',
     username: 'superadmin',
     role: 'admin',
   });
@@ -60,35 +59,30 @@ export const seedDatabase = async (
   const caffeinatedDuck = await createUser(prisma, auth, {
     email: 'caffeinatedduck@example.com',
     password: 'password1',
-    name: 'Caffeinated Duck',
     username: 'CaffeinatedDuck',
   });
 
   const deepDuckThoughts = await createUser(prisma, auth, {
     email: 'deepduckthoughts@example.com',
     password: 'password2',
-    name: 'Deep Duck Thoughts',
     username: 'DeepDuckThoughts',
   });
 
   const breadCritic = await createUser(prisma, auth, {
     email: 'breadcritic@example.com',
     password: 'password3',
-    name: 'The Bread Critic',
     username: 'BreadCritic',
   });
 
   const migrationSeason = await createUser(prisma, auth, {
     email: 'migrationseason@example.com',
     password: 'password4',
-    name: 'Migration Season',
     username: 'MigrationSeason',
   });
 
   const pondAdmin = await createUser(prisma, auth, {
     email: 'pondadmin@example.com',
     password: 'password5',
-    name: 'Pond Admin',
     username: 'PondAdmin',
   });
 
@@ -97,14 +91,12 @@ export const seedDatabase = async (
   const freshDuckling = await createUser(prisma, auth, {
     email: 'freshduckling@example.com',
     password: 'password6',
-    name: 'Fresh Duckling',
     username: 'FreshDuckling',
   });
 
   const lostGosling = await createUser(prisma, auth, {
     email: 'lostgosling@example.com',
     password: 'password7',
-    name: 'Lost Gosling',
     username: 'LostGosling',
   });
 

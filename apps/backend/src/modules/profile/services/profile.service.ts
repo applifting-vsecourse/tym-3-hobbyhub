@@ -11,8 +11,15 @@ import {
   Profile,
   PublicProfile,
 } from '@/modules/profile/domain/profile';
-import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
+import {
+  NicknameChange,
+  ProfileRepository,
+} from '@/modules/profile/repositories/profile.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import {
+  nicknameChangeableFrom,
+  nicknameViolation,
+} from '@/shared/auth/registration/nickname';
 import { Gender } from '@/shared/auth/registration/registration';
 import {
   BadRequestException,
@@ -27,12 +34,16 @@ export class ProfileService {
     private readonly onboardingService: OnboardingService,
   ) {}
 
-  async getProfile(user: Identity): Promise<Profile> {
+  async getProfile(user: Identity, now = new Date()): Promise<Profile> {
     const row = await this.profileRepository.getRow(user.id);
     if (!row) throw new NotFoundException('User not found');
     const onboarding = await this.onboardingService.getOnboarding(user);
     return {
       name: row.name,
+      nicknameChangeableFrom: nicknameChangeableFrom(
+        row.nicknameChangedAt,
+        now,
+      ),
       joinedAt: row.createdAt,
       bio: row.bio,
       image: row.image,
@@ -60,7 +71,8 @@ export class ProfileService {
     };
   }
 
-  // Only what is sent is changed; `null` clears the bio or the photo.
+  // Only what is sent is changed; `null` clears the bio or the photo. Nothing
+  // is saved unless all of it passes.
   async updatePublic(
     user: Identity,
     data: {
@@ -69,7 +81,12 @@ export class ProfileService {
       image?: string | null;
       cover?: string | null;
     },
+    now = new Date(),
   ): Promise<Profile> {
+    const nickname =
+      data.name === undefined
+        ? undefined
+        : await this.nicknameChange(user, data.name, now);
     if (data.image) {
       const violations = imageViolations(data.image);
       if (violations.length > 0) throw new BadRequestException(violations);
@@ -78,12 +95,43 @@ export class ProfileService {
       const violations = coverViolations(data.cover);
       if (violations.length > 0) throw new BadRequestException(violations);
     }
-    const { cover, ...rest } = data;
-    await this.profileRepository.updatePublic(user.id, {
-      ...rest,
+    const { bio, image, cover } = data;
+    const result = await this.profileRepository.updatePublic(user.id, {
+      ...(bio !== undefined && { bio }),
+      ...(image !== undefined && { image }),
+      ...(nickname && { nickname }),
       ...(cover !== undefined && { profileCover: cover }),
     });
-    return this.getProfile(user);
+    // Someone took the same nickname between the check and the save.
+    if (result === 'NICKNAME_TAKEN') {
+      throw new BadRequestException(['NICKNAME_TAKEN']);
+    }
+    return this.getProfile(user, now);
+  }
+
+  /**
+   * #212: checks a nickname sent with the profile. The same one as now is no
+   * change (null); a new one must follow the rules, be free, and come at least
+   * 30 days after the last change (ADR-0025).
+   */
+  private async nicknameChange(
+    user: Identity,
+    nickname: string,
+    now: Date,
+  ): Promise<NicknameChange | null> {
+    const row = await this.profileRepository.getRow(user.id);
+    if (!row) throw new NotFoundException('User not found');
+    if (nickname === row.name) return null;
+
+    const violation = nicknameViolation(nickname);
+    if (violation) throw new BadRequestException([violation]);
+    if (nicknameChangeableFrom(row.nicknameChangedAt, now)) {
+      throw new BadRequestException(['NICKNAME_CHANGE_TOO_SOON']);
+    }
+    if (await this.profileRepository.isNicknameTaken(nickname, user.id)) {
+      throw new BadRequestException(['NICKNAME_TAKEN']);
+    }
+    return { nickname, changedAt: now };
   }
 
   async updatePrivate(

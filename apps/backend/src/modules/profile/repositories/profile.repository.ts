@@ -1,9 +1,11 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Gender } from '@/generated/prisma/client';
+import { Gender, Prisma } from '@/generated/prisma/client';
+import { normalizeNickname } from '@/shared/auth/registration/nickname';
 import { Injectable } from '@nestjs/common';
 
 export type ProfileRow = {
   name: string;
+  nicknameChangedAt: Date | null;
   createdAt: Date;
   bio: string | null;
   image: string | null;
@@ -20,16 +22,24 @@ export type PublicProfileRow = {
   profileCover: string | null;
 };
 
+/** A new nickname as typed, and when the user changed it. */
+export type NicknameChange = { nickname: string; changedAt: Date };
+
+const isUniqueViolation = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === 'P2002';
+
 // Trusts the layers above: it validates nothing, it only reads and writes.
 @Injectable()
 export class ProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  getRow(userId: string): Promise<ProfileRow | null> {
-    return this.prisma.user.findUnique({
+  async getRow(userId: string): Promise<ProfileRow | null> {
+    const row = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         name: true,
+        usernameChangedAt: true,
         createdAt: true,
         bio: true,
         image: true,
@@ -38,6 +48,19 @@ export class ProfileRepository {
         birthYear: true,
       },
     });
+    if (!row) return null;
+    const { usernameChangedAt, ...rest } = row;
+    return { ...rest, nicknameChangedAt: usernameChangedAt };
+  }
+
+  // #212: whether someone other than `userId` has the nickname, letter case
+  // aside (the unique index compares the lower-cased form).
+  async isNicknameTaken(nickname: string, userId: string): Promise<boolean> {
+    const holder = await this.prisma.user.findUnique({
+      where: { username: normalizeNickname(nickname) },
+      select: { id: true },
+    });
+    return holder !== null && holder.id !== userId;
   }
 
   // Only the columns another person may see; the private ones are not selected.
@@ -54,19 +77,39 @@ export class ProfileRepository {
     });
   }
 
+  // A new nickname sets all three columns at once: the CHECKs keep `name` and
+  // `displayUsername` equal and `username` their lower-cased form. Someone
+  // taking the same nickname in the meantime trips the unique index; that is
+  // answered, not thrown.
   async updatePublic(
     userId: string,
     data: {
-      name?: string;
+      nickname?: NicknameChange;
       bio?: string | null;
       image?: string | null;
       profileCover?: string | null;
     },
-  ): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { ...data, updatedAt: new Date() },
-    });
+  ): Promise<'UPDATED' | 'NICKNAME_TAKEN'> {
+    const { nickname, ...rest } = data;
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...rest,
+          ...(nickname && {
+            name: nickname.nickname,
+            displayUsername: nickname.nickname,
+            username: normalizeNickname(nickname.nickname),
+            usernameChangedAt: nickname.changedAt,
+          }),
+          updatedAt: new Date(),
+        },
+      });
+      return 'UPDATED';
+    } catch (error) {
+      if (nickname && isUniqueViolation(error)) return 'NICKNAME_TAKEN';
+      throw error;
+    }
   }
 
   async updatePrivate(

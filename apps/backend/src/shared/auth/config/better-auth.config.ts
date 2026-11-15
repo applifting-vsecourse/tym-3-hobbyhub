@@ -1,3 +1,7 @@
+import {
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MIN_LENGTH,
+} from '@/shared/auth/registration/nickname';
 import { openAPI, username } from 'better-auth/plugins';
 import { BetterAuthOptions } from 'better-auth/types';
 
@@ -75,7 +79,20 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
       // around the send, coarse cap per IP here) and a cap on guessing tokens.
       '/request-password-reset': { window: 60, max: 30 },
       '/reset-password': { window: 15 * 60, max: 10 },
+      // #212: the forms ask while the nickname is typed (with a pause), so
+      // there is room for a few dozen checks a minute per IP, not for walking
+      // through every nickname.
+      '/is-username-available': { window: 60, max: 60 },
     },
   },
-  plugins: [openAPI(), username()],
+  // #212: the nickname (ADR-0025). The plugin keeps it lower-cased in
+  // `username`, which is unique, and as typed in `displayUsername`; its default
+  // pattern (a-z, 0-9, "_" and ".") is the one the app uses.
+  plugins: [
+    openAPI(),
+    username({
+      minUsernameLength: NICKNAME_MIN_LENGTH,
+      maxUsernameLength: NICKNAME_MAX_LENGTH,
+    }),
+  ],
 };
