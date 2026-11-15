@@ -400,6 +400,35 @@ describeDb('blocks between two people in the database (#239)', () => {
       expect(members.map((member) => member.userId)).toEqual([owner]);
     });
 
+    it('leave out the groups the hidden people own or run as admins', async () => {
+      const [viewer, blocked, other] = [
+        await aUser(),
+        await aUser(),
+        await aUser(),
+      ];
+      const owned = await aGroup([[blocked, GroupRole.OWNER]]);
+      const run = await aGroup([
+        [other, GroupRole.OWNER],
+        [blocked, GroupRole.ADMIN],
+      ]);
+      const joined = await aGroup([
+        [other, GroupRole.OWNER],
+        [blocked, GroupRole.MEMBER],
+      ]);
+
+      const page = await groups.listDiscoverableGroups(
+        viewer,
+        10_000,
+        undefined,
+        [blocked],
+      );
+      const found = page.items.map((group) => group.id);
+
+      expect(found).toContain(joined);
+      expect(found).not.toContain(owned);
+      expect(found).not.toContain(run);
+    });
+
     it('keep the notifications without an actor in the bell', async () => {
       const [recipient, blocked] = [await aUser(), await aUser()];
       await prisma.notification.createMany({

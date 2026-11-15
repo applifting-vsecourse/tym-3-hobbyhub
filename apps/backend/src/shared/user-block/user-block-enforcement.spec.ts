@@ -145,7 +145,7 @@ describe('blocks between two people (#239)', () => {
         visibility: 'PUBLIC',
         status: 'ACTIVE',
       } as Group);
-      repository.getOwnerId.mockResolvedValue('blocked');
+      repository.listAdminIds.mockResolvedValue(['blocked']);
       repository.getMemberRole.mockResolvedValue('MEMBER');
       return {
         repository,
@@ -157,13 +157,22 @@ describe('blocks between two people (#239)', () => {
       };
     };
 
-    it('gives no page of a group the blocked person owns', async () => {
-      const { service } = setup();
+    it('gives no page of a group the blocked person runs, as owner or admin', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockResolvedValue(null);
+      repository.listAdminIds.mockResolvedValue(['owner', 'blocked']);
 
       await expect(service.getPublicGroup('g1', viewer)).rejects.toBeInstanceOf(
         NotFoundException,
       );
       await expect(service.getPublicGroup('g1')).resolves.toBeDefined();
+    });
+
+    it('still shows a member their own group, where both of the pair run it', async () => {
+      const { repository, service } = setup();
+      repository.getMemberRole.mockResolvedValue('ADMIN');
+
+      await expect(service.getPublicGroup('g1', viewer)).resolves.toBeDefined();
     });
 
     it('leaves the blocked person off the member list', async () => {

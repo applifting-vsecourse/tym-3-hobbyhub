@@ -83,17 +83,21 @@ const orderBy = [
 // A visitor (no userId) is in none, so they find every such group.
 const discoverableBy = (
   userId?: string,
-  hiddenOwnerIds: string[] = [],
+  hiddenManagerIds: string[] = [],
 ): Prisma.GroupWhereInput => ({
   visibility: GroupVisibility.PUBLIC,
   status: GroupStatus.ACTIVE,
   ...(userId ? { memberships: { none: { userId } } } : {}),
-  // #239: a group whose owner is blocked from the viewer does not exist.
-  ...(hiddenOwnerIds.length > 0
+  // #239, ADR-0022: a group run (OWNER or ADMIN) by someone blocked from the
+  // viewer does not exist.
+  ...(hiddenManagerIds.length > 0
     ? {
         NOT: {
           memberships: {
-            some: { role: GroupRole.OWNER, userId: { in: hiddenOwnerIds } },
+            some: {
+              role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+              userId: { in: hiddenManagerIds },
+            },
           },
         },
       }
@@ -161,15 +165,6 @@ export class GroupRepository {
       orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
     });
     return memberships.map(mapMembershipToMember);
-  }
-
-  // #239: whose group it is.
-  async getOwnerId(groupId: string): Promise<string | null> {
-    const owner = await this.prisma.groupMembership.findFirst({
-      where: { groupId, role: GroupRole.OWNER },
-      select: { userId: true },
-    });
-    return owner?.userId ?? null;
   }
 
   // ADR-0015: who is told about a new request to join (the founder and the
@@ -256,11 +251,11 @@ export class GroupRepository {
     userId: string,
     city: string,
     limit: number,
-    hiddenOwnerIds: string[] = [],
+    hiddenManagerIds: string[] = [],
   ): Promise<Group[]> {
     const groups = await this.prisma.group.findMany({
       where: {
-        ...discoverableBy(userId, hiddenOwnerIds),
+        ...discoverableBy(userId, hiddenManagerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
       include,
@@ -274,10 +269,10 @@ export class GroupRepository {
     userId: string | undefined,
     pageSize: number,
     cursor?: string,
-    hiddenOwnerIds: string[] = [],
+    hiddenManagerIds: string[] = [],
   ): Promise<GroupPage> {
     const groups = await this.prisma.group.findMany({
-      where: discoverableBy(userId, hiddenOwnerIds),
+      where: discoverableBy(userId, hiddenManagerIds),
       include,
       orderBy,
       // One extra row tells whether another page exists.

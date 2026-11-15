@@ -65,27 +65,33 @@ export class GroupsService {
 
   // F-02.5: the detail is public, so only a public, active group is shown.
   // Anything else is "not found", so nobody can tell it exists; so is the
-  // group of an owner blocked from the viewer (#239).
+  // group run by someone blocked from the viewer (#239).
   // TODO(F-07.1b #93): a private group is shown to its members.
   async getPublicGroup(id: string, viewer?: Identity): Promise<Group> {
     const group = await this.groupRepository.getGroupById(id);
     if (!group || !isPubliclyVisible(group)) {
       throw new NotFoundException('Group not found');
     }
-    if (viewer && (await this.isOwnedByHidden(id, viewer.id))) {
+    if (viewer && (await this.isRunByHidden(id, viewer.id))) {
       throw new NotFoundException('Group not found');
     }
     return group;
   }
 
-  private async isOwnedByHidden(
+  // ADR-0022: the owner and the admins run the group, the same people a block
+  // removes members from (`removeBlockedPair`). A member still sees their own
+  // group: where both of the pair run it, both stay.
+  private async isRunByHidden(
     groupId: string,
     viewerId: string,
   ): Promise<boolean> {
     const hidden = await this.blocks.hiddenFor(viewerId);
     if (hidden.length === 0) return false;
-    const ownerId = await this.groupRepository.getOwnerId(groupId);
-    return ownerId !== null && hidden.includes(ownerId);
+    const [role, managerIds] = await Promise.all([
+      this.groupRepository.getMemberRole(groupId, viewerId),
+      this.groupRepository.listAdminIds(groupId),
+    ]);
+    return role === null && managerIds.some((id) => hidden.includes(id));
   }
 
   getMemberRole(groupId: string, userId: string): Promise<GroupRole | null> {

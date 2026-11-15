@@ -51,7 +51,7 @@ Blokování ([#65][65]) mění viditelnost napříč celou aplikací, proto je v
 
 Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tabulce žádostí je proto mezi ostatními.
 
-**Blokace dvojice správcem** ([#239][239], [ADR-0022](../adr/adr-0022.md)) platí oběma směry: oba jsou pro sebe navzájem ve sloupci Zablokovaný. Navíc se navzájem nevidí ani v seznamech účastníků a členů cizích akcí a skupin. Že blokace existuje a proč, vidí jen superadmin; nikdo z dvojice se to nedozví.
+**Blokace dvojice správcem** ([#239][239], [ADR-0022](../adr/adr-0022.md)) platí oběma směry: oba jsou pro sebe navzájem ve sloupci Zablokovaný. Za „vlastníka skupiny“ se u ní počítá i admin skupiny: skupinu, kterou ten druhý vlastní nebo spravuje, nevidí, pokud v ní sám není. Navíc se navzájem nevidí ani v seznamech účastníků a členů cizích akcí a skupin. Že blokace existuje a proč, vidí jen superadmin; nikdo z dvojice se to nedozví.
 
 ## Akce
 
