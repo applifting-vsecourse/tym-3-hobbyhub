@@ -284,9 +284,9 @@ describe('ProfileService', () => {
         repository.getPublicRow.mockResolvedValue(publicRow);
         onboardingService.getInterestsOf.mockResolvedValue([]);
         friendshipService.relationBetween.mockResolvedValue(relation);
-        await expect(service.getPublicProfile(user, 'u2')).resolves.toMatchObject(
-          { nickname: 'PetrBehá', relation },
-        );
+        await expect(
+          service.getPublicProfile(user, 'u2'),
+        ).resolves.toMatchObject({ nickname: 'PetrBehá', relation });
         expect(friendshipService.relationBetween).toHaveBeenCalledWith(
           'u1',
           'u2',

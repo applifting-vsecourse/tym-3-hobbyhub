@@ -98,7 +98,11 @@ describe("EditProfileForm", () => {
     })
 
     it("shows what was saved", async () => {
-      await renderForm({ ...profile, friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true })
+      await renderForm({
+        ...profile,
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      })
 
       expect(history()).not.toBeChecked()
       expect(upcoming()).toBeChecked()
