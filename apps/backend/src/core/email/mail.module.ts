@@ -3,6 +3,7 @@ import { Config } from '@/shared/config/config.service';
 import { Global, Module } from '@nestjs/common';
 import { ConsoleMailerAdapterFactory } from './adapters/console-mailer/console-mailer.adapter.factory';
 import { ResendAdapterFactory } from './adapters/resend/resend.adapter.factory';
+import { allowSelfSignedSmtp } from './adapters/smtp/allow-self-signed-smtp';
 import { SMTPAdapterFactory } from './adapters/smtp/smtp.adapter.factory';
 import { EmailModule } from './email.module';
 import { DatabaseEmailOutbox } from './outbox/database-email-outbox';
@@ -41,6 +42,11 @@ import { EMAIL_OUTBOX } from './outbox/email-outbox.interface';
             user: config.smtpUsername,
             pass: config.smtpPassword,
             from: config.smtpFrom,
+            // Throws outside development: the backend does not start.
+            allowSelfSigned: allowSelfSignedSmtp(
+              config.smtpAllowSelfSigned,
+              config.nodeEnv,
+            ),
           });
         }
         return ConsoleMailerAdapterFactory.create();
