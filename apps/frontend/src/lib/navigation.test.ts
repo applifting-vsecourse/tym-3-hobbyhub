@@ -15,7 +15,10 @@ describe("navSectionForPath", () => {
   })
 
   // Profil is in the avatar menu, not a section of the navigation (#227).
-  it.each(["/", "/terms", "/login", "/eventsy", "/profile", "/profile/edit"])("%s highlights nothing", (pathname) => {
-    expect(navSectionForPath(pathname)).toBeNull()
-  })
+  it.each(["/", "/terms", "/login", "/eventsy", "/profile", "/profile/edit"])(
+    "%s highlights nothing",
+    (pathname) => {
+      expect(navSectionForPath(pathname)).toBeNull()
+    },
+  )
 })
