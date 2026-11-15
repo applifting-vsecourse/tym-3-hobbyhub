@@ -1,8 +1,9 @@
 import { useEffect, useId, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ChevronDownIcon, UserIcon } from "lucide-react"
+import { UserIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { ComboboxTrigger } from "@/components/hobbyhub/ComboboxTrigger"
 import {
   Command,
   CommandEmpty,
@@ -12,7 +13,6 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 
 import { adminUsersQueryOptions } from "@/features/admin/api/adminQueryOptions"
 import type { AdminUser } from "@/features/admin/api/adminSchemas"
@@ -67,33 +67,23 @@ export function AdminUserPicker({
       onOpenChange={setIsOpen}
     >
       <PopoverTrigger asChild>
-        <button
+        <ComboboxTrigger
           id={id}
-          type="button"
-          role="combobox"
-          aria-expanded={isOpen}
-          aria-controls={listId}
+          isOpen={isOpen}
+          listId={listId}
+          isEmpty={!value}
           aria-invalid={isInvalid}
           aria-describedby={describedBy}
           disabled={isDisabled}
-          className="flex h-12 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3.5 py-3 typo-body text-foreground transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring disabled:opacity-50 aria-invalid:border-destructive"
         >
-          <span
-            className={cn("flex min-w-0 items-center gap-2", !value && "text-muted-foreground")}
-          >
-            <UserIcon
-              aria-hidden
-              className="size-4 shrink-0"
-            />
-            <span className="truncate">
-              {value ? `${value.name} (${value.email})` : t("admin.blocks.pickPlaceholder")}
-            </span>
-          </span>
-          <ChevronDownIcon
+          <UserIcon
             aria-hidden
-            className="size-4 shrink-0 text-muted-foreground"
+            className="size-4 shrink-0"
           />
-        </button>
+          <span className="truncate">
+            {value ? `${value.name} (${value.email})` : t("admin.blocks.pickPlaceholder")}
+          </span>
+        </ComboboxTrigger>
       </PopoverTrigger>
       <PopoverContent
         align="start"
