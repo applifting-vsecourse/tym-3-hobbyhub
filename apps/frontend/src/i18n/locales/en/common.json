@@ -1186,12 +1186,23 @@
     },
     "showAll": "Show all",
     "someone": "Someone",
+    "startsWhen": "{{day}} at {{time}}",
     "text": {
       "EVENT_CANCELLED": "The event {{title}} was cancelled",
       "EVENT_CHANGED": {
         "BOTH": "The event {{title}} has a new time and place",
         "PLACE": "The event {{title}} has a new place",
         "TIME": "The event {{title}} has a new time"
+      },
+      "EVENT_REMINDER": {
+        "started": "{{title}} started {{when}}",
+        "upcoming": "{{title}} starts {{when}}"
+      },
+      "HOSTED_EVENT_REMINDER": {
+        "belowMinimum_one": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participant short of the minimum",
+        "belowMinimum_other": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participants short of the minimum",
+        "started": "Your event {{title}} started {{when}}",
+        "upcoming": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken"
       },
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",

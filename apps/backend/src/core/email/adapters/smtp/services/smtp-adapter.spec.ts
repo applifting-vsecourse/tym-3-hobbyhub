@@ -33,6 +33,31 @@ describe('SMTPAdapter', () => {
     );
   });
 
+  it('checks the server certificate by default', () => {
+    new SMTPAdapter(config);
+
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.not.objectContaining({ tls: expect.anything() }),
+    );
+  });
+
+  // Local Mailpit: still encrypted, only its self-signed certificate passes.
+  it('accepts a self-signed certificate only when told to, still over TLS', () => {
+    new SMTPAdapter({
+      ...config,
+      port: 1025,
+      secure: false,
+      allowSelfSigned: true,
+    });
+
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requireTLS: true,
+        tls: { rejectUnauthorized: false },
+      }),
+    );
+  });
+
   it('sends from the user name when no sender is set', async () => {
     await new SMTPAdapter(config).sendEmail('a@example.com', 'Hi', '<p>x</p>');
 
