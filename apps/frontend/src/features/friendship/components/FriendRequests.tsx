@@ -140,7 +140,7 @@ function FriendRequestCard({ request, now }: { request: ReceivedFriendRequest; n
           <Link
             to="/profile/$userId"
             params={{ userId: sender.id }}
-            className="typo-title w-fit break-words text-foreground underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+            className="w-fit typo-title break-words text-foreground underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
           >
             {sender.name}
           </Link>
@@ -157,6 +157,7 @@ function FriendRequestCard({ request, now }: { request: ReceivedFriendRequest; n
       <FriendRequestDecision
         senderId={sender.id}
         senderName={sender.name}
+        errorAs="toast"
       />
     </article>
   )

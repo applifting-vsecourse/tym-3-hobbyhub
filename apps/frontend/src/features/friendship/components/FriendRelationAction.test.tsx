@@ -130,6 +130,19 @@ describe("FriendRelationAction", () => {
       expect(screen.queryByRole("alert")).toBeNull()
     })
 
+    it("says the account is gone when it was blocked or deleted (404)", async () => {
+      failWith(404)
+      await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+      )
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Tento účet už není dostupný, žádost nejde vyřídit.",
+      )
+    })
+
     it("says so when the decision failed", async () => {
       failWith(500)
       await renderAction("request_received")

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { HTTPError } from "@/lib/api-client"
 import { relativeTime } from "@/lib/relativeTime"
 import { cn } from "@/lib/utils"
 
@@ -163,7 +164,11 @@ function FriendRequestActions({
           role="alert"
           className="typo-small text-destructive"
         >
-          {t("friends.requests.decideError")}
+          {t(
+            decide.error instanceof HTTPError && decide.error.response.status === 404
+              ? "friends.requests.unavailable"
+              : "friends.requests.decideError",
+          )}
         </p>
       ) : null}
     </div>

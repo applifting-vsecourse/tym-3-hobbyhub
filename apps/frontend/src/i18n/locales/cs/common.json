@@ -476,6 +476,7 @@
       "rejectLabel": "Zamítnout žádost o přátelství od {{name}}",
       "rejecting": "Zamítáme…",
       "retry": "Zkusit znovu",
+      "unavailable": "Tento účet už není dostupný, žádost nejde vyřídit.",
       "waiting_few": "{{count}} nevyřízené žádosti",
       "waiting_one": "{{count}} nevyřízená žádost",
       "waiting_other": "{{count}} nevyřízených žádostí"

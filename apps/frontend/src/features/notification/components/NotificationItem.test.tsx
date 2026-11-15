@@ -106,20 +106,46 @@ describe("NotificationItem, a friend request (#228)", () => {
   })
 
   it.each([
+    [404, "Tento účet už není dostupný, žádost nejde vyřídit."],
+    [500, "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu."],
+  ])("says what went wrong (%i)", async (status, text) => {
+    post.mockRejectedValueOnce(
+      new HTTPError(
+        new Response("{}", { status }),
+        new Request("http://x/api/friends/requests/u2/accept"),
+        {} as never,
+      ),
+    )
+    await renderItem(aFriendRequest("PENDING"))
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(text)
+  })
+
+  it.each([
     ["ACCEPTED", "Přijato"],
     ["REJECTED", "Zamítnuto"],
-  ] as const)("shows what became of a decided request (%s), without buttons", async (status, text) => {
-    await renderItem(aFriendRequest(status, { readAt: now }))
+  ] as const)(
+    "shows what became of a decided request (%s), without buttons",
+    async (status, text) => {
+      await renderItem(aFriendRequest(status, { readAt: now }))
 
-    expect(await screen.findByText(text)).toBeInTheDocument()
-    expect(screen.queryByRole("button")).toBeNull()
-  })
+      expect(await screen.findByText(text)).toBeInTheDocument()
+      expect(screen.queryByRole("button")).toBeNull()
+    },
+  )
 })
 
 describe("NotificationItem, an accepted request (#228)", () => {
   it("leads to the person who accepted, as one link", async () => {
     await renderItem(
-      aFriendRequest("ACCEPTED", { type: "FRIEND_REQUEST_ACCEPTED", actor: { id: "u3", name: "Jana" } }),
+      aFriendRequest("ACCEPTED", {
+        type: "FRIEND_REQUEST_ACCEPTED",
+        actor: { id: "u3", name: "Jana" },
+      }),
     )
 
     expect(

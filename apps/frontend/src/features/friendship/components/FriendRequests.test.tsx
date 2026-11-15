@@ -1,13 +1,19 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { FriendRequests } from "@/features/friendship/components/FriendRequests"
 
-const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
+const { get, post, toastError } = vi.hoisted(() => ({
+  get: vi.fn(),
+  post: vi.fn(),
+  toastError: vi.fn(),
+}))
+vi.mock("sonner", () => ({ toast: { error: toastError } }))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   api: { get, post },
@@ -15,7 +21,12 @@ vi.mock("@/lib/api-client", async (importOriginal) => ({
 
 const now = new Date("2026-11-15T12:00:00.000Z")
 
-const aRequest = (id: string, name: string, requestedAt: string, nickname: string | null = null) => ({
+const aRequest = (
+  id: string,
+  name: string,
+  requestedAt: string,
+  nickname: string | null = null,
+) => ({
   id,
   requestedAt,
   sender: { id: `u-${id}`, name, nickname, image: null },
@@ -41,6 +52,7 @@ const renderRequests = () =>
 beforeEach(() => {
   get.mockReset()
   post.mockReset()
+  toastError.mockReset()
 })
 
 describe("FriendRequests (#228)", () => {
@@ -91,7 +103,71 @@ describe("FriendRequests (#228)", () => {
     )
 
     expect(post).toHaveBeenCalledWith("friends/requests/u-r1/accept")
-    expect(await screen.findByText(/Žádosti o přátelství, které vám lidé pošlou/)).toBeInTheDocument()
+    expect(
+      await screen.findByText(/Žádosti o přátelství, které vám lidé pošlou/),
+    ).toBeInTheDocument()
+  })
+
+  // The request of a blocked account leaves the list when it loads again, and
+  // its card with it: the failure is said in a toast, which stays.
+  it("says in a toast that the account is gone, though its card leaves the list", async () => {
+    answer(
+      {
+        items: [aRequest("r1", "Fresh Duckling", "2026-11-15T10:00:00.000Z")],
+        total: 1,
+        nextOffset: null,
+      },
+      { items: [], total: 0, nextOffset: null },
+    )
+    post.mockReturnValueOnce({
+      json: () =>
+        Promise.reject(
+          new HTTPError(
+            new Response("{}", { status: 404 }),
+            new Request("http://x/api/friends/requests/u-r1/accept"),
+            {} as never,
+          ),
+        ),
+    })
+    await renderRequests()
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Fresh Duckling" }),
+    )
+
+    await vi.waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith("Tento účet už není dostupný, žádost nejde vyřídit."),
+    )
+    expect(
+      await screen.findByText(/Žádosti o přátelství, které vám lidé pošlou/),
+    ).toBeInTheDocument()
+  })
+
+  it("says in a toast that a decision failed otherwise", async () => {
+    answer(
+      {
+        items: [aRequest("r1", "Libor Novák", "2026-11-15T10:00:00.000Z")],
+        total: 1,
+        nextOffset: null,
+      },
+      {
+        items: [aRequest("r1", "Libor Novák", "2026-11-15T10:00:00.000Z")],
+        total: 1,
+        nextOffset: null,
+      },
+    )
+    post.mockReturnValueOnce({ json: () => Promise.reject(new Error("down")) })
+    await renderRequests()
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Zamítnout žádost o přátelství od Libor Novák" }),
+    )
+
+    await vi.waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      ),
+    )
   })
 
   it("loads the next 20 on request", async () => {

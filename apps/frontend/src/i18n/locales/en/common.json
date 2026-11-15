@@ -469,6 +469,7 @@
       "rejectLabel": "Decline the friend request from {{name}}",
       "rejecting": "Declining…",
       "retry": "Try again",
+      "unavailable": "This account is no longer available, so the request cannot be handled.",
       "waiting_one": "{{count}} request waiting",
       "waiting_other": "{{count}} requests waiting"
     },
