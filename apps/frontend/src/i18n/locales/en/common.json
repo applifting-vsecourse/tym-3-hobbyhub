@@ -201,6 +201,9 @@
       "events": "Events",
       "groups": "Groups",
       "label": "Administration navigation",
+      "newReports_one": "{{count}} new report",
+      "newReports_other": "{{count}} new reports",
+      "reports": "Reports",
       "users": "Users"
     },
     "no": "No",
@@ -213,6 +216,110 @@
       "INVITED": "Invited",
       "NO_SHOW": "No-show",
       "WAITLISTED": "Substitute"
+    },
+    "reports": {
+      "aboutEvent": "Reports about the event",
+      "aboutUser": "Reports about the user",
+      "assign": {
+        "administrator": "Administrator",
+        "description": "The chosen administrator becomes responsible.",
+        "noColleagues": "Nobody to hand it to: there is no other active administrator.",
+        "pickRequired": "Choose an administrator",
+        "placeholder": "Choose an administrator",
+        "submit": "Hand over",
+        "title": "Hand the report over"
+      },
+      "assignee": "Responsible",
+      "basics": "Report",
+      "createdAt": "Received",
+      "detailTitle": {
+        "EVENT": "Report of the event {{name}}",
+        "USER": "Report of {{name}}"
+      },
+      "empty": "No open reports. New ones appear here as soon as someone sends them.",
+      "filedByUser": "Reports filed",
+      "filter": {
+        "anyTarget": "Events and users",
+        "mine": "Only mine",
+        "status": "State",
+        "statuses": {
+          "ALL": "All",
+          "IN_PROGRESS": "In progress",
+          "NEW": "New",
+          "OPEN": "Open",
+          "RESOLVED": "Resolved"
+        },
+        "target": "What is reported",
+        "targets": {
+          "EVENT": "Events",
+          "USER": "Users"
+        }
+      },
+      "history": {
+        "ASSIGNED": "Assigned to {{assignee}} · {{admin}}",
+        "CREATED": "Received from {{reporter}}",
+        "REOPENED": "Reopened · {{admin}}",
+        "RESOLVED": "Resolved · {{admin}}",
+        "title": "History"
+      },
+      "intervention": {
+        "blockPair": "Block the pair",
+        "pairText": "A report of a user is a request to block: once blocked, {{reporter}} and {{target}} no longer see each other. Neither of them learns of the block.",
+        "pairTitle": "Blocking the pair"
+      },
+      "noMatch": "No report matches the filter.",
+      "noneAboutEvent": "Nobody has reported this event.",
+      "noneAboutUser": "Nobody has reported this user.",
+      "noneFiledByUser": "The user has reported nothing.",
+      "otherOpenEmpty": "There are no other open reports about the same target.",
+      "otherOpenTitle": "Other open reports about the same target",
+      "otherOpen_one": "+{{count}} more open",
+      "otherOpen_other": "+{{count}} more open",
+      "reason": "Reason",
+      "refused": {
+        "ALREADY_ASSIGNED": "The chosen administrator has the report already.",
+        "ALREADY_RESOLVED": "The report is resolved already.",
+        "ASSIGNEE_NOT_ACTIVE": "The chosen administrator no longer has access to the administration.",
+        "CHANGED": "A colleague changed the report meanwhile. The page shows where it stands now.",
+        "NOT_RESOLVED": "The report is not resolved; there is nothing to reopen."
+      },
+      "reporter": "Reported by",
+      "resolutionNote": "Resolution note",
+      "resolve": {
+        "description": "Only administrators see the note. The reporter is told the report was dealt with, not how.",
+        "note": "Resolution note",
+        "notePlaceholder": "E.g. the pair was blocked; the behaviour matches other reports too.",
+        "noteTooLong": "The note can be at most 500 characters",
+        "noteTooShort": "Write a note of at least 10 characters",
+        "submit": "Resolve",
+        "title": "Resolve the report"
+      },
+      "resolvedAt": "Resolved",
+      "state": "State",
+      "status": {
+        "IN_PROGRESS": "In progress",
+        "NEW": "New",
+        "RESOLVED": "Resolved"
+      },
+      "stepFailed": "The step failed. Please try again.",
+      "steps": {
+        "handOver": "Hand to a colleague",
+        "handedOver": "Report handed over.",
+        "reopen": "Reopen",
+        "reopened": "The report is open again.",
+        "resolve": "Resolve",
+        "resolved": "Report resolved.",
+        "take": "Take over",
+        "taken": "The report is in your hands.",
+        "title": "Handling"
+      },
+      "target": "Target",
+      "targetType": {
+        "EVENT": "Event",
+        "USER": "User"
+      },
+      "text": "What happened",
+      "title": "Reports"
     },
     "retry": "Try again",
     "setPassword": {

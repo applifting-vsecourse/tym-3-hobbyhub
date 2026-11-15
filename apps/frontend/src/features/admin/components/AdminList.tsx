@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next"
 
 import { AdminTable, type AdminColumn } from "@/components/hobbyhub/AdminTable"
 import { SearchField } from "@/components/hobbyhub/SearchField"
-import { Button } from "@/components/ui/button"
 
-import { ADMIN_PAGE_SIZE, ADMIN_SEARCH_MAX_LENGTH } from "@/features/admin/api/adminSchemas"
+import { ADMIN_SEARCH_MAX_LENGTH } from "@/features/admin/api/adminSchemas"
+import { AdminPager } from "@/features/admin/components/AdminPager"
 import { AdminState } from "@/features/admin/components/AdminState"
 
 const SEARCH_DELAY_MS = 300
@@ -63,7 +63,6 @@ export function AdminList<T>({
   }, [typed, search, onChange])
 
   const page = query.data
-  const shownTo = page ? Math.min(offset + page.items.length, page.total) : 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -91,36 +90,12 @@ export function AdminList<T>({
               primary={primary}
               columns={columns}
             />
-            <nav
-              aria-label={t("admin.list.pages")}
-              className="flex flex-wrap items-center justify-between gap-3"
-            >
-              <p className="typo-small text-muted-foreground">
-                {t("admin.list.range", { from: offset + 1, to: shownTo, total: page.total })}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-11 md:h-9"
-                  disabled={offset === 0}
-                  onClick={() =>
-                    onChange({ search, offset: Math.max(0, offset - ADMIN_PAGE_SIZE) })
-                  }
-                >
-                  {t("admin.list.previous")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-11 md:h-9"
-                  disabled={offset + ADMIN_PAGE_SIZE >= page.total}
-                  onClick={() => onChange({ search, offset: offset + ADMIN_PAGE_SIZE })}
-                >
-                  {t("admin.list.next")}
-                </Button>
-              </div>
-            </nav>
+            <AdminPager
+              offset={offset}
+              shown={page.items.length}
+              total={page.total}
+              onOffsetChange={(next) => onChange({ search, offset: next })}
+            />
           </>
         )
       ) : (

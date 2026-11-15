@@ -42,6 +42,8 @@ type BlockUserSheetProps = {
   onOpenChange: (isOpen: boolean) => void
   /** The person whose detail this is. */
   user: { id: string; name: string }
+  /** #240: the other person, fixed, when a report already says who it is. */
+  otherUser?: { id: string; name: string }
   isPending: boolean
   error: unknown
   onSubmit: (values: BlockUserValues) => Promise<unknown>
@@ -60,6 +62,7 @@ export function BlockUserSheet({
   isOpen,
   onOpenChange,
   user,
+  otherUser,
   isPending,
   error,
   onSubmit,
@@ -69,7 +72,8 @@ export function BlockUserSheet({
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<BlockUserFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { otherUser: null, reason: "" },
+    // The picker shows the e-mail; a fixed person is shown by name only.
+    defaultValues: { otherUser: otherUser ? { ...otherUser, email: "" } : null, reason: "" },
   })
   const errorMessage = errorMessageOf(t, error)
 
@@ -120,14 +124,18 @@ export function BlockUserSheet({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("admin.blocks.otherUser")}</FormLabel>
-              <FormControl>
-                <AdminUserPicker
-                  value={field.value}
-                  onSelect={(picked) => field.onChange(picked)}
-                  excludeId={user.id}
-                  isDisabled={isPending}
-                />
-              </FormControl>
+              {otherUser ? (
+                <p className="typo-body text-foreground">{otherUser.name}</p>
+              ) : (
+                <FormControl>
+                  <AdminUserPicker
+                    value={field.value}
+                    onSelect={(picked) => field.onChange(picked)}
+                    excludeId={user.id}
+                    isDisabled={isPending}
+                  />
+                </FormControl>
+              )}
               <FormMessage />
             </FormItem>
           )}

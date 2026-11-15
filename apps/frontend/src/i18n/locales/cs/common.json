@@ -202,6 +202,10 @@
       "events": "Akce",
       "groups": "Skupiny",
       "label": "Navigace administrace",
+      "newReports_few": "{{count}} nová nahlášení",
+      "newReports_one": "{{count}} nové nahlášení",
+      "newReports_other": "{{count}} nových nahlášení",
+      "reports": "Nahlášení",
       "users": "Uživatelé"
     },
     "no": "Ne",
@@ -214,6 +218,111 @@
       "INVITED": "Pozvaný",
       "NO_SHOW": "Nedorazil",
       "WAITLISTED": "Náhradník"
+    },
+    "reports": {
+      "aboutEvent": "Nahlášení akce",
+      "aboutUser": "Nahlášení na uživatele",
+      "assign": {
+        "administrator": "Správce",
+        "description": "Odpovědným se stane vybraný správce.",
+        "noColleagues": "Není komu předat: žádný další aktivní správce.",
+        "pickRequired": "Vyberte správce",
+        "placeholder": "Vyberte správce",
+        "submit": "Předat",
+        "title": "Předat nahlášení"
+      },
+      "assignee": "Odpovědný správce",
+      "basics": "Nahlášení",
+      "createdAt": "Přijato",
+      "detailTitle": {
+        "EVENT": "Nahlášení akce {{name}}",
+        "USER": "Nahlášení uživatele {{name}}"
+      },
+      "empty": "Žádné otevřené nahlášení. Nová se tu objeví, jakmile je někdo pošle.",
+      "filedByUser": "Podaná nahlášení",
+      "filter": {
+        "anyTarget": "Akce i uživatelé",
+        "mine": "Jen přiřazená mně",
+        "status": "Stav",
+        "statuses": {
+          "ALL": "Všechna",
+          "IN_PROGRESS": "Řeší se",
+          "NEW": "Nová",
+          "OPEN": "Otevřená",
+          "RESOLVED": "Vyřešená"
+        },
+        "target": "Co je nahlášeno",
+        "targets": {
+          "EVENT": "Akce",
+          "USER": "Uživatelé"
+        }
+      },
+      "history": {
+        "ASSIGNED": "Přiřazeno správci {{assignee}} · {{admin}}",
+        "CREATED": "Přijato od uživatele {{reporter}}",
+        "REOPENED": "Znovu otevřeno · {{admin}}",
+        "RESOLVED": "Vyřešeno · {{admin}}",
+        "title": "Historie"
+      },
+      "intervention": {
+        "blockPair": "Zablokovat dvojici",
+        "pairText": "Nahlášení uživatele je žádost o blokaci: {{reporter}} a {{target}} se po zablokování navzájem neuvidí. Nikdo z nich se o blokaci nedozví.",
+        "pairTitle": "Blokace dvojice"
+      },
+      "noMatch": "Filtru neodpovídá žádné nahlášení.",
+      "noneAboutEvent": "Akci nikdo nenahlásil.",
+      "noneAboutUser": "Na uživatele nikdo nic nenahlásil.",
+      "noneFiledByUser": "Uživatel nic nenahlásil.",
+      "otherOpenEmpty": "Na stejný cíl žádné další otevřené nahlášení není.",
+      "otherOpenTitle": "Další otevřená nahlášení na stejný cíl",
+      "otherOpen_few": "+{{count}} další otevřená",
+      "otherOpen_one": "+{{count}} další otevřené",
+      "otherOpen_other": "+{{count}} dalších otevřených",
+      "reason": "Důvod",
+      "refused": {
+        "ALREADY_ASSIGNED": "Nahlášení už má na starosti vybraný správce.",
+        "ALREADY_RESOLVED": "Nahlášení už je vyřešené.",
+        "ASSIGNEE_NOT_ACTIVE": "Vybraný správce už nemá přístup do administrace.",
+        "CHANGED": "Nahlášení mezitím změnil kolega. Stránka ukazuje aktuální stav.",
+        "NOT_RESOLVED": "Nahlášení není vyřešené, není co otevírat."
+      },
+      "reporter": "Kdo nahlásil",
+      "resolutionNote": "Poznámka k řešení",
+      "resolve": {
+        "description": "Poznámku uvidí jen správci. Nahlašující dostane upozornění, že jsme nahlášení vyřídili, ale ne jak.",
+        "note": "Poznámka k řešení",
+        "notePlaceholder": "Např. dvojice zablokována, chování odpovídá i dalším nahlášením.",
+        "noteTooLong": "Poznámka může mít nejvýš 500 znaků",
+        "noteTooShort": "Napište poznámku, aspoň 10 znaků",
+        "submit": "Vyřešit",
+        "title": "Vyřešit nahlášení"
+      },
+      "resolvedAt": "Vyřešeno",
+      "state": "Stav",
+      "status": {
+        "IN_PROGRESS": "Řeší se",
+        "NEW": "Nové",
+        "RESOLVED": "Vyřešené"
+      },
+      "stepFailed": "Krok se nepovedl. Zkuste to znovu.",
+      "steps": {
+        "handOver": "Předat kolegovi",
+        "handedOver": "Nahlášení předáno.",
+        "reopen": "Znovu otevřít",
+        "reopened": "Nahlášení je znovu otevřené.",
+        "resolve": "Vyřešit",
+        "resolved": "Nahlášení vyřešeno.",
+        "take": "Převzít",
+        "taken": "Nahlášení máte na starosti.",
+        "title": "Řešení"
+      },
+      "target": "Cíl",
+      "targetType": {
+        "EVENT": "Akce",
+        "USER": "Uživatel"
+      },
+      "text": "Co se stalo",
+      "title": "Nahlášení"
     },
     "retry": "Zkusit znovu",
     "setPassword": {

@@ -5,7 +5,10 @@ const linkClass =
   "font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground"
 
 type Target =
-  { kind: "user"; id: string } | { kind: "event"; id: string } | { kind: "group"; id: string }
+  | { kind: "user"; id: string }
+  | { kind: "event"; id: string }
+  | { kind: "group"; id: string }
+  | { kind: "report"; id: string }
 
 /** A link to a record's detail in the administration. */
 export function AdminLink({ to, children }: { to: Target; children: ReactNode }) {
@@ -35,6 +38,16 @@ export function AdminLink({ to, children }: { to: Target; children: ReactNode })
         <Link
           to="/admin/groups/$groupId"
           params={{ groupId: to.id }}
+          className={linkClass}
+        >
+          {children}
+        </Link>
+      )
+    case "report":
+      return (
+        <Link
+          to="/admin/reports/$reportId"
+          params={{ reportId: to.id }}
           className={linkClass}
         >
           {children}

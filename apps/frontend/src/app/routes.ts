@@ -25,4 +25,5 @@ export const ROUTES = {
   adminEvents: "/admin/events",
   adminGroups: "/admin/groups",
   adminAdministrators: "/admin/administrators",
+  adminReports: "/admin/reports",
 } as const
