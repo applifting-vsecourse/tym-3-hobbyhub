@@ -66,6 +66,24 @@ describe("ProfileView", () => {
     expect(screen.queryByText("Žena")).not.toBeInTheDocument()
   })
 
+  it("says under the private heading what friends see, with a way to change it (#227)", async () => {
+    await renderView(profile())
+
+    expect(screen.getByText("Přátelé vidí vaši historii akcí")).toBeInTheDocument()
+    expect(screen.getByText("Přátelé nevidí vaše budoucí akce")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "úpravě profilu" })).toHaveAttribute(
+      "href",
+      "/profile/edit",
+    )
+  })
+
+  it("follows the switches the other way round too (#227)", async () => {
+    await renderView(profile({ friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true }))
+
+    expect(screen.getByText("Přátelé nevidí vaši historii akcí")).toBeInTheDocument()
+    expect(screen.getByText("Přátelé vidí vaše budoucí akce")).toBeInTheDocument()
+  })
+
   it("invites to fill in an empty profile", async () => {
     await renderView(profile({ bio: null, interests: [], address: null, birthYear: null }))
 
