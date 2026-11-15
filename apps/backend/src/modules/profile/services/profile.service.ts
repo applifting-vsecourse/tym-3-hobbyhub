@@ -1,4 +1,5 @@
 import { FriendVisibility } from '@/modules/friendship/domain/friendship';
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import {
   HomeAddress,
   InterestInput,
@@ -26,6 +27,7 @@ export class ProfileService {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly onboardingService: OnboardingService,
+    private readonly friendshipService: FriendshipService,
   ) {}
 
   async getProfile(user: Identity): Promise<Profile> {
@@ -52,16 +54,26 @@ export class ProfileService {
 
   // F-04.2: another person's profile: only what the visibility matrix lets any
   // signed-in person see. The e-mail is never part of it.
-  async getPublicProfile(userId: string): Promise<PublicProfile> {
+  // #225: with the viewer's relation to the person (friends, a request either way).
+  async getPublicProfile(
+    viewer: Identity,
+    userId: string,
+  ): Promise<PublicProfile> {
     const row = await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
+    const [interests, relation] = await Promise.all([
+      this.onboardingService.getInterestsOf(userId),
+      this.friendshipService.relationBetween(viewer.id, userId),
+    ]);
     return {
       id: row.id,
       name: row.name,
+      nickname: row.nickname,
       bio: row.bio,
       image: row.image,
       cover: row.profileCover,
-      interests: await this.onboardingService.getInterestsOf(userId),
+      interests,
+      relation,
     };
   }
 

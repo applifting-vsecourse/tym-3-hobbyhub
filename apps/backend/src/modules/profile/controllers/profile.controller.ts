@@ -60,10 +60,11 @@ export class ProfileController {
   @ApiResponse({ status: 401, description: 'Not signed in' })
   @ApiResponse({ status: 404, description: 'No such user' })
   async getPublic(
+    @User() user: Identity,
     @Param('userId') userId: string,
   ): Promise<PublicProfileResponseDto> {
     return PublicProfileResponseDto.fromDomain(
-      await this.profileService.getPublicProfile(userId),
+      await this.profileService.getPublicProfile(user, userId),
     );
   }
 

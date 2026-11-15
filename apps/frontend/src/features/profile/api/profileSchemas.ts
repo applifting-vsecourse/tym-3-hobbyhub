@@ -57,6 +57,10 @@ export type Profile = z.infer<typeof profileSchema>
 export const publicProfileSchema = z.object({
   id: z.string(),
   name: z.string(),
+  /** #225: the username, when the person has one. */
+  nickname: z.string().nullable(),
+  /** #225: where I stand with the person; the same values as the friendship feature's. */
+  relation: z.enum(["none", "request_sent", "request_received", "friends"]),
   bio: z.string().nullable(),
   image: z.string().nullable(),
   cover: z.string().nullable(),

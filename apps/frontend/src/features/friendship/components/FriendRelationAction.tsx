@@ -1,0 +1,84 @@
+import { Check, Clock, Heart, UserPlus } from "lucide-react"
+import { useTranslation } from "react-i18next"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+
+import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
+import { useSendFriendRequest } from "@/features/friendship/hooks/useSendFriendRequest"
+
+type FriendRelationActionProps = {
+  /** Whose profile this is. */
+  userId: string
+  relation: FriendRelation
+  /** Fetches the profile again after a request, so it shows the real state. */
+  reload: () => Promise<unknown>
+}
+
+/**
+ * #225: under the bio of someone's profile, what I can do about friendship.
+ * No relation: ask. Asked: a disabled "Žádost odeslána". They ask me: a note,
+ * to which #228 adds Přijmout and Zamítnout. Friends: the "Přítel" badge, to
+ * which #226 adds removing the friend.
+ */
+export function FriendRelationAction({ userId, relation, reload }: FriendRelationActionProps) {
+  const { t } = useTranslation()
+  const send = useSendFriendRequest(userId, reload)
+
+  switch (relation) {
+    case "none":
+      return (
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            className="w-full md:w-fit"
+            disabled={send.isPending}
+            onClick={() => send.mutate()}
+          >
+            <UserPlus aria-hidden />
+            {send.isPending ? t("friends.action.sending") : t("friends.action.send")}
+          </Button>
+          {send.isError ? (
+            <p
+              role="alert"
+              className="typo-small text-destructive"
+            >
+              {t("friends.action.error")}
+            </p>
+          ) : null}
+        </div>
+      )
+    case "request_sent":
+      return (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full md:w-fit"
+          disabled
+        >
+          <Clock aria-hidden />
+          {t("friends.action.sent")}
+        </Button>
+      )
+    case "request_received":
+      return (
+        <p className="flex items-center gap-3 rounded-lg bg-accent px-4 py-3 typo-body text-accent-foreground">
+          <Heart
+            aria-hidden
+            className="size-5 shrink-0"
+          />
+          {t("friends.action.received")}
+        </p>
+      )
+    case "friends":
+      return (
+        <Badge
+          variant="success"
+          className="px-3 py-1"
+        >
+          <Check aria-hidden />
+          {t("friends.relation.friends")}
+        </Badge>
+      )
+  }
+}

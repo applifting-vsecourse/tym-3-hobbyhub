@@ -24,6 +24,7 @@ const renderPage = (userId: string) =>
         userId={userId}
         ownUserId="me"
         activityLabel={(activity) => activity.name}
+        renderFriendAction={({ relation }) => <p>{`relation:${relation}`}</p>}
       />
     </QueryClientProvider>,
   )
@@ -35,6 +36,8 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
+      nickname: "petr",
+      relation: "request_sent",
       bio: null,
       image: null,
       cover: null,
@@ -44,6 +47,8 @@ describe("PublicProfilePage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Petr" })).toBeInTheDocument()
     expect(get).toHaveBeenCalledWith("profile/u2")
+    // #225: my relation to the person comes with the profile.
+    expect(screen.getByText("relation:request_sent")).toBeInTheDocument()
   })
 
   it("sends me to my own profile instead of this page", async () => {

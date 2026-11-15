@@ -1,0 +1,23 @@
+import { api, HTTPError } from "@/lib/api-client"
+
+import {
+  friendRelationResponseSchema,
+  type FriendRelation,
+} from "@/features/friendship/api/friendshipSchemas"
+
+/**
+ * #225: asks the person to become my friend. The sender is the session on the
+ * server. A 409 means the state changed meanwhile (they asked me, we became
+ * friends): that is no failure, the caller reloads the real state (`null`).
+ */
+export async function sendFriendRequest(recipientId: string): Promise<FriendRelation | null> {
+  try {
+    const response = friendRelationResponseSchema.parse(
+      await api.post("friends/requests", { json: { recipientId } }).json(),
+    )
+    return response.relation
+  } catch (error) {
+    if (error instanceof HTTPError && error.response.status === 409) return null
+    throw error
+  }
+}

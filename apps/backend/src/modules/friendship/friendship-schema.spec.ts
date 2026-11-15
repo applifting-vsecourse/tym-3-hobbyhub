@@ -8,6 +8,7 @@ import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { Prisma } from '@/generated/prisma/client';
 import { friendPairOf } from '@/modules/friendship/domain/friendship';
+import { FriendshipRepository } from '@/modules/friendship/repositories/friendship.repository';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
@@ -38,6 +39,7 @@ describeDb('friendship schema constraints', () => {
   const createUser = async (
     tx: Prisma.TransactionClient,
     id = `test-${unique()}`,
+    data: Partial<Prisma.UserUncheckedCreateInput> = {},
   ): Promise<string> => {
     const now = new Date();
     await tx.user.create({
@@ -48,6 +50,7 @@ describeDb('friendship schema constraints', () => {
         emailVerified: true,
         createdAt: now,
         updatedAt: now,
+        ...data,
       },
     });
     return id;
@@ -209,6 +212,110 @@ describeDb('friendship schema constraints', () => {
         expect(
           await tx.friendship.count({ where: { userAId: pair.userAId } }),
         ).toBe(0);
+      });
+    });
+  });
+  // #225: the search query runs on PostgreSQL itself (unaccent, LIKE), so it
+  // is checked here. Every name carries a token unique to the case, so other
+  // rows in the database never match.
+  describe('searchUsers', () => {
+    const search = (
+      tx: Prisma.TransactionClient,
+      viewerId: string,
+      text: string,
+    ): Promise<string[]> =>
+      new FriendshipRepository(tx as unknown as PrismaService)
+        .searchUsers(viewerId, text, 0, 50)
+        .then((rows) => rows.map((row) => row.name));
+
+    it('finds a part of the name, whatever the case and the diacritics', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, { name: `Šimon Nováček ${token}` });
+        expect(await search(tx, viewer, `simon novacek ${token}`)).toEqual([
+          `Šimon Nováček ${token}`,
+        ]);
+        expect(await search(tx, viewer, `ÁČEK ${token.toUpperCase()}`)).toEqual(
+          [`Šimon Nováček ${token}`],
+        );
+      });
+    });
+
+    it('finds the username, and returns the one typed at sign-up', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, {
+          name: 'Libor',
+          username: `novyhrac${token}`,
+          displayUsername: `NovyHrac${token}`,
+        });
+        const rows = await new FriendshipRepository(
+          tx as unknown as PrismaService,
+        ).searchUsers(viewer, `hrac${token}`, 0, 50);
+        expect(rows).toEqual([
+          expect.objectContaining({
+            name: 'Libor',
+            nickname: `NovyHrac${token}`,
+          }),
+        ]);
+        expect(Object.keys(rows[0]).sort()).toEqual([
+          'id',
+          'image',
+          'name',
+          'nickname',
+        ]);
+      });
+    });
+
+    it('never finds anybody by the e-mail', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, {
+          name: 'Libor',
+          email: `libor-${token}@example.com`,
+        });
+        expect(await search(tx, viewer, `libor-${token}@example.com`)).toEqual(
+          [],
+        );
+        expect(await search(tx, viewer, `${token}@example`)).toEqual([]);
+      });
+    });
+
+    it('leaves out the viewer and blocked or deleted accounts', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx, undefined, { name: `Me ${token}` });
+        for (const status of [
+          'ACTIVE',
+          'RESTRICTED',
+          'BLOCKED',
+          'DELETED',
+        ] as const) {
+          await createUser(tx, undefined, {
+            name: `${status} ${token}`,
+            status,
+          });
+        }
+        expect((await search(tx, viewer, token)).sort()).toEqual([
+          `ACTIVE ${token}`,
+          `RESTRICTED ${token}`,
+        ]);
+      });
+    });
+
+    it('takes % and _ as typed, not as wildcards', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, { name: `Ana ${token}` });
+        await createUser(tx, undefined, { name: `A_a ${token}` });
+        expect(await search(tx, viewer, `a_a ${token}`)).toEqual([
+          `A_a ${token}`,
+        ]);
+        expect(await search(tx, viewer, `%${token}`)).toEqual([]);
       });
     });
   });

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
+import { FriendRelationAction } from "@/features/friendship/components/FriendRelationAction"
 import { PublicProfilePage } from "@/features/profile/components/PublicProfilePage"
 
 export const Route = createFileRoute("/_ProtectedPages/profile/$userId")({
@@ -25,6 +26,8 @@ function ProfileRoute() {
       userId={userId}
       ownUserId={user?.id}
       activityLabel={activityLabel}
+      // #225: ask for friendship, or see where the request stands.
+      renderFriendAction={(friendship) => <FriendRelationAction {...friendship} />}
     />
   )
 }

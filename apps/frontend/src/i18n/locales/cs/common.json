@@ -439,11 +439,38 @@
     "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
   },
   "friends": {
+    "action": {
+      "error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
+      "received": "Tento uživatel vás žádá o přátelství.",
+      "send": "Požádat o přátelství",
+      "sending": "Odesíláme žádost…",
+      "sent": "Žádost odeslána"
+    },
     "empty": {
       "findPeople": "Vyhledat uživatele",
       "friends": "Zatím tu nikoho nemáte. Až vám někdo přijme žádost o přátelství, uvidíte ho tady.",
-      "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady.",
-      "search": "Zatím tu nic není. Brzy tu půjde najít lidi podle přezdívky nebo jména a příjmení."
+      "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady."
+    },
+    "nickname": "@{{nickname}}",
+    "relation": {
+      "friends": "Přítel",
+      "request_received": "Žádá vás",
+      "request_sent": "Žádost odeslána"
+    },
+    "search": {
+      "error": "Vyhledávání se nepovedlo.",
+      "hint_few": "Napište aspoň {{count}} znaky jména nebo přezdívky. Podle e-mailu hledat nejde.",
+      "hint_one": "Napište aspoň {{count}} znak jména nebo přezdívky. Podle e-mailu hledat nejde.",
+      "hint_other": "Napište aspoň {{count}} znaků jména nebo přezdívky. Podle e-mailu hledat nejde.",
+      "label": "Hledat lidi podle jména nebo přezdívky",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další lidi se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Hledáme lidi…",
+      "loadingMore": "Načítáme…",
+      "noResults": "Nikoho takového jsme nenašli. Zkuste jen část jména nebo přezdívky.",
+      "placeholder": "Jméno nebo přezdívka",
+      "results": "Nalezení lidé",
+      "retry": "Zkusit znovu"
     },
     "tabs": {
       "friends": "Přátelé",

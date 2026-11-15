@@ -1,13 +1,38 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
+import { Prisma } from '@/generated/prisma/client';
 import {
   friendPairOf,
   FriendRequest,
 } from '@/modules/friendship/domain/friendship';
 import { Injectable } from '@nestjs/common';
 
-// #227, ADR-0023. The only place that touches the friendship tables. Trusts
-// the layers above: it validates nothing, it only reads and writes. The
-// endpoints that create and decide requests come with #225 and #228.
+/** A person as the search shows them, before the relation is added. */
+export type FoundUserRow = {
+  id: string;
+  name: string;
+  nickname: string | null;
+  image: string | null;
+};
+
+/** What is stored between the viewer and one other person. */
+export type StoredRelation = {
+  isFriend: boolean;
+  pendingRequest: { senderId: string } | null;
+};
+
+/** The second request for a pair lost the race (friend_request_one_pending_per_pair). */
+export class PendingRequestExistsError extends Error {}
+
+const isUniqueViolation = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === 'P2002';
+
+/** `LIKE` treats `%`, `_` and the escape character as wildcards; typed text must not. */
+const containsPattern = (text: string): string =>
+  `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+
+// #227, #225, ADR-0023. The only place that touches the friendship tables.
+// Trusts the layers above: it validates nothing, it only reads and writes.
 @Injectable()
 export class FriendshipRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -43,5 +68,102 @@ export class FriendshipRepository {
         decidedAt: true,
       },
     });
+  }
+
+  /**
+   * #225: people whose name or username contains the text, ignoring case and
+   * diacritics (unaccent). Never the e-mail, never the viewer, only accounts
+   * that are active or restricted. Ordered by name; `limit` rows from `offset`.
+   */
+  async searchUsers(
+    viewerId: string,
+    text: string,
+    offset: number,
+    limit: number,
+  ): Promise<FoundUserRow[]> {
+    const pattern = containsPattern(text);
+    const matches = (column: Prisma.Sql): Prisma.Sql =>
+      Prisma.sql`unaccent(lower(${column})) LIKE unaccent(lower(${pattern})) ESCAPE '\\'`;
+    return this.prisma.$queryRaw<FoundUserRow[]>`
+      SELECT "id", "name", COALESCE("displayUsername", "username") AS "nickname", "image"
+      FROM "user"
+      WHERE "id" <> ${viewerId}
+        AND "status" IN ('ACTIVE', 'RESTRICTED')
+        AND (
+          ${matches(Prisma.sql`"name"`)}
+          OR ${matches(Prisma.sql`COALESCE("displayUsername", '')`)}
+          OR ${matches(Prisma.sql`COALESCE("username", '')`)}
+        )
+      ORDER BY unaccent(lower("name")), "id"
+      OFFSET ${offset}
+      LIMIT ${limit}
+    `;
+  }
+
+  /** What is stored between the viewer and each of `otherIds`, in one go. */
+  async findRelationsWith(
+    viewerId: string,
+    otherIds: readonly string[],
+  ): Promise<Map<string, StoredRelation>> {
+    const relations = new Map<string, StoredRelation>(
+      otherIds.map((id) => [id, { isFriend: false, pendingRequest: null }]),
+    );
+    if (otherIds.length === 0) return relations;
+    const ids = [...otherIds];
+    const [friendships, requests] = await Promise.all([
+      this.prisma.friendship.findMany({
+        where: {
+          OR: [
+            { userAId: viewerId, userBId: { in: ids } },
+            { userBId: viewerId, userAId: { in: ids } },
+          ],
+        },
+        select: { userAId: true, userBId: true },
+      }),
+      this.prisma.friendRequest.findMany({
+        where: {
+          status: 'PENDING',
+          OR: [
+            { senderId: viewerId, recipientId: { in: ids } },
+            { recipientId: viewerId, senderId: { in: ids } },
+          ],
+        },
+        select: { senderId: true, recipientId: true },
+      }),
+    ]);
+    for (const pair of friendships) {
+      const otherId = pair.userAId === viewerId ? pair.userBId : pair.userAId;
+      relations.get(otherId)!.isFriend = true;
+    }
+    for (const request of requests) {
+      const otherId =
+        request.senderId === viewerId ? request.recipientId : request.senderId;
+      relations.get(otherId)!.pendingRequest = { senderId: request.senderId };
+    }
+    return relations;
+  }
+
+  /** Whether a request can be sent to the person: the account exists and is not blocked or deleted. */
+  async isReachable(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, status: { in: ['ACTIVE', 'RESTRICTED'] } },
+      select: { id: true },
+    });
+    return user !== null;
+  }
+
+  /**
+   * #225: a new pending request. The database keeps one pending request per
+   * pair in either direction; losing that race throws `PendingRequestExistsError`.
+   */
+  async createRequest(senderId: string, recipientId: string): Promise<void> {
+    try {
+      await this.prisma.friendRequest.create({
+        data: { senderId, recipientId },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) throw new PendingRequestExistsError();
+      throw error;
+    }
   }
 }

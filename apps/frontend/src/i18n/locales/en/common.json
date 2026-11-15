@@ -432,11 +432,37 @@
     "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
   },
   "friends": {
+    "action": {
+      "error": "The request could not be sent. Please try again.",
+      "received": "This person is asking you to be friends.",
+      "send": "Ask to be friends",
+      "sending": "Sending the request…",
+      "sent": "Request sent"
+    },
     "empty": {
       "findPeople": "Find people",
       "friends": "Nobody here yet. Once someone accepts your friend request, you will see them here.",
-      "requests": "Nothing here yet. Friend requests people send you will show up here.",
-      "search": "Nothing here yet. Soon you will be able to find people by nickname or by first and last name."
+      "requests": "Nothing here yet. Friend requests people send you will show up here."
+    },
+    "nickname": "@{{nickname}}",
+    "relation": {
+      "friends": "Friend",
+      "request_received": "Asks you",
+      "request_sent": "Request sent"
+    },
+    "search": {
+      "error": "The search failed.",
+      "hint_one": "Type at least {{count}} character of a name or nickname. Searching by e-mail is not possible.",
+      "hint_other": "Type at least {{count}} characters of a name or nickname. Searching by e-mail is not possible.",
+      "label": "Search people by name or nickname",
+      "loadMore": "Load more",
+      "loadMoreError": "More people could not be loaded. Try again.",
+      "loading": "Looking for people…",
+      "loadingMore": "Loading…",
+      "noResults": "Nobody like that was found. Try just part of a name or nickname.",
+      "placeholder": "Name or nickname",
+      "results": "People found",
+      "retry": "Try again"
     },
     "tabs": {
       "friends": "Friends",

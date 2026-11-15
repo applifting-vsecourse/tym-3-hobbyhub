@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Navigate } from "@tanstack/react-router"
 import { HTTPError } from "ky"
@@ -11,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { publicProfileQueryOptions } from "@/features/profile/api/profileQueryOptions"
+import type { PublicProfile } from "@/features/profile/api/profileSchemas"
 import { PublicProfileView } from "@/features/profile/components/PublicProfileView"
 
 /**
@@ -21,12 +23,22 @@ export function PublicProfilePage({
   userId,
   ownUserId,
   activityLabel,
+  renderFriendAction,
 }: {
   userId: string
   /** The signed-in person; their own id leads to Můj profil. */
   ownUserId?: string
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: { name: string; icon: string }) => string
+  /**
+   * #225: what I can do about friendship with the person; the friendship
+   * feature owns it. `reload` fetches the profile again after a change.
+   */
+  renderFriendAction?: (props: {
+    userId: string
+    relation: PublicProfile["relation"]
+    reload: () => Promise<unknown>
+  }) => ReactNode
 }) {
   const { t } = useTranslation()
   const isOwn = ownUserId === userId
@@ -78,6 +90,11 @@ export function PublicProfilePage({
           <PublicProfileView
             profile={profile.data}
             activityLabel={activityLabel}
+            friendAction={renderFriendAction?.({
+              userId: profile.data.id,
+              relation: profile.data.relation,
+              reload: () => profile.refetch(),
+            })}
           />
         )}
       </section>

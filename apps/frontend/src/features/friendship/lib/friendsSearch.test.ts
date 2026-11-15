@@ -12,3 +12,13 @@ describe("friendsSearchSchema", () => {
     },
   )
 })
+
+describe("friendsSearchSchema q", () => {
+  it("keeps the searched text (#225)", () => {
+    expect(friendsSearchSchema.parse({ q: "nov" })).toEqual({ q: "nov" })
+  })
+
+  it("drops a text that is no string", () => {
+    expect(friendsSearchSchema.parse({ q: 3 }).q).toBeUndefined()
+  })
+})

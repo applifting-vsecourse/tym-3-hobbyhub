@@ -3,7 +3,34 @@ import {
   friendOf,
   friendPairOf,
   friendRequestViolations,
+  relationOf,
 } from './friendship';
+
+describe('relationOf', () => {
+  it('has no relation without a friendship or a pending request', () => {
+    expect(relationOf('me', { isFriend: false, pendingRequest: null })).toBe(
+      'none',
+    );
+  });
+
+  it('tells a request I sent from one sent to me', () => {
+    expect(
+      relationOf('me', { isFriend: false, pendingRequest: { senderId: 'me' } }),
+    ).toBe('request_sent');
+    expect(
+      relationOf('me', {
+        isFriend: false,
+        pendingRequest: { senderId: 'libor' },
+      }),
+    ).toBe('request_received');
+  });
+
+  it('puts the friendship before any request', () => {
+    expect(
+      relationOf('me', { isFriend: true, pendingRequest: { senderId: 'me' } }),
+    ).toBe('friends');
+  });
+});
 
 describe('friendPairOf', () => {
   it('stores the pair the same way whichever way round it is asked', () => {

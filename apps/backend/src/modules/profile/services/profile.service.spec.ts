@@ -1,3 +1,4 @@
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
 import { PROFILE_IMAGE_PREFIX } from '@/modules/profile/domain/profile';
@@ -44,16 +45,24 @@ describe('ProfileService', () => {
   ): {
     repository: MockProxy<ProfileRepository>;
     onboardingService: MockProxy<OnboardingService>;
+    friendshipService: MockProxy<FriendshipService>;
     service: ProfileService;
   } => {
     const repository = mock<ProfileRepository>();
     repository.getRow.mockResolvedValue(row);
     const onboardingService = mock<OnboardingService>();
     onboardingService.getOnboarding.mockResolvedValue(onboarding);
+    const friendshipService = mock<FriendshipService>();
+    friendshipService.relationBetween.mockResolvedValue('none');
     return {
       repository,
       onboardingService,
-      service: new ProfileService(repository, onboardingService),
+      friendshipService,
+      service: new ProfileService(
+        repository,
+        onboardingService,
+        friendshipService,
+      ),
     };
   };
 
@@ -242,6 +251,7 @@ describe('ProfileService', () => {
     const publicRow = {
       id: 'u2',
       name: 'Petr',
+      nickname: 'PetrBehá',
       createdAt: new Date('2026-09-02T10:00:00Z'),
       bio: 'Běhám',
       image: null,
@@ -252,7 +262,7 @@ describe('ProfileService', () => {
       const { service, repository, onboardingService } = setup();
       repository.getPublicRow.mockResolvedValue(publicRow);
       onboardingService.getInterestsOf.mockResolvedValue([]);
-      const profile = await service.getPublicProfile('u2');
+      const profile = await service.getPublicProfile(user, 'u2');
       expect(Object.keys(profile).sort()).toEqual([
         'bio',
         'cover',
@@ -260,13 +270,34 @@ describe('ProfileService', () => {
         'image',
         'interests',
         'name',
+        'nickname',
+        'relation',
       ]);
     });
+
+    // #225: the profile says where the signed-in viewer stands with the person.
+    it.each(['none', 'request_sent', 'request_received', 'friends'] as const)(
+      "carries the viewer's relation (%s) and the nickname",
+      async (relation) => {
+        const { service, repository, onboardingService, friendshipService } =
+          setup();
+        repository.getPublicRow.mockResolvedValue(publicRow);
+        onboardingService.getInterestsOf.mockResolvedValue([]);
+        friendshipService.relationBetween.mockResolvedValue(relation);
+        await expect(service.getPublicProfile(user, 'u2')).resolves.toMatchObject(
+          { nickname: 'PetrBehá', relation },
+        );
+        expect(friendshipService.relationBetween).toHaveBeenCalledWith(
+          'u1',
+          'u2',
+        );
+      },
+    );
 
     it('answers not found for a user that does not exist', async () => {
       const { service, repository } = setup();
       repository.getPublicRow.mockResolvedValue(null);
-      await expect(service.getPublicProfile('nobody')).rejects.toThrow(
+      await expect(service.getPublicProfile(user, 'nobody')).rejects.toThrow(
         NotFoundException,
       );
     });

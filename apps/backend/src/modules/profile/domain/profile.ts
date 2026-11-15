@@ -1,4 +1,7 @@
-import { FriendVisibility } from '@/modules/friendship/domain/friendship';
+import {
+  FriendRelation,
+  FriendVisibility,
+} from '@/modules/friendship/domain/friendship';
 import { Interest } from '@/modules/onboarding/domain/onboarding';
 import {
   birthYearViolation,
@@ -57,10 +60,14 @@ export type Profile = {
 export type PublicProfile = {
   id: string;
   name: string;
+  /** #225: the username, when the person has one. Public, like the name. */
+  nickname: string | null;
   bio: string | null;
   image: string | null;
   cover: string | null;
   interests: Interest[];
+  /** #225: where the viewer stands with the person. Only the viewer gets it. */
+  relation: FriendRelation;
 };
 
 export type ProfileViolation =
