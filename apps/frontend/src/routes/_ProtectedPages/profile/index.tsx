@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
 import { ChangePassword } from "@/features/auth/components/ChangePassword"
+import { VerifyEmailPrompt } from "@/features/auth/components/VerifyEmailPrompt"
 import { ProfilePrompt } from "@/features/onboarding/components/ProfilePrompt"
 import { profileQueryOptions } from "@/features/profile/api/profileQueryOptions"
 import { ProfileView } from "@/features/profile/components/ProfileView"
@@ -32,6 +33,7 @@ function ProfilePage() {
     <>
       <Seo title={t("profile.title")} />
       <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 md:py-12">
+        <VerifyEmailPrompt />
         <div className="empty:hidden">
           <ProfilePrompt />
         </div>

@@ -20,7 +20,7 @@ export const NAV_TARGETS: Record<NavPlace, NavRoute> = {
 /**
  * The places each kind of viewer gets a link to, in navigation order. A
  * visitor has only the public ones (#151): Moje akce and Profil have nothing
- * to show without an account. "Přidat" is not here — both navigations draw it
+ * to show without an account. "Přidat akci" is not here — both navigations draw it
  * for everyone, since it is the way a visitor finds out they need an account.
  */
 export function navPlacesFor(isSignedIn: boolean): NavPlace[] {
@@ -33,7 +33,7 @@ const isUnder = (pathname: string, base: string) =>
 /**
  * Which section the current page belongs to, by an explicit map rather than a
  * prefix: the new-event form lives under /events but is not "discovering" —
- * it is "Přidat". The landing page highlights nothing.
+ * it is "Přidat akci". The landing page highlights nothing.
  */
 export function navSectionForPath(pathname: string): NavSection | null {
   if (isUnder(pathname, ROUTES.newEvent)) return "add"
