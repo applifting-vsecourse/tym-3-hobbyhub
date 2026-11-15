@@ -167,6 +167,28 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 
 **Akce jen pro skupinu vidí i ten, kdo na ní má místo** ([#47][47]). Kdo má schválenou účast, je náhradník nebo má čekající žádost, vidí akci dál, i když ze skupiny odejde nebo je odebrán. Jinak by se z akce nemohl odhlásit a zmizela by mu z přehledu. Pro všechny ostatní mimo skupinu akce neexistuje: není ve výpisu skupiny a na odkaz vrací „nenalezeno“.
 
+## Nahlášení
+
+Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizuje ve frontě ([#64][64], [#73][73], [#240][240], [ADR-0023](../adr/adr-0023.md)). Nahlášení uživatele je zároveň žádost o blokaci dvojice.
+
+- **Nahlášený:** uživatel, na kterého nahlášení míří, nebo organizátor nahlášené akce (hlavní i spoluorganizátoři).
+- **Ostatní:** všichni kromě nahlašujícího a superadmina, včetně účastníků nahlášené akce.
+- **Nahlašující:** kdo nahlášení podal.
+
+| Pole                                                       | Ostatní | Nahlášený | Nahlašující      | Superadmin | Zdroj                                       |
+| ---------------------------------------------------------- | ------- | --------- | ---------------- | ---------- | ------------------------------------------- |
+| Že nahlášení existuje                                      | ❌      | ❌        | ✅               | ✅         | [#64][64], [#240][240]                      |
+| Kdo nahlásil                                               | ❌      | ❌        | ✅               | ✅         | [#73][73], [ADR-0023](../adr/adr-0023.md)   |
+| Kategorie a text nahlášení                                 | ❌      | ❌        | ✅               | ✅         | [#64][64], [#240][240]                      |
+| Stav, odpovědný správce, poznámka k řešení, historie kroků | ❌      | ❌        | ❌               | ✅         | [#73][73], [ADR-0023](../adr/adr-0023.md)   |
+| Že bylo nahlášení vyřízeno                                 | ❌      | ❌        | jen bez výsledku | ✅         | [#64][64], [ADR-0023](../adr/adr-0023.md)   |
+| Výsledek: zásah (skrytí akce, blokace dvojice) nebo žádný  | ❌      | ❌        | ❌               | ✅         | [#239][239], [ADR-0022](../adr/adr-0022.md) |
+
+- **Nahlášený se o nahlášení nedozví**, ani z odpovědi API, ani z počtu. Dozví se jen o zásahu, a to tak, jak ho popisuje ADR-0022: organizátor skryté akce dostane upozornění s důvodem, blokaci dvojice nepozná nikdo z ní.
+- **Nahlašující vidí jen to, co sám poslal**: potvrzení o přijetí a hlášku, že už má na tentýž cíl nahlášení otevřené. Seznam svých nahlášení v aplikaci nemá.
+- **Upozornění o vyřízení** dostane nahlašující jednou, do zvonečku i e-mailem. Nenese cíl, kategorii, výsledek ani poznámku správce, aby neprozradilo blokaci dvojice ani to, co správce udělal.
+- **Nahlásit jde jen to, co nahlašující vidí.** Akce nebo profil, které pro něj neexistují, vrací při nahlášení 404 jako v detailu.
+
 [po]: review-2026-11-05.md
 [6]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/6
 [7]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/7
@@ -212,4 +234,5 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
 [181]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/181
 [239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
+[240]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/240
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
