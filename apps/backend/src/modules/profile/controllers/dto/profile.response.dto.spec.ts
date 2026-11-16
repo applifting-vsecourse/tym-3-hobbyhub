@@ -55,6 +55,7 @@ describe('ProfileResponseDto', () => {
       interests: [],
       address: null,
       travelRadiusKm: null,
+      nicknameChangeableFrom: null,
       friendVisibility: {
         friendsSeeEventHistory: false,
         friendsSeeUpcomingEvents: true,

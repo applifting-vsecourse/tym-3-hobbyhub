@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { HTTPError } from "@/lib/api-client"
