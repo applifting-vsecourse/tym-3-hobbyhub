@@ -31,7 +31,7 @@ import { SearchFriendsQuery } from './dto/search-friends.query';
 import { SendFriendRequestDto } from './dto/send-friend-request.dto';
 import { friendsValidationPipe } from './friends-validation.pipe';
 
-// #225, #228, ADR-0023: finding people, asking them to become friends, taking
+// #225, #228, ADR-0026: finding people, asking them to become friends, taking
 // the request back, and deciding the requests I received. Who acts is the
 // signed-in user, never an id from the request.
 @ApiTags('friends')

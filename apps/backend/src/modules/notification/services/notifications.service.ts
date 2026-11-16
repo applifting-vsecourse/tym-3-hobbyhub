@@ -249,7 +249,7 @@ export class NotificationsService {
   }
 
   // #228: the recipient of a friend request, unless the sender is over the
-  // limit of notified requests (the friendship module decides, ADR-0023).
+  // limit of notified requests (the friendship module decides, ADR-0026).
   notifyFriendRequest(input: {
     request: AFriendRequest;
     sender: Who;
@@ -277,7 +277,7 @@ export class NotificationsService {
     });
   }
 
-  // #228: a withdrawn request takes its notification away (ADR-0023). An
+  // #228: a withdrawn request takes its notification away (ADR-0026). An
   // e-mail already queued stays: it names nobody and leads to the tab.
   async removeFriendRequestNotifications(
     request: AFriendRequest,

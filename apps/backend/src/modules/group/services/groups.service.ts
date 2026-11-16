@@ -5,6 +5,7 @@ import {
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
   Group,
+  GroupDiscoverFilter,
   GroupMember,
   GroupMemberListItem,
   GroupPage,
@@ -232,11 +233,13 @@ export class GroupsService {
   async discoverGroups(
     user: Identity | undefined,
     cursor?: string,
+    filter: GroupDiscoverFilter = { activityIds: [] },
   ): Promise<GroupPage> {
     return this.groupRepository.listDiscoverableGroups(
       user?.id,
       DISCOVER_PAGE_SIZE,
       cursor,
+      filter,
     );
   }
 }

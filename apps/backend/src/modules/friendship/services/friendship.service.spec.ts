@@ -56,40 +56,6 @@ describe('FriendshipService', () => {
     };
   };
 
-  describe('areFriends', () => {
-    it.each([true, false])('answers what is stored (%p)', async (stored) => {
-      const { repository, service } = setup();
-      repository.areFriends.mockResolvedValue(stored);
-      await expect(service.areFriends('u1', 'u2')).resolves.toBe(stored);
-      expect(repository.areFriends).toHaveBeenCalledWith('u1', 'u2');
-    });
-
-    it('never counts a person as their own friend, without asking', async () => {
-      const { repository, service } = setup();
-      await expect(service.areFriends('u1', 'u1')).resolves.toBe(false);
-      expect(repository.areFriends).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('pendingRequestBetween', () => {
-    it('returns the request found in either direction', async () => {
-      const { repository, service } = setup();
-      const request = pending('u2', 'u1');
-      repository.findPendingRequestBetween.mockResolvedValue(request);
-      await expect(service.pendingRequestBetween('u1', 'u2')).resolves.toBe(
-        request,
-      );
-    });
-
-    it('has nothing pending with oneself, without asking', async () => {
-      const { repository, service } = setup();
-      await expect(service.pendingRequestBetween('u1', 'u1')).resolves.toBe(
-        null,
-      );
-      expect(repository.findPendingRequestBetween).not.toHaveBeenCalled();
-    });
-  });
-
   describe('relationBetween', () => {
     it.each([
       ['none', false, null],

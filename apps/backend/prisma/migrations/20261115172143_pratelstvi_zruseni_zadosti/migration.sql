@@ -1,4 +1,4 @@
--- #225, ADR-0023: odesílatel smí čekající žádost o přátelství zrušit. Zrušená
+-- #225, ADR-0026: odesílatel smí čekající žádost o přátelství zrušit. Zrušená
 -- žádost zůstává jako záznam (decidedAt = kdy byla zrušena, CHECK
 -- friend_request_decided_at), aby se pokusy daly počítat do limitu
 -- upozornění. Novou žádost mezi stejnými lidmi neblokuje.

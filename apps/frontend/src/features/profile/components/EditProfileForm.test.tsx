@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
@@ -242,6 +243,35 @@ describe("EditProfileForm", () => {
 
     await waitFor(() => expect(requests.updateInterests).toHaveBeenCalledTimes(2))
     expect(requests.updateProfile).toHaveBeenCalledTimes(1)
+  })
+
+  // The client checks the same rules, so this needs the two to disagree (here:
+  // the server refuses a year the form let through).
+  it("says which private detail the server refused, and that the switches wait for it", async () => {
+    requests.updatePrivateDetails.mockRejectedValueOnce(
+      Object.assign(
+        new HTTPError(
+          new Response("{}", { status: 400 }),
+          new Request("http://x/api/profile/private"),
+          {} as never,
+        ),
+        { data: { message: ["UNDERAGE"] } },
+      ),
+    )
+    await renderForm()
+
+    await userEvent.click(screen.getByRole("switch", { name: "Přátelé vidí moje budoucí akce" }))
+    const birthYear = screen.getByLabelText("Rok narození")
+    await userEvent.clear(birthYear)
+    await userEvent.type(birthYear, "1985")
+    await userEvent.click(screen.getByRole("button", { name: "Uložit" }))
+
+    expect(await screen.findByText("Registrace je možná až od 18 let")).toBeInTheDocument()
+    expect(screen.getByText(/Soukromé údaje jsme neuložili/)).toBeInTheDocument()
+    expect(screen.queryByText(/Změny se nepodařilo uložit/)).toBeNull()
+    expect(requests.updatePrivateDetails).toHaveBeenCalledTimes(1)
+    // What the user set stays on screen, to be saved once the year is fixed.
+    expect(screen.getByRole("switch", { name: "Přátelé vidí moje budoucí akce" })).toBeChecked()
   })
 
   describe("location privacy", () => {

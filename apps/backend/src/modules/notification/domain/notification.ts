@@ -113,7 +113,7 @@ export type NotificationEvent = { id: string; title: string };
 export type NotificationGroup = { id: string; name: string };
 
 // #228: the states of a friend request, as the friendship module has them
-// (ADR-0023). This module imports no other one, so it keeps its own copy.
+// (ADR-0026). This module imports no other one, so it keeps its own copy.
 export const FRIEND_REQUEST_STATUSES = [
   'PENDING',
   'ACCEPTED',

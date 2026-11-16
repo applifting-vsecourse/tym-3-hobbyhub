@@ -1,4 +1,4 @@
--- #228, ADR-0023: upozornění na žádost o přátelství a na její přijetí.
+-- #228, ADR-0026: upozornění na žádost o přátelství a na její přijetí.
 -- Upozornění na žádost odkazuje na ni: když se smaže (s uživatelem), zmizí
 -- i upozornění. Zrušení žádosti upozornění maže ve službě.
 

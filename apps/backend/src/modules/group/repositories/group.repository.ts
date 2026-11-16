@@ -13,11 +13,14 @@ import {
   CreateGroupData,
   GroupRole as DomainGroupRole,
   Group,
+  GroupDiscoverFilter,
   GroupMember,
   GroupPage,
   MyGroup,
   TransferOwnershipResult,
 } from '@/modules/group/domain/group';
+import { searchWords } from '@/shared/search/fold-for-search';
+import { containsInAny } from '@/shared/search/folded-search';
 import { Injectable } from '@nestjs/common';
 
 // Thrown inside the hand-over transaction only to roll it back.
@@ -81,6 +84,36 @@ const discoverableBy = (userId?: string): Prisma.GroupWhereInput => ({
   status: GroupStatus.ACTIVE,
   ...(userId ? { memberships: { none: { userId } } } : {}),
 });
+
+// The activity filter as a Prisma condition; the text ones are `textConditionsOf`.
+const filterConditions = ({
+  activityIds,
+}: GroupDiscoverFilter): Prisma.GroupWhereInput =>
+  activityIds.length > 0 ? { activityId: { in: activityIds } } : {};
+
+// Every word of the search has to match the name, place or activity, and every
+// word of the location the place, ignoring case and diacritics (aliases: `g` the
+// group, `a` its activity).
+const textConditionsOf = ({
+  search,
+  location,
+}: GroupDiscoverFilter): Prisma.Sql[] => [
+  ...searchWords(search).map(
+    (word) =>
+      Prisma.sql`(${containsInAny(
+        [
+          Prisma.sql`g."name"`,
+          Prisma.sql`g."locationName"`,
+          Prisma.sql`a."name"`,
+        ],
+        word,
+      )})`,
+  ),
+  ...searchWords(location).map(
+    (word) =>
+      Prisma.sql`(${containsInAny([Prisma.sql`g."locationName"`], word)})`,
+  ),
+];
 
 @Injectable()
 export class GroupRepository {
@@ -237,20 +270,74 @@ export class GroupRepository {
     userId: string | undefined,
     pageSize: number,
     cursor?: string,
+    filter: GroupDiscoverFilter = { activityIds: [] },
   ): Promise<GroupPage> {
-    const groups = await this.prisma.group.findMany({
-      where: discoverableBy(userId),
-      include,
-      orderBy,
-      // One extra row tells whether another page exists.
-      take: pageSize + 1,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    });
+    const textConditions = textConditionsOf(filter);
+    // One extra row tells whether another page exists.
+    const take = pageSize + 1;
+    const groups =
+      textConditions.length > 0
+        ? await this.pageMatchingText(
+            userId,
+            filter,
+            textConditions,
+            take,
+            cursor,
+          )
+        : await this.prisma.group.findMany({
+            where: { ...discoverableBy(userId), ...filterConditions(filter) },
+            include,
+            orderBy,
+            take,
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+          });
     const items = groups.slice(0, pageSize).map(mapPrismaGroupToDomain);
     return {
       items,
       nextCursor: groups.length > pageSize ? items[items.length - 1].id : null,
     };
+  }
+
+  // A page of a search with text. The text needs folding that Prisma cannot
+  // express, so (like the event list) SQL picks the ids of the page, in the
+  // order of the list and after the cursor; Prisma loads the rows and applies
+  // the visibility rules again, so SQL never decides who may see a group.
+  private async pageMatchingText(
+    userId: string | undefined,
+    { activityIds }: GroupDiscoverFilter,
+    textConditions: Prisma.Sql[],
+    take: number,
+    cursor?: string,
+  ): Promise<Parameters<typeof mapPrismaGroupToDomain>[0][]> {
+    const conditions = [
+      Prisma.sql`g."visibility" = 'PUBLIC' AND g."status" = 'ACTIVE'`,
+      ...(userId
+        ? [
+            Prisma.sql`NOT EXISTS (SELECT 1 FROM "group_membership" m WHERE m."groupId" = g."id" AND m."userId" = ${userId})`,
+          ]
+        : []),
+      ...(activityIds.length > 0
+        ? [Prisma.sql`g."activityId" IN (${Prisma.join(activityIds)})`]
+        : []),
+      ...(cursor
+        ? [
+            Prisma.sql`(g."createdAt", g."id") < (SELECT c."createdAt", c."id" FROM "group" c WHERE c."id" = ${cursor})`,
+          ]
+        : []),
+      ...textConditions,
+    ];
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT g."id" FROM "group" g
+      JOIN "activity" a ON a."id" = g."activityId"
+      WHERE ${Prisma.join(conditions, ' AND ')}
+      ORDER BY g."createdAt" DESC, g."id" DESC
+      LIMIT ${take}`;
+    const ids = rows.map((row) => row.id);
+    const groups = await this.prisma.group.findMany({
+      where: { ...discoverableBy(userId), id: { in: ids } },
+      include,
+    });
+    return ids.flatMap((id) => groups.find((group) => group.id === id) ?? []);
   }
 
   async getUserCity(userId: string, now: Date): Promise<string | null> {
