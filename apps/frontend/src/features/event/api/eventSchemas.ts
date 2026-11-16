@@ -138,6 +138,11 @@ export const eventListItemSchema = z.object({
   minParticipants: z.number(),
   maxParticipants: z.number(),
   takenCount: z.number(),
+  organizerName: z.string(),
+  /** The public group that organizes the event, if any. */
+  group: z.object({ id: z.string(), name: z.string() }).nullable(),
+  /** Per seat in CZK, information only. */
+  contributionAmount: z.number().nullable(),
 })
 
 export const eventListSchema = z.object({
@@ -161,16 +166,11 @@ export const participantStatsSchema = z.object({
 export const eventDetailSchema = eventListItemSchema.extend({
   description: z.string(),
   equipment: z.string().nullable(),
-  /** In CZK, information only. */
-  contributionAmount: z.number().nullable(),
   contributionNote: z.string().nullable(),
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   approvalMode: z.enum(APPROVAL_MODES),
   /** Lets the page offer editing to the organizer. */
   organizerId: z.string(),
-  organizerName: z.string(),
-  /** The public group that organizes the event, if any. */
-  group: z.object({ id: z.string(), name: z.string() }).nullable(),
   /** GROUP_ONLY (F-07.2): only its group's members and those holding a seat see it. */
   visibility: z.enum(["PUBLIC", "GROUP_ONLY"]),
   cancellationReason: z.string().nullable(),

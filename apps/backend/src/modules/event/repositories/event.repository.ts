@@ -5,6 +5,7 @@ import {
   Prisma,
   Activity as PrismaActivity,
   Event as PrismaEvent,
+  Group as PrismaGroup,
   Level as PrismaLevel,
   RequestStatus,
 } from '@/generated/prisma/client';
@@ -189,6 +190,8 @@ const mapEventFacts = (event: EventFactsRow): EventFacts => {
 const listInclude = {
   activity: true,
   level: true,
+  organizer: { select: { name: true } },
+  group: { select: { id: true, name: true, visibility: true, status: true } },
   _count: {
     select: {
       participations: { where: { status: { in: LIST_TAKEN_STATUSES } } },
@@ -200,6 +203,8 @@ export const mapPrismaEventToListItem = (
   event: PrismaEvent & {
     activity: PrismaActivity;
     level: PrismaLevel | null;
+    organizer: { name: string };
+    group: Pick<PrismaGroup, 'id' | 'name' | 'visibility' | 'status'> | null;
     _count: { participations: number };
   },
   distanceKm: number | null = null,
@@ -235,6 +240,14 @@ export const mapPrismaEventToListItem = (
   minParticipants: event.minParticipants,
   maxParticipants: event.maxParticipants,
   takenCount: event._count.participations + event.externalOccupiedSpots,
+  organizerName: event.organizer.name,
+  // A private or cancelled group has no public page to link to.
+  group:
+    event.group && isPubliclyVisible(event.group)
+      ? { id: event.group.id, name: event.group.name }
+      : null,
+  contributionAmount:
+    event.contributionAmount === null ? null : Number(event.contributionAmount),
   isHidden: event.isHidden,
 });
 
@@ -721,22 +734,12 @@ export class EventRepository {
       ...listItem,
       description: event.description,
       equipment: event.equipment,
-      contributionAmount:
-        event.contributionAmount === null
-          ? null
-          : Number(event.contributionAmount),
       contributionNote: event.contributionNote,
       status: event.status as EventDetail['status'],
       approvalMode: event.approvalMode,
       organizerId: event.organizer.id,
-      organizerName: event.organizer.name,
       cancellationReason: event.cancellationReason?.name ?? null,
       cancellationNote: event.cancellationNote,
-      // A private or cancelled group has no public page to link to.
-      group:
-        event.group && isPubliclyVisible(event.group)
-          ? { id: event.group.id, name: event.group.name }
-          : null,
       visibility: event.visibility as EventDetail['visibility'],
       stats: computeParticipantStats(
         participants,

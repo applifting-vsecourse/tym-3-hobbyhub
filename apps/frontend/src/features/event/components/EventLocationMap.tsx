@@ -85,7 +85,9 @@ export function EventLocationMap({
   if (!token || isBroken) return null
 
   return (
-    <div className={cn("relative h-48 overflow-hidden rounded-lg bg-muted md:h-60", className)}>
+    <div
+      className={cn("relative h-48 overflow-hidden rounded-lg bg-muted md:h-60 xl:h-80", className)}
+    >
       {/* Mapbox's stylesheet makes its container `position: relative`, so the
           filling is done by this wrapper, not by the container. */}
       <div className="absolute inset-0">

@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
-import { formatEventDay } from "@/features/event/lib/eventDateTime"
+import { formatContribution, formatEventDay } from "@/features/event/lib/eventDateTime"
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
@@ -70,4 +70,32 @@ export function eventPlaceAndLevel(
 /** Activity, approximate place and level: "Florbal · ZŠ Kobylisy, Praha 8 · Pokročilí". */
 export function eventMeta(t: TFunction, event: EventListItem, activityLabel: string): string {
   return [activityLabel, eventPlace(t, event), event.level].filter(Boolean).join(" · ")
+}
+
+/**
+ * What a seat costs: "150 Kč", or "Zdarma" for an event without a
+ * contribution, as the price filter counts it.
+ */
+export function eventPrice(
+  t: TFunction,
+  event: Pick<EventListItem, "contributionAmount">,
+  locale: string,
+): string {
+  const price = event.contributionAmount ?? 0
+  return price > 0 ? formatContribution(price, locale) : t("events.list.free")
+}
+
+/**
+ * Who runs the event and what a seat costs, for a row on a large screen (#224):
+ * "Pořádá Florbal Kobylisy · 150 Kč". A public group speaks for its event.
+ */
+export function eventHostAndPrice(
+  t: TFunction,
+  event: Pick<EventListItem, "organizerName" | "group" | "contributionAmount">,
+  locale: string,
+): string {
+  return [
+    t("events.list.organizedBy", { name: event.group?.name ?? event.organizerName }),
+    eventPrice(t, event, locale),
+  ].join(" · ")
 }

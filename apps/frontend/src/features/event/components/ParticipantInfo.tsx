@@ -86,7 +86,7 @@ export function ParticipantInfo({ info, pin }: ParticipantInfoProps) {
         <section className="flex flex-col gap-4 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.where.title")}</h2>
           {location.latitude !== null && location.longitude !== null ? (
-            <Suspense fallback={<div className="h-48 rounded-lg bg-muted md:h-60" />}>
+            <Suspense fallback={<div className="h-48 rounded-lg bg-muted md:h-60 xl:h-80" />}>
               <EventLocationMap
                 latitude={location.latitude}
                 longitude={location.longitude}

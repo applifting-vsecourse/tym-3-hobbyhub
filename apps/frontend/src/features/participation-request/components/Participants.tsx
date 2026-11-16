@@ -67,6 +67,7 @@ function ParticipantsSection({ eventId, status, externalOccupied }: Participants
       renderItem={(participant) => (
         <JoinRequestCard
           name={participant.person.name}
+          profileUserId={participant.userId}
           photo={participant.person.image}
           hasVerifiedEmail={participant.person.hasVerifiedEmail}
           bio={participant.person.bio}

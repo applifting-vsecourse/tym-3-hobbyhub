@@ -16,6 +16,11 @@ type ScheduleRowProps = Capacity & {
   photo?: { src: string; alt: string }
   /** Icon key of the activity (`ACTIVITIES`); unknown keys leave the square empty. */
   activity?: string
+  /**
+   * Who runs it and what it costs, e.g. "Pořádá Jana Nováková · 150 Kč". Only
+   * on a large screen (#224), where the row has room; a phone keeps it short.
+   */
+  details?: string
   /** A state of the person on this event (`StatusBadge`), under the subtitle. */
   badge?: ReactNode
   className?: string
@@ -25,6 +30,11 @@ type ScheduleRowProps = Capacity & {
  * Řádek rozpisu — the main item of an event listing: time, a small photo,
  * title with place and level, small seats and a status word. No card, no
  * shadow; rows are separated by a hairline.
+ *
+ * The row reads its own width (a container query), not the screen's: in the
+ * narrow list beside the map everything stacks, while a row as wide as a page
+ * (Moje akce) puts the photo beside the time and its texts in two columns, so
+ * it uses the width instead of growing tall (#224).
  */
 export function ScheduleRow({
   time,
@@ -32,6 +42,7 @@ export function ScheduleRow({
   subtitle,
   photo,
   activity,
+  details,
   badge,
   className,
   ...capacity
@@ -40,49 +51,60 @@ export function ScheduleRow({
   const missing = missingCount(capacity)
 
   return (
-    <div className={cn("flex items-start gap-3 border-t border-border py-4", className)}>
-      {/* The photo sits under the time, so the title keeps the row's width
+    <div className={cn("@container border-t border-border", className)}>
+      <div className="flex items-start gap-3 py-4 @3xl:gap-6">
+        {/* The photo sits under the time, so the title keeps the row's width
           next to the seats even in the narrow list beside the map. */}
-      <div className="flex w-22 shrink-0 flex-col gap-2">
-        <p className="typo-time text-foreground">{time}</p>
-        {photo ? (
-          <EventPhoto
-            src={photo.src}
-            alt={photo.alt}
-            className="h-14"
-          />
-        ) : (
-          <div
-            aria-hidden
-            className="flex h-14 w-full items-center justify-center rounded-md bg-muted text-muted-foreground"
-          >
-            {activity && isActivityKey(activity) ? (
-              <ActivityIcon
-                activity={activity}
-                className="size-6"
-              />
-            ) : null}
+        <div className="flex w-22 shrink-0 flex-col gap-2 @3xl:w-auto @3xl:flex-row @3xl:items-center @3xl:gap-4">
+          <p className="typo-time text-foreground @3xl:w-22">{time}</p>
+          {photo ? (
+            <EventPhoto
+              src={photo.src}
+              alt={photo.alt}
+              className="h-14 @3xl:w-22"
+            />
+          ) : (
+            <div
+              aria-hidden
+              className="flex h-14 w-full items-center justify-center rounded-md bg-muted text-muted-foreground @3xl:w-22"
+            >
+              {activity && isActivityKey(activity) ? (
+                <ActivityIcon
+                  activity={activity}
+                  className="size-6"
+                />
+              ) : null}
+            </div>
+          )}
+        </div>
+        {/* Wide: what and where on the left, who runs it and the person's state
+          on the right, each column stacking on its own. Narrow: one stack. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 @3xl:flex-row @3xl:gap-6">
+          <div className="flex min-w-0 flex-col gap-0.5 @3xl:flex-3">
+            <h3 className="typo-title text-foreground">{title}</h3>
+            <p className="typo-small text-muted-foreground">{subtitle}</p>
           </div>
-        )}
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <h3 className="typo-title text-foreground">{title}</h3>
-        <p className="typo-small text-muted-foreground">{subtitle}</p>
-        {badge ? <div className="mt-1.5">{badge}</div> : null}
-      </div>
-      {/* One width for every row and aligned to the right edge, so the seats and
+          <div className="contents @3xl:flex @3xl:min-w-0 @3xl:flex-2 @3xl:flex-col @3xl:gap-1.5 @3xl:pt-0.5">
+            {details ? (
+              <p className="hidden typo-small text-muted-foreground lg:block">{details}</p>
+            ) : null}
+            {badge ? <div className="mt-1.5 @3xl:mt-0">{badge}</div> : null}
+          </div>
+        </div>
+        {/* One width for every row and aligned to the right edge, so the seats and
           the word under them stay in one column whatever the word says (#177).
           A long table of seats may widen it rather than run into the title. */}
-      <div className="flex min-w-28 shrink-0 flex-col items-end gap-2 text-right">
-        <SeatMeter
-          size="sm"
-          {...capacity}
-        />
-        <p className={cn("typo-small", missing > 0 ? "text-signal-ink" : "text-success-ink")}>
-          {missing > 0
-            ? t("hobbyhub.capacity.missing", { count: missing })
-            : t("hobbyhub.capacity.full")}
-        </p>
+        <div className="flex min-w-28 shrink-0 flex-col items-end gap-2 text-right">
+          <SeatMeter
+            size="sm"
+            {...capacity}
+          />
+          <p className={cn("typo-small", missing > 0 ? "text-signal-ink" : "text-success-ink")}>
+            {missing > 0
+              ? t("hobbyhub.capacity.missing", { count: missing })
+              : t("hobbyhub.capacity.full")}
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -21,7 +21,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12 md:flex-row md:items-start md:justify-between md:px-6 md:py-16 lg:px-8">
+      <div className="mx-auto flex w-full max-w-page flex-col gap-8 px-page py-12 md:flex-row md:items-start md:justify-between md:py-16">
         <div className="flex max-w-md flex-col gap-3">
           <Link
             to={ROUTES.home}

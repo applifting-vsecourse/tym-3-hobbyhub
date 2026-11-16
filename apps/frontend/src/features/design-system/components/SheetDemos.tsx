@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react"
 import type { TFunction } from "i18next"
 import { useTranslation } from "react-i18next"
 
+import { FiltersPanel } from "@/components/hobbyhub/FiltersPanel"
 import { EMPTY_FILTERS, FiltersSheet, type EventFilters } from "@/components/hobbyhub/FiltersSheet"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { ShareEventSheet } from "@/components/hobbyhub/ShareEventSheet"
@@ -58,6 +59,28 @@ export function SearchWithFilters() {
   )
 }
 
+/** The same filters open beside the results on a large screen, folded into a strip on demand. */
+export function FiltersPanelDemo() {
+  const { t } = useTranslation()
+  const [filters, setFilters] = useState<EventFilters>(EMPTY_FILTERS)
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <FiltersPanel
+        value={filters}
+        onApply={setFilters}
+        isExpanded={isExpanded}
+        onExpandedChange={setIsExpanded}
+        activeCount={filters.activities.length + (filters.location ? 1 : 0)}
+      />
+      <p className="typo-small text-muted-foreground">
+        Použité filtry: {describeFilters(filters, t)}
+      </p>
+    </div>
+  )
+}
+
 /** Share panel behind any trigger, e.g. the "Sdílet do chatu" button of a free seat. */
 export function ShareEventDemo({ trigger }: { trigger: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -81,6 +104,9 @@ export function SheetSection() {
     >
       <Example label="Filtry — otevře tlačítko filtrů ve vyhledávání">
         <SearchWithFilters />
+      </Example>
+      <Example label="Filtry v bočním panelu — od šířky xl místo dialogu, lze sbalit">
+        <FiltersPanelDemo />
       </Example>
       <Example label="Sdílet do chatu">
         <ShareEventDemo trigger={<Button variant="outline">Sdílet akci</Button>} />
