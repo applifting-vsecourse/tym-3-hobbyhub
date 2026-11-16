@@ -41,6 +41,8 @@ import {
   aheadFirstOrder,
   allOf,
   eventFilterConditions,
+  eventListRangeConditions,
+  LIST_TAKEN_STATUSES,
 } from './event-list.sql';
 
 // Approved participations are the only ones that take a seat (ADR-0009).
@@ -59,13 +61,6 @@ type PrismaEventWithRelations = PrismaEvent & {
   cancellationReason: { name: string } | null;
   _count: { participations: number };
 };
-
-// The list also needs the level and counts the people who actually take a seat
-// (approved, or already attended an event that is over).
-const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
-  ParticipationStatus.APPROVED,
-  ParticipationStatus.ATTENDED,
-];
 
 // Great-circle distance in km (haversine) from `near` to the event, with the
 // alias `e`. Null for a private venue, which is never located, and for an event
@@ -88,6 +83,7 @@ const listCondition = (now: Date, filter: EventListFilter): Prisma.Sql =>
     Prisma.sql`NOT e."isHidden"`,
     Prisma.sql`e."endAt" > ${now}`,
     ...eventFilterConditions(filter),
+    ...eventListRangeConditions(filter),
   ]);
 
 // F-07.2: what may be shown to someone, depending on who they are: public or
