@@ -4,6 +4,11 @@ import { toNodeHandler } from 'better-auth/node';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { AppModule } from './app.module';
+import {
+  ADMIN_AUTH,
+  ADMIN_AUTH_BASE_PATH,
+  AdminAuth,
+} from './shared/admin-auth/providers/admin-auth.provider';
 import { BetterAuth } from './shared/auth/providers/better-auth.provider';
 import { Config } from './shared/config/config.service';
 
@@ -31,6 +36,9 @@ async function main(): Promise<void> {
   const betterAuth = app.get<BetterAuth>('BetterAuth');
   // Express 5 (via NestJS 11) requires named wildcards — a bare `*` throws.
   appInstance.all('/api/auth/*splat', toNodeHandler(betterAuth));
+  // ADR-0010, #238: the administrators' sign-in, a separate instance.
+  const adminAuth = app.get<AdminAuth>(ADMIN_AUTH);
+  appInstance.all(`${ADMIN_AUTH_BASE_PATH}/*splat`, toNodeHandler(adminAuth));
   // Room for the profile photo and cover as base64 data URLs (a 2 MB picture
   // is ~2.8 MB, and both can come in one request); every other route keeps the
   // default limit. The first parser to read a body wins, so this goes first.

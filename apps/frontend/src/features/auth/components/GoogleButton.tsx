@@ -11,6 +11,7 @@ import { AuthError, authErrorMessage } from "@/features/auth/lib/authErrors"
 
 /** What a new account needs besides Google's own data (F-03.1, #174). */
 export type GoogleRegistration = {
+  readonly username: string
   readonly gender: "MALE" | "FEMALE"
   readonly birthYear: number
   readonly adulthoodConfirmed: true

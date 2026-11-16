@@ -29,7 +29,8 @@ describe('UpdateProfileDto', () => {
 
   it.each([
     ['a blank nickname', { name: '   ' }],
-    ['a nickname over 50 characters', { name: 'x'.repeat(51) }],
+    ['a nickname under 3 characters', { name: 'ab' }],
+    ['a nickname over 30 characters', { name: 'x'.repeat(31) }],
     ['a bio over 300 characters', { bio: 'x'.repeat(301) }],
     ['a photo that is not text', { image: 5 }],
     ['an unknown field', { role: 'admin' }],
@@ -50,13 +51,39 @@ describe('UpdatePrivateDetailsDto', () => {
     ).resolves.toBeDefined();
   });
 
+  // #227: the switches come in the same request, alone or with the details.
+  it.each([
+    [{ friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true }],
+    [
+      {
+        gender: 'FEMALE',
+        birthYear: 1990,
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: false,
+      },
+    ],
+  ])('accepts the switches %j', async (body) => {
+    await expect(
+      validate(UpdatePrivateDetailsDto, body),
+    ).resolves.toMatchObject(body);
+  });
+
   it.each([
     [{ gender: 'OTHER', birthYear: 1990 }],
     [{ gender: 'MALE', birthYear: '1990' }],
     [{ gender: 'MALE', birthYear: 1990.5 }],
     [{ gender: 'MALE', birthYear: 1899 }],
     [{ gender: 'MALE', birthDate: '1990-05-17' }],
+    // Half of a pair.
     [{ gender: 'MALE' }],
+    [{ birthYear: 1990 }],
+    [{ friendsSeeEventHistory: true }],
+    [{ friendsSeeUpcomingEvents: false }],
+    [{ gender: 'MALE', birthYear: 1990, friendsSeeEventHistory: true }],
+    // The switches are booleans.
+    [{ friendsSeeEventHistory: 'true', friendsSeeUpcomingEvents: false }],
+    [{ friendsSeeEventHistory: true, friendsSeeUpcomingEvents: 1 }],
+    [{ friendsSeeEventHistory: null, friendsSeeUpcomingEvents: false }],
   ])('refuses %j', async (body) => {
     await expect(
       validate(UpdatePrivateDetailsDto, body),

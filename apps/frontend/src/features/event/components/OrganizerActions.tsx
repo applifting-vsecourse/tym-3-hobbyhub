@@ -12,10 +12,12 @@ import { useCancelEvent } from "@/features/event/hooks/useUpdateEvent"
 
 type OrganizerActionsProps = {
   readonly event: Pick<EventDetail, "id">
+  /** False while an administrator keeps the event hidden: it can only be cancelled (#239). */
+  readonly canEdit?: boolean
 }
 
 /** Edit and cancel of an event that has not started; the page decides when to show it. */
-export function OrganizerActions({ event }: OrganizerActionsProps) {
+export function OrganizerActions({ event, canEdit = true }: OrganizerActionsProps) {
   const { t } = useTranslation()
   const [isCancelOpen, setIsCancelOpen] = useState(false)
   const reasonsQuery = useCancellationReasons(isCancelOpen)
@@ -29,17 +31,19 @@ export function OrganizerActions({ event }: OrganizerActionsProps) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button
-        asChild
-        variant="outline"
-      >
-        <Link
-          to="/events/$eventId/edit"
-          params={{ eventId: event.id }}
+      {canEdit ? (
+        <Button
+          asChild
+          variant="outline"
         >
-          {t("events.manage.edit")}
-        </Link>
-      </Button>
+          <Link
+            to="/events/$eventId/edit"
+            params={{ eventId: event.id }}
+          >
+            {t("events.manage.edit")}
+          </Link>
+        </Button>
+      ) : null}
       <Button
         type="button"
         variant="outline"

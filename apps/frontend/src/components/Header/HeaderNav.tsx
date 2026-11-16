@@ -13,14 +13,14 @@ const LABELS: Record<NavPlace, string> = {
   discover: "hobbyhub.nav.discover",
   "my-events": "hobbyhub.nav.myEvents",
   groups: "hobbyhub.nav.groups",
-  profile: "hobbyhub.nav.profile",
+  friends: "hobbyhub.nav.friends",
 }
 
-// Desktop only: on phones the same places are in the BottomNav. Profile is not
-// here either — the avatar menu has it. The logo already links home.
+// Desktop only: on phones the same places are in the BottomNav. Profile is in
+// the avatar menu. The logo already links home.
 export function HeaderNav({ active, isSignedIn }: HeaderNavProps) {
   const { t } = useTranslation()
-  const places = navPlacesFor(isSignedIn).filter((place) => place !== "profile")
+  const places = navPlacesFor(isSignedIn)
 
   return (
     <nav

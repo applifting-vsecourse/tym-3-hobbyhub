@@ -18,9 +18,14 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as ProtectedPagesFriendsRouteImport } from './routes/_ProtectedPages/friends'
 import { Route as ProtectedPagesMyEventsRouteImport } from './routes/_ProtectedPages/my-events'
 import { Route as ProtectedPagesNotificationsRouteImport } from './routes/_ProtectedPages/notifications'
 import { Route as ProtectedPagesOnboardingRouteImport } from './routes/_ProtectedPages/onboarding'
+import { Route as AdminAdminPagesRouteImport } from './routes/admin/_AdminPages'
+import { Route as AdminForgotPasswordRouteImport } from './routes/admin/forgot-password'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminSetPasswordRouteImport } from './routes/admin/set-password'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as GroupsIndexRouteImport } from './routes/groups/index'
@@ -30,9 +35,19 @@ import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_Protected
 import { Route as ProtectedPagesProfileIndexRouteImport } from './routes/_ProtectedPages/profile/index'
 import { Route as ProtectedPagesProfileUserIdRouteImport } from './routes/_ProtectedPages/profile/$userId'
 import { Route as ProtectedPagesProfileEditRouteImport } from './routes/_ProtectedPages/profile/edit'
+import { Route as AdminAdminPagesIndexRouteImport } from './routes/admin/_AdminPages/index'
+import { Route as AdminAdminPagesAdministratorsRouteImport } from './routes/admin/_AdminPages/administrators'
 import { Route as ProtectedPagesEventsEventIdEditRouteImport } from './routes/_ProtectedPages/events/$eventId.edit'
 import { Route as ProtectedPagesEventsEventIdParticipantsRouteImport } from './routes/_ProtectedPages/events/$eventId/participants'
 import { Route as ProtectedPagesGroupsGroupIdMembersRouteImport } from './routes/_ProtectedPages/groups/$groupId/members'
+import { Route as AdminAdminPagesEventsIndexRouteImport } from './routes/admin/_AdminPages/events/index'
+import { Route as AdminAdminPagesEventsEventIdRouteImport } from './routes/admin/_AdminPages/events/$eventId'
+import { Route as AdminAdminPagesGroupsIndexRouteImport } from './routes/admin/_AdminPages/groups/index'
+import { Route as AdminAdminPagesGroupsGroupIdRouteImport } from './routes/admin/_AdminPages/groups/$groupId'
+import { Route as AdminAdminPagesReportsIndexRouteImport } from './routes/admin/_AdminPages/reports/index'
+import { Route as AdminAdminPagesReportsReportIdRouteImport } from './routes/admin/_AdminPages/reports/$reportId'
+import { Route as AdminAdminPagesUsersIndexRouteImport } from './routes/admin/_AdminPages/users/index'
+import { Route as AdminAdminPagesUsersUserIdRouteImport } from './routes/admin/_AdminPages/users/$userId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,6 +93,11 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedPagesFriendsRoute = ProtectedPagesFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => ProtectedPagesRoute,
+} as any)
 const ProtectedPagesMyEventsRoute = ProtectedPagesMyEventsRouteImport.update({
   id: '/my-events',
   path: '/my-events',
@@ -95,6 +115,26 @@ const ProtectedPagesOnboardingRoute =
     path: '/onboarding',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const AdminAdminPagesRoute = AdminAdminPagesRouteImport.update({
+  id: '/admin/_AdminPages',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
+  id: '/admin/forgot-password',
+  path: '/admin/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSetPasswordRoute = AdminSetPasswordRouteImport.update({
+  id: '/admin/set-password',
+  path: '/admin/set-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
   id: '/events/',
   path: '/events/',
@@ -143,6 +183,17 @@ const ProtectedPagesProfileEditRoute =
     path: '/profile/edit',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const AdminAdminPagesIndexRoute = AdminAdminPagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAdminPagesRoute,
+} as any)
+const AdminAdminPagesAdministratorsRoute =
+  AdminAdminPagesAdministratorsRouteImport.update({
+    id: '/administrators',
+    path: '/administrators',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
 const ProtectedPagesEventsEventIdEditRoute =
   ProtectedPagesEventsEventIdEditRouteImport.update({
     id: '/events/$eventId/edit',
@@ -161,6 +212,54 @@ const ProtectedPagesGroupsGroupIdMembersRoute =
     path: '/groups/$groupId/members',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const AdminAdminPagesEventsIndexRoute =
+  AdminAdminPagesEventsIndexRouteImport.update({
+    id: '/events/',
+    path: '/events/',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesEventsEventIdRoute =
+  AdminAdminPagesEventsEventIdRouteImport.update({
+    id: '/events/$eventId',
+    path: '/events/$eventId',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesGroupsIndexRoute =
+  AdminAdminPagesGroupsIndexRouteImport.update({
+    id: '/groups/',
+    path: '/groups/',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesGroupsGroupIdRoute =
+  AdminAdminPagesGroupsGroupIdRouteImport.update({
+    id: '/groups/$groupId',
+    path: '/groups/$groupId',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesReportsIndexRoute =
+  AdminAdminPagesReportsIndexRouteImport.update({
+    id: '/reports/',
+    path: '/reports/',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesReportsReportIdRoute =
+  AdminAdminPagesReportsReportIdRouteImport.update({
+    id: '/reports/$reportId',
+    path: '/reports/$reportId',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesUsersIndexRoute =
+  AdminAdminPagesUsersIndexRouteImport.update({
+    id: '/users/',
+    path: '/users/',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
+const AdminAdminPagesUsersUserIdRoute =
+  AdminAdminPagesUsersUserIdRouteImport.update({
+    id: '/users/$userId',
+    path: '/users/$userId',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -171,9 +270,14 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/friends': typeof ProtectedPagesFriendsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
   '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
+  '/admin': typeof AdminAdminPagesRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/set-password': typeof AdminSetPasswordRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/events/': typeof EventsIndexRoute
@@ -182,10 +286,20 @@ export interface FileRoutesByFullPath {
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
+  '/admin/administrators': typeof AdminAdminPagesAdministratorsRoute
   '/profile/': typeof ProtectedPagesProfileIndexRoute
+  '/admin/': typeof AdminAdminPagesIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
   '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
+  '/admin/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
+  '/admin/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
+  '/admin/reports/$reportId': typeof AdminAdminPagesReportsReportIdRoute
+  '/admin/users/$userId': typeof AdminAdminPagesUsersUserIdRoute
+  '/admin/events/': typeof AdminAdminPagesEventsIndexRoute
+  '/admin/groups/': typeof AdminAdminPagesGroupsIndexRoute
+  '/admin/reports/': typeof AdminAdminPagesReportsIndexRoute
+  '/admin/users/': typeof AdminAdminPagesUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,9 +310,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/friends': typeof ProtectedPagesFriendsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
   '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/set-password': typeof AdminSetPasswordRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/events': typeof EventsIndexRoute
@@ -207,10 +325,20 @@ export interface FileRoutesByTo {
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
+  '/admin/administrators': typeof AdminAdminPagesAdministratorsRoute
   '/profile': typeof ProtectedPagesProfileIndexRoute
+  '/admin': typeof AdminAdminPagesIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
   '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
+  '/admin/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
+  '/admin/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
+  '/admin/reports/$reportId': typeof AdminAdminPagesReportsReportIdRoute
+  '/admin/users/$userId': typeof AdminAdminPagesUsersUserIdRoute
+  '/admin/events': typeof AdminAdminPagesEventsIndexRoute
+  '/admin/groups': typeof AdminAdminPagesGroupsIndexRoute
+  '/admin/reports': typeof AdminAdminPagesReportsIndexRoute
+  '/admin/users': typeof AdminAdminPagesUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -223,9 +351,14 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_ProtectedPages/friends': typeof ProtectedPagesFriendsRoute
   '/_ProtectedPages/my-events': typeof ProtectedPagesMyEventsRoute
   '/_ProtectedPages/notifications': typeof ProtectedPagesNotificationsRoute
   '/_ProtectedPages/onboarding': typeof ProtectedPagesOnboardingRoute
+  '/admin/_AdminPages': typeof AdminAdminPagesRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/set-password': typeof AdminSetPasswordRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/events/': typeof EventsIndexRoute
@@ -234,10 +367,20 @@ export interface FileRoutesById {
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/_ProtectedPages/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/_ProtectedPages/profile/edit': typeof ProtectedPagesProfileEditRoute
+  '/admin/_AdminPages/administrators': typeof AdminAdminPagesAdministratorsRoute
   '/_ProtectedPages/profile/': typeof ProtectedPagesProfileIndexRoute
+  '/admin/_AdminPages/': typeof AdminAdminPagesIndexRoute
   '/_ProtectedPages/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/_ProtectedPages/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
   '/_ProtectedPages/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
+  '/admin/_AdminPages/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
+  '/admin/_AdminPages/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
+  '/admin/_AdminPages/reports/$reportId': typeof AdminAdminPagesReportsReportIdRoute
+  '/admin/_AdminPages/users/$userId': typeof AdminAdminPagesUsersUserIdRoute
+  '/admin/_AdminPages/events/': typeof AdminAdminPagesEventsIndexRoute
+  '/admin/_AdminPages/groups/': typeof AdminAdminPagesGroupsIndexRoute
+  '/admin/_AdminPages/reports/': typeof AdminAdminPagesReportsIndexRoute
+  '/admin/_AdminPages/users/': typeof AdminAdminPagesUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -250,9 +393,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/verify-email'
+    | '/friends'
     | '/my-events'
     | '/notifications'
     | '/onboarding'
+    | '/admin'
+    | '/admin/forgot-password'
+    | '/admin/login'
+    | '/admin/set-password'
     | '/events/$eventId'
     | '/groups/$groupId'
     | '/events/'
@@ -261,10 +409,20 @@ export interface FileRouteTypes {
     | '/groups/new'
     | '/profile/$userId'
     | '/profile/edit'
+    | '/admin/administrators'
     | '/profile/'
+    | '/admin/'
     | '/events/$eventId/edit'
     | '/events/$eventId/participants'
     | '/groups/$groupId/members'
+    | '/admin/events/$eventId'
+    | '/admin/groups/$groupId'
+    | '/admin/reports/$reportId'
+    | '/admin/users/$userId'
+    | '/admin/events/'
+    | '/admin/groups/'
+    | '/admin/reports/'
+    | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -275,9 +433,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/verify-email'
+    | '/friends'
     | '/my-events'
     | '/notifications'
     | '/onboarding'
+    | '/admin/forgot-password'
+    | '/admin/login'
+    | '/admin/set-password'
     | '/events/$eventId'
     | '/groups/$groupId'
     | '/events'
@@ -286,10 +448,20 @@ export interface FileRouteTypes {
     | '/groups/new'
     | '/profile/$userId'
     | '/profile/edit'
+    | '/admin/administrators'
     | '/profile'
+    | '/admin'
     | '/events/$eventId/edit'
     | '/events/$eventId/participants'
     | '/groups/$groupId/members'
+    | '/admin/events/$eventId'
+    | '/admin/groups/$groupId'
+    | '/admin/reports/$reportId'
+    | '/admin/users/$userId'
+    | '/admin/events'
+    | '/admin/groups'
+    | '/admin/reports'
+    | '/admin/users'
   id:
     | '__root__'
     | '/'
@@ -301,9 +473,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/verify-email'
+    | '/_ProtectedPages/friends'
     | '/_ProtectedPages/my-events'
     | '/_ProtectedPages/notifications'
     | '/_ProtectedPages/onboarding'
+    | '/admin/_AdminPages'
+    | '/admin/forgot-password'
+    | '/admin/login'
+    | '/admin/set-password'
     | '/events/$eventId'
     | '/groups/$groupId'
     | '/events/'
@@ -312,10 +489,20 @@ export interface FileRouteTypes {
     | '/_ProtectedPages/groups/new'
     | '/_ProtectedPages/profile/$userId'
     | '/_ProtectedPages/profile/edit'
+    | '/admin/_AdminPages/administrators'
     | '/_ProtectedPages/profile/'
+    | '/admin/_AdminPages/'
     | '/_ProtectedPages/events/$eventId/edit'
     | '/_ProtectedPages/events/$eventId/participants'
     | '/_ProtectedPages/groups/$groupId/members'
+    | '/admin/_AdminPages/events/$eventId'
+    | '/admin/_AdminPages/groups/$groupId'
+    | '/admin/_AdminPages/reports/$reportId'
+    | '/admin/_AdminPages/users/$userId'
+    | '/admin/_AdminPages/events/'
+    | '/admin/_AdminPages/groups/'
+    | '/admin/_AdminPages/reports/'
+    | '/admin/_AdminPages/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,6 +515,10 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  AdminAdminPagesRoute: typeof AdminAdminPagesRouteWithChildren
+  AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminSetPasswordRoute: typeof AdminSetPasswordRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -399,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_ProtectedPages/friends': {
+      id: '/_ProtectedPages/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof ProtectedPagesFriendsRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/my-events': {
       id: '/_ProtectedPages/my-events'
       path: '/my-events'
@@ -419,6 +617,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding'
       preLoaderRoute: typeof ProtectedPagesOnboardingRouteImport
       parentRoute: typeof ProtectedPagesRoute
+    }
+    '/admin/_AdminPages': {
+      id: '/admin/_AdminPages'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminAdminPagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/forgot-password': {
+      id: '/admin/forgot-password'
+      path: '/admin/forgot-password'
+      fullPath: '/admin/forgot-password'
+      preLoaderRoute: typeof AdminForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/set-password': {
+      id: '/admin/set-password'
+      path: '/admin/set-password'
+      fullPath: '/admin/set-password'
+      preLoaderRoute: typeof AdminSetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/events/': {
       id: '/events/'
@@ -483,6 +709,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesProfileEditRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/admin/_AdminPages/': {
+      id: '/admin/_AdminPages/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminAdminPagesIndexRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/administrators': {
+      id: '/admin/_AdminPages/administrators'
+      path: '/administrators'
+      fullPath: '/admin/administrators'
+      preLoaderRoute: typeof AdminAdminPagesAdministratorsRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
     '/_ProtectedPages/events/$eventId/edit': {
       id: '/_ProtectedPages/events/$eventId/edit'
       path: '/events/$eventId/edit'
@@ -504,10 +744,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesGroupsGroupIdMembersRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/admin/_AdminPages/events/': {
+      id: '/admin/_AdminPages/events/'
+      path: '/events'
+      fullPath: '/admin/events/'
+      preLoaderRoute: typeof AdminAdminPagesEventsIndexRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/events/$eventId': {
+      id: '/admin/_AdminPages/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/admin/events/$eventId'
+      preLoaderRoute: typeof AdminAdminPagesEventsEventIdRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/groups/': {
+      id: '/admin/_AdminPages/groups/'
+      path: '/groups'
+      fullPath: '/admin/groups/'
+      preLoaderRoute: typeof AdminAdminPagesGroupsIndexRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/groups/$groupId': {
+      id: '/admin/_AdminPages/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/admin/groups/$groupId'
+      preLoaderRoute: typeof AdminAdminPagesGroupsGroupIdRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/reports/': {
+      id: '/admin/_AdminPages/reports/'
+      path: '/reports'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AdminAdminPagesReportsIndexRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/reports/$reportId': {
+      id: '/admin/_AdminPages/reports/$reportId'
+      path: '/reports/$reportId'
+      fullPath: '/admin/reports/$reportId'
+      preLoaderRoute: typeof AdminAdminPagesReportsReportIdRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/users/': {
+      id: '/admin/_AdminPages/users/'
+      path: '/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AdminAdminPagesUsersIndexRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
+    '/admin/_AdminPages/users/$userId': {
+      id: '/admin/_AdminPages/users/$userId'
+      path: '/users/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AdminAdminPagesUsersUserIdRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
   }
 }
 
 interface ProtectedPagesRouteChildren {
+  ProtectedPagesFriendsRoute: typeof ProtectedPagesFriendsRoute
   ProtectedPagesMyEventsRoute: typeof ProtectedPagesMyEventsRoute
   ProtectedPagesNotificationsRoute: typeof ProtectedPagesNotificationsRoute
   ProtectedPagesOnboardingRoute: typeof ProtectedPagesOnboardingRoute
@@ -522,6 +819,7 @@ interface ProtectedPagesRouteChildren {
 }
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
+  ProtectedPagesFriendsRoute: ProtectedPagesFriendsRoute,
   ProtectedPagesMyEventsRoute: ProtectedPagesMyEventsRoute,
   ProtectedPagesNotificationsRoute: ProtectedPagesNotificationsRoute,
   ProtectedPagesOnboardingRoute: ProtectedPagesOnboardingRoute,
@@ -541,6 +839,36 @@ const ProtectedPagesRouteWithChildren = ProtectedPagesRoute._addFileChildren(
   ProtectedPagesRouteChildren,
 )
 
+interface AdminAdminPagesRouteChildren {
+  AdminAdminPagesAdministratorsRoute: typeof AdminAdminPagesAdministratorsRoute
+  AdminAdminPagesIndexRoute: typeof AdminAdminPagesIndexRoute
+  AdminAdminPagesEventsEventIdRoute: typeof AdminAdminPagesEventsEventIdRoute
+  AdminAdminPagesGroupsGroupIdRoute: typeof AdminAdminPagesGroupsGroupIdRoute
+  AdminAdminPagesReportsReportIdRoute: typeof AdminAdminPagesReportsReportIdRoute
+  AdminAdminPagesUsersUserIdRoute: typeof AdminAdminPagesUsersUserIdRoute
+  AdminAdminPagesEventsIndexRoute: typeof AdminAdminPagesEventsIndexRoute
+  AdminAdminPagesGroupsIndexRoute: typeof AdminAdminPagesGroupsIndexRoute
+  AdminAdminPagesReportsIndexRoute: typeof AdminAdminPagesReportsIndexRoute
+  AdminAdminPagesUsersIndexRoute: typeof AdminAdminPagesUsersIndexRoute
+}
+
+const AdminAdminPagesRouteChildren: AdminAdminPagesRouteChildren = {
+  AdminAdminPagesAdministratorsRoute: AdminAdminPagesAdministratorsRoute,
+  AdminAdminPagesIndexRoute: AdminAdminPagesIndexRoute,
+  AdminAdminPagesEventsEventIdRoute: AdminAdminPagesEventsEventIdRoute,
+  AdminAdminPagesGroupsGroupIdRoute: AdminAdminPagesGroupsGroupIdRoute,
+  AdminAdminPagesReportsReportIdRoute: AdminAdminPagesReportsReportIdRoute,
+  AdminAdminPagesUsersUserIdRoute: AdminAdminPagesUsersUserIdRoute,
+  AdminAdminPagesEventsIndexRoute: AdminAdminPagesEventsIndexRoute,
+  AdminAdminPagesGroupsIndexRoute: AdminAdminPagesGroupsIndexRoute,
+  AdminAdminPagesReportsIndexRoute: AdminAdminPagesReportsIndexRoute,
+  AdminAdminPagesUsersIndexRoute: AdminAdminPagesUsersIndexRoute,
+}
+
+const AdminAdminPagesRouteWithChildren = AdminAdminPagesRoute._addFileChildren(
+  AdminAdminPagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProtectedPagesRoute: ProtectedPagesRouteWithChildren,
@@ -551,6 +879,10 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  AdminAdminPagesRoute: AdminAdminPagesRouteWithChildren,
+  AdminForgotPasswordRoute: AdminForgotPasswordRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminSetPasswordRoute: AdminSetPasswordRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   GroupsGroupIdRoute: GroupsGroupIdRoute,
   EventsIndexRoute: EventsIndexRoute,

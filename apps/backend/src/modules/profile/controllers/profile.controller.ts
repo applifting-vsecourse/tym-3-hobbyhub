@@ -59,10 +59,11 @@ export class ProfileController {
   @ApiResponse({ status: 401, description: 'Not signed in' })
   @ApiResponse({ status: 404, description: 'No such user' })
   async getPublic(
+    @User() user: Identity,
     @Param('userId') userId: string,
   ): Promise<PublicProfileResponseDto> {
     return PublicProfileResponseDto.fromDomain(
-      await this.profileService.getPublicProfile(userId),
+      await this.profileService.getPublicProfile(userId, user),
     );
   }
 
@@ -80,15 +81,33 @@ export class ProfileController {
   }
 
   @Put('private')
-  @ApiOperation({ summary: 'Correct the private gender and year of birth' })
+  @ApiOperation({
+    summary:
+      'Correct the private gender and year of birth, and choose what my friends see of my events',
+  })
   @ApiResponse({ status: 200, type: ProfileResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid input or under 18' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input, half of a pair, or under 18',
+  })
   async updatePrivate(
     @User() user: Identity,
     @Body() body: UpdatePrivateDetailsDto,
   ): Promise<ProfileResponseDto> {
     return ProfileResponseDto.fromDomain(
-      await this.profileService.updatePrivate(user, body),
+      await this.profileService.updatePrivate(user, {
+        ...(body.gender !== undefined &&
+          body.birthYear !== undefined && {
+            details: { gender: body.gender, birthYear: body.birthYear },
+          }),
+        ...(body.friendsSeeEventHistory !== undefined &&
+          body.friendsSeeUpcomingEvents !== undefined && {
+            friendVisibility: {
+              friendsSeeEventHistory: body.friendsSeeEventHistory,
+              friendsSeeUpcomingEvents: body.friendsSeeUpcomingEvents,
+            },
+          }),
+      }),
     );
   }
 

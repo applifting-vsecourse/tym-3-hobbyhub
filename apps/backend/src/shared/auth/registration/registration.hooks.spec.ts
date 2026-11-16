@@ -21,7 +21,9 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
 
   it('creates the account with the checked gender, year and consents', async () => {
     jest.mocked(getOAuthState).mockResolvedValue({
-      serverContext: { registration: { gender: 'FEMALE', birthYear: 1990 } },
+      serverContext: {
+        registration: { username: 'Jana.N', gender: 'FEMALE', birthYear: 1990 },
+      },
     } as never);
 
     const result = (await createBefore(user, {
@@ -29,6 +31,9 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
     } as never)) as { data: Record<string, unknown> };
 
     expect(result.data).toMatchObject({
+      name: 'Jana.N',
+      username: 'jana.n',
+      displayUsername: 'Jana.N',
       gender: 'FEMALE',
       birthYear: 1990,
       termsVersion: expect.any(String) as string,

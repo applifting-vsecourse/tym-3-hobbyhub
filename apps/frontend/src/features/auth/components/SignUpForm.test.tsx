@@ -1,9 +1,15 @@
 import { createRootRoute, createRouter, RouterProvider } from "@tanstack/react-router"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { SignUpForm } from "@/features/auth/components/SignUpForm"
+
+// #212: whether the nickname is free; the server is not asked in these tests.
+const availability = vi.hoisted(() => ({ value: "idle" }))
+vi.mock("@/hooks/useNicknameAvailability", () => ({
+  useNicknameAvailability: () => availability.value,
+}))
 
 // The terms link is a router <Link>, so the form needs a router around it.
 const renderForm = (onSubmit = vi.fn()) => {
@@ -28,7 +34,75 @@ const THIS_YEAR = new Date().getFullYear()
 
 const SUBMIT = "Vytvořit účet a pokračovat"
 
+const fillTheRest = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
+  await user.type(screen.getByLabelText("Heslo"), "correct-horse")
+  await user.type(screen.getByLabelText("Zopakujte heslo"), "correct-horse")
+  await user.click(screen.getByRole("combobox", { name: "Pohlaví" }))
+  await user.click(await screen.findByRole("option", { name: "Žena" }))
+  await typeBirthYear(1995)
+  await user.click(screen.getByRole("checkbox", { name: ADULTHOOD }))
+  await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
+}
+
 describe("SignUpForm", () => {
+  beforeEach(() => {
+    availability.value = "idle"
+  })
+
+  // #212, ADR-0025.
+  describe("the unique nickname", () => {
+    it("explains the rules at the field", async () => {
+      renderForm()
+
+      expect(await screen.findByLabelText("Přezdívka")).toHaveAccessibleDescription(
+        /3–30 znaků.*musí být jen vaše/i,
+      )
+    })
+
+    it.each([
+      ["a space", "Jana Nova", "Použijte jen písmena bez diakritiky, číslice, _ a tečku"],
+      ["diacritics", "Kačka", "Použijte jen písmena bez diakritiky, číslice, _ a tečku"],
+      ["too few characters", "Ja", "Přezdívka musí mít alespoň 3 znaky"],
+      [
+        "a reserved word",
+        "HobbyHubJana",
+        "Přezdívka nesmí obsahovat slova jako admin, moderator nebo hobbyhub",
+      ],
+    ])("refuses a nickname with %s", async (_, nickname, message) => {
+      const onSubmit = renderForm()
+      const user = userEvent.setup()
+
+      await user.type(await screen.findByLabelText("Přezdívka"), nickname)
+      await fillTheRest(user)
+      await user.click(screen.getByRole("button", { name: SUBMIT }))
+
+      expect(await screen.findByText(message)).toBeInTheDocument()
+      expect(onSubmit).not.toHaveBeenCalled()
+    })
+
+    it("says while typing that the nickname is free", async () => {
+      availability.value = "available"
+      renderForm()
+
+      expect(await screen.findByText("Přezdívka je volná.")).toBeInTheDocument()
+    })
+
+    it("does not submit a nickname someone else has", async () => {
+      availability.value = "taken"
+      const onSubmit = renderForm()
+      const user = userEvent.setup()
+
+      await user.type(await screen.findByLabelText("Přezdívka"), "BreadCritic")
+      await fillTheRest(user)
+      await user.click(screen.getByRole("button", { name: SUBMIT }))
+
+      expect(screen.getByText("Tuhle přezdívku už někdo má. Zkuste jinou.")).toBeInTheDocument()
+      expect(screen.getByLabelText("Přezdívka")).toHaveFocus()
+      expect(onSubmit).not.toHaveBeenCalled()
+    })
+  })
+
   it("links the consent to the terms, in a new tab", async () => {
     renderForm()
 
@@ -64,7 +138,7 @@ describe("SignUpForm", () => {
     const onSubmit = renderForm()
     const user = userEvent.setup()
 
-    await user.type(await screen.findByLabelText("Jméno / přezdívka"), "Jana")
+    await user.type(await screen.findByLabelText("Přezdívka"), "Jana")
     await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
     await user.type(screen.getByLabelText("Heslo"), "correct-horse")
     await user.type(screen.getByLabelText("Zopakujte heslo"), "correct-horse")
@@ -77,7 +151,7 @@ describe("SignUpForm", () => {
 
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
     expect(onSubmit.mock.calls[0]?.[0]).toEqual({
-      name: "Jana",
+      username: "Jana",
       email: "jana@example.com",
       password: "correct-horse",
       confirmPassword: "correct-horse",
@@ -104,7 +178,7 @@ describe("SignUpForm", () => {
     const onSubmit = renderForm()
     const user = userEvent.setup()
 
-    await user.type(await screen.findByLabelText("Jméno / přezdívka"), "Jana")
+    await user.type(await screen.findByLabelText("Přezdívka"), "Jana")
     await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
     await user.type(screen.getByLabelText("Heslo"), " correct-horse ")
     await user.type(screen.getByLabelText("Zopakujte heslo"), " correct-horse ")
@@ -196,7 +270,7 @@ describe("SignUpForm", () => {
     const onSubmit = renderForm()
     const user = userEvent.setup()
 
-    await user.type(await screen.findByLabelText("Jméno / přezdívka"), "Jana")
+    await user.type(await screen.findByLabelText("Přezdívka"), "Jana")
     await user.type(screen.getByLabelText("E-mail"), "jana@example.com")
     await user.type(screen.getByLabelText("Heslo"), "correct-horse")
     await user.type(screen.getByLabelText("Zopakujte heslo"), "correct-horse")

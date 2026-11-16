@@ -40,16 +40,6 @@ const createAuth = (
     database: prismaAdapter(prismaService, {
       provider: 'postgresql',
     }),
-    user: {
-      additionalFields: {
-        role: {
-          type: 'string',
-          required: true,
-          defaultValue: 'user',
-          input: false,
-        },
-      },
-    },
     trustedOrigins: config.frontendOrigins,
     // A password account whose e-mail was never verified must not be taken
     // over by whoever signs in with Google under that address.

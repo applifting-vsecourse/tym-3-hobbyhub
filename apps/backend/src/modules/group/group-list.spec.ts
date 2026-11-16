@@ -181,6 +181,121 @@ describeDb('group lists', () => {
     );
   });
 
+  it('narrows the discover list by text, place and activity', async () => {
+    await inRolledBackTransaction(async ({ repository, createGroup }) => {
+      const brno = await createGroup({
+        name: 'Volejbal pro všechny',
+        locationName: 'Brno-střed',
+      });
+      const praha = await createGroup({
+        name: 'Florbal',
+        locationName: 'Praha 8',
+      });
+      const page = (
+        filter: Parameters<typeof repository.listDiscoverableGroups>[3],
+      ): Promise<string[]> =>
+        repository
+          .listDiscoverableGroups(undefined, 50, undefined, filter)
+          .then(({ items }) => items.map((group) => group.id));
+
+      const byName = await page({ activityIds: [], search: 'VOLEJ' });
+      expect(byName).toContain(brno);
+      expect(byName).not.toContain(praha);
+
+      const byPlace = await page({ activityIds: [], location: 'praha' });
+      expect(byPlace).toContain(praha);
+      expect(byPlace).not.toContain(brno);
+
+      const both = await page({
+        activityIds: [],
+        search: 'florbal',
+        location: 'brno',
+      });
+      expect(both).not.toContain(brno);
+      expect(both).not.toContain(praha);
+
+      // Diacritics and case do not matter, like in the event list.
+      const folded = await page({ activityIds: [], location: 'BRNO-STRED' });
+      expect(folded).toContain(brno);
+
+      expect(await page({ activityIds: ['no-such-activity'] })).toEqual([]);
+
+      // A searched list pages like the plain one: no gaps, no repeats.
+      const second = await createGroup({
+        name: 'Volejbal pod sítí',
+        locationName: 'Brno',
+      });
+      const found: string[] = [];
+      let cursor: string | undefined;
+      do {
+        const next = await repository.listDiscoverableGroups(
+          undefined,
+          1,
+          cursor,
+          { activityIds: [], search: 'volejbal' },
+        );
+        found.push(...next.items.map((group) => group.id));
+        cursor = next.nextCursor ?? undefined;
+      } while (cursor);
+      expect(found.filter((id) => [brno, second].includes(id)).sort()).toEqual(
+        [brno, second].sort(),
+      );
+      expect(new Set(found).size).toBe(found.length);
+    });
+  });
+
+  it('pages a search for a signed-in user past groups it must not show', async () => {
+    await inRolledBackTransaction(
+      async ({ repository, createUser, createGroup }) => {
+        const me = await createUser();
+        const other = await createUser();
+        // Newer than the matches, so a page cut before the exclusions would
+        // fill up with groups that are dropped afterwards.
+        const newer = new Date('2099-01-01T00:00:00Z');
+        const hidden = [
+          await createGroup({ name: 'Zzhledat moje', createdAt: newer }, [
+            { user: me, role: GroupRole.OWNER },
+          ]),
+          await createGroup(
+            {
+              name: 'Zzhledat soukromá',
+              createdAt: newer,
+              visibility: GroupVisibility.PRIVATE,
+            },
+            [{ user: other, role: GroupRole.OWNER }],
+          ),
+          await createGroup({
+            name: 'Zzhledat zrušená',
+            createdAt: newer,
+            status: GroupStatus.CANCELLED,
+          }),
+        ];
+        const first = await createGroup({ name: 'Zzhledat první' });
+        const second = await createGroup({ name: 'Zzhledat druhá' });
+
+        const found: string[] = [];
+        let cursor: string | undefined;
+        do {
+          const page = await repository.listDiscoverableGroups(
+            me.id,
+            1,
+            cursor,
+            {
+              activityIds: [],
+              search: 'zzhledat',
+            },
+          );
+          expect(page.items.length).toBeLessThanOrEqual(1);
+          found.push(...page.items.map((group) => group.id));
+          cursor = page.nextCursor ?? undefined;
+        } while (cursor);
+
+        expect([...found].sort()).toEqual([first, second].sort());
+        for (const id of hidden) expect(found).not.toContain(id);
+      },
+    );
+  });
+
   it('pages newest first without gaps or repeats, even on equal dates', async () => {
     await inRolledBackTransaction(async ({ repository, createGroup }) => {
       // Three share a date, so only the id keeps their order stable.

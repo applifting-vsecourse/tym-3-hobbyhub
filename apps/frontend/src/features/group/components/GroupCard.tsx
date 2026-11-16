@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { GroupRow } from "@/components/hobbyhub/GroupRow"
 
 import type { Group, GroupRole } from "@/features/group/api/groupSchemas"
 
@@ -16,8 +16,8 @@ type GroupCardProps = {
 }
 
 /**
- * Karta skupiny — a thumbnail beside the text on phones, above it from `md`.
- * Groups have no photos yet, so the thumbnail is the activity icon on accent.
+ * A group in a listing: a `GroupRow`, like an event's `ScheduleRow`, as a link
+ * to the group. Groups have no photos yet, so the row shows the activity icon.
  */
 export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
   const { t } = useTranslation()
@@ -31,28 +31,16 @@ export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
     <Link
       to="/groups/$groupId"
       params={{ groupId: group.id }}
-      className="flex h-full items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors outline-none hover:border-ring focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring md:flex-col md:items-stretch"
+      className="-mx-3 block rounded-lg px-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring"
     >
-      <div
-        aria-hidden
-        className="flex size-16 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground md:h-24 md:w-full"
-      >
-        {isActivityKey(group.activity.icon) ? (
-          <ActivityIcon
-            activity={group.activity.icon}
-            className="size-8"
-          />
-        ) : null}
-      </div>
-      <div className="flex min-w-0 flex-col gap-1">
-        <h3 className="truncate typo-title text-foreground">{group.name}</h3>
-        <p className="typo-small text-muted-foreground">{meta.join(" · ")}</p>
-        <p className="typo-small text-primary">
-          {myRole
-            ? t(`groups.list.role.${myRole}`)
-            : t(`groups.list.visibility.${group.visibility}`)}
-        </p>
-      </div>
+      <GroupRow
+        title={group.name}
+        subtitle={meta.join(" · ")}
+        activity={group.activity.icon}
+        badge={
+          myRole ? t(`groups.list.role.${myRole}`) : t(`groups.list.visibility.${group.visibility}`)
+        }
+      />
     </Link>
   )
 }

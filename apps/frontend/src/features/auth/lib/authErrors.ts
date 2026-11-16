@@ -1,5 +1,7 @@
 import type { TFunction } from "i18next"
 
+import { NICKNAME_LIMITS } from "@/lib/nickname"
+
 // BetterAuth sends English sentences; the stable part is `code`. Known codes
 // are translated, anything else falls back to a generic message.
 export class AuthError extends Error {
@@ -47,6 +49,21 @@ export function authErrorMessage(
       return t("auth.errors.termsNotAccepted")
     case "ADULTHOOD_NOT_CONFIRMED":
       return t("auth.errors.adulthoodNotConfirmed")
+    // #212: the nickname. The first four come from the registration hook, the
+    // rest from BetterAuth's username plugin, which checks the database.
+    case "USERNAME_IS_ALREADY_TAKEN":
+      return t("nickname.taken")
+    case "NICKNAME_RESERVED":
+      return t("nickname.reserved")
+    case "NICKNAME_TOO_SHORT":
+    case "USERNAME_TOO_SHORT":
+      return t("nickname.tooShort", NICKNAME_LIMITS)
+    case "NICKNAME_TOO_LONG":
+    case "USERNAME_TOO_LONG":
+      return t("nickname.tooLong", NICKNAME_LIMITS)
+    case "NICKNAME_INVALID":
+    case "INVALID_USERNAME":
+      return t("nickname.invalid")
     default:
       return t(`auth.errors.${fallback}`)
   }

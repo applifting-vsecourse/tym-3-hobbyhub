@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router"
-import { Cake, Lock, MapPin, Pencil } from "lucide-react"
-import { useTranslation } from "react-i18next"
+import { Cake, CalendarClock, CalendarOff, History, Lock, MapPin, Pencil } from "lucide-react"
+import { Trans, useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
@@ -20,7 +20,8 @@ type ProfileViewProps = {
 /**
  * Můj profil — the profile as others see it: a tinted cover with the photo on
  * its edge, the nickname, the bio and what I play. What only I see (the home
- * city and the year of birth) is set apart and marked as private. Editing is one tap away.
+ * city, the year of birth and what friends see of my events, #227) is set apart and
+ * marked as private. Editing is one tap away.
  */
 export function ProfileView({ profile, activityLabel }: ProfileViewProps) {
   const { t, i18n } = useTranslation()
@@ -137,6 +138,45 @@ export function ProfileView({ profile, activityLabel }: ProfileViewProps) {
           {profile.birthYear === null
             ? t("profile.view.noBirthYear")
             : t("profile.view.birthYear", { year: profile.birthYear })}
+        </p>
+        <p className="flex items-center gap-2 typo-body text-foreground">
+          <History
+            aria-hidden="true"
+            className="size-4 text-muted-foreground"
+          />
+          {profile.friendsSeeEventHistory
+            ? t("profile.view.friendsSeeHistory")
+            : t("profile.view.friendsDontSeeHistory")}
+        </p>
+        <p className="flex items-center gap-2 typo-body text-foreground">
+          {profile.friendsSeeUpcomingEvents ? (
+            <CalendarClock
+              aria-hidden="true"
+              className="size-4 text-muted-foreground"
+            />
+          ) : (
+            <CalendarOff
+              aria-hidden="true"
+              className="size-4 text-muted-foreground"
+            />
+          )}
+          {profile.friendsSeeUpcomingEvents
+            ? t("profile.view.friendsSeeUpcoming")
+            : t("profile.view.friendsDontSeeUpcoming")}
+        </p>
+        <p className="typo-small text-muted-foreground">
+          <Trans
+            t={t}
+            i18nKey="profile.view.friendVisibilityHint"
+            components={{
+              edit: (
+                <Link
+                  to={ROUTES.profileEdit}
+                  className="underline underline-offset-4"
+                />
+              ),
+            }}
+          />
         </p>
       </section>
     </div>

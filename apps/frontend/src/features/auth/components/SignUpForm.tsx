@@ -3,12 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Link } from "@tanstack/react-router"
 import type { TFunction } from "i18next"
 import { Loader2 } from "lucide-react"
-import { useForm, type DefaultValues } from "react-hook-form"
+import { useForm, useWatch, type DefaultValues } from "react-hook-form"
 import { Trans, useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { ROUTES } from "@/app/routes"
 import { AppForm } from "@/components/form/AppForm"
+import { NicknameAvailabilityHint } from "@/components/hobbyhub/NicknameAvailabilityHint"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -28,8 +29,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useNicknameAvailability } from "@/hooks/useNicknameAvailability"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
+import {
+  NICKNAME_LIMITS,
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MESSAGES,
+  nicknameProblem,
+} from "@/lib/nickname"
 
 import { OrDivider, type GoogleRegistration } from "@/features/auth/components/GoogleButton"
 import { PasswordInput } from "@/features/auth/components/PasswordInput"
@@ -45,7 +53,19 @@ const GENDER_LABELS = {
 const createSchema = (t: TFunction) =>
   z
     .object({
-      name: z.string().trim().min(1, t("auth.validation.nameRequired")),
+      // #212: whether someone else has it is asked while typing, see below.
+      username: z
+        .string()
+        .trim()
+        .superRefine((value, context) => {
+          const problem = nicknameProblem(value)
+          if (problem) {
+            context.addIssue({
+              code: "custom",
+              message: t(NICKNAME_MESSAGES[problem], NICKNAME_LIMITS),
+            })
+          }
+        }),
       email: z
         .string()
         .trim()
@@ -79,7 +99,7 @@ export type SignUpFormValues = Omit<FormValues, "birthYear"> & { birthYear: numb
 
 // Gender has no default: the user picks one.
 const defaultValues: DefaultValues<FormValues> = {
-  name: "",
+  username: "",
   email: "",
   password: "",
   confirmPassword: "",
@@ -109,12 +129,35 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
     mode: "onChange",
   })
   useRevalidateOnLanguageChange(form)
+  const nickname = useWatch({ control: form.control, name: "username" })
+  const availability = useNicknameAvailability(nickname)
+
+  const submit = (values: FormValues) => {
+    // The hint under the field already says so; the server would refuse it.
+    if (availability === "taken") {
+      form.setFocus("username")
+      return
+    }
+    return onSubmit({ ...values, birthYear: Number(values.birthYear.trim()) })
+  }
 
   const getGoogleRegistration = async (): Promise<GoogleRegistration | null> => {
-    const isValid = await form.trigger(["gender", "birthYear", "adulthoodConfirmed", "termsAccepted"])
+    const isValid = await form.trigger([
+      "username",
+      "gender",
+      "birthYear",
+      "adulthoodConfirmed",
+      "termsAccepted",
+    ])
     if (!isValid) return null
-    const { gender, birthYear } = form.getValues()
+    // The hint under the field already says so; the server would refuse it.
+    if (availability === "taken") {
+      form.setFocus("username")
+      return null
+    }
+    const { username, gender, birthYear } = form.getValues()
     return {
+      username: username.trim(),
       gender,
       birthYear: Number(birthYear.trim()),
       adulthoodConfirmed: true,
@@ -125,7 +168,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
   return (
     <AppForm
       form={form}
-      onSubmit={(values) => onSubmit({ ...values, birthYear: Number(values.birthYear.trim()) })}
+      onSubmit={submit}
       // Nothing is lost by leaving a sign-up half-way.
       isGuarded={false}
       className="flex flex-col gap-4"
@@ -138,17 +181,22 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
 
       <FormField
         control={form.control}
-        name="name"
+        name="username"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("auth.fields.name")}</FormLabel>
+            <FormLabel>{t("auth.fields.nickname")}</FormLabel>
             <FormControl>
               <Input
                 autoComplete="nickname"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={NICKNAME_MAX_LENGTH}
                 {...field}
               />
             </FormControl>
+            <FormDescription>{t("nickname.hint")}</FormDescription>
             <FormMessage />
+            <NicknameAvailabilityHint availability={availability} />
           </FormItem>
         )}
       />

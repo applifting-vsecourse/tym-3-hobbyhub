@@ -14,6 +14,7 @@ const THIS_YEAR = 2026;
 const aBody = (
   overrides: Record<string, unknown> = {},
 ): Record<string, unknown> => ({
+  username: 'CaffeinatedDuck',
   gender: 'FEMALE',
   birthYear: 1995,
   termsAccepted: true,
@@ -71,6 +72,7 @@ describe('validateRegistration', () => {
   it('accepts an adult who agreed to the terms and confirmed being 18+', () => {
     expect(validateRegistration(aBody(), TODAY)).toEqual({
       ok: true,
+      username: 'CaffeinatedDuck',
       gender: 'FEMALE',
       birthYear: 1995,
     });
@@ -83,6 +85,10 @@ describe('validateRegistration', () => {
   });
 
   it.each([
+    ['no nickname', { username: undefined }, 'NICKNAME_INVALID'],
+    ['a short nickname', { username: 'ab' }, 'NICKNAME_TOO_SHORT'],
+    ['a nickname with a space', { username: 'Jan Novak' }, 'NICKNAME_INVALID'],
+    ['a reserved nickname', { username: 'HobbyHubTeam' }, 'NICKNAME_RESERVED'],
     ['no gender', { gender: undefined }, 'INVALID_GENDER'],
     ['an unknown gender', { gender: 'OTHER' }, 'INVALID_GENDER'],
     ['no birth year', { birthYear: undefined }, 'INVALID_BIRTH_YEAR'],

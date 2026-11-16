@@ -4,7 +4,7 @@ import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 
 export type GroupTab = "mine" | "discover" | "requests"
 
-/** "Moje skupiny" / "Objevit" / "Žádosti": the tab lives in the URL, "mine" without a param. */
+/** "Objevit" / "Moje skupiny" / "Žádosti", like the tabs of the event pages: the tab lives in the URL, "discover" (always first) without a param. */
 export function GroupTabs({ active }: { active: GroupTab }) {
   const { t } = useTranslation()
 
@@ -13,16 +13,16 @@ export function GroupTabs({ active }: { active: GroupTab }) {
       <PageTab
         to="/groups"
         search={{}}
-        isActive={active === "mine"}
-      >
-        {t("groups.list.tabs.mine")}
-      </PageTab>
-      <PageTab
-        to="/groups"
-        search={{ tab: "discover" }}
         isActive={active === "discover"}
       >
         {t("groups.list.tabs.discover")}
+      </PageTab>
+      <PageTab
+        to="/groups"
+        search={{ tab: "mine" }}
+        isActive={active === "mine"}
+      >
+        {t("groups.list.tabs.mine")}
       </PageTab>
       <PageTab
         to="/groups"

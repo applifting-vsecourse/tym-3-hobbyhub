@@ -16,7 +16,22 @@ const SIGN_UP_PATH = '/sign-up/email';
 const SOCIAL_SIGN_IN_PATH = '/sign-in/social';
 const OAUTH_CALLBACK_PREFIX = '/callback/';
 
+// The nickname is changed only through the profile (PATCH /api/profile),
+// which keeps the three columns together and waits 30 days between changes.
+const PROFILE_ONLY_FIELDS = [
+  'name',
+  'username',
+  'displayUsername',
+  'gender',
+  'birthYear',
+];
+
 const MESSAGES: Record<RegistrationErrorCode, string> = {
+  NICKNAME_TOO_SHORT: 'The nickname must be at least 3 characters long',
+  NICKNAME_TOO_LONG: 'The nickname must be at most 30 characters long',
+  NICKNAME_INVALID:
+    'The nickname may contain only letters a-z, digits, "_" and "."',
+  NICKNAME_RESERVED: 'The nickname contains a reserved word',
   INVALID_GENDER: 'Gender must be MALE or FEMALE',
   INVALID_BIRTH_YEAR:
     'Birth year must be a whole number from 1900 to the current year',
@@ -26,8 +41,9 @@ const MESSAGES: Record<RegistrationErrorCode, string> = {
 };
 
 /**
- * Validates the F-03.1 fields before BetterAuth creates the user and passes
- * on only the checked gender and year of birth.
+ * Validates the F-03.1 fields and the nickname before BetterAuth creates the
+ * user and passes on only the checked values. The username plugin then
+ * refuses a nickname someone has already (USERNAME_IS_ALREADY_TAKEN).
  */
 export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
   if (ctx.path === SIGN_UP_PATH) {
@@ -42,6 +58,11 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
       context: {
         body: {
           ...ctx.body,
+          // #212: `name` is a copy of the nickname as typed; whatever the
+          // client sent as the name is ignored (ADR-0025).
+          name: result.username,
+          username: result.username,
+          displayUsername: result.username,
           gender: result.gender,
           birthYear: result.birthYear,
         },
@@ -60,22 +81,47 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
         message: MESSAGES[result.code],
       });
     }
+    // The username plugin only guards its own sign-up route, so a nickname
+    // that is taken is refused here, before the user leaves for Google.
+    const taken = await ctx.context.adapter.findOne({
+      model: 'user',
+      where: [{ field: 'username', value: result.username.toLowerCase() }],
+    });
+    if (taken) {
+      throw APIError.from('BAD_REQUEST', {
+        code: 'USERNAME_IS_ALREADY_TAKEN',
+        message: 'Username is already taken. Please try another.',
+      });
+    }
     await addOAuthServerContext({
-      registration: { gender: result.gender, birthYear: result.birthYear },
+      registration: {
+        username: result.username,
+        gender: result.gender,
+        birthYear: result.birthYear,
+      },
     });
     return;
   }
 
-  // Gender and year of birth feed the participant statistics (F-06.7). They
-  // are corrected through the profile (PUT /api/profile/private), which runs
-  // the same rules, never through BetterAuth's generic update.
+  // #212: the nickname is public, so it is no sign-in credential: only the
+  // e-mail signs in.
+  if (ctx.path === '/sign-in/username') {
+    throw APIError.from('NOT_FOUND', {
+      code: 'NOT_FOUND',
+      message: 'Sign in with your e-mail',
+    });
+  }
+
+  // Gender and year of birth feed the participant statistics (F-06.7); they
+  // and the nickname are changed through the profile, which runs the same
+  // rules, never through BetterAuth's generic update.
   if (
     ctx.path === '/update-user' &&
-    ('gender' in (ctx.body ?? {}) || 'birthYear' in (ctx.body ?? {}))
+    PROFILE_ONLY_FIELDS.some((field) => field in (ctx.body ?? {}))
   ) {
     throw APIError.from('BAD_REQUEST', {
       code: 'FIELD_NOT_ALLOWED',
-      message: 'Gender and birth year cannot be changed here',
+      message: 'The nickname, gender and birth year cannot be changed here',
     });
   }
 });
@@ -98,7 +144,7 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
           // get here.
           const state = await getOAuthState();
           const registration = state?.serverContext?.registration as
-            | { gender: Gender; birthYear: number }
+            | { username: string; gender: Gender; birthYear: number }
             | undefined;
           if (!registration) {
             throw APIError.from('BAD_REQUEST', {
@@ -106,8 +152,19 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
               message: 'Sign up through the registration form first',
             });
           }
+          const { username, gender, birthYear } = registration;
           return {
-            data: { ...user, ...registration, ...consentsAtSignUp(new Date()) },
+            data: {
+              ...user,
+              // #212: the nickname the user typed, not the Google name, is the
+              // public name (ADR-0025); `username` is its lower-cased form.
+              name: username,
+              username: username.toLowerCase(),
+              displayUsername: username,
+              gender,
+              birthYear,
+              ...consentsAtSignUp(new Date()),
+            },
           };
         }
       },

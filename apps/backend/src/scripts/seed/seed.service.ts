@@ -1,4 +1,8 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
+import {
+  ADMIN_AUTH,
+  AdminAuth,
+} from '@/shared/admin-auth/providers/admin-auth.provider';
 import { BetterAuth } from '@/shared/auth/providers/better-auth.provider';
 import { Config } from '@/shared/config/config.service';
 import { Inject, Injectable } from '@nestjs/common';
@@ -14,11 +18,17 @@ export class SeedService {
     private readonly config: Config,
     private readonly prisma: PrismaService,
     @Inject('BetterAuth') private readonly betterAuth: BetterAuth,
+    @Inject(ADMIN_AUTH) private readonly adminAuth: AdminAuth,
   ) {}
 
   async run(): Promise<void> {
     try {
-      await seedDatabase(this.prisma, this.config, this.betterAuth);
+      await seedDatabase(
+        this.prisma,
+        this.config,
+        this.betterAuth,
+        this.adminAuth,
+      );
     } catch (error) {
       console.error('Error seeding data:', error);
       process.exit(1);

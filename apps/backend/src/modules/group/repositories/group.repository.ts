@@ -13,11 +13,19 @@ import {
   CreateGroupData,
   GroupRole as DomainGroupRole,
   Group,
+  GroupDiscoverFilter,
   GroupMember,
   GroupPage,
   MyGroup,
   TransferOwnershipResult,
 } from '@/modules/group/domain/group';
+import {
+  ADMIN_PAGE_SIZE,
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
+import { searchWords } from '@/shared/search/fold-for-search';
+import { containsInAny } from '@/shared/search/folded-search';
 import { Injectable } from '@nestjs/common';
 
 // Thrown inside the hand-over transaction only to roll it back.
@@ -76,11 +84,58 @@ const orderBy = [
 
 // Groups a stranger may find: public, not cancelled, and not ones they are in.
 // A visitor (no userId) is in none, so they find every such group.
-const discoverableBy = (userId?: string): Prisma.GroupWhereInput => ({
+const discoverableBy = (
+  userId?: string,
+  hiddenManagerIds: string[] = [],
+): Prisma.GroupWhereInput => ({
   visibility: GroupVisibility.PUBLIC,
   status: GroupStatus.ACTIVE,
   ...(userId ? { memberships: { none: { userId } } } : {}),
+  // #239, ADR-0022: a group run (OWNER or ADMIN) by someone blocked from the
+  // viewer does not exist.
+  ...(hiddenManagerIds.length > 0
+    ? {
+        NOT: {
+          memberships: {
+            some: {
+              role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+              userId: { in: hiddenManagerIds },
+            },
+          },
+        },
+      }
+    : {}),
 });
+
+// The activity filter as a Prisma condition; the text ones are `textConditionsOf`.
+const filterConditions = ({
+  activityIds,
+}: GroupDiscoverFilter): Prisma.GroupWhereInput =>
+  activityIds.length > 0 ? { activityId: { in: activityIds } } : {};
+
+// Every word of the search has to match the name, place or activity, and every
+// word of the location the place, ignoring case and diacritics (aliases: `g` the
+// group, `a` its activity).
+const textConditionsOf = ({
+  search,
+  location,
+}: GroupDiscoverFilter): Prisma.Sql[] => [
+  ...searchWords(search).map(
+    (word) =>
+      Prisma.sql`(${containsInAny(
+        [
+          Prisma.sql`g."name"`,
+          Prisma.sql`g."locationName"`,
+          Prisma.sql`a."name"`,
+        ],
+        word,
+      )})`,
+  ),
+  ...searchWords(location).map(
+    (word) =>
+      Prisma.sql`(${containsInAny([Prisma.sql`g."locationName"`], word)})`,
+  ),
+];
 
 @Injectable()
 export class GroupRepository {
@@ -127,9 +182,18 @@ export class GroupRepository {
 
   // F-07.3: the owner first, then admins and members, each by who joined
   // first. The `group_role` enum sorts in that order.
-  async listMembers(groupId: string): Promise<GroupMember[]> {
+  async listMembers(
+    groupId: string,
+    // #239: members blocked from the one asking are left out.
+    hiddenUserIds: string[] = [],
+  ): Promise<GroupMember[]> {
     const memberships = await this.prisma.groupMembership.findMany({
-      where: { groupId },
+      where: {
+        groupId,
+        ...(hiddenUserIds.length > 0
+          ? { userId: { notIn: hiddenUserIds } }
+          : {}),
+      },
       include: memberInclude,
       orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
     });
@@ -220,10 +284,11 @@ export class GroupRepository {
     userId: string,
     city: string,
     limit: number,
+    hiddenManagerIds: string[] = [],
   ): Promise<Group[]> {
     const groups = await this.prisma.group.findMany({
       where: {
-        ...discoverableBy(userId),
+        ...discoverableBy(userId, hiddenManagerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
       include,
@@ -237,20 +302,86 @@ export class GroupRepository {
     userId: string | undefined,
     pageSize: number,
     cursor?: string,
+    filter: GroupDiscoverFilter = { activityIds: [] },
+    hiddenManagerIds: string[] = [],
   ): Promise<GroupPage> {
-    const groups = await this.prisma.group.findMany({
-      where: discoverableBy(userId),
-      include,
-      orderBy,
-      // One extra row tells whether another page exists.
-      take: pageSize + 1,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    });
+    const textConditions = textConditionsOf(filter);
+    // One extra row tells whether another page exists.
+    const take = pageSize + 1;
+    const groups =
+      textConditions.length > 0
+        ? await this.pageMatchingText(
+            userId,
+            filter,
+            textConditions,
+            take,
+            cursor,
+            hiddenManagerIds,
+          )
+        : await this.prisma.group.findMany({
+            where: {
+              ...discoverableBy(userId, hiddenManagerIds),
+              ...filterConditions(filter),
+            },
+            include,
+            orderBy,
+            take,
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+          });
     const items = groups.slice(0, pageSize).map(mapPrismaGroupToDomain);
     return {
       items,
       nextCursor: groups.length > pageSize ? items[items.length - 1].id : null,
     };
+  }
+
+  // A page of a search with text. The text needs folding that Prisma cannot
+  // express, so (like the event list) SQL picks the ids of the page, in the
+  // order of the list and after the cursor; Prisma loads the rows and applies
+  // the visibility rules again, so SQL never decides who may see a group.
+  private async pageMatchingText(
+    userId: string | undefined,
+    { activityIds }: GroupDiscoverFilter,
+    textConditions: Prisma.Sql[],
+    take: number,
+    cursor?: string,
+    hiddenManagerIds: string[] = [],
+  ): Promise<Parameters<typeof mapPrismaGroupToDomain>[0][]> {
+    const conditions = [
+      Prisma.sql`g."visibility" = 'PUBLIC' AND g."status" = 'ACTIVE'`,
+      ...(userId
+        ? [
+            Prisma.sql`NOT EXISTS (SELECT 1 FROM "group_membership" m WHERE m."groupId" = g."id" AND m."userId" = ${userId})`,
+          ]
+        : []),
+      ...(activityIds.length > 0
+        ? [Prisma.sql`g."activityId" IN (${Prisma.join(activityIds)})`]
+        : []),
+      // #239, ADR-0022: as in `discoverableBy`, so the page is not cut short.
+      ...(hiddenManagerIds.length > 0
+        ? [
+            Prisma.sql`NOT EXISTS (SELECT 1 FROM "group_membership" m WHERE m."groupId" = g."id" AND m."role" IN ('OWNER', 'ADMIN') AND m."userId" IN (${Prisma.join(hiddenManagerIds)}))`,
+          ]
+        : []),
+      ...(cursor
+        ? [
+            Prisma.sql`(g."createdAt", g."id") < (SELECT c."createdAt", c."id" FROM "group" c WHERE c."id" = ${cursor})`,
+          ]
+        : []),
+      ...textConditions,
+    ];
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT g."id" FROM "group" g
+      JOIN "activity" a ON a."id" = g."activityId"
+      WHERE ${Prisma.join(conditions, ' AND ')}
+      ORDER BY g."createdAt" DESC, g."id" DESC
+      LIMIT ${take}`;
+    const ids = rows.map((row) => row.id);
+    const groups = await this.prisma.group.findMany({
+      where: { ...discoverableBy(userId, hiddenManagerIds), id: { in: ids } },
+      include,
+    });
+    return ids.flatMap((id) => groups.find((group) => group.id === id) ?? []);
   }
 
   async getUserCity(userId: string, now: Date): Promise<string | null> {
@@ -270,5 +401,51 @@ export class GroupRepository {
       user.temporaryLocationValidUntil > now &&
       Boolean(user.temporaryCity?.trim());
     return isTemporaryValid ? user.temporaryCity : user.homeCity;
+  }
+
+  // #238: every group for the administration, newest first, by name.
+  async listForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<Group>> {
+    const where: Prisma.GroupWhereInput = query.search
+      ? { name: { contains: query.search, mode: 'insensitive' } }
+      : {};
+    const [groups, total] = await Promise.all([
+      this.prisma.group.findMany({
+        where,
+        include,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        skip: query.offset,
+        take: ADMIN_PAGE_SIZE,
+      }),
+      this.prisma.group.count({ where }),
+    ]);
+    return { items: groups.map(mapPrismaGroupToDomain), total };
+  }
+
+  // #239, ADR-0022: one of two blocked people leaves, as a plain member, the
+  // groups the other owns or runs. Where both run the group, both stay.
+  async removeBlockedPair(a: string, b: string): Promise<void> {
+    await this.prisma.$transaction(
+      [
+        [a, b],
+        [b, a],
+      ].map(([managerId, userId]) =>
+        this.prisma.groupMembership.deleteMany({
+          where: {
+            userId,
+            role: GroupRole.MEMBER,
+            group: {
+              memberships: {
+                some: {
+                  userId: managerId,
+                  role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+                },
+              },
+            },
+          },
+        }),
+      ),
+    );
   }
 }

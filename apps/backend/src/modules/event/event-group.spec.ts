@@ -14,6 +14,13 @@ import {
 } from '@/generated/prisma/client';
 import { EventRepository } from './repositories/event.repository';
 
+// ADR-0022: hidden means since when and why (CHECK event_hidden_all_or_nothing).
+const HIDDEN = {
+  isHidden: true,
+  hiddenAt: new Date('2030-01-01T00:00:00Z'),
+  hiddenReason: 'Skryto správcem v testu.',
+} as const;
+
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
 type GroupFixture = {
@@ -165,7 +172,7 @@ describeDb('EventRepository: group events', () => {
     await anEvent(group, 13, { visibility: EventVisibility.GROUP_ONLY });
     await anEvent(group, 14, { status: EventStatus.DRAFT });
     await anEvent(group, 15, { visibility: EventVisibility.PRIVATE });
-    await anEvent(group, 16, { isHidden: true });
+    await anEvent(group, 16, HIDDEN);
     const other = await aGroup();
     await anEvent(other, 12);
 

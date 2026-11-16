@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -10,10 +10,17 @@ import { AppForm } from "@/components/form/AppForm"
 import type { ActivityOption, LevelOption } from "@/components/hobbyhub/ActivityPicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { useNicknameAvailability } from "@/hooks/useNicknameAvailability"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { NICKNAME_LIMITS } from "@/lib/nickname"
 
+import {
+  NICKNAME_REFUSAL_MESSAGES,
+  nicknameRefusalOf,
+} from "@/features/profile/api/nicknameRefusal"
 import type { Profile } from "@/features/profile/api/profileSchemas"
 import {
+  FriendVisibilityFields,
   InterestsFields,
   LocationFields,
   PrivateFields,
@@ -30,6 +37,7 @@ import {
   editValuesOf,
   type EditProfileValues,
 } from "@/features/profile/lib/editProfile"
+import { privateDetailsErrorsOf } from "@/features/profile/lib/privateDetailsErrors"
 
 type EditProfileFormProps = {
   profile: Profile
@@ -53,22 +61,46 @@ export function EditProfileForm({
 }: EditProfileFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const schema = useMemo(() => createEditProfileSchema(t), [t])
   const [saved, setSaved] = useState(() => editValuesOf(profile))
+  const schema = useMemo(() => createEditProfileSchema(t, saved.name), [t, saved.name])
   const form = useForm<EditProfileValues>({
     resolver: zodResolver(schema),
     defaultValues: saved,
   })
-  const [hasSaveError, setHasSaveError] = useState(false)
+  // A refused private detail has its own message: it held back the switches too.
+  const [saveError, setSaveError] = useState<"failed" | "privateRefused" | null>(null)
   const updateProfile = useUpdateProfile()
   const updateInterests = useUpdateInterests()
   const updateLocation = useUpdateLocation()
   const updatePrivate = useUpdatePrivateDetails()
 
   useRevalidateOnLanguageChange(form)
+  const nickname = useWatch({ control: form.control, name: "name" })
+  const nicknameAvailability = useNicknameAvailability(nickname, saved.name)
+
+  // A refused nickname or private detail is explained at its field, anything
+  // else as a failed save.
+  const explainFailure = (error: unknown) => {
+    const refusal = nicknameRefusalOf(error)
+    if (refusal) {
+      form.setError("name", { message: t(NICKNAME_REFUSAL_MESSAGES[refusal], NICKNAME_LIMITS) })
+      return
+    }
+    // The server refused a private detail: say which, at its field.
+    const refused = privateDetailsErrorsOf(error)
+    for (const { field, message } of refused) {
+      form.setError(field, { message: t(message) })
+    }
+    setSaveError(refused.length > 0 ? "privateRefused" : "failed")
+  }
 
   const submit = async (values: EditProfileValues) => {
-    setHasSaveError(false)
+    setSaveError(null)
+    // #212: the hint under the field already says so; the server would refuse it.
+    if (nicknameAvailability === "taken") {
+      form.setFocus("name")
+      return
+    }
     // The activities are the one part the server insists on: it needs one.
     if (differs(values.selection, saved.selection) && values.selection.length === 0) {
       form.setError("selection", { message: t("profile.interests.none") })
@@ -104,20 +136,29 @@ export function EditProfileForm({
         await updateLocation.mutateAsync({ street, city, postalCode, country, latitude, longitude })
         done = { ...done, address: values.address }
       }
-      if (
-        values.gender &&
-        values.birthYear &&
-        (values.gender !== done.gender || values.birthYear !== done.birthYear)
-      ) {
+      // The private details and what friends see (#227) go in one request,
+      // which the server saves in one write: never one without the other.
+      const hasDetailsChange = values.gender !== done.gender || values.birthYear !== done.birthYear
+      const hasVisibilityChange =
+        values.friendsSeeEventHistory !== done.friendsSeeEventHistory ||
+        values.friendsSeeUpcomingEvents !== done.friendsSeeUpcomingEvents
+      if ((hasDetailsChange && values.gender && values.birthYear) || hasVisibilityChange) {
         await updatePrivate.mutateAsync({
-          gender: values.gender,
-          birthYear: Number(values.birthYear.trim()),
+          ...(hasDetailsChange &&
+            values.gender &&
+            values.birthYear && {
+              gender: values.gender,
+              birthYear: Number(values.birthYear.trim()),
+            }),
+          ...(hasVisibilityChange && {
+            friendsSeeEventHistory: values.friendsSeeEventHistory,
+            friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
+          }),
         })
-        done = { ...done, gender: values.gender, birthYear: values.birthYear }
       }
     } catch (error) {
       setSaved(done)
-      setHasSaveError(true)
+      explainFailure(error)
       throw error
     }
     setSaved(values)
@@ -137,7 +178,11 @@ export function EditProfileForm({
       onSubmit={submit}
       className="flex flex-col gap-8"
     >
-      <PublicFields activities={activities} />
+      <PublicFields
+        activities={activities}
+        nicknameChangeableFrom={profile.nicknameChangeableFrom}
+        nicknameAvailability={nicknameAvailability}
+      />
       <InterestsFields
         activities={activities}
         activityLabel={activityLabel}
@@ -151,10 +196,13 @@ export function EditProfileForm({
         }}
       />
       <PrivateFields />
+      <FriendVisibilityFields />
 
-      {hasSaveError ? (
+      {saveError ? (
         <Alert variant="destructive">
-          <AlertDescription>{t("profile.saveError")}</AlertDescription>
+          <AlertDescription>
+            {t(saveError === "privateRefused" ? "profile.privateRefused" : "profile.saveError")}
+          </AlertDescription>
         </Alert>
       ) : null}
       <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row-reverse sm:justify-start">

@@ -8,6 +8,7 @@ import { ProfileView } from "@/features/profile/components/ProfileView"
 
 const profile = (overrides: Partial<Profile> = {}): Profile => ({
   name: "Jana",
+  nicknameChangeableFrom: null,
   joinedAt: new Date("2026-09-15T10:00:00Z"),
   bio: "Hraju rok, rád zkusím nové věci.",
   image: null,
@@ -29,6 +30,8 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
     latitude: 50.09,
     longitude: 14.44,
   },
+  friendsSeeEventHistory: true,
+  friendsSeeUpcomingEvents: false,
   ...overrides,
 })
 
@@ -62,6 +65,24 @@ describe("ProfileView", () => {
     expect(screen.getByText("Praha 8")).toBeInTheDocument()
     expect(screen.getByText("Rok narození 1990")).toBeInTheDocument()
     expect(screen.queryByText("Žena")).not.toBeInTheDocument()
+  })
+
+  it("says under the private heading what friends see, with a way to change it (#227)", async () => {
+    await renderView(profile())
+
+    expect(screen.getByText("Přátelé vidí vaši historii akcí")).toBeInTheDocument()
+    expect(screen.getByText("Přátelé nevidí vaše budoucí akce")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "úpravě profilu" })).toHaveAttribute(
+      "href",
+      "/profile/edit",
+    )
+  })
+
+  it("follows the switches the other way round too (#227)", async () => {
+    await renderView(profile({ friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true }))
+
+    expect(screen.getByText("Přátelé nevidí vaši historii akcí")).toBeInTheDocument()
+    expect(screen.getByText("Přátelé vidí vaše budoucí akce")).toBeInTheDocument()
   })
 
   it("invites to fill in an empty profile", async () => {
