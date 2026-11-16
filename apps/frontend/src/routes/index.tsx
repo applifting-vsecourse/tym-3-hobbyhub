@@ -168,7 +168,9 @@ function LandingPage() {
           >
             {t("landing.groups.title")}
           </h2>
-          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:gap-12 md:px-12 md:py-10">
+          {/* Centred as one block: on a wide screen the seats and the text sit in
+              the middle of the invitation, not at its left edge (#224). */}
+          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:justify-center md:gap-12 md:px-12 md:py-10">
             <div
               aria-hidden
               className="shrink-0"

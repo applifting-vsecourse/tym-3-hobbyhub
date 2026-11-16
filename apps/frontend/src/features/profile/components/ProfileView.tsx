@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { Cake, Lock, MapPin, Pencil } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -15,6 +16,13 @@ type ProfileViewProps = {
   profile: Profile
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: { name: string; icon: string }) => string
+  /**
+   * Beside the profile on a large screen, level with the name (#224): the
+   * cover runs over both columns above them.
+   */
+  aside?: ReactNode
+  /** More of the page under the profile, in its column (changing the password). */
+  children?: ReactNode
 }
 
 /**
@@ -22,14 +30,14 @@ type ProfileViewProps = {
  * its edge, the nickname, the bio and what I play. What only I see (the home
  * city and the year of birth) is set apart and marked as private. Editing is one tap away.
  */
-export function ProfileView({ profile, activityLabel }: ProfileViewProps) {
+export function ProfileView({ profile, activityLabel, aside, children }: ProfileViewProps) {
   const { t, i18n } = useTranslation()
   const joined = new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(
     profile.joinedAt,
   )
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col">
       <div className="flex flex-col">
         <ProfileCover
           cover={profile.cover}
@@ -52,93 +60,99 @@ export function ProfileView({ profile, activityLabel }: ProfileViewProps) {
             </Link>
           </Button>
         </div>
-        <div className="mt-4 flex flex-col gap-2 px-1">
-          <h1 className="typo-h1 text-balance text-foreground">{profile.name}</h1>
-          <p className="typo-small text-muted-foreground">
-            {t("profile.view.memberSince", { date: joined })}
-          </p>
-          {profile.bio ? (
-            <p className="mt-1 typo-body-lg whitespace-pre-line text-foreground">{profile.bio}</p>
-          ) : (
-            <p className="mt-1 typo-body text-muted-foreground">
-              {t("profile.view.noBio")}{" "}
-              <Link
-                to={ROUTES.profileEdit}
-                className="underline underline-offset-4"
-              >
-                {t("profile.view.addBio")}
-              </Link>
-            </p>
-          )}
-        </div>
       </div>
+      <div className="mt-4 flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-x-8">
+        <div className="flex min-w-0 flex-col gap-8">
+          <div className="flex flex-col gap-2 px-1">
+            <h1 className="typo-h1 text-balance text-foreground">{profile.name}</h1>
+            <p className="typo-small text-muted-foreground">
+              {t("profile.view.memberSince", { date: joined })}
+            </p>
+            {profile.bio ? (
+              <p className="mt-1 typo-body-lg whitespace-pre-line text-foreground">{profile.bio}</p>
+            ) : (
+              <p className="mt-1 typo-body text-muted-foreground">
+                {t("profile.view.noBio")}{" "}
+                <Link
+                  to={ROUTES.profileEdit}
+                  className="underline underline-offset-4"
+                >
+                  {t("profile.view.addBio")}
+                </Link>
+              </p>
+            )}
+          </div>
 
-      <section
-        aria-labelledby="profile-activities"
-        className="flex flex-col gap-3 border-t border-border pt-6"
-      >
-        <h2
-          id="profile-activities"
-          className="typo-h3 text-foreground"
-        >
-          {t("profile.interests.title")}
-        </h2>
-        {profile.interests.length > 0 ? (
-          <ul className="flex flex-wrap gap-2">
-            {profile.interests.map(({ activity, level }) => (
-              <ActivityChip
-                key={activity.id}
-                icon={activity.icon}
-                name={activityLabel(activity)}
-                level={level?.name}
-              />
-            ))}
-          </ul>
-        ) : (
-          <p className="typo-body text-muted-foreground">
-            {t("profile.view.noActivities")}{" "}
-            <Link
-              to={ROUTES.profileEdit}
-              className="underline underline-offset-4"
+          <section
+            aria-labelledby="profile-activities"
+            className="flex flex-col gap-3 border-t border-border pt-6"
+          >
+            <h2
+              id="profile-activities"
+              className="typo-h3 text-foreground"
             >
-              {t("profile.view.addActivities")}
-            </Link>
-          </p>
-        )}
-      </section>
+              {t("profile.interests.title")}
+            </h2>
+            {profile.interests.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {profile.interests.map(({ activity, level }) => (
+                  <ActivityChip
+                    key={activity.id}
+                    icon={activity.icon}
+                    name={activityLabel(activity)}
+                    level={level?.name}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <p className="typo-body text-muted-foreground">
+                {t("profile.view.noActivities")}{" "}
+                <Link
+                  to={ROUTES.profileEdit}
+                  className="underline underline-offset-4"
+                >
+                  {t("profile.view.addActivities")}
+                </Link>
+              </p>
+            )}
+          </section>
 
-      <section
-        aria-labelledby="profile-private"
-        className="flex flex-col gap-3 border-t border-border pt-6"
-      >
-        <h2
-          id="profile-private"
-          className="flex items-center gap-2 typo-h3 text-foreground"
-        >
-          <Lock
-            aria-hidden="true"
-            className="size-4 text-muted-foreground"
-          />
-          {t("profile.view.privateTitle")}
-        </h2>
-        <p className="typo-small text-muted-foreground">{t("profile.view.privateHint")}</p>
-        <p className="flex items-center gap-2 typo-body text-foreground">
-          <MapPin
-            aria-hidden="true"
-            className="size-4 text-muted-foreground"
-          />
-          {profile.address ? profile.address.city : t("profile.view.noAddress")}
-        </p>
-        <p className="flex items-center gap-2 typo-body text-foreground">
-          <Cake
-            aria-hidden="true"
-            className="size-4 text-muted-foreground"
-          />
-          {profile.birthYear === null
-            ? t("profile.view.noBirthYear")
-            : t("profile.view.birthYear", { year: profile.birthYear })}
-        </p>
-      </section>
+          <section
+            aria-labelledby="profile-private"
+            className="flex flex-col gap-3 border-t border-border pt-6"
+          >
+            <h2
+              id="profile-private"
+              className="flex items-center gap-2 typo-h3 text-foreground"
+            >
+              <Lock
+                aria-hidden="true"
+                className="size-4 text-muted-foreground"
+              />
+              {t("profile.view.privateTitle")}
+            </h2>
+            <p className="typo-small text-muted-foreground">{t("profile.view.privateHint")}</p>
+            <p className="flex items-center gap-2 typo-body text-foreground">
+              <MapPin
+                aria-hidden="true"
+                className="size-4 text-muted-foreground"
+              />
+              {profile.address ? profile.address.city : t("profile.view.noAddress")}
+            </p>
+            <p className="flex items-center gap-2 typo-body text-foreground">
+              <Cake
+                aria-hidden="true"
+                className="size-4 text-muted-foreground"
+              />
+              {profile.birthYear === null
+                ? t("profile.view.noBirthYear")
+                : t("profile.view.birthYear", { year: profile.birthYear })}
+            </p>
+          </section>
+          {children}
+        </div>
+        {aside}
+      </div>
     </div>
   )
 }

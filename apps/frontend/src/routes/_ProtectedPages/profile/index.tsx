@@ -40,53 +40,54 @@ function ProfilePage() {
       <Seo title={t("profile.title")} />
       {/* On a large screen the person's own upcoming events sit beside the
           profile (#224). Only here: nobody else sees them (visibility matrix). */}
-      <div className="mx-auto w-full max-w-2xl px-page py-6 md:py-12 lg:grid lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-x-8">
-        <section className="flex min-w-0 flex-col gap-6">
-          <VerifyEmailPrompt />
-          <div className="empty:hidden">
-            <ProfilePrompt />
-          </div>
+      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page py-6 md:py-12 lg:max-w-5xl">
+        <VerifyEmailPrompt />
+        <div className="empty:hidden">
+          <ProfilePrompt />
+        </div>
 
-          {profile.isPending ? (
-            <div className="flex justify-center py-8">
-              <Loader
-                variant="player"
-                label={t("profile.loading")}
-              />
-            </div>
-          ) : profile.isError ? (
-            <Alert variant="destructive">
-              <AlertDescription className="flex items-center justify-between gap-3">
-                <span>{t("profile.loadError")}</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="max-md:h-11"
-                  onClick={() => void profile.refetch()}
-                >
-                  <RefreshCw className="size-4" />
-                  {t("onboarding.reload")}
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <ProfileView
-                profile={profile.data}
-                activityLabel={activityLabel}
-              />
+        {profile.isPending ? (
+          <div className="flex justify-center py-8">
+            <Loader
+              variant="player"
+              label={t("profile.loading")}
+            />
+          </div>
+        ) : profile.isError ? (
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between gap-3">
+              <span>{t("profile.loadError")}</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="max-md:h-11"
+                onClick={() => void profile.refetch()}
+              >
+                <RefreshCw className="size-4" />
+                {t("onboarding.reload")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            <ProfileView
+              profile={profile.data}
+              activityLabel={activityLabel}
+              aside={
+                isWide && user ? (
+                  <MyUpcomingEvents
+                    userId={user.id}
+                    className="lg:sticky lg:top-24"
+                  />
+                ) : null
+              }
+            >
               <ChangePassword />
-            </>
-          )}
-        </section>
-        {isWide && user ? (
-          <MyUpcomingEvents
-            userId={user.id}
-            className="lg:sticky lg:top-24"
-          />
-        ) : null}
-      </div>
+            </ProfileView>
+          </>
+        )}
+      </section>
     </>
   )
 }
