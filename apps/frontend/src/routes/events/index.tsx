@@ -20,6 +20,7 @@ import { eventsMapQueryOptions, eventsQueryOptions } from "@/features/event/api/
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import {
   EventFiltersPanel,
+  isPanelOpen,
   panelFiltersButton,
 } from "@/features/event/components/EventFiltersPanel"
 import { EventList } from "@/features/event/components/EventList"
@@ -172,6 +173,7 @@ function EventsPage() {
                 void navigate({ search: (previous) => searchWithFilters(previous, next) })
               }
               onOpenFilters={panelFiltersButton(filtersPanel)}
+              shouldShowChips={!isPanelOpen(filtersPanel)}
               leadingChips={
                 <FilterChip
                   pressed={nearMe.position !== null || nearMe.status === "locating"}

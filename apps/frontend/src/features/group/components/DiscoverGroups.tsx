@@ -20,6 +20,8 @@ type DiscoverGroupsProps = {
   filtersBar: ReactNode
   /** The filters open beside the list on a large screen (#224); nothing where there is no room. */
   filtersPanel?: ReactNode
+  /** The page's tabs for a signed-in viewer, above the search beside the filters. */
+  tabs?: ReactNode
   onClearFilters: () => void
 }
 
@@ -34,6 +36,7 @@ export function DiscoverGroups({
   filters,
   filtersBar,
   filtersPanel,
+  tabs,
   onClearFilters,
 }: DiscoverGroupsProps) {
   const { t } = useTranslation()
@@ -59,6 +62,7 @@ export function DiscoverGroups({
       </h2>
       {filtersPanel}
       <div className="flex min-w-0 flex-col gap-6">
+        {tabs}
         {filtersBar}
         <div
           aria-busy={discover.isPlaceholderData}

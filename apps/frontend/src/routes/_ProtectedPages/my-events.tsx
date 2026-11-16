@@ -23,6 +23,7 @@ import {
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import {
   EventFiltersPanel,
+  isPanelOpen,
   panelFiltersButton,
 } from "@/features/event/components/EventFiltersPanel"
 import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
@@ -149,6 +150,7 @@ function MyEventsPage() {
                 sortNote={t("myEvents.sortNote")}
                 onFiltersChange={onFiltersChange}
                 onOpenFilters={panelFiltersButton(filtersPanel)}
+                shouldShowChips={!isPanelOpen(filtersPanel)}
               />
             }
             activityLabel={(activity) => activityName(t, activity)}

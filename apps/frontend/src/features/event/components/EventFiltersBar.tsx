@@ -120,6 +120,11 @@ type EventFiltersBarProps = {
    * passes `null` while the panel is open and the button has nothing to do.
    */
   onOpenFilters?: (() => void) | null
+  /**
+   * The chosen filters as chips under the field. Off while the side panel is
+   * open beside the list (#224): it shows the same filters already.
+   */
+  shouldShowChips?: boolean
 }
 
 /**
@@ -142,6 +147,7 @@ export function EventFiltersBar({
   leadingChips,
   children,
   onOpenFilters,
+  shouldShowChips = true,
 }: EventFiltersBarProps) {
   const { t, i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
@@ -172,11 +178,12 @@ export function EventFiltersBar({
     },
   ]
   const hasChips =
-    selectedActivities.length > 0 ||
-    filters.location !== "" ||
-    dateLabel !== "" ||
-    filters.freeSpotsOnly ||
-    rangeChips.some(({ label }) => label !== "")
+    shouldShowChips &&
+    (selectedActivities.length > 0 ||
+      filters.location !== "" ||
+      dateLabel !== "" ||
+      filters.freeSpotsOnly ||
+      rangeChips.some(({ label }) => label !== ""))
 
   return (
     <div className="flex flex-col gap-3">

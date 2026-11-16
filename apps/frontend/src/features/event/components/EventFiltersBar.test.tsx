@@ -70,6 +70,17 @@ describe("EventFiltersBar", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
+  it("leaves the chosen filters to the open side panel, keeping the page's own chips", () => {
+    renderBar(
+      { location: "Praha 8" },
+      { shouldShowChips: false, leadingChips: <button type="button">Nejblíž mně</button> },
+    )
+
+    expect(screen.queryByRole("group", { name: "Vybrané filtry" })).not.toBeInTheDocument()
+    expect(screen.queryByText("Praha 8")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Nejblíž mně" })).toBeInTheDocument()
+  })
+
   it("has no filters button while the side panel is open", () => {
     renderBar({}, { onOpenFilters: null })
 

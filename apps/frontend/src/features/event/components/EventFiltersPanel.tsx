@@ -63,3 +63,6 @@ export function EventFiltersPanel({
  */
 export const panelFiltersButton = (panel: FiltersPanelState) =>
   panel.isWide ? (panel.isExpanded ? null : () => panel.setExpanded(true)) : undefined
+
+/** The open panel shows the chosen filters itself; the chips under the field return when it is folded. */
+export const isPanelOpen = (panel: FiltersPanelState) => panel.isWide && panel.isExpanded

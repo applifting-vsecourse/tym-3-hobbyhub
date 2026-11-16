@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -16,6 +17,7 @@ import { useSession } from "@/features/auth/hooks/useSession"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import {
   EventFiltersPanel,
+  isPanelOpen,
   panelFiltersButton,
 } from "@/features/event/components/EventFiltersPanel"
 import { useSearchText } from "@/features/event/hooks/useSearchText"
@@ -59,9 +61,12 @@ export const Route = createFileRoute("/groups/")({
 function DiscoverTab({
   viewerId,
   activityLabel,
+  tabs,
 }: {
   viewerId: string | null
   activityLabel: ActivityLabel
+  /** The page's tabs, above the list beside the filters, as on "Moje akce" (#224). */
+  tabs?: ReactNode
 }) {
   const { t } = useTranslation()
   const search = Route.useSearch()
@@ -96,6 +101,7 @@ function DiscoverTab({
       viewerId={viewerId}
       activityLabel={activityLabel}
       filters={filters}
+      tabs={tabs}
       // On a large screen the filters are open beside the list (#224).
       filtersPanel={
         <EventFiltersPanel
@@ -118,6 +124,7 @@ function DiscoverTab({
           onSearchTextChange={setSearchText}
           onFiltersChange={onFiltersChange}
           onOpenFilters={panelFiltersButton(filtersPanel)}
+          shouldShowChips={!isPanelOpen(filtersPanel)}
           activityOptions={activityOptions.options}
           activitiesState={activityOptions.state}
           fields={GROUP_FILTER_FIELDS}
@@ -161,19 +168,22 @@ function GroupsPage() {
             />
           </div>
         ) : user ? (
-          <>
-            <GroupTabs active={tab} />
-            {tab === "requests" ? (
-              <MyMembershipRequests userId={user.id} />
-            ) : tab === "mine" ? (
-              <MyGroups activityLabel={activityLabel} />
-            ) : (
-              <DiscoverTab
-                viewerId={user.id}
-                activityLabel={activityLabel}
-              />
-            )}
-          </>
+          tab === "discover" ? (
+            <DiscoverTab
+              viewerId={user.id}
+              activityLabel={activityLabel}
+              tabs={<GroupTabs active={tab} />}
+            />
+          ) : (
+            <>
+              <GroupTabs active={tab} />
+              {tab === "requests" ? (
+                <MyMembershipRequests userId={user.id} />
+              ) : (
+                <MyGroups activityLabel={activityLabel} />
+              )}
+            </>
+          )
         ) : (
           <DiscoverTab
             viewerId={null}
