@@ -69,12 +69,13 @@ const type = async (user: ReturnType<typeof userEvent.setup>, text: string) => {
 }
 
 describe("AddressSearch streets", () => {
-  it("hides streets when they can be picked neither as they are nor by a handler", async () => {
+  it("asks only for exact addresses when a street can be used neither as it is nor by a handler", async () => {
     const { user } = await renderSearch()
     await type(user, "Vodičk")
+    await screen.findByRole("option", { name: /Vodičkova 3/ })
 
-    expect(await screen.findByRole("option", { name: /Vodičkova 3/ })).toBeInTheDocument()
-    expect(screen.queryByRole("option", { name: "Vodičkova, 110 00 Praha, Česko" })).toBeNull()
+    const [requested] = vi.mocked(fetch).mock.calls.at(-1) ?? []
+    expect(new URL(requested as string).searchParams.get("types")).toBe("address")
   })
 
   it("picks a street as it is where a street is allowed", async () => {
@@ -86,6 +87,8 @@ describe("AddressSearch streets", () => {
       expect.objectContaining({ street: "Vodičkova", city: "Praha", postalCode: "110 00" }),
     )
     expect(onSelect.mock.calls[0]?.[0]).not.toHaveProperty("isStreet")
+    const [requested] = vi.mocked(fetch).mock.calls.at(-1) ?? []
+    expect(new URL(requested as string).searchParams.get("types")).toBe("address,street")
   })
 
   it("hands a street to its own handler, not to onSelect, where it is not allowed as it is", async () => {
@@ -105,5 +108,17 @@ describe("AddressSearch streets", () => {
 
     const [requested] = vi.mocked(fetch).mock.calls.at(-1) ?? []
     expect(new URL(requested as string).searchParams.get("types")).toBe("address")
+  })
+
+  it("takes over the focus only as the list closes after a street was picked", async () => {
+    const onCloseAutoFocus = vi.fn()
+    const { user } = await renderSearch({ onSelectStreet: vi.fn(), onCloseAutoFocus })
+    await type(user, "Vodičk")
+    await user.click(await screen.findByRole("option", { name: "Vodičkova, 110 00 Praha, Česko" }))
+    expect(onCloseAutoFocus).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole("combobox"))
+    await user.keyboard("{Escape}")
+    expect(onCloseAutoFocus).toHaveBeenCalledTimes(1)
   })
 })

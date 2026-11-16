@@ -51,6 +51,7 @@ function AddressSearchExample() {
   return (
     <div className="w-full max-w-sm">
       <AddressSearch
+        isStreetAllowed
         value={address}
         onSelect={(picked) => setAddress(picked.label)}
         placeholder="Najít adresu"

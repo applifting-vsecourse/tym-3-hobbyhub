@@ -290,6 +290,9 @@ describe("EventForm on a phone", () => {
         postalCode: "182 00",
         country: "Česko",
         placeName: undefined,
+        // Typed by hand, so its position is looked up when the event is sent.
+        latitude: 50.1297,
+        longitude: 14.4421,
       },
       minParticipants: 8,
       maxParticipants: 12,
@@ -373,6 +376,13 @@ describe("EventForm address suggestions", () => {
     expect(
       screen.queryByText("Poloha adresy je uložená, akce se ukáže na mapě."),
     ).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText("Ulice a číslo"), "4")
+
+    expect(screen.queryByText(/Ulice je vyplněná/)).not.toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Najít adresu" })).toHaveTextContent(
+      "Začněte psát ulici a město",
+    )
   })
 
   it("forgets the position once the address is edited by hand", async () => {

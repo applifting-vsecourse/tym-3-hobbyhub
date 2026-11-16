@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { ChevronDownIcon, MapPinIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -16,31 +16,11 @@ import {
   addressSuggestionsQueryOptions,
   MIN_ADDRESS_QUERY_LENGTH,
   type AddressSuggestion,
-  type AddressSuggestionItem,
 } from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 // Typing waits this long before it asks, so an address is not searched letter by letter.
 const TYPING_PAUSE_MS = 300
-
-// The address as the forms store it, without the geocoder's marker of a whole street.
-const toAddress = ({
-  label,
-  street,
-  city,
-  postalCode,
-  country,
-  latitude,
-  longitude,
-}: AddressSuggestionItem): AddressSuggestion => ({
-  label,
-  street,
-  city,
-  postalCode,
-  country,
-  latitude,
-  longitude,
-})
 
 type AddressSearchProps = {
   /** The line of the address that was picked, or "" while none is. */
@@ -55,7 +35,7 @@ type AddressSearchProps = {
    * allowed as it is. Without it such streets are not suggested at all.
    */
   onSelectStreet?: (street: AddressSuggestion) => void
-  /** Called as the list closes after a street was picked, to take over the focus. */
+  /** Called as the list closes after a street was picked (not after other closes), to take over the focus. */
   onCloseAutoFocus?: (event: Event) => void
   className?: string
   id?: string
@@ -81,25 +61,26 @@ export function AddressSearch({
   const [text, setText] = useState("")
   const [asked, setAsked] = useState("")
   const listId = useId()
+  const isStreetPicked = useRef(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setAsked(text.trim()), TYPING_PAUSE_MS)
     return () => clearTimeout(timer)
   }, [text])
 
-  const suggestions = useQuery(addressSuggestionsQueryOptions(asked, i18n.language))
+  const canPickStreet = isStreetAllowed || onSelectStreet !== undefined
+  const suggestions = useQuery(addressSuggestionsQueryOptions(asked, i18n.language, canPickStreet))
   const isTooShort = text.trim().length < MIN_ADDRESS_QUERY_LENGTH
   // The previous text's suggestions are not offered for the new text.
   const isCurrent = asked === text.trim()
-  const canPickStreet = isStreetAllowed || onSelectStreet !== undefined
-  const shown = (suggestions.data ?? []).filter(
-    (suggestion) => canPickStreet || !suggestion.isStreet,
-  )
-
   return (
     <Popover
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={(isOpening) => {
+        // A close that is not after a street pick leaves the focus where it goes by itself.
+        if (isOpening) isStreetPicked.current = false
+        setIsOpen(isOpening)
+      }}
     >
       <PopoverTrigger asChild>
         <button
@@ -130,7 +111,11 @@ export function AddressSearch({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        onCloseAutoFocus={onCloseAutoFocus}
+        onCloseAutoFocus={(event) => {
+          if (!isStreetPicked.current) return
+          isStreetPicked.current = false
+          onCloseAutoFocus?.(event)
+        }}
         className="w-(--radix-popover-trigger-width) p-0"
       >
         {/* The geocoder ranks the suggestions, so cmdk must not filter or re-sort them. */}
@@ -163,21 +148,22 @@ export function AddressSearch({
               <>
                 <CommandEmpty>{t("geo.address.noMatch")}</CommandEmpty>
                 <CommandGroup>
-                  {shown.map((suggestion) => (
+                  {(suggestions.data ?? []).map(({ address, isStreet }) => (
                     <CommandItem
-                      key={`${suggestion.isStreet}:${suggestion.label}:${suggestion.latitude}:${suggestion.longitude}`}
-                      value={suggestion.label}
+                      key={`${isStreet}:${address.label}:${address.latitude}:${address.longitude}`}
+                      value={address.label}
                       onSelect={() => {
-                        if (suggestion.isStreet && !isStreetAllowed) {
-                          onSelectStreet?.(toAddress(suggestion))
+                        if (isStreet && !isStreetAllowed) {
+                          isStreetPicked.current = true
+                          onSelectStreet?.(address)
                         } else {
-                          onSelect(toAddress(suggestion))
+                          onSelect(address)
                         }
                         setIsOpen(false)
                       }}
                     >
                       <MapPinIcon aria-hidden />
-                      {suggestion.label}
+                      {address.label}
                     </CommandItem>
                   ))}
                 </CommandGroup>

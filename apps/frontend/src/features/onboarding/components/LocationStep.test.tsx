@@ -75,7 +75,7 @@ const renderStep = async (...args: Parameters<typeof stepFor>) => {
 describe("LocationStep", () => {
   it("lets a street be picked as it is, since a home location needs no house number", async () => {
     await renderStep()
-    expect(screen.getByRole("button", { name: /Vyberte|adres|Začněte/i })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Začněte psát ulici a město" })).toHaveAttribute(
       "data-street-allowed",
       "yes",
     )

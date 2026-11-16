@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react"
+import { useId, useMemo, useState, type ComponentProps, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
 import { ChevronLeft, Loader2, MapPin } from "lucide-react"
@@ -27,7 +27,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
-import { hasAddressSuggestions, type AddressSuggestion } from "@/lib/addressSuggestions"
+import {
+  geocodeAddress,
+  hasAddressSuggestions,
+  type AddressSuggestion,
+} from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 import {
@@ -247,6 +251,15 @@ const valuesOfEvent = (event: Event): FormValues => {
   }
 }
 
+// An address that was typed, or finished by hand after a street was picked, has no
+// position yet: it is looked up when the event is sent, so it gets onto the map too.
+const withPosition = async (values: FormValues, language: string): Promise<FormValues> => {
+  const isLocated = values.latitude !== null && values.positionOf === addressKey(values)
+  if (values.venueType === "ONLINE" || isLocated) return values
+  const position = await geocodeAddress(values, language)
+  return position ? { ...values, ...position, positionOf: addressKey(values) } : values
+}
+
 // Optional fields left empty are not sent at all. Dates are validated by then.
 const toInput = (values: FormValues): CreateEventInput => {
   const start = combineDateTime(values.startDate, values.startTime)
@@ -363,7 +376,7 @@ export function EventForm({
   cancelAction,
   now = realNow,
 }: EventFormProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
   const isEditing = event !== undefined
   const approvedCount = event?.approvedCount ?? 0
@@ -418,7 +431,7 @@ export function EventForm({
   return (
     <AppForm
       form={form}
-      onSubmit={(values) => onSubmit(toInput(values))}
+      onSubmit={async (values) => onSubmit(toInput(await withPosition(values, i18n.language)))}
       onInvalid={showFirstBrokenStep}
       // Enter on a phone step moves on; only the last step publishes.
       onBeforeSubmit={() => {
@@ -746,7 +759,6 @@ function AddressPicker() {
     AddressSuggestion,
     "label" | "street" | "city" | "postalCode"
   > | null>(null)
-  const shouldFocusStreet = useRef(false)
   const [street, city, postalCode, latitude, positionOf] = useWatch({
     control: form.control,
     name: ["street", "city", "postalCode", "latitude", "positionOf"],
@@ -754,11 +766,11 @@ function AddressPicker() {
   if (!hasAddressSuggestions()) return null
 
   const isLocated = latitude !== null && positionOf === addressKey({ street, city, postalCode })
-  // The street stays shown while the number is typed after it, until another place is typed.
+  // The picked street stays shown until its house number is typed or another place is.
   const isStreetShown =
     !isLocated &&
     pickedStreet !== null &&
-    street.startsWith(pickedStreet.street) &&
+    street.trim() === pickedStreet.street &&
     city === pickedStreet.city &&
     postalCode === pickedStreet.postalCode
   const options = { shouldDirty: true, shouldTouch: true, shouldValidate: true }
@@ -789,12 +801,9 @@ function AddressPicker() {
         onSelectStreet={(address) => {
           fillAddress({ ...address, street: `${address.street} ` }, null)
           setPickedStreet(address)
-          shouldFocusStreet.current = true
         }}
         // The list hands the focus back to its button as it closes; the street is next.
         onCloseAutoFocus={(event) => {
-          if (!shouldFocusStreet.current) return
-          shouldFocusStreet.current = false
           event.preventDefault()
           form.setFocus("street")
         }}
