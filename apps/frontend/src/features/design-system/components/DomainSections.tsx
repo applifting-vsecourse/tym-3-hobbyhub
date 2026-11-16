@@ -12,6 +12,7 @@ import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
 import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
+import { GroupRow } from "@/components/hobbyhub/GroupRow"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
 import { Loader, type LoaderVariant } from "@/components/hobbyhub/Loader"
@@ -210,6 +211,22 @@ export function DomainSections() {
               taken={5}
               min={5}
               activity="volejbal"
+            />
+          </div>
+        </Example>
+        <Example label="Řádek skupiny">
+          <div className="flex w-full max-w-md flex-col">
+            <GroupRow
+              title="Čtvrteční florbalisté"
+              subtitle="Praha 8 · florbal · 14 členů"
+              activity="florbal"
+              badge="Veřejná"
+            />
+            <GroupRow
+              title="Cyklovýlety bez cíle"
+              subtitle="Cyklistika · 2 členové"
+              activity="cyklistika"
+              badge="Organizátor"
             />
           </div>
         </Example>
