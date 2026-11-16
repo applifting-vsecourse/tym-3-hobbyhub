@@ -7,9 +7,18 @@ import {
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { MembershipRequestsService } from './membership-requests.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const user = { id: 'u1' } as Identity;
 const admin = { id: 'admin' } as Identity;
@@ -91,7 +100,12 @@ describe('MembershipRequestsService', () => {
       repository,
       groups,
       notifications,
-      service: new MembershipRequestsService(repository, groups, notifications),
+      service: new MembershipRequestsService(
+        repository,
+        groups,
+        notifications,
+        noBlocks(),
+      ),
     };
   };
 
@@ -348,6 +362,35 @@ describe('MembershipRequestsService', () => {
           decidedBy: admin,
         },
       );
+    });
+  });
+
+  // #238: the administration reads the requests of any group.
+  describe('getPendingRequestsForAdministration', () => {
+    it('reads the requests without asking who manages the group', async () => {
+      const { repository, groups, service } = setup();
+      groups.getGroupForAdministration.mockResolvedValue({
+        group: aGroup(),
+        members: [],
+      });
+      repository.getPendingRequests.mockResolvedValue([]);
+
+      await expect(
+        service.getPendingRequestsForAdministration('g1'),
+      ).resolves.toEqual([]);
+      expect(groups.getManagedGroup).not.toHaveBeenCalled();
+    });
+
+    it('is not found for an unknown group', async () => {
+      const { repository, groups, service } = setup();
+      groups.getGroupForAdministration.mockRejectedValue(
+        new NotFoundException('Group not found'),
+      );
+
+      await expect(
+        service.getPendingRequestsForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.getPendingRequests).not.toHaveBeenCalled();
     });
   });
 });

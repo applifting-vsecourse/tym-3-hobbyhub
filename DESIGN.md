@@ -34,7 +34,8 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
   - **Reading pages** keep text at its line length (`max-w-prose`); the extra width goes to a **side panel** with what belongs next to it, never to longer lines. Detail pages are `max-w-6xl` with a panel that grows from `xl`; the participants, the members and one's own profile are `max-w-2xl` on a phone and `lg:max-w-5xl` with a panel beside them. A panel shows only what the viewer may see (visibility matrix): one's own upcoming events on one's own profile, never on someone else's.
   - **Forms and sign-in stay narrow** (`max-w-4xl`, `max-w-sm`): a wider form is only harder to fill in.
   - **The header and the footer are `max-w-page`** on every page, whatever the column under them, so the navigation on the right stays put between pages.
-- **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands.
+- **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands. The administration (`/admin/*`) keeps its own chrome, `AdminShell`, instead of the user one.
+- **Tables are for the administration only.** A list of records to scan and compare (users, events, groups in `/admin`) is the kit's `Table` from `md` up; below `md` each row stacks into lines separated by a hairline, never into a card. The rest of the app lists items as cards or rows, not tables.
 - Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
 
 ## Spacing

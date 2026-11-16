@@ -130,6 +130,14 @@ export class NotificationResponseDto {
   changes!: EventChange[];
 
   @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'EVENT_HIDDEN: why an administrator hid the event; only the organizers’ copy carries it (#239)',
+  })
+  reason!: string | null;
+
+  @ApiProperty({
     type: NotificationReminderDto,
     nullable: true,
     description:
@@ -150,6 +158,7 @@ export class NotificationResponseDto {
       decision: notification.payload.decision ?? null,
       message: notification.payload.message ?? null,
       changes: notification.payload.changes ?? [],
+      reason: notification.payload.reason ?? null,
       reminder:
         reminder && startsAt
           ? { kind: reminder, startsAt, occupancy: occupancy ?? null }

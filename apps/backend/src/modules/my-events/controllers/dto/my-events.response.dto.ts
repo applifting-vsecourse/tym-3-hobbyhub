@@ -1,5 +1,5 @@
 import { EventListItemResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
-import { EventListPage } from '@/modules/event/domain/event';
+import { EventListItem, EventListPage } from '@/modules/event/domain/event';
 import {
   APPLICATION_STATUSES,
   ApplicationStatus,
@@ -49,9 +49,22 @@ export class MyApplicationPageResponseDto {
   }
 }
 
+// #239: the organizer's own list also holds what an administrator hid.
+export class HostedEventResponseDto extends EventListItemResponseDto {
+  @ApiProperty({ description: 'Hidden by an administrator (#239)' })
+  isHidden!: boolean;
+
+  static fromHosted(event: EventListItem): HostedEventResponseDto {
+    return {
+      ...EventListItemResponseDto.fromDomain(event),
+      isHidden: event.isHidden,
+    };
+  }
+}
+
 export class MyHostedEventsResponseDto {
-  @ApiProperty({ type: [EventListItemResponseDto] })
-  items!: EventListItemResponseDto[];
+  @ApiProperty({ type: [HostedEventResponseDto] })
+  items!: HostedEventResponseDto[];
 
   @ApiProperty({
     description:
@@ -61,7 +74,9 @@ export class MyHostedEventsResponseDto {
 
   static fromDomain(page: EventListPage): MyHostedEventsResponseDto {
     return {
-      items: page.items.map(EventListItemResponseDto.fromDomain),
+      items: page.items.map((event) =>
+        HostedEventResponseDto.fromHosted(event),
+      ),
       total: page.total,
     };
   }

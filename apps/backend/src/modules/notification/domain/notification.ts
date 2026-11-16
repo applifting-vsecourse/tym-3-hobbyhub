@@ -20,6 +20,9 @@ export const NOTIFICATION_TYPES = [
   'MONTHLY_RECOMMENDATION',
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
+  'EVENT_HIDDEN',
+  'EVENT_RESTORED',
+  'REPORT_RESOLVED',
   'EVENT_REMINDER',
   'HOSTED_EVENT_REMINDER',
 ] as const;
@@ -46,12 +49,14 @@ export const NOTIFICATION_TYPES_BY_KIND = {
   events: [
     'EVENT_CHANGED',
     'EVENT_CANCELLED',
+    'EVENT_HIDDEN',
+    'EVENT_RESTORED',
     'EVENT_BOARD',
     'EVENT_REMINDER',
     'HOSTED_EVENT_REMINDER',
   ],
   groups: ['GROUP_INVITATION'],
-  other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION'],
+  other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION', 'REPORT_RESOLVED'],
 } as const satisfies Record<NotificationKind, readonly NotificationType[]>;
 
 export const notificationTypesOf = (
@@ -94,6 +99,9 @@ export type NotificationPayload = {
   message?: string;
   // EVENT_CHANGED
   changes?: EventChange[];
+  // EVENT_HIDDEN, to the organizers only: why the administrator hid it
+  // (ADR-0022). Everyone else learns only that it is gone.
+  reason?: string;
   // EVENT_REMINDER, HOSTED_EVENT_REMINDER
   reminder?: EventReminderKind;
   // EVENT_REMINDER, HOSTED_EVENT_REMINDER: the start the reminder was for, an

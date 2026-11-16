@@ -69,7 +69,8 @@ describe("MyUpcomingEvents", () => {
         { status: "PENDING", event: event("e3", "Čeká na schválení", 12) },
         { status: "APPROVED", event: event("e4", "Už proběhlo", 2) },
       ],
-      [event("e1", "Můj florbal", 11)],
+      // The hosted list says whether an administrator hid the event (#239).
+      [{ ...event("e1", "Můj florbal", 11), isHidden: false }],
     )
     await renderPanel()
 

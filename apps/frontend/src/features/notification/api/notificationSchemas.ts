@@ -14,6 +14,10 @@ export const notificationTypeSchema = z.enum([
   "MONTHLY_RECOMMENDATION",
   "EVENT_CHANGED",
   "EVENT_CANCELLED",
+  "EVENT_HIDDEN",
+  "EVENT_RESTORED",
+  // #240: a report the recipient filed was dealt with; says nothing of how.
+  "REPORT_RESOLVED",
   "EVENT_REMINDER",
   "HOSTED_EVENT_REMINDER",
 ])
@@ -52,6 +56,8 @@ export const notificationSchema = z.object({
   decision: decisionSchema.nullable(),
   message: z.string().nullable(),
   changes: z.array(eventChangeSchema),
+  /** EVENT_HIDDEN: why an administrator hid it; only the organizers' copy has it (#239). */
+  reason: z.string().nullable(),
   reminder: reminderSchema.nullable(),
 })
 

@@ -10,6 +10,13 @@ import {
 } from '@/generated/prisma/client';
 import { EventRepository } from './repositories/event.repository';
 
+// ADR-0022: hidden means since when and why (CHECK event_hidden_all_or_nothing).
+const HIDDEN = {
+  isHidden: true,
+  hiddenAt: new Date('2030-01-01T00:00:00Z'),
+  hiddenReason: 'Skryto správcem v testu.',
+} as const;
+
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
 describeDb('EventRepository: organized events', () => {
@@ -209,7 +216,6 @@ describeDb('EventRepository: organized events', () => {
   it.each([
     ['cancelled', { status: EventStatus.CANCELLED }],
     ['a draft', { status: EventStatus.DRAFT }],
-    ['hidden', { isHidden: true }],
     ['not public', { visibility: 'PRIVATE' }],
   ])('leaves out an event that is %s', async (_, extra) => {
     const me = await aUser();
@@ -218,6 +224,19 @@ describeDb('EventRepository: organized events', () => {
     const result = await repository.getOrganizedBy(me, now, page);
 
     expect(result).toEqual({ items: [], total: 0 });
+  });
+
+  // #239, ADR-0022: the organizer still has the event an administrator hid.
+  it('keeps an event hidden by an administrator, marked as such', async () => {
+    const me = await aUser();
+    const hidden = await anEvent(me, await anActivity(), 5, HIDDEN);
+
+    const result = await repository.getOrganizedBy(me, now, page);
+
+    expect(result.total).toBe(1);
+    expect(result.items).toEqual([
+      expect.objectContaining({ id: hidden, isHidden: true }),
+    ]);
   });
 
   it('loads the cards of the given events and nothing for no ids', async () => {

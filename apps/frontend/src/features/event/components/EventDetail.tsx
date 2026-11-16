@@ -41,6 +41,8 @@ type EventDetailProps = {
    * Absent for everyone else, who is told when they appear instead.
    */
   participantInfo?: ReactNode
+  /** "Nahlásit akci" (#240), for a signed-in person who does not organize it. */
+  reportAction?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -80,11 +82,13 @@ export function EventDetail({
   shareAction,
   ownRequest,
   participantInfo,
+  reportAction,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const state = eventState(event, now)
+  const isHidden = event.hiddenReason !== null
   const missing = missingCount({ taken: event.takenCount, min: event.minParticipants })
   const { stats } = event
   const day = eventDay(t, event.startAt, now, locale)
@@ -158,8 +162,17 @@ export function EventDetail({
             {event.visibility === "GROUP_ONLY" ? (
               <StatusBadge status="neutral">{t("events.detail.groupOnly")}</StatusBadge>
             ) : null}
-            {state === "open" ? shareAction : null}
+            {isHidden ? (
+              <StatusBadge status="neutral">{t("events.detail.hidden.badge")}</StatusBadge>
+            ) : null}
+            {state === "open" && !isHidden ? shareAction : null}
           </div>
+          {/* #239: only the organizers get here; nobody else sees the event. */}
+          {isHidden ? (
+            <p className="typo-body text-foreground">
+              {t("events.detail.hidden.text", { reason: event.hiddenReason })}
+            </p>
+          ) : null}
           {state !== "open" ? (
             <p className="typo-body text-foreground">{t(`events.detail.state.${state}Text`)}</p>
           ) : null}
@@ -259,7 +272,9 @@ export function EventDetail({
           {t("events.detail.seats", { taken: event.takenCount, total: event.maxParticipants })}
         </p>
         {ownRequest ??
-          (state === "open" ? (
+          (isHidden ? (
+            <p className="typo-small text-signal-soft">{t("events.detail.hidden.seats")}</p>
+          ) : state === "open" ? (
             <YourSeat
               surface="dark"
               description={t(
@@ -292,7 +307,7 @@ export function EventDetail({
         ) : null}
 
         {participantInfo ??
-          (state === "open" || state === "full" ? (
+          (!isHidden && (state === "open" || state === "full") ? (
             <p className="typo-small text-muted-foreground">{t("events.detail.hiddenInfo")}</p>
           ) : null)}
 
@@ -326,6 +341,8 @@ export function EventDetail({
             </p>
           )}
         </section>
+
+        {reportAction ? <div className="border-t border-border pt-4">{reportAction}</div> : null}
       </div>
     </div>
   )
