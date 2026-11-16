@@ -627,6 +627,7 @@
       "membersLink": "Show all members",
       "membersMore": "+{{count}}",
       "membersTitle": "Members ({{count}})",
+      "openGroup": "View group",
       "outcome_one": "After approval there will be {{count}} member.",
       "outcome_other": "After approval there will be {{count}} members.",
       "refused": {
@@ -645,6 +646,7 @@
       "requestsEmpty": "No membership requests are waiting.",
       "requestsLink": "Membership requests ({{count}})",
       "retry": "Try again",
+      "summary": "About the group",
       "tabs": {
         "members": "Members {{count}}",
         "requests": "Requests {{count}}"
@@ -1496,6 +1498,7 @@
       "rejected": "Request rejected",
       "requests": "Waiting",
       "retry": "Try again",
+      "summary": "Event summary",
       "tabs": {
         "participants": "Participants",
         "participantsCount": "Participants {{count}}",
@@ -1604,6 +1607,16 @@
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "title": "My profile",
+    "upcoming": {
+      "all": "All my events",
+      "empty": "You are not going anywhere or organizing anything yet.",
+      "find": "Find an event",
+      "hosting": "You organize",
+      "loadError": "Could not load the events.",
+      "loading": "Loading events…",
+      "retry": "Try again",
+      "title": "My upcoming events"
+    },
     "userProfile": {
       "interests": "What they play",
       "notFound": "Profile not found.",

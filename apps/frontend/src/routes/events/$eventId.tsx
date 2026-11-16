@@ -138,7 +138,7 @@ function EventDetailPage() {
   return (
     <>
       <Seo title={eventQuery.data?.title ?? t("events.detail.title")} />
-      <AppShell className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
+      <AppShell className="mx-auto w-full max-w-6xl px-page py-6 md:py-12">
         <BackLink
           to={ROUTES.events}
           label={t("events.detail.back")}

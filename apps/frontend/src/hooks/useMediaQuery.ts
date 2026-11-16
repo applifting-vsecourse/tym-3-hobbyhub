@@ -3,6 +3,9 @@ import { useCallback, useSyncExternalStore } from "react"
 /** Tailwind's `md` breakpoint: below it the app uses its phone layout. */
 export const DESKTOP_QUERY = "(min-width: 48rem)"
 
+/** Tailwind's `lg` breakpoint: from here a reading page has room for a side panel (#224). */
+export const WIDE_QUERY = "(min-width: 64rem)"
+
 /** Subscribes to a CSS media query and re-renders when it starts or stops matching. */
 export function useMediaQuery(query: string) {
   const subscribe = useCallback(

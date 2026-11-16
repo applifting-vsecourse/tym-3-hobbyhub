@@ -128,7 +128,9 @@ export function EventDetail({
     : []
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8">
+    // From `xl` the page is wider (#224): the photo grows and the roster gets
+    // more room, the description keeps its line length.
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8 xl:grid-cols-[minmax(0,1fr)_26rem] xl:gap-x-12">
       <header className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
         {event.imageUrl ? (
           // Decorative: the title below says what the event is.
@@ -136,7 +138,7 @@ export function EventDetail({
             src={event.imageUrl}
             alt=""
             rounding="xl"
-            className="h-48 md:h-72"
+            className="h-48 md:h-72 xl:h-96"
           />
         ) : null}
         <div className="flex flex-col gap-2">

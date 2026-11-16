@@ -59,74 +59,85 @@ export function EventParticipants({
   const isLocked = decisionLockOf(event, now) !== null
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
+    // On a large screen (#224) the event at a glance sits beside the lists, so
+    // the seats stay in view while the requests are decided.
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-8">
+      <header className="flex flex-col gap-1 lg:col-span-2">
         <p className="typo-label text-muted-foreground">
           {t("participationRequests.manage.title")}
         </p>
         <h1 className="typo-h1 break-words text-foreground">{event.title}</h1>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <p className="typo-body text-muted-foreground">{event.when}</p>
+          <p className="typo-body text-muted-foreground">
+            {[event.when, event.where].filter(Boolean).join(" · ")}
+          </p>
           <StatusBadge status={FILL_STATE_BADGE[event.fillState]}>
             {t(`participationRequests.manage.fillState.${event.fillState}`)}
           </StatusBadge>
         </div>
       </header>
 
-      <div className="flex flex-col gap-3 rounded-xl bg-signal p-4 text-signal-foreground">
-        <RosterSeats
-          size="md"
-          surface="dark"
-          taken={event.taken}
-          min={event.min}
-          capacity={event.max}
-        />
-        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          {missing > 0 ? (
-            <span className="typo-h3">
-              {t("participationRequests.manage.missingToMin", { count: missing })}
-            </span>
-          ) : null}
-          <span className="typo-small text-signal-soft">
-            {t("events.detail.seats", { taken: event.taken, total: event.max })}
-          </span>
-          <span className="typo-small text-signal-soft">
-            {t("participationRequests.manage.breakdown", {
-              approved: event.approved,
-              external: event.externalOccupied,
-            })}
-          </span>
-        </p>
-      </div>
-
-      <ExternalSpotsCounter
-        event={event}
-        isLocked={isLocked}
-        onChange={onChange}
-      />
-
-      <ParticipantsTabs
-        eventId={event.id}
-        active={tab}
-        counts={{
-          requests: requestsQuery.data?.pages[0]?.total,
-          // Everyone with a seat, the people outside the app too.
-          participants: event.taken,
-        }}
-      />
-
-      {tab === "participants" ? (
-        <Participants event={event} />
-      ) : (
-        <div className="flex flex-col gap-8">
-          <PendingRequests
-            event={event}
-            onChange={onChange}
-            now={now}
+      <aside
+        aria-label={t("participationRequests.manage.summary")}
+        className="flex flex-col gap-6 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-2"
+      >
+        <div className="flex flex-col gap-3 rounded-xl bg-signal p-4 text-signal-foreground">
+          <RosterSeats
+            size="md"
+            surface="dark"
+            taken={event.taken}
+            min={event.min}
+            capacity={event.max}
           />
-          <DecidedRequests eventId={event.id} />
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {missing > 0 ? (
+              <span className="typo-h3">
+                {t("participationRequests.manage.missingToMin", { count: missing })}
+              </span>
+            ) : null}
+            <span className="typo-small text-signal-soft">
+              {t("events.detail.seats", { taken: event.taken, total: event.max })}
+            </span>
+            <span className="typo-small text-signal-soft">
+              {t("participationRequests.manage.breakdown", {
+                approved: event.approved,
+                external: event.externalOccupied,
+              })}
+            </span>
+          </p>
         </div>
-      )}
+
+        <ExternalSpotsCounter
+          event={event}
+          isLocked={isLocked}
+          onChange={onChange}
+        />
+      </aside>
+
+      <div className="flex min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2">
+        <ParticipantsTabs
+          eventId={event.id}
+          active={tab}
+          counts={{
+            requests: requestsQuery.data?.pages[0]?.total,
+            // Everyone with a seat, the people outside the app too.
+            participants: event.taken,
+          }}
+        />
+
+        {tab === "participants" ? (
+          <Participants event={event} />
+        ) : (
+          <div className="flex flex-col gap-8">
+            <PendingRequests
+              event={event}
+              onChange={onChange}
+              now={now}
+            />
+            <DecidedRequests eventId={event.id} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

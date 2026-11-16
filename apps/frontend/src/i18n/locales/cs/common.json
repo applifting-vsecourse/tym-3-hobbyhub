@@ -638,6 +638,7 @@
       "membersLink": "Zobrazit všechny členy",
       "membersMore": "+{{count}}",
       "membersTitle": "Členové ({{count}})",
+      "openGroup": "Zobrazit skupinu",
       "outcome_few": "Po schválení budou {{count}} členové.",
       "outcome_one": "Po schválení bude {{count}} člen.",
       "outcome_other": "Po schválení bude {{count}} členů.",
@@ -657,6 +658,7 @@
       "requestsEmpty": "Žádné žádosti o členství nečekají na vyřízení.",
       "requestsLink": "Žádosti o členství ({{count}})",
       "retry": "Zkusit znovu",
+      "summary": "O skupině",
       "tabs": {
         "members": "Členové {{count}}",
         "requests": "Žádosti {{count}}"
@@ -1525,6 +1527,7 @@
       "rejected": "Žádost zamítnuta",
       "requests": "Čekající",
       "retry": "Zkusit znovu",
+      "summary": "Souhrn akce",
       "tabs": {
         "participants": "Účastníci",
         "participantsCount": "Účastníci {{count}}",
@@ -1634,6 +1637,16 @@
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
     "title": "Můj profil",
+    "upcoming": {
+      "all": "Všechny moje akce",
+      "empty": "Zatím nikam nejdete a nic nepořádáte.",
+      "find": "Najít akci",
+      "hosting": "Pořádáte",
+      "loadError": "Akce se nepodařilo načíst.",
+      "loading": "Načítám akce…",
+      "retry": "Zkusit znovu",
+      "title": "Moje nadcházející akce"
+    },
     "userProfile": {
       "interests": "Co hraje",
       "notFound": "Profil nenalezen.",
