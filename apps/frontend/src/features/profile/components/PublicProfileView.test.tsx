@@ -10,7 +10,6 @@ import { PublicProfileView } from "@/features/profile/components/PublicProfileVi
 const profile: PublicProfile = {
   id: "u2",
   name: "Petr",
-  nickname: null,
   relation: "none",
   bio: "Běhám po práci",
   image: null,
@@ -43,17 +42,6 @@ describe("PublicProfileView", () => {
   it("leaves out empty parts instead of showing blanks", async () => {
     await renderProfile({ bio: null, interests: [] })
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull()
-  })
-
-  // #225: the username is public, like the name.
-  it("shows the nickname under the name, when the person has one", async () => {
-    await renderProfile({ nickname: "BehajiciPetr" })
-    expect(screen.getByText("@BehajiciPetr")).toBeInTheDocument()
-  })
-
-  it("shows no nickname line without one", async () => {
-    await renderProfile()
-    expect(screen.queryByText(/^@/)).toBeNull()
   })
 
   it("puts the friendship action under the bio", async () => {

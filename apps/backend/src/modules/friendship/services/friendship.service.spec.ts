@@ -16,6 +16,7 @@ import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { mock } from 'jest-mock-extended';
@@ -35,7 +36,6 @@ const pending = (senderId: string, recipientId: string): FriendRequest => ({
 const aFound = (id: string): FoundUserRow => ({
   id,
   name: `Person ${id}`,
-  nickname: null,
   image: null,
 });
 
@@ -120,26 +120,30 @@ describe('FriendshipService', () => {
     });
 
     // #239: people blocked from the viewer are not found.
-    it('leaves out the people blocked from the viewer', async () => {
+    // Either way, as sending a request: whom I blocked (#65) is not found
+    // either, or the request to them would end in 404.
+    it('leaves out the people blocked with the viewer, either way', async () => {
       const { repository, blocks, service } = setup();
       blocks.hiddenFor.mockResolvedValue(['u9']);
+      blocks.hiddenFrom.mockResolvedValue(['u8', 'u9']);
       repository.searchUsers.mockResolvedValue([]);
       repository.findRelationsWith.mockResolvedValue(new Map());
       await service.search(me, 'nov', 0);
       expect(blocks.hiddenFor).toHaveBeenCalledWith('u1');
+      expect(blocks.hiddenFrom).toHaveBeenCalledWith('u1');
       expect(repository.searchUsers).toHaveBeenCalledWith(
         'u1',
         'nov',
         0,
         FRIEND_SEARCH_PAGE_SIZE + 1,
-        ['u9'],
+        ['u9', 'u8'],
       );
     });
 
     it("gives each person found the viewer's relation", async () => {
       const { repository, service } = setup();
       repository.searchUsers.mockResolvedValue([
-        { id: 'u2', name: 'Libor', nickname: 'NovyHrac', image: 'data:x' },
+        { id: 'u2', name: 'Libor', image: 'data:x' },
         aFound('u3'),
       ]);
       repository.findRelationsWith.mockResolvedValue(
@@ -153,14 +157,12 @@ describe('FriendshipService', () => {
           {
             id: 'u2',
             name: 'Libor',
-            nickname: 'NovyHrac',
             image: 'data:x',
             relation: 'request_received',
           },
           {
             id: 'u3',
             name: 'Person u3',
-            nickname: null,
             image: null,
             relation: 'friends',
           },
@@ -195,6 +197,7 @@ describe('FriendshipService', () => {
   describe('sendRequest', () => {
     const reachableStranger = (): ReturnType<typeof setup> => {
       const context = setup();
+      context.repository.isActive.mockResolvedValue(true);
       context.repository.isReachable.mockResolvedValue(true);
       context.repository.areFriends.mockResolvedValue(false);
       context.repository.findPendingRequestBetween.mockResolvedValue(null);
@@ -297,6 +300,18 @@ describe('FriendshipService', () => {
         expect(repository.createRequest).not.toHaveBeenCalled();
       },
     );
+
+    // ADR-0026: only an active account asks; a restricted one may still be
+    // found and accept.
+    it('refuses a sender whose account is not active', async () => {
+      const { repository, service } = reachableStranger();
+      repository.isActive.mockResolvedValue(false);
+      await expect(service.sendRequest(me, 'u2')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(repository.isActive).toHaveBeenCalledWith('u1');
+      expect(repository.createRequest).not.toHaveBeenCalled();
+    });
 
     it('refuses a request between friends', async () => {
       const { repository, service } = reachableStranger();

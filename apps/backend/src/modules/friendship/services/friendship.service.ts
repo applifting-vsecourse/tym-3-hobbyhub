@@ -19,6 +19,7 @@ import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -91,7 +92,7 @@ export class FriendshipService {
       text,
       offset,
       FRIEND_SEARCH_PAGE_SIZE + 1,
-      await this.blocks.hiddenFor(viewer.id),
+      await this.blockedWith(viewer.id),
     );
     const page = rows.slice(0, FRIEND_SEARCH_PAGE_SIZE);
     const relations = await this.friendshipRepository.findRelationsWith(
@@ -102,7 +103,6 @@ export class FriendshipService {
       items: page.map((row) => ({
         id: row.id,
         name: row.name,
-        nickname: row.nickname,
         image: row.image,
         relation: relationOf(viewer.id, relations.get(row.id)!),
       })),
@@ -127,23 +127,26 @@ export class FriendshipService {
   ): Promise<SentFriendRequest> {
     const violations = friendRequestViolations(sender.id, recipientId);
     if (violations.length > 0) throw new BadRequestException(violations);
-    if (
-      !(await this.friendshipRepository.isReachable(recipientId)) ||
-      (await this.isBlockedPair(sender.id, recipientId))
-    ) {
+    // Independent reads, at once; the answers keep their order below.
+    const [isSenderActive, isReachable, blocked, isFriend, pendingRequest] =
+      await Promise.all([
+        this.friendshipRepository.isActive(sender.id),
+        this.friendshipRepository.isReachable(recipientId),
+        this.blockedWith(sender.id),
+        this.friendshipRepository.areFriends(sender.id, recipientId),
+        this.friendshipRepository.findPendingRequestBetween(
+          sender.id,
+          recipientId,
+        ),
+      ]);
+    // ADR-0026: only an active account asks; a restricted one may still be
+    // found and accept requests.
+    if (!isSenderActive) throw new ForbiddenException(['SENDER_NOT_ACTIVE']);
+    if (!isReachable || blocked.includes(recipientId)) {
       throw new NotFoundException('User not found');
     }
-    if (await this.friendshipRepository.areFriends(sender.id, recipientId)) {
-      throw new ConflictException(['ALREADY_FRIENDS']);
-    }
-    if (
-      await this.friendshipRepository.findPendingRequestBetween(
-        sender.id,
-        recipientId,
-      )
-    ) {
-      throw new ConflictException(['REQUEST_PENDING']);
-    }
+    if (isFriend) throw new ConflictException(['ALREADY_FRIENDS']);
+    if (pendingRequest) throw new ConflictException(['REQUEST_PENDING']);
     const earlierInWindow = await this.friendshipRepository.countRequestsSince(
       sender.id,
       recipientId,
@@ -300,16 +303,14 @@ export class FriendshipService {
     await this.friendshipRepository.removeBlockedPair(oneId, otherId, now);
   }
 
-  // #239: blocked either way, by an administrator for both, or (#65) by one
-  // of them: no request goes between them.
-  private async isBlockedPair(
-    oneId: string,
-    otherId: string,
-  ): Promise<boolean> {
+  // #239: the people blocked with the user either way: by an administrator
+  // (both ways), or (#65) by one of them. They do not find each other and no
+  // request goes between them.
+  private async blockedWith(userId: string): Promise<string[]> {
     const [hiddenFor, hiddenFrom] = await Promise.all([
-      this.blocks.hiddenFor(oneId),
-      this.blocks.hiddenFrom(oneId),
+      this.blocks.hiddenFor(userId),
+      this.blocks.hiddenFrom(userId),
     ]);
-    return hiddenFor.includes(otherId) || hiddenFrom.includes(otherId);
+    return [...new Set([...hiddenFor, ...hiddenFrom])];
   }
 }

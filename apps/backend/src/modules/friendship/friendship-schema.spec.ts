@@ -250,30 +250,23 @@ describeDb('friendship schema constraints', () => {
       });
     });
 
-    it('finds the username, and returns the one typed at sign-up', async () => {
+    // ADR-0025: the nickname is the one name; `name` is its copy as typed.
+    it('finds the nickname whatever the case, and returns it as typed', async () => {
       await inRolledBackTransaction(async (tx) => {
         const token = unique();
         const viewer = await createUser(tx);
         await createUser(tx, undefined, {
-          name: 'Libor',
+          name: `NovyHrac${token}`,
           username: `novyhrac${token}`,
           displayUsername: `NovyHrac${token}`,
         });
         const rows = await new FriendshipRepository(
           tx as unknown as PrismaService,
-        ).searchUsers(viewer, `hrac${token}`, 0, 50);
+        ).searchUsers(viewer, `HRAC${token}`, 0, 50);
         expect(rows).toEqual([
-          expect.objectContaining({
-            name: 'Libor',
-            nickname: `NovyHrac${token}`,
-          }),
+          expect.objectContaining({ name: `NovyHrac${token}` }),
         ]);
-        expect(Object.keys(rows[0]).sort()).toEqual([
-          'id',
-          'image',
-          'name',
-          'nickname',
-        ]);
+        expect(Object.keys(rows[0]).sort()).toEqual(['id', 'image', 'name']);
       });
     });
 
@@ -347,6 +340,23 @@ describeDb('friendship schema constraints', () => {
   });
 
   // #225: withdrawing and counting requests run on the database itself.
+  // #225, ADR-0026: only an active account may send a request.
+  describe('isActive', () => {
+    it.each([
+      ['ACTIVE', true],
+      ['RESTRICTED', false],
+      ['BLOCKED', false],
+      ['DELETED', false],
+    ] as const)('answers %s as %p', async (status, expected) => {
+      await inRolledBackTransaction(async (tx) => {
+        const id = await createUser(tx, undefined, { status });
+        await expect(
+          new FriendshipRepository(tx as unknown as PrismaService).isActive(id),
+        ).resolves.toBe(expected);
+      });
+    });
+  });
+
   describe('withdrawPendingRequest and countRequestsSince', () => {
     const repositoryOf = (tx: Prisma.TransactionClient): FriendshipRepository =>
       new FriendshipRepository(tx as unknown as PrismaService);

@@ -13,8 +13,17 @@ import { GENDERS } from '@/shared/auth/registration/registration';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ProfileResponseDto {
-  @ApiProperty({ description: 'The public nickname' })
+  @ApiProperty({ description: 'The public nickname, unique' })
   name!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Private: when the nickname may be changed again; null = it may be changed now',
+  })
+  nicknameChangeableFrom!: Date | null;
 
   @ApiProperty({ type: String, format: 'date-time' })
   joinedAt!: Date;
@@ -68,6 +77,7 @@ export class ProfileResponseDto {
   static fromDomain(profile: Profile): ProfileResponseDto {
     return {
       name: profile.name,
+      nicknameChangeableFrom: profile.nicknameChangeableFrom,
       joinedAt: profile.joinedAt,
       bio: profile.bio,
       image: profile.image,
@@ -94,13 +104,6 @@ export class PublicProfileResponseDto {
 
   @ApiProperty({ description: 'The public nickname' })
   name!: string;
-
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    description: '#225: the username, when the person has one',
-  })
-  nickname!: string | null;
 
   @ApiProperty({ type: String, nullable: true })
   bio!: string | null;
@@ -133,7 +136,6 @@ export class PublicProfileResponseDto {
     return {
       id: profile.id,
       name: profile.name,
-      nickname: profile.nickname,
       relation: profile.relation,
       bio: profile.bio,
       image: profile.image,

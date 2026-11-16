@@ -29,8 +29,10 @@ export const GENDERS = ["MALE", "FEMALE"] as const
 
 /** My own profile: the public parts and the private ones only I see. */
 export const profileSchema = z.object({
-  /** The public nickname. */
+  /** The public nickname, unique (#212). */
   name: z.string(),
+  /** When the nickname may be changed again; null = now. Only I see it. */
+  nicknameChangeableFrom: z.coerce.date().nullable(),
   /** When the account was created. */
   joinedAt: z.coerce.date(),
   bio: z.string().nullable(),
@@ -57,8 +59,6 @@ export type Profile = z.infer<typeof profileSchema>
 export const publicProfileSchema = z.object({
   id: z.string(),
   name: z.string(),
-  /** #225: the username, when the person has one. */
-  nickname: z.string().nullable(),
   /** #225: where I stand with the person; the same values as the friendship feature's. */
   relation: z.enum(["none", "request_sent", "request_received", "friends"]),
   bio: z.string().nullable(),

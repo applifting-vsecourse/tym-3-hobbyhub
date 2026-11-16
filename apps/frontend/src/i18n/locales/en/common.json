@@ -394,7 +394,7 @@
       "confirmPassword": "Repeat password",
       "email": "Email",
       "gender": "Gender",
-      "name": "Name / nickname",
+      "nickname": "Nickname",
       "password": "Password"
     },
     "forgotPassword": {
@@ -463,7 +463,6 @@
       "emailInvalid": "Invalid email",
       "emailRequired": "Email is required",
       "genderRequired": "Choose your gender",
-      "nameRequired": "Enter your name or a nickname",
       "passwordMin": "Password must be at least 8 characters",
       "passwordMinLength": "Password must be at least {{minimum}} characters",
       "passwordRequired": "Password is required",
@@ -840,7 +839,6 @@
       "friends": "Nobody here yet. Once someone accepts your friend request, you will see them here.",
       "requests": "Nothing here yet. Friend requests people send you will show up here."
     },
-    "nickname": "@{{nickname}}",
     "relation": {
       "friends": "Friend",
       "request_received": "Wants to be friends",
@@ -868,15 +866,15 @@
     },
     "search": {
       "error": "The search failed.",
-      "hint_one": "Type at least {{count}} character of a name or nickname.",
-      "hint_other": "Type at least {{count}} characters of a name or nickname.",
-      "label": "Search people by name or nickname",
+      "hint_one": "Type at least {{count}} character of a nickname.",
+      "hint_other": "Type at least {{count}} characters of a nickname.",
+      "label": "Search people by nickname",
       "loadMore": "Load more",
       "loadMoreError": "More people could not be loaded. Try again.",
       "loading": "Looking for people…",
       "loadingMore": "Loading…",
-      "noResults": "Nobody like that was found. Try just part of a name or nickname.",
-      "placeholder": "Name or nickname",
+      "noResults": "Nobody like that was found. Try just part of a nickname.",
+      "placeholder": "Nickname",
       "results": "People found",
       "retry": "Try again"
     },
@@ -1639,6 +1637,18 @@
     },
     "title": "My events"
   },
+  "nickname": {
+    "available": "The nickname is free.",
+    "changeTooSoon": "The nickname can be changed only once every 30 days.",
+    "checking": "Checking whether the nickname is free…",
+    "hint": "3–30 characters: letters without accents, digits, _ and a dot. It must be yours alone.",
+    "invalid": "Use only letters without accents, digits, _ and a dot",
+    "required": "Enter a nickname",
+    "reserved": "The nickname cannot contain words like admin, moderator or hobbyhub",
+    "taken": "Someone already has this nickname. Try another one.",
+    "tooLong": "The nickname can have at most {{max}} characters",
+    "tooShort": "The nickname must have at least {{min}} characters"
+  },
   "notifications": {
     "badgeOverflow": "{{max}}+",
     "bell": "Notifications",
@@ -2058,8 +2068,8 @@
       "bioTooLong": "The bio can have at most {{max}} characters.",
       "mediaHint": "The cover is your calling card: an illustration or your own photo. The picture over its edge is your profile picture.",
       "name": "Nickname",
-      "nameRequired": "Enter a nickname",
-      "nameTooLong": "The nickname can have at most {{max}} characters.",
+      "nicknameChangeHint": "The nickname can be changed once every 30 days.",
+      "nicknameLocked": "You changed your nickname recently. You can change it again from {{date}}.",
       "photoProblem": {
         "tooLarge": "The photo is still over 2 MB after shrinking. Choose another one.",
         "unreadable": "The photo could not be processed. Try another one."

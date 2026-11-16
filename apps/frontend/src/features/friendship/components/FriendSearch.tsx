@@ -26,7 +26,7 @@ type FriendSearchProps = {
 }
 
 /**
- * Vyhledat uživatele (#225): people by part of their name or nickname, never
+ * Vyhledat uživatele (#225): people by part of their nickname, never
  * by e-mail. Each one a card leading to the profile, with my relation to them.
  */
 export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) {
@@ -120,8 +120,6 @@ export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) 
 
 /** One person found: the card is the link to their profile. */
 function FriendSearchCard({ person }: { person: FriendSearchItem }) {
-  const { t } = useTranslation()
-
   return (
     <Link
       to="/profile/$userId"
@@ -134,11 +132,6 @@ function FriendSearchCard({ person }: { person: FriendSearchItem }) {
       />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="typo-title break-words text-foreground">{person.name}</span>
-        {person.nickname ? (
-          <span className="typo-small break-words text-muted-foreground">
-            {t("friends.nickname", { nickname: person.nickname })}
-          </span>
-        ) : null}
       </span>
       <FriendRelationBadge relation={person.relation} />
     </Link>

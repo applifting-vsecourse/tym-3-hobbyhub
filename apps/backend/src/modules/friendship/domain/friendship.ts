@@ -117,13 +117,12 @@ export const FRIEND_SEARCH_PAGE_SIZE = 20;
 
 /**
  * One person found by the search: only what the public profile shows (the
- * visibility matrix), never the e-mail.
+ * visibility matrix), never the e-mail. `name` is the nickname, the one name
+ * a person has (ADR-0025).
  */
 export type FriendSearchResult = {
   id: string;
   name: string;
-  /** The username, when the person has one. */
-  nickname: string | null;
   image: string | null;
   relation: FriendRelation;
 };

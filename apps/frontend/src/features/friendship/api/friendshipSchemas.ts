@@ -14,9 +14,8 @@ export const FRIEND_SEARCH_MAX_LENGTH = 100
 /** One person found: only the public profile, never the e-mail. */
 export const friendSearchItemSchema = z.object({
   id: z.string(),
+  /** The nickname, the one name a person has (ADR-0025). */
   name: z.string(),
-  /** The username, when the person has one. */
-  nickname: z.string().nullable(),
   /** A WebP data URL, or `avatar:<name>`. */
   image: z.string().nullable(),
   relation: friendRelationSchema,
