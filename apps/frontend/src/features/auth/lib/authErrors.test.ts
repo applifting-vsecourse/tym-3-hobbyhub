@@ -22,6 +22,16 @@ describe("authErrorMessage", () => {
     )
   })
 
+  it.each([
+    ["USERNAME_IS_ALREADY_TAKEN", "Tuhle přezdívku už někdo má. Zkuste jinou."],
+    ["NICKNAME_RESERVED", "Přezdívka nesmí obsahovat slova jako admin, moderator nebo hobbyhub"],
+    ["NICKNAME_TOO_SHORT", "Přezdívka musí mít alespoň 3 znaky"],
+    ["USERNAME_TOO_LONG", "Přezdívka může mít nejvýše 30 znaků"],
+    ["INVALID_USERNAME", "Použijte jen písmena bez diakritiky, číslice, _ a tečku"],
+  ])("translates the nickname code %s (#212)", (code, message) => {
+    expect(authErrorMessage(i18n.t, new AuthError(code), "signUpFailed")).toBe(message)
+  })
+
   it("explains the rate limit, which has no code", () => {
     expect(
       authErrorMessage(i18n.t, new AuthError(undefined, "Too many requests", 429), "signUpFailed"),

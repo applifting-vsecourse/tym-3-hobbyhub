@@ -771,8 +771,17 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  username        String? @db.VarChar(50)
-  displayUsername String? @db.VarChar(50)
+  // #212: the unique nickname (ADR-0025), kept by BetterAuth's username
+  // plugin: `username` lower-cased (the unique index compares it), and
+  // `displayUsername` as typed; `name` is always a copy of `displayUsername`.
+  // Null only for accounts not made by sign-up (tests). CHECKs in the
+  // migration: user_username_format, user_display_username_matches,
+  // user_name_is_display_username.
+  username          String?   @db.VarChar(30)
+  displayUsername   String?   @db.VarChar(30)
+  // When the user last changed the nickname in the profile; the next change
+  // waits 30 days. Null: never changed (sign-up and migration do not count).
+  usernameChangedAt DateTime?
 
   // Profile fields from the domain model. BetterAuth keeps name, email,
   // emailVerified and image. Several fields the model marks as required are

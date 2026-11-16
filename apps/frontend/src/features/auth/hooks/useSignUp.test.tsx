@@ -13,10 +13,10 @@ vi.mock("@/features/auth/lib/auth-client", () => ({
   authClient: { signUp: { email: signUpEmail }, getSession },
 }))
 
-const user = { id: "u1", name: "Jana Nováková", email: "jana@example.com" }
+const user = { id: "u1", name: "JanaNovakova", email: "jana@example.com" }
 
 const input: SignUpInput = {
-  name: user.name,
+  username: user.name,
   email: user.email,
   password: "heslo123",
   gender: "FEMALE",
@@ -37,6 +37,15 @@ const signUp = async (queryClient: QueryClient, from?: string) => {
 describe("useSignUp", () => {
   beforeEach(() => {
     signUpEmail.mockResolvedValue({ data: {}, error: null })
+  })
+
+  it("sends the nickname, and the same as the name BetterAuth requires (#212)", async () => {
+    getSession.mockResolvedValue({ data: null, error: null })
+    await signUp(new QueryClient())
+
+    expect(signUpEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ username: "JanaNovakova", name: "JanaNovakova" }),
+    )
   })
 
   it("sends the verification link to the confirmation page of the app", async () => {

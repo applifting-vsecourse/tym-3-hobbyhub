@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -10,8 +10,14 @@ import { AppForm } from "@/components/form/AppForm"
 import type { ActivityOption, LevelOption } from "@/components/hobbyhub/ActivityPicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { useNicknameAvailability } from "@/hooks/useNicknameAvailability"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { NICKNAME_LIMITS } from "@/lib/nickname"
 
+import {
+  NICKNAME_REFUSAL_MESSAGES,
+  nicknameRefusalOf,
+} from "@/features/profile/api/nicknameRefusal"
 import type { Profile } from "@/features/profile/api/profileSchemas"
 import {
   InterestsFields,
@@ -53,8 +59,8 @@ export function EditProfileForm({
 }: EditProfileFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const schema = useMemo(() => createEditProfileSchema(t), [t])
   const [saved, setSaved] = useState(() => editValuesOf(profile))
+  const schema = useMemo(() => createEditProfileSchema(t, saved.name), [t, saved.name])
   const form = useForm<EditProfileValues>({
     resolver: zodResolver(schema),
     defaultValues: saved,
@@ -66,9 +72,26 @@ export function EditProfileForm({
   const updatePrivate = useUpdatePrivateDetails()
 
   useRevalidateOnLanguageChange(form)
+  const nickname = useWatch({ control: form.control, name: "name" })
+  const nicknameAvailability = useNicknameAvailability(nickname, saved.name)
+
+  // A refused nickname is explained at its field, anything else as a failed save.
+  const explainFailure = (error: unknown) => {
+    const refusal = nicknameRefusalOf(error)
+    if (refusal) {
+      form.setError("name", { message: t(NICKNAME_REFUSAL_MESSAGES[refusal], NICKNAME_LIMITS) })
+    } else {
+      setHasSaveError(true)
+    }
+  }
 
   const submit = async (values: EditProfileValues) => {
     setHasSaveError(false)
+    // #212: the hint under the field already says so; the server would refuse it.
+    if (nicknameAvailability === "taken") {
+      form.setFocus("name")
+      return
+    }
     // The activities are the one part the server insists on: it needs one.
     if (differs(values.selection, saved.selection) && values.selection.length === 0) {
       form.setError("selection", { message: t("profile.interests.none") })
@@ -117,7 +140,7 @@ export function EditProfileForm({
       }
     } catch (error) {
       setSaved(done)
-      setHasSaveError(true)
+      explainFailure(error)
       throw error
     }
     setSaved(values)
@@ -137,7 +160,11 @@ export function EditProfileForm({
       onSubmit={submit}
       className="flex flex-col gap-8"
     >
-      <PublicFields activities={activities} />
+      <PublicFields
+        activities={activities}
+        nicknameChangeableFrom={profile.nicknameChangeableFrom}
+        nicknameAvailability={nicknameAvailability}
+      />
       <InterestsFields
         activities={activities}
         activityLabel={activityLabel}

@@ -124,7 +124,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 
 | Pole                                                               | Sám | Návštěvník | Přihlášený | Přítel | Vyřizuje jeho žádost | Organizátor jeho účasti | Superadmin    | Zablokovaný | Zdroj                                                             |
 | ------------------------------------------------------------------ | --- | ---------- | ---------- | ------ | -------------------- | ----------------------- | ------------- | ----------- | ----------------------------------------------------------------- |
-| Jméno a příjmení, fotka, bio, seznam zájmů                         | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#19][19], [PO][po]                                               |
+| Přezdívka, fotka, bio, seznam zájmů                                | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#19][19], [#212][212], [PO][po]                                  |
 | Průměr hodnocení a počet hodnocení                                 | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#44][44], [PO][po]                                               |
 | Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ❌     | ✅                   | ✅                      | ✅            | ❌          | [#32][32], [PO][po]                                               |
 | Historie účasti a pořádaných akcí                                  | ✅  | ❌         | ❌         | ✅     | ❌                   | ❌                      | ✅            | ❌          | [#56][56], [PO][po]                                               |
@@ -132,11 +132,13 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#24][24], [#67][67], [PO][po]                                    |
 | Rok narození, věk, pohlaví                                         | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#12][12], [#18][18], [#19][19], [#32][32], [#174][174], [PO][po] |
 | E-mailová adresa                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                                    |
+| Odkdy smí znovu změnit přezdívku                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#212][212]                                                       |
 | Placené členství                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                               |
 | Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [#61][61], [PO][po]            |
 | Blokace dvojice, kterou zadal správce, a její důvod                | ❌  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#239][239], [ADR-0022](../adr/adr-0022.md)                       |
 
-- **Veřejný profil** je jméno a příjmení, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
+- **Veřejný profil** je přezdívka, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
+- **Přezdívka je unikátní** bez ohledu na velikost písmen a je to jediné jméno, které aplikace o člověku drží ([#212][212], [ADR-0025](../adr/adr-0025.md)). Formulář registrace se během psaní ptá, jestli je volná, takže i nepřihlášený zjistí, že nějaká přezdívka existuje. Víc o účtu tím nezjistí: profil ani to, komu patří. Přezdívku organizátora vidí nepřihlášený stejně v detailu akce.
 - **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
 - **Přesné datum narození aplikace nezná.** Drží jen rok, věk ve složení účastníků je proto přesný na rok ([#174][174], [ADR-0016](../adr/adr-0016.md)).
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
@@ -238,3 +240,4 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [240]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/240
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
 [233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233
+[212]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/212
