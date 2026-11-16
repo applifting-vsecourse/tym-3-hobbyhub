@@ -25,6 +25,16 @@ type NotificationRow = Prisma.NotificationGetPayload<{
   include: typeof include;
 }>;
 
+// #239, ADR-0022: what people blocked from the recipient caused does not
+// exist for them. A notification without an actor stays (`NOT IN` alone
+// would drop it with the NULL).
+const notCausedBy = (
+  hiddenActorIds: string[],
+): Prisma.NotificationWhereInput =>
+  hiddenActorIds.length > 0
+    ? { OR: [{ actorId: null }, { actorId: { notIn: hiddenActorIds } }] }
+    : {};
+
 // The column is JSON; anything that is not an object is treated as empty.
 const payloadOf = (value: Prisma.JsonValue): NotificationPayload =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -92,9 +102,11 @@ export class NotificationRepository {
     recipientId: string,
     page: Page,
     filter: NotificationFilter = {},
+    hiddenActorIds: string[] = [],
   ): Promise<NotificationPage> {
     const where: Prisma.NotificationWhereInput = {
       recipientId,
+      ...notCausedBy(hiddenActorIds),
       ...(filter.read === undefined
         ? {}
         : { readAt: filter.read ? { not: null } : null }),
@@ -113,9 +125,12 @@ export class NotificationRepository {
     return { items: rows.map(mapToDomain), total };
   }
 
-  countUnread(recipientId: string): Promise<number> {
+  countUnread(
+    recipientId: string,
+    hiddenActorIds: string[] = [],
+  ): Promise<number> {
     return this.prisma.notification.count({
-      where: { recipientId, readAt: null },
+      where: { recipientId, readAt: null, ...notCausedBy(hiddenActorIds) },
     });
   }
 

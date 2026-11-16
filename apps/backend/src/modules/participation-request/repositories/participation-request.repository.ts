@@ -147,6 +147,11 @@ const takeSeat = (
     },
   });
 
+// #239, ADR-0022: the organizer who asks does not see people blocked from
+// them on the event's lists.
+const notAmong = (hiddenUserIds: string[]): { userId?: { notIn: string[] } } =>
+  hiddenUserIds.length > 0 ? { userId: { notIn: hiddenUserIds } } : {};
+
 @Injectable()
 export class ParticipationRequestRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -296,8 +301,13 @@ export class ParticipationRequestRepository {
   async getPendingRequests(
     eventId: string,
     page: Page,
+    hiddenUserIds: string[] = [],
   ): Promise<PendingRequestPage> {
-    const where = { eventId, status: RequestStatus.PENDING };
+    const where = {
+      eventId,
+      status: RequestStatus.PENDING,
+      ...notAmong(hiddenUserIds),
+    };
     const [requests, total] = await this.prisma.$transaction([
       this.prisma.participationRequest.findMany({
         where,
@@ -322,9 +332,12 @@ export class ParticipationRequestRepository {
     eventId: string,
     status: DecidedStatus,
     page: Page,
+    hiddenUserIds: string[] = [],
   ): Promise<DecidedRequestPage> {
-    if (status === 'REJECTED') return this.getRejected(eventId, page);
-    return this.getWithdrawn(eventId, page);
+    if (status === 'REJECTED') {
+      return this.getRejected(eventId, page, hiddenUserIds);
+    }
+    return this.getWithdrawn(eventId, page, hiddenUserIds);
   }
 
   // F-05.6, F-06.4: one state of the participants tab, the latest change first.
@@ -332,9 +345,12 @@ export class ParticipationRequestRepository {
     eventId: string,
     status: SeatStatus,
     page: Page,
+    hiddenUserIds: string[] = [],
   ): Promise<ParticipantPage> {
-    if (status === 'APPROVED') return this.getSeats(eventId, page);
-    return this.getCancelledSeats(eventId, page);
+    if (status === 'APPROVED') {
+      return this.getSeats(eventId, page, hiddenUserIds);
+    }
+    return this.getCancelledSeats(eventId, page, hiddenUserIds);
   }
 
   // Everyone with a seat, so the list adds up to the approved count: a seat
@@ -342,8 +358,13 @@ export class ParticipationRequestRepository {
   private async getSeats(
     eventId: string,
     page: Page,
+    hiddenUserIds: string[],
   ): Promise<ParticipantPage> {
-    const where = { eventId, status: ParticipationStatus.APPROVED };
+    const where = {
+      eventId,
+      status: ParticipationStatus.APPROVED,
+      ...notAmong(hiddenUserIds),
+    };
     const [seats, total] = await this.prisma.$transaction([
       this.prisma.participation.findMany({
         where,
@@ -394,8 +415,13 @@ export class ParticipationRequestRepository {
   private async getCancelledSeats(
     eventId: string,
     page: Page,
+    hiddenUserIds: string[],
   ): Promise<ParticipantPage> {
-    const where = { eventId, status: ParticipationStatus.CANCELLED };
+    const where = {
+      eventId,
+      status: ParticipationStatus.CANCELLED,
+      ...notAmong(hiddenUserIds),
+    };
     const [seats, total] = await this.prisma.$transaction([
       this.prisma.participation.findMany({
         where,
@@ -439,8 +465,13 @@ export class ParticipationRequestRepository {
   private async getRejected(
     eventId: string,
     page: Page,
+    hiddenUserIds: string[],
   ): Promise<DecidedRequestPage> {
-    const where = { eventId, status: RequestStatus.REJECTED };
+    const where = {
+      eventId,
+      status: RequestStatus.REJECTED,
+      ...notAmong(hiddenUserIds),
+    };
     const [requests, total] = await this.prisma.$transaction([
       this.prisma.participationRequest.findMany({
         where,
@@ -469,10 +500,12 @@ export class ParticipationRequestRepository {
   private async getWithdrawn(
     eventId: string,
     page: Page,
+    hiddenUserIds: string[],
   ): Promise<DecidedRequestPage> {
     const where = {
       eventId,
       status: RequestStatus.WITHDRAWN,
+      ...notAmong(hiddenUserIds),
       user: {
         participationRequests: {
           none: {
@@ -712,6 +745,50 @@ export class ParticipationRequestRepository {
         },
       });
       return count === 0 ? 'NO_SEAT' : null;
+    });
+  }
+
+  // #239, ADR-0022: an administrator blocked two people from each other.
+  // Wherever one of them organizes an event still to come, the other's
+  // waiting request is closed and their seat (or place on the waitlist, or
+  // invitation) is cancelled, quietly: no message, nothing counted as late.
+  async detachBlockedPair(a: string, b: string, at: Date): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      for (const [organizerId, userId] of [
+        [a, b],
+        [b, a],
+      ]) {
+        const event = {
+          endAt: { gt: at },
+          OR: [
+            { organizerId },
+            { coOrganizers: { some: { id: organizerId } } },
+          ],
+        } satisfies Prisma.EventWhereInput;
+        await tx.participationRequest.updateMany({
+          where: { userId, status: RequestStatus.PENDING, event },
+          data: { status: RequestStatus.CLOSED, decidedAt: at },
+        });
+        await tx.participation.updateMany({
+          where: {
+            userId,
+            status: {
+              in: [
+                ParticipationStatus.APPROVED,
+                ParticipationStatus.WAITLISTED,
+                ParticipationStatus.INVITED,
+              ],
+            },
+            event,
+          },
+          data: {
+            status: ParticipationStatus.CANCELLED,
+            cancelledAt: at,
+            waitlistPosition: null,
+            offerExpiresAt: null,
+          },
+        });
+      }
     });
   }
 }

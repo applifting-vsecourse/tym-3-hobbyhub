@@ -33,11 +33,11 @@ Platí pro všechny tabulky, ať se řádek týká akce, skupiny nebo profilu.
 - **Agregát nesmí prozradit to, co skrývá jednotlivý údaj.** Údaj, který nikdo nemá vidět, nesmí jít dopočítat z údaje, který vidět smí. Proto komu se zobrazuje jmenný seznam účastníků, tomu se nezobrazuje složení účastníků. Totéž platí pro každé další souhrnné číslo, které v aplikaci vznikne.
 - **Nedostupný obsah se chová, jako by neexistoval**, ne jako by byl zamčený. Hláška „nemáte přístup“ prozrazuje, že tam něco je, a kdo to tam dal.
 - **Hodnocení akcí i jednotlivců má stejné pravidlo** ([#44][44]): průměr hvězdiček a počet hodnocení je veřejný údaj, slovní hodnocení je soukromé mezi autorem a adresátem. U hodnocení akce to znamená mezi autorem a organizátorem. Nevidí ho ostatní účastníci, přátelé ani organizátor dalších akcí.
-- **Notifikace a e-mail nesou jen důvod a odkaz.** Detail se zobrazí až po přihlášení a tam platí matice. Upozornění v aplikaci vidí jen jeho příjemce a ukazuje jen to, co příjemce vidí podle matice ([ADR-0015](../adr/adr-0015.md)). E-mail žije mimo přihlášení, dá se přeposlat a zpětně ho nikdo neskryje, proto nenese jméno účastníka, přesnou adresu ani existenci neveřejné akce. Výjimky, kde obsah ve zprávě být musí: ověření e-mailu při registraci a při změně e-mailu ([#13][13], [#16][16]) a obnova hesla ([#16][16], [#57][57]).
+- **Notifikace a e-mail nesou jen důvod a odkaz.** Detail se zobrazí až po přihlášení a tam platí matice. Upozornění v aplikaci vidí jen jeho příjemce a ukazuje jen to, co příjemce vidí podle matice ([ADR-0015](../adr/adr-0015.md)). E-mail žije mimo přihlášení, dá se přeposlat a zpětně ho nikdo neskryje, proto nenese jméno účastníka, přesnou adresu ani existenci neveřejné akce. Výjimky, kde obsah ve zprávě být musí: ověření e-mailu při registraci a při změně e-mailu ([#13][13], [#16][16]) a obnova hesla ([#16][16], [#57][57]), pro správce také pozvánka a obnova jeho hesla ([ADR-0024](../adr/adr-0024.md)).
 
 ## Superadmin
 
-Správce aplikace ([#70][70], [#71][71], [#72][72]) je v každé tabulce samostatný sloupec, ne nepsaná výjimka. Vidí všechny akce, skupiny a profily včetně konceptů a soukromých a může blokovat uživatele, akce i skupiny. Dvě hranice:
+Správce aplikace ([#70][70], [#71][71], [#72][72]) je v každé tabulce samostatný sloupec, ne nepsaná výjimka. Je to samostatný účet s odděleným přihlášením do administrace, ne role běžného uživatele ([ADR-0010](../adr/adr-0010.md)); co vidí, dostává jen přes administrační API a v běžné aplikaci nic navíc neuvidí. Vidí všechny akce, skupiny a profily včetně konceptů a soukromých a může blokovat uživatele, akce i skupiny. Dvě hranice:
 
 - **Soukromý obsah nevidí automaticky.** Slovní hodnocení a zprávy mezi uživateli vidí jen na základě nahlášení ([#64][64], [#73][73]) a jen to, co nahlášení popisuje. V tabulkách „jen na report“.
 - **Každý přístup superadmina k soukromému obsahu se zaznamenává.**
@@ -50,6 +50,8 @@ Blokování ([#65][65]) mění viditelnost napříč celou aplikací, proto je v
 - **Nedozvím se, že jsem zablokovaný.** Obsah se chová, jako by nebyl, ne jako by byl zamčený.
 
 Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tabulce žádostí je proto mezi ostatními.
+
+**Blokace dvojice správcem** ([#239][239], [ADR-0022](../adr/adr-0022.md)) platí oběma směry: oba jsou pro sebe navzájem ve sloupci Zablokovaný. Za „vlastníka skupiny“ se u ní počítá i admin skupiny: skupinu, kterou ten druhý vlastní nebo spravuje, nevidí, pokud v ní sám není. Navíc se navzájem nevidí ani v seznamech účastníků a členů cizích akcí a skupin. Že blokace existuje a proč, vidí jen superadmin; nikdo z dvojice se to nedozví.
 
 ## Akce
 
@@ -88,7 +90,8 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 - **Kontakt na organizátora** je text, který organizátor sám vyplní, nikdy e-mail jeho účtu. Veškerá komunikace jde přes aplikaci; kontakt mimo ni je rozhodnutí organizátora, ne vedlejší efekt přihlášky.
 - **Jmenný seznam účastníků vidí ostatní účastníci.** Je to sdílená aktivita a lidé mají právo vědět, s kým někam jdou; organizátor je navíc všechny schválil. Proto se jim nezobrazuje složení účastníků: u malé skupiny jde z agregátu a jmen dopočítat konkrétní člověk.
 - **Placená propagace musí být viditelně označená.** Neoznačená placená propagace klame člověka, který si v aplikaci hledá partu.
-- **Akce zablokovaná správcem** se pro všechny kromě organizátora a superadmina chová, jako by neexistovala.
+- **Akce zablokovaná správcem** se pro všechny kromě organizátora a superadmina chová, jako by neexistovala ([#239][239], [ADR-0022](../adr/adr-0022.md)). Organizátor ji dál vidí v detailu a v Moje akce i s důvodem.
+- **Upozornění na skrytí a odkrytí akce** dostanou organizátoři, schválení účastníci, žadatelé a náhradníci. Důvod nese jen upozornění organizátorů. Ostatní vidí v aplikaci jen název akce, kterou znali, a že ji správce odstranil, bez odkazu na ni; e-mail podle pravidla výše nenese ani název.
 
 ## Žádosti o účast a o členství
 
@@ -121,7 +124,7 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 
 | Pole                                                               | Sám | Návštěvník | Přihlášený | Přítel | Vyřizuje jeho žádost | Organizátor jeho účasti | Superadmin    | Zablokovaný | Zdroj                                                             |
 | ------------------------------------------------------------------ | --- | ---------- | ---------- | ------ | -------------------- | ----------------------- | ------------- | ----------- | ----------------------------------------------------------------- |
-| Jméno a příjmení, fotka, bio, seznam zájmů                         | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#19][19], [PO][po]                                               |
+| Přezdívka, fotka, bio, seznam zájmů                                | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#19][19], [#212][212], [PO][po]                                  |
 | Průměr hodnocení a počet hodnocení                                 | ✅  | ❌         | ✅         | ✅     | ✅                   | ✅                      | ✅            | ❌          | [#44][44], [PO][po]                                               |
 | Jestli má ověřený e-mail                                           | ✅  | ❌         | ❌         | ❌     | ✅                   | ✅                      | ✅            | ❌          | [#32][32], [PO][po]                                               |
 | Historie účasti a pořádaných akcí                                  | ✅  | ❌         | ❌         | ✅     | ❌                   | ❌                      | ✅            | ❌          | [#56][56], [PO][po]                                               |
@@ -129,10 +132,13 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Lokalita a dojezd                                                  | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#24][24], [#67][67], [PO][po]                                    |
 | Rok narození, věk, pohlaví                                         | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#12][12], [#18][18], [#19][19], [#32][32], [#174][174], [PO][po] |
 | E-mailová adresa                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#19][19], [#32][32], [PO][po]                                    |
+| Odkdy smí znovu změnit přezdívku                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#212][212]                                                       |
 | Placené členství                                                   | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#23][23], [PO][po]                                               |
 | Přehledy: přihlášky, pořádané akce, žádosti o členství, notifikace | ✅  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#41][41], [#52][52], [#152][152], [#61][61], [PO][po]            |
+| Blokace dvojice, kterou zadal správce, a její důvod                | ❌  | ❌         | ❌         | ❌     | ❌                   | ❌                      | ✅            | ❌          | [#239][239], [ADR-0022](../adr/adr-0022.md)                       |
 
-- **Veřejný profil** je jméno a příjmení, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
+- **Veřejný profil** je přezdívka, fotka, bio, seznam zájmů a průměrné hodnocení. Nic víc.
+- **Přezdívka je unikátní** bez ohledu na velikost písmen a je to jediné jméno, které aplikace o člověku drží ([#212][212], [ADR-0025](../adr/adr-0025.md)). Formulář registrace se během psaní ptá, jestli je volná, takže i nepřihlášený zjistí, že nějaká přezdívka existuje. Víc o účtu tím nezjistí: profil ani to, komu patří. Přezdívku organizátora vidí nepřihlášený stejně v detailu akce.
 - **Lokalitu, dojezd, rok narození, věk a pohlaví nevidí nikdo** kromě vlastníka účtu. Ani přítel, ani organizátor akce, na kterou je člověk přihlášený. Věk a pohlaví se ostatním ukazují jen souhrnně ve složení účastníků akce, v rozpětí a jen tomu, kdo nevidí jmenný seznam ([#45][45]).
 - **Přesné datum narození aplikace nezná.** Drží jen rok, věk ve složení účastníků je proto přesný na rok ([#174][174], [ADR-0016](../adr/adr-0016.md)).
 - **E-mailovou adresu nevidí nikdo**, ani organizátor u svého účastníka.
@@ -163,6 +169,28 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 **Soukromá skupina je dohledatelná, ale zavřená.** Skupina, kterou nejde najít, nemůže shánět lidi, a to je důvod, proč produkt existuje. Vidět má jít, že existuje a čemu se věnuje; co se v ní děje, ne.
 
 **Akce jen pro skupinu vidí i ten, kdo na ní má místo** ([#47][47]). Kdo má schválenou účast, je náhradník nebo má čekající žádost, vidí akci dál, i když ze skupiny odejde nebo je odebrán. Jinak by se z akce nemohl odhlásit a zmizela by mu z přehledu. Pro všechny ostatní mimo skupinu akce neexistuje: není ve výpisu skupiny a na odkaz vrací „nenalezeno“.
+
+## Nahlášení
+
+Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizuje ve frontě ([#64][64], [#73][73], [#240][240], [ADR-0023](../adr/adr-0023.md)). Nahlášení uživatele je zároveň žádost o blokaci dvojice.
+
+- **Nahlášený:** uživatel, na kterého nahlášení míří, nebo organizátor nahlášené akce (hlavní i spoluorganizátoři).
+- **Ostatní:** všichni kromě nahlašujícího a superadmina, včetně účastníků nahlášené akce.
+- **Nahlašující:** kdo nahlášení podal.
+
+| Pole                                                       | Ostatní | Nahlášený | Nahlašující      | Superadmin | Zdroj                                       |
+| ---------------------------------------------------------- | ------- | --------- | ---------------- | ---------- | ------------------------------------------- |
+| Že nahlášení existuje                                      | ❌      | ❌        | ✅               | ✅         | [#64][64], [#240][240]                      |
+| Kdo nahlásil                                               | ❌      | ❌        | ✅               | ✅         | [#73][73], [ADR-0023](../adr/adr-0023.md)   |
+| Kategorie a text nahlášení                                 | ❌      | ❌        | ✅               | ✅         | [#64][64], [#240][240]                      |
+| Stav, odpovědný správce, poznámka k řešení, historie kroků | ❌      | ❌        | ❌               | ✅         | [#73][73], [ADR-0023](../adr/adr-0023.md)   |
+| Že bylo nahlášení vyřízeno                                 | ❌      | ❌        | jen bez výsledku | ✅         | [#64][64], [ADR-0023](../adr/adr-0023.md)   |
+| Výsledek: zásah (skrytí akce, blokace dvojice) nebo žádný  | ❌      | ❌        | ❌               | ✅         | [#239][239], [ADR-0022](../adr/adr-0022.md) |
+
+- **Nahlášený se o nahlášení nedozví**, ani z odpovědi API, ani z počtu. Dozví se jen o zásahu, a to tak, jak ho popisuje ADR-0022: organizátor skryté akce dostane upozornění s důvodem, blokaci dvojice nepozná nikdo z ní.
+- **Nahlašující vidí jen to, co sám poslal**: potvrzení o přijetí a hlášku, že už má na tentýž cíl nahlášení otevřené. Seznam svých nahlášení v aplikaci nemá.
+- **Upozornění o vyřízení** dostane nahlašující jednou, do zvonečku i e-mailem. Nenese cíl, kategorii, výsledek ani poznámku správce, aby neprozradilo blokaci dvojice ani to, co správce udělal.
+- **Nahlásit jde jen to, co nahlašující vidí.** Akce nebo profil, které pro něj neexistují, vrací při nahlášení 404 jako v detailu.
 
 [po]: review-2026-11-05.md
 [6]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/6
@@ -208,5 +236,8 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 [152]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/152
 [153]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/153
 [181]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/181
+[239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
+[240]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/240
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
 [233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233
+[212]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/212

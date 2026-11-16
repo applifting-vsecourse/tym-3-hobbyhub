@@ -179,6 +179,11 @@ export const eventDetailSchema = eventListItemSchema.extend({
   stats: participantStatsSchema.nullable(),
   /** Included participants needed before the server shows stats. */
   statsMinParticipants: z.number(),
+  /**
+   * #239: why an administrator hid the event. Only its organizers ever get a
+   * hidden event, so anyone else always sees null.
+   */
+  hiddenReason: z.string().nullable(),
 })
 
 export type EventDetail = z.infer<typeof eventDetailSchema>
