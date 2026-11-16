@@ -60,6 +60,33 @@ describe('friendPairOf', () => {
   it('orders by bytes, not by a locale', () => {
     expect(friendPairOf('b1', 'B2')).toEqual({ userAId: 'B2', userBId: 'b1' });
   });
+
+  it('orders letters with diacritics by their bytes too', () => {
+    expect(friendPairOf('é', 'z')).toEqual({ userAId: 'z', userBId: 'é' });
+  });
+
+  // UTF-16 (JavaScript's `<`) puts the emoji first; UTF-8 bytes and code
+  // points put U+FFFD first, as the database does.
+  it('orders a character outside the BMP after U+E000–U+FFFF, as the bytes do', () => {
+    const emoji = 'x-\u{1F600}';
+    const replacement = 'x-\uFFFD';
+    expect(emoji < replacement).toBe(true);
+    expect(friendPairOf(emoji, replacement)).toEqual({
+      userAId: replacement,
+      userBId: emoji,
+    });
+    expect(friendPairOf(replacement, emoji)).toEqual({
+      userAId: replacement,
+      userBId: emoji,
+    });
+  });
+
+  it('puts a prefix first', () => {
+    expect(friendPairOf('u10', 'u1')).toEqual({
+      userAId: 'u1',
+      userBId: 'u10',
+    });
+  });
 });
 
 describe('friendRequestViolations', () => {

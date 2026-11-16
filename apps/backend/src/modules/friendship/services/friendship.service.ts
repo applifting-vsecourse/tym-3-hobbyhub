@@ -1,7 +1,6 @@
 import {
   FRIEND_SEARCH_PAGE_SIZE,
   FriendRelation,
-  FriendRequest,
   friendRequestNotifyWindowStart,
   friendRequestViolations,
   FriendSearchPage,
@@ -27,27 +26,12 @@ export type SentFriendRequest = {
   notifyRecipient: boolean;
 };
 
-// #227, #225, ADR-0023: what other modules ask about friendships, searching
+// #227, #225, ADR-0026: what other modules ask about friendships, searching
 // people, sending a request and withdrawing it. #228 adds deciding requests, #226 the list of
 // friends.
 @Injectable()
 export class FriendshipService {
   constructor(private readonly friendshipRepository: FriendshipRepository) {}
-
-  /** Whether the two people are friends. Nobody is their own friend. */
-  async areFriends(oneId: string, otherId: string): Promise<boolean> {
-    if (oneId === otherId) return false;
-    return this.friendshipRepository.areFriends(oneId, otherId);
-  }
-
-  /** The request still waiting between the two people, in either direction. */
-  async pendingRequestBetween(
-    oneId: string,
-    otherId: string,
-  ): Promise<FriendRequest | null> {
-    if (oneId === otherId) return null;
-    return this.friendshipRepository.findPendingRequestBetween(oneId, otherId);
-  }
 
   /** #225: where the viewer stands with the other person, for their profile. */
   async relationBetween(

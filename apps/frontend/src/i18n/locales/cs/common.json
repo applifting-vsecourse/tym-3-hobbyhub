@@ -599,6 +599,11 @@
       "create": "Nová skupina",
       "discoverEmpty": "Tady uvidíte veřejné skupiny, ve kterých ještě nejste. Zatím žádná není.",
       "discoverEmptyVisitor": "Zatím tu není žádná veřejná skupina.",
+      "emptyFiltered": {
+        "clear": "Vymazat filtry",
+        "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
+        "title": "Nic nenalezeno"
+      },
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",
@@ -613,6 +618,9 @@
         "MEMBER": "Člen",
         "OWNER": "Organizátor"
       },
+      "searchLabel": "Hledat skupiny",
+      "searchPlaceholder": "Název, místo nebo aktivita",
+      "sortNote": "Výsledky řadíme od nejnovější skupiny.",
       "tabs": {
         "discover": "Objevit",
         "mine": "Moje skupiny",
@@ -1664,6 +1672,7 @@
       "notice": "Nikdo další tyto údaje neuvidí.",
       "title": "Soukromé údaje"
     },
+    "privateRefused": "Soukromé údaje jsme neuložili: opravte zvýrazněné pole. Nastavení pro přátele se ukládá spolu s nimi, proto se zatím také neuložilo.",
     "public": {
       "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
       "mediaHint": "Úvodní grafika je vaše vizitka: ilustrace, nebo vlastní fotka. Obrázek přes její okraj je váš profilový obrázek.",

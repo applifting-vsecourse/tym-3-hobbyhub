@@ -31,6 +31,7 @@ import {
   editValuesOf,
   type EditProfileValues,
 } from "@/features/profile/lib/editProfile"
+import { privateDetailsErrorsOf } from "@/features/profile/lib/privateDetailsErrors"
 
 type EditProfileFormProps = {
   profile: Profile
@@ -60,7 +61,8 @@ export function EditProfileForm({
     resolver: zodResolver(schema),
     defaultValues: saved,
   })
-  const [hasSaveError, setHasSaveError] = useState(false)
+  // A refused private detail has its own message: it held back the switches too.
+  const [saveError, setSaveError] = useState<"failed" | "privateRefused" | null>(null)
   const updateProfile = useUpdateProfile()
   const updateInterests = useUpdateInterests()
   const updateLocation = useUpdateLocation()
@@ -69,7 +71,7 @@ export function EditProfileForm({
   useRevalidateOnLanguageChange(form)
 
   const submit = async (values: EditProfileValues) => {
-    setHasSaveError(false)
+    setSaveError(null)
     // The activities are the one part the server insists on: it needs one.
     if (differs(values.selection, saved.selection) && values.selection.length === 0) {
       form.setError("selection", { message: t("profile.interests.none") })
@@ -107,33 +109,32 @@ export function EditProfileForm({
       }
       // The private details and what friends see (#227) go in one request,
       // which the server saves in one write: never one without the other.
-      const details =
-        values.gender &&
-        values.birthYear &&
-        (values.gender !== done.gender || values.birthYear !== done.birthYear)
-          ? { gender: values.gender, birthYear: values.birthYear }
-          : null
-      const visibility =
+      const hasDetailsChange = values.gender !== done.gender || values.birthYear !== done.birthYear
+      const hasVisibilityChange =
         values.friendsSeeEventHistory !== done.friendsSeeEventHistory ||
         values.friendsSeeUpcomingEvents !== done.friendsSeeUpcomingEvents
-          ? {
-              friendsSeeEventHistory: values.friendsSeeEventHistory,
-              friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
-            }
-          : null
-      if (details || visibility) {
+      if ((hasDetailsChange && values.gender && values.birthYear) || hasVisibilityChange) {
         await updatePrivate.mutateAsync({
-          ...(details && {
-            gender: details.gender,
-            birthYear: Number(details.birthYear.trim()),
+          ...(hasDetailsChange &&
+            values.gender &&
+            values.birthYear && {
+              gender: values.gender,
+              birthYear: Number(values.birthYear.trim()),
+            }),
+          ...(hasVisibilityChange && {
+            friendsSeeEventHistory: values.friendsSeeEventHistory,
+            friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
           }),
-          ...visibility,
         })
-        done = { ...done, ...details, ...visibility }
       }
     } catch (error) {
       setSaved(done)
-      setHasSaveError(true)
+      // The server refused a private detail: say which, at its field.
+      const refused = privateDetailsErrorsOf(error)
+      for (const { field, message } of refused) {
+        form.setError(field, { message: t(message) })
+      }
+      setSaveError(refused.length > 0 ? "privateRefused" : "failed")
       throw error
     }
     setSaved(values)
@@ -169,9 +170,11 @@ export function EditProfileForm({
       <PrivateFields />
       <FriendVisibilityFields />
 
-      {hasSaveError ? (
+      {saveError ? (
         <Alert variant="destructive">
-          <AlertDescription>{t("profile.saveError")}</AlertDescription>
+          <AlertDescription>
+            {t(saveError === "privateRefused" ? "profile.privateRefused" : "profile.saveError")}
+          </AlertDescription>
         </Alert>
       ) : null}
       <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row-reverse sm:justify-start">

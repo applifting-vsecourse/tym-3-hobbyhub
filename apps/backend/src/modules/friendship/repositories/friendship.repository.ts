@@ -31,7 +31,7 @@ const isUniqueViolation = (error: unknown): boolean =>
 const containsPattern = (text: string): string =>
   `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 
-// #227, #225, ADR-0023. The only place that touches the friendship tables.
+// #227, #225, ADR-0026. The only place that touches the friendship tables.
 // Trusts the layers above: it validates nothing, it only reads and writes.
 @Injectable()
 export class FriendshipRepository {

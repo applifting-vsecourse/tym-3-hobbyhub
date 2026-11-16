@@ -14,7 +14,7 @@ type GroupGridProps<T> = {
   empty: ReactNode
   renderItem: (item: T) => ReactNode
   getKey: (item: T) => string
-  /** The list's layout; three cards across from `md` by default. */
+  /** The list's layout; one column of rows, like the event list, by default. */
   listClassName?: string
   /** What failed, when the list is not of groups. */
   errorTitle?: string
@@ -29,7 +29,7 @@ export function GroupGrid<T>({
   empty,
   renderItem,
   getKey,
-  listClassName = "grid gap-3 md:grid-cols-3",
+  listClassName = "flex flex-col",
   errorTitle,
 }: GroupGridProps<T>) {
   const { t } = useTranslation()

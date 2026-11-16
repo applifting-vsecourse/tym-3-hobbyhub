@@ -1,4 +1,4 @@
--- #227, ADR-0023: přátelství uživatelů. Žádost o přátelství, symetrické
+-- #227, ADR-0026: přátelství uživatelů. Žádost o přátelství, symetrické
 -- přátelství (jeden řádek na dvojici) a dva přepínače, co přátelé vidí.
 -- Existující účty dostanou výchozí hodnoty přepínačů z DEFAULT.
 

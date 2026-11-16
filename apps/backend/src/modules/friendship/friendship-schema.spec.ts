@@ -1,4 +1,4 @@
-// Database constraints of friendships and friend requests (#227, ADR-0023).
+// Database constraints of friendships and friend requests (#227, ADR-0026).
 // Like event-schema.spec.ts, the suite needs a real PostgreSQL with the
 // migrations applied and only runs on request:
 //   DB_TESTS=1 pnpm backend test friendship-schema
@@ -167,6 +167,13 @@ describeDb('friendship schema constraints', () => {
     it.each([
       ['lower-case ids', `a-${unique()}`, `b-${unique()}`],
       ['mixed-case ids', `b-${unique()}`, `B-${unique()}`],
+      ['ids with diacritics', `é-${unique()}`, `z-${unique()}`],
+      // UTF-16 and the bytes disagree here (see friendPairOf).
+      [
+        'ids outside the BMP',
+        `x-\u{1F600}-${unique()}`,
+        `x-\uFFFD-${unique()}`,
+      ],
     ])('accepts the pair from friendPairOf for %s', async (_case, x, y) => {
       await inRolledBackTransaction(async (tx) => {
         await createUser(tx, x);

@@ -479,7 +479,7 @@ model ParticipationRequest {
   @@map("participation_request")
 }
 
-// #227, ADR-0023: where a friend request stands. A rejected request is kept
+// #227, ADR-0026: where a friend request stands. A rejected request is kept
 // (decidedAt) but does not stop a new one between the same two people.
 enum FriendRequestStatus {
   PENDING
@@ -491,7 +491,7 @@ enum FriendRequestStatus {
   @@map("friend_request_status")
 }
 
-// #227, ADR-0023: one person asks another to become friends. In the migration:
+// #227, ADR-0026: one person asks another to become friends. In the migration:
 // CHECK friend_request_not_self, CHECK friend_request_decided_at (decidedAt is
 // set exactly when the request is no longer PENDING) and the unique index
 // friend_request_one_pending_per_pair: at most one PENDING request for a pair,
@@ -513,7 +513,7 @@ model FriendRequest {
   @@map("friend_request")
 }
 
-// #227, ADR-0023: two people are friends. Symmetric, so one row per pair with
+// #227, ADR-0026: two people are friends. Symmetric, so one row per pair with
 // the ids in order: CHECK friendship_ordered_pair (userAId < userBId) in the
 // migration, and the pair is unique.
 model Friendship {
@@ -732,7 +732,7 @@ model User {
   // for accounts created before the confirmation existed (ADR-0016).
   adulthoodConfirmedAt     DateTime?
   disabledNotifications    NotificationType[] @default([])
-  // #227, ADR-0023: what friends may see of the user's events. History
+  // #227, ADR-0026: what friends may see of the user's events. History
   // (past events) is shown by default, upcoming events are not. Both cover
   // approved participations and organized events only; #226 applies them.
   friendsSeeEventHistory   Boolean            @default(true)

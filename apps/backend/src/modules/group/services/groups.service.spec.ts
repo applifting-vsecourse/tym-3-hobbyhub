@@ -456,6 +456,7 @@ describe('GroupsService', () => {
       'u1',
       DISCOVER_PAGE_SIZE,
       'g0',
+      { activityIds: [] },
     );
   });
 
@@ -471,6 +472,24 @@ describe('GroupsService', () => {
       undefined,
       DISCOVER_PAGE_SIZE,
       undefined,
+      { activityIds: [] },
+    );
+  });
+
+  it('passes the filter of the discover list on', async () => {
+    const { repository, service } = setup();
+    repository.listDiscoverableGroups.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+    });
+    const filter = { activityIds: ['a1'], search: 'volej', location: 'Praha' };
+
+    await service.discoverGroups(undefined, undefined, filter);
+    expect(repository.listDiscoverableGroups).toHaveBeenCalledWith(
+      undefined,
+      DISCOVER_PAGE_SIZE,
+      undefined,
+      filter,
     );
   });
 });
