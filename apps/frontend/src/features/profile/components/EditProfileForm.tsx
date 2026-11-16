@@ -20,6 +20,7 @@ import {
 } from "@/features/profile/api/nicknameRefusal"
 import type { Profile } from "@/features/profile/api/profileSchemas"
 import {
+  FriendVisibilityFields,
   InterestsFields,
   LocationFields,
   PrivateFields,
@@ -36,6 +37,7 @@ import {
   editValuesOf,
   type EditProfileValues,
 } from "@/features/profile/lib/editProfile"
+import { privateDetailsErrorsOf } from "@/features/profile/lib/privateDetailsErrors"
 
 type EditProfileFormProps = {
   profile: Profile
@@ -65,7 +67,8 @@ export function EditProfileForm({
     resolver: zodResolver(schema),
     defaultValues: saved,
   })
-  const [hasSaveError, setHasSaveError] = useState(false)
+  // A refused private detail has its own message: it held back the switches too.
+  const [saveError, setSaveError] = useState<"failed" | "privateRefused" | null>(null)
   const updateProfile = useUpdateProfile()
   const updateInterests = useUpdateInterests()
   const updateLocation = useUpdateLocation()
@@ -75,18 +78,24 @@ export function EditProfileForm({
   const nickname = useWatch({ control: form.control, name: "name" })
   const nicknameAvailability = useNicknameAvailability(nickname, saved.name)
 
-  // A refused nickname is explained at its field, anything else as a failed save.
+  // A refused nickname or private detail is explained at its field, anything
+  // else as a failed save.
   const explainFailure = (error: unknown) => {
     const refusal = nicknameRefusalOf(error)
     if (refusal) {
       form.setError("name", { message: t(NICKNAME_REFUSAL_MESSAGES[refusal], NICKNAME_LIMITS) })
-    } else {
-      setHasSaveError(true)
+      return
     }
+    // The server refused a private detail: say which, at its field.
+    const refused = privateDetailsErrorsOf(error)
+    for (const { field, message } of refused) {
+      form.setError(field, { message: t(message) })
+    }
+    setSaveError(refused.length > 0 ? "privateRefused" : "failed")
   }
 
   const submit = async (values: EditProfileValues) => {
-    setHasSaveError(false)
+    setSaveError(null)
     // #212: the hint under the field already says so; the server would refuse it.
     if (nicknameAvailability === "taken") {
       form.setFocus("name")
@@ -127,16 +136,25 @@ export function EditProfileForm({
         await updateLocation.mutateAsync({ street, city, postalCode, country, latitude, longitude })
         done = { ...done, address: values.address }
       }
-      if (
-        values.gender &&
-        values.birthYear &&
-        (values.gender !== done.gender || values.birthYear !== done.birthYear)
-      ) {
+      // The private details and what friends see (#227) go in one request,
+      // which the server saves in one write: never one without the other.
+      const hasDetailsChange = values.gender !== done.gender || values.birthYear !== done.birthYear
+      const hasVisibilityChange =
+        values.friendsSeeEventHistory !== done.friendsSeeEventHistory ||
+        values.friendsSeeUpcomingEvents !== done.friendsSeeUpcomingEvents
+      if ((hasDetailsChange && values.gender && values.birthYear) || hasVisibilityChange) {
         await updatePrivate.mutateAsync({
-          gender: values.gender,
-          birthYear: Number(values.birthYear.trim()),
+          ...(hasDetailsChange &&
+            values.gender &&
+            values.birthYear && {
+              gender: values.gender,
+              birthYear: Number(values.birthYear.trim()),
+            }),
+          ...(hasVisibilityChange && {
+            friendsSeeEventHistory: values.friendsSeeEventHistory,
+            friendsSeeUpcomingEvents: values.friendsSeeUpcomingEvents,
+          }),
         })
-        done = { ...done, gender: values.gender, birthYear: values.birthYear }
       }
     } catch (error) {
       setSaved(done)
@@ -178,10 +196,13 @@ export function EditProfileForm({
         }}
       />
       <PrivateFields />
+      <FriendVisibilityFields />
 
-      {hasSaveError ? (
+      {saveError ? (
         <Alert variant="destructive">
-          <AlertDescription>{t("profile.saveError")}</AlertDescription>
+          <AlertDescription>
+            {t(saveError === "privateRefused" ? "profile.privateRefused" : "profile.saveError")}
+          </AlertDescription>
         </Alert>
       ) : null}
       <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row-reverse sm:justify-start">

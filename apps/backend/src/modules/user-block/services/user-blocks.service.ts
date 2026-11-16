@@ -1,3 +1,4 @@
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { MembershipRequestsService } from '@/modules/membership-request/services/membership-requests.service';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
@@ -40,6 +41,7 @@ export class UserBlocksService {
     private readonly participationRequests: ParticipationRequestsService,
     private readonly membershipRequests: MembershipRequestsService,
     private readonly groups: GroupsService,
+    private readonly friendships: FriendshipService,
   ) {}
 
   async listBlocksOf(userId: string): Promise<AdminUserBlock[]> {
@@ -92,6 +94,8 @@ export class UserBlocksService {
     await this.participationRequests.detachBlockedPair(a, b, now);
     await this.membershipRequests.closeBlockedPair(a, b, now);
     await this.groups.removeBlockedPair(a, b);
+    // ADR-0026: blocking ends the friendship and the pending requests.
+    await this.friendships.removeBlockedPair(a, b, now);
   }
 
   private async assertUsersExist(ids: string[]): Promise<void> {

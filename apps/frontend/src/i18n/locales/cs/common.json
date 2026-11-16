@@ -833,6 +833,21 @@
     "label": "Patička",
     "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
   },
+  "friends": {
+    "empty": {
+      "findPeople": "Vyhledat uživatele",
+      "friends": "Zatím tu nikoho nemáte. Až vám někdo přijme žádost o přátelství, uvidíte ho tady.",
+      "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady.",
+      "search": "Zatím tu nic není. Brzy tu půjde najít lidi podle přezdívky nebo jména a příjmení."
+    },
+    "tabs": {
+      "friends": "Přátelé",
+      "label": "Části sekce Přátelé",
+      "requests": "Žádosti",
+      "search": "Vyhledat uživatele"
+    },
+    "title": "Přátelé"
+  },
   "geo": {
     "address": {
       "error": "Adresy se nepodařilo načíst. Zkuste to prosím znovu.",
@@ -1374,10 +1389,10 @@
     "nav": {
       "add": "Přidat akci",
       "discover": "Akce",
+      "friends": "Přátelé",
       "groups": "Skupiny",
       "label": "Hlavní navigace",
       "myEvents": "Moje akce",
-      "profile": "Profil",
       "skipToContent": "Přeskočit na obsah",
       "withNewRequests": "{{label}}, nové žádosti"
     },
@@ -1982,6 +1997,14 @@
     "edit": {
       "title": "Upravit profil"
     },
+    "friendVisibility": {
+      "description": "Přátelé uvidí akce, kde máte schválenou účast, a akce, které pořádáte. Čekající přihlášky, místa náhradníka a zrušené akce neuvidí.",
+      "history": "Přátelé vidí moji historii akcí",
+      "historyHint": "Proběhlé akce na vašem profilu.",
+      "title": "Co uvidí přátelé",
+      "upcoming": "Přátelé vidí moje budoucí akce",
+      "upcomingHint": "Nadcházející akce na vašem profilu a vaše jméno v detailu akce."
+    },
     "interests": {
       "description": "Sporty a aktivity, které vás baví, a jak dobře je hrajete. Ostatním je ukážeme na profilu.",
       "none": "Vyberte alespoň jednu aktivitu.",
@@ -2010,6 +2033,7 @@
       "notice": "Nikdo další tyto údaje neuvidí.",
       "title": "Soukromé údaje"
     },
+    "privateRefused": "Soukromé údaje jsme neuložili: opravte zvýrazněné pole. Nastavení pro přátele se ukládá spolu s nimi, proto se zatím také neuložilo.",
     "public": {
       "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
       "mediaHint": "Úvodní grafika je vaše vizitka: ilustrace, nebo vlastní fotka. Obrázek přes její okraj je váš profilový obrázek.",
@@ -2034,6 +2058,11 @@
       "addBio": "Napsat pár slov",
       "birthYear": "Rok narození {{year}}",
       "edit": "Upravit profil",
+      "friendVisibilityHint": "Změnit to můžete v <edit>úpravě profilu</edit>.",
+      "friendsDontSeeHistory": "Přátelé nevidí vaši historii akcí",
+      "friendsDontSeeUpcoming": "Přátelé nevidí vaše budoucí akce",
+      "friendsSeeHistory": "Přátelé vidí vaši historii akcí",
+      "friendsSeeUpcoming": "Přátelé vidí vaše budoucí akce",
       "memberSince": "Členem od {{date}}",
       "noActivities": "Zatím žádné aktivity.",
       "noAddress": "Adresu jste zatím nezadali",
