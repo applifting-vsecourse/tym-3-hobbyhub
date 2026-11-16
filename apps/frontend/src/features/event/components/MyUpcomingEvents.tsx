@@ -1,3 +1,4 @@
+import { useId } from "react"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
@@ -32,6 +33,7 @@ type MyUpcomingEventsProps = {
  */
 export function MyUpcomingEvents({ userId, className, now = new Date() }: MyUpcomingEventsProps) {
   const { t, i18n } = useTranslation()
+  const headingId = useId()
   // The first page of each list holds what is still ahead first, soonest first.
   const applications = useInfiniteQuery(myApplicationsQueryOptions(userId))
   const hosted = useInfiniteQuery(myHostedEventsQueryOptions(userId))
@@ -58,11 +60,11 @@ export function MyUpcomingEvents({ userId, className, now = new Date() }: MyUpco
 
   return (
     <section
-      aria-labelledby="my-upcoming-heading"
+      aria-labelledby={headingId}
       className={cn("flex flex-col gap-3", className)}
     >
       <h2
-        id="my-upcoming-heading"
+        id={headingId}
         className="typo-h3 text-foreground"
       >
         {t("profile.upcoming.title")}
