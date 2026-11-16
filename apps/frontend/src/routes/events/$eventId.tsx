@@ -183,20 +183,6 @@ function EventDetailPage() {
             activityLabel={activityName(t, eventQuery.data.activity)}
             joinAction={joinAction}
             isOrganizerLinked={Boolean(user)}
-            groupLink={
-              eventQuery.data.group ? (
-                <p className="typo-small text-muted-foreground">
-                  {t("events.detail.organizedByGroup")}{" "}
-                  <Link
-                    to="/groups/$groupId"
-                    params={{ groupId: eventQuery.data.group.id }}
-                    className="font-medium text-foreground underline underline-offset-4"
-                  >
-                    {eventQuery.data.group.name}
-                  </Link>
-                </p>
-              ) : null
-            }
             shareAction={<ShareEventAction event={eventQuery.data} />}
             reportAction={
               canReport ? (
@@ -214,6 +200,7 @@ function EventDetailPage() {
                 <OrganizerActions
                   event={eventQuery.data}
                   canEdit={!isHidden}
+                  surface="dark"
                 />
               ) : null
             }
