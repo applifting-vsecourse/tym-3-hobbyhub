@@ -103,18 +103,26 @@ export class GroupsController {
     @Query() query: DiscoverGroupsQueryDto,
   ): Promise<GroupPageResponseDto> {
     return GroupPageResponseDto.fromDomain(
-      await this.groupsService.discoverGroups(user, query.cursor),
+      await this.groupsService.discoverGroups(user, query.cursor, {
+        activityIds: query.activityIds,
+        search: query.search,
+        location: query.location,
+      }),
     );
   }
 
   // Public detail (F-02.5): a visitor needs no account. It shows the member
   // count, never the members.
   @Get(':id')
+  @UseGuards(OptionalUserGuard)
   @ApiOperation({ summary: 'Get a public group' })
   @ApiResponse({ status: 200, type: GroupResponseDto })
   @ApiResponse({ status: 404, description: 'Group not found or not public' })
-  async detail(@Param('id') id: string): Promise<GroupResponseDto> {
-    const group = await this.groupsService.getPublicGroup(id);
+  async detail(
+    @OptionalUser() user: Identity | undefined,
+    @Param('id') id: string,
+  ): Promise<GroupResponseDto> {
+    const group = await this.groupsService.getPublicGroup(id, user);
     return GroupResponseDto.fromDomain(group);
   }
 

@@ -15,13 +15,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  user
-  admin
-
-  @@map("user_role")
-}
-
 // ---------------------------------------------------------------------------
 // Doménový model (wiki: Domenovy-model). Names follow the model; derived
 // attributes ("/freeSpots", "/approvedCount", …) are computed in code.
@@ -68,11 +61,25 @@ enum NotificationType {
   // F-09.3: a change of time or place, and a cancellation, of an event one goes to.
   EVENT_CHANGED
   EVENT_CANCELLED
+  // #239, ADR-0022: an administrator hid the event, or brought it back.
+  EVENT_HIDDEN
+  EVENT_RESTORED
+  // ADR-0023: a report the recipient filed was dealt with; says nothing of how.
+  REPORT_RESOLVED
   // #233, ADR-0021: the event one goes to, or organizes, starts soon.
   EVENT_REMINDER
   HOSTED_EVENT_REMINDER
 
   @@map("notification_type")
+}
+
+// ADR-0023: where a report stands in the administrators' queue.
+enum ReportStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+
+  @@map("report_status")
 }
 
 // #233, ADR-0021: which reminder before the start of an event.
@@ -350,15 +357,22 @@ model Event {
   contributionNote              String?  @db.VarChar(200)
 
   // F-05.2 / F-05.4 private event via an invitation link.
-  inviteToken     String? @unique @db.VarChar(100)
+  inviteToken     String?        @unique @db.VarChar(100)
   // F-06.5 link to an external group chat.
-  externalChatUrl String? @db.Text
+  externalChatUrl String?        @db.Text
   // F-06.5 how to reach the organizer, shown to APPROVED participants only.
-  contact         String? @db.VarChar(200)
+  contact         String?        @db.VarChar(200)
   // Shown to APPROVED participants only.
-  onlineUrl       String? @db.Text
-  // F-11.3, F-11.4 hidden by an administrator.
-  isHidden        Boolean @default(false)
+  onlineUrl       String?        @db.Text
+  // F-11.3, #239 hidden by an administrator (ADR-0022): when and why go
+  // together with the flag, who is known for everything hidden through the
+  // administration (CHECK event_hidden_all_or_nothing in the migration). The
+  // reason is shown to the organizers and the administration.
+  isHidden        Boolean        @default(false)
+  hiddenAt        DateTime?
+  hiddenReason    String?        @db.VarChar(500)
+  hiddenBy        Administrator? @relation("EventHiddenBy", fields: [hiddenById], references: [id], onDelete: Restrict)
+  hiddenById      String?
 
   // Model datatype `Location`, stored as columns. The address is all-or-nothing
   // (see the CHECK constraints in the migration); an ONLINE event has none.
@@ -397,6 +411,8 @@ model Event {
   group                 Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
   groupId               String?
   notifications         Notification[]
+  // ADR-0023: reports about this event, seen by the administration only.
+  reports               Report[]
   reminders             EventReminder[]
 
   @@index([organizerId])
@@ -523,6 +539,8 @@ enum EmailKind {
   VERIFY_EMAIL
   RESET_PASSWORD
   NOTIFICATION
+  // ADR-0024: a new administrator sets their password.
+  ADMIN_INVITATION
 }
 
 enum EmailDeliveryStatus {
@@ -558,12 +576,16 @@ model EmailDelivery {
   html      String @db.Text
 
   // Whose e-mail it is: the per-recipient cap counts by it. Their e-mails go
-  // with their account.
-  recipient      User          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  recipientId    String
+  // with their account. Exactly one of a user and an administrator (ADR-0024,
+  // CHECK email_delivery_one_recipient in the migration); an administrator's
+  // e-mails are all critical, so the cap never counts them.
+  recipient       User?          @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId     String?
+  administrator   Administrator? @relation(fields: [administratorId], references: [id], onDelete: Cascade)
+  administratorId String?
   // At most one e-mail per notification; the record stays when it goes.
-  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
-  notificationId String?       @unique
+  notification    Notification?  @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  notificationId  String?        @unique
 
   attempts          Int              @default(0)
   nextAttemptAt     DateTime         @default(now())
@@ -639,6 +661,105 @@ model RateLimit {
   @@map("rate_limit")
 }
 
+// ---------------------------------------------------------------------------
+// ADR-0010, #238: the administrator is a separate account with its own sign-in,
+// a second BetterAuth instance (`shared/admin-auth/`) on these tables. An
+// administrator has no row in `User`: no profile, events or requests.
+// ---------------------------------------------------------------------------
+
+model Administrator {
+  id            String         @id
+  name          String
+  email         String
+  emailVerified Boolean        @default(false)
+  image         String?        @db.Text
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      AdminSession[]
+  accounts      AdminAccount[]
+
+  // ADR-0024: who invited them; null for the first one (seed, admin:create).
+  createdById               String?
+  createdBy                 Administrator?  @relation("AdministratorCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAdministrators     Administrator[] @relation("AdministratorCreatedBy")
+  // ADR-0024: removed by a colleague, never deleted. Both or neither (CHECK
+  // administrator_deactivation_all_or_nothing in the migration).
+  deactivatedAt             DateTime?
+  deactivatedById           String?
+  deactivatedBy             Administrator?  @relation("AdministratorDeactivatedBy", fields: [deactivatedById], references: [id], onDelete: Restrict)
+  deactivatedAdministrators Administrator[] @relation("AdministratorDeactivatedBy")
+  emailDeliveries           EmailDelivery[]
+  // ADR-0022: what they did. Administrators are deactivated, never deleted.
+  hiddenEvents              Event[]         @relation("EventHiddenBy")
+  userBlocks                UserBlock[]
+  auditLogEntries           AuditLogEntry[]
+  // ADR-0023: the reports they are responsible for.
+  assignedReports           Report[]
+
+  @@unique([email])
+  @@map("administrator")
+}
+
+// `userId` keeps BetterAuth's field name: it points to `Administrator`.
+model AdminSession {
+  id            String        @id
+  expiresAt     DateTime
+  token         String        @db.VarChar(255)
+  createdAt     DateTime
+  updatedAt     DateTime
+  ipAddress     String?       @db.VarChar(45)
+  userAgent     String?       @db.Text
+  userId        String
+  administrator Administrator @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("admin_session")
+}
+
+model AdminAccount {
+  id                    String        @id
+  accountId             String
+  providerId            String
+  userId                String
+  administrator         Administrator @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?       @db.Text
+  refreshToken          String?       @db.Text
+  idToken               String?       @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  issuer                String?
+  password              String?       @db.Text
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("admin_account")
+}
+
+model AdminVerification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("admin_verification")
+}
+
+// Its own table: the limiter's key is IP + path, and the paths are the same as
+// the users' (`/sign-in/email`), so a shared table would share the limit.
+model AdminRateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("admin_rate_limit")
+}
+
 model User {
   id            String    @id
   name          String
@@ -649,7 +770,6 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  role          UserRole  @default(user)
 
   // #212: the unique nickname (ADR-0025), kept by BetterAuth's username
   // plugin: `username` lower-cased (the unique index compares it), and
@@ -714,8 +834,10 @@ model User {
 
   interests UserActivity[]
 
-  blockedUsers User[] @relation("UserBlocks")
-  blockedBy    User[] @relation("UserBlocks")
+  // ADR-0022: blocks this user made (#65) or an administrator made between
+  // this user and someone else (#239).
+  blocks    UserBlock[] @relation("UserBlockBlocker")
+  blockedBy UserBlock[] @relation("UserBlockBlocked")
 
   organizedEvents       Event[]                @relation("EventOrganizer")
   coOrganizedEvents     Event[]                @relation("EventCoOrganizers")
@@ -726,8 +848,110 @@ model User {
   notifications         Notification[]         @relation("NotificationRecipient")
   causedNotifications   Notification[]         @relation("NotificationActor")
   emailDeliveries       EmailDelivery[]
+  // ADR-0023: reports this user filed, and reports about them; the latter
+  // are never shown to them.
+  filedReports          Report[]               @relation("ReportReporter")
+  reportsAbout          Report[]               @relation("ReportTargetUser")
 
   @@unique([email])
   @@unique([username])
   @@map("user")
+}
+
+// #239, ADR-0022: two users who must not see each other. A row an
+// administrator made (`createdBy` set, with a reason) applies both ways and is
+// stored once, with the smaller id as the blocker (CHECK
+// user_block_admin_ordered in the migration). A row a user makes (#65, not
+// built yet) applies one way: the blocker's content does not exist for the
+// blocked.
+model UserBlock {
+  id String @id @default(cuid())
+
+  blocker     User           @relation("UserBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockerId   String
+  blocked     User           @relation("UserBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockedId   String
+  createdBy   Administrator? @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String?
+  // Seen by the administration only; 10–500 characters, set exactly when an
+  // administrator made the block (CHECK in the migration).
+  reason      String?        @db.VarChar(500)
+  createdAt   DateTime       @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("user_block")
+}
+
+// ADR-0010, ADR-0022: what an administrator did, kept as evidence. The target
+// is generic (`targetType` + `targetId`), not a relation: it may be anything
+// and must outlive it.
+model AuditLogEntry {
+  id String @id @default(cuid())
+
+  admin       Administrator @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  adminId     String
+  action      String        @db.VarChar(50)
+  targetType  String        @db.VarChar(50)
+  targetId    String
+  description String?       @db.VarChar(500)
+  createdAt   DateTime      @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_log_entry")
+}
+
+// Reports (F-10.1, F-11.4) -------------------------------------------------
+
+// ADR-0023: what a report is about, chosen from a fixed list shared by events
+// and users. Filled by the migration; `order` keeps "Jiné" last.
+model ReportReason {
+  id      String   @id @default(cuid())
+  name    String   @unique @db.VarChar(100)
+  order   Int      @unique
+  reports Report[]
+
+  @@map("report_reason")
+}
+
+// #240, ADR-0010, ADR-0023: a user reports an event or another user; a report
+// of a user asks for the pair to be blocked from each other. Only the
+// administration sees it. Exactly one target (CHECK report_one_target), at most
+// one open report per reporter and target (partial unique indexes in the
+// migration). Every relation is Restrict: a report is evidence and outlives
+// what it is about.
+model Report {
+  id String @id @default(cuid())
+
+  reporter      User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  reporterId    String
+  targetEvent   Event?       @relation(fields: [targetEventId], references: [id], onDelete: Restrict)
+  targetEventId String?
+  targetUser    User?        @relation("ReportTargetUser", fields: [targetUserId], references: [id], onDelete: Restrict)
+  targetUserId  String?
+  reason        ReportReason @relation(fields: [reasonId], references: [id], onDelete: Restrict)
+  reasonId      String
+  // What happened, in the reporter's words; 10–500 characters.
+  text          String       @db.VarChar(500)
+  createdAt     DateTime     @default(now())
+
+  status             ReportStatus   @default(NEW)
+  // Set whenever the report is IN_PROGRESS (CHECK report_in_progress_assigned).
+  assignee           Administrator? @relation(fields: [assigneeId], references: [id], onDelete: Restrict)
+  assigneeId         String?
+  // Both set exactly when RESOLVED (CHECK report_resolved_all_or_nothing);
+  // cleared on reopening, the audit log keeps the old ones.
+  resolutionNote     String?        @db.VarChar(500)
+  resolvedAt         DateTime?
+  // When the reporter was told the report was dealt with; only the first
+  // resolution tells them.
+  reporterNotifiedAt DateTime?
+
+  @@index([status, createdAt])
+  @@index([targetEventId])
+  @@index([targetUserId])
+  @@index([reporterId])
+  @@index([assigneeId])
+  @@map("report")
 }

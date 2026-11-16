@@ -71,7 +71,7 @@ The CLI puts `shadow-xs`/`shadow-sm` on inputs, textareas and cards. [`DESIGN.md
 
 ### Every page sits in `AppShell`
 
-A route outside `_ProtectedPages` wraps its content in `AppShell` itself (pass the page's column as `className`) — never a bare `Header` with its own `<main>`, which silently drops the navigation; only sign-in/sign-up (`AuthLayout`) and the crash screen (`RootErrorBoundary`) go without it.
+A route outside `_ProtectedPages` wraps its content in `AppShell` itself (pass the page's column as `className`) — never a bare `Header` with its own `<main>`, which silently drops the navigation; only sign-in/sign-up (`AuthLayout`) and the crash screen (`RootErrorBoundary`) go without it. The administration is the one other exception: `/admin/*` sits in `AdminShell` (its own header and navigation, no user navigation) and `/admin/login` in `AuthLayout` ([ADR-0010](docs/adr/adr-0010.md)).
 
 ### Forms go through `AppForm`
 
