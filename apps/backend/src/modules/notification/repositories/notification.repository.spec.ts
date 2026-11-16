@@ -96,6 +96,8 @@ describe('NotificationRepository', () => {
         in: [
           'EVENT_CHANGED',
           'EVENT_CANCELLED',
+          'EVENT_HIDDEN',
+          'EVENT_RESTORED',
           'EVENT_BOARD',
           'EVENT_REMINDER',
           'HOSTED_EVENT_REMINDER',

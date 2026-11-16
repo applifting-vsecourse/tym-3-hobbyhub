@@ -12,6 +12,7 @@ import {
   PendingRequestExistsError,
 } from '@/modules/friendship/repositories/friendship.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ConflictException,
@@ -31,7 +32,10 @@ export type SentFriendRequest = {
 // friends.
 @Injectable()
 export class FriendshipService {
-  constructor(private readonly friendshipRepository: FriendshipRepository) {}
+  constructor(
+    private readonly friendshipRepository: FriendshipRepository,
+    private readonly blocks: UserBlockVisibility,
+  ) {}
 
   /** #225: where the viewer stands with the other person, for their profile. */
   async relationBetween(
@@ -70,7 +74,7 @@ export class FriendshipService {
   /**
    * #225: a page of people whose name or username contains the text, each
    * with the viewer's relation to them. The text arrives trimmed and long
-   * enough (the DTO).
+   * enough (the DTO). People blocked from the viewer (#239) are not found.
    */
   async search(
     viewer: Identity,
@@ -83,6 +87,7 @@ export class FriendshipService {
       text,
       offset,
       FRIEND_SEARCH_PAGE_SIZE + 1,
+      await this.blocks.hiddenFor(viewer.id),
     );
     const page = rows.slice(0, FRIEND_SEARCH_PAGE_SIZE);
     const relations = await this.friendshipRepository.findRelationsWith(
@@ -108,7 +113,9 @@ export class FriendshipService {
    * #225: the signed-in person asks another to become friends. Refused to
    * oneself (400), to an account that does not exist or is blocked or deleted
    * (404), between friends and where a request already waits in either
-   * direction (409). A rejected request does not stop a new one.
+   * direction (409). A rejected request does not stop a new one. Between a
+   * blocked pair (#239, ADR-0026) the answer is the same 404, so neither
+   * learns of the block.
    */
   async sendRequest(
     sender: Identity,
@@ -116,7 +123,10 @@ export class FriendshipService {
   ): Promise<SentFriendRequest> {
     const violations = friendRequestViolations(sender.id, recipientId);
     if (violations.length > 0) throw new BadRequestException(violations);
-    if (!(await this.friendshipRepository.isReachable(recipientId))) {
+    if (
+      !(await this.friendshipRepository.isReachable(recipientId)) ||
+      (await this.isBlockedPair(sender.id, recipientId))
+    ) {
       throw new NotFoundException('User not found');
     }
     if (await this.friendshipRepository.areFriends(sender.id, recipientId)) {
@@ -171,5 +181,32 @@ export class FriendshipService {
     );
     if (!withdrawn) throw new ConflictException(['NO_PENDING_REQUEST']);
     return 'none';
+  }
+
+  /**
+   * #239, ADR-0022: an administrator blocked the two from each other. Called
+   * by the block's clean-up: the friendship ends and pending requests between
+   * them are closed, quietly. Nobody is their own friend, so nothing to do.
+   */
+  async removeBlockedPair(
+    oneId: string,
+    otherId: string,
+    now: Date = new Date(),
+  ): Promise<void> {
+    if (oneId === otherId) return;
+    await this.friendshipRepository.removeBlockedPair(oneId, otherId, now);
+  }
+
+  // #239: blocked either way, by an administrator for both, or (#65) by one
+  // of them: no request goes between them.
+  private async isBlockedPair(
+    oneId: string,
+    otherId: string,
+  ): Promise<boolean> {
+    const [hiddenFor, hiddenFrom] = await Promise.all([
+      this.blocks.hiddenFor(oneId),
+      this.blocks.hiddenFrom(oneId),
+    ]);
+    return hiddenFor.includes(otherId) || hiddenFrom.includes(otherId);
   }
 }

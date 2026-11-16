@@ -73,21 +73,28 @@ export class FriendshipRepository {
   /**
    * #225: people whose name or username contains the text, ignoring case and
    * diacritics (unaccent). Never the e-mail, never the viewer, only accounts
-   * that are active or restricted. Ordered by name; `limit` rows from `offset`.
+   * that are active or restricted, never `excludedIds` (people blocked from the
+   * viewer, #239). Ordered by name; `limit` rows from `offset`.
    */
   async searchUsers(
     viewerId: string,
     text: string,
     offset: number,
     limit: number,
+    excludedIds: readonly string[] = [],
   ): Promise<FoundUserRow[]> {
     const pattern = containsPattern(text);
+    const notExcluded =
+      excludedIds.length === 0
+        ? Prisma.empty
+        : Prisma.sql`AND "id" NOT IN (${Prisma.join([...excludedIds])})`;
     const matches = (column: Prisma.Sql): Prisma.Sql =>
       Prisma.sql`unaccent(lower(${column})) LIKE unaccent(lower(${pattern})) ESCAPE '\\'`;
     return this.prisma.$queryRaw<FoundUserRow[]>`
       SELECT "id", "name", COALESCE("displayUsername", "username") AS "nickname", "image"
       FROM "user"
       WHERE "id" <> ${viewerId}
+        ${notExcluded}
         AND "status" IN ('ACTIVE', 'RESTRICTED')
         AND (
           ${matches(Prisma.sql`"name"`)}
@@ -196,5 +203,34 @@ export class FriendshipRepository {
       data: { status: 'WITHDRAWN', decidedAt: now },
     });
     return count > 0;
+  }
+
+  /**
+   * #239, ADR-0022, ADR-0026: an administrator blocked the two from each
+   * other. Their friendship goes, and the requests still pending between them
+   * in either direction end as REJECTED with today's date: a rejection is
+   * silent, so neither learns of the block. Requests are never deleted. Safe
+   * to run again.
+   */
+  async removeBlockedPair(
+    oneId: string,
+    otherId: string,
+    now: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.friendship.deleteMany({
+        where: friendPairOf(oneId, otherId),
+      }),
+      this.prisma.friendRequest.updateMany({
+        where: {
+          status: 'PENDING',
+          OR: [
+            { senderId: oneId, recipientId: otherId },
+            { senderId: otherId, recipientId: oneId },
+          ],
+        },
+        data: { status: 'REJECTED', decidedAt: now },
+      }),
+    ]);
   }
 }

@@ -15,7 +15,10 @@ vi.mock("@/lib/api-client", async (importOriginal) => ({
 
 const answer = (body: unknown) => get.mockReturnValueOnce({ json: () => Promise.resolve(body) })
 
-const renderPage = (userId: string) =>
+const renderPage = (
+  userId: string,
+  reportAction?: (profile: { id: string; name: string }) => React.ReactNode,
+) =>
   renderWithRouter(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
@@ -25,6 +28,7 @@ const renderPage = (userId: string) =>
         ownUserId="me"
         activityLabel={(activity) => activity.name}
         renderFriendAction={({ relation }) => <p>{`relation:${relation}`}</p>}
+        reportAction={reportAction}
       />
     </QueryClientProvider>,
   )
@@ -49,6 +53,25 @@ describe("PublicProfilePage", () => {
     expect(get).toHaveBeenCalledWith("profile/u2")
     // #225: my relation to the person comes with the profile.
     expect(screen.getByText("relation:request_sent")).toBeInTheDocument()
+  })
+
+  // #240: the route hands in "Nahlásit uživatele" for the loaded person.
+  it("offers the report action for the loaded person", async () => {
+    answer({
+      id: "u2",
+      name: "Petr",
+      nickname: null,
+      relation: "none",
+      bio: null,
+      image: null,
+      cover: null,
+      interests: [],
+    })
+    await renderPage("u2", (profile) => (
+      <button type="button">{`Nahlásit ${profile.name} (${profile.id})`}</button>
+    ))
+
+    expect(await screen.findByRole("button", { name: "Nahlásit Petr (u2)" })).toBeInTheDocument()
   })
 
   it("sends me to my own profile instead of this page", async () => {

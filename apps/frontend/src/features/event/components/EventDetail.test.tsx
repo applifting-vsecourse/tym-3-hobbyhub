@@ -40,6 +40,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   visibility: "PUBLIC",
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1, unknown: 1 } },
   statsMinParticipants: 3,
+  hiddenReason: null,
   ...overrides,
 })
 
@@ -56,6 +57,21 @@ const renderDetail = (overrides: Partial<EventDetailData> = {}, isOrganizerLinke
   )
 
 describe("EventDetail", () => {
+  // #240: the page decides who may report; the detail only places it.
+  it("shows the report action when the page hands one in", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event()}
+        activityLabel="Florbal"
+        joinAction={null}
+        reportAction={<button type="button">Nahlásit akci</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Nahlásit akci" })).toBeInTheDocument()
+  })
+
   it("links the organizer to their profile", async () => {
     await renderDetail({ organizerId: "org-1", organizerName: "Jana" }, true)
 
@@ -280,6 +296,23 @@ describe("EventDetail", () => {
     })
 
     expect(screen.getByText("Důvod: Nepříznivé počasí · Hrajeme příští týden")).toBeInTheDocument()
+  })
+
+  // #239: only the organizers ever get a hidden event, with the reason.
+  it("tells the organizer an administrator hid the event, and offers no seat", async () => {
+    await renderDetail({ hiddenReason: "Nabízí placené služby." })
+
+    expect(screen.getByText("Skrytá správcem")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Správce akci skryl, takže ji kromě organizátorů nikdo nevidí. Důvod: Nabízí placené služby.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Obsadit místo" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Sdílet" })).not.toBeInTheDocument()
+    expect(
+      screen.getByText("Dokud je akce skrytá, nikdo nový se nepřihlásí a žádosti počkají."),
+    ).toBeInTheDocument()
   })
 
   it("shows what the page gives the organizer", async () => {

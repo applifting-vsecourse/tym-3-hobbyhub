@@ -63,7 +63,7 @@ export class ProfileController {
     @Param('userId') userId: string,
   ): Promise<PublicProfileResponseDto> {
     return PublicProfileResponseDto.fromDomain(
-      await this.profileService.getPublicProfile(user, userId),
+      await this.profileService.getPublicProfile(userId, user),
     );
   }
 

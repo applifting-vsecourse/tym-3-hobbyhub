@@ -24,6 +24,7 @@ export function PublicProfilePage({
   ownUserId,
   activityLabel,
   renderFriendAction,
+  reportAction,
 }: {
   userId: string
   /** The signed-in person; their own id leads to Můj profil. */
@@ -39,6 +40,8 @@ export function PublicProfilePage({
     relation: PublicProfile["relation"]
     reload: () => Promise<unknown>
   }) => ReactNode
+  /** "Nahlásit uživatele" (#240) for the loaded profile; the report feature owns it. */
+  reportAction?: (profile: { id: string; name: string }) => ReactNode
 }) {
   const { t } = useTranslation()
   const isOwn = ownUserId === userId
@@ -87,15 +90,20 @@ export function PublicProfilePage({
             </AlertDescription>
           </Alert>
         ) : (
-          <PublicProfileView
-            profile={profile.data}
-            activityLabel={activityLabel}
-            friendAction={renderFriendAction?.({
-              userId: profile.data.id,
-              relation: profile.data.relation,
-              reload: () => profile.refetch(),
-            })}
-          />
+          <>
+            <PublicProfileView
+              profile={profile.data}
+              activityLabel={activityLabel}
+              friendAction={renderFriendAction?.({
+                userId: profile.data.id,
+                relation: profile.data.relation,
+                reload: () => profile.refetch(),
+              })}
+            />
+            {reportAction ? (
+              <div className="border-t border-border pt-4">{reportAction(profile.data)}</div>
+            ) : null}
+          </>
         )}
       </section>
     </>
