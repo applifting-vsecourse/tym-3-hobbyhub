@@ -57,9 +57,14 @@ export function UpcomingEvents({
   }
 
   return (
-    <ul className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3">
-      {events.map((event) => (
-        <li key={event.id}>
+    // More room adds a column, the cards keep their width (#224). Three rows
+    // fill the smaller grids; the fourth event waits for the fourth column.
+    <ul className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      {events.map((event, index) => (
+        <li
+          key={event.id}
+          className={index >= 3 ? "max-2xl:hidden" : undefined}
+        >
           <Link
             to="/events/$eventId"
             params={{ eventId: event.id }}

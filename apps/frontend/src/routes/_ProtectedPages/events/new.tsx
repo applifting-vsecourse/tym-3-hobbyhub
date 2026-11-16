@@ -58,7 +58,7 @@ function NewEventPage() {
   return (
     <>
       <Seo title={t("events.form.title")} />
-      <section className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
+      <section className="mx-auto w-full max-w-4xl px-page py-6 md:py-12">
         <VerifyEmailSheet
           isOpen={isVerifySheetOpen}
           onOpenChange={setIsVerifySheetOpen}

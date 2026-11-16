@@ -729,6 +729,7 @@
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
+      "free": "Free",
       "inMapArea": "Events in the map area",
       "loadError": "Could not load events",
       "loadMore": "Load more",
@@ -738,6 +739,7 @@
         "label": "Nearest to me",
         "unavailable": "We couldn't find your location. Please try again."
       },
+      "organizedBy": "Organized by {{name}}",
       "reload": "Reload",
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
@@ -1016,6 +1018,7 @@
       "membersLink": "Show all members",
       "membersMore": "+{{count}}",
       "membersTitle": "Members ({{count}})",
+      "openGroup": "View group",
       "outcome_one": "After approval there will be {{count}} member.",
       "outcome_other": "After approval there will be {{count}} members.",
       "refused": {
@@ -1034,6 +1037,7 @@
       "requestsEmpty": "No membership requests are waiting.",
       "requestsLink": "Membership requests ({{count}})",
       "retry": "Try again",
+      "summary": "About the group",
       "tabs": {
         "members": "Members {{count}}",
         "requests": "Requests {{count}}"
@@ -1296,12 +1300,15 @@
       "until": "until {{time}}"
     },
     "filters": {
+      "activeCount_one": "{{count}} active filter",
+      "activeCount_other": "{{count}} active filters",
       "activitiesEmpty": "There are no activities yet.",
       "activitiesError": "Could not load the activities",
       "activitiesLoading": "Loading activities…",
       "activitiesRetry": "Try again",
       "activity": "Activity",
       "activityPlaceholder": "All activities",
+      "apply": "Apply",
       "capacity": "How many people fit (spots)",
       "chosenActivities": "Chosen activities",
       "clear": "Clear",
@@ -1312,6 +1319,8 @@
       "freeSpots": "Only with free spots",
       "location": "Location",
       "locationPlaceholder": "Prague 8",
+      "panelHide": "Hide filters",
+      "panelShow": "Show filters",
       "preset": {
         "capacity": {
           "from13": "13 and more",
@@ -1342,6 +1351,7 @@
       "showResults": "Show results",
       "sortNote": "Results are sorted by the nearest date.",
       "title": "Filters",
+      "unapplied": "Changes take effect when you press Apply.",
       "week": "This week",
       "weekend": "Weekend",
       "when": "When"
@@ -1899,6 +1909,7 @@
       "rejected": "Request rejected",
       "requests": "Waiting",
       "retry": "Try again",
+      "summary": "Event summary",
       "tabs": {
         "participants": "Participants",
         "participantsCount": "Participants {{count}}",
@@ -2016,6 +2027,16 @@
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "title": "My profile",
+    "upcoming": {
+      "all": "All my events",
+      "empty": "You are not going anywhere or organizing anything yet.",
+      "find": "Find an event",
+      "hosting": "You organize",
+      "loadError": "Could not load the events.",
+      "loading": "Loading events…",
+      "retry": "Try again",
+      "title": "My upcoming events"
+    },
     "userProfile": {
       "interests": "What they play",
       "notFound": "Profile not found.",

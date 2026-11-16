@@ -209,6 +209,7 @@ export function DomainSections() {
               taken={7}
               min={10}
               photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
+              details="Pořádá Florbal Kobylisy · 80 Kč"
               badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
@@ -227,6 +228,8 @@ export function DomainSections() {
               title="Čtvrteční florbalisté"
               subtitle="Praha 8 · florbal · 14 členů"
               activity="florbal"
+              schedule="Každý čtvrtek 19:00"
+              description="Hrajeme pro radost, ne o body. Hledáme hlavně lidi, kteří chtějí chodit pravidelně a nevadí jim, že se po hře jde na pivo."
               badge="Veřejná"
             />
             <GroupRow

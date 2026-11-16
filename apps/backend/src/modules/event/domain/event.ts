@@ -536,6 +536,13 @@ export type EventListItem = {
   maxParticipants: number;
   // Approved and attended people plus those the organizer brought along.
   takenCount: number;
+  // Who runs it and the group behind it, public like on the detail (visibility
+  // matrix), so a row on a large screen can say so (#224). Only a public,
+  // active group is named.
+  organizerName: string;
+  group: { id: string; name: string } | null;
+  // Per seat in CZK; information only, nothing is paid in the app.
+  contributionAmount: number | null;
   // #239: only the organizer's own list ever holds a hidden event.
   isHidden: boolean;
 };
@@ -590,17 +597,12 @@ export type ParticipantEventInfo = {
 export type EventDetail = EventListItem & {
   description: string;
   equipment: string | null;
-  // Information only; nothing is paid in the app.
-  contributionAmount: number | null;
   contributionNote: string | null;
   status: PublicEventStatus;
   approvalMode: ApprovalMode;
   organizerId: string;
-  organizerName: string;
   cancellationReason: string | null;
   cancellationNote: string | null;
-  // The group that organizes the event; only a public, active one is linked.
-  group: { id: string; name: string } | null;
   // F-07.2: a group-only event says so; a private one never gets here.
   visibility: 'PUBLIC' | 'GROUP_ONLY';
   stats: ParticipantStats | null;

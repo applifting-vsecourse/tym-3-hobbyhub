@@ -736,6 +736,7 @@
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
       },
+      "free": "Zdarma",
       "inMapArea": "Akce z oblasti na mapě",
       "loadError": "Akce se nepodařilo načíst",
       "loadMore": "Načíst další",
@@ -745,6 +746,7 @@
         "label": "Nejblíž mně",
         "unavailable": "Polohu se nepodařilo zjistit. Zkus to prosím znovu."
       },
+      "organizedBy": "Pořádá {{name}}",
       "reload": "Načíst znovu",
       "searchPlaceholder": "Název, místo nebo aktivita",
       "seoTitle": "Akce",
@@ -1030,6 +1032,7 @@
       "membersLink": "Zobrazit všechny členy",
       "membersMore": "+{{count}}",
       "membersTitle": "Členové ({{count}})",
+      "openGroup": "Zobrazit skupinu",
       "outcome_few": "Po schválení budou {{count}} členové.",
       "outcome_one": "Po schválení bude {{count}} člen.",
       "outcome_other": "Po schválení bude {{count}} členů.",
@@ -1049,6 +1052,7 @@
       "requestsEmpty": "Žádné žádosti o členství nečekají na vyřízení.",
       "requestsLink": "Žádosti o členství ({{count}})",
       "retry": "Zkusit znovu",
+      "summary": "O skupině",
       "tabs": {
         "members": "Členové {{count}}",
         "requests": "Žádosti {{count}}"
@@ -1314,12 +1318,16 @@
       "until": "do {{time}}"
     },
     "filters": {
+      "activeCount_few": "{{count}} aktivní filtry",
+      "activeCount_one": "{{count}} aktivní filtr",
+      "activeCount_other": "{{count}} aktivních filtrů",
       "activitiesEmpty": "Zatím tu nejsou žádné aktivity.",
       "activitiesError": "Aktivity se nepodařilo načíst",
       "activitiesLoading": "Načítáme aktivity…",
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
+      "apply": "Použít",
       "capacity": "Kolik lidí se vejde (počet míst)",
       "chosenActivities": "Vybrané aktivity",
       "clear": "Vymazat",
@@ -1330,6 +1338,8 @@
       "freeSpots": "Jen s volnými místy",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
+      "panelHide": "Skrýt filtry",
+      "panelShow": "Zobrazit filtry",
       "preset": {
         "capacity": {
           "from13": "13 a více",
@@ -1361,6 +1371,7 @@
       "showResults": "Zobrazit výsledky",
       "sortNote": "Výsledky řadíme podle nejbližšího termínu.",
       "title": "Filtry",
+      "unapplied": "Změny se projeví po stisku Použít.",
       "week": "Tento týden",
       "weekend": "Víkend",
       "when": "Kdy"
@@ -1930,6 +1941,7 @@
       "rejected": "Žádost zamítnuta",
       "requests": "Čekající",
       "retry": "Zkusit znovu",
+      "summary": "Souhrn akce",
       "tabs": {
         "participants": "Účastníci",
         "participantsCount": "Účastníci {{count}}",
@@ -2048,6 +2060,16 @@
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
     "title": "Můj profil",
+    "upcoming": {
+      "all": "Všechny moje akce",
+      "empty": "Zatím nikam nejdete a nic nepořádáte.",
+      "find": "Najít akci",
+      "hosting": "Pořádáte",
+      "loadError": "Akce se nepodařilo načíst.",
+      "loading": "Načítám akce…",
+      "retry": "Zkusit znovu",
+      "title": "Moje nadcházející akce"
+    },
     "userProfile": {
       "interests": "Co hraje",
       "notFound": "Profil nenalezen.",
