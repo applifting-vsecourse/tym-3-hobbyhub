@@ -420,6 +420,7 @@ describeDb('blocks between two people in the database (#239)', () => {
         viewer,
         10_000,
         undefined,
+        { activityIds: [] },
         [blocked],
       );
       const found = page.items.map((group) => group.id);
