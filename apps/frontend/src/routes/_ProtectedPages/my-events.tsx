@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { Seo } from "@/components/Seo"
+import { useFiltersPanel } from "@/hooks/useFiltersPanel"
 
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
@@ -20,6 +21,11 @@ import {
   myHostedEventsQueryOptions,
 } from "@/features/event/api/myEventsQueryOptions"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
+import {
+  EventFiltersPanel,
+  isPanelOpen,
+  panelFiltersButton,
+} from "@/features/event/components/EventFiltersPanel"
 import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
 import { useSearchText } from "@/features/event/hooks/useSearchText"
 import {
@@ -28,6 +34,7 @@ import {
   hasFilters,
   nonEmpty,
   searchWithFilters,
+  type EventFilterChange,
 } from "@/features/event/lib/eventsSearch"
 
 import { ApplicationSheet, type ApplicationSheetState } from "./-my-events/ApplicationSheet"
@@ -89,6 +96,9 @@ function MyEventsPage() {
     placeholderData: keepPreviousData,
   })
   const activityOptions = useActivityOptions()
+  const filtersPanel = useFiltersPanel()
+  const onFiltersChange = (next: EventFilterChange) =>
+    void navigate({ search: (previous) => searchWithFilters(previous, next) })
   const [searchText, setSearchText] = useSearchText(
     filters.search,
     (next) =>
@@ -110,9 +120,19 @@ function MyEventsPage() {
   return (
     <>
       <Seo title={t("myEvents.title")} />
-      <section className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
+      <section className="mx-auto w-full max-w-page px-page py-6 md:py-12">
         <h1 className="typo-h1 text-foreground">{t("myEvents.title")}</h1>
-        <div className="mt-6">
+        {/* On a large screen the filters are open beside both tabs (#224). */}
+        <div className="mt-6 xl:grid xl:grid-cols-[auto_minmax(0,1fr)] xl:items-start xl:gap-8">
+          <EventFiltersPanel
+            filters={filters}
+            onFiltersChange={onFiltersChange}
+            panel={filtersPanel}
+            activityOptions={activityOptions.options}
+            activitiesState={activityOptions.state}
+            sortNote={t("myEvents.sortNote")}
+            className="xl:sticky xl:top-20 xl:max-h-[calc(100svh-6rem)] xl:overflow-y-auto"
+          />
           <MyEventsOverview
             applications={applicationList}
             hosted={toList(hosted)}
@@ -128,9 +148,9 @@ function MyEventsPage() {
                 activityOptions={activityOptions.options}
                 activitiesState={activityOptions.state}
                 sortNote={t("myEvents.sortNote")}
-                onFiltersChange={(next) =>
-                  void navigate({ search: (previous) => searchWithFilters(previous, next) })
-                }
+                onFiltersChange={onFiltersChange}
+                onOpenFilters={panelFiltersButton(filtersPanel)}
+                shouldShowChips={!isPanelOpen(filtersPanel)}
               />
             }
             activityLabel={(activity) => activityName(t, activity)}

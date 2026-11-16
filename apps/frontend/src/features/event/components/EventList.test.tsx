@@ -45,6 +45,9 @@ const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
   minParticipants: 8,
   maxParticipants: 10,
   takenCount: 7,
+  organizerName: "Jana Nováková",
+  group: null,
+  contributionAmount: null,
   ...overrides,
 })
 
@@ -66,6 +69,28 @@ describe("EventList", () => {
     expect(screen.getByText("1 akce")).toBeInTheDocument()
     // Missing counts towards the minimum (8), not the capacity (10).
     expect(screen.getByText("chybí 1")).toBeInTheDocument()
+  })
+
+  // #224: on a large screen the row also says who runs the event and what it costs.
+  it("says who runs the event and what a seat costs", () => {
+    render(
+      <EventList
+        activityLabel={(activity) => activity.name}
+        events={[
+          event(),
+          event({
+            id: "e2",
+            group: { id: "g1", name: "Florbal Kobylisy" },
+            contributionAmount: 80,
+          }),
+        ]}
+        total={2}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("Pořádá Jana Nováková · Zdarma")).toBeInTheDocument()
+    expect(screen.getByText("Pořádá Florbal Kobylisy · 80 Kč")).toBeInTheDocument()
   })
 
   it("lists events nearest first with their distance and day, without day headings", () => {

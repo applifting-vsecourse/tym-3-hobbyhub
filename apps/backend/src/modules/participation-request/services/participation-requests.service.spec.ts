@@ -525,6 +525,7 @@ describe('ParticipationRequestsService', () => {
               {
                 id: 'p1',
                 status,
+                userId: 'u1',
                 message: null,
                 changedAt: now,
                 asksAgain: false,

@@ -40,7 +40,9 @@ export function GroupDetail({
   ].filter(Boolean)
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8">
+    // From `xl` the page is wider (#224): the side panel gets more room, the
+    // description keeps its line length.
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-x-12">
       <header className="flex flex-col gap-2">
         <p className="flex items-center gap-2 typo-label text-muted-foreground">
           {isActivityKey(group.activity.icon) ? (

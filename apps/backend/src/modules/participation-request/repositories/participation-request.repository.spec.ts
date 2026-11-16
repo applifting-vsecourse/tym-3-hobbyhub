@@ -804,12 +804,14 @@ describeDb('ParticipationRequestRepository', () => {
       expect(result.items).toEqual([
         expect.objectContaining({
           status: 'CANCELLED',
+          userId: asking,
           message: 'Nakonec nemůžu, sorry.',
           changedAt: later,
           asksAgain: true,
         }),
         expect.objectContaining({
           status: 'CANCELLED',
+          userId: quiet,
           message: 'Onemocněl jsem, promiňte.',
           changedAt: at,
           asksAgain: false,

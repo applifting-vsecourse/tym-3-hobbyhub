@@ -25,6 +25,9 @@ const event: EventListItem = {
   minParticipants: 8,
   maxParticipants: 10,
   takenCount: 7,
+  organizerName: "Jana Nováková",
+  group: null,
+  contributionAmount: null,
 }
 
 const NOW = new Date(2026, 9, 22, 12, 0)

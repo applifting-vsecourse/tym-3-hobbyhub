@@ -98,6 +98,9 @@ const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
   minParticipants: 8,
   maxParticipants: 10,
   takenCount: 6,
+  organizerName: "Jana Nováková",
+  group: null,
+  contributionAmount: null,
   ...overrides,
 })
 

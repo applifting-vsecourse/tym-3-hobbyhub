@@ -48,7 +48,7 @@ function DesignSystemPage() {
     <>
       <Seo title="Design system" />
       <AppShell>
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-4 py-12">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-page py-12">
           <header className="flex flex-col gap-4">
             <Logo className="h-10 self-start" />
             <h1 className="typo-h1 text-foreground">Rozpis a soupiska</h1>

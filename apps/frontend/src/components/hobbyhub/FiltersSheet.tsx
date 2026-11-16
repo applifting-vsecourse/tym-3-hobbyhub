@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type ReactNode } from "react"
+import { useId, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 import { X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -206,6 +206,293 @@ export type FilterActivitiesState = {
   onRetry: () => void
 }
 
+/** What is wrong with a draft; one that has anything wrong is not applied. */
+export const filterDraftErrors = (draft: EventFilters) => {
+  const isDateReversed =
+    draft.dateFrom !== "" && draft.dateTo !== "" && draft.dateFrom > draft.dateTo
+  const isNumberReversed =
+    isNumberRangeReversed(draft.priceFrom, draft.priceTo) ||
+    isNumberRangeReversed(draft.hoursFrom, draft.hoursTo) ||
+    isNumberRangeReversed(draft.capacityFrom, draft.capacityTo)
+  const isNumberInvalid =
+    !isRangeValueValid("price", draft.priceFrom) ||
+    !isRangeValueValid("price", draft.priceTo) ||
+    !isRangeValueValid("duration", draft.hoursFrom) ||
+    !isRangeValueValid("duration", draft.hoursTo) ||
+    !isRangeValueValid("capacity", draft.capacityFrom) ||
+    !isRangeValueValid("capacity", draft.capacityTo)
+  return {
+    isDateReversed,
+    isNumberReversed,
+    isNumberInvalid,
+    hasErrors: isDateReversed || isNumberReversed || isNumberInvalid,
+  }
+}
+
+/** The activities offered in the combobox: the page's, or a few sample ones on the design-system page. */
+export function useActivityChoices(activityOptions?: ActivityComboboxOption[]) {
+  const { t } = useTranslation()
+  return useMemo(
+    () =>
+      activityOptions ??
+      DEMO_ACTIVITY_KEYS.map((key) => ({
+        id: key,
+        label: t(`hobbyhub.activities.${key}`),
+        icon: key,
+      })),
+    [activityOptions, t],
+  )
+}
+
+type FiltersFieldsProps = {
+  draft: EventFilters
+  onDraftChange: Dispatch<SetStateAction<EventFilters>>
+  fields: FiltersSheetField[]
+  options: ActivityComboboxOption[]
+  activitiesState?: FilterActivitiesState
+  sortNote?: string
+}
+
+/**
+ * The fields of the filters with their messages: the same in the bottom panel
+ * on a phone and in the side panel of a large screen (#224), so the two never
+ * drift apart.
+ */
+export function FiltersFields({
+  draft,
+  onDraftChange: setDraft,
+  fields,
+  options,
+  activitiesState,
+  sortNote,
+}: FiltersFieldsProps) {
+  const { t } = useTranslation()
+  const locationId = useId()
+  const activityId = useId()
+  const dateFromId = useId()
+  const dateToId = useId()
+  const { isDateReversed, isNumberReversed, isNumberInvalid } = filterDraftErrors(draft)
+  const week = thisWeekRange()
+  const weekend = thisWeekendRange()
+  // On a Sunday the week is the weekend; one chip then, so only one can be pressed.
+  const presets = [
+    ...(week.dateFrom === weekend.dateFrom && week.dateTo === weekend.dateTo
+      ? []
+      : [{ key: "week", range: week }]),
+    { key: "weekend", range: weekend },
+  ] as const
+
+  return (
+    <div className="flex flex-col gap-3">
+      {fields.includes("activity") ? (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={activityId}>{t("hobbyhub.filters.activity")}</Label>
+          {activitiesState?.isLoading ? (
+            <p
+              role="status"
+              className="typo-small text-muted-foreground"
+            >
+              {t("hobbyhub.filters.activitiesLoading")}
+            </p>
+          ) : activitiesState?.error && options.length === 0 ? (
+            <Alert variant="destructive">
+              <AlertDescription className="flex items-center justify-between gap-3">
+                <span>{t("hobbyhub.filters.activitiesError")}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={activitiesState.onRetry}
+                >
+                  {t("hobbyhub.filters.activitiesRetry")}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : options.length === 0 ? (
+            <p className="typo-small text-muted-foreground">
+              {t("hobbyhub.filters.activitiesEmpty")}
+            </p>
+          ) : (
+            <ActivityCombobox
+              id={activityId}
+              isMultiple
+              options={options}
+              value={draft.activities}
+              onValueChange={(activities) => setDraft((current) => ({ ...current, activities }))}
+              placeholder={t("hobbyhub.filters.activityPlaceholder")}
+            />
+          )}
+          {/* The chosen ones as tags, each removed by one tap before the results are shown. */}
+          {draft.activities.length > 0 ? (
+            <div
+              role="group"
+              aria-label={t("hobbyhub.filters.chosenActivities")}
+              className="flex flex-wrap gap-2 pt-1.5"
+            >
+              {draft.activities.map((id) => (
+                <FilterChip
+                  key={id}
+                  pressed
+                  onPressedChange={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      activities: current.activities.filter((chosen) => chosen !== id),
+                    }))
+                  }
+                >
+                  {options.find((option) => option.id === id)?.label ??
+                    t("hobbyhub.activityCombobox.unknown")}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {fields.includes("when") ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {presets.map(({ key, range }) => (
+              <FilterChip
+                key={key}
+                pressed={draft.dateFrom === range.dateFrom && draft.dateTo === range.dateTo}
+                onPressedChange={(isPressed) =>
+                  setDraft((current) => ({
+                    ...current,
+                    dateFrom: isPressed ? range.dateFrom : "",
+                    dateTo: isPressed ? range.dateTo : "",
+                  }))
+                }
+              >
+                {t(`hobbyhub.filters.${key}`)}
+              </FilterChip>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor={dateFromId}>{t("hobbyhub.filters.dateFrom")}</Label>
+              <Input
+                id={dateFromId}
+                type="date"
+                value={draft.dateFrom}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, dateFrom: event.target.value }))
+                }
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor={dateToId}>{t("hobbyhub.filters.dateTo")}</Label>
+              <Input
+                id={dateToId}
+                type="date"
+                value={draft.dateTo}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, dateTo: event.target.value }))
+                }
+              />
+            </div>
+          </div>
+          {isDateReversed ? (
+            <p
+              role="alert"
+              className="typo-small text-destructive"
+            >
+              {t("hobbyhub.filters.dateRangeReversed")}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* TODO(F-02.1b #91): a text for now. Later a place picker with a radius
+          and distance from it, once events have coordinates (geocoding, F-12.3). */}
+      {fields.includes("location") ? (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={locationId}>{t("hobbyhub.filters.location")}</Label>
+          <Input
+            id={locationId}
+            maxLength={FILTER_TEXT_MAX_LENGTH}
+            placeholder={t("hobbyhub.filters.locationPlaceholder")}
+            value={draft.location}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, location: event.target.value }))
+            }
+          />
+        </div>
+      ) : null}
+      {fields.includes("freeSpots") ? (
+        <div className="flex flex-wrap gap-2">
+          <FilterChip
+            pressed={draft.freeSpotsOnly}
+            onPressedChange={(isPressed) =>
+              setDraft((current) => ({ ...current, freeSpotsOnly: isPressed }))
+            }
+          >
+            {t("hobbyhub.filters.freeSpots")}
+          </FilterChip>
+        </div>
+      ) : null}
+
+      {fields.includes("price") ? (
+        <RangeField
+          kind="price"
+          label={t("hobbyhub.filters.price")}
+          from={draft.priceFrom}
+          to={draft.priceTo}
+          step="1"
+          onChange={({ from, to }) =>
+            setDraft((current) => ({ ...current, priceFrom: from, priceTo: to }))
+          }
+        />
+      ) : null}
+
+      {fields.includes("duration") ? (
+        <RangeField
+          kind="duration"
+          label={t("hobbyhub.filters.duration")}
+          from={draft.hoursFrom}
+          to={draft.hoursTo}
+          step="0.5"
+          onChange={({ from, to }) =>
+            setDraft((current) => ({ ...current, hoursFrom: from, hoursTo: to }))
+          }
+        />
+      ) : null}
+
+      {fields.includes("capacity") ? (
+        <RangeField
+          kind="capacity"
+          label={t("hobbyhub.filters.capacity")}
+          from={draft.capacityFrom}
+          to={draft.capacityTo}
+          step="1"
+          onChange={({ from, to }) =>
+            setDraft((current) => ({ ...current, capacityFrom: from, capacityTo: to }))
+          }
+        />
+      ) : null}
+      {isNumberReversed || isNumberInvalid ? (
+        <p
+          role="alert"
+          className="typo-small text-destructive"
+        >
+          {isNumberInvalid
+            ? t("hobbyhub.filters.rangeInvalid", {
+                capacity: RANGE_LIMITS.capacity.max,
+                hours: RANGE_LIMITS.duration.max,
+              })
+            : t("hobbyhub.filters.rangeReversed")}
+        </p>
+      ) : null}
+      <p className="typo-small text-muted-foreground">
+        {sortNote ?? t("hobbyhub.filters.sortNote")}
+      </p>
+    </div>
+  )
+}
+
 type FiltersSheetProps = {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
@@ -241,21 +528,8 @@ export function FiltersSheet({
   trigger,
 }: FiltersSheetProps) {
   const { t } = useTranslation()
-  const options = useMemo(
-    () =>
-      activityOptions ??
-      DEMO_ACTIVITY_KEYS.map((key) => ({
-        id: key,
-        label: t(`hobbyhub.activities.${key}`),
-        icon: key,
-      })),
-    [activityOptions, t],
-  )
+  const options = useActivityChoices(activityOptions)
   const [draft, setDraft] = useState(value)
-  const locationId = useId()
-  const activityId = useId()
-  const dateFromId = useId()
-  const dateToId = useId()
 
   // Every opening starts from the filters that are actually applied, whether
   // the panel was opened by its trigger or by the parent.
@@ -264,29 +538,6 @@ export function FiltersSheet({
     setIsPreviouslyOpen(isOpen)
     if (isOpen) setDraft(value)
   }
-
-  const isRangeReversed =
-    draft.dateFrom !== "" && draft.dateTo !== "" && draft.dateFrom > draft.dateTo
-  const isNumberReversed =
-    isNumberRangeReversed(draft.priceFrom, draft.priceTo) ||
-    isNumberRangeReversed(draft.hoursFrom, draft.hoursTo) ||
-    isNumberRangeReversed(draft.capacityFrom, draft.capacityTo)
-  const isNumberInvalid =
-    !isRangeValueValid("price", draft.priceFrom) ||
-    !isRangeValueValid("price", draft.priceTo) ||
-    !isRangeValueValid("duration", draft.hoursFrom) ||
-    !isRangeValueValid("duration", draft.hoursTo) ||
-    !isRangeValueValid("capacity", draft.capacityFrom) ||
-    !isRangeValueValid("capacity", draft.capacityTo)
-  const week = thisWeekRange()
-  const weekend = thisWeekendRange()
-  // On a Sunday the week is the weekend; one chip then, so only one can be pressed.
-  const presets = [
-    ...(week.dateFrom === weekend.dateFrom && week.dateTo === weekend.dateTo
-      ? []
-      : [{ key: "week", range: week }]),
-    { key: "weekend", range: weekend },
-  ] as const
 
   const resultLabel = countResults
     ? t("hobbyhub.filters.results", { count: countResults(draft) })
@@ -314,7 +565,7 @@ export function FiltersSheet({
         <Button
           className="w-full"
           onClick={() => {
-            if (isRangeReversed || isNumberReversed || isNumberInvalid) return
+            if (filterDraftErrors(draft).hasErrors) return
             onApply(draft)
             onOpenChange(false)
           }}
@@ -323,213 +574,14 @@ export function FiltersSheet({
         </Button>
       }
     >
-      <div className="flex flex-col gap-3">
-        {fields.includes("activity") ? (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={activityId}>{t("hobbyhub.filters.activity")}</Label>
-            {activitiesState?.isLoading ? (
-              <p
-                role="status"
-                className="typo-small text-muted-foreground"
-              >
-                {t("hobbyhub.filters.activitiesLoading")}
-              </p>
-            ) : activitiesState?.error && options.length === 0 ? (
-              <Alert variant="destructive">
-                <AlertDescription className="flex items-center justify-between gap-3">
-                  <span>{t("hobbyhub.filters.activitiesError")}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={activitiesState.onRetry}
-                  >
-                    {t("hobbyhub.filters.activitiesRetry")}
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            ) : options.length === 0 ? (
-              <p className="typo-small text-muted-foreground">
-                {t("hobbyhub.filters.activitiesEmpty")}
-              </p>
-            ) : (
-              <ActivityCombobox
-                id={activityId}
-                isMultiple
-                options={options}
-                value={draft.activities}
-                onValueChange={(activities) => setDraft((current) => ({ ...current, activities }))}
-                placeholder={t("hobbyhub.filters.activityPlaceholder")}
-              />
-            )}
-            {/* The chosen ones as tags, each removed by one tap before the results are shown. */}
-            {draft.activities.length > 0 ? (
-              <div
-                role="group"
-                aria-label={t("hobbyhub.filters.chosenActivities")}
-                className="flex flex-wrap gap-2 pt-1.5"
-              >
-                {draft.activities.map((id) => (
-                  <FilterChip
-                    key={id}
-                    pressed
-                    onPressedChange={() =>
-                      setDraft((current) => ({
-                        ...current,
-                        activities: current.activities.filter((chosen) => chosen !== id),
-                      }))
-                    }
-                  >
-                    {options.find((option) => option.id === id)?.label ??
-                      t("hobbyhub.activityCombobox.unknown")}
-                    <X
-                      aria-hidden
-                      className="size-4 text-muted-foreground"
-                    />
-                  </FilterChip>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {fields.includes("when") ? (
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2">
-              {presets.map(({ key, range }) => (
-                <FilterChip
-                  key={key}
-                  pressed={draft.dateFrom === range.dateFrom && draft.dateTo === range.dateTo}
-                  onPressedChange={(isPressed) =>
-                    setDraft((current) => ({
-                      ...current,
-                      dateFrom: isPressed ? range.dateFrom : "",
-                      dateTo: isPressed ? range.dateTo : "",
-                    }))
-                  }
-                >
-                  {t(`hobbyhub.filters.${key}`)}
-                </FilterChip>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <Label htmlFor={dateFromId}>{t("hobbyhub.filters.dateFrom")}</Label>
-                <Input
-                  id={dateFromId}
-                  type="date"
-                  value={draft.dateFrom}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, dateFrom: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <Label htmlFor={dateToId}>{t("hobbyhub.filters.dateTo")}</Label>
-                <Input
-                  id={dateToId}
-                  type="date"
-                  value={draft.dateTo}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, dateTo: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            {isRangeReversed ? (
-              <p
-                role="alert"
-                className="typo-small text-destructive"
-              >
-                {t("hobbyhub.filters.dateRangeReversed")}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* TODO(F-02.1b #91): a text for now. Later a place picker with a radius
-            and distance from it, once events have coordinates (geocoding, F-12.3). */}
-        {fields.includes("location") ? (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={locationId}>{t("hobbyhub.filters.location")}</Label>
-            <Input
-              id={locationId}
-              maxLength={FILTER_TEXT_MAX_LENGTH}
-              placeholder={t("hobbyhub.filters.locationPlaceholder")}
-              value={draft.location}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, location: event.target.value }))
-              }
-            />
-          </div>
-        ) : null}
-        {fields.includes("freeSpots") ? (
-          <div className="flex flex-wrap gap-2">
-            <FilterChip
-              pressed={draft.freeSpotsOnly}
-              onPressedChange={(isPressed) =>
-                setDraft((current) => ({ ...current, freeSpotsOnly: isPressed }))
-              }
-            >
-              {t("hobbyhub.filters.freeSpots")}
-            </FilterChip>
-          </div>
-        ) : null}
-
-        {fields.includes("price") ? (
-          <RangeField
-            kind="price"
-            label={t("hobbyhub.filters.price")}
-            from={draft.priceFrom}
-            to={draft.priceTo}
-            step="1"
-            onChange={({ from, to }) =>
-              setDraft((current) => ({ ...current, priceFrom: from, priceTo: to }))
-            }
-          />
-        ) : null}
-
-        {fields.includes("duration") ? (
-          <RangeField
-            kind="duration"
-            label={t("hobbyhub.filters.duration")}
-            from={draft.hoursFrom}
-            to={draft.hoursTo}
-            step="0.5"
-            onChange={({ from, to }) =>
-              setDraft((current) => ({ ...current, hoursFrom: from, hoursTo: to }))
-            }
-          />
-        ) : null}
-
-        {fields.includes("capacity") ? (
-          <RangeField
-            kind="capacity"
-            label={t("hobbyhub.filters.capacity")}
-            from={draft.capacityFrom}
-            to={draft.capacityTo}
-            step="1"
-            onChange={({ from, to }) =>
-              setDraft((current) => ({ ...current, capacityFrom: from, capacityTo: to }))
-            }
-          />
-        ) : null}
-        {isNumberReversed || isNumberInvalid ? (
-          <p
-            role="alert"
-            className="typo-small text-destructive"
-          >
-            {isNumberInvalid
-              ? t("hobbyhub.filters.rangeInvalid", {
-                  capacity: RANGE_LIMITS.capacity.max,
-                  hours: RANGE_LIMITS.duration.max,
-                })
-              : t("hobbyhub.filters.rangeReversed")}
-          </p>
-        ) : null}
-        <p className="typo-small text-muted-foreground">
-          {sortNote ?? t("hobbyhub.filters.sortNote")}
-        </p>
-      </div>
+      <FiltersFields
+        draft={draft}
+        onDraftChange={setDraft}
+        fields={fields}
+        options={options}
+        activitiesState={activitiesState}
+        sortNote={sortNote}
+      />
     </ResponsiveSheet>
   )
 }

@@ -50,7 +50,7 @@ export function PublicProfilePage({
   return (
     <>
       <Seo title={profile.data?.name ?? t("profile.userProfile.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 md:py-12">
+      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page py-6 md:py-12">
         {profile.isPending ? (
           <div className="flex justify-center py-8">
             <Loader

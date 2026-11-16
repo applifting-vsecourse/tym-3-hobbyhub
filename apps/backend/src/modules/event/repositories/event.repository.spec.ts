@@ -1,5 +1,5 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Activity, Event, Level } from '@/generated/prisma/client';
+import { Activity, Event, Level, Prisma } from '@/generated/prisma/client';
 import { EventRepository, mapPrismaEventToListItem } from './event.repository';
 
 const anEvent = (
@@ -33,6 +33,9 @@ const anEvent = (
       defaultMaxParticipants: 12,
     } as Activity,
     level,
+    organizer: { name: 'Jana Nováková' },
+    group: null,
+    contributionAmount: null,
     _count: { participations },
     ...overrides,
   }) as Parameters<typeof mapPrismaEventToListItem>[0];
@@ -67,6 +70,42 @@ describe('mapPrismaEventToListItem', () => {
 
   it('has no level when the organizer did not set one', () => {
     expect(mapPrismaEventToListItem(anEvent({}, 0, null)).level).toBeNull();
+  });
+
+  // #224: a row on a large screen says who runs the event and what a seat costs.
+  it('names the organizer, a public group and the contribution', () => {
+    const item = mapPrismaEventToListItem({
+      ...anEvent({
+        contributionAmount: new Prisma.Decimal(150),
+      } as Partial<Event>),
+      group: {
+        id: 'g1',
+        name: 'Florbal Kobylisy',
+        visibility: 'PUBLIC',
+        status: 'ACTIVE',
+      },
+    });
+
+    expect(item).toMatchObject({
+      organizerName: 'Jana Nováková',
+      group: { id: 'g1', name: 'Florbal Kobylisy' },
+      contributionAmount: 150,
+    });
+  });
+
+  it('does not name a private group', () => {
+    const item = mapPrismaEventToListItem({
+      ...anEvent(),
+      group: {
+        id: 'g1',
+        name: 'Tajný klub',
+        visibility: 'PRIVATE',
+        status: 'ACTIVE',
+      },
+    });
+
+    expect(item.group).toBeNull();
+    expect(item.contributionAmount).toBeNull();
   });
 });
 
