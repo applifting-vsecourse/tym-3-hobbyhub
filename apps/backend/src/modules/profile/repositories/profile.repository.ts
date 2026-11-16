@@ -28,12 +28,46 @@ export type PublicProfileRow = {
   profileCover: string | null;
 };
 
-/** A new nickname as typed, and when the user changed it. */
-export type NicknameChange = { nickname: string; changedAt: Date };
+/**
+ * A new nickname as typed and when the user changed it. It is saved only if
+ * the last change came no later than `previousChangeAtMost` (ADR-0025).
+ */
+export type NicknameChange = {
+  nickname: string;
+  changedAt: Date;
+  previousChangeAtMost: Date;
+};
+
+export type ProfileUpdateRefusal =
+  'NICKNAME_TAKEN' | 'NICKNAME_CHANGE_TOO_SOON';
+
+const profileSelect = {
+  name: true,
+  usernameChangedAt: true,
+  createdAt: true,
+  bio: true,
+  image: true,
+  profileCover: true,
+  gender: true,
+  birthYear: true,
+} as const;
+
+const toProfileRow = ({
+  usernameChangedAt,
+  ...rest
+}: Prisma.UserGetPayload<{ select: typeof profileSelect }>): ProfileRow => ({
+  ...rest,
+  nicknameChangedAt: usernameChangedAt,
+});
 
 const isUniqueViolation = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === 'P2002';
+
+// The update's condition did not match: the record to update was not found.
+const isNotMatched = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === 'P2025';
 
 const accountSelect = {
   id: true,
@@ -52,20 +86,9 @@ export class ProfileRepository {
   async getRow(userId: string): Promise<ProfileRow | null> {
     const row = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        name: true,
-        usernameChangedAt: true,
-        createdAt: true,
-        bio: true,
-        image: true,
-        profileCover: true,
-        gender: true,
-        birthYear: true,
-      },
+      select: profileSelect,
     });
-    if (!row) return null;
-    const { usernameChangedAt, ...rest } = row;
-    return { ...rest, nicknameChangedAt: usernameChangedAt };
+    return row && toProfileRow(row);
   }
 
   // #212: whether someone other than `userId` has the nickname, letter case
@@ -93,9 +116,11 @@ export class ProfileRepository {
   }
 
   // A new nickname sets all three columns at once: the CHECKs keep `name` and
-  // `displayUsername` equal and `username` their lower-cased form. Someone
-  // taking the same nickname in the meantime trips the unique index; that is
-  // answered, not thrown.
+  // `displayUsername` equal and `username` their lower-cased form. The 30 days
+  // are a condition of the UPDATE itself, so two requests sent at once cannot
+  // both change the nickname. Someone taking the same nickname in the meantime
+  // trips the unique index. Both are answered, not thrown. Answers the saved
+  // profile, so nobody has to read it again.
   async updatePublic(
     userId: string,
     data: {
@@ -104,11 +129,19 @@ export class ProfileRepository {
       image?: string | null;
       profileCover?: string | null;
     },
-  ): Promise<'UPDATED' | 'NICKNAME_TAKEN'> {
+  ): Promise<ProfileRow | ProfileUpdateRefusal> {
     const { nickname, ...rest } = data;
     try {
-      await this.prisma.user.update({
-        where: { id: userId },
+      const row = await this.prisma.user.update({
+        where: {
+          id: userId,
+          ...(nickname && {
+            OR: [
+              { usernameChangedAt: null },
+              { usernameChangedAt: { lte: nickname.previousChangeAtMost } },
+            ],
+          }),
+        },
         data: {
           ...rest,
           ...(nickname && {
@@ -119,10 +152,12 @@ export class ProfileRepository {
           }),
           updatedAt: new Date(),
         },
+        select: profileSelect,
       });
-      return 'UPDATED';
+      return toProfileRow(row);
     } catch (error) {
       if (nickname && isUniqueViolation(error)) return 'NICKNAME_TAKEN';
+      if (nickname && isNotMatched(error)) return 'NICKNAME_CHANGE_TOO_SOON';
       throw error;
     }
   }

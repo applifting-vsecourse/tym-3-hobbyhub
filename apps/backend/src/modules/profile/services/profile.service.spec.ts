@@ -56,6 +56,7 @@ describe('ProfileService', () => {
   } => {
     const repository = mock<ProfileRepository>();
     repository.getRow.mockResolvedValue(row);
+    repository.updatePublic.mockResolvedValue(row ?? aRow());
     const onboardingService = mock<OnboardingService>();
     onboardingService.getOnboarding.mockResolvedValue(onboarding);
     onboardingService.getOnboardingOf.mockResolvedValue(onboarding);
@@ -157,8 +158,24 @@ describe('ProfileService', () => {
           'u1',
         );
         expect(repository.updatePublic).toHaveBeenCalledWith('u1', {
-          nickname: { nickname: 'KacenkaJana', changedAt: now },
+          nickname: {
+            nickname: 'KacenkaJana',
+            changedAt: now,
+            previousChangeAtMost: daysAgo(30),
+          },
         });
+      });
+
+      it('answers with the saved row and does not read the profile again', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(false);
+        repository.updatePublic.mockResolvedValue(
+          aRow({ name: 'KacenkaJana', nicknameChangedAt: now }),
+        );
+        await expect(
+          service.updatePublic(user, { name: 'KacenkaJana' }, now),
+        ).resolves.toMatchObject({ name: 'KacenkaJana' });
+        expect(repository.getRow).toHaveBeenCalledTimes(1);
       });
 
       it('takes the same nickname as no change, even within 30 days', async () => {
@@ -188,6 +205,15 @@ describe('ProfileService', () => {
         await expect(
           refusal(service.updatePublic(user, { name: 'BreadCritic' }, now)),
         ).resolves.toMatchObject({ message: ['NICKNAME_TAKEN'] });
+      });
+
+      it('refuses it when another request changed it between the check and the save', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(false);
+        repository.updatePublic.mockResolvedValue('NICKNAME_CHANGE_TOO_SOON');
+        await expect(
+          refusal(service.updatePublic(user, { name: 'KacenkaJana' }, now)),
+        ).resolves.toMatchObject({ message: ['NICKNAME_CHANGE_TOO_SOON'] });
       });
 
       it.each([

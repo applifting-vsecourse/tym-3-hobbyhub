@@ -25,6 +25,10 @@ export const RESERVED_NICKNAME_WORDS = [
 ] as const;
 // Too short to refuse inside other words ("Modrak"), refused on its own.
 export const RESERVED_NICKNAMES = ['mod'] as const;
+// Ordinary words that happen to contain a reserved one ("badminton" holds
+// "admin"). They are taken out before the search, so "BadmintonPetr" passes
+// and "BadmintonAdmin" still does not.
+export const NICKNAME_WORDS_NOT_RESERVED = ['badminton', 'ecosystem'] as const;
 
 export const NICKNAME_CHANGE_COOLDOWN_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,9 +51,13 @@ export function nicknameViolation(value: unknown): NicknameViolation | null {
   if (value.length > NICKNAME_MAX_LENGTH) return 'NICKNAME_TOO_LONG';
   if (!NICKNAME_PATTERN.test(value)) return 'NICKNAME_INVALID';
   const normalized = normalizeNickname(value);
+  const searched = NICKNAME_WORDS_NOT_RESERVED.reduce(
+    (rest, word) => rest.split(word).join(' '),
+    normalized,
+  );
   const isReserved =
     (RESERVED_NICKNAMES as readonly string[]).includes(normalized) ||
-    RESERVED_NICKNAME_WORDS.some((word) => normalized.includes(word));
+    RESERVED_NICKNAME_WORDS.some((word) => searched.includes(word));
   return isReserved ? 'NICKNAME_RESERVED' : null;
 }
 
@@ -67,4 +75,12 @@ export function nicknameChangeableFrom(
     lastChangedAt.getTime() + NICKNAME_CHANGE_COOLDOWN_DAYS * DAY_MS,
   );
   return from > now ? from : null;
+}
+
+/**
+ * The latest moment of the last change that still lets the nickname change
+ * at `now`; the save checks it again in the database.
+ */
+export function nicknamePreviousChangeAtMost(now: Date): Date {
+  return new Date(now.getTime() - NICKNAME_CHANGE_COOLDOWN_DAYS * DAY_MS);
 }

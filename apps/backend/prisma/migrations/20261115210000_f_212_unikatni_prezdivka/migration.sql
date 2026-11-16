@@ -2,7 +2,8 @@
 -- it in `username` (lower-cased; the unique index "user_username_key" already
 -- exists) and `displayUsername` (as typed); `name` is a copy of
 -- `displayUsername`. Every existing account gets a nickname here:
---   * a valid username it already has (the seeded accounts) is kept;
+--   * a valid username it already has (the seeded accounts) is kept, in the
+--     letter case of its displayUsername when that is the same nickname;
 --   * anyone else gets one made from the name: diacritics and anything but
 --     a-z, 0-9, "_" and "." removed ("Jan Novák" -> "JanNovak"), cut to 30;
 --     shorter than 3 characters -> "hrac1";
@@ -15,8 +16,10 @@ ALTER TABLE "user" ADD COLUMN "usernameChangedAt" TIMESTAMP(3);
 -- Every nickname is assigned anew, so an old username of an account handled
 -- later cannot block a candidate of one handled earlier.
 ALTER TABLE "user" ADD COLUMN "previousUsername" TEXT;
+ALTER TABLE "user" ADD COLUMN "previousDisplayUsername" TEXT;
 UPDATE "user"
 SET "previousUsername" = "username",
+    "previousDisplayUsername" = "displayUsername",
     "username" = NULL,
     "displayUsername" = NULL;
 
@@ -28,7 +31,7 @@ DECLARE
   n INT;
 BEGIN
   FOR account IN
-    SELECT "id", "name", "previousUsername"
+    SELECT "id", "name", "previousUsername", "previousDisplayUsername"
     FROM "user"
     ORDER BY
       COALESCE("previousUsername" ~ '^[A-Za-z0-9_.]{3,30}$', FALSE) DESC,
@@ -36,7 +39,13 @@ BEGIN
       "id"
   LOOP
     IF COALESCE(account."previousUsername" ~ '^[A-Za-z0-9_.]{3,30}$', FALSE) THEN
-      base := account."previousUsername";
+      -- The plugin stores username lower-cased; the letter case is kept in
+      -- displayUsername.
+      IF lower(account."previousDisplayUsername") = account."previousUsername" THEN
+        base := account."previousDisplayUsername";
+      ELSE
+        base := account."previousUsername";
+      END IF;
     ELSE
       base := left(
         regexp_replace(
@@ -73,6 +82,7 @@ BEGIN
 END $$;
 
 ALTER TABLE "user" DROP COLUMN "previousUsername";
+ALTER TABLE "user" DROP COLUMN "previousDisplayUsername";
 
 -- AlterTable
 ALTER TABLE "user" ALTER COLUMN "username" SET DATA TYPE VARCHAR(30),

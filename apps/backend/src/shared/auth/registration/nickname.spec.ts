@@ -1,6 +1,7 @@
 import {
   NICKNAME_CHANGE_COOLDOWN_DAYS,
   nicknameChangeableFrom,
+  nicknamePreviousChangeAtMost,
   nicknameViolation,
   normalizeNickname,
 } from './nickname';
@@ -32,6 +33,18 @@ describe('nicknameViolation', () => {
     },
   );
 
+  it.each(['BadmintonPetr', 'badminton_92', 'EcosystemFan'])(
+    'accepts %p, where the reserved word is part of an ordinary one',
+    (value) => {
+      expect(nicknameViolation(value)).toBeNull();
+    },
+  );
+
+  it('still refuses a reserved word next to an ordinary one', () => {
+    expect(nicknameViolation('BadmintonAdmin')).toBe('NICKNAME_RESERVED');
+    expect(nicknameViolation('SystemEcosystem')).toBe('NICKNAME_RESERVED');
+  });
+
   it('refuses "mod" on its own, but not inside another word', () => {
     expect(nicknameViolation('MOD')).toBe('NICKNAME_RESERVED');
     expect(nicknameViolation('Modrak')).toBeNull();
@@ -61,5 +74,17 @@ describe('nicknameChangeableFrom', () => {
 
   it('lets them change it once the 30 days are over', () => {
     expect(nicknameChangeableFrom(daysAgo(30), NOW)).toBeNull();
+  });
+});
+
+describe('nicknamePreviousChangeAtMost', () => {
+  it('is 30 days back, the same bound as nicknameChangeableFrom', () => {
+    const now = new Date('2026-11-15T12:00:00Z');
+    const bound = nicknamePreviousChangeAtMost(now);
+    expect(bound).toEqual(new Date('2026-10-16T12:00:00Z'));
+    expect(nicknameChangeableFrom(bound, now)).toBeNull();
+    expect(
+      nicknameChangeableFrom(new Date(bound.getTime() + 1), now),
+    ).not.toBeNull();
   });
 });

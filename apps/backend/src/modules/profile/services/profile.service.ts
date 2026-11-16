@@ -16,6 +16,7 @@ import {
 import {
   NicknameChange,
   ProfileRepository,
+  ProfileRow,
 } from '@/modules/profile/repositories/profile.repository';
 import {
   AdminListQuery,
@@ -24,6 +25,7 @@ import {
 import { Identity } from '@/shared/auth/domain/identity';
 import {
   nicknameChangeableFrom,
+  nicknamePreviousChangeAtMost,
   nicknameViolation,
 } from '@/shared/auth/registration/nickname';
 import { Gender } from '@/shared/auth/registration/registration';
@@ -52,6 +54,14 @@ export class ProfileService {
   ): Promise<Profile> {
     const row = await this.profileRepository.getRow(userId);
     if (!row) throw new NotFoundException('User not found');
+    return this.profileFrom(row, userId, now);
+  }
+
+  private async profileFrom(
+    row: ProfileRow,
+    userId: string,
+    now: Date,
+  ): Promise<Profile> {
     const onboarding = await this.onboardingService.getOnboardingOf(userId);
     return {
       name: row.name,
@@ -124,11 +134,10 @@ export class ProfileService {
       ...(nickname && { nickname }),
       ...(cover !== undefined && { profileCover: cover }),
     });
-    // Someone took the same nickname between the check and the save.
-    if (result === 'NICKNAME_TAKEN') {
-      throw new BadRequestException(['NICKNAME_TAKEN']);
-    }
-    return this.getProfile(user, now);
+    // Someone took the same nickname, or another request changed it, between
+    // the check and the save.
+    if (typeof result === 'string') throw new BadRequestException([result]);
+    return this.profileFrom(result, user.id, now);
   }
 
   /**
@@ -153,7 +162,11 @@ export class ProfileService {
     if (await this.profileRepository.isNicknameTaken(nickname, user.id)) {
       throw new BadRequestException(['NICKNAME_TAKEN']);
     }
-    return { nickname, changedAt: now };
+    return {
+      nickname,
+      changedAt: now,
+      previousChangeAtMost: nicknamePreviousChangeAtMost(now),
+    };
   }
 
   async updatePrivate(
