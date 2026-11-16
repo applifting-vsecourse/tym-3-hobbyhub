@@ -389,11 +389,7 @@ export function MyEventsOverview({
     }
     return (
       <div className="flex flex-col">
-        {/* A row keeps the width it reads well at; a wide screen fits more of
-            them side by side instead of stretching each one (#224). */}
-        <ul className="xl:grid xl:grid-cols-[repeat(auto-fill,minmax(36rem,1fr))] xl:gap-x-8">
-          {list.items.map(render)}
-        </ul>
+        <ul>{list.items.map(render)}</ul>
         {list.error ? (
           // A later page or a reload failed: keep what is loaded and retry just that.
           <EventsLoadError
