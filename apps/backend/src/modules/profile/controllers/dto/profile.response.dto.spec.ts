@@ -28,9 +28,11 @@ describe('PublicProfileResponseDto', () => {
       },
       friendsSeeEventHistory: true,
       friendsSeeUpcomingEvents: false,
+      nicknameChangeableFrom: new Date('2026-12-01T00:00:00Z'),
     } as unknown as PublicProfile;
     const response = PublicProfileResponseDto.fromDomain(profile);
     expect(response).not.toHaveProperty('email');
+    expect(response).not.toHaveProperty('nicknameChangeableFrom');
     expect(Object.keys(response).sort()).toEqual([
       'bio',
       'cover',
@@ -57,6 +59,7 @@ describe('ProfileResponseDto', () => {
       interests: [],
       address: null,
       travelRadiusKm: null,
+      nicknameChangeableFrom: null,
       friendVisibility: {
         friendsSeeEventHistory: false,
         friendsSeeUpcomingEvents: true,

@@ -1,8 +1,9 @@
 import { CharLength } from '@/core/validation/char-length.decorator';
+import { PROFILE_BIO_MAX_LENGTH } from '@/modules/profile/domain/profile';
 import {
-  PROFILE_BIO_MAX_LENGTH,
-  PROFILE_NAME_MAX_LENGTH,
-} from '@/modules/profile/domain/profile';
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MIN_LENGTH,
+} from '@/shared/auth/registration/nickname';
 import {
   GENDERS,
   OLDEST_BIRTH_YEAR,
@@ -28,12 +29,20 @@ const trimToNull = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() || null : value;
 
 export class UpdateProfileDto {
-  @ApiPropertyOptional({ maxLength: PROFILE_NAME_MAX_LENGTH })
+  // #212: the unique nickname. The allowed characters, reserved words, whether
+  // it is free and the 30 days between changes are the service's rules, which
+  // answer with codes (ADR-0025).
+  @ApiPropertyOptional({
+    minLength: NICKNAME_MIN_LENGTH,
+    maxLength: NICKNAME_MAX_LENGTH,
+    description:
+      'The nickname: a-z, 0-9, "_" and "."; unique regardless of letter case; changed at most once in 30 days',
+  })
   @Transform(trim)
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  @CharLength(1, PROFILE_NAME_MAX_LENGTH)
+  @CharLength(NICKNAME_MIN_LENGTH, NICKNAME_MAX_LENGTH)
   name?: string;
 
   @ApiPropertyOptional({

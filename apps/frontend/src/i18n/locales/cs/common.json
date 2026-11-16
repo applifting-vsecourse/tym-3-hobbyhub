@@ -397,7 +397,7 @@
       "confirmPassword": "Zopakujte heslo",
       "email": "E-mail",
       "gender": "Pohlaví",
-      "name": "Jméno / přezdívka",
+      "nickname": "Přezdívka",
       "password": "Heslo"
     },
     "forgotPassword": {
@@ -466,7 +466,6 @@
       "emailInvalid": "Neplatný e-mail",
       "emailRequired": "Zadejte e-mail",
       "genderRequired": "Vyberte pohlaví",
-      "nameRequired": "Zadejte jméno nebo přezdívku",
       "passwordMin": "Heslo musí mít alespoň 8 znaků",
       "passwordMinLength": "Heslo musí mít alespoň {{minimum}} znaků",
       "passwordRequired": "Zadejte heslo",
@@ -1640,6 +1639,18 @@
     },
     "title": "Moje akce"
   },
+  "nickname": {
+    "available": "Přezdívka je volná.",
+    "changeTooSoon": "Přezdívku jde změnit jen jednou za 30 dní.",
+    "checking": "Zjišťujeme, jestli je přezdívka volná…",
+    "hint": "3–30 znaků: písmena bez diakritiky, číslice, _ a tečka. Musí být jen vaše.",
+    "invalid": "Použijte jen písmena bez diakritiky, číslice, _ a tečku",
+    "required": "Zadejte přezdívku",
+    "reserved": "Přezdívka nesmí obsahovat slova jako admin, moderator nebo hobbyhub",
+    "taken": "Tuhle přezdívku už někdo má. Zkuste jinou.",
+    "tooLong": "Přezdívka může mít nejvýše {{max}} znaků",
+    "tooShort": "Přezdívka musí mít alespoň {{min}} znaky"
+  },
   "notifications": {
     "badgeOverflow": "{{max}}+",
     "bell": "Notifikace",
@@ -2065,8 +2076,8 @@
       "bioTooLong": "Bio může mít nejvýše {{max}} znaků.",
       "mediaHint": "Úvodní grafika je vaše vizitka: ilustrace, nebo vlastní fotka. Obrázek přes její okraj je váš profilový obrázek.",
       "name": "Přezdívka",
-      "nameRequired": "Zadejte přezdívku",
-      "nameTooLong": "Přezdívka může mít nejvýše {{max}} znaků.",
+      "nicknameChangeHint": "Přezdívku jde změnit jednou za 30 dní.",
+      "nicknameLocked": "Přezdívku jste nedávno změnili. Znovu ji můžete změnit od {{date}}.",
       "photoProblem": {
         "tooLarge": "Fotka je i po zmenšení větší než 2 MB. Vyberte jinou.",
         "unreadable": "Fotku se nepodařilo zpracovat. Zkuste jinou."

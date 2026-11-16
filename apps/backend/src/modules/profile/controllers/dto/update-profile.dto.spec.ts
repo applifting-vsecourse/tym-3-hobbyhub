@@ -29,7 +29,8 @@ describe('UpdateProfileDto', () => {
 
   it.each([
     ['a blank nickname', { name: '   ' }],
-    ['a nickname over 50 characters', { name: 'x'.repeat(51) }],
+    ['a nickname under 3 characters', { name: 'ab' }],
+    ['a nickname over 30 characters', { name: 'x'.repeat(31) }],
     ['a bio over 300 characters', { bio: 'x'.repeat(301) }],
     ['a photo that is not text', { image: 5 }],
     ['an unknown field', { role: 'admin' }],
