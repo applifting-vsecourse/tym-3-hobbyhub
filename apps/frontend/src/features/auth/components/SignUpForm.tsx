@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link } from "@tanstack/react-router"
 import type { TFunction } from "i18next"
@@ -31,6 +31,7 @@ import {
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
 
+import { OrDivider, type GoogleRegistration } from "@/features/auth/components/GoogleButton"
 import { PasswordInput } from "@/features/auth/components/PasswordInput"
 
 const GENDERS = ["MALE", "FEMALE"] as const
@@ -91,9 +92,14 @@ type SignUpFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
   readonly onSubmit: (values: SignUpFormValues) => void | Promise<void>
+  /**
+   * Sign-up with Google needs the same personal fields and consents as the
+   * form, but no e-mail or password: this hands over a way to check just those.
+   */
+  readonly renderGoogle?: (getRegistration: () => Promise<GoogleRegistration | null>) => ReactNode
 }
 
-export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProps) {
+export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: SignUpFormProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
@@ -103,6 +109,18 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
     mode: "onChange",
   })
   useRevalidateOnLanguageChange(form)
+
+  const getGoogleRegistration = async (): Promise<GoogleRegistration | null> => {
+    const isValid = await form.trigger(["gender", "birthYear", "adulthoodConfirmed", "termsAccepted"])
+    if (!isValid) return null
+    const { gender, birthYear } = form.getValues()
+    return {
+      gender,
+      birthYear: Number(birthYear.trim()),
+      adulthoodConfirmed: true,
+      termsAccepted: true,
+    }
+  }
 
   return (
     <AppForm
@@ -312,6 +330,13 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
         {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
         {t("auth.signUp.submit")}
       </Button>
+
+      {renderGoogle ? (
+        <>
+          <OrDivider />
+          {renderGoogle(getGoogleRegistration)}
+        </>
+      ) : null}
     </AppForm>
   )
 }

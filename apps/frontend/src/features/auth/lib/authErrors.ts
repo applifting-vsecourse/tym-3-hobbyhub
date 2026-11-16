@@ -16,7 +16,7 @@ export class AuthError extends Error {
 export function authErrorMessage(
   t: TFunction,
   error: unknown,
-  fallback: "signInFailed" | "signUpFailed" | "resetPasswordFailed",
+  fallback: "signInFailed" | "signUpFailed" | "resetPasswordFailed" | "googleFailed",
 ) {
   if (!(error instanceof AuthError)) return t(`auth.errors.${fallback}`)
   // The rate limiter answers without a code.
@@ -49,5 +49,21 @@ export function authErrorMessage(
       return t("auth.errors.adulthoodNotConfirmed")
     default:
       return t(`auth.errors.${fallback}`)
+  }
+}
+
+/**
+ * The message for the `error` code BetterAuth puts on the return address when
+ * the Google round trip fails.
+ */
+export function googleErrorMessage(t: TFunction, code: string) {
+  switch (code) {
+    case "new_user_signup_disabled":
+      return t("auth.errors.googleNoAccount")
+    case "account_not_linked":
+    case "unable_to_link_account":
+      return t("auth.errors.googleEmailExists")
+    default:
+      return t("auth.errors.googleFailed")
   }
 }

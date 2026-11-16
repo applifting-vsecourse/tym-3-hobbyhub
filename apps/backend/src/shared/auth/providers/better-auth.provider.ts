@@ -50,7 +50,24 @@ const createAuth = (
         },
       },
     },
-    trustedOrigins: [config.frontendUrl],
+    trustedOrigins: config.frontendOrigins,
+    // A password account whose e-mail was never verified must not be taken
+    // over by whoever signs in with Google under that address.
+    account: { accountLinking: { requireLocalEmailVerified: true } },
+    // Google redirects to `${backendUrl}/api/auth/callback/google`. Off unless
+    // both credentials are set, so the app still starts without them.
+    socialProviders:
+      config.googleClientId && config.googleClientSecret
+        ? {
+            google: {
+              clientId: config.googleClientId,
+              clientSecret: config.googleClientSecret,
+              // Signing in never creates an account: that takes the sign-up
+              // form (gender, year of birth, 18+, terms), see the hooks.
+              disableImplicitSignUp: true,
+            },
+          }
+        : {},
     emailVerification: {
       sendVerificationEmail: async ({ user, url }) => {
         // F-03.2: once a minute per address, the registration's e-mail too.

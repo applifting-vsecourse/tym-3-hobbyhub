@@ -9,28 +9,40 @@ import { AuthLayout } from "@/components/AuthLayout"
 import { Seo } from "@/components/Seo"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
+import { GoogleButton, OrDivider } from "@/features/auth/components/GoogleButton"
 import { SignInForm, type SignInFormValues } from "@/features/auth/components/SignInForm"
 import { useSignIn } from "@/features/auth/hooks/useSignIn"
-import { authErrorMessage } from "@/features/auth/lib/authErrors"
+import { authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
 import { redirectTarget } from "@/features/auth/lib/redirect"
 import { onboardingQueryOptions } from "@/features/onboarding/api/onboardingQueryOptions"
 
 const loginSearchParamsSchema = z.object({
   from: z.string().optional(),
+  // Set by BetterAuth when the round trip to Google fails.
+  error: z.string().optional(),
 })
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   validateSearch: loginSearchParamsSchema,
-  loader: async ({ context }) => {
+  loaderDeps: ({ search }) => ({ from: search.from }),
+  loader: async ({ context, deps }) => {
     const session = await context.queryClient.ensureQueryData(authSessionQueryOptions())
     if (!session) return
-    throw redirect({ to: ROUTES.home })
+    // Coming back from Google lands here already signed in: on to where the
+    // visitor was going, or to an onboarding that was not ended (F-04.8).
+    const onboarding = await context.queryClient
+      .fetchQuery({ ...onboardingQueryOptions(), staleTime: 0 })
+      .catch(() => null)
+    if (onboarding?.completedAt === null) {
+      throw redirect({ to: ROUTES.onboarding, search: { from: deps.from } })
+    }
+    throw redirect({ to: redirectTarget(deps.from, ROUTES.home) })
   },
 })
 
 function LoginPage() {
-  const { from } = Route.useSearch()
+  const { from, error: googleError } = Route.useSearch()
   const redirectTo = redirectTarget(from, ROUTES.home)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -76,9 +88,19 @@ function LoginPage() {
           </>
         }
       >
+        <div className="mb-6 space-y-3">
+          <GoogleButton from={from} />
+          <OrDivider />
+        </div>
         <SignInForm
           isLoading={signIn.isPending}
-          errorMessage={error ? authErrorMessage(t, error, "signInFailed") : null}
+          errorMessage={
+            error
+              ? authErrorMessage(t, error, "signInFailed")
+              : googleError
+                ? googleErrorMessage(t, googleError)
+                : null
+          }
           onSubmit={handleSubmit}
         />
         <p className="mt-4 text-center typo-small">

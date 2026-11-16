@@ -4,6 +4,9 @@
     "errors": {
       "adulthoodNotConfirmed": "You need to confirm you are 18 or older to register.",
       "emailNotVerified": "Your email is not verified yet.",
+      "googleEmailExists": "An account with this e-mail already exists. Sign in with your password.",
+      "googleFailed": "Signing in with Google failed.",
+      "googleNoAccount": "There is no account for this Google account yet. Please sign up.",
       "invalidBirthYear": "Invalid year of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
@@ -37,6 +40,10 @@
     "gender": {
       "female": "Female",
       "male": "Male"
+    },
+    "google": {
+      "button": "Continue with Google",
+      "divider": "or"
     },
     "password": {
       "hide": "Hide",

@@ -20,7 +20,7 @@ async function main(): Promise<void> {
 
   // Configure CORS - Allows cross-origin requests from specific origins
   app.enableCors({
-    origin: [config.backendUrl, config.frontendUrl],
+    origin: [config.backendUrl, ...config.frontendOrigins],
     credentials: true,
   });
 
