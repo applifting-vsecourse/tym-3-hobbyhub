@@ -40,6 +40,7 @@ const aSeat = (
 ) => ({
   id,
   status,
+  userId: `user-${id}`,
   message: null,
   changedAt: "2029-12-30T10:00:00.000Z",
   asksAgain: false,
@@ -86,6 +87,11 @@ describe("Participants", () => {
     expect(await within(coming).findByRole("heading", { name: "Honza_K" })).toBeInTheDocument()
     expect(within(coming).getByText("K tomu 3 místa mimo aplikaci")).toBeInTheDocument()
     expect(within(coming).getByText(/^Místo má od/)).toBeInTheDocument()
+    // The organizer opens the participant's profile from the name.
+    expect(within(coming).getByRole("link", { name: "Honza_K" })).toHaveAttribute(
+      "href",
+      "/profile/user-p1",
+    )
     expect(get).toHaveBeenCalledWith("events/e1/participations", {
       searchParams: { status: "APPROVED", limit: "20", offset: "0" },
     })

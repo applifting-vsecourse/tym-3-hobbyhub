@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react"
+import { Link } from "@tanstack/react-router"
 import { Ellipsis } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -77,7 +78,16 @@ export function GroupMemberList({ groupId, groupName, members, me }: GroupMember
                 size="md"
               />
               <div className="flex min-w-0 flex-1 flex-col">
-                <p className="truncate typo-title text-foreground">{member.name}</p>
+                <p className="truncate typo-title text-foreground">
+                  {/* The members see each other's public profile (visibility matrix). */}
+                  <Link
+                    to="/profile/$userId"
+                    params={{ userId: member.userId }}
+                    className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
+                  >
+                    {member.name}
+                  </Link>
+                </p>
                 <p className="typo-small text-muted-foreground">
                   {t(`groups.list.role.${member.role}`)}
                 </p>

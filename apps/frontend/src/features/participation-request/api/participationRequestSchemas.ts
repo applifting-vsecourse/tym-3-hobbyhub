@@ -117,6 +117,8 @@ export const participantSchema = z.object({
   /** The seat. */
   id: z.string(),
   status: seatStatusSchema,
+  /** Whose seat it is: the name opens their profile. */
+  userId: z.string(),
   /** APPROVED: the message of the request behind the seat. CANCELLED: the words when cancelling. */
   message: z.string().nullable(),
   /** When the person got the seat, or gave it back. */
