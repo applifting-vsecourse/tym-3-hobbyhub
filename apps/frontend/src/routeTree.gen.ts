@@ -18,6 +18,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as ProtectedPagesFriendsRouteImport } from './routes/_ProtectedPages/friends'
 import { Route as ProtectedPagesMyEventsRouteImport } from './routes/_ProtectedPages/my-events'
 import { Route as ProtectedPagesNotificationsRouteImport } from './routes/_ProtectedPages/notifications'
 import { Route as ProtectedPagesOnboardingRouteImport } from './routes/_ProtectedPages/onboarding'
@@ -91,6 +92,11 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedPagesFriendsRoute = ProtectedPagesFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => ProtectedPagesRoute,
 } as any)
 const ProtectedPagesMyEventsRoute = ProtectedPagesMyEventsRouteImport.update({
   id: '/my-events',
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/friends': typeof ProtectedPagesFriendsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
   '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/friends': typeof ProtectedPagesFriendsRoute
   '/my-events': typeof ProtectedPagesMyEventsRoute
   '/notifications': typeof ProtectedPagesNotificationsRoute
   '/onboarding': typeof ProtectedPagesOnboardingRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_ProtectedPages/friends': typeof ProtectedPagesFriendsRoute
   '/_ProtectedPages/my-events': typeof ProtectedPagesMyEventsRoute
   '/_ProtectedPages/notifications': typeof ProtectedPagesNotificationsRoute
   '/_ProtectedPages/onboarding': typeof ProtectedPagesOnboardingRoute
@@ -384,6 +393,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/verify-email'
+    | '/friends'
     | '/my-events'
     | '/notifications'
     | '/onboarding'
@@ -423,6 +433,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/verify-email'
+    | '/friends'
     | '/my-events'
     | '/notifications'
     | '/onboarding'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/verify-email'
+    | '/_ProtectedPages/friends'
     | '/_ProtectedPages/my-events'
     | '/_ProtectedPages/notifications'
     | '/_ProtectedPages/onboarding'
@@ -577,6 +589,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_ProtectedPages/friends': {
+      id: '/_ProtectedPages/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof ProtectedPagesFriendsRouteImport
+      parentRoute: typeof ProtectedPagesRoute
     }
     '/_ProtectedPages/my-events': {
       id: '/_ProtectedPages/my-events'
@@ -785,6 +804,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedPagesRouteChildren {
+  ProtectedPagesFriendsRoute: typeof ProtectedPagesFriendsRoute
   ProtectedPagesMyEventsRoute: typeof ProtectedPagesMyEventsRoute
   ProtectedPagesNotificationsRoute: typeof ProtectedPagesNotificationsRoute
   ProtectedPagesOnboardingRoute: typeof ProtectedPagesOnboardingRoute
@@ -799,6 +819,7 @@ interface ProtectedPagesRouteChildren {
 }
 
 const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
+  ProtectedPagesFriendsRoute: ProtectedPagesFriendsRoute,
   ProtectedPagesMyEventsRoute: ProtectedPagesMyEventsRoute,
   ProtectedPagesNotificationsRoute: ProtectedPagesNotificationsRoute,
   ProtectedPagesOnboardingRoute: ProtectedPagesOnboardingRoute,

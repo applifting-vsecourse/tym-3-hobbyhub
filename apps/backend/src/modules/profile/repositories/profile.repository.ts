@@ -18,6 +18,8 @@ export type ProfileRow = {
   profileCover: string | null;
   gender: Gender | null;
   birthYear: number | null;
+  friendsSeeEventHistory: boolean;
+  friendsSeeUpcomingEvents: boolean;
 };
 
 export type PublicProfileRow = {
@@ -50,6 +52,8 @@ const profileSelect = {
   profileCover: true,
   gender: true,
   birthYear: true,
+  friendsSeeEventHistory: true,
+  friendsSeeUpcomingEvents: true,
 } as const;
 
 const toProfileRow = ({
@@ -162,9 +166,16 @@ export class ProfileRepository {
     }
   }
 
+  // The private details and (#227) what friends may see of the user's
+  // events: whatever of them is given, in one update.
   async updatePrivate(
     userId: string,
-    data: { gender: Gender; birthYear: number },
+    data: {
+      gender?: Gender;
+      birthYear?: number;
+      friendsSeeEventHistory?: boolean;
+      friendsSeeUpcomingEvents?: boolean;
+    },
   ): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },

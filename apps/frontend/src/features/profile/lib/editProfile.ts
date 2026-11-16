@@ -60,6 +60,9 @@ export const createEditProfileSchema = (t: TFunction, savedNickname: string) =>
           context.addIssue({ code: "custom", message: t(BIRTH_YEAR_MESSAGES[problem]) })
         }
       }),
+      // #227: what friends see of the events.
+      friendsSeeEventHistory: z.boolean(),
+      friendsSeeUpcomingEvents: z.boolean(),
     })
     .superRefine((values, context) => {
       const hasBirthYear = values.birthYear.trim() !== ""
@@ -97,4 +100,6 @@ export const editValuesOf = (profile: Profile): EditProfileValues => ({
   },
   gender: profile.gender ?? undefined,
   birthYear: profile.birthYear === null ? "" : String(profile.birthYear),
+  friendsSeeEventHistory: profile.friendsSeeEventHistory,
+  friendsSeeUpcomingEvents: profile.friendsSeeUpcomingEvents,
 })

@@ -5,6 +5,7 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { AdministratorModule } from './modules/administrator/administrator.module';
 import { CancellationReasonModule } from './modules/cancellation-reason/cancellation-reason.module';
 import { EventModule } from './modules/event/event.module';
+import { FriendshipModule } from './modules/friendship/friendship.module';
 import { GroupModule } from './modules/group/group.module';
 import { LevelModule } from './modules/level/level.module';
 import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
@@ -43,6 +44,7 @@ const imports = [
   MyEventsModule,
   MembershipRequestModule,
   NotificationModule,
+  FriendshipModule,
   ReportReasonModule,
   ReportModule,
 ];
