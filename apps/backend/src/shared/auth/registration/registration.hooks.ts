@@ -74,7 +74,10 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
   // for Google. Only the checked values travel on, as server-trusted context
   // (the request's own `additionalData` is client-controlled).
   if (ctx.path === SOCIAL_SIGN_IN_PATH && ctx.body?.requestSignUp === true) {
-    const result = validateRegistration(ctx.body.additionalData ?? {}, new Date());
+    const result = validateRegistration(
+      ctx.body.additionalData ?? {},
+      new Date(),
+    );
     if (!result.ok) {
       throw APIError.from('BAD_REQUEST', {
         code: result.code,
@@ -144,8 +147,7 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
           // get here.
           const state = await getOAuthState();
           const registration = state?.serverContext?.registration as
-            | { username: string; gender: Gender; birthYear: number }
-            | undefined;
+            { username: string; gender: Gender; birthYear: number } | undefined;
           if (!registration) {
             throw APIError.from('BAD_REQUEST', {
               code: 'REGISTRATION_REQUIRED',
