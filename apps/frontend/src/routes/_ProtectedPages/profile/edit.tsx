@@ -34,7 +34,7 @@ function EditProfilePage() {
   return (
     <>
       <Seo title={t("profile.edit.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-6 md:py-12">
+      <section className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-page py-6 md:py-12">
         <h1 className="typo-h1 text-foreground">{t("profile.edit.title")}</h1>
 
         {profile.isPending || activities.isPending ? (

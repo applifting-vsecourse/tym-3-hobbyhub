@@ -353,6 +353,25 @@
 }
 
 /*
+ * The page frame (#224): the header, the footer and the discovery pages share
+ * one width, so the navigation stays put between pages. It reaches almost to
+ * the edges of the window and stops only on an ultrawide monitor; what fills
+ * the width is decided by the content (the map takes it, card grids add
+ * columns, text keeps its line length).
+ */
+@theme {
+  --container-page: 120rem;
+}
+
+/*
+ * Side gutter of the page frame: grows with the window instead of jumping at
+ * breakpoints — 16px on a phone, about 36px on a laptop, 67px on a 1920px screen.
+ */
+@utility px-page {
+  padding-inline: max(1rem, 3.5vw);
+}
+
+/*
  * Bottom padding of an action bar fixed to the bottom of a phone screen. Under
  * the BottomNav it clears the whole nav, raised "Přidat akci" button included
  * (AppShell measures it into --bottom-nav-height), so the bar's own background

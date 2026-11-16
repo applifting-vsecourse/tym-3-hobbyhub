@@ -28,7 +28,7 @@ export function AuthLayout({ title, description, children, footer, backTo }: Aut
     <>
       <Header userMenu={null} />
       <main className="min-h-svh">
-        <section className="mx-auto w-full max-w-sm px-4 py-6 md:py-16">
+        <section className="mx-auto w-full max-w-sm px-page py-6 md:py-16">
           {backTo ? (
             <Button
               asChild
