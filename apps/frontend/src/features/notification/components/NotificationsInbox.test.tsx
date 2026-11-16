@@ -28,6 +28,8 @@ const aNotification = (id: string, title: string, readAt: string | null = null) 
   decision: null,
   message: null,
   changes: [],
+  reason: null,
+  reminder: null,
 })
 
 type Options = { searchParams?: Record<string, string> }

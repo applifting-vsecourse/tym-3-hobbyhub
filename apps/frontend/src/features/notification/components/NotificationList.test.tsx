@@ -27,6 +27,8 @@ const aNotification = (n: number) => ({
   decision: null,
   message: null,
   changes: [],
+  reason: null,
+  reminder: null,
 })
 
 type Options = { searchParams?: Record<string, string> }

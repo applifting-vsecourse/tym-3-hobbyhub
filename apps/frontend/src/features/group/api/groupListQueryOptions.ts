@@ -3,7 +3,7 @@ import { z } from "zod"
 
 import { api } from "@/lib/api-client"
 
-import { groupKeys } from "@/features/group/api/groupKeys"
+import { groupKeys, type DiscoverGroupsFilters } from "@/features/group/api/groupKeys"
 import {
   groupPageSchema,
   myGroupSchema,
@@ -22,15 +22,20 @@ export const nearbyGroupsQueryOptions = () =>
     queryFn: async () => nearbyGroupsSchema.parse(await api.get("groups/nearby").json()),
   })
 
-export const discoverGroupsQueryOptions = (viewerId: string | null) =>
+export const discoverGroupsQueryOptions = (
+  viewerId: string | null,
+  filters: DiscoverGroupsFilters,
+) =>
   infiniteQueryOptions({
-    queryKey: groupKeys.discover(viewerId),
-    queryFn: async ({ pageParam }) =>
-      groupPageSchema.parse(
-        await api
-          .get("groups/discover", { searchParams: pageParam ? { cursor: pageParam } : {} })
-          .json(),
-      ),
+    queryKey: groupKeys.discover(viewerId, filters),
+    queryFn: async ({ pageParam }) => {
+      const searchParams = new URLSearchParams()
+      if (pageParam) searchParams.set("cursor", pageParam)
+      for (const id of filters.activityIds) searchParams.append("activityIds", id)
+      if (filters.search) searchParams.set("search", filters.search)
+      if (filters.location) searchParams.set("location", filters.location)
+      return groupPageSchema.parse(await api.get("groups/discover", { searchParams }).json())
+    },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   })

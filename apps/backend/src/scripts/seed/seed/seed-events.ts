@@ -917,6 +917,15 @@ export async function seedEvents(
         status,
         visibility: example.visibility ?? EventVisibility.PUBLIC,
         isHidden: example.isHidden ?? false,
+        // ADR-0022: hidden means since when and why (CHECK in the migration).
+        // The seed hides it without an administrator, like events hidden
+        // before the administration could.
+        ...(example.isHidden
+          ? {
+              hiddenAt: new Date(now),
+              hiddenReason: 'Ukázka akce, kterou skryl správce.',
+            }
+          : {}),
         approvalMode: ApprovalMode.MANUAL,
         venueType,
         onlineUrl: example.onlineUrl,

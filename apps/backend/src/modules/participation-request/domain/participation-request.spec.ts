@@ -21,6 +21,7 @@ const anEvent = (overrides: Partial<EventSeatFacts> = {}): EventSeatFacts => ({
   approvalMode: 'MANUAL',
   organizerIds: ['organizer', 'co-organizer'],
   freeSpots: 3,
+  isHidden: false,
   hasSeat: false,
   ...overrides,
 });
@@ -168,6 +169,11 @@ describe('decisionRuleViolations', () => {
     ['an event that has started', { startAt: now }, 'EVENT_STARTED'],
     ['an event that is over', { status: 'FINISHED' }, 'EVENT_FINISHED'],
     ['an event that did not happen', { status: 'NOT_HELD' }, 'EVENT_NOT_HELD'],
+    [
+      'an event an administrator hid (#239)',
+      { isHidden: true },
+      'EVENT_HIDDEN',
+    ],
   ] as const)('refuses both decisions on %s', (_, override, violation) => {
     for (const decision of ['APPROVE', 'REJECT'] as const) {
       expect(

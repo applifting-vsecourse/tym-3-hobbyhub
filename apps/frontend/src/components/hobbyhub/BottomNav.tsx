@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import DiscoverIcon from "@/assets/ui-icons/nav-discover.svg?react"
+import FriendsIcon from "@/assets/ui-icons/nav-friends.svg?react"
 import GroupsIcon from "@/assets/ui-icons/nav-groups.svg?react"
 import MyEventsIcon from "@/assets/ui-icons/nav-my-events.svg?react"
-import ProfileIcon from "@/assets/ui-icons/nav-profile.svg?react"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { NavLink } from "@/components/NavLink"
 import { NAV_TARGETS, navPlacesFor, type NavPlace, type NavSection } from "@/lib/navigation"
@@ -16,20 +16,20 @@ const ICONS: Record<NavPlace, ComponentType<SVGProps<SVGSVGElement>>> = {
   discover: DiscoverIcon,
   "my-events": MyEventsIcon,
   groups: GroupsIcon,
-  profile: ProfileIcon,
+  friends: FriendsIcon,
 }
 
 const NAV_LABELS = {
   discover: "hobbyhub.nav.discover",
   "my-events": "hobbyhub.nav.myEvents",
   groups: "hobbyhub.nav.groups",
-  profile: "hobbyhub.nav.profile",
+  friends: "hobbyhub.nav.friends",
 } as const
 
 type BottomNavProps = {
   /** The highlighted section; `null` on pages that belong to none (the landing page). */
   readonly active: NavSection | null
-  /** A visitor gets Objevovat, Přidat and Skupiny only (#151). */
+  /** A visitor gets Akce, Přidat akci and Skupiny only (#151). */
   readonly isSignedIn: boolean
   readonly hasNewRequests?: boolean
   readonly className?: string
@@ -72,7 +72,7 @@ function NavItem({ place, isActive, hasDot }: NavItemProps) {
 
 /**
  * Spodní navigace (vzhled Soupiska) — the sections of the viewer around a
- * raised logo button "Přidat" in the middle that starts a new event: four for
+ * raised logo button "Přidat akci" in the middle that starts a new event: four for
  * a signed-in user, two for a visitor. Přihlášky and Pořádám are merged into
  * Moje akce. Positioning (sticky to the bottom) is the shell's job.
  */
@@ -84,7 +84,7 @@ export function BottomNav({
 }: BottomNavProps) {
   const { t } = useTranslation()
   const places = navPlacesFor(isSignedIn)
-  // "Přidat" splits the places evenly: two and two, or one and one.
+  // "Přidat akci" splits the places evenly: two and two, or one and one.
   const middle = Math.ceil(places.length / 2)
   const renderItem = (place: NavPlace) => (
     <NavItem

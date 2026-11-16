@@ -54,7 +54,7 @@ The ports are deliberately odd — 3050, 4050, and Postgres on 5433 rather than 
 | `lostgosling@example.com`      | `password7`     |
 | `admin@example.com`            | `adminpassword` |
 
-Verification/reset emails are printed to the backend terminal (console mailer) unless you configure Resend or SMTP (Mailjet) in `apps/backend/.env`.
+Locally, every email lands in **Mailpit at http://localhost:8025**, a local inbox that `pnpm dev` starts with the database. Nothing leaves your machine. `apps/backend/.env.example` points SMTP at it (`SMTP_HOST=localhost`, `SMTP_PORT=1025`, `SMTP_ALLOW_SELF_SIGNED=true` for Mailpit's self-signed STARTTLS certificate, accepted only with `NODE_ENV=development`). An `apps/backend/.env` created before Mailpit keeps its old values: copy the `SMTP_*` lines over to use it. With `SMTP_HOST` empty, emails are only printed to the backend terminal (console mailer).
 
 Every email — verification, password reset and each notification — is first a row in the `email_delivery` table; a poller in the backend sends it within a few seconds, retries temporary failures and records the outcome (ADR-0018). To see why an email did not arrive, look at its row (`status`, `lastError`, `skipReason`), e.g. in `pnpm backend prisma:studio`.
 
@@ -86,6 +86,7 @@ Two things worth knowing:
 
 - **You set exactly two URLs**, `BACKEND_URL` and `FRONTEND_URL`. The backend uses them for CORS, BetterAuth trusted origins and password-reset links; the frontend's API URL is derived from `BACKEND_URL`. Point them at the real domains or the backend rejects the browser.
 - **The frontend bakes its API URL in at build time** (`VITE_*` are build args, not runtime env), so changing `BACKEND_URL` needs a rebuild, not just a restart.
+- **E-mail settings come from GitHub, not Coolify.** Coolify's variables are fixed by the course, so `deploy.yml` bakes them into the backend image: repository variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` and secrets `SMTP_USERNAME`, `SMTP_PASSWORD` (Settings → Secrets and variables → Actions). Without `SMTP_HOST` the backend only logs e-mails. Anyone who can pull the image can read the password.
 - **Production migrates but does not seed** — the container runs `prisma migrate deploy` then starts. A fresh deployment has an empty database, so the first account is created through the sign-up form. The lookup tables (activities, levels, cancellation reasons) are data migrations, so they are there from the first deployment; demo events and groups for testing come from a one-off data migration too (issue #120), attached to whoever has signed up by then.
 
 ## When something goes wrong

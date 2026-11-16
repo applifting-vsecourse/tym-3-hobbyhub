@@ -44,8 +44,10 @@ import { eventsValidationPipe } from './events-validation.pipe';
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  // Public: browsing events needs no account (E2).
+  // Public: browsing events needs no account (E2). A signed-in user does not
+  // see the events of people blocked from them (#239).
   @Get()
+  @UseGuards(OptionalUserGuard)
   @ApiOperation({
     summary:
       'List upcoming public events, soonest first or nearest first with lat and lng',
@@ -55,16 +57,28 @@ export class EventsController {
     status: 400,
     description: 'Invalid limit, offset or filter',
   })
-  async list(@Query() query: ListEventsQuery): Promise<EventListResponseDto> {
+  async list(
+    @OptionalUser() user: Identity | undefined,
+    @Query() query: ListEventsQuery,
+  ): Promise<EventListResponseDto> {
     const page = await this.eventsService.getUpcomingPublicEvents(
       { limit: query.limit, offset: query.offset },
       {
         ...eventFilterOf(query),
+        onlyWithFreeSpots: query.onlyWithFreeSpots,
+        priceFrom: query.priceFrom,
+        priceTo: query.priceTo,
+        durationHoursFrom: query.durationHoursFrom,
+        durationHoursTo: query.durationHoursTo,
+        capacityFrom: query.capacityFrom,
+        capacityTo: query.capacityTo,
         near:
           query.lat !== undefined && query.lng !== undefined
             ? { latitude: query.lat, longitude: query.lng }
             : undefined,
       },
+      undefined,
+      user,
     );
     return EventListResponseDto.fromDomain(page);
   }

@@ -148,9 +148,17 @@ export class MembershipRequestRepository {
   // The requests waiting on the group, oldest first, so none is forgotten.
   async getPendingRequests(
     groupId: string,
+    // #239: applicants blocked from the admin who asks are left out.
+    hiddenUserIds: string[] = [],
   ): Promise<PendingMembershipRequest[]> {
     const requests = await this.prisma.membershipRequest.findMany({
-      where: { groupId, status: RequestStatus.PENDING },
+      where: {
+        groupId,
+        status: RequestStatus.PENDING,
+        ...(hiddenUserIds.length > 0
+          ? { userId: { notIn: hiddenUserIds } }
+          : {}),
+      },
       include: { user: { select: applicantSelect } },
       orderBy: [{ requestedAt: 'asc' }, { id: 'asc' }],
     });
@@ -275,5 +283,32 @@ export class MembershipRequestRepository {
       where: { id: data.requestId },
     });
     return mapToDomain(request);
+  }
+
+  // #239, ADR-0022: the waiting request of one of two blocked people to a
+  // group the other owns or runs is closed, quietly.
+  async closeBlockedPair(a: string, b: string, at: Date): Promise<void> {
+    await this.prisma.$transaction(
+      [
+        [a, b],
+        [b, a],
+      ].map(([managerId, userId]) =>
+        this.prisma.membershipRequest.updateMany({
+          where: {
+            userId,
+            status: RequestStatus.PENDING,
+            group: {
+              memberships: {
+                some: {
+                  userId: managerId,
+                  role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+                },
+              },
+            },
+          },
+          data: { status: RequestStatus.CLOSED, decidedAt: at },
+        }),
+      ),
+    );
   }
 }

@@ -28,9 +28,9 @@ type AppShellProps = {
 
 /**
  * The app chrome every page keeps: the header and the navigation — links and
- * "Přidat" in the header from `md`, the BottomNav below it. A signed-in user
+ * "Přidat akci" in the header from `md`, the BottomNav below it. A signed-in user
  * also gets the notification bell and, in the navigation, Moje akce and
- * Profil; a visitor has Objevovat, Přidat and Skupiny with "Sign in" in the
+ * Profil; a visitor has Akce, Přidat akci and Skupiny with "Sign in" in the
  * header (#151). It lives in `app/`, not in a feature: it composes the auth
  * menu and the notifications, and a feature may not import another one.
  */

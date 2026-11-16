@@ -12,6 +12,7 @@ import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
@@ -19,6 +20,14 @@ import {
 } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { EventsService } from './events.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 // One clock read for every fixture: two `anEvent()` calls must describe the
 // same event, not two a millisecond apart.
@@ -44,6 +53,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   contributionNote: null,
   contact: null,
   externalChatUrl: null,
+  isHidden: false,
+  hiddenReason: null,
   location: {
     street: 'Chabařovická 4',
     city: 'Praha 8',
@@ -123,6 +134,7 @@ describe('EventsService', () => {
         reasons,
         notifications,
         groups,
+        noBlocks(),
       ),
     };
   };
@@ -214,7 +226,7 @@ describe('EventsService', () => {
     expect(repository.getUpcomingPublicEvents).toHaveBeenCalledWith(
       now,
       { limit: 20, offset: 0 },
-      { activityIds: ['a1'] },
+      { activityIds: ['a1'], hiddenOrganizerIds: [] },
     );
   });
 
@@ -225,6 +237,22 @@ describe('EventsService', () => {
       service.getUpcomingPublicEvents(
         { limit: 20, offset: 0 },
         { activityIds: [], dateFrom: '2026-11-16', dateTo: '2026-11-15' },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.getUpcomingPublicEvents).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { priceFrom: 300, priceTo: 100 },
+    { durationHoursFrom: 3, durationHoursTo: 1 },
+    { capacityFrom: 12, capacityTo: 4 },
+  ])('refuses a number range that ends before it starts: %j', async (range) => {
+    const { repository, service } = setup();
+
+    await expect(
+      service.getUpcomingPublicEvents(
+        { limit: 20, offset: 0 },
+        { activityIds: [], ...range },
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(repository.getUpcomingPublicEvents).not.toHaveBeenCalled();
@@ -260,6 +288,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['organizer'],
       freeSpots: 3,
+      isHidden: false,
     };
     const viewer = { id: 'u2' } as Identity;
 
@@ -321,6 +350,19 @@ describe('EventsService', () => {
       );
     });
 
+    it('loads the facts once for the organizers of an event a member may report', async () => {
+      const { repository, groups, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(groupOnly);
+      repository.getEventFacts.mockResolvedValue(groupFacts);
+      repository.isInvolvedIn.mockResolvedValue(false);
+      groups.getMemberRole.mockResolvedValue('MEMBER');
+
+      await expect(
+        service.getVisibleEventOrganizerIds('e1', viewer),
+      ).resolves.toEqual(['organizer']);
+      expect(repository.getEventFacts).toHaveBeenCalledTimes(1);
+    });
+
     it('gives its seat facts to a member only', async () => {
       const { repository, groups, service } = setup();
       const seatFacts = { ...groupFacts, hasSeat: false };
@@ -352,7 +394,12 @@ describe('EventsService', () => {
       ).resolves.toBe(page);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
-        { period: 'past', visibilities: ['PUBLIC', 'GROUP_ONLY'], now },
+        {
+          period: 'past',
+          visibilities: ['PUBLIC', 'GROUP_ONLY'],
+          now,
+          hiddenOrganizerIds: [],
+        },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
       );
       expect(groups.getPublicGroup).not.toHaveBeenCalled();
@@ -364,10 +411,15 @@ describe('EventsService', () => {
 
       await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
 
-      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1');
+      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1', undefined);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
-        { period: 'upcoming', visibilities: ['PUBLIC'], now },
+        {
+          period: 'upcoming',
+          visibilities: ['PUBLIC'],
+          now,
+          hiddenOrganizerIds: [],
+        },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
       );
     });
@@ -718,6 +770,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['organizer', 'co-organizer'],
       freeSpots: 3,
+      isHidden: false,
     };
 
     it.each(['organizer', 'co-organizer'])(
@@ -766,6 +819,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['u1'],
       freeSpots: 3,
+      isHidden: false,
       hasSeat: false,
       ...overrides,
     });
@@ -848,6 +902,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds,
       freeSpots: 8,
+      isHidden: false,
     });
 
     it('gives a co-organizer the whole event', async () => {
@@ -884,6 +939,7 @@ describe('EventsService', () => {
       approvalMode: 'MANUAL',
       organizerIds: ['u1'],
       freeSpots: 2,
+      isHidden: false,
     };
     const violationsOf = async (
       promise: Promise<unknown>,
@@ -972,6 +1028,37 @@ describe('EventsService', () => {
         ),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(repository.updateExternalOccupiedSpots).not.toHaveBeenCalled();
+    });
+  });
+
+  // #238: the administration sees any event, hidden and drafts too, so the
+  // only "not found" is an event that does not exist.
+  describe('getEventForAdministration', () => {
+    it('is not found for an unknown event', async () => {
+      const { repository, service } = setup();
+      repository.getAdministrationDetail.mockResolvedValue(null);
+
+      await expect(
+        service.getEventForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('passes the search and page to the repository', async () => {
+      const { repository, service } = setup();
+      repository.listForAdministration.mockResolvedValue({
+        items: [],
+        total: 0,
+      });
+
+      await service.listEventsForAdministration({
+        search: 'florbal',
+        offset: 20,
+      });
+
+      expect(repository.listForAdministration).toHaveBeenCalledWith({
+        search: 'florbal',
+        offset: 20,
+      });
     });
   });
 });

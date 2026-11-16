@@ -7,6 +7,10 @@ export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
 export const EVENT_EQUIPMENT_MAX_LENGTH = 500;
 export const EVENT_CONTRIBUTION_NOTE_MAX_LENGTH = 200;
 export const EVENT_CANCELLATION_NOTE_MAX_LENGTH = 500;
+// #239, ADR-0022: why an administrator hid an event (CHECK
+// event_hidden_reason_length in the migration).
+export const EVENT_HIDDEN_REASON_MIN_LENGTH = 10;
+export const EVENT_HIDDEN_REASON_MAX_LENGTH = 500;
 export const EVENT_CHAT_URL_MAX_LENGTH = 500;
 export const EVENT_CONTACT_MAX_LENGTH = 200;
 // Decimal(10, 2)
@@ -115,6 +119,10 @@ export type Event = Occupancy & {
   organizerId: string;
   cancellationReason: string | null;
   cancellationNote: string | null;
+  // #239, ADR-0022: hidden by an administrator, and why. Only the organizers
+  // and the administration ever see the reason.
+  isHidden: boolean;
+  hiddenReason: string | null;
 };
 
 // What the rules about an event's seats need to know: who runs it, when and in
@@ -131,6 +139,8 @@ export type EventFacts = {
   // The organizer and the co-organizers.
   organizerIds: string[];
   freeSpots: number;
+  // #239: a hidden event exists only for its organizers, who cannot run it.
+  isHidden: boolean;
 };
 
 // F-07.2: who may see an event that is not a draft and not hidden by a
@@ -272,6 +282,7 @@ export type CancelEventData = {
 };
 
 export type EventChangeViolation =
+  | 'EVENT_HIDDEN'
   | 'EVENT_NOT_CHANGEABLE'
   | 'EVENT_NOT_CANCELLABLE'
   | 'MAX_BELOW_OCCUPIED'
@@ -283,9 +294,13 @@ const hasStarted = (event: Pick<Event, 'startAt'>, now: Date): boolean =>
   event.startAt.getTime() <= now.getTime();
 
 // F-05.10: a draft or published event can be edited until it starts; only a
-// published one can be cancelled, and not once it has started either.
+// published one can be cancelled, and not once it has started either. One an
+// administrator hid can be cancelled, not edited (ADR-0022).
 export const eventChangeViolations = (
-  event: Pick<Event, 'status' | 'startAt' | 'approvedCount' | 'venueType'>,
+  event: Pick<
+    Event,
+    'status' | 'startAt' | 'approvedCount' | 'venueType' | 'isHidden'
+  >,
   change:
     | {
         kind: 'update';
@@ -302,6 +317,7 @@ export const eventChangeViolations = (
       ? []
       : ['EVENT_NOT_CANCELLABLE'];
   }
+  if (event.isHidden) return ['EVENT_HIDDEN'];
   const changeable =
     (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
     !hasStarted(event, now);
@@ -335,14 +351,15 @@ export const eventChangeViolations = (
 export const externalSpotsViolations = (
   event: Pick<
     Event,
-    'status' | 'startAt' | 'maxParticipants' | 'approvedCount'
+    'status' | 'startAt' | 'maxParticipants' | 'approvedCount' | 'isHidden'
   >,
   externalOccupiedSpots: number,
   now: Date,
 ): Extract<
   EventChangeViolation,
-  'EVENT_NOT_CHANGEABLE' | 'MAX_BELOW_OCCUPIED'
+  'EVENT_HIDDEN' | 'EVENT_NOT_CHANGEABLE' | 'MAX_BELOW_OCCUPIED'
 >[] => {
+  if (event.isHidden) return ['EVENT_HIDDEN'];
   const changeable =
     (event.status === 'DRAFT' || event.status === 'PUBLISHED') &&
     !hasStarted(event, now);
@@ -358,6 +375,38 @@ export type EventAudience = {
   participantIds: string[];
   applicantIds: string[];
 };
+
+// #239, ADR-0022: who hiding an event, or bringing it back, concerns: the
+// audience of a change plus the people on the waitlist, and the organizers.
+export type HiddenEventAudience = EventAudience & {
+  waitlistedIds: string[];
+  organizerIds: string[];
+};
+
+// #239, ADR-0022: an administrator hides any event but a draft, and brings
+// back only a hidden one.
+export type EventModeration = 'HIDE' | 'RESTORE';
+export type EventModerationViolation =
+  'EVENT_IS_DRAFT' | 'EVENT_ALREADY_HIDDEN' | 'EVENT_NOT_HIDDEN';
+
+export const eventModerationViolations = (
+  event: Pick<Event, 'status' | 'isHidden'>,
+  moderation: EventModeration,
+): EventModerationViolation[] => {
+  if (moderation === 'RESTORE') {
+    return event.isHidden ? [] : ['EVENT_NOT_HIDDEN'];
+  }
+  if (event.status === 'DRAFT') return ['EVENT_IS_DRAFT'];
+  return event.isHidden ? ['EVENT_ALREADY_HIDDEN'] : [];
+};
+
+// Only people who still expect the event hear that it went or came back: not
+// for one that is over or was called off.
+export const moderationConcernsPeople = (
+  event: Pick<Event, 'status' | 'endAt'>,
+  now: Date,
+): boolean =>
+  event.status === 'PUBLISHED' && event.endAt.getTime() > now.getTime();
 
 // What a guarded write reports: the changed event, or the rule that no longer
 // held when the write was made.
@@ -381,15 +430,36 @@ export const EVENT_LIST_LOCATION_MAX_LENGTH = 100;
 // The zone in which "a day" is read by the date filter: where the events are.
 export const EVENT_LIST_TIME_ZONE = 'Europe/Prague';
 
-export type EventListFilterViolation = 'DATE_FROM_AFTER_DATE_TO';
+export type EventListFilterViolation =
+  | 'DATE_FROM_AFTER_DATE_TO'
+  | 'PRICE_FROM_AFTER_PRICE_TO'
+  | 'DURATION_FROM_AFTER_DURATION_TO'
+  | 'CAPACITY_FROM_AFTER_CAPACITY_TO';
+
+// The limits of the number ranges of the public list (#214): sanity caps that
+// keep the query sensible, not business rules.
+export const EVENT_LIST_MAX_DURATION_HOURS = 24 * 31;
+
+const reversed = (from?: number, to?: number): boolean =>
+  from !== undefined && to !== undefined && from > to;
 
 // Rules between the fields of the list filter. ISO dates compare as text.
 export const eventListFilterViolations = (
-  filter: Pick<EventFilter, 'dateFrom' | 'dateTo'>,
-): EventListFilterViolation[] =>
-  filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
-    ? ['DATE_FROM_AFTER_DATE_TO']
-    : [];
+  filter: Pick<EventFilter, 'dateFrom' | 'dateTo'> & Partial<EventListRanges>,
+): EventListFilterViolation[] => [
+  ...(filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo
+    ? (['DATE_FROM_AFTER_DATE_TO'] as const)
+    : []),
+  ...(reversed(filter.priceFrom, filter.priceTo)
+    ? (['PRICE_FROM_AFTER_PRICE_TO'] as const)
+    : []),
+  ...(reversed(filter.durationHoursFrom, filter.durationHoursTo)
+    ? (['DURATION_FROM_AFTER_DURATION_TO'] as const)
+    : []),
+  ...(reversed(filter.capacityFrom, filter.capacityTo)
+    ? (['CAPACITY_FROM_AFTER_CAPACITY_TO'] as const)
+    : []),
+];
 
 // TODO(F-02.1b #91): `location` is plain text for now. A radius filter needs
 // every event to have coordinates (geocoding, F-12.3), and similar spellings
@@ -413,15 +483,32 @@ export type EventFilter = {
   // `EVENT_LIST_TIME_ZONE`; either end may be left open.
   dateFrom?: string;
   dateTo?: string;
+  // #239, ADR-0022: people whose events do not exist for the one asking
+  // (`UserBlockVisibility.hiddenFor`); never from the request.
+  hiddenOrganizerIds?: string[];
 };
 
-export type EventListFilter = EventFilter & { near?: GeoPoint };
+// What only the public list can be narrowed by besides the `EventFilter` (#214);
+// every range is inclusive and either end may be left open.
+// `price` is the contribution per seat in CZK (an event without one costs 0),
+// `duration` is hours from start to end, `capacity` is how many people the event
+// holds in all, and `onlyWithFreeSpots` keeps the events that still have a seat.
+export type EventListRanges = {
+  onlyWithFreeSpots?: boolean;
+  priceFrom?: number;
+  priceTo?: number;
+  durationHoursFrom?: number;
+  durationHoursTo?: number;
+  capacityFrom?: number;
+  capacityTo?: number;
+};
+
+export type EventListFilter = EventFilter &
+  EventListRanges & { near?: GeoPoint };
 
 export const NO_EVENT_FILTER: EventFilter = { activityIds: [] };
 
-// The form a text is compared in: lower case, no diacritics, no outer spaces.
-export const foldForSearch = (text: string): string =>
-  text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+export { foldForSearch } from '@/shared/search/fold-for-search';
 
 // What a row in the event list needs. The address is deliberately only
 // approximate: the street never leaves the server here, and the name and the
@@ -449,6 +536,8 @@ export type EventListItem = {
   maxParticipants: number;
   // Approved and attended people plus those the organizer brought along.
   takenCount: number;
+  // #239: only the organizer's own list ever holds a hidden event.
+  isHidden: boolean;
 };
 
 export type EventListPage = { items: EventListItem[]; total: number };
@@ -517,6 +606,9 @@ export type EventDetail = EventListItem & {
   stats: ParticipantStats | null;
   // How many included people the stats need, so the UI can say when they appear.
   statsMinParticipants: number;
+  // #239: set only when an organizer opens their event an administrator hid;
+  // nobody else ever gets a hidden event.
+  hiddenReason: string | null;
 };
 
 export type ContactKind = 'email' | 'phone';
@@ -536,3 +628,56 @@ export const contactKindOf = (value: string): ContactKind | null => {
     return 'phone';
   return null;
 };
+
+// #238: an event as the administration lists it. Every event, whatever its
+// status, visibility or moderation (the visibility matrix: Superadmin).
+export type AdminEventListItem = {
+  id: string;
+  title: string;
+  status: EventStatus;
+  visibility: EventVisibility;
+  isHidden: boolean;
+  startAt: Date;
+  createdAt: Date;
+  activityName: string;
+  organizer: { id: string; name: string };
+  group: { id: string; name: string } | null;
+};
+
+// Everyone who holds or waits for a seat, with the state of it.
+export type AdminEventParticipant = {
+  userId: string;
+  name: string;
+  status:
+    | 'APPROVED'
+    | 'WAITLISTED'
+    | 'CANCELLED'
+    | 'ATTENDED'
+    | 'NO_SHOW'
+    | 'INVITED'
+    | 'DECLINED';
+  waitlistPosition: number | null;
+};
+
+export type AdminEventDetail = {
+  event: Event;
+  isHidden: boolean;
+  // #239: when and by whom; the reason is on `event`. Null for an event
+  // hidden before ADR-0022.
+  hiddenAt: Date | null;
+  hiddenBy: { id: string; name: string } | null;
+  organizer: { id: string; name: string; email: string };
+  group: { id: string; name: string } | null;
+  participants: AdminEventParticipant[];
+};
+
+// #238: a person's events in the administration's user detail: what they
+// organize (main or co-organizer) and where they hold or held a seat.
+export type AdminUserEvents = {
+  organized: AdminEventListItem[];
+  participations: (AdminEventListItem & {
+    participationStatus: AdminEventParticipant['status'];
+  })[];
+};
+
+export const ADMIN_USER_EVENTS_LIMIT = 50;

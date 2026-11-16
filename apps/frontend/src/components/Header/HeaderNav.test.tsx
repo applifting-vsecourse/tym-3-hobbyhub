@@ -4,7 +4,7 @@ import { HeaderNav } from "@/components/Header/HeaderNav"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 describe("HeaderNav", () => {
-  it("links the three places of a signed-in user and marks the current one", async () => {
+  it("links the four places of a signed-in user and marks the current one", async () => {
     await renderWithRouter(
       <HeaderNav
         active="discover"
@@ -13,10 +13,16 @@ describe("HeaderNav", () => {
     )
 
     const links = screen.getAllByRole("link")
-    expect(links.map((link) => link.textContent)).toEqual(["Objevovat", "Moje akce", "Skupiny"])
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Akce",
+      "Moje akce",
+      "Skupiny",
+      "Přátelé",
+    ])
     expect(links[0]).toHaveAttribute("aria-current", "page")
     expect(links[1]).toHaveAttribute("href", "/my-events")
     expect(links[2]).toHaveAttribute("href", "/groups")
+    expect(links[3]).toHaveAttribute("href", "/friends")
   })
 
   it("links only the public places for a visitor (#151)", async () => {
@@ -28,7 +34,7 @@ describe("HeaderNav", () => {
     )
 
     const links = screen.getAllByRole("link")
-    expect(links.map((link) => link.textContent)).toEqual(["Objevovat", "Skupiny"])
+    expect(links.map((link) => link.textContent)).toEqual(["Akce", "Skupiny"])
     expect(links[0]).toHaveAttribute("href", "/events")
     expect(links[1]).toHaveAttribute("aria-current", "page")
   })

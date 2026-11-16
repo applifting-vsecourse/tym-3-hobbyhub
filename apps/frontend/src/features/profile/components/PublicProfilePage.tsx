@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Navigate } from "@tanstack/react-router"
 import { HTTPError } from "ky"
@@ -21,12 +22,15 @@ export function PublicProfilePage({
   userId,
   ownUserId,
   activityLabel,
+  reportAction,
 }: {
   userId: string
   /** The signed-in person; their own id leads to Můj profil. */
   ownUserId?: string
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: { name: string; icon: string }) => string
+  /** "Nahlásit uživatele" (#240) for the loaded profile; the report feature owns it. */
+  reportAction?: (profile: { id: string; name: string }) => ReactNode
 }) {
   const { t } = useTranslation()
   const isOwn = ownUserId === userId
@@ -75,10 +79,15 @@ export function PublicProfilePage({
             </AlertDescription>
           </Alert>
         ) : (
-          <PublicProfileView
-            profile={profile.data}
-            activityLabel={activityLabel}
-          />
+          <>
+            <PublicProfileView
+              profile={profile.data}
+              activityLabel={activityLabel}
+            />
+            {reportAction ? (
+              <div className="border-t border-border pt-4">{reportAction(profile.data)}</div>
+            ) : null}
+          </>
         )}
       </section>
     </>

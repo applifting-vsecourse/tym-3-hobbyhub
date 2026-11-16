@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { PublicProfilePage } from "@/features/profile/components/PublicProfilePage"
+import { ReportAction } from "@/features/report/components/ReportAction"
 
 export const Route = createFileRoute("/_ProtectedPages/profile/$userId")({
   component: ProfileRoute,
@@ -25,6 +26,13 @@ function ProfileRoute() {
       userId={userId}
       ownUserId={user?.id}
       activityLabel={activityLabel}
+      // #240: a report of a person also asks for the two to be blocked.
+      reportAction={(profile) => (
+        <ReportAction
+          target={{ type: "USER", id: profile.id }}
+          targetName={profile.name}
+        />
+      )}
     />
   )
 }

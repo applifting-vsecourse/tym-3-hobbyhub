@@ -2,13 +2,53 @@ import {
   Decision,
   DECISIONS,
   EVENT_CHANGES,
+  EVENT_REMINDERS,
   EventChange,
+  EventReminderKind,
   Notification,
   NOTIFICATION_TYPES,
   NotificationPage,
   NotificationType,
 } from '@/modules/notification/domain/notification';
 import { ApiProperty } from '@nestjs/swagger';
+
+class NotificationOccupancyDto {
+  @ApiProperty({
+    description: 'Seats taken, the ones outside the app included',
+  })
+  occupiedSpots!: number;
+
+  @ApiProperty()
+  maxParticipants!: number;
+
+  @ApiProperty({
+    description: 'How many are missing to the minimum; 0 once it is reached',
+  })
+  missingToMinimum!: number;
+}
+
+class NotificationReminderDto {
+  @ApiProperty({
+    enum: EVENT_REMINDERS,
+    description: 'DAY: 24 h before, TWO_HOURS: 2 h before',
+  })
+  kind!: EventReminderKind;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'The start the reminder was for',
+  })
+  startsAt!: string;
+
+  @ApiProperty({
+    type: NotificationOccupancyDto,
+    nullable: true,
+    description:
+      'HOSTED_EVENT_REMINDER: how full the event was when it went out',
+  })
+  occupancy!: NotificationOccupancyDto | null;
+}
 
 class NotificationPersonDto {
   @ApiProperty()
@@ -89,7 +129,24 @@ export class NotificationResponseDto {
   })
   changes!: EventChange[];
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'EVENT_HIDDEN: why an administrator hid the event; only the organizers’ copy carries it (#239)',
+  })
+  reason!: string | null;
+
+  @ApiProperty({
+    type: NotificationReminderDto,
+    nullable: true,
+    description:
+      'EVENT_REMINDER, HOSTED_EVENT_REMINDER: which reminder and for which start',
+  })
+  reminder!: NotificationReminderDto | null;
+
   static fromDomain(notification: Notification): NotificationResponseDto {
+    const { reminder, startsAt, occupancy } = notification.payload;
     return {
       id: notification.id,
       type: notification.type,
@@ -101,6 +158,11 @@ export class NotificationResponseDto {
       decision: notification.payload.decision ?? null,
       message: notification.payload.message ?? null,
       changes: notification.payload.changes ?? [],
+      reason: notification.payload.reason ?? null,
+      reminder:
+        reminder && startsAt
+          ? { kind: reminder, startsAt, occupancy: occupancy ?? null }
+          : null,
     };
   }
 }

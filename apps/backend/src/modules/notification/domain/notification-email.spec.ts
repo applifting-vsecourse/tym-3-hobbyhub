@@ -136,6 +136,55 @@ describe('notificationEmailOf', () => {
     },
   );
 
+  // #233, ADR-0021: a reminder says only that the event is near, not what,
+  // where or when: a late one may go after an outage, so neither "zítra" nor
+  // "za 2 hodiny" would hold. Both versions are critical; late is worthless.
+  it.each<Notification['payload']>([
+    { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+    { reminder: 'TWO_HOURS', startsAt: '2030-01-02T17:00:00.000Z' },
+  ])('reminds a participant %j that the event is near', (payload) => {
+    const content = notificationEmailOf(
+      aNotification({ type: 'EVENT_REMINDER', payload }),
+    );
+
+    expect(JSON.stringify(content)).not.toMatch(/zítra|hodin/);
+    expect(content).toEqual(
+      expect.objectContaining({
+        subject: 'Akce, na kterou jdeš, se blíží',
+        buttonLabel: 'Zobrazit akci',
+        path: '/events/e1',
+        critical: true,
+      }),
+    );
+  });
+
+  it('reminds an organizer and leads to the participants, without the numbers', () => {
+    const content = notificationEmailOf(
+      aNotification({
+        type: 'HOSTED_EVENT_REMINDER',
+        payload: {
+          reminder: 'TWO_HOURS',
+          startsAt: '2030-01-02T17:00:00.000Z',
+          occupancy: {
+            occupiedSpots: 7,
+            maxParticipants: 12,
+            missingToMinimum: 1,
+          },
+        },
+      }),
+    );
+
+    expect(content).toEqual(
+      expect.objectContaining({
+        subject: 'Tvoje akce se blíží',
+        buttonLabel: 'Zobrazit účastníky',
+        path: '/events/e1/participants?tab=participants',
+        critical: true,
+      }),
+    );
+    expect(JSON.stringify(content)).not.toMatch(/\b(7|12)\b/);
+  });
+
   it('tells a group’s admins and leads to the group’s requests', () => {
     expect(notificationEmailOf(aNotification(aboutGroup))).toEqual(
       expect.objectContaining({
@@ -175,6 +224,14 @@ describe('notificationEmailOf', () => {
       ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }],
       ['EVENT_CANCELLED', {}],
       ['PARTICIPANT_CANCELLED', { message: MESSAGE }],
+      [
+        'EVENT_REMINDER',
+        { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+      ],
+      [
+        'HOSTED_EVENT_REMINDER',
+        { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
+      ],
     ])('%s %j', (type, payload) => {
       const text = JSON.stringify(
         notificationEmailOf(aNotification({ ...target, type, payload })),
@@ -183,6 +240,77 @@ describe('notificationEmailOf', () => {
       for (const secret of [APPLICANT, EVENT_TITLE, GROUP_NAME, MESSAGE]) {
         expect(text).not.toContain(secret);
       }
+    });
+  });
+
+  describe('an event an administrator hid (#239)', () => {
+    it('tells an organizer, without the reason, and leads to the event', () => {
+      const email = notificationEmailOf(
+        aNotification({
+          type: 'EVENT_HIDDEN',
+          actor: null,
+          payload: { reason: 'Nabízí placené služby.' },
+        }),
+      );
+
+      expect(email).toEqual(
+        expect.objectContaining({
+          subject: 'Tvoji akci skryl správce',
+          path: '/events/e1',
+          critical: true,
+        }),
+      );
+      expect(JSON.stringify(email)).not.toContain('Nabízí placené služby.');
+    });
+
+    it('tells a participant it is gone and leads to their own events', () => {
+      const email = notificationEmailOf(
+        aNotification({ type: 'EVENT_HIDDEN', actor: null }),
+      );
+
+      expect(email).toEqual(
+        expect.objectContaining({
+          subject: 'Akce, kterou máš v přehledu, byla odstraněna',
+          path: '/my-events',
+        }),
+      );
+      expect(JSON.stringify(email)).not.toContain(EVENT_TITLE);
+    });
+
+    it('tells everyone when it is back', () => {
+      expect(
+        notificationEmailOf(
+          aNotification({ type: 'EVENT_RESTORED', actor: null }),
+        ),
+      ).toEqual(
+        expect.objectContaining({
+          subject: 'Akce, kterou máš v přehledu, je zpět',
+          path: '/events/e1',
+          critical: false,
+        }),
+      );
+    });
+  });
+
+  // #240, ADR-0023: only that the report was dealt with, never about what or
+  // how: it must not give away a block between two people.
+  it('tells a reporter their report was dealt with, and nothing more', () => {
+    const content = notificationEmailOf(
+      aNotification({
+        type: 'REPORT_RESOLVED',
+        actor: null,
+        event: null,
+        group: null,
+      }),
+    );
+
+    expect(content).toEqual({
+      subject: 'Tvoje nahlášení jsme vyřídili',
+      heading: 'Tvoje nahlášení jsme vyřídili',
+      body: 'Děkujeme, že pomáháš udržet HobbyHub bezpečný. Správce tvoje nahlášení prošel a vyřídil.',
+      buttonLabel: 'Zobrazit upozornění',
+      path: '/notifications',
+      critical: false,
     });
   });
 

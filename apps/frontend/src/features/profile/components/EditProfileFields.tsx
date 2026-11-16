@@ -9,6 +9,7 @@ import {
   type LevelOption,
 } from "@/components/hobbyhub/ActivityPicker"
 import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
+import { NicknameAvailabilityHint } from "@/components/hobbyhub/NicknameAvailabilityHint"
 import { ProfileCoverPicker } from "@/components/hobbyhub/ProfileCoverPicker"
 import {
   ProfilePicturePicker,
@@ -30,8 +31,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import type { NicknameAvailability } from "@/hooks/useNicknameAvailability"
 import { hasAddressSuggestions, type AddressSuggestion } from "@/lib/addressSuggestions"
+import { NICKNAME_MAX_LENGTH } from "@/lib/nickname"
 import { PhotoError, toWebpDataUrl, type PhotoProblem } from "@/lib/webpImage"
 
 import { GENDERS } from "@/features/profile/api/profileSchemas"
@@ -51,8 +55,17 @@ const GENDER_LABELS = {
  * Vzhled profilu — edited where it is seen: the cover with the picture over its
  * edge, as on the profile, then the nickname and the bio under them.
  */
-export function PublicFields({ activities }: { activities: ActivityOption[] }) {
-  const { t } = useTranslation()
+export function PublicFields({
+  activities,
+  nicknameChangeableFrom,
+  nicknameAvailability,
+}: {
+  activities: ActivityOption[]
+  /** Set while the last change of the nickname is under 30 days old (#212). */
+  nicknameChangeableFrom: Date | null
+  nicknameAvailability: NicknameAvailability
+}) {
+  const { t, i18n } = useTranslation()
   const form = useFormContext<EditProfileValues>()
   const selection = useWatch({ control: form.control, name: "selection" })
   // With no cover chosen, the first sport picked decides which one is shown.
@@ -126,10 +139,25 @@ export function PublicFields({ activities }: { activities: ActivityOption[] }) {
             <FormControl>
               <Input
                 autoComplete="nickname"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={NICKNAME_MAX_LENGTH}
+                // #212: changed at most once in 30 days; until then it stays.
+                readOnly={nicknameChangeableFrom !== null}
                 {...field}
               />
             </FormControl>
+            <FormDescription>
+              {nicknameChangeableFrom
+                ? t("profile.public.nicknameLocked", {
+                    date: new Intl.DateTimeFormat(i18n.language, { dateStyle: "long" }).format(
+                      nicknameChangeableFrom,
+                    ),
+                  })
+                : `${t("nickname.hint")} ${t("profile.public.nicknameChangeHint")}`}
+            </FormDescription>
             <FormMessage />
+            <NicknameAvailabilityHint availability={nicknameAvailability} />
           </FormItem>
         )}
       />
@@ -325,6 +353,61 @@ export function PrivateFields() {
           </FormItem>
         )}
       />
+    </ProfileSection>
+  )
+}
+
+const FRIEND_VISIBILITY_SWITCHES = [
+  {
+    name: "friendsSeeEventHistory",
+    label: "profile.friendVisibility.history",
+    hint: "profile.friendVisibility.historyHint",
+  },
+  {
+    name: "friendsSeeUpcomingEvents",
+    label: "profile.friendVisibility.upcoming",
+    hint: "profile.friendVisibility.upcomingHint",
+  },
+] as const
+
+/**
+ * #227: what friends see of the events: the history (on by default) and the
+ * upcoming events (off by default). Saved with the rest by "Uložit".
+ */
+export function FriendVisibilityFields() {
+  const { t } = useTranslation()
+  const form = useFormContext<EditProfileValues>()
+
+  return (
+    <ProfileSection
+      title={t("profile.friendVisibility.title")}
+      description={t("profile.friendVisibility.description")}
+    >
+      {FRIEND_VISIBILITY_SWITCHES.map((item) => (
+        <FormField
+          key={item.name}
+          control={form.control}
+          name={item.name}
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <FormLabel>{t(item.label)}</FormLabel>
+                <FormDescription>{t(item.hint)}</FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  ref={field.ref}
+                  name={field.name}
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  onBlur={field.onBlur}
+                  className="mt-1"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+      ))}
     </ProfileSection>
   )
 }

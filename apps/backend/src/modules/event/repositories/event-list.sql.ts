@@ -1,9 +1,11 @@
-import { Prisma } from '@/generated/prisma/client';
+import { ParticipationStatus, Prisma } from '@/generated/prisma/client';
 import {
   EVENT_LIST_TIME_ZONE,
   EventFilter,
-  foldForSearch,
+  EventListRanges,
 } from '@/modules/event/domain/event';
+import { searchWords } from '@/shared/search/fold-for-search';
+import { containsInAny } from '@/shared/search/folded-search';
 
 // The filter of an event listing (`EventFilter`) as SQL, written once for every
 // list that offers it: the public list and a person's own overview (F-06.3,
@@ -17,22 +19,6 @@ import {
 // typo like "Brnoo". Similarity search (e.g. pg_trgm `similarity`, ranked by
 // closeness) belongs here, and so does a radius filter once every event has
 // coordinates (geocoding on save, F-12.3).
-// The database folds like `foldForSearch` does, but only for the diacritics of
-// Czech and Slovak (no `unaccent` extension needed); other accents, such as
-// "è", are not matched.
-const FOLD_FROM = 'áäčďéěíĺľňóôöŕřšťúůüýž';
-const FOLD_TO = 'aacdeeillnooorrstuuuyz';
-
-// True when `needle` is part of any of the columns, ignoring case and diacritics.
-const containsInAny = (columns: Prisma.Sql[], needle: string): Prisma.Sql =>
-  Prisma.join(
-    columns.map(
-      (column) =>
-        Prisma.sql`strpos(translate(lower(coalesce(${column}, '')), ${FOLD_FROM}, ${FOLD_TO}), ${needle}) > 0`,
-    ),
-    ' OR ',
-  );
-
 // A private venue is someone's home: its name is never matched, like it is
 // never shown.
 const PLACE_COLUMNS = [
@@ -41,10 +27,12 @@ const PLACE_COLUMNS = [
   Prisma.sql`e."locationDistrict"`,
 ];
 
-const words = (text?: string): string[] =>
-  foldForSearch(text ?? '')
-    .split(/\s+/)
-    .filter(Boolean);
+// #239, ADR-0022: nobody of these organizes the event, neither as its
+// organizer nor as a co-organizer.
+export const notOrganizedBy = (userIds: string[]): Prisma.Sql =>
+  Prisma.sql`(e."organizerId" NOT IN (${Prisma.join(userIds)}) AND NOT EXISTS (
+    SELECT 1 FROM "_EventCoOrganizers" c
+    WHERE c."A" = e."id" AND c."B" IN (${Prisma.join(userIds)})))`;
 
 // Every word of a text has to match somewhere, so "volejbal praha" finds the
 // activity in one column and the city in another. Nothing set is no condition.
@@ -54,7 +42,11 @@ export const eventFilterConditions = ({
   location,
   dateFrom,
   dateTo,
+  hiddenOrganizerIds = [],
 }: EventFilter): Prisma.Sql[] => [
+  ...(hiddenOrganizerIds.length > 0
+    ? [notOrganizedBy(hiddenOrganizerIds)]
+    : []),
   ...(activityIds.length > 0
     ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]
     : []),
@@ -70,17 +62,65 @@ export const eventFilterConditions = ({
         Prisma.sql`e."startAt" < ((${dateTo}::date + 1)::timestamp AT TIME ZONE ${EVENT_LIST_TIME_ZONE}) AT TIME ZONE 'UTC'`,
       ]
     : []),
-  ...words(search).map(
+  ...searchWords(search).map(
     (word) =>
       Prisma.sql`(${containsInAny(
         [Prisma.sql`e."title"`, ...PLACE_COLUMNS, Prisma.sql`a."name"`],
         word,
       )})`,
   ),
-  ...words(location).map(
+  ...searchWords(location).map(
     (word) => Prisma.sql`(${containsInAny(PLACE_COLUMNS, word)})`,
   ),
 ];
+
+// The people who actually take a seat: approved, or already attended an event
+// that is over. The list cards count them and the free-seat filter below reads
+// the same statuses, so the two cannot drift apart.
+export const LIST_TAKEN_STATUSES: ParticipationStatus[] = [
+  ParticipationStatus.APPROVED,
+  ParticipationStatus.ATTENDED,
+];
+
+// The number ranges and the free-seat switch of the public list (#214). A seat
+// is taken by an approved or attended person and by someone outside the app, the
+// same count the list cards show. An event without a contribution costs 0.
+export const eventListRangeConditions = ({
+  onlyWithFreeSpots,
+  priceFrom,
+  priceTo,
+  durationHoursFrom,
+  durationHoursTo,
+  capacityFrom,
+  capacityTo,
+}: EventListRanges): Prisma.Sql[] => {
+  const price = Prisma.sql`coalesce(e."contributionAmount", 0)`;
+  const durationHours = Prisma.sql`(extract(epoch FROM (e."endAt" - e."startAt")) / 3600)`;
+  return [
+    ...(onlyWithFreeSpots
+      ? [
+          Prisma.sql`e."maxParticipants" - e."externalOccupiedSpots" - (
+            SELECT count(*) FROM "participation" p
+            WHERE p."eventId" = e."id" AND p."status" IN (${Prisma.join(LIST_TAKEN_STATUSES)})
+          ) > 0`,
+        ]
+      : []),
+    ...(priceFrom !== undefined ? [Prisma.sql`${price} >= ${priceFrom}`] : []),
+    ...(priceTo !== undefined ? [Prisma.sql`${price} <= ${priceTo}`] : []),
+    ...(durationHoursFrom !== undefined
+      ? [Prisma.sql`${durationHours} >= ${durationHoursFrom}`]
+      : []),
+    ...(durationHoursTo !== undefined
+      ? [Prisma.sql`${durationHours} <= ${durationHoursTo}`]
+      : []),
+    ...(capacityFrom !== undefined
+      ? [Prisma.sql`e."maxParticipants" >= ${capacityFrom}`]
+      : []),
+    ...(capacityTo !== undefined
+      ? [Prisma.sql`e."maxParticipants" <= ${capacityTo}`]
+      : []),
+  ];
+};
 
 // The conditions joined with AND; `TRUE` keeps an empty list valid SQL.
 export const allOf = (conditions: Prisma.Sql[]): Prisma.Sql =>
