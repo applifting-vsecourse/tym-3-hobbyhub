@@ -357,6 +357,7 @@
         "selected": "Vybrané filtry",
         "unknownActivity": "Neznámá aktivita"
       },
+      "free": "Zdarma",
       "inMapArea": "Akce z oblasti na mapě",
       "loadError": "Akce se nepodařilo načíst",
       "loadMore": "Načíst další",
@@ -366,6 +367,7 @@
         "label": "Nejblíž mně",
         "unavailable": "Polohu se nepodařilo zjistit. Zkus to prosím znovu."
       },
+      "organizedBy": "Pořádá {{name}}",
       "reload": "Načíst znovu",
       "searchPlaceholder": "Název, místo nebo aktivita",
       "seoTitle": "Akce",

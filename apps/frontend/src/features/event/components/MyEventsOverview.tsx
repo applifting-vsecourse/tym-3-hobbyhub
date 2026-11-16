@@ -23,7 +23,13 @@ import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { ApplicationStatus, MyApplication } from "@/features/event/api/myEventsSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
-import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
+import {
+  eventDay,
+  eventHostAndPrice,
+  eventMeta,
+  eventPrice,
+  eventTime,
+} from "@/features/event/lib/eventLabels"
 
 const BADGES: Record<ApplicationStatus, Status> = {
   PENDING: "pending",
@@ -305,6 +311,12 @@ export function MyEventsOverview({
             // The title next to it says what the photo shows.
             photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
             activity={event.activity.icon}
+            // Who runs it says nothing new on the person's own events.
+            details={
+              application
+                ? eventHostAndPrice(t, event, i18n.language)
+                : eventPrice(t, event, i18n.language)
+            }
             className="border-t-0"
             badge={
               status ? (

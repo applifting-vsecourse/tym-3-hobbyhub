@@ -5,6 +5,7 @@ import { i18n } from "@/i18n"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import {
   eventDay,
+  eventHostAndPrice,
   eventMeta,
   eventPlaceAndLevel,
   eventTime,
@@ -31,6 +32,9 @@ const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
   minParticipants: 8,
   maxParticipants: 10,
   takenCount: 7,
+  organizerName: "Jana Nováková",
+  group: null,
+  contributionAmount: null,
   ...overrides,
 })
 
@@ -93,5 +97,21 @@ describe("eventMeta", () => {
         "Šachy",
       ),
     ).toBe("Šachy · Online · Pokročilí")
+  })
+})
+
+describe("eventHostAndPrice", () => {
+  it("names the organizer and calls an event without a contribution free", () => {
+    expect(eventHostAndPrice(t, event(), "cs")).toBe("Pořádá Jana Nováková · Zdarma")
+  })
+
+  it("lets a public group speak for its event and shows the price per seat", () => {
+    expect(
+      eventHostAndPrice(
+        t,
+        event({ group: { id: "g1", name: "Florbal Kobylisy" }, contributionAmount: 150 }),
+        "cs",
+      ),
+    ).toBe("Pořádá Florbal Kobylisy · 150\u00a0Kč")
   })
 })

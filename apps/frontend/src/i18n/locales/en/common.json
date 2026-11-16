@@ -353,6 +353,7 @@
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
+      "free": "Free",
       "inMapArea": "Events in the map area",
       "loadError": "Could not load events",
       "loadMore": "Load more",
@@ -362,6 +363,7 @@
         "label": "Nearest to me",
         "unavailable": "We couldn't find your location. Please try again."
       },
+      "organizedBy": "Organized by {{name}}",
       "reload": "Reload",
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",

@@ -16,6 +16,11 @@ type ScheduleRowProps = Capacity & {
   photo?: { src: string; alt: string }
   /** Icon key of the activity (`ACTIVITIES`); unknown keys leave the square empty. */
   activity?: string
+  /**
+   * Who runs it and what it costs, e.g. "Pořádá Jana Nováková · 150 Kč". Only
+   * on a large screen (#224), where the row has room; a phone keeps it short.
+   */
+  details?: string
   /** A state of the person on this event (`StatusBadge`), under the subtitle. */
   badge?: ReactNode
   className?: string
@@ -32,6 +37,7 @@ export function ScheduleRow({
   subtitle,
   photo,
   activity,
+  details,
   badge,
   className,
   ...capacity
@@ -68,6 +74,9 @@ export function ScheduleRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <h3 className="typo-title text-foreground">{title}</h3>
         <p className="typo-small text-muted-foreground">{subtitle}</p>
+        {details ? (
+          <p className="hidden typo-small text-muted-foreground lg:block">{details}</p>
+        ) : null}
         {badge ? <div className="mt-1.5">{badge}</div> : null}
       </div>
       {/* One width for every row and aligned to the right edge, so the seats and
