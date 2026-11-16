@@ -29,8 +29,10 @@ export const GENDERS = ["MALE", "FEMALE"] as const
 
 /** My own profile: the public parts and the private ones only I see. */
 export const profileSchema = z.object({
-  /** The public nickname. */
+  /** The public nickname, unique (#212). */
   name: z.string(),
+  /** When the nickname may be changed again; null = now. Only I see it. */
+  nicknameChangeableFrom: z.coerce.date().nullable(),
   /** When the account was created. */
   joinedAt: z.coerce.date(),
   bio: z.string().nullable(),
@@ -43,6 +45,10 @@ export const profileSchema = z.object({
   birthYear: z.number().int().nullable(),
   interests: z.array(interestSchema),
   address: homeAddressSchema.nullable(),
+  /** #227: friends see the past events. Only I see this switch. */
+  friendsSeeEventHistory: z.boolean(),
+  /** #227: friends see the upcoming events and my name in an event's detail. */
+  friendsSeeUpcomingEvents: z.boolean(),
 })
 
 export type Profile = z.infer<typeof profileSchema>
@@ -68,7 +74,14 @@ export type UpdateProfileInput = {
   cover?: string | null
 }
 
+/**
+ * `PUT /profile/private`: the gender with the year of birth, (#227) the two
+ * switches of what friends see, or both, saved in one write. Each pair is sent
+ * whole or not at all; the server refuses half of one.
+ */
 export type UpdatePrivateDetailsInput = {
-  gender: (typeof GENDERS)[number]
-  birthYear: number
+  gender?: (typeof GENDERS)[number]
+  birthYear?: number
+  friendsSeeEventHistory?: boolean
+  friendsSeeUpcomingEvents?: boolean
 }

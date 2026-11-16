@@ -1,3 +1,4 @@
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { MembershipRequestsService } from '@/modules/membership-request/services/membership-requests.service';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
@@ -33,6 +34,7 @@ describe('UserBlocksService', () => {
     participationRequests: MockProxy<ParticipationRequestsService>;
     membershipRequests: MockProxy<MembershipRequestsService>;
     groups: MockProxy<GroupsService>;
+    friendships: MockProxy<FriendshipService>;
     service: UserBlocksService;
   } => {
     const repository = mock<UserBlockRepository>();
@@ -45,16 +47,19 @@ describe('UserBlocksService', () => {
     const participationRequests = mock<ParticipationRequestsService>();
     const membershipRequests = mock<MembershipRequestsService>();
     const groups = mock<GroupsService>();
+    const friendships = mock<FriendshipService>();
     return {
       repository,
       participationRequests,
       membershipRequests,
       groups,
+      friendships,
       service: new UserBlocksService(
         repository,
         participationRequests,
         membershipRequests,
         groups,
+        friendships,
       ),
     };
   };
@@ -66,6 +71,7 @@ describe('UserBlocksService', () => {
         participationRequests,
         membershipRequests,
         groups,
+        friendships,
         service,
       } = setup();
 
@@ -90,6 +96,12 @@ describe('UserBlocksService', () => {
         NOW,
       );
       expect(groups.removeBlockedPair).toHaveBeenCalledWith('u1', 'u2');
+      // ADR-0026: the friendship and pending friend requests end too.
+      expect(friendships.removeBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
       // The block exists before any tie is undone.
       expect(
         repository.createAdminBlock.mock.invocationCallOrder[0],
@@ -122,6 +134,7 @@ describe('UserBlocksService', () => {
         participationRequests,
         membershipRequests,
         groups,
+        friendships,
         service,
       } = setup();
       repository.createAdminBlock.mockResolvedValue(false);
@@ -141,6 +154,12 @@ describe('UserBlocksService', () => {
         NOW,
       );
       expect(groups.removeBlockedPair).toHaveBeenCalledWith('u1', 'u2');
+      // ADR-0026: the friendship and pending friend requests end too.
+      expect(friendships.removeBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
     });
   });
 

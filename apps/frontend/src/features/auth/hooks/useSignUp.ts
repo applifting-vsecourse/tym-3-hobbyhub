@@ -9,7 +9,8 @@ import { redirectTarget } from "@/features/auth/lib/redirect"
 import { verifyEmailCallbackUrl } from "@/features/auth/lib/verifyEmailUrl"
 
 export type SignUpInput = {
-  name: string
+  /** The unique nickname (#212); the account's name is always the same. */
+  username: string
   email: string
   password: string
   gender: "MALE" | "FEMALE"
@@ -35,6 +36,9 @@ export function useSignUp() {
       // hook; the typed sign-up body does not list them, hence the variable.
       const body = {
         ...input,
+        // BetterAuth requires a name; the server makes it a copy of the
+        // nickname whatever is sent (ADR-0025).
+        name: input.username,
         // Where the link in the verification e-mail ends. Without it BetterAuth
         // redirects to `/` on the backend, which has no page. It leads back
         // to the page the visitor wanted, if there was one (F-03.2).

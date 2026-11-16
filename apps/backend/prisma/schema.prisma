@@ -495,6 +495,55 @@ model ParticipationRequest {
   @@map("participation_request")
 }
 
+// #227, ADR-0026: where a friend request stands. A rejected request is kept
+// (decidedAt) but does not stop a new one between the same two people.
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+
+  @@map("friend_request_status")
+}
+
+// #227, ADR-0026: one person asks another to become friends. In the migration:
+// CHECK friend_request_not_self, CHECK friend_request_decided_at (decidedAt is
+// set exactly when the request is no longer PENDING) and the unique index
+// friend_request_one_pending_per_pair: at most one PENDING request for a pair,
+// in either direction.
+model FriendRequest {
+  id String @id @default(cuid())
+
+  status      FriendRequestStatus @default(PENDING)
+  requestedAt DateTime            @default(now())
+  decidedAt   DateTime?
+
+  sender      User   @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    String
+  recipient   User   @relation("FriendRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+
+  @@index([recipientId, status])
+  @@index([senderId])
+  @@map("friend_request")
+}
+
+// #227, ADR-0026: two people are friends. Symmetric, so one row per pair with
+// the ids in order: CHECK friendship_ordered_pair (userAId < userBId) in the
+// migration, and the pair is unique.
+model Friendship {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userA   User   @relation("FriendshipUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userAId String
+  userB   User   @relation("FriendshipUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  userBId String
+
+  @@unique([userAId, userBId])
+  @@index([userBId])
+  @@map("friendship")
+}
+
 // #152, ADR-0015: one record of "something happened that concerns you", the
 // source of truth for the bell in the app and, later, for the e-mails (E9).
 // The text is not stored: the client puts it together from `type`, the linked
@@ -771,36 +820,50 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  username        String? @db.VarChar(50)
-  displayUsername String? @db.VarChar(50)
+  // #212: the unique nickname (ADR-0025), kept by BetterAuth's username
+  // plugin: `username` lower-cased (the unique index compares it), and
+  // `displayUsername` as typed; `name` is always a copy of `displayUsername`.
+  // Null only for accounts not made by sign-up (tests). CHECKs in the
+  // migration: user_username_format, user_display_username_matches,
+  // user_name_is_display_username.
+  username          String?   @db.VarChar(30)
+  displayUsername   String?   @db.VarChar(30)
+  // When the user last changed the nickname in the profile; the next change
+  // waits 30 days. Null: never changed (sign-up and migration do not count).
+  usernameChangedAt DateTime?
 
   // Profile fields from the domain model. BetterAuth keeps name, email,
   // emailVerified and image. Several fields the model marks as required are
   // optional here until registration (F-03.1) collects them.
-  bio                   String?            @db.Text
+  bio                      String?            @db.Text
   // F-04.1: the picture on top of the profile: an id of the app's covers or an
   // uploaded WebP data URL; null = the default of the first activity.
-  profileCover          String?            @db.Text
+  profileCover             String?            @db.Text
   // #174: only the year of birth is kept, never the full date (ADR-0016).
   // CHECK user_birth_year_range in the migration: 1900 or later.
-  birthYear             Int?
-  gender                Gender?
-  phone                 String?            @db.VarChar(30)
-  phoneVerifiedAt       DateTime?
-  preferredLanguage     Language           @default(CS)
-  prefersOnlineEvents   Boolean            @default(false)
-  status                UserStatus         @default(ACTIVE)
-  travelRadiusKm        Int?
-  onboardingCompletedAt DateTime?
+  birthYear                Int?
+  gender                   Gender?
+  phone                    String?            @db.VarChar(30)
+  phoneVerifiedAt          DateTime?
+  preferredLanguage        Language           @default(CS)
+  prefersOnlineEvents      Boolean            @default(false)
+  status                   UserStatus         @default(ACTIVE)
+  travelRadiusKm           Int?
+  onboardingCompletedAt    DateTime?
   // F-04.8: how many wizard steps (activities, location, profile) are done or
   // skipped, so an interrupted wizard resumes at the first open one.
-  onboardingStepsDone   Int                @default(0)
-  termsAcceptedAt       DateTime?
-  termsVersion          String?            @db.VarChar(20)
+  onboardingStepsDone      Int                @default(0)
+  termsAcceptedAt          DateTime?
+  termsVersion             String?            @db.VarChar(20)
   // #174: when the user confirmed at sign-up that they are 18 or older; null
   // for accounts created before the confirmation existed (ADR-0016).
-  adulthoodConfirmedAt  DateTime?
-  disabledNotifications NotificationType[] @default([])
+  adulthoodConfirmedAt     DateTime?
+  disabledNotifications    NotificationType[] @default([])
+  // #227, ADR-0026: what friends may see of the user's events. History
+  // (past events) is shown by default, upcoming events are not. Both cover
+  // approved participations and organized events only; #226 applies them.
+  friendsSeeEventHistory   Boolean            @default(true)
+  friendsSeeUpcomingEvents Boolean            @default(false)
 
   // Model datatype `Location` (private): where the user lives, and a temporary
   // place (e.g. on holiday) that is valid until `temporaryLocationValidUntil`.
@@ -830,19 +893,23 @@ model User {
   blocks    UserBlock[] @relation("UserBlockBlocker")
   blockedBy UserBlock[] @relation("UserBlockBlocked")
 
-  organizedEvents       Event[]                @relation("EventOrganizer")
-  coOrganizedEvents     Event[]                @relation("EventCoOrganizers")
-  participations        Participation[]
-  participationRequests ParticipationRequest[]
-  groupMemberships      GroupMembership[]
-  membershipRequests    MembershipRequest[]
-  notifications         Notification[]         @relation("NotificationRecipient")
-  causedNotifications   Notification[]         @relation("NotificationActor")
-  emailDeliveries       EmailDelivery[]
+  organizedEvents        Event[]                @relation("EventOrganizer")
+  coOrganizedEvents      Event[]                @relation("EventCoOrganizers")
+  participations         Participation[]
+  participationRequests  ParticipationRequest[]
+  groupMemberships       GroupMembership[]
+  membershipRequests     MembershipRequest[]
+  notifications          Notification[]         @relation("NotificationRecipient")
+  causedNotifications    Notification[]         @relation("NotificationActor")
+  emailDeliveries        EmailDelivery[]
   // ADR-0023: reports this user filed, and reports about them; the latter
   // are never shown to them.
-  filedReports          Report[]               @relation("ReportReporter")
-  reportsAbout          Report[]               @relation("ReportTargetUser")
+  filedReports           Report[]               @relation("ReportReporter")
+  reportsAbout           Report[]               @relation("ReportTargetUser")
+  sentFriendRequests     FriendRequest[]        @relation("FriendRequestSender")
+  receivedFriendRequests FriendRequest[]        @relation("FriendRequestRecipient")
+  friendshipsAsA         Friendship[]           @relation("FriendshipUserA")
+  friendshipsAsB         Friendship[]           @relation("FriendshipUserB")
 
   @@unique([email])
   @@unique([username])

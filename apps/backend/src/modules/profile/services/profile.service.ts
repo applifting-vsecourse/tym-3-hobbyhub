@@ -1,3 +1,4 @@
+import { FriendVisibility } from '@/modules/friendship/domain/friendship';
 import {
   HomeAddress,
   InterestInput,
@@ -13,12 +14,21 @@ import {
   Profile,
   PublicProfile,
 } from '@/modules/profile/domain/profile';
-import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
+import {
+  NicknameChange,
+  ProfileRepository,
+  ProfileRow,
+} from '@/modules/profile/repositories/profile.repository';
 import {
   AdminListQuery,
   AdminPage,
 } from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
+import {
+  nicknameChangeableFrom,
+  nicknamePreviousChangeAtMost,
+  nicknameViolation,
+} from '@/shared/auth/registration/nickname';
 import { Gender } from '@/shared/auth/registration/registration';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
@@ -35,16 +45,31 @@ export class ProfileService {
     private readonly blocks: UserBlockVisibility,
   ) {}
 
-  async getProfile(user: Identity): Promise<Profile> {
-    return this.getProfileOf(user.id);
+  async getProfile(user: Identity, now = new Date()): Promise<Profile> {
+    return this.getProfileOf(user.id, now);
   }
 
-  private async getProfileOf(userId: string): Promise<Profile> {
+  private async getProfileOf(
+    userId: string,
+    now = new Date(),
+  ): Promise<Profile> {
     const row = await this.profileRepository.getRow(userId);
     if (!row) throw new NotFoundException('User not found');
+    return this.profileFrom(row, userId, now);
+  }
+
+  private async profileFrom(
+    row: ProfileRow,
+    userId: string,
+    now: Date,
+  ): Promise<Profile> {
     const onboarding = await this.onboardingService.getOnboardingOf(userId);
     return {
       name: row.name,
+      nicknameChangeableFrom: nicknameChangeableFrom(
+        row.nicknameChangedAt,
+        now,
+      ),
       joinedAt: row.createdAt,
       bio: row.bio,
       image: row.image,
@@ -54,6 +79,10 @@ export class ProfileService {
       interests: onboarding.interests,
       address: onboarding.address,
       travelRadiusKm: onboarding.travelRadiusKm,
+      friendVisibility: {
+        friendsSeeEventHistory: row.friendsSeeEventHistory,
+        friendsSeeUpcomingEvents: row.friendsSeeUpcomingEvents,
+      },
     };
   }
 
@@ -79,7 +108,8 @@ export class ProfileService {
     };
   }
 
-  // Only what is sent is changed; `null` clears the bio or the photo.
+  // Only what is sent is changed; `null` clears the bio or the photo. Nothing
+  // is saved unless all of it passes.
   async updatePublic(
     user: Identity,
     data: {
@@ -88,7 +118,12 @@ export class ProfileService {
       image?: string | null;
       cover?: string | null;
     },
+    now = new Date(),
   ): Promise<Profile> {
+    const nickname =
+      data.name === undefined
+        ? undefined
+        : await this.nicknameChange(user, data.name, now);
     if (data.image) {
       const violations = imageViolations(data.image);
       if (violations.length > 0) throw new BadRequestException(violations);
@@ -97,29 +132,73 @@ export class ProfileService {
       const violations = coverViolations(data.cover);
       if (violations.length > 0) throw new BadRequestException(violations);
     }
-    const { cover, ...rest } = data;
-    await this.profileRepository.updatePublic(user.id, {
-      ...rest,
+    const { bio, image, cover } = data;
+    const result = await this.profileRepository.updatePublic(user.id, {
+      ...(bio !== undefined && { bio }),
+      ...(image !== undefined && { image }),
+      ...(nickname && { nickname }),
       ...(cover !== undefined && { profileCover: cover }),
     });
-    return this.getProfile(user);
+    // Someone took the same nickname, or another request changed it, between
+    // the check and the save.
+    if (typeof result === 'string') throw new BadRequestException([result]);
+    return this.profileFrom(result, user.id, now);
   }
 
+  /**
+   * #212: checks a nickname sent with the profile. The same one as now is no
+   * change (null); a new one must follow the rules, be free, and come at least
+   * 30 days after the last change (ADR-0025).
+   */
+  private async nicknameChange(
+    user: Identity,
+    nickname: string,
+    now: Date,
+  ): Promise<NicknameChange | null> {
+    const row = await this.profileRepository.getRow(user.id);
+    if (!row) throw new NotFoundException('User not found');
+    if (nickname === row.name) return null;
+
+    const violation = nicknameViolation(nickname);
+    if (violation) throw new BadRequestException([violation]);
+    if (nicknameChangeableFrom(row.nicknameChangedAt, now)) {
+      throw new BadRequestException(['NICKNAME_CHANGE_TOO_SOON']);
+    }
+    if (await this.profileRepository.isNicknameTaken(nickname, user.id)) {
+      throw new BadRequestException(['NICKNAME_TAKEN']);
+    }
+    return {
+      nickname,
+      changedAt: now,
+      previousChangeAtMost: nicknamePreviousChangeAtMost(now),
+    };
+  }
+
+  // The private details and (#227) what friends see, whichever of the two
+  // came, in one write: the edit form never saves only half of them. The
+  // switches only take effect for friends (#226).
   async updatePrivate(
     user: Identity,
-    data: { gender: Gender; birthYear: number },
+    data: {
+      details?: { gender: Gender; birthYear: number };
+      friendVisibility?: FriendVisibility;
+    },
     now = new Date(),
   ): Promise<Profile> {
-    const violations = privateDetailsViolations(
-      data.gender,
-      data.birthYear,
-      now,
-    );
-    if (violations.length > 0) throw new BadRequestException(violations);
-    await this.profileRepository.updatePrivate(user.id, {
-      gender: data.gender,
-      birthYear: data.birthYear,
-    });
+    if (data.details) {
+      const violations = privateDetailsViolations(
+        data.details.gender,
+        data.details.birthYear,
+        now,
+      );
+      if (violations.length > 0) throw new BadRequestException(violations);
+    }
+    if (data.details || data.friendVisibility) {
+      await this.profileRepository.updatePrivate(user.id, {
+        ...data.details,
+        ...data.friendVisibility,
+      });
+    }
     return this.getProfile(user);
   }
 

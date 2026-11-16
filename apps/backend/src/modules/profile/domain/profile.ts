@@ -1,11 +1,12 @@
+import { FriendVisibility } from '@/modules/friendship/domain/friendship';
 import { Interest } from '@/modules/onboarding/domain/onboarding';
+import { NicknameViolation } from '@/shared/auth/registration/nickname';
 import {
   birthYearViolation,
   Gender,
   GENDERS,
 } from '@/shared/auth/registration/registration';
 
-export const PROFILE_NAME_MAX_LENGTH = 50;
 export const PROFILE_BIO_MAX_LENGTH = 300;
 
 // The photo is converted to WebP in the browser and stored as a data URL in
@@ -33,7 +34,11 @@ export type HomeLocation = {
 
 /** What the signed-in user sees on their own profile. */
 export type Profile = {
+  // The unique nickname as typed (#212).
   name: string;
+  // When the nickname may be changed again; null: now (30 days after the last
+  // change). Only its owner sees it.
+  nicknameChangeableFrom: Date | null;
   joinedAt: Date;
   bio: string | null;
   image: string | null;
@@ -45,6 +50,8 @@ export type Profile = {
   interests: Interest[];
   address: HomeLocation | null;
   travelRadiusKm: number | null;
+  // #227: what friends may see of the user's events. Only the owner sees it.
+  friendVisibility: FriendVisibility;
 };
 
 /**
@@ -61,6 +68,9 @@ export type PublicProfile = {
 };
 
 export type ProfileViolation =
+  | NicknameViolation
+  | 'NICKNAME_TAKEN'
+  | 'NICKNAME_CHANGE_TOO_SOON'
   | 'IMAGE_FORMAT'
   | 'IMAGE_TOO_LARGE'
   | 'INVALID_GENDER'

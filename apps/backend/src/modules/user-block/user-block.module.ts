@@ -1,4 +1,5 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
+import { FriendshipModule } from '@/modules/friendship/friendship.module';
 import { GroupModule } from '@/modules/group/group.module';
 import { MembershipRequestModule } from '@/modules/membership-request/membership-request.module';
 import { ParticipationRequestModule } from '@/modules/participation-request/participation-request.module';
@@ -19,6 +20,7 @@ import { UserBlocksService } from './services/user-blocks.service';
     GroupModule,
     MembershipRequestModule,
     ParticipationRequestModule,
+    FriendshipModule,
   ],
   controllers: [AdminUserBlocksController],
   providers: [UserBlocksService, UserBlockRepository],

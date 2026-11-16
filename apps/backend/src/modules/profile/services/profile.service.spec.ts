@@ -23,12 +23,15 @@ const user = new Identity('u1', 'jana@example.com', 'Jana', true);
 
 const aRow = (overrides: Partial<ProfileRow> = {}): ProfileRow => ({
   name: 'Jana',
+  nicknameChangedAt: null,
   createdAt: new Date('2026-09-01T10:00:00Z'),
   bio: null,
   image: null,
   profileCover: null,
   gender: 'FEMALE',
   birthYear: 1990,
+  friendsSeeEventHistory: true,
+  friendsSeeUpcomingEvents: false,
   ...overrides,
 });
 
@@ -55,6 +58,7 @@ describe('ProfileService', () => {
   } => {
     const repository = mock<ProfileRepository>();
     repository.getRow.mockResolvedValue(row);
+    repository.updatePublic.mockResolvedValue(row ?? aRow());
     const onboardingService = mock<OnboardingService>();
     onboardingService.getOnboarding.mockResolvedValue(onboarding);
     onboardingService.getOnboardingOf.mockResolvedValue(onboarding);
@@ -131,6 +135,141 @@ describe('ProfileService', () => {
         image: null,
       });
     });
+
+    // #212, ADR-0025.
+    describe('the nickname', () => {
+      const now = new Date('2026-11-15T12:00:00Z');
+      const daysAgo = (days: number): Date =>
+        new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+      const refusal = async (promise: Promise<unknown>): Promise<unknown> => {
+        const error = await promise.then(
+          () => null,
+          (thrown: unknown) => thrown,
+        );
+        expect(error).toBeInstanceOf(BadRequestException);
+        return (error as BadRequestException).getResponse();
+      };
+
+      it('saves a free nickname with the moment of the change', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(false);
+        await service.updatePublic(user, { name: 'KacenkaJana' }, now);
+        expect(repository.isNicknameTaken).toHaveBeenCalledWith(
+          'KacenkaJana',
+          'u1',
+        );
+        expect(repository.updatePublic).toHaveBeenCalledWith('u1', {
+          nickname: {
+            nickname: 'KacenkaJana',
+            changedAt: now,
+            previousChangeAtMost: daysAgo(30),
+          },
+        });
+      });
+
+      it('answers with the saved row and does not read the profile again', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(false);
+        repository.updatePublic.mockResolvedValue(
+          aRow({ name: 'KacenkaJana', nicknameChangedAt: now }),
+        );
+        await expect(
+          service.updatePublic(user, { name: 'KacenkaJana' }, now),
+        ).resolves.toMatchObject({ name: 'KacenkaJana' });
+        expect(repository.getRow).toHaveBeenCalledTimes(1);
+      });
+
+      it('takes the same nickname as no change, even within 30 days', async () => {
+        const { service, repository } = setup(
+          aRow({ nicknameChangedAt: daysAgo(1) }),
+        );
+        await service.updatePublic(user, { name: 'Jana', bio: 'Ahoj' }, now);
+        expect(repository.isNicknameTaken).not.toHaveBeenCalled();
+        expect(repository.updatePublic).toHaveBeenCalledWith('u1', {
+          bio: 'Ahoj',
+        });
+      });
+
+      it('refuses a nickname someone else has and saves nothing', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(true);
+        await expect(
+          refusal(service.updatePublic(user, { name: 'BreadCritic' }, now)),
+        ).resolves.toMatchObject({ message: ['NICKNAME_TAKEN'] });
+        expect(repository.updatePublic).not.toHaveBeenCalled();
+      });
+
+      it('refuses it when someone took it between the check and the save', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(false);
+        repository.updatePublic.mockResolvedValue('NICKNAME_TAKEN');
+        await expect(
+          refusal(service.updatePublic(user, { name: 'BreadCritic' }, now)),
+        ).resolves.toMatchObject({ message: ['NICKNAME_TAKEN'] });
+      });
+
+      it('refuses it when another request changed it between the check and the save', async () => {
+        const { service, repository } = setup();
+        repository.isNicknameTaken.mockResolvedValue(false);
+        repository.updatePublic.mockResolvedValue('NICKNAME_CHANGE_TOO_SOON');
+        await expect(
+          refusal(service.updatePublic(user, { name: 'KacenkaJana' }, now)),
+        ).resolves.toMatchObject({ message: ['NICKNAME_CHANGE_TOO_SOON'] });
+      });
+
+      it.each([
+        ['a reserved word', 'JanaAdmin', 'NICKNAME_RESERVED'],
+        ['a space', 'Jana Nova', 'NICKNAME_INVALID'],
+      ])('refuses a nickname with %s', async (_, name, code) => {
+        const { service, repository } = setup();
+        await expect(
+          refusal(service.updatePublic(user, { name }, now)),
+        ).resolves.toMatchObject({ message: [code] });
+        expect(repository.updatePublic).not.toHaveBeenCalled();
+      });
+
+      it('refuses a change within 30 days of the last one', async () => {
+        const { service, repository } = setup(
+          aRow({ nicknameChangedAt: daysAgo(29) }),
+        );
+        repository.isNicknameTaken.mockResolvedValue(false);
+        await expect(
+          refusal(service.updatePublic(user, { name: 'KacenkaJana' }, now)),
+        ).resolves.toMatchObject({ message: ['NICKNAME_CHANGE_TOO_SOON'] });
+        expect(repository.updatePublic).not.toHaveBeenCalled();
+      });
+
+      it('lets the nickname change again after 30 days', async () => {
+        const { service, repository } = setup(
+          aRow({ nicknameChangedAt: daysAgo(30) }),
+        );
+        repository.isNicknameTaken.mockResolvedValue(false);
+        await service.updatePublic(user, { name: 'KacenkaJana' }, now);
+        expect(repository.updatePublic).toHaveBeenCalled();
+      });
+
+      it('tells the owner when the nickname may change again', async () => {
+        const { service } = setup(aRow({ nicknameChangedAt: daysAgo(10) }));
+        await expect(service.getProfile(user, now)).resolves.toMatchObject({
+          nicknameChangeableFrom: new Date(
+            daysAgo(10).getTime() + 30 * 24 * 60 * 60 * 1000,
+          ),
+        });
+      });
+    });
+  });
+
+  it('reports what friends may see of the events', async () => {
+    const { service } = setup(
+      aRow({ friendsSeeEventHistory: false, friendsSeeUpcomingEvents: true }),
+    );
+    await expect(service.getProfile(user)).resolves.toMatchObject({
+      friendVisibility: {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      },
+    });
   });
 
   describe('updatePrivate', () => {
@@ -140,7 +279,7 @@ describe('ProfileService', () => {
       const { service, repository } = setup();
       await service.updatePrivate(
         user,
-        { gender: 'MALE', birthYear: 1985 },
+        { details: { gender: 'MALE', birthYear: 1985 } },
         now,
       );
       expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
@@ -149,12 +288,68 @@ describe('ProfileService', () => {
       });
     });
 
-    it('refuses someone under 18', async () => {
+    // #227: the switches alone, for an account without the details too.
+    it('saves both switches and returns the profile', async () => {
+      const { service, repository } = setup();
+      await service.updatePrivate(user, {
+        friendVisibility: {
+          friendsSeeEventHistory: false,
+          friendsSeeUpcomingEvents: true,
+        },
+      });
+      expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
+        friendsSeeEventHistory: false,
+        friendsSeeUpcomingEvents: true,
+      });
+      expect(repository.getRow).toHaveBeenCalledWith('u1');
+    });
+
+    // One write, so the form never saves only half of what it sent.
+    it('saves the details and the switches in one write', async () => {
+      const { service, repository } = setup();
+      await service.updatePrivate(
+        user,
+        {
+          details: { gender: 'FEMALE', birthYear: 1990 },
+          friendVisibility: {
+            friendsSeeEventHistory: true,
+            friendsSeeUpcomingEvents: true,
+          },
+        },
+        now,
+      );
+      expect(repository.updatePrivate).toHaveBeenCalledTimes(1);
+      expect(repository.updatePrivate).toHaveBeenCalledWith('u1', {
+        gender: 'FEMALE',
+        birthYear: 1990,
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: true,
+      });
+    });
+
+    it('refuses someone under 18, switches and all', async () => {
       const { service, repository } = setup();
       await expect(
-        service.updatePrivate(user, { gender: 'MALE', birthYear: 2009 }, now),
+        service.updatePrivate(
+          user,
+          {
+            details: { gender: 'MALE', birthYear: 2009 },
+            friendVisibility: {
+              friendsSeeEventHistory: false,
+              friendsSeeUpcomingEvents: false,
+            },
+          },
+          now,
+        ),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(repository.updatePrivate).not.toHaveBeenCalled();
+    });
+
+    it('writes nothing for an empty request', async () => {
+      const { service, repository } = setup();
+      await service.updatePrivate(user, {});
+      expect(repository.updatePrivate).not.toHaveBeenCalled();
+      expect(repository.getRow).toHaveBeenCalledWith('u1');
     });
   });
 

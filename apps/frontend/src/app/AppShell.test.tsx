@@ -25,6 +25,7 @@ describe("AppShell", () => {
     const navs = screen.getAllByRole("navigation", { name: "Hlavní navigace" })
     expect(navs).toHaveLength(2)
     expect(screen.getAllByRole("link", { name: "Moje akce" })).toHaveLength(2)
+    expect(screen.getAllByRole("link", { name: "Přátelé" })).toHaveLength(2)
     expect(screen.getAllByRole("link", { name: "Přidat akci" })).not.toHaveLength(0)
     expect(screen.getByRole("button", { name: "zvoneček" })).toBeInTheDocument()
     expect(screen.getByRole("main")).toHaveTextContent("obsah")
@@ -40,7 +41,7 @@ describe("AppShell", () => {
       expect(within(nav).getByRole("link", { name: "Akce" })).toHaveAttribute("href", "/events")
       expect(within(nav).getByRole("link", { name: "Skupiny" })).toHaveAttribute("href", "/groups")
       expect(within(nav).queryByRole("link", { name: "Moje akce" })).not.toBeInTheDocument()
-      expect(within(nav).queryByRole("link", { name: "Profil" })).not.toBeInTheDocument()
+      expect(within(nav).queryByRole("link", { name: "Přátelé" })).not.toBeInTheDocument()
     }
     expect(screen.getAllByRole("link", { name: "Přidat akci" })).not.toHaveLength(0)
     expect(screen.queryByRole("button", { name: "zvoneček" })).not.toBeInTheDocument()
