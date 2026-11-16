@@ -11,7 +11,6 @@ describe('PublicProfileResponseDto', () => {
     const profile = {
       id: 'u2',
       name: 'Petr',
-      nickname: 'petr',
       relation: 'none',
       bio: null,
       image: null,
@@ -40,7 +39,6 @@ describe('PublicProfileResponseDto', () => {
       'image',
       'interests',
       'name',
-      'nickname',
       'relation',
     ]);
   });

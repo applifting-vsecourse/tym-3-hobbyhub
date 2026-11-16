@@ -25,8 +25,6 @@ export type ProfileRow = {
 export type PublicProfileRow = {
   id: string;
   name: string;
-  /** #225: the username as typed, else as stored. */
-  nickname: string | null;
   bio: string | null;
   image: string | null;
   profileCover: string | null;
@@ -108,22 +106,17 @@ export class ProfileRepository {
   }
 
   // Only the columns another person may see; the private ones are not selected.
-  async getPublicRow(userId: string): Promise<PublicProfileRow | null> {
-    const row = await this.prisma.user.findUnique({
+  getPublicRow(userId: string): Promise<PublicProfileRow | null> {
+    return this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         name: true,
-        displayUsername: true,
-        username: true,
         bio: true,
         image: true,
         profileCover: true,
       },
     });
-    if (!row) return null;
-    const { displayUsername, username, ...rest } = row;
-    return { ...rest, nickname: displayUsername ?? username };
   }
 
   // A new nickname sets all three columns at once: the CHECKs keep `name` and

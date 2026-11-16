@@ -10,7 +10,6 @@ import { Injectable } from '@nestjs/common';
 export type FoundUserRow = {
   id: string;
   name: string;
-  nickname: string | null;
   image: string | null;
 };
 
@@ -88,19 +87,14 @@ export class FriendshipRepository {
       excludedIds.length === 0
         ? Prisma.empty
         : Prisma.sql`AND "id" NOT IN (${Prisma.join([...excludedIds])})`;
-    const matches = (column: Prisma.Sql): Prisma.Sql =>
-      Prisma.sql`unaccent(lower(${column})) LIKE unaccent(lower(${pattern})) ESCAPE '\\'`;
+    // `name` is the nickname (ADR-0025: always a copy of displayUsername).
     return this.prisma.$queryRaw<FoundUserRow[]>`
-      SELECT "id", "name", COALESCE("displayUsername", "username") AS "nickname", "image"
+      SELECT "id", "name", "image"
       FROM "user"
       WHERE "id" <> ${viewerId}
         ${notExcluded}
         AND "status" IN ('ACTIVE', 'RESTRICTED')
-        AND (
-          ${matches(Prisma.sql`"name"`)}
-          OR ${matches(Prisma.sql`COALESCE("displayUsername", '')`)}
-          OR ${matches(Prisma.sql`COALESCE("username", '')`)}
-        )
+        AND unaccent(lower("name")) LIKE unaccent(lower(${pattern})) ESCAPE '\\'
       ORDER BY unaccent(lower("name")), "id"
       OFFSET ${offset}
       LIMIT ${limit}
@@ -148,6 +142,15 @@ export class FriendshipRepository {
       relations.get(otherId)!.pendingRequest = { senderId: request.senderId };
     }
     return relations;
+  }
+
+  /** #225, ADR-0026: whether the account may send a request: it is active. */
+  async isActive(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, status: 'ACTIVE' },
+      select: { id: true },
+    });
+    return user !== null;
   }
 
   /** Whether a request can be sent to the person: the account exists and is not blocked or deleted. */

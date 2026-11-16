@@ -67,8 +67,7 @@ describe('FriendSearchPageResponseDto', () => {
     // Even a row with private columns spread in must not reach the response.
     const person = {
       id: 'u2',
-      name: 'Libor',
-      nickname: 'NovyHrac',
+      name: 'NovyHrac',
       image: null,
       relation: 'none',
       email: 'libor@example.com',
@@ -82,7 +81,6 @@ describe('FriendSearchPageResponseDto', () => {
       'id',
       'image',
       'name',
-      'nickname',
       'relation',
     ]);
   });

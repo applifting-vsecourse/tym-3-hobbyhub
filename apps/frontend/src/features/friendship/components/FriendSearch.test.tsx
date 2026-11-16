@@ -19,7 +19,6 @@ const answer = (body: unknown) => get.mockReturnValueOnce({ json: () => Promise.
 const person = (overrides: Partial<FriendSearchItem>): FriendSearchItem => ({
   id: "u2",
   name: "Jana Nováková",
-  nickname: null,
   image: null,
   relation: "none",
   ...overrides,
@@ -44,7 +43,7 @@ describe("FriendSearch", () => {
   it.each(["", "n"])("asks for 2 characters and searches nothing for %j", async (text) => {
     await renderSearch(text)
 
-    expect(screen.getByText("Napište aspoň 2 znaky jména nebo přezdívky.")).toBeInTheDocument()
+    expect(screen.getByText("Napište aspoň 2 znaky přezdívky.")).toBeInTheDocument()
     expect(screen.queryByText(/e-mail/)).toBeNull()
     expect(get).not.toHaveBeenCalled()
   })
@@ -54,7 +53,7 @@ describe("FriendSearch", () => {
     await renderSearch("", onTypedChange)
 
     await userEvent.type(
-      screen.getByRole("searchbox", { name: "Hledat lidi podle jména nebo přezdívky" }),
+      screen.getByRole("searchbox", { name: "Hledat lidi podle přezdívky" }),
       "n",
     )
 
@@ -64,7 +63,7 @@ describe("FriendSearch", () => {
   it("shows each person as a card to their profile, with the nickname and my relation", async () => {
     answer({
       items: [
-        person({ id: "u2", name: "Jana Nováková", nickname: "janca_n" }),
+        person({ id: "u2", name: "janca_n" }),
         person({ id: "u3", name: "Petr Ivanov", relation: "request_sent" }),
         person({ id: "u4", name: "Libor Svoboda", relation: "request_received" }),
         person({ id: "u5", name: "Tereza Novotná", relation: "friends" }),
@@ -81,7 +80,7 @@ describe("FriendSearch", () => {
       "/profile/u4",
       "/profile/u5",
     ])
-    expect(links[0]).toHaveTextContent("Jana Nováková@janca_n")
+    expect(links[0]).toHaveTextContent("janca_n")
     expect(links[1]).toHaveTextContent("Žádost odeslána")
     expect(links[2]).toHaveTextContent("Chce se spřátelit")
     expect(links[3]).toHaveTextContent("Přítel")

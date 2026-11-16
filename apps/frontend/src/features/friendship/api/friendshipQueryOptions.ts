@@ -8,7 +8,7 @@ import {
   friendSearchPageSchema,
 } from "@/features/friendship/api/friendshipSchemas"
 
-/** #225: people whose name or nickname contains the text, a page at a time. */
+/** #225: people whose nickname contains the text, a page at a time. */
 export const friendSearchQueryOptions = (text: string) =>
   infiniteQueryOptions({
     queryKey: friendshipKeys.search(text),

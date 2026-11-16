@@ -40,7 +40,6 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
-      nickname: "petr",
       relation: "request_sent",
       bio: null,
       image: null,
@@ -60,7 +59,6 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
-      nickname: null,
       relation: "none",
       bio: null,
       image: null,

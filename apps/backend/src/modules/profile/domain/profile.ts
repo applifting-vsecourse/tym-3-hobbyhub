@@ -64,8 +64,6 @@ export type Profile = {
 export type PublicProfile = {
   id: string;
   name: string;
-  /** #225: the username, when the person has one. Public, like the name. */
-  nickname: string | null;
   bio: string | null;
   image: string | null;
   cover: string | null;

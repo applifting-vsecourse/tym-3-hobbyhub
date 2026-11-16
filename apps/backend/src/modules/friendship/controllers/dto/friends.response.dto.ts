@@ -12,15 +12,8 @@ export class FriendSearchItemResponseDto {
   @ApiProperty()
   id!: string;
 
-  @ApiProperty({ description: 'The public name' })
+  @ApiProperty({ description: 'The nickname, the one public name (ADR-0025)' })
   name!: string;
-
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    description: 'The username, when the person has one',
-  })
-  nickname!: string | null;
 
   @ApiProperty({
     type: String,
@@ -36,7 +29,6 @@ export class FriendSearchItemResponseDto {
     return {
       id: result.id,
       name: result.name,
-      nickname: result.nickname,
       image: result.image,
       relation: result.relation,
     };

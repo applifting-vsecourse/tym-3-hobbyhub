@@ -849,7 +849,6 @@
       "friends": "Zatím tu nikoho nemáte. Až vám někdo přijme žádost o přátelství, uvidíte ho tady.",
       "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady."
     },
-    "nickname": "@{{nickname}}",
     "relation": {
       "friends": "Přítel",
       "request_received": "Chce se spřátelit",
@@ -857,16 +856,16 @@
     },
     "search": {
       "error": "Vyhledávání se nepovedlo.",
-      "hint_few": "Napište aspoň {{count}} znaky jména nebo přezdívky.",
-      "hint_one": "Napište aspoň {{count}} znak jména nebo přezdívky.",
-      "hint_other": "Napište aspoň {{count}} znaků jména nebo přezdívky.",
-      "label": "Hledat lidi podle jména nebo přezdívky",
+      "hint_few": "Napište aspoň {{count}} znaky přezdívky.",
+      "hint_one": "Napište aspoň {{count}} znak přezdívky.",
+      "hint_other": "Napište aspoň {{count}} znaků přezdívky.",
+      "label": "Hledat lidi podle přezdívky",
       "loadMore": "Načíst další",
       "loadMoreError": "Další lidi se nepodařilo načíst. Zkuste to znovu.",
       "loading": "Hledáme lidi…",
       "loadingMore": "Načítáme…",
-      "noResults": "Nikoho takového jsme nenašli. Zkuste jen část jména nebo přezdívky.",
-      "placeholder": "Jméno nebo přezdívka",
+      "noResults": "Nikoho takového jsme nenašli. Zkuste jen část přezdívky.",
+      "placeholder": "Přezdívka",
       "results": "Nalezení lidé",
       "retry": "Zkusit znovu"
     },

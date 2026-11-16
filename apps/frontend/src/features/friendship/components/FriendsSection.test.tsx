@@ -42,7 +42,7 @@ describe("FriendsSection", () => {
     )
 
     expect(
-      screen.getByRole("searchbox", { name: "Hledat lidi podle jména nebo přezdívky" }),
+      screen.getByRole("searchbox", { name: "Hledat lidi podle přezdívky" }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "Vyhledat uživatele" })).toHaveLength(1)
   })

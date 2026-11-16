@@ -428,7 +428,6 @@ describe('ProfileService', () => {
     const publicRow = {
       id: 'u2',
       name: 'Petr',
-      nickname: 'PetrBehá',
       createdAt: new Date('2026-09-02T10:00:00Z'),
       bio: 'Běhám',
       image: null,
@@ -447,14 +446,13 @@ describe('ProfileService', () => {
         'image',
         'interests',
         'name',
-        'nickname',
         'relation',
       ]);
     });
 
     // #225: the profile says where the signed-in viewer stands with the person.
     it.each(['none', 'request_sent', 'request_received', 'friends'] as const)(
-      "carries the viewer's relation (%s) and the nickname",
+      "carries the viewer's relation (%s)",
       async (relation) => {
         const { service, repository, onboardingService, friendshipService } =
           setup();
@@ -463,7 +461,7 @@ describe('ProfileService', () => {
         friendshipService.relationBetween.mockResolvedValue(relation);
         await expect(
           service.getPublicProfile('u2', user),
-        ).resolves.toMatchObject({ nickname: 'PetrBehá', relation });
+        ).resolves.toMatchObject({ relation });
         expect(friendshipService.relationBetween).toHaveBeenCalledWith(
           'u1',
           'u2',

@@ -105,13 +105,6 @@ export class PublicProfileResponseDto {
   @ApiProperty({ description: 'The public nickname' })
   name!: string;
 
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    description: '#225: the username, when the person has one',
-  })
-  nickname!: string | null;
-
   @ApiProperty({ type: String, nullable: true })
   bio!: string | null;
 
@@ -143,7 +136,6 @@ export class PublicProfileResponseDto {
     return {
       id: profile.id,
       name: profile.name,
-      nickname: profile.nickname,
       relation: profile.relation,
       bio: profile.bio,
       image: profile.image,

@@ -45,11 +45,6 @@ export function PublicProfileView({
         </div>
         <div className="mt-4 flex flex-col gap-2 px-1">
           <h1 className="typo-h1 text-balance break-words text-foreground">{profile.name}</h1>
-          {profile.nickname ? (
-            <p className="typo-label-lg break-words text-muted-foreground">
-              {t("friends.nickname", { nickname: profile.nickname })}
-            </p>
-          ) : null}
           {profile.bio ? (
             <p className="mt-1 typo-body-lg break-words whitespace-pre-line text-foreground">
               {profile.bio}

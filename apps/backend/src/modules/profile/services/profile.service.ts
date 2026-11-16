@@ -108,7 +108,6 @@ export class ProfileService {
     return {
       id: row.id,
       name: row.name,
-      nickname: row.nickname,
       bio: row.bio,
       image: row.image,
       cover: row.profileCover,

@@ -839,7 +839,6 @@
       "friends": "Nobody here yet. Once someone accepts your friend request, you will see them here.",
       "requests": "Nothing here yet. Friend requests people send you will show up here."
     },
-    "nickname": "@{{nickname}}",
     "relation": {
       "friends": "Friend",
       "request_received": "Wants to be friends",
@@ -847,15 +846,15 @@
     },
     "search": {
       "error": "The search failed.",
-      "hint_one": "Type at least {{count}} character of a name or nickname.",
-      "hint_other": "Type at least {{count}} characters of a name or nickname.",
-      "label": "Search people by name or nickname",
+      "hint_one": "Type at least {{count}} character of a nickname.",
+      "hint_other": "Type at least {{count}} characters of a nickname.",
+      "label": "Search people by nickname",
       "loadMore": "Load more",
       "loadMoreError": "More people could not be loaded. Try again.",
       "loading": "Looking for people…",
       "loadingMore": "Loading…",
-      "noResults": "Nobody like that was found. Try just part of a name or nickname.",
-      "placeholder": "Name or nickname",
+      "noResults": "Nobody like that was found. Try just part of a nickname.",
+      "placeholder": "Nickname",
       "results": "People found",
       "retry": "Try again"
     },
