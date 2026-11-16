@@ -163,6 +163,13 @@ describeDb('friendship schema constraints', () => {
     it.each([
       ['lower-case ids', `a-${unique()}`, `b-${unique()}`],
       ['mixed-case ids', `b-${unique()}`, `B-${unique()}`],
+      ['ids with diacritics', `é-${unique()}`, `z-${unique()}`],
+      // UTF-16 and the bytes disagree here (see friendPairOf).
+      [
+        'ids outside the BMP',
+        `x-\u{1F600}-${unique()}`,
+        `x-\uFFFD-${unique()}`,
+      ],
     ])('accepts the pair from friendPairOf for %s', async (_case, x, y) => {
       await inRolledBackTransaction(async (tx) => {
         await createUser(tx, x);

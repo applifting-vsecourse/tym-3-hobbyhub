@@ -45,12 +45,32 @@ export type FriendVisibility = {
 };
 
 /**
- * The stored order of a pair, whichever way round it is asked. Compares by
- * UTF-16 code units, which for the ASCII ids of the app is the byte order
- * the database CHECK uses (`COLLATE "C"`).
+ * Orders two strings by Unicode code points: the order of their UTF-8 bytes,
+ * which the database CHECK compares (`COLLATE "C"` in a UTF8 database).
+ * JavaScript's `<` compares UTF-16 code units instead, which puts a character
+ * outside the BMP (an emoji, U+1F600) before U+E000–U+FFFF: the opposite of
+ * the bytes. Negative, zero or positive, like a sort comparator.
+ */
+function compareByCodePoints(a: string, b: string): number {
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    const x = a.codePointAt(i)!;
+    const y = b.codePointAt(j)!;
+    if (x !== y) return x - y;
+    i += x > 0xffff ? 2 : 1;
+    j += y > 0xffff ? 2 : 1;
+  }
+  return a.length - i - (b.length - j);
+}
+
+/**
+ * The stored order of a pair, whichever way round it is asked: by code
+ * points, the same order as the database CHECK `friendship_ordered_pair`.
+ * The ids BetterAuth makes are ASCII, but the order holds for any id.
  */
 export function friendPairOf(oneId: string, otherId: string): FriendPair {
-  return oneId < otherId
+  return compareByCodePoints(oneId, otherId) < 0
     ? { userAId: oneId, userBId: otherId }
     : { userAId: otherId, userBId: oneId };
 }

@@ -1597,6 +1597,7 @@
       "notice": "Nobody else sees these details.",
       "title": "Private details"
     },
+    "privateRefused": "Your private details were not saved: fix the highlighted field. The friend settings are saved together with them, so they were not saved yet either.",
     "public": {
       "bioTooLong": "The bio can have at most {{max}} characters.",
       "mediaHint": "The cover is your calling card: an illustration or your own photo. The picture over its edge is your profile picture.",
