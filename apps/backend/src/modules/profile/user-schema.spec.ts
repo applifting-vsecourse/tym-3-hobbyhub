@@ -1,4 +1,4 @@
-// Database constraints of the user's private details. Like event-schema.spec.ts,
+// Database constraints of the user's private details and nickname. Like event-schema.spec.ts,
 // the suite needs a real PostgreSQL with the migrations applied and only runs
 // on request:  DB_TESTS=1 pnpm backend test user-schema
 //
@@ -6,7 +6,12 @@
 import 'dotenv/config';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { Prisma } from '@/generated/prisma/client';
-import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
+import {
+  ProfileRepository,
+  ProfileRow,
+  ProfileUpdateRefusal,
+} from '@/modules/profile/repositories/profile.repository';
+import { nicknamePreviousChangeAtMost } from '@/shared/auth/registration/nickname';
 import { OLDEST_BIRTH_YEAR } from '@/shared/auth/registration/registration';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
@@ -35,7 +40,9 @@ describeDb('user schema constraints', () => {
     }
   };
 
-  const createUser = (birthYear: number | null): Promise<void> =>
+  const createUser = (
+    data: Partial<Prisma.UserCreateInput> = {},
+  ): Promise<void> =>
     inRolledBackTransaction(async (tx) => {
       const now = new Date();
       await tx.user.create({
@@ -46,7 +53,7 @@ describeDb('user schema constraints', () => {
           emailVerified: true,
           createdAt: now,
           updatedAt: now,
-          birthYear,
+          ...data,
         },
       });
     });
@@ -54,14 +61,107 @@ describeDb('user schema constraints', () => {
   it.each([[null], [OLDEST_BIRTH_YEAR], [1990]])(
     'accepts the birth year %p',
     async (birthYear) => {
-      await createUser(birthYear);
+      await createUser({ birthYear });
     },
   );
 
   it('rejects a birth year before 1900 (user_birth_year_range)', async () => {
-    await expect(createUser(OLDEST_BIRTH_YEAR - 1)).rejects.toThrow(
-      'user_birth_year_range',
+    await expect(
+      createUser({ birthYear: OLDEST_BIRTH_YEAR - 1 }),
+    ).rejects.toThrow('user_birth_year_range');
+  });
+
+  // #212, ADR-0025: the nickname in its three columns.
+  describe('the nickname', () => {
+    const nickname = (
+      displayUsername: string | null,
+      username: string | null = displayUsername?.toLowerCase() ?? null,
+      name: string = displayUsername ?? 'Test User',
+    ): {
+      name: string;
+      displayUsername: string | null;
+      username: string | null;
+    } => ({ name, displayUsername, username });
+
+    it('accepts a nickname kept in step in all three columns', async () => {
+      await createUser(nickname(`Jana.${unique().slice(0, 8)}_1`));
+    });
+
+    it('accepts an account without a nickname', async () => {
+      await createUser(nickname(null));
+    });
+
+    // The other two CHECKs hold, so only the format can refuse. Upper case
+    // always breaks user_display_username_matches as well, and more than 30
+    // characters are stopped by VARCHAR(30) before any CHECK.
+    it.each([
+      ['too short', 'ab'],
+      ['with a space', 'jana nova'],
+      ['with a dash', 'jana-nova'],
+      ['with diacritics', 'kačka'],
+    ])('rejects a username %s (user_username_format)', async (_, username) => {
+      await expect(createUser(nickname(username))).rejects.toThrow(
+        'user_username_format',
+      );
+    });
+
+    it.each([
+      ['another nickname', 'Petr'],
+      ['no displayUsername', null],
+    ])(
+      'rejects a username next to %s (user_display_username_matches)',
+      async (_, displayUsername) => {
+        await expect(
+          createUser(nickname(displayUsername, `jana${unique().slice(0, 8)}`)),
+        ).rejects.toThrow('user_display_username_matches');
+      },
     );
+
+    it('rejects a name other than the nickname (user_name_is_display_username)', async () => {
+      const shown = `Jana${unique().slice(0, 8)}`;
+      await expect(
+        createUser(nickname(shown, shown.toLowerCase(), 'Someone Else')),
+      ).rejects.toThrow('user_name_is_display_username');
+    });
+
+    // Review of #258: the 30 days hold even for two requests sent at once.
+    it('changes the nickname only once for two saves sent at the same time', async () => {
+      const id = `test-${unique()}`;
+      const now = new Date();
+      const shown = `Jana${unique().slice(0, 8)}`;
+      await prisma.user.create({
+        data: {
+          id,
+          email: `test-${unique()}@example.com`,
+          emailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+          ...nickname(shown),
+        },
+      });
+      try {
+        const repository = new ProfileRepository(prisma);
+        const change = (
+          to: string,
+        ): Promise<ProfileRow | ProfileUpdateRefusal> =>
+          repository.updatePublic(id, {
+            nickname: {
+              nickname: to,
+              changedAt: now,
+              previousChangeAtMost: nicknamePreviousChangeAtMost(now),
+            },
+          });
+        const results = await Promise.all([
+          change(`A${shown}`),
+          change(`B${shown}`),
+        ]);
+        expect(
+          results.filter((result) => result === 'NICKNAME_CHANGE_TOO_SOON'),
+        ).toHaveLength(1);
+      } finally {
+        await prisma.user.delete({ where: { id } });
+      }
+    });
   });
 
   // #24: "remove my location" must leave nothing behind. The columns are read

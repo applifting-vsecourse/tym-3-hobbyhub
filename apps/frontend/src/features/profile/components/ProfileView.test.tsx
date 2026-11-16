@@ -8,6 +8,7 @@ import { ProfileView } from "@/features/profile/components/ProfileView"
 
 const profile = (overrides: Partial<Profile> = {}): Profile => ({
   name: "Jana",
+  nicknameChangeableFrom: null,
   joinedAt: new Date("2026-09-15T10:00:00Z"),
   bio: "Hraju rok, rád zkusím nové věci.",
   image: null,

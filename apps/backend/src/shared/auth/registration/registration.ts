@@ -1,7 +1,9 @@
-// F-03.1 registration rules on top of BetterAuth's email sign-up: gender, year
-// of birth (18+, F-10.3), confirmation of adulthood and consent to the terms.
-// Only the year is collected, never the full date (#174, ADR-0016). The
-// frontend checks the same, but only the server can be trusted.
+// F-03.1 registration rules on top of BetterAuth's email sign-up: the nickname
+// (#212), gender, year of birth (18+, F-10.3), confirmation of adulthood and
+// consent to the terms. Only the year is collected, never the full date (#174,
+// ADR-0016). The frontend checks the same, but only the server can be trusted.
+
+import { NicknameViolation, nicknameViolation } from './nickname';
 
 /** Version of the terms a new user agrees to. Bump it when the text changes. */
 export const TERMS_VERSION = '2026-10';
@@ -14,6 +16,7 @@ export type Gender = (typeof GENDERS)[number];
 
 // Codes the frontend translates (features/auth/lib/authErrors.ts).
 export type RegistrationErrorCode =
+  | NicknameViolation
   | 'INVALID_GENDER'
   | 'INVALID_BIRTH_YEAR'
   | 'UNDERAGE'
@@ -73,7 +76,7 @@ export function birthYearViolation(
 }
 
 export type RegistrationResult =
-  | { ok: true; gender: Gender; birthYear: number }
+  | { ok: true; username: string; gender: Gender; birthYear: number }
   | { ok: false; code: RegistrationErrorCode };
 
 /** Checks the F-03.1 fields of a sign-up body. */
@@ -81,7 +84,13 @@ export function validateRegistration(
   body: Record<string, unknown>,
   today: Date,
 ): RegistrationResult {
-  const { gender, birthYear, termsAccepted, adulthoodConfirmed } = body;
+  const { username, gender, birthYear, termsAccepted, adulthoodConfirmed } =
+    body;
+
+  // Whether someone else has it already is checked by BetterAuth's username
+  // plugin against the database; its hook runs after this one.
+  const nicknameCode = nicknameViolation(username);
+  if (nicknameCode) return { ok: false, code: nicknameCode };
 
   if (!GENDERS.includes(gender as Gender)) {
     return { ok: false, code: 'INVALID_GENDER' };
@@ -99,6 +108,7 @@ export function validateRegistration(
 
   return {
     ok: true,
+    username: username as string,
     gender: gender as Gender,
     birthYear: birthYear as number,
   };

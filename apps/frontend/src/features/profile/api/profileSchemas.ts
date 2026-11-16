@@ -29,8 +29,10 @@ export const GENDERS = ["MALE", "FEMALE"] as const
 
 /** My own profile: the public parts and the private ones only I see. */
 export const profileSchema = z.object({
-  /** The public nickname. */
+  /** The public nickname, unique (#212). */
   name: z.string(),
+  /** When the nickname may be changed again; null = now. Only I see it. */
+  nicknameChangeableFrom: z.coerce.date().nullable(),
   /** When the account was created. */
   joinedAt: z.coerce.date(),
   bio: z.string().nullable(),

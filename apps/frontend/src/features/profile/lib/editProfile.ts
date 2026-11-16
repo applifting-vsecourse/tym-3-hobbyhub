@@ -2,23 +2,32 @@ import type { TFunction } from "i18next"
 import { z } from "zod"
 
 import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
+import { NICKNAME_LIMITS, NICKNAME_MESSAGES, nicknameProblem } from "@/lib/nickname"
 
 import { GENDERS, type Profile } from "@/features/profile/api/profileSchemas"
-import { BIO_MAX_LENGTH, NAME_MAX_LENGTH } from "@/features/profile/lib/profileLimits"
+import { BIO_MAX_LENGTH } from "@/features/profile/lib/profileLimits"
 
 // Built per render so validation messages follow the current language.
-export const createEditProfileSchema = (t: TFunction) =>
+// `savedNickname` is the nickname the profile has now: kept as it is, it is
+// no change and the rules for a new one do not apply (an older nickname may
+// predate them, ADR-0025).
+export const createEditProfileSchema = (t: TFunction, savedNickname: string) =>
   z
     .object({
-      // Counted in characters, as the server does, not UTF-16 units.
+      // #212: the unique nickname; whether it is free is asked while typing.
       name: z
         .string()
         .trim()
-        .min(1, t("profile.public.nameRequired"))
-        .refine(
-          (value) => [...value].length <= NAME_MAX_LENGTH,
-          t("profile.public.nameTooLong", { max: NAME_MAX_LENGTH }),
-        ),
+        .superRefine((value, context) => {
+          if (value === savedNickname) return
+          const problem = nicknameProblem(value)
+          if (problem) {
+            context.addIssue({
+              code: "custom",
+              message: t(NICKNAME_MESSAGES[problem], NICKNAME_LIMITS),
+            })
+          }
+        }),
       bio: z
         .string()
         .trim()
