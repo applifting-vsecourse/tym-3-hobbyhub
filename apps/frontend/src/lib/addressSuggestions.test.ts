@@ -6,6 +6,15 @@ import {
   toSuggestion,
 } from "@/lib/addressSuggestions"
 
+// The geocoder is asked only with a map token; the tests give one and answer the geocoder themselves.
+vi.mock("@/config/env", () => ({
+  env: {
+    VITE_API_URL: "http://api.test/api",
+    VITE_BETTER_AUTH_URL: "http://api.test",
+    VITE_MAPBOX_TOKEN: "test-token",
+  },
+}))
+
 const feature = (context: Record<string, unknown> = {}, featureType = "address") =>
   ({
     properties: {
