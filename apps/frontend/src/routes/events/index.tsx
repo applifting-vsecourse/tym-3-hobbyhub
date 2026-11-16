@@ -11,12 +11,17 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
+import { useFiltersPanel } from "@/hooks/useFiltersPanel"
 import { cn } from "@/lib/utils"
 
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
 import { eventsMapQueryOptions, eventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
+import {
+  EventFiltersPanel,
+  panelFiltersButton,
+} from "@/features/event/components/EventFiltersPanel"
 import { EventList } from "@/features/event/components/EventList"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import { useNearMe } from "@/features/event/hooks/useNearMe"
@@ -66,13 +71,16 @@ const uniqueById = <T extends { id: string }>(items: T[]): T[] => [
 ]
 
 // Public: browsing events needs no account. On phones one view at a time, from
-// `lg` the list and the map sit side by side.
+// `lg` the list and the map sit side by side, from `xl` with the filters open
+// in a panel before them (#224). The map takes every pixel the list leaves.
 function EventsPage() {
   const { t } = useTranslation()
   const [view, setView] = useState<EventsView>("list")
   const navigate = Route.useNavigate()
   const { filters, isRangeReversed } = filtersFromSearch(Route.useSearch())
   const nearMe = useNearMe()
+  const filtersPanel = useFiltersPanel()
+  const activityOptions = useActivityOptions()
   // The part of the map the visitor moved to; the list then shows only its events.
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null)
   const [mapFitKey, setMapFitKey] = useState(0)
@@ -104,7 +112,6 @@ function EventsPage() {
     setMapFitKey((key) => key + 1)
   }
   // The field is what the user typed; the address follows after a pause.
-  const activityOptions = useActivityOptions()
   const [searchText, setSearchText] = useSearchText(
     filters.search,
     (next) =>
@@ -129,16 +136,28 @@ function EventsPage() {
       <AppShell
         shellClassName={cn("lg:h-svh", view === "map" && "max-lg:h-dvh")}
         className={cn(
-          "mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10 lg:min-h-0 lg:overflow-hidden lg:px-8 lg:py-6",
+          "mx-auto flex w-full max-w-page flex-col gap-6 px-page py-6 md:py-10 lg:min-h-0 lg:overflow-hidden lg:py-6",
           view === "map" && "max-lg:min-h-0 max-lg:overflow-hidden max-lg:py-4",
         )}
       >
         <div
           className={cn(
-            "grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8",
+            "grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8 xl:grid-cols-[auto_minmax(0,28rem)_minmax(0,1fr)]",
             view === "map" && "max-lg:min-h-0 max-lg:flex-1 max-lg:grid-rows-[auto_minmax(0,1fr)]",
           )}
         >
+          <EventFiltersPanel
+            filters={filters}
+            onFiltersChange={(next) =>
+              void navigate({ search: (previous) => searchWithFilters(previous, next) })
+            }
+            panel={filtersPanel}
+            fields={EVENT_LIST_FILTER_FIELDS}
+            activityOptions={activityOptions.options}
+            activitiesState={activityOptions.state}
+            // Scrolls on its own like the list; the padding keeps the focus rings in view.
+            className="-mx-1 min-h-0 overflow-y-auto px-1"
+          />
           <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4">
             <h1 className="typo-h1 text-foreground">{t("events.list.title")}</h1>
             <EventFiltersBar
@@ -152,6 +171,7 @@ function EventsPage() {
               onFiltersChange={(next) =>
                 void navigate({ search: (previous) => searchWithFilters(previous, next) })
               }
+              onOpenFilters={panelFiltersButton(filtersPanel)}
               leadingChips={
                 <FilterChip
                   pressed={nearMe.position !== null || nearMe.status === "locating"}

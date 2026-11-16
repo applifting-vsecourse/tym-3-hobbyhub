@@ -920,12 +920,16 @@
       "until": "do {{time}}"
     },
     "filters": {
+      "activeCount_few": "{{count}} aktivní filtry",
+      "activeCount_one": "{{count}} aktivní filtr",
+      "activeCount_other": "{{count}} aktivních filtrů",
       "activitiesEmpty": "Zatím tu nejsou žádné aktivity.",
       "activitiesError": "Aktivity se nepodařilo načíst",
       "activitiesLoading": "Načítáme aktivity…",
       "activitiesRetry": "Zkusit znovu",
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
+      "apply": "Použít",
       "capacity": "Kolik lidí se vejde (počet míst)",
       "chosenActivities": "Vybrané aktivity",
       "clear": "Vymazat",
@@ -936,6 +940,8 @@
       "freeSpots": "Jen s volnými místy",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
+      "panelHide": "Skrýt filtry",
+      "panelShow": "Zobrazit filtry",
       "preset": {
         "capacity": {
           "from13": "13 a více",
@@ -967,6 +973,7 @@
       "showResults": "Zobrazit výsledky",
       "sortNote": "Výsledky řadíme podle nejbližšího termínu.",
       "title": "Filtry",
+      "unapplied": "Změny se projeví po stisku Použít.",
       "week": "Tento týden",
       "weekend": "Víkend",
       "when": "Kdy"

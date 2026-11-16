@@ -18,6 +18,8 @@ type DiscoverGroupsProps = {
   filters: DiscoverGroupsFilters
   /** The search field and the filter chips; the page builds them (the event list's bar). */
   filtersBar: ReactNode
+  /** The filters open beside the list on a large screen (#224); nothing where there is no room. */
+  filtersPanel?: ReactNode
   onClearFilters: () => void
 }
 
@@ -31,6 +33,7 @@ export function DiscoverGroups({
   activityLabel,
   filters,
   filtersBar,
+  filtersPanel,
   onClearFilters,
 }: DiscoverGroupsProps) {
   const { t } = useTranslation()
@@ -46,7 +49,7 @@ export function DiscoverGroups({
   return (
     <section
       aria-labelledby="discover-groups-heading"
-      className="flex flex-col gap-6"
+      className="flex flex-col gap-6 xl:grid xl:grid-cols-[auto_minmax(0,1fr)] xl:items-start xl:gap-8"
     >
       <h2
         id="discover-groups-heading"
@@ -54,59 +57,64 @@ export function DiscoverGroups({
       >
         {t("groups.list.tabs.discover")}
       </h2>
-      {filtersBar}
-      <div
-        aria-busy={discover.isPlaceholderData}
-        className={discover.isPlaceholderData ? "opacity-60 transition-opacity" : undefined}
-      >
-        <GroupGrid
-          items={groups}
-          isPending={discover.isPending}
-          // A failed next page keeps the loaded ones; the button below retries it.
-          error={groups ? null : discover.error}
-          onRetry={() => void discover.refetch()}
-          getKey={(group) => group.id}
-          renderItem={(group) => (
-            <GroupCard
-              group={group}
-              activityLabel={activityLabel}
-            />
-          )}
-          empty={
-            isFiltered ? (
-              <NoMatchingResults
-                title={t("groups.list.emptyFiltered.title")}
-                description={t("groups.list.emptyFiltered.description")}
-                clearLabel={t("groups.list.emptyFiltered.clear")}
-                onClearFilters={onClearFilters}
+      {filtersPanel}
+      <div className="flex min-w-0 flex-col gap-6">
+        {filtersBar}
+        <div
+          aria-busy={discover.isPlaceholderData}
+          className={discover.isPlaceholderData ? "opacity-60 transition-opacity" : undefined}
+        >
+          <GroupGrid
+            items={groups}
+            isPending={discover.isPending}
+            // A failed next page keeps the loaded ones; the button below retries it.
+            error={groups ? null : discover.error}
+            onRetry={() => void discover.refetch()}
+            getKey={(group) => group.id}
+            renderItem={(group) => (
+              <GroupCard
+                group={group}
+                activityLabel={activityLabel}
               />
-            ) : viewerId ? (
-              t("groups.list.discoverEmpty")
-            ) : (
-              t("groups.list.discoverEmptyVisitor")
-            )
-          }
-        />
-      </div>
-      {discover.hasNextPage && !discover.isPlaceholderData ? (
-        <div className="flex flex-col items-center gap-2">
-          {discover.isFetchNextPageError ? (
-            <p
-              role="alert"
-              className="typo-small text-destructive"
-            >
-              {t("groups.list.loadMoreError")}
-            </p>
-          ) : null}
-          <Button
-            variant="outline"
-            disabled={discover.isFetchingNextPage}
-            onClick={() => void discover.fetchNextPage()}
-          >
-            {discover.isFetchingNextPage ? t("groups.list.loadingMore") : t("groups.list.loadMore")}
-          </Button>
+            )}
+            empty={
+              isFiltered ? (
+                <NoMatchingResults
+                  title={t("groups.list.emptyFiltered.title")}
+                  description={t("groups.list.emptyFiltered.description")}
+                  clearLabel={t("groups.list.emptyFiltered.clear")}
+                  onClearFilters={onClearFilters}
+                />
+              ) : viewerId ? (
+                t("groups.list.discoverEmpty")
+              ) : (
+                t("groups.list.discoverEmptyVisitor")
+              )
+            }
+          />
         </div>
-      ) : null}
+        {discover.hasNextPage && !discover.isPlaceholderData ? (
+          <div className="flex flex-col items-center gap-2">
+            {discover.isFetchNextPageError ? (
+              <p
+                role="alert"
+                className="typo-small text-destructive"
+              >
+                {t("groups.list.loadMoreError")}
+              </p>
+            ) : null}
+            <Button
+              variant="outline"
+              disabled={discover.isFetchingNextPage}
+              onClick={() => void discover.fetchNextPage()}
+            >
+              {discover.isFetchingNextPage
+                ? t("groups.list.loadingMore")
+                : t("groups.list.loadMore")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
     </section>
   )
 }

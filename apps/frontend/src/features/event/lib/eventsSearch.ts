@@ -179,6 +179,22 @@ export function searchWithFilters<T extends EventsSearch & ListRangesSearch>(
 }
 
 /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
+/**
+ * How many filters of the panel are on, counted like their chips: each
+ * activity, the place, the dates, free spots and each range. The search text
+ * has its own field and does not count.
+ */
+export const activeFilterCount = (filters: EventFilterValues): number =>
+  filters.activityIds.length +
+  [
+    filters.location !== "",
+    filters.dateFrom !== "" || filters.dateTo !== "",
+    filters.freeSpotsOnly,
+    filters.priceFrom !== "" || filters.priceTo !== "",
+    filters.hoursFrom !== "" || filters.hoursTo !== "",
+    filters.capacityFrom !== "" || filters.capacityTo !== "",
+  ].filter(Boolean).length
+
 export const hasFilters = (filters: EventFilterValues): boolean =>
   filters.activityIds.length > 0 ||
   filters.search !== "" ||
