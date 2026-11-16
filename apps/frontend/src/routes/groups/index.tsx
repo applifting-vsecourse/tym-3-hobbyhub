@@ -13,7 +13,12 @@ import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions
 import { useSession } from "@/features/auth/hooks/useSession"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import { useSearchText } from "@/features/event/hooks/useSearchText"
-import { eventsSearchSchema, nonEmpty, searchWithFilters } from "@/features/event/lib/eventsSearch"
+import {
+  eventsSearchSchema,
+  filtersFromSearch,
+  nonEmpty,
+  searchWithFilters,
+} from "@/features/event/lib/eventsSearch"
 import { DiscoverGroups } from "@/features/group/components/DiscoverGroups"
 import type { ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupTabs } from "@/features/group/components/GroupTabs"
@@ -66,6 +71,12 @@ function DiscoverTab({
       }),
   )
   const activityOptions = useActivityOptions()
+  // The bar speaks the event list's filters; the ones a group does not have stay empty.
+  const { filters: eventFilters } = filtersFromSearch({
+    activity: search.activity,
+    q: search.q,
+    location: search.location,
+  })
 
   return (
     <DiscoverGroups
@@ -75,7 +86,7 @@ function DiscoverTab({
       // The event list's search field and filter chips; groups have no dates.
       filtersBar={
         <EventFiltersBar
-          filters={{ ...filters, dateFrom: "", dateTo: "" }}
+          filters={eventFilters}
           isRangeReversed={false}
           searchText={searchText}
           onSearchTextChange={setSearchText}
