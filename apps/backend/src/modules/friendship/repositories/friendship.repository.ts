@@ -5,7 +5,7 @@ import {
 } from '@/modules/friendship/domain/friendship';
 import { Injectable } from '@nestjs/common';
 
-// #227, ADR-0023. The only place that touches the friendship tables. Trusts
+// #227, ADR-0026. The only place that touches the friendship tables. Trusts
 // the layers above: it validates nothing, it only reads and writes. The
 // endpoints that create and decide requests come with #225 and #228.
 @Injectable()

@@ -1,4 +1,4 @@
-// #227, ADR-0023: the vocabulary of friendships. Plain TypeScript: no Nest,
+// #227, ADR-0026: the vocabulary of friendships. Plain TypeScript: no Nest,
 // no Prisma, no HTTP.
 
 export const FRIEND_REQUEST_STATUSES = [
