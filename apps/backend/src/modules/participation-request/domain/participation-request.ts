@@ -122,7 +122,11 @@ export type EventStateViolation =
 // Why the organizer cannot decide a request now (F-05.7). APPLICANT_HAS_SEAT
 // shows only once the seat is taken, so the repository reports it.
 export type DecisionRuleViolation =
-  EventStateViolation | 'EVENT_FULL' | 'NOT_PENDING' | 'APPLICANT_HAS_SEAT';
+  | EventStateViolation
+  | 'EVENT_HIDDEN'
+  | 'EVENT_FULL'
+  | 'NOT_PENDING'
+  | 'APPLICANT_HAS_SEAT';
 
 export type Decision = 'APPROVE' | 'REJECT';
 
@@ -199,12 +203,20 @@ export const joinRuleViolations = (
 // decided until the event starts, the boundary of asking too. Approval takes a
 // seat, so a full event can only reject.
 export const decisionRuleViolations = (
-  event: Pick<EventFacts, 'status' | 'startAt' | 'endAt' | 'freeSpots'>,
+  event: Pick<
+    EventFacts,
+    'status' | 'startAt' | 'endAt' | 'freeSpots' | 'isHidden'
+  >,
   request: Pick<ParticipationRequest, 'status'>,
   decision: Decision,
   now: Date,
 ): DecisionRuleViolation[] => {
   const violations: DecisionRuleViolation[] = [];
+  // #239, ADR-0022: requests to an event an administrator hid wait until it
+  // is back.
+  if (event.isHidden) {
+    violations.push('EVENT_HIDDEN');
+  }
   const state = eventStateViolation(event, now);
   if (state) {
     violations.push(state);

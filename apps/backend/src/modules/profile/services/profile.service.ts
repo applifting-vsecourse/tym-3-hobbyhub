@@ -7,6 +7,8 @@ import {
 } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
 import {
+  AdminUserDetail,
+  AdminUserListItem,
   coverViolations,
   imageViolations,
   privateDetailsViolations,
@@ -14,8 +16,13 @@ import {
   PublicProfile,
 } from '@/modules/profile/domain/profile';
 import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
+import {
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { Gender } from '@/shared/auth/registration/registration';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   Injectable,
@@ -28,12 +35,17 @@ export class ProfileService {
     private readonly profileRepository: ProfileRepository,
     private readonly onboardingService: OnboardingService,
     private readonly friendshipService: FriendshipService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   async getProfile(user: Identity): Promise<Profile> {
-    const row = await this.profileRepository.getRow(user.id);
+    return this.getProfileOf(user.id);
+  }
+
+  private async getProfileOf(userId: string): Promise<Profile> {
+    const row = await this.profileRepository.getRow(userId);
     if (!row) throw new NotFoundException('User not found');
-    const onboarding = await this.onboardingService.getOnboarding(user);
+    const onboarding = await this.onboardingService.getOnboardingOf(userId);
     return {
       name: row.name,
       joinedAt: row.createdAt,
@@ -54,12 +66,16 @@ export class ProfileService {
 
   // F-04.2: another person's profile: only what the visibility matrix lets any
   // signed-in person see. The e-mail is never part of it.
+  // #239: the profile of someone blocked from the viewer does not exist.
   // #225: with the viewer's relation to the person (friends, a request either way).
   async getPublicProfile(
-    viewer: Identity,
     userId: string,
+    viewer: Identity,
   ): Promise<PublicProfile> {
-    const row = await this.profileRepository.getPublicRow(userId);
+    const hidden = await this.blocks.hiddenFor(viewer.id);
+    const row = hidden.includes(userId)
+      ? null
+      : await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
     const [interests, relation] = await Promise.all([
       this.onboardingService.getInterestsOf(userId),
@@ -155,5 +171,19 @@ export class ProfileService {
   async removeLocation(user: Identity): Promise<Profile> {
     await this.profileRepository.clearLocation(user.id);
     return this.getProfile(user);
+  }
+
+  // #238: everyone, for the administration (visibility matrix: Superadmin).
+  listUsersForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<AdminUserListItem>> {
+    return this.profileRepository.listForAdministration(query);
+  }
+
+  // The account and the whole profile, private fields included.
+  async getUserForAdministration(userId: string): Promise<AdminUserDetail> {
+    const account = await this.profileRepository.getAccount(userId);
+    if (!account) throw new NotFoundException('User not found');
+    return { account, profile: await this.getProfileOf(userId) };
   }
 }

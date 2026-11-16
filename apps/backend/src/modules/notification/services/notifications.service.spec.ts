@@ -1,10 +1,19 @@
 import { Notification } from '@/modules/notification/domain/notification';
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { NotificationEmailsService } from './notification-emails.service';
 import { NotificationsService } from './notifications.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const user = { id: 'u1' } as Identity;
 const now = new Date('2030-01-01T12:00:00Z');
@@ -38,7 +47,7 @@ describe('NotificationsService', () => {
     return {
       repository,
       emails,
-      service: new NotificationsService(repository, emails),
+      service: new NotificationsService(repository, emails, noBlocks()),
     };
   };
 
@@ -55,6 +64,7 @@ describe('NotificationsService', () => {
         'u1',
         { limit: 20, offset: 0 },
         {},
+        [],
       );
     });
 
@@ -72,6 +82,7 @@ describe('NotificationsService', () => {
         'u1',
         { limit: 10, offset: 10 },
         { read: false, kind: 'events' },
+        [],
       );
     });
 
@@ -236,6 +247,56 @@ describe('NotificationsService', () => {
       });
 
       expect(repository.createForRecipients).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('an event an administrator hid or brought back (#239)', () => {
+    const people = {
+      event: { id: 'e1' },
+      organizerIds: ['organizer', 'co-organizer'],
+      participantIds: ['p1', 'organizer'],
+      applicantIds: ['a1'],
+      waitlistedIds: ['w1', 'p1'],
+    };
+
+    it('tells the organizers why, the others only that it is gone', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyEventHidden({ ...people, reason: 'Spam a reklama.' });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_HIDDEN',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: null,
+        eventId: 'e1',
+        payload: { reason: 'Spam a reklama.' },
+      });
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_HIDDEN',
+        recipientIds: ['p1', 'a1', 'w1'],
+        actorId: null,
+        eventId: 'e1',
+      });
+    });
+
+    it('tells the same people it is back, with no reason', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyEventRestored(people);
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_RESTORED',
+        recipientIds: ['organizer', 'co-organizer'],
+        actorId: null,
+        eventId: 'e1',
+        payload: {},
+      });
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'EVENT_RESTORED',
+        recipientIds: ['p1', 'a1', 'w1'],
+        actorId: null,
+        eventId: 'e1',
+      });
     });
   });
 

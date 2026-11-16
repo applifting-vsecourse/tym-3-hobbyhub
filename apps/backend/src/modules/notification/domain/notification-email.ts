@@ -32,6 +32,7 @@ export type NotificationEmailContent = {
 export const CRITICAL_NOTIFICATION_TYPES: readonly NotificationType[] = [
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
+  'EVENT_HIDDEN',
   'EVENT_REMINDER',
   'HOSTED_EVENT_REMINDER',
 ];
@@ -118,6 +119,31 @@ const eventDraft = (
         buttonLabel: 'Zobrazit akci',
         path: eventPath,
       };
+    // #239, ADR-0022: the organizers' copy carries the reason (not in the
+    // e-mail, only behind the button); the others' copy does not, and their
+    // button leads to their own events, since the event does not exist for
+    // them any more.
+    case 'EVENT_HIDDEN':
+      return payload.reason !== undefined
+        ? {
+            heading: 'Tvoji akci skryl správce',
+            body: 'Akci teď nikdo jiný nevidí. Důvod najdeš v detailu akce.',
+            buttonLabel: 'Zobrazit akci',
+            path: eventPath,
+          }
+        : {
+            heading: 'Akce, kterou máš v přehledu, byla odstraněna',
+            body: 'Akci odstranil správce HobbyHubu. Přehled svých akcí najdeš v aplikaci.',
+            buttonLabel: 'Moje akce',
+            path: '/my-events',
+          };
+    case 'EVENT_RESTORED':
+      return {
+        heading: 'Akce, kterou máš v přehledu, je zpět',
+        body: 'Správce akci znovu zveřejnil. Podrobnosti najdeš v detailu akce.',
+        buttonLabel: 'Zobrazit akci',
+        path: eventPath,
+      };
     // F-09.2 (#58): to every organizer. The participant's words stay out like
     // their name: the organizers read both on the participants page, under
     // "Odhlášení", which the event detail links to.
@@ -182,6 +208,22 @@ const friendRequestDraft = (notification: Notification): Draft | null =>
  * The e-mail of a notification, or null when it has none: a type nothing
  * creates yet (F-05.8, F-05.9 …), or the event or group is gone.
  */
+// #240, ADR-0023: about neither an event nor a group. Only that the report was
+// dealt with: not what it was about, nor how.
+const standaloneDraft = (notification: Notification): Draft | null => {
+  switch (notification.type) {
+    case 'REPORT_RESOLVED':
+      return {
+        heading: 'Tvoje nahlášení jsme vyřídili',
+        body: 'Děkujeme, že pomáháš udržet HobbyHub bezpečný. Správce tvoje nahlášení prošel a vyřídil.',
+        buttonLabel: 'Zobrazit upozornění',
+        path: '/notifications',
+      };
+    default:
+      return null;
+  }
+};
+
 export const notificationEmailOf = (
   notification: Notification,
 ): NotificationEmailContent | null => {
@@ -191,7 +233,7 @@ export const notificationEmailOf = (
       ? eventDraft(notification, notification.event.id)
       : notification.group
         ? groupDraft(notification, notification.group.id)
-        : null;
+        : standaloneDraft(notification);
   if (!draft) return null;
   return {
     ...draft,

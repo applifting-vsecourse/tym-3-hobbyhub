@@ -12,6 +12,7 @@ import {
 } from '@/modules/friendship/repositories/friendship.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ConflictException,
@@ -20,7 +21,7 @@ import {
 import { mock } from 'jest-mock-extended';
 import { FriendshipService } from './friendship.service';
 
-const me = new Identity('u1', 'jana@example.com', 'Jana', 'user', true);
+const me = new Identity('u1', 'jana@example.com', 'Jana', true);
 
 const pending = (senderId: string, recipientId: string): FriendRequest => ({
   id: 'r1',
@@ -45,14 +46,19 @@ describe('FriendshipService', () => {
   const setup = (): {
     repository: ReturnType<typeof mock<FriendshipRepository>>;
     notifications: ReturnType<typeof mock<NotificationsService>>;
+    blocks: ReturnType<typeof mock<UserBlockVisibility>>;
     service: FriendshipService;
   } => {
     const repository = mock<FriendshipRepository>();
     const notifications = mock<NotificationsService>();
+    const blocks = mock<UserBlockVisibility>();
+    blocks.hiddenFor.mockResolvedValue([]);
+    blocks.hiddenFrom.mockResolvedValue([]);
     return {
       repository,
       notifications,
-      service: new FriendshipService(repository, notifications),
+      blocks,
+      service: new FriendshipService(repository, notifications, blocks),
     };
   };
 
@@ -109,6 +115,24 @@ describe('FriendshipService', () => {
         'nov',
         40,
         FRIEND_SEARCH_PAGE_SIZE + 1,
+        [],
+      );
+    });
+
+    // #239: people blocked from the viewer are not found.
+    it('leaves out the people blocked from the viewer', async () => {
+      const { repository, blocks, service } = setup();
+      blocks.hiddenFor.mockResolvedValue(['u9']);
+      repository.searchUsers.mockResolvedValue([]);
+      repository.findRelationsWith.mockResolvedValue(new Map());
+      await service.search(me, 'nov', 0);
+      expect(blocks.hiddenFor).toHaveBeenCalledWith('u1');
+      expect(repository.searchUsers).toHaveBeenCalledWith(
+        'u1',
+        'nov',
+        0,
+        FRIEND_SEARCH_PAGE_SIZE + 1,
+        ['u9'],
       );
     });
 
@@ -257,6 +281,22 @@ describe('FriendshipService', () => {
       );
       expect(repository.createRequest).not.toHaveBeenCalled();
     });
+
+    // #239: neither of a blocked pair may learn of the block.
+    it.each([
+      ['hidden from the sender', 'hiddenFor'],
+      ['hiding from the sender', 'hiddenFrom'],
+    ] as const)(
+      'answers not found for someone %s by a block',
+      async (_case, side) => {
+        const { repository, blocks, service } = reachableStranger();
+        blocks[side].mockResolvedValue(['u2']);
+        await expect(service.sendRequest(me, 'u2')).rejects.toBeInstanceOf(
+          NotFoundException,
+        );
+        expect(repository.createRequest).not.toHaveBeenCalled();
+      },
+    );
 
     it('refuses a request between friends', async () => {
       const { repository, service } = reachableStranger();
@@ -471,5 +511,25 @@ describe('FriendshipService', () => {
     await service.rejectRequest(me, 'u2');
     expect(notifications.notifyFriendRequestAccepted).not.toHaveBeenCalled();
     expect(notifications.notifyFriendRequest).not.toHaveBeenCalled();
+  });
+
+  // #239, ADR-0022: the clean-up of a block by an administrator.
+  describe('removeBlockedPair', () => {
+    it('ends the friendship and the pending requests of the pair', async () => {
+      const { repository, service } = setup();
+      const now = new Date('2030-01-01T12:00:00Z');
+      await service.removeBlockedPair('u1', 'u2', now);
+      expect(repository.removeBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        now,
+      );
+    });
+
+    it('does nothing for one person, without asking', async () => {
+      const { repository, service } = setup();
+      await service.removeBlockedPair('u1', 'u1');
+      expect(repository.removeBlockedPair).not.toHaveBeenCalled();
+    });
   });
 });

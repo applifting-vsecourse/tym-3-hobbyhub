@@ -7,6 +7,7 @@ import {
   NotificationFilter,
   NotificationKind,
   NotificationPage,
+  NotificationPayload,
   Page,
   recipientsExcept,
   ReminderOccupancy,
@@ -14,6 +15,7 @@ import {
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
 import { NotificationEmailsService } from '@/modules/notification/services/notification-emails.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 // What the places where something happens know, and hand over (ADR-0015):
@@ -33,22 +35,32 @@ export class NotificationsService {
   constructor(
     private readonly repository: NotificationRepository,
     private readonly emails: NotificationEmailsService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   // -------------------------------------------------------------------------
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  listMine(
+  // #239: without what people blocked from the user caused.
+  async listMine(
     user: Identity,
     page: Page,
     filter: NotificationFilter = {},
   ): Promise<NotificationPage> {
-    return this.repository.listOf(user.id, page, filter);
+    return this.repository.listOf(
+      user.id,
+      page,
+      filter,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
-  countUnread(user: Identity): Promise<number> {
-    return this.repository.countUnread(user.id);
+  async countUnread(user: Identity): Promise<number> {
+    return this.repository.countUnread(
+      user.id,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // Someone else's notification does not exist for the user: 404, never 403.
@@ -172,6 +184,78 @@ export class NotificationsService {
       ),
       actorId: input.cancelledBy.id,
       eventId: input.event.id,
+    });
+  }
+
+  // #239, ADR-0022: an administrator hid the event, or brought it back. The
+  // organizers hear why it was hidden; the participants, the people waiting
+  // for a decision and the waitlist only that it is gone or back. Nobody is
+  // the actor: an administrator is not a user.
+  async notifyEventHidden(input: {
+    event: AnEvent;
+    organizerIds: readonly string[];
+    participantIds: readonly string[];
+    applicantIds: readonly string[];
+    waitlistedIds: readonly string[];
+    reason: string;
+  }): Promise<void> {
+    await this.notifyModeration('EVENT_HIDDEN', input, {
+      reason: input.reason,
+    });
+  }
+
+  async notifyEventRestored(input: {
+    event: AnEvent;
+    organizerIds: readonly string[];
+    participantIds: readonly string[];
+    applicantIds: readonly string[];
+    waitlistedIds: readonly string[];
+  }): Promise<void> {
+    await this.notifyModeration('EVENT_RESTORED', input, {});
+  }
+
+  private async notifyModeration(
+    type: 'EVENT_HIDDEN' | 'EVENT_RESTORED',
+    input: {
+      event: AnEvent;
+      organizerIds: readonly string[];
+      participantIds: readonly string[];
+      applicantIds: readonly string[];
+      waitlistedIds: readonly string[];
+    },
+    organizerPayload: NotificationPayload,
+  ): Promise<void> {
+    const organizerIds = recipientsExcept(input.organizerIds, null);
+    await this.record({
+      type,
+      recipientIds: organizerIds,
+      actorId: null,
+      eventId: input.event.id,
+      payload: organizerPayload,
+    });
+    await this.record({
+      type,
+      recipientIds: recipientsExcept(
+        [
+          ...input.participantIds,
+          ...input.applicantIds,
+          ...input.waitlistedIds,
+        ],
+        null,
+      ).filter((id) => !organizerIds.includes(id)),
+      actorId: null,
+      eventId: input.event.id,
+    });
+  }
+
+  // #240, ADR-0023: a report the user filed was dealt with. It names neither
+  // the target nor the outcome, so it gives away no block between two people
+  // and nothing of what the administrator did. Nobody is the actor.
+  notifyReportResolved(input: { reporterId: string }): Promise<void> {
+    return this.record({
+      type: 'REPORT_RESOLVED',
+      recipientIds: [input.reporterId],
+      actorId: null,
     });
   }
 
@@ -317,7 +401,18 @@ export class NotificationsService {
     if (data.recipientIds.length === 0) return;
     let ids: string[];
     try {
-      ids = await this.repository.createForRecipients(data);
+      // #239: nobody hears from someone blocked from them.
+      const hidden = data.actorId
+        ? await this.blocks.hiddenFrom(data.actorId)
+        : [];
+      const recipientIds = data.recipientIds.filter(
+        (id) => !hidden.includes(id),
+      );
+      if (recipientIds.length === 0) return;
+      ids = await this.repository.createForRecipients({
+        ...data,
+        recipientIds,
+      });
     } catch (error) {
       // The change that caused the notification is saved already; failing
       // the request now would tell the user it did not happen.

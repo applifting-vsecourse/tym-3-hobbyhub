@@ -244,6 +244,77 @@ describe('notificationEmailOf', () => {
     });
   });
 
+  describe('an event an administrator hid (#239)', () => {
+    it('tells an organizer, without the reason, and leads to the event', () => {
+      const email = notificationEmailOf(
+        aNotification({
+          type: 'EVENT_HIDDEN',
+          actor: null,
+          payload: { reason: 'Nabízí placené služby.' },
+        }),
+      );
+
+      expect(email).toEqual(
+        expect.objectContaining({
+          subject: 'Tvoji akci skryl správce',
+          path: '/events/e1',
+          critical: true,
+        }),
+      );
+      expect(JSON.stringify(email)).not.toContain('Nabízí placené služby.');
+    });
+
+    it('tells a participant it is gone and leads to their own events', () => {
+      const email = notificationEmailOf(
+        aNotification({ type: 'EVENT_HIDDEN', actor: null }),
+      );
+
+      expect(email).toEqual(
+        expect.objectContaining({
+          subject: 'Akce, kterou máš v přehledu, byla odstraněna',
+          path: '/my-events',
+        }),
+      );
+      expect(JSON.stringify(email)).not.toContain(EVENT_TITLE);
+    });
+
+    it('tells everyone when it is back', () => {
+      expect(
+        notificationEmailOf(
+          aNotification({ type: 'EVENT_RESTORED', actor: null }),
+        ),
+      ).toEqual(
+        expect.objectContaining({
+          subject: 'Akce, kterou máš v přehledu, je zpět',
+          path: '/events/e1',
+          critical: false,
+        }),
+      );
+    });
+  });
+
+  // #240, ADR-0023: only that the report was dealt with, never about what or
+  // how: it must not give away a block between two people.
+  it('tells a reporter their report was dealt with, and nothing more', () => {
+    const content = notificationEmailOf(
+      aNotification({
+        type: 'REPORT_RESOLVED',
+        actor: null,
+        event: null,
+        group: null,
+      }),
+    );
+
+    expect(content).toEqual({
+      subject: 'Tvoje nahlášení jsme vyřídili',
+      heading: 'Tvoje nahlášení jsme vyřídili',
+      body: 'Děkujeme, že pomáháš udržet HobbyHub bezpečný. Správce tvoje nahlášení prošel a vyřídil.',
+      buttonLabel: 'Zobrazit upozornění',
+      path: '/notifications',
+      critical: false,
+    });
+  });
+
   it('has no e-mail for a type nothing creates yet', () => {
     expect(
       notificationEmailOf(aNotification({ type: 'SPOT_AVAILABLE' })),

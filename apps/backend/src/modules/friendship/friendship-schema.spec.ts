@@ -314,6 +314,24 @@ describeDb('friendship schema constraints', () => {
       });
     });
 
+    // #239: the service hands over the people blocked from the viewer.
+    it('leaves out the people it is told to', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        const shown = await createUser(tx, undefined, {
+          name: `Shown ${token}`,
+        });
+        const blocked = await createUser(tx, undefined, {
+          name: `Blocked ${token}`,
+        });
+        const rows = await new FriendshipRepository(
+          tx as unknown as PrismaService,
+        ).searchUsers(viewer, token, 0, 50, [blocked]);
+        expect(rows.map((row) => row.id)).toEqual([shown]);
+      });
+    });
+
     it('takes % and _ as typed, not as wildcards', async () => {
       await inRolledBackTransaction(async (tx) => {
         const token = unique();
@@ -614,6 +632,74 @@ describeDb('friendship schema constraints', () => {
         await expect(
           tx.notification.count({ where: { friendRequestId: request.id } }),
         ).resolves.toBe(0);
+      });
+    });
+  });
+
+  // #239, ADR-0022, ADR-0026: blocking a pair ends what ties them together.
+  describe('removeBlockedPair', () => {
+    // The repository opens its own transaction; inside the rolled back one of
+    // the test it runs in that one instead.
+    const repositoryOf = (tx: Prisma.TransactionClient): FriendshipRepository =>
+      new FriendshipRepository(
+        new Proxy(tx, {
+          get: (target, key, receiver): unknown =>
+            key === '$transaction'
+              ? (work: Promise<unknown>[]): Promise<unknown[]> =>
+                  Promise.all(work)
+              : Reflect.get(target, key, receiver),
+        }) as unknown as PrismaService,
+      );
+
+    it('ends the friendship and closes the pending requests of the pair only', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const a = await createUser(tx);
+        const b = await createUser(tx);
+        const c = await createUser(tx);
+        await tx.friendship.create({ data: friendPairOf(a, b) });
+        await tx.friendship.create({ data: friendPairOf(a, c) });
+        const accepted = await tx.friendRequest.create({
+          data: {
+            senderId: b,
+            recipientId: a,
+            status: 'ACCEPTED',
+            decidedAt: new Date('2030-01-01T10:00:00Z'),
+          },
+        });
+        // One request still pending inside the pair, one from outside it.
+        const pending = await tx.friendRequest.create({
+          data: { senderId: a, recipientId: b },
+        });
+        const other = await tx.friendRequest.create({
+          data: { senderId: c, recipientId: b },
+        });
+        const now = new Date('2030-01-01T12:00:00Z');
+
+        await repositoryOf(tx).removeBlockedPair(b, a, now);
+
+        await expect(
+          tx.friendship.count({ where: friendPairOf(a, b) }),
+        ).resolves.toBe(0);
+        await expect(
+          tx.friendship.count({ where: friendPairOf(a, c) }),
+        ).resolves.toBe(1);
+        // Kept, never deleted: the pending one ends silently as REJECTED.
+        expect(
+          await tx.friendRequest.findUniqueOrThrow({
+            where: { id: pending.id },
+          }),
+        ).toMatchObject({ status: 'REJECTED', decidedAt: now });
+        expect(
+          await tx.friendRequest.findUniqueOrThrow({
+            where: { id: accepted.id },
+          }),
+        ).toMatchObject({ status: 'ACCEPTED' });
+        expect(
+          await tx.friendRequest.findUniqueOrThrow({ where: { id: other.id } }),
+        ).toMatchObject({ status: 'PENDING' });
+
+        // Running it again changes nothing.
+        await repositoryOf(tx).removeBlockedPair(a, b, now);
       });
     });
   });
