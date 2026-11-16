@@ -9,11 +9,26 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRelationAction } from "@/features/friendship/components/FriendRelationAction"
 
-const { post, del } = vi.hoisted(() => ({ post: vi.fn(), del: vi.fn() }))
+const { post, del, toast } = vi.hoisted(() => ({
+  post: vi.fn(),
+  del: vi.fn(),
+  toast: Object.assign(vi.fn(), { error: vi.fn() }),
+}))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   api: { post, delete: del },
 }))
+vi.mock("sonner", () => ({ toast }))
+
+// #228: deciding a request reads the answer of `post` itself (lib/friend-requests).
+const decisionFails = (status: number) =>
+  post.mockRejectedValueOnce(
+    new HTTPError(
+      new Response("{}", { status }),
+      new Request("http://x/api/friends/requests/u2/accept"),
+      {} as never,
+    ),
+  )
 
 const failWith = (status: number, method = post) =>
   method.mockReturnValueOnce({
@@ -29,6 +44,7 @@ const failWith = (status: number, method = post) =>
 
 const renderAction = async (relation: FriendRelation) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const invalidate = vi.spyOn(client, "invalidateQueries")
   const reload = vi.fn(() => Promise.resolve())
   await renderWithRouter(
     <QueryClientProvider client={client}>
@@ -40,7 +56,7 @@ const renderAction = async (relation: FriendRelation) => {
       />
     </QueryClientProvider>,
   )
-  return { reload }
+  return { reload, invalidate }
 }
 
 describe("FriendRelationAction", () => {
@@ -105,33 +121,38 @@ describe("FriendRelationAction", () => {
     it.each([
       ["Přijmout", "accept"],
       ["Zamítnout", "reject"],
-    ])("%s decides the request and reloads the profile", async (label, decision) => {
-      post.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "friends" }) })
-      const { reload } = await renderAction("request_received")
+    ])("%s decides the request and loads the profile again", async (label, decision) => {
+      post.mockResolvedValueOnce(new Response("{}"))
+      const { invalidate } = await renderAction("request_received")
 
       await userEvent.click(
         await screen.findByRole("button", { name: `${label} žádost o přátelství od Libor` }),
       )
 
       expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
-      await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+      // Only what a decision changes, the profile among it (review #257).
+      await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] }))
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] })
+      expect(invalidate).not.toHaveBeenCalledWith()
       expect(screen.queryByRole("alert")).toBeNull()
     })
 
-    it("only reloads when the request was decided elsewhere meanwhile (409)", async () => {
-      failWith(409)
-      const { reload } = await renderAction("request_received")
+    it("says the request is no longer current when it was decided elsewhere (409)", async () => {
+      decisionFails(409)
+      const { invalidate } = await renderAction("request_received")
 
       await userEvent.click(
         await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
       )
 
-      await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+      await vi.waitFor(() => expect(toast).toHaveBeenCalledWith("Žádost už není aktuální."))
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] })
       expect(screen.queryByRole("alert")).toBeNull()
     })
 
     it("says the account is gone when it was blocked or deleted (404)", async () => {
-      failWith(404)
+      decisionFails(404)
       await renderAction("request_received")
 
       await userEvent.click(
@@ -144,7 +165,7 @@ describe("FriendRelationAction", () => {
     })
 
     it("says so when the decision failed", async () => {
-      failWith(500)
+      decisionFails(500)
       await renderAction("request_received")
 
       await userEvent.click(

@@ -8,12 +8,16 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 
 import { FriendRequests } from "@/features/friendship/components/FriendRequests"
 
-const { get, post, toastError } = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  toastError: vi.fn(),
-}))
-vi.mock("sonner", () => ({ toast: { error: toastError } }))
+const { get, post, toast, toastError } = vi.hoisted(() => {
+  const toastError = vi.fn()
+  return {
+    get: vi.fn(),
+    post: vi.fn(),
+    toast: Object.assign(vi.fn(), { error: toastError }),
+    toastError,
+  }
+})
+vi.mock("sonner", () => ({ toast }))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   api: { get, post },
@@ -21,16 +25,21 @@ vi.mock("@/lib/api-client", async (importOriginal) => ({
 
 const now = new Date("2026-11-15T12:00:00.000Z")
 
-const aRequest = (
-  id: string,
-  name: string,
-  requestedAt: string,
-  nickname: string | null = null,
-) => ({
+const aRequest = (id: string, name: string, requestedAt: string) => ({
   id,
   requestedAt,
-  sender: { id: `u-${id}`, name, nickname, image: null },
+  sender: { id: `u-${id}`, name, image: null },
 })
+
+// #228: deciding reads the answer of `post` itself (lib/friend-requests).
+const decisionFails = (status: number) =>
+  post.mockRejectedValueOnce(
+    new HTTPError(
+      new Response("{}", { status }),
+      new Request("http://x/api/friends/requests/u-r1/accept"),
+      {} as never,
+    ),
+  )
 
 type Page = { items: ReturnType<typeof aRequest>[]; total: number; nextOffset: number | null }
 
@@ -52,6 +61,7 @@ const renderRequests = () =>
 beforeEach(() => {
   get.mockReset()
   post.mockReset()
+  toast.mockReset()
   toastError.mockReset()
 })
 
@@ -59,7 +69,7 @@ describe("FriendRequests (#228)", () => {
   it("lists the requests as the server sends them, newest first, each with the person and the buttons", async () => {
     answer({
       items: [
-        aRequest("r2", "Libor Novák", "2026-11-15T10:00:00.000Z", "libor"),
+        aRequest("r2", "LiborNovak", "2026-11-15T10:00:00.000Z"),
         aRequest("r1", "Deep Duck Thoughts", "2026-11-14T12:00:00.000Z"),
       ],
       total: 2,
@@ -70,13 +80,14 @@ describe("FriendRequests (#228)", () => {
     const list = await screen.findByRole("list", { name: "Žádosti o přátelství" })
     const [first, second] = within(list).getAllByRole("listitem") as [HTMLElement, HTMLElement]
     expect(within(list).getAllByRole("listitem")).toHaveLength(2)
-    expect(within(first).getByRole("link", { name: "Libor Novák" })).toHaveAttribute(
+    expect(within(first).getByRole("link", { name: "LiborNovak" })).toHaveAttribute(
       "href",
       "/profile/u-r2",
     )
-    expect(first).toHaveTextContent("@libor · před 2 h")
+    // ADR-0025: the nickname is the name, so no second line with it.
+    expect(first).toHaveTextContent("LiborNovakpřed 2 h")
     expect(
-      within(first).getByRole("button", { name: "Přijmout žádost o přátelství od Libor Novák" }),
+      within(first).getByRole("button", { name: "Přijmout žádost o přátelství od LiborNovak" }),
     ).toBeInTheDocument()
     expect(
       within(second).getByRole("button", {
@@ -95,7 +106,7 @@ describe("FriendRequests (#228)", () => {
       },
       { items: [], total: 0, nextOffset: null },
     )
-    post.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "friends" }) })
+    post.mockResolvedValueOnce(new Response("{}"))
     await renderRequests()
 
     await userEvent.click(
@@ -119,16 +130,7 @@ describe("FriendRequests (#228)", () => {
       },
       { items: [], total: 0, nextOffset: null },
     )
-    post.mockReturnValueOnce({
-      json: () =>
-        Promise.reject(
-          new HTTPError(
-            new Response("{}", { status: 404 }),
-            new Request("http://x/api/friends/requests/u-r1/accept"),
-            {} as never,
-          ),
-        ),
-    })
+    decisionFails(404)
     await renderRequests()
 
     await userEvent.click(
@@ -156,7 +158,7 @@ describe("FriendRequests (#228)", () => {
         nextOffset: null,
       },
     )
-    post.mockReturnValueOnce({ json: () => Promise.reject(new Error("down")) })
+    post.mockRejectedValueOnce(new Error("down"))
     await renderRequests()
 
     await userEvent.click(
@@ -168,6 +170,28 @@ describe("FriendRequests (#228)", () => {
         "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
       ),
     )
+  })
+
+  // Review #257: withdrawn or decided elsewhere meanwhile; the card goes and
+  // a toast says why, instead of looking like a done decision.
+  it("says the request is no longer current when nothing waited (409)", async () => {
+    answer(
+      {
+        items: [aRequest("r1", "LiborNovak", "2026-11-15T10:00:00.000Z")],
+        total: 1,
+        nextOffset: null,
+      },
+      { items: [], total: 0, nextOffset: null },
+    )
+    decisionFails(409)
+    await renderRequests()
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Přijmout žádost o přátelství od LiborNovak" }),
+    )
+
+    await vi.waitFor(() => expect(toast).toHaveBeenCalledWith("Žádost už není aktuální."))
+    expect(toastError).not.toHaveBeenCalled()
   })
 
   it("loads the next 20 on request", async () => {

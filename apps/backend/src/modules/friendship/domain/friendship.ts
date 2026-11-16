@@ -177,9 +177,8 @@ export type ReceivedFriendRequest = {
   requestedAt: Date;
   sender: {
     id: string;
+    /** The nickname, the one name a person has (ADR-0025). */
     name: string;
-    /** The username, when the person has one. */
-    nickname: string | null;
     image: string | null;
   };
 };

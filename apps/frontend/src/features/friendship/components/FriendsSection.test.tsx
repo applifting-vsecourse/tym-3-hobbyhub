@@ -13,9 +13,16 @@ vi.mock("@/lib/api-client", async (importOriginal) => ({
   api: { get },
 }))
 
-// #228: the requests waiting for me, for the tab and its number.
-const waiting = (total: number) =>
-  get.mockReturnValue({ json: () => Promise.resolve({ items: [], total, nextOffset: null }) })
+// #228: the requests waiting for me: their number for the tab, the list on its tab.
+const waiting = (count: number) =>
+  get.mockImplementation((path: string) => ({
+    json: () =>
+      Promise.resolve(
+        path === "friends/requests/received/count"
+          ? { count }
+          : { items: [], total: count, nextOffset: null },
+      ),
+  }))
 
 beforeEach(() => {
   get.mockReset()
@@ -93,6 +100,8 @@ describe("FriendsSection", () => {
     const tab = await screen.findByRole("link", { name: /Žádosti/ })
     expect(await screen.findByText("3 nevyřízené žádosti")).toBeInTheDocument()
     expect(tab).toHaveTextContent("Žádosti3")
-    expect(get).toHaveBeenCalledWith("friends/requests/received", { searchParams: {} })
+    // Just the number: the list itself loads only on its own tab (review #257).
+    expect(get).toHaveBeenCalledWith("friends/requests/received/count")
+    expect(get).not.toHaveBeenCalledWith("friends/requests/received", expect.anything())
   })
 })

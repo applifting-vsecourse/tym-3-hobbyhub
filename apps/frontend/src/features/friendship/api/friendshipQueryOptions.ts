@@ -1,10 +1,11 @@
-import { infiniteQueryOptions } from "@tanstack/react-query"
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query"
 
 import { api } from "@/lib/api-client"
 
 import { friendshipKeys } from "@/features/friendship/api/friendshipKeys"
 import {
   FRIEND_SEARCH_MIN_LENGTH,
+  friendRequestCountSchema,
   friendSearchPageSchema,
   receivedFriendRequestPageSchema,
 } from "@/features/friendship/api/friendshipSchemas"
@@ -43,4 +44,12 @@ export const receivedFriendRequestsQueryOptions = () =>
       ),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
+  })
+
+/** #228: how many requests wait for me, without loading them (the tab's number). */
+export const receivedFriendRequestCountQueryOptions = () =>
+  queryOptions({
+    queryKey: friendshipKeys.receivedCount(),
+    queryFn: async () =>
+      friendRequestCountSchema.parse(await api.get("friends/requests/received/count").json()).count,
   })

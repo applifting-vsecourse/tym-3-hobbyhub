@@ -8,6 +8,7 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { useNow } from "@/hooks/useNow"
 import { relativeTime } from "@/lib/relativeTime"
 
 import { receivedFriendRequestsQueryOptions } from "@/features/friendship/api/friendshipQueryOptions"
@@ -24,7 +25,10 @@ type FriendRequestsProps = {
  * time. Each a card with the person, a link to their profile and the buttons;
  * a decided one leaves the list when it loads again.
  */
-export function FriendRequests({ now = new Date() }: FriendRequestsProps) {
+export function FriendRequests({ now: fixedNow }: FriendRequestsProps) {
+  // A minute's "now" for every card, not a new one each render (review #257).
+  const minuteNow = useNow()
+  const now = fixedNow ?? minuteNow
   const { t } = useTranslation()
   const query = useInfiniteQuery(receivedFriendRequestsQueryOptions())
   const requests = query.data?.pages.flatMap((page) => page.items)
@@ -144,14 +148,7 @@ function FriendRequestCard({ request, now }: { request: ReceivedFriendRequest; n
           >
             {sender.name}
           </Link>
-          <span className="typo-small break-words text-muted-foreground">
-            {sender.nickname
-              ? t("friends.requests.nicknameAndWhen", {
-                  nickname: t("friends.nickname", { nickname: sender.nickname }),
-                  when,
-                })
-              : when}
-          </span>
+          <span className="typo-small break-words text-muted-foreground">{when}</span>
         </div>
       </div>
       <FriendRequestDecision

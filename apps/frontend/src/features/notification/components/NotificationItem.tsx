@@ -2,15 +2,16 @@ import type { ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { Check, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { HTTPError } from "@/lib/api-client"
+import { useDecideFriendRequest } from "@/hooks/useDecideFriendRequest"
+import { FRIEND_REQUEST_STALE_MESSAGE, friendRequestDecisionErrorKey } from "@/lib/friend-requests"
 import { relativeTime } from "@/lib/relativeTime"
 import { cn } from "@/lib/utils"
 
 import type { Notification } from "@/features/notification/api/notificationSchemas"
-import { useDecideFriendRequest } from "@/features/notification/hooks/useDecideFriendRequest"
 import {
   notificationTarget,
   notificationText,
@@ -124,10 +125,24 @@ function TargetLink({
   }
 }
 
+/** The dot that marks an unread notification; the same place when read. */
+function UnreadDot({ isUnread }: { isUnread: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "mt-2 size-2 shrink-0 rounded-full",
+        isUnread ? "bg-primary" : "bg-transparent",
+      )}
+    />
+  )
+}
+
 /**
  * #228: "Přijmout" / "Zamítnout" under a friend request still waiting; once
  * it is decided, wherever, what became of it. A withdrawn one has no
- * notification any more.
+ * notification any more. The call and its answers are shared with the tab
+ * „Žádosti“ and the profile (`useDecideFriendRequest`).
  */
 function FriendRequestActions({
   senderId,
@@ -139,7 +154,10 @@ function FriendRequestActions({
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN"
 }) {
   const { t } = useTranslation()
-  const decide = useDecideFriendRequest(senderId)
+  // In a toast: the row itself may go once the real state loads (withdrawn).
+  const decide = useDecideFriendRequest(senderId, {
+    onStale: () => toast(t(FRIEND_REQUEST_STALE_MESSAGE)),
+  })
   const deciding = decide.isPending ? decide.variables : undefined
 
   if (status === "ACCEPTED" || status === "REJECTED") {
@@ -186,11 +204,7 @@ function FriendRequestActions({
           role="alert"
           className="typo-small text-destructive"
         >
-          {t(
-            decide.error instanceof HTTPError && decide.error.response.status === 404
-              ? "friends.requests.unavailable"
-              : "friends.requests.decideError",
-          )}
+          {t(friendRequestDecisionErrorKey(decide.error))}
         </p>
       ) : null}
     </div>
@@ -207,25 +221,25 @@ export function NotificationItem({
   const isUnread = notification.readAt === null
   const target = notificationTarget(notification)
 
+  // The parts every row shares, the friend request's one included.
+  const sentence = (
+    <>
+      {isUnread ? <span className="sr-only">{t("notifications.unread")} </span> : null}
+      {notificationText(t, notification, { now, locale: i18n.language })}
+    </>
+  )
+  const sentenceTone = isUnread ? "text-foreground" : "text-muted-foreground"
+  const time = (
+    <span className="typo-caption text-muted-foreground">
+      {relativeTime(notification.createdAt, now, i18n.language, t("notifications.justNow"))}
+    </span>
+  )
+
   const body = (
     <>
-      <span
-        aria-hidden
-        className={cn(
-          "mt-2 size-2 shrink-0 rounded-full",
-          isUnread ? "bg-primary" : "bg-transparent",
-        )}
-      />
+      <UnreadDot isUnread={isUnread} />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span
-          className={cn(
-            "typo-body break-words",
-            isUnread ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
-          {isUnread ? <span className="sr-only">{t("notifications.unread")} </span> : null}
-          {notificationText(t, notification, { now, locale: i18n.language })}
-        </span>
+        <span className={cn("typo-body break-words", sentenceTone)}>{sentence}</span>
         {notification.message ? (
           <span className="typo-small break-words whitespace-pre-line text-muted-foreground">
             {t("notifications.message", { message: notification.message })}
@@ -236,37 +250,30 @@ export function NotificationItem({
             {t("notifications.reason", { reason: notification.reason })}
           </span>
         ) : null}
-        <span className="typo-caption text-muted-foreground">
-          {relativeTime(notification.createdAt, now, i18n.language, t("notifications.justNow"))}
-        </span>
+        {time}
       </span>
     </>
   )
 
   // #228: a friend request holds buttons, which cannot sit inside a link:
-  // the sentence alone leads to the person, the buttons sit under it.
+  // the sentence alone leads to the person, the buttons sit under it. Its
+  // sender always exists: a deleted account takes the request and so the
+  // notification with it.
   if (notification.type === "FRIEND_REQUEST" && notification.friendRequest && notification.actor) {
     return (
       <div className="flex w-full items-start gap-3 rounded-md px-3 py-2">
-        <span
-          aria-hidden
-          className={cn(
-            "mt-2 size-2 shrink-0 rounded-full",
-            isUnread ? "bg-primary" : "bg-transparent",
-          )}
-        />
+        <UnreadDot isUnread={isUnread} />
         <span className="flex min-w-0 flex-1 flex-col gap-2">
           {target ? (
             <TargetLink
               target={target}
               className={cn(
                 "w-fit rounded-sm typo-body break-words underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring",
-                isUnread ? "text-foreground" : "text-muted-foreground",
+                sentenceTone,
               )}
               onClick={() => onOpen?.(notification)}
             >
-              {isUnread ? <span className="sr-only">{t("notifications.unread")} </span> : null}
-              {notificationText(t, notification)}
+              {sentence}
             </TargetLink>
           ) : null}
           <FriendRequestActions
@@ -274,9 +281,7 @@ export function NotificationItem({
             senderName={notification.actor.name}
             status={notification.friendRequest.status}
           />
-          <span className="typo-caption text-muted-foreground">
-            {relativeTime(notification.createdAt, now, i18n.language, t("notifications.justNow"))}
-          </span>
+          {time}
         </span>
       </div>
     )

@@ -123,7 +123,6 @@ describe('ReceivedFriendRequestPageResponseDto (#228)', () => {
       sender: {
         id: 'u2',
         name: 'Libor',
-        nickname: null,
         image: null,
         email: 'libor@example.com',
       },
@@ -143,7 +142,6 @@ describe('ReceivedFriendRequestPageResponseDto (#228)', () => {
       'id',
       'image',
       'name',
-      'nickname',
     ]);
   });
 });

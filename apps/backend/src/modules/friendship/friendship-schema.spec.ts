@@ -551,10 +551,7 @@ describeDb('friendship schema constraints', () => {
     it('lists the pending requests to me, newest first, without blocked senders', async () => {
       await inRolledBackTransaction(async (tx) => {
         const me = await createUser(tx);
-        const older = await createUser(tx, undefined, {
-          name: 'Older',
-          username: 'older',
-        });
+        const older = await createUser(tx, undefined, { name: 'Older' });
         const newer = await createUser(tx, undefined, { name: 'Newer' });
         const blocked = await createUser(tx, undefined, { status: 'BLOCKED' });
         const decided = await createUser(tx);
@@ -584,8 +581,8 @@ describeDb('friendship schema constraints', () => {
         const page = await repositoryOf(tx).listReceivedRequests(me, 0, 20);
         expect(page.total).toBe(2);
         expect(page.items.map((item) => item.sender)).toEqual([
-          { id: newer, name: 'Newer', nickname: null, image: null },
-          { id: older, name: 'Older', nickname: 'older', image: null },
+          { id: newer, name: 'Newer', image: null },
+          { id: older, name: 'Older', image: null },
         ]);
         await expect(
           repositoryOf(tx).listReceivedRequests(me, 1, 20),
@@ -593,6 +590,10 @@ describeDb('friendship schema constraints', () => {
           total: 2,
           items: [{ sender: { id: older } }],
         });
+        // The tab's number counts the same requests.
+        await expect(repositoryOf(tx).countReceivedRequests(me)).resolves.toBe(
+          2,
+        );
       });
     });
 
@@ -685,7 +686,9 @@ describeDb('friendship schema constraints', () => {
         });
         const now = new Date('2030-01-01T12:00:00Z');
 
-        await repositoryOf(tx).removeBlockedPair(b, a, now);
+        await expect(
+          repositoryOf(tx).removeBlockedPair(b, a, now),
+        ).resolves.toEqual([pending.id]);
 
         await expect(
           tx.friendship.count({ where: friendPairOf(a, b) }),

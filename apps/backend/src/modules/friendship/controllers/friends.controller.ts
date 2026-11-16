@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import {
   FriendRelationResponseDto,
+  FriendRequestCountResponseDto,
   FriendSearchPageResponseDto,
   ReceivedFriendRequestPageResponseDto,
 } from './dto/friends.response.dto';
@@ -115,6 +116,20 @@ export class FriendsController {
     return ReceivedFriendRequestPageResponseDto.fromDomain(
       await this.friendshipService.listReceivedRequests(user, query.offset),
     );
+  }
+
+  @Get('requests/received/count')
+  @ApiOperation({
+    summary: 'How many friend requests wait for my decision (the tab badge)',
+  })
+  @ApiResponse({ status: 200, type: FriendRequestCountResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async countReceivedRequests(
+    @User() user: Identity,
+  ): Promise<FriendRequestCountResponseDto> {
+    return {
+      count: await this.friendshipService.countReceivedRequests(user),
+    };
   }
 
   @Post('requests/:senderId/accept')

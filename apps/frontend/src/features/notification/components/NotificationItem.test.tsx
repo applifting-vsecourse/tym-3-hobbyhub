@@ -9,7 +9,11 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 import type { Notification } from "@/features/notification/api/notificationSchemas"
 import { NotificationItem } from "@/features/notification/components/NotificationItem"
 
-const { post } = vi.hoisted(() => ({ post: vi.fn() }))
+const { post, toast } = vi.hoisted(() => ({
+  post: vi.fn(),
+  toast: Object.assign(vi.fn(), { error: vi.fn() }),
+}))
+vi.mock("sonner", () => ({ toast }))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   api: { post },
@@ -53,7 +57,10 @@ const renderItem = async (notification: Notification) => {
   return { invalidate, onOpen }
 }
 
-beforeEach(() => post.mockReset())
+beforeEach(() => {
+  post.mockReset()
+  toast.mockReset()
+})
 
 describe("NotificationItem, a friend request (#228)", () => {
   it("leads by the sentence to the person, with the buttons under it", async () => {
@@ -75,7 +82,7 @@ describe("NotificationItem, a friend request (#228)", () => {
   it.each([
     ["Přijmout", "accept"],
     ["Zamítnout", "reject"],
-  ])("%s decides the request and loads everything again", async (label, decision) => {
+  ])("%s decides the request and loads what it changed again", async (label, decision) => {
     post.mockResolvedValueOnce(new Response("{}"))
     const { invalidate, onOpen } = await renderItem(aFriendRequest("PENDING"))
 
@@ -84,12 +91,16 @@ describe("NotificationItem, a friend request (#228)", () => {
     )
 
     expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
-    await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith())
+    // The notifications, the requests and the profile; nothing else (review #257).
+    await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] }))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] })
+    expect(invalidate).not.toHaveBeenCalledWith()
     // Deciding is not opening: the bell stays open.
     expect(onOpen).not.toHaveBeenCalled()
   })
 
-  it("only loads again when the request was decided elsewhere meanwhile (409)", async () => {
+  it("says the request is no longer current when it was decided elsewhere (409)", async () => {
     post.mockRejectedValueOnce(
       new HTTPError(
         new Response("{}", { status: 409 }),
@@ -103,7 +114,9 @@ describe("NotificationItem, a friend request (#228)", () => {
       await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
     )
 
-    await vi.waitFor(() => expect(invalidate).toHaveBeenCalled())
+    // In a toast: the row itself may go once the real state loads (withdrawn).
+    await vi.waitFor(() => expect(toast).toHaveBeenCalledWith("Žádost už není aktuální."))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] })
     expect(screen.queryByRole("alert")).toBeNull()
   })
 

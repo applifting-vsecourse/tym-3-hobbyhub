@@ -38,7 +38,6 @@ export const receivedFriendRequestSchema = z.object({
   sender: z.object({
     id: z.string(),
     name: z.string(),
-    nickname: z.string().nullable(),
     image: z.string().nullable(),
   }),
 })
@@ -53,5 +52,5 @@ export const receivedFriendRequestPageSchema = z.object({
   nextOffset: z.number().int().nullable(),
 })
 
-/** #228: what I do with a request someone sent me. */
-export type FriendRequestDecision = "accept" | "reject"
+/** #228: how many requests wait for me, the number on the tab. */
+export const friendRequestCountSchema = z.object({ count: z.number().int() })

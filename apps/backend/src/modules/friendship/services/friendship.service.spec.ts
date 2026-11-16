@@ -401,7 +401,6 @@ describe('FriendshipService', () => {
       sender: {
         id: `s-${id}`,
         name: `Sender ${id}`,
-        nickname: null,
         image: null,
       },
     });
@@ -505,6 +504,27 @@ describe('FriendshipService', () => {
       );
       expect(repository[repositoryMethod]).not.toHaveBeenCalled();
     });
+
+    // #239: nothing passes between a blocked pair, either way (review #257).
+    it.each(['hiddenFor', 'hiddenFrom'] as const)(
+      'answers not found when the pair is blocked (%s)',
+      async (side) => {
+        const { repository, blocks, service } = reachableSender();
+        blocks[side].mockResolvedValue(['u2']);
+        await expect(service[method](me, 'u2')).rejects.toBeInstanceOf(
+          NotFoundException,
+        );
+        expect(blocks[side]).toHaveBeenCalledWith('u1');
+        expect(repository[repositoryMethod]).not.toHaveBeenCalled();
+      },
+    );
+  });
+
+  it('counts the requests waiting for me (#228)', async () => {
+    const { repository, service } = setup();
+    repository.countReceivedRequests.mockResolvedValue(3);
+    await expect(service.countReceivedRequests(me)).resolves.toBe(3);
+    expect(repository.countReceivedRequests).toHaveBeenCalledWith('u1');
   });
 
   it('tells the sender their request was accepted (#228)', async () => {
@@ -532,6 +552,7 @@ describe('FriendshipService', () => {
   describe('removeBlockedPair', () => {
     it('ends the friendship and the pending requests of the pair', async () => {
       const { repository, service } = setup();
+      repository.removeBlockedPair.mockResolvedValue([]);
       const now = new Date('2030-01-01T12:00:00Z');
       await service.removeBlockedPair('u1', 'u2', now);
       expect(repository.removeBlockedPair).toHaveBeenCalledWith(
@@ -539,6 +560,19 @@ describe('FriendshipService', () => {
         'u2',
         now,
       );
+    });
+
+    // #228 (review #257): no unread line about someone no longer visible.
+    it('removes the notifications of the requests it closed', async () => {
+      const { repository, notifications, service } = setup();
+      repository.removeBlockedPair.mockResolvedValue(['r1', 'r2']);
+      await service.removeBlockedPair('u1', 'u2');
+      expect(
+        notifications.removeFriendRequestNotifications,
+      ).toHaveBeenCalledWith({ id: 'r1' });
+      expect(
+        notifications.removeFriendRequestNotifications,
+      ).toHaveBeenCalledWith({ id: 'r2' });
     });
 
     it('does nothing for one person, without asking', async () => {

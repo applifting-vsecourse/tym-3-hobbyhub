@@ -1,11 +1,11 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import { PageTab, PageTabs } from "@/components/hobbyhub/PageTabs"
 import { Badge } from "@/components/ui/badge"
 
-import { receivedFriendRequestsQueryOptions } from "@/features/friendship/api/friendshipQueryOptions"
+import { receivedFriendRequestCountQueryOptions } from "@/features/friendship/api/friendshipQueryOptions"
 import {
   DEFAULT_FRIENDS_TAB,
   FRIENDS_TABS,
@@ -19,9 +19,8 @@ import {
  */
 export function FriendsTabs({ active }: { active: FriendsTab }) {
   const { t } = useTranslation()
-  // The same query as the list on the tab: its first page knows the total.
-  const received = useInfiniteQuery(receivedFriendRequestsQueryOptions())
-  const waiting = received.data?.pages[0]?.total ?? 0
+  // Just the number, on every tab; the list loads only on its own tab.
+  const waiting = useQuery(receivedFriendRequestCountQueryOptions()).data ?? 0
 
   return (
     <PageTabs label={t("friends.tabs.label")}>

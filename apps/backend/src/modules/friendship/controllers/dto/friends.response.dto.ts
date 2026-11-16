@@ -58,6 +58,12 @@ export class FriendSearchPageResponseDto {
   }
 }
 
+// #228: how many requests wait for me.
+export class FriendRequestCountResponseDto {
+  @ApiProperty()
+  count!: number;
+}
+
 export class FriendRelationResponseDto {
   @ApiProperty({ enum: FRIEND_RELATIONS })
   relation!: FriendRelation;
@@ -68,15 +74,8 @@ export class FriendRequestSenderResponseDto {
   @ApiProperty()
   id!: string;
 
-  @ApiProperty({ description: 'The public name' })
+  @ApiProperty({ description: 'The nickname, the one public name (ADR-0025)' })
   name!: string;
-
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    description: 'The username, when the person has one',
-  })
-  nickname!: string | null;
 
   @ApiProperty({
     type: String,
@@ -105,7 +104,6 @@ export class ReceivedFriendRequestResponseDto {
       sender: {
         id: request.sender.id,
         name: request.sender.name,
-        nickname: request.sender.nickname,
         image: request.sender.image,
       },
     };

@@ -3,18 +3,15 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { HTTPError } from "@/lib/api-client"
+import { useDecideFriendRequest } from "@/hooks/useDecideFriendRequest"
+import { FRIEND_REQUEST_STALE_MESSAGE, friendRequestDecisionErrorKey } from "@/lib/friend-requests"
 import { cn } from "@/lib/utils"
-
-import { useDecideFriendRequest } from "@/features/friendship/hooks/useDecideFriendRequest"
 
 type FriendRequestDecisionProps = {
   /** Who asks me. */
   senderId: string
   /** Their name, so each button says whose request it decides. */
   senderName: string
-  /** Fetches the caller's own data again after the decision. */
-  reload?: () => Promise<unknown>
   /**
    * Where a failure is said: under the buttons, or in a toast where the
    * buttons may be gone once the list loads again (the tab „Žádosti“ drops
@@ -24,37 +21,28 @@ type FriendRequestDecisionProps = {
   className?: string
 }
 
-/** The sentence for a failed decision: the account is gone (404), or try again. */
-const decideErrorKey = (error: unknown) =>
-  error instanceof HTTPError && error.response.status === 404
-    ? "friends.requests.unavailable"
-    : "friends.requests.decideError"
-
 /**
  * #228: "Přijmout" and "Zamítnout" a request someone sent me, side by side,
  * full width on phones. Rejecting asks nothing: it is silent and the person
- * may ask again.
+ * may ask again. The call, its answers and what loads again afterwards are
+ * shared with the bell (`useDecideFriendRequest`).
  */
 export function FriendRequestDecision({
   senderId,
   senderName,
-  reload,
   errorAs = "inline",
   className,
 }: FriendRequestDecisionProps) {
   const { t } = useTranslation()
-  // The toast goes from the mutation itself, not from `mutate(…, { onError })`:
-  // those callbacks are skipped once the card has left the list, which the
-  // reload after a failure does to a request from a blocked account.
+  // A request no longer there is said in a toast: the card or the band it
+  // was in leaves the screen once the real state has loaded.
   const decide = useDecideFriendRequest(senderId, {
-    reload,
+    onStale: () => toast(t(FRIEND_REQUEST_STALE_MESSAGE)),
     onError: (error) => {
-      if (errorAs === "toast") toast.error(t(decideErrorKey(error)))
+      if (errorAs === "toast") toast.error(t(friendRequestDecisionErrorKey(error)))
     },
   })
   const deciding = decide.isPending ? decide.variables : undefined
-
-  const run = (decision: "accept" | "reject") => decide.mutate(decision)
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -64,7 +52,7 @@ export function FriendRequestDecision({
           className="flex-1 md:flex-none"
           aria-label={t("friends.requests.acceptLabel", { name: senderName })}
           disabled={decide.isPending}
-          onClick={() => run("accept")}
+          onClick={() => decide.mutate("accept")}
         >
           <Check aria-hidden />
           {deciding === "accept" ? t("friends.requests.accepting") : t("friends.requests.accept")}
@@ -75,7 +63,7 @@ export function FriendRequestDecision({
           className="flex-1 md:flex-none"
           aria-label={t("friends.requests.rejectLabel", { name: senderName })}
           disabled={decide.isPending}
-          onClick={() => run("reject")}
+          onClick={() => decide.mutate("reject")}
         >
           <X aria-hidden />
           {deciding === "reject" ? t("friends.requests.rejecting") : t("friends.requests.reject")}
@@ -86,7 +74,7 @@ export function FriendRequestDecision({
           role="alert"
           className="typo-small text-destructive"
         >
-          {t(decideErrorKey(decide.error))}
+          {t(friendRequestDecisionErrorKey(decide.error))}
         </p>
       ) : null}
     </div>

@@ -89,7 +89,6 @@ export function FriendRelationAction({
           <FriendRequestDecision
             senderId={userId}
             senderName={userName}
-            reload={reload}
           />
         </div>
       )

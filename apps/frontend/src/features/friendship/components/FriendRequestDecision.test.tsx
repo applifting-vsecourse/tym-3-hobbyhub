@@ -13,7 +13,7 @@ vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   api: { post },
 }))
-vi.mock("sonner", () => ({ toast: { error: toastError } }))
+vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { error: toastError }) }))
 
 beforeEach(() => {
   post.mockReset()
@@ -25,12 +25,11 @@ describe("FriendRequestDecision (#228)", () => {
   // the failure is reported; the toast must come all the same.
   it("says the failure in a toast even when the buttons are gone by then", async () => {
     let fail: (error: Error) => void = () => undefined
-    post.mockReturnValueOnce({
-      json: () =>
-        new Promise((_resolve, reject) => {
-          fail = reject
-        }),
-    })
+    post.mockReturnValueOnce(
+      new Promise((_resolve, reject) => {
+        fail = reject
+      }),
+    )
     const { unmount } = await renderWithRouter(
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}

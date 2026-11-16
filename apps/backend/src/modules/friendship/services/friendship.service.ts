@@ -227,6 +227,11 @@ export class FriendshipService {
     };
   }
 
+  /** #228: how many requests wait for the signed-in person (the tab's number). */
+  countReceivedRequests(recipient: Identity): Promise<number> {
+    return this.friendshipRepository.countReceivedRequests(recipient.id);
+  }
+
   /**
    * #228: the signed-in person accepts the pending request from the sender:
    * they become friends and the sender is told. Only the recipient decides,
@@ -245,14 +250,17 @@ export class FriendshipService {
       new Date(),
     );
     if (!requestId) throw new ConflictException(['NO_PENDING_REQUEST']);
-    await this.notifications.markFriendRequestNotificationRead(recipient, {
-      id: requestId,
-    });
-    await this.notifications.notifyFriendRequestAccepted({
-      request: { id: requestId },
-      senderId,
-      acceptedBy: recipient,
-    });
+    // Independent, so at once; neither throws (NotificationsService).
+    await Promise.all([
+      this.notifications.markFriendRequestNotificationRead(recipient, {
+        id: requestId,
+      }),
+      this.notifications.notifyFriendRequestAccepted({
+        request: { id: requestId },
+        senderId,
+        acceptedBy: recipient,
+      }),
+    ]);
     return 'friends';
   }
 
@@ -284,7 +292,13 @@ export class FriendshipService {
   ): Promise<void> {
     const violations = friendRequestViolations(senderId, recipient.id);
     if (violations.length > 0) throw new BadRequestException(violations);
-    if (!(await this.friendshipRepository.isReachable(senderId))) {
+    // #239: like sending, nothing passes between a blocked pair, and the
+    // answer is the one of an unknown account.
+    const [isReachable, blocked] = await Promise.all([
+      this.friendshipRepository.isReachable(senderId),
+      this.blockedWith(recipient.id),
+    ]);
+    if (!isReachable || blocked.includes(senderId)) {
       throw new NotFoundException('User not found');
     }
   }
@@ -300,7 +314,18 @@ export class FriendshipService {
     now: Date = new Date(),
   ): Promise<void> {
     if (oneId === otherId) return;
-    await this.friendshipRepository.removeBlockedPair(oneId, otherId, now);
+    const closed = await this.friendshipRepository.removeBlockedPair(
+      oneId,
+      otherId,
+      now,
+    );
+    // #228: as with a withdrawn request, its notification goes; otherwise
+    // the recipient keeps an unread line about someone they no longer see.
+    await Promise.all(
+      closed.map((id) =>
+        this.notifications.removeFriendRequestNotifications({ id }),
+      ),
+    );
   }
 
   // #239: the people blocked with the user either way: by an administrator

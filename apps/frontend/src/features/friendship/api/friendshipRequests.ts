@@ -3,7 +3,6 @@ import { api, HTTPError } from "@/lib/api-client"
 import {
   friendRelationResponseSchema,
   type FriendRelation,
-  type FriendRequestDecision,
 } from "@/features/friendship/api/friendshipSchemas"
 
 /**
@@ -31,26 +30,6 @@ export async function withdrawFriendRequest(recipientId: string): Promise<Friend
   try {
     const response = friendRelationResponseSchema.parse(
       await api.delete(`friends/requests/${encodeURIComponent(recipientId)}`).json(),
-    )
-    return response.relation
-  } catch (error) {
-    if (error instanceof HTTPError && error.response.status === 409) return null
-    throw error
-  }
-}
-
-/**
- * #228: accepts or rejects the pending request the person sent me. Only the
- * recipient decides, the session on the server. A 409 means nothing waits any
- * more (decided elsewhere, withdrawn): the caller reloads the real state (`null`).
- */
-export async function decideFriendRequest(
-  senderId: string,
-  decision: FriendRequestDecision,
-): Promise<FriendRelation | null> {
-  try {
-    const response = friendRelationResponseSchema.parse(
-      await api.post(`friends/requests/${encodeURIComponent(senderId)}/${decision}`).json(),
     )
     return response.relation
   } catch (error) {

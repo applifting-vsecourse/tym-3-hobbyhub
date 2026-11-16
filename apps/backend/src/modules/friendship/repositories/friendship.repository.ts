@@ -23,6 +23,15 @@ export type StoredRelation = {
 /** Accounts a request can reach and whose requests still count. */
 const REACHABLE_STATUSES = ['ACTIVE', 'RESTRICTED'] as const;
 
+// #228: the requests waiting for the recipient, from accounts that still count.
+const receivedWhere = (
+  recipientId: string,
+): Prisma.FriendRequestWhereInput => ({
+  recipientId,
+  status: 'PENDING',
+  sender: { status: { in: [...REACHABLE_STATUSES] } },
+});
+
 /** The second request for a pair lost the race (friend_request_one_pending_per_pair). */
 export class PendingRequestExistsError extends Error {}
 
@@ -264,11 +273,7 @@ export class FriendshipRepository {
     offset: number,
     limit: number,
   ): Promise<{ items: ReceivedFriendRequest[]; total: number }> {
-    const where: Prisma.FriendRequestWhereInput = {
-      recipientId,
-      status: 'PENDING',
-      sender: { status: { in: [...REACHABLE_STATUSES] } },
-    };
+    const where = receivedWhere(recipientId);
     const [rows, total] = await Promise.all([
       this.prisma.friendRequest.findMany({
         where,
@@ -282,8 +287,6 @@ export class FriendshipRepository {
             select: {
               id: true,
               name: true,
-              username: true,
-              displayUsername: true,
               image: true,
             },
           },
@@ -298,7 +301,6 @@ export class FriendshipRepository {
         sender: {
           id: row.sender.id,
           name: row.sender.name,
-          nickname: row.sender.displayUsername ?? row.sender.username,
           image: row.sender.image,
         },
       })),
@@ -331,12 +333,12 @@ export class FriendshipRepository {
     oneId: string,
     otherId: string,
     now: Date,
-  ): Promise<void> {
-    await this.prisma.$transaction([
+  ): Promise<string[]> {
+    const [, closed] = await this.prisma.$transaction([
       this.prisma.friendship.deleteMany({
         where: friendPairOf(oneId, otherId),
       }),
-      this.prisma.friendRequest.updateMany({
+      this.prisma.friendRequest.updateManyAndReturn({
         where: {
           status: 'PENDING',
           OR: [
@@ -345,7 +347,17 @@ export class FriendshipRepository {
           ],
         },
         data: { status: 'REJECTED', decidedAt: now },
+        select: { id: true },
       }),
     ]);
+    // #228: their notifications go too.
+    return closed.map((request) => request.id);
+  }
+
+  /** #228: how many requests wait for the recipient, for the number on the tab. */
+  countReceivedRequests(recipientId: string): Promise<number> {
+    return this.prisma.friendRequest.count({
+      where: receivedWhere(recipientId),
+    });
   }
 }
