@@ -91,13 +91,16 @@ describeDb('user schema constraints', () => {
       await createUser(nickname(null));
     });
 
+    // The other two CHECKs hold, so only the format can refuse. Upper case
+    // always breaks user_display_username_matches as well, and more than 30
+    // characters are stopped by VARCHAR(30) before any CHECK.
     it.each([
       ['too short', 'ab'],
-      ['upper case', 'Jana'],
-      ['a space', 'jana nova'],
-      ['too long', 'a'.repeat(31)],
+      ['with a space', 'jana nova'],
+      ['with a dash', 'jana-nova'],
+      ['with diacritics', 'kačka'],
     ])('rejects a username %s (user_username_format)', async (_, username) => {
-      await expect(createUser({ name: 'Test User', username })).rejects.toThrow(
+      await expect(createUser(nickname(username))).rejects.toThrow(
         'user_username_format',
       );
     });
