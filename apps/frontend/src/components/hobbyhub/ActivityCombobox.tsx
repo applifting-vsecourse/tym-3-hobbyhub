@@ -1,5 +1,5 @@
 import { useId, useMemo, useState, type ComponentProps, type ReactNode } from "react"
-import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -9,6 +9,7 @@ import {
   isCategoryKey,
 } from "@/components/hobbyhub/ActivityIcon"
 import { ActivityToken } from "@/components/hobbyhub/ActivityToken"
+import { ComboboxTrigger } from "@/components/hobbyhub/ComboboxTrigger"
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -241,30 +242,15 @@ export function ActivityCombobox({
   )
 
   const trigger = (
-    <button
-      type="button"
-      role="combobox"
-      aria-expanded={isOpen}
-      aria-controls={listId}
-      className={cn(
-        "flex h-12 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3.5 py-3 typo-body text-foreground transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20",
-        className,
-      )}
+    <ComboboxTrigger
+      isOpen={isOpen}
+      listId={listId}
+      isEmpty={selected.length === 0}
+      className={className}
       {...buttonProps}
     >
-      <span
-        className={cn(
-          "flex min-w-0 items-center gap-2",
-          selected.length === 0 && "text-muted-foreground",
-        )}
-      >
-        {summary}
-      </span>
-      <ChevronDownIcon
-        aria-hidden
-        className="size-4 shrink-0 text-muted-foreground"
-      />
-    </button>
+      {summary}
+    </ComboboxTrigger>
   )
 
   const activityRow = (option: ActivityComboboxOption, hasCategoryCaption = false) => {

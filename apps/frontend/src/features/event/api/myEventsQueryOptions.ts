@@ -4,9 +4,11 @@ import { api } from "@/lib/api-client"
 import { myEventsKeys } from "@/lib/my-events-keys"
 
 import { type EventListFilters } from "@/features/event/api/eventKeys"
-import { eventListSchema } from "@/features/event/api/eventSchemas"
 import { filterSearchParams, NO_FILTERS } from "@/features/event/api/eventsQueryOptions"
-import { myApplicationsPageSchema } from "@/features/event/api/myEventsSchemas"
+import {
+  hostedEventsPageSchema,
+  myApplicationsPageSchema,
+} from "@/features/event/api/myEventsSchemas"
 
 const MY_EVENTS_PAGE_SIZE = 20
 
@@ -43,7 +45,7 @@ export const myHostedEventsQueryOptions = (userId: string, filters: MyEventsFilt
     queryKey: myEventsKeys.hosted(userId, filters),
     staleTime: MY_EVENTS_STALE_TIME,
     queryFn: async ({ pageParam }) =>
-      eventListSchema.parse(
+      hostedEventsPageSchema.parse(
         await api
           .get("my-events/hosted", {
             searchParams: filterSearchParams(filters, MY_EVENTS_PAGE_SIZE, pageParam),

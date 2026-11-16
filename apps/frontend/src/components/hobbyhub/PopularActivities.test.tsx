@@ -168,7 +168,7 @@ describe("PopularActivities", () => {
     const names = tagNames()
     expect(names).toHaveLength(2 + POPULAR_FIRST + POPULAR_MORE)
     expect(names.at(-1)).toBe("Oblíbená 37")
-    // The first new tag takes the focus, on the next animation frame.
+    // The first new tag takes the focus, on the next frame once it is rendered.
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Oblíbená 16" })).toHaveFocus()
     })

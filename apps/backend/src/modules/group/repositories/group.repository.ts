@@ -19,6 +19,11 @@ import {
   MyGroup,
   TransferOwnershipResult,
 } from '@/modules/group/domain/group';
+import {
+  ADMIN_PAGE_SIZE,
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { searchWords } from '@/shared/search/fold-for-search';
 import { containsInAny } from '@/shared/search/folded-search';
 import { Injectable } from '@nestjs/common';
@@ -79,10 +84,27 @@ const orderBy = [
 
 // Groups a stranger may find: public, not cancelled, and not ones they are in.
 // A visitor (no userId) is in none, so they find every such group.
-const discoverableBy = (userId?: string): Prisma.GroupWhereInput => ({
+const discoverableBy = (
+  userId?: string,
+  hiddenManagerIds: string[] = [],
+): Prisma.GroupWhereInput => ({
   visibility: GroupVisibility.PUBLIC,
   status: GroupStatus.ACTIVE,
   ...(userId ? { memberships: { none: { userId } } } : {}),
+  // #239, ADR-0022: a group run (OWNER or ADMIN) by someone blocked from the
+  // viewer does not exist.
+  ...(hiddenManagerIds.length > 0
+    ? {
+        NOT: {
+          memberships: {
+            some: {
+              role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+              userId: { in: hiddenManagerIds },
+            },
+          },
+        },
+      }
+    : {}),
 });
 
 // The activity filter as a Prisma condition; the text ones are `textConditionsOf`.
@@ -160,9 +182,18 @@ export class GroupRepository {
 
   // F-07.3: the owner first, then admins and members, each by who joined
   // first. The `group_role` enum sorts in that order.
-  async listMembers(groupId: string): Promise<GroupMember[]> {
+  async listMembers(
+    groupId: string,
+    // #239: members blocked from the one asking are left out.
+    hiddenUserIds: string[] = [],
+  ): Promise<GroupMember[]> {
     const memberships = await this.prisma.groupMembership.findMany({
-      where: { groupId },
+      where: {
+        groupId,
+        ...(hiddenUserIds.length > 0
+          ? { userId: { notIn: hiddenUserIds } }
+          : {}),
+      },
       include: memberInclude,
       orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }, { id: 'asc' }],
     });
@@ -253,10 +284,11 @@ export class GroupRepository {
     userId: string,
     city: string,
     limit: number,
+    hiddenManagerIds: string[] = [],
   ): Promise<Group[]> {
     const groups = await this.prisma.group.findMany({
       where: {
-        ...discoverableBy(userId),
+        ...discoverableBy(userId, hiddenManagerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
       include,
@@ -271,6 +303,7 @@ export class GroupRepository {
     pageSize: number,
     cursor?: string,
     filter: GroupDiscoverFilter = { activityIds: [] },
+    hiddenManagerIds: string[] = [],
   ): Promise<GroupPage> {
     const textConditions = textConditionsOf(filter);
     // One extra row tells whether another page exists.
@@ -283,9 +316,13 @@ export class GroupRepository {
             textConditions,
             take,
             cursor,
+            hiddenManagerIds,
           )
         : await this.prisma.group.findMany({
-            where: { ...discoverableBy(userId), ...filterConditions(filter) },
+            where: {
+              ...discoverableBy(userId, hiddenManagerIds),
+              ...filterConditions(filter),
+            },
             include,
             orderBy,
             take,
@@ -308,6 +345,7 @@ export class GroupRepository {
     textConditions: Prisma.Sql[],
     take: number,
     cursor?: string,
+    hiddenManagerIds: string[] = [],
   ): Promise<Parameters<typeof mapPrismaGroupToDomain>[0][]> {
     const conditions = [
       Prisma.sql`g."visibility" = 'PUBLIC' AND g."status" = 'ACTIVE'`,
@@ -318,6 +356,12 @@ export class GroupRepository {
         : []),
       ...(activityIds.length > 0
         ? [Prisma.sql`g."activityId" IN (${Prisma.join(activityIds)})`]
+        : []),
+      // #239, ADR-0022: as in `discoverableBy`, so the page is not cut short.
+      ...(hiddenManagerIds.length > 0
+        ? [
+            Prisma.sql`NOT EXISTS (SELECT 1 FROM "group_membership" m WHERE m."groupId" = g."id" AND m."role" IN ('OWNER', 'ADMIN') AND m."userId" IN (${Prisma.join(hiddenManagerIds)}))`,
+          ]
         : []),
       ...(cursor
         ? [
@@ -334,7 +378,7 @@ export class GroupRepository {
       LIMIT ${take}`;
     const ids = rows.map((row) => row.id);
     const groups = await this.prisma.group.findMany({
-      where: { ...discoverableBy(userId), id: { in: ids } },
+      where: { ...discoverableBy(userId, hiddenManagerIds), id: { in: ids } },
       include,
     });
     return ids.flatMap((id) => groups.find((group) => group.id === id) ?? []);
@@ -357,5 +401,51 @@ export class GroupRepository {
       user.temporaryLocationValidUntil > now &&
       Boolean(user.temporaryCity?.trim());
     return isTemporaryValid ? user.temporaryCity : user.homeCity;
+  }
+
+  // #238: every group for the administration, newest first, by name.
+  async listForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<Group>> {
+    const where: Prisma.GroupWhereInput = query.search
+      ? { name: { contains: query.search, mode: 'insensitive' } }
+      : {};
+    const [groups, total] = await Promise.all([
+      this.prisma.group.findMany({
+        where,
+        include,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        skip: query.offset,
+        take: ADMIN_PAGE_SIZE,
+      }),
+      this.prisma.group.count({ where }),
+    ]);
+    return { items: groups.map(mapPrismaGroupToDomain), total };
+  }
+
+  // #239, ADR-0022: one of two blocked people leaves, as a plain member, the
+  // groups the other owns or runs. Where both run the group, both stay.
+  async removeBlockedPair(a: string, b: string): Promise<void> {
+    await this.prisma.$transaction(
+      [
+        [a, b],
+        [b, a],
+      ].map(([managerId, userId]) =>
+        this.prisma.groupMembership.deleteMany({
+          where: {
+            userId,
+            role: GroupRole.MEMBER,
+            group: {
+              memberships: {
+                some: {
+                  userId: managerId,
+                  role: { in: [GroupRole.OWNER, GroupRole.ADMIN] },
+                },
+              },
+            },
+          },
+        }),
+      ),
+    );
   }
 }

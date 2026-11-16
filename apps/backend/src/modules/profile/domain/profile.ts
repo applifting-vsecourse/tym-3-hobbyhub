@@ -102,3 +102,20 @@ export function privateDetailsViolations(
   if (birthYearCode) violations.push(birthYearCode);
   return violations;
 }
+
+// #238: an account as the administration lists it.
+export type AdminUserListItem = {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  status: 'ACTIVE' | 'RESTRICTED' | 'BLOCKED' | 'DELETED';
+  createdAt: Date;
+};
+
+// The account and the whole profile, private fields included (visibility
+// matrix: Superadmin sees e-mail, year of birth, gender and location).
+export type AdminUserDetail = {
+  account: AdminUserListItem;
+  profile: Profile;
+};

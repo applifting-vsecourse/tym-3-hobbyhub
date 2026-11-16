@@ -1,5 +1,6 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
 import {
+  AdminGroupDetail,
   AssignableGroupRole,
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
@@ -17,8 +18,13 @@ import {
   NearbyGroups,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
+import {
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
@@ -37,6 +43,7 @@ export class GroupsService {
   constructor(
     private readonly groupRepository: GroupRepository,
     private readonly activitiesService: ActivitiesService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   async createGroup(user: Identity, data: CreateGroupData): Promise<Group> {
@@ -58,14 +65,34 @@ export class GroupsService {
   }
 
   // F-02.5: the detail is public, so only a public, active group is shown.
-  // Anything else is "not found", so nobody can tell it exists.
+  // Anything else is "not found", so nobody can tell it exists; so is the
+  // group run by someone blocked from the viewer (#239).
   // TODO(F-07.1b #93): a private group is shown to its members.
-  async getPublicGroup(id: string): Promise<Group> {
+  async getPublicGroup(id: string, viewer?: Identity): Promise<Group> {
     const group = await this.groupRepository.getGroupById(id);
     if (!group || !isPubliclyVisible(group)) {
       throw new NotFoundException('Group not found');
     }
+    if (viewer && (await this.isRunByHidden(id, viewer.id))) {
+      throw new NotFoundException('Group not found');
+    }
     return group;
+  }
+
+  // ADR-0022: the owner and the admins run the group, the same people a block
+  // removes members from (`removeBlockedPair`). A member still sees their own
+  // group: where both of the pair run it, both stay.
+  private async isRunByHidden(
+    groupId: string,
+    viewerId: string,
+  ): Promise<boolean> {
+    const hidden = await this.blocks.hiddenFor(viewerId);
+    if (hidden.length === 0) return false;
+    const [role, managerIds] = await Promise.all([
+      this.groupRepository.getMemberRole(groupId, viewerId),
+      this.groupRepository.listAdminIds(groupId),
+    ]);
+    return role === null && managerIds.some((id) => hidden.includes(id));
   }
 
   getMemberRole(groupId: string, userId: string): Promise<GroupRole | null> {
@@ -98,7 +125,11 @@ export class GroupsService {
   async listMembers(groupId: string, user: Identity): Promise<GroupMember[]> {
     const role = await this.groupRepository.getMemberRole(groupId, user.id);
     if (!role) throw new NotFoundException('Group not found');
-    return this.groupRepository.listMembers(groupId);
+    // #239: members blocked from the one asking are not on the list.
+    return this.groupRepository.listMembers(
+      groupId,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   // F-07.3b: who acts comes from the session. ADR-0007 decides who may do
@@ -209,6 +240,7 @@ export class GroupsService {
       user.id,
       city,
       NEARBY_GROUPS_LIMIT,
+      await this.blocks.hiddenFor(user.id),
     );
     return { city, groups };
   }
@@ -224,6 +256,27 @@ export class GroupsService {
       DISCOVER_PAGE_SIZE,
       cursor,
       filter,
+      await this.blocks.hiddenFor(user?.id),
     );
+  }
+
+  // #238: the administration sees every group (visibility matrix: Superadmin).
+  listGroupsForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<Group>> {
+    return this.groupRepository.listForAdministration(query);
+  }
+
+  async getGroupForAdministration(id: string): Promise<AdminGroupDetail> {
+    const group = await this.groupRepository.getGroupById(id);
+    if (!group) throw new NotFoundException('Group not found');
+    const members = await this.groupRepository.listMembers(id);
+    return { group, members };
+  }
+
+  // #239, ADR-0022: called by the administration once two people are blocked
+  // from each other. Nobody is told: the block must not show.
+  removeBlockedPair(a: string, b: string): Promise<void> {
+    return this.groupRepository.removeBlockedPair(a, b);
   }
 }
