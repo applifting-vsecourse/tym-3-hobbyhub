@@ -1,0 +1,29 @@
+import type { AdminReportFilter } from "@/features/admin/api/reportSchemas"
+
+// #238: everything the administration caches sits under one root, so signing
+// out of it drops all of it and nothing of the app's own cache.
+export const adminKeys = {
+  all: () => ["admin"] as const,
+  session: () => [...adminKeys.all(), "session"] as const,
+  users: (search: string, offset: number) =>
+    [...adminKeys.all(), "users", { search, offset }] as const,
+  user: (id: string) => [...adminKeys.all(), "user", id] as const,
+  userEvents: (id: string) => [...adminKeys.user(id), "events"] as const,
+  userBlocks: (id: string) => [...adminKeys.user(id), "blocks"] as const,
+  events: (search: string, offset: number) =>
+    [...adminKeys.all(), "events", { search, offset }] as const,
+  event: (id: string) => [...adminKeys.all(), "event", id] as const,
+  groups: (search: string, offset: number) =>
+    [...adminKeys.all(), "groups", { search, offset }] as const,
+  group: (id: string) => [...adminKeys.all(), "group", id] as const,
+  groupRequests: (id: string) => [...adminKeys.group(id), "requests"] as const,
+  administrators: () => [...adminKeys.all(), "administrators"] as const,
+  // #240: the queue, one report, the count in the navigation, and the
+  // reports in the detail of a user (under `user`, so a block refreshes them)
+  // and of an event.
+  reports: (filter: AdminReportFilter) => [...adminKeys.all(), "reports", filter] as const,
+  report: (id: string) => [...adminKeys.all(), "report", id] as const,
+  newReportsCount: () => [...adminKeys.all(), "reports-new-count"] as const,
+  userReports: (id: string) => [...adminKeys.user(id), "reports"] as const,
+  eventReports: (id: string) => [...adminKeys.event(id), "reports"] as const,
+}

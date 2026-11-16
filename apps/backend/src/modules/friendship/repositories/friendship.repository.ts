@@ -44,4 +44,33 @@ export class FriendshipRepository {
       },
     });
   }
+
+  /**
+   * #239, ADR-0022, ADR-0026: an administrator blocked the two from each
+   * other. Their friendship goes, and the requests still pending between them
+   * in either direction end as REJECTED with today's date: a rejection is
+   * silent, so neither learns of the block. Requests are never deleted. Safe
+   * to run again.
+   */
+  async removeBlockedPair(
+    oneId: string,
+    otherId: string,
+    now: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.friendship.deleteMany({
+        where: friendPairOf(oneId, otherId),
+      }),
+      this.prisma.friendRequest.updateMany({
+        where: {
+          status: 'PENDING',
+          OR: [
+            { senderId: oneId, recipientId: otherId },
+            { senderId: otherId, recipientId: oneId },
+          ],
+        },
+        data: { status: 'REJECTED', decidedAt: now },
+      }),
+    ]);
+  }
 }

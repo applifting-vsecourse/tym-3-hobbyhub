@@ -1,6 +1,9 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
 import { CancellationReasonsService } from '@/modules/cancellation-reason/services/cancellation-reasons.service';
 import {
+  AdminEventDetail,
+  AdminEventListItem,
+  AdminUserEvents,
   CancelEventData,
   canSeeEvent,
   CreateEventData,
@@ -14,6 +17,9 @@ import {
   eventListFilterViolations,
   EventListItem,
   EventListPage,
+  EventModeration,
+  EventModerationViolation,
+  eventModerationViolations,
   EventRuleViolation,
   eventRuleViolations,
   EventSeatFacts,
@@ -22,6 +28,7 @@ import {
   GroupEventPage,
   GroupEventsPeriod,
   isOrganizerOf,
+  moderationConcernsPeople,
   Page,
   ParticipantEventInfo,
   UpdateEventData,
@@ -30,8 +37,13 @@ import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { eventChangesOf } from '@/modules/notification/domain/notification';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
+import {
+  AdminListQuery,
+  AdminPage,
+} from '@/shared/admin-auth/domain/administration';
 import { Identity } from '@/shared/auth/domain/identity';
 import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
@@ -50,6 +62,7 @@ const VIOLATION_MESSAGES: Record<EventRuleViolation, string> = {
 };
 
 const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
+  EVENT_HIDDEN: 'An event hidden by an administrator cannot be edited',
   EVENT_NOT_CHANGEABLE: 'The event has started or can no longer be edited',
   EVENT_NOT_CANCELLABLE: 'Only an event that has not started can be cancelled',
   MAX_BELOW_OCCUPIED: 'maxParticipants must not be below the occupied seats',
@@ -57,6 +70,25 @@ const CHANGE_VIOLATION_MESSAGES: Record<EventChangeViolation, string> = {
   LOCATION_REQUIRED: 'location is required for an event at a place',
   LOCATION_NOT_ALLOWED: 'an online event has no location',
 };
+
+const MODERATION_VIOLATION_MESSAGES: Record<EventModerationViolation, string> =
+  {
+    EVENT_IS_DRAFT: 'A draft is not public and cannot be hidden',
+    EVENT_ALREADY_HIDDEN: 'The event is already hidden',
+    EVENT_NOT_HIDDEN: 'The event is not hidden',
+  };
+
+const moderationViolationsError = (
+  violations: EventModerationViolation[],
+): BadRequestException =>
+  new BadRequestException({
+    statusCode: 400,
+    error: 'Bad Request',
+    message: violations.map(
+      (violation) => MODERATION_VIOLATION_MESSAGES[violation],
+    ),
+    violations,
+  });
 
 // Messages plus the codes, so the client can say why in its language.
 const changeViolationsError = (
@@ -79,6 +111,7 @@ export class EventsService {
     private readonly cancellationReasonsService: CancellationReasonsService,
     private readonly notificationsService: NotificationsService,
     private readonly groupsService: GroupsService,
+    private readonly blocks: UserBlockVisibility,
   ) {}
 
   // F-06.3: the cards of events another module already picked.
@@ -265,17 +298,22 @@ export class EventsService {
     return event;
   }
 
+  // #239: without the events of people blocked from the one asking.
   async getUpcomingPublicEvents(
     page: Page,
     filter: EventListFilter = { activityIds: [] },
     now: Date = new Date(),
+    viewer?: Identity,
   ): Promise<EventListPage> {
     if (eventListFilterViolations(filter).length > 0) {
       throw new BadRequestException(
         'A range must not start after it ends (dateFrom/dateTo, priceFrom/priceTo, durationHoursFrom/durationHoursTo, capacityFrom/capacityTo)',
       );
     }
-    return this.eventRepository.getUpcomingPublicEvents(now, page, filter);
+    return this.eventRepository.getUpcomingPublicEvents(now, page, {
+      ...filter,
+      hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
+    });
   }
 
   // F-06.5: the exact address and the contacts, for the organizers and the
@@ -303,17 +341,66 @@ export class EventsService {
 
   // The detail: what a visitor may see, nothing of the organizer's private
   // data. A group-only event (F-07.2) only for those `canSeeEvent` lets in;
-  // to anyone else it does not exist.
+  // to anyone else it does not exist. One an administrator hid exists only
+  // for its organizers, who also see why (ADR-0022).
   async getEventDetail(id: string, viewer?: Identity): Promise<EventDetail> {
-    const event = await this.eventRepository.getShowableEventById(id);
-    if (!event) throw new NotFoundException('Event not found');
-    if (event.visibility !== 'PUBLIC') {
-      const facts = await this.eventRepository.getEventFacts(id);
-      if (!facts || !(await this.canSee(facts, viewer?.id))) {
-        throw new NotFoundException('Event not found');
+    return (await this.loadVisibleEvent(id, viewer)).event;
+  }
+
+  // #240, ADR-0023: who organizes an event the viewer may report, which is
+  // any event whose detail they may open. Anything else does not exist for
+  // them, the same 404 as the detail.
+  async getVisibleEventOrganizerIds(
+    id: string,
+    viewer: Identity,
+  ): Promise<readonly string[]> {
+    const { loadFacts } = await this.loadVisibleEvent(id, viewer);
+    const facts = await loadFacts();
+    if (!facts) throw new NotFoundException('Event not found');
+    return facts.organizerIds;
+  }
+
+  // The detail with the checks of `getEventDetail`. The facts are loaded at
+  // most once, and only when a check needs them; the caller may ask for them
+  // too through `loadFacts`.
+  private async loadVisibleEvent(
+    id: string,
+    viewer?: Identity,
+  ): Promise<{
+    event: EventDetail;
+    loadFacts: () => Promise<EventFacts | null>;
+  }> {
+    let facts: Promise<EventFacts | null> | undefined;
+    const loadFacts = (): Promise<EventFacts | null> =>
+      (facts ??= this.eventRepository.getEventFacts(id));
+    const notFound = (): NotFoundException =>
+      new NotFoundException('Event not found');
+
+    let event = await this.eventRepository.getShowableEventById(id);
+    if (!event && viewer) {
+      const hiddenEvent = await loadFacts();
+      if (hiddenEvent?.isHidden && isOrganizerOf(hiddenEvent, viewer.id)) {
+        event = await this.eventRepository.getHiddenEventDetail(id);
       }
     }
-    return event;
+    if (!event) throw notFound();
+    // #239: an event of someone blocked from the viewer does not exist.
+    if (viewer) {
+      const hidden = await this.blocks.hiddenFor(viewer.id);
+      if (hidden.length > 0) {
+        const organizerIds = (await loadFacts())?.organizerIds ?? [];
+        if (organizerIds.some((organizerId) => hidden.includes(organizerId))) {
+          throw notFound();
+        }
+      }
+    }
+    if (event.visibility !== 'PUBLIC') {
+      const current = await loadFacts();
+      if (!current || !(await this.canSee(current, viewer?.id))) {
+        throw notFound();
+      }
+    }
+    return { event, loadFacts };
   }
 
   // F-06.1: null when there is no such event this person may see.
@@ -325,7 +412,15 @@ export class EventsService {
       id,
       userId,
     );
-    return facts && (await this.canSee(facts, userId)) ? facts : null;
+    if (!facts) return null;
+    // #239: no request to, nor seat on, an event of someone blocked from them.
+    const hidden = await this.blocks.hiddenFor(userId);
+    if (
+      facts.organizerIds.some((organizerId) => hidden.includes(organizerId))
+    ) {
+      return null;
+    }
+    return (await this.canSee(facts, userId)) ? facts : null;
   }
 
   // F-07.2: the events of a group on its page. Everyone who may see the group
@@ -342,8 +437,9 @@ export class EventsService {
       ? await this.groupsService.getMemberRole(groupId, viewer.id)
       : null;
     if (!role) {
-      // Throws "not found" for a group that has no public page.
-      await this.groupsService.getPublicGroup(groupId);
+      // Throws "not found" for a group that has no public page, and for
+      // one whose owner is blocked from the viewer (#239).
+      await this.groupsService.getPublicGroup(groupId, viewer);
       if (period === 'past') throw new NotFoundException('Group not found');
     }
     return this.eventRepository.getGroupEvents(
@@ -352,6 +448,7 @@ export class EventsService {
         period,
         visibilities: role ? ['PUBLIC', 'GROUP_ONLY'] : ['PUBLIC'],
         now,
+        hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
       },
       { limit: GROUP_EVENTS_PAGE_SIZE, offset },
     );
@@ -391,5 +488,74 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
     return event;
+  }
+
+  // #238: the administration sees every event (visibility matrix: Superadmin).
+  async listEventsForAdministration(
+    query: AdminListQuery,
+  ): Promise<AdminPage<AdminEventListItem>> {
+    return this.eventRepository.listForAdministration(query);
+  }
+
+  async getEventForAdministration(id: string): Promise<AdminEventDetail> {
+    const detail = await this.eventRepository.getAdministrationDetail(id);
+    if (!detail) throw new NotFoundException('Event not found');
+    return detail;
+  }
+
+  // #239, ADR-0022: an administrator hides an event (with a reason) or brings
+  // it back; the audit log records it with the change. Who expects the event
+  // hears about it, unless it is over or was called off.
+  async moderateEvent(
+    admin: { id: string },
+    id: string,
+    moderation:
+      | { kind: Extract<EventModeration, 'HIDE'>; reason: string }
+      | { kind: Extract<EventModeration, 'RESTORE'> },
+    now: Date = new Date(),
+  ): Promise<AdminEventDetail> {
+    const event = await this.getEvent(id);
+    const violations = eventModerationViolations(event, moderation.kind);
+    if (violations.length > 0) throw moderationViolationsError(violations);
+    const changed = await this.eventRepository.setHidden(
+      id,
+      moderation.kind === 'HIDE'
+        ? {
+            kind: 'HIDE',
+            adminId: admin.id,
+            reason: moderation.reason.trim(),
+            at: now,
+          }
+        : { kind: 'RESTORE', adminId: admin.id },
+    );
+    // Another administrator got there first.
+    if (!changed) {
+      throw moderationViolationsError(
+        moderation.kind === 'HIDE'
+          ? ['EVENT_ALREADY_HIDDEN']
+          : ['EVENT_NOT_HIDDEN'],
+      );
+    }
+    if (moderationConcernsPeople(changed, now)) {
+      const audience = await this.eventRepository.getHiddenEventAudience(id);
+      if (moderation.kind === 'HIDE') {
+        await this.notificationsService.notifyEventHidden({
+          event: changed,
+          ...audience,
+          reason: changed.hiddenReason ?? moderation.reason,
+        });
+      } else {
+        await this.notificationsService.notifyEventRestored({
+          event: changed,
+          ...audience,
+        });
+      }
+    }
+    return this.getEventForAdministration(id);
+  }
+
+  // #238: the events of a person, for the user detail in the administration.
+  getUserEventsForAdministration(userId: string): Promise<AdminUserEvents> {
+    return this.eventRepository.getUserEventsForAdministration(userId);
   }
 }

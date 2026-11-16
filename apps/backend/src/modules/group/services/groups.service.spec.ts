@@ -7,6 +7,7 @@ import {
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { Identity } from '@/shared/auth/domain/identity';
+import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
@@ -14,6 +15,14 @@ import {
 } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { GroupsService } from './groups.service';
+
+// #239: nobody is blocked here; blocks have tests of their own.
+const noBlocks = (): MockProxy<UserBlockVisibility> => {
+  const blocks = mock<UserBlockVisibility>();
+  blocks.hiddenFor.mockResolvedValue([]);
+  blocks.hiddenFrom.mockResolvedValue([]);
+  return blocks;
+};
 
 const aGroup = (overrides: Partial<Group> = {}): Group => ({
   id: 'g1',
@@ -50,7 +59,7 @@ describe('GroupsService', () => {
     activities.isAvailable.mockResolvedValue(isActivityAvailable);
     return {
       repository,
-      service: new GroupsService(repository, activities),
+      service: new GroupsService(repository, activities, noBlocks()),
     };
   };
 
@@ -388,6 +397,7 @@ describe('GroupsService', () => {
         'u1',
         'Praha',
         NEARBY_GROUPS_LIMIT,
+        [],
       );
     });
 
@@ -422,6 +432,7 @@ describe('GroupsService', () => {
       DISCOVER_PAGE_SIZE,
       'g0',
       { activityIds: [] },
+      [],
     );
   });
 
@@ -438,6 +449,7 @@ describe('GroupsService', () => {
       DISCOVER_PAGE_SIZE,
       undefined,
       { activityIds: [] },
+      [],
     );
   });
 
@@ -455,6 +467,32 @@ describe('GroupsService', () => {
       DISCOVER_PAGE_SIZE,
       undefined,
       filter,
+      [],
     );
+  });
+
+  // #238: private and cancelled groups too.
+  describe('getGroupForAdministration', () => {
+    it('returns a private group with its members', async () => {
+      const { repository, service } = setup();
+      const group = aGroup({ visibility: 'PRIVATE', status: 'CANCELLED' });
+      repository.getGroupById.mockResolvedValue(group);
+      repository.listMembers.mockResolvedValue([]);
+
+      await expect(service.getGroupForAdministration('g1')).resolves.toEqual({
+        group,
+        members: [],
+      });
+    });
+
+    it('is not found for an unknown group', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(null);
+
+      await expect(
+        service.getGroupForAdministration('missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.listMembers).not.toHaveBeenCalled();
+    });
   });
 });

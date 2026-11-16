@@ -18,6 +18,13 @@ import {
 import { applicationStatusOf } from '@/modules/my-events/domain/my-events';
 import { ParticipationRequestRepository } from './participation-request.repository';
 
+// ADR-0022: hidden means since when and why (CHECK event_hidden_all_or_nothing).
+const HIDDEN = {
+  isHidden: true,
+  hiddenAt: new Date('2030-01-01T00:00:00Z'),
+  hiddenReason: 'Skryto správcem v testu.',
+} as const;
+
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
 
 describeDb('ParticipationRequestRepository', () => {
@@ -196,7 +203,7 @@ describeDb('ParticipationRequestRepository', () => {
     });
 
     it.each([
-      ['hidden', { isHidden: true }],
+      ['hidden', HIDDEN],
       ['not public', { visibility: 'PRIVATE' as const }],
       ['a draft', { status: 'DRAFT' as const }],
     ])('leaves out an event that is %s', async (_, change) => {
