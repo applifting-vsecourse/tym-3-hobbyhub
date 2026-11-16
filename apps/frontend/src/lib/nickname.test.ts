@@ -20,6 +20,7 @@ describe("nicknameProblem", () => {
     ["a reserved word", "HobbyHubTeam", "reserved"],
     ["a reserved word in other letter case", "xADMINx", "reserved"],
     ["mod on its own", "Mod", "reserved"],
+    ["a reserved word next to badminton", "BadmintonAdmin", "reserved"],
   ])("refuses %s", (_, value, problem) => {
     expect(nicknameProblem(value)).toBe(problem)
   })
@@ -27,6 +28,13 @@ describe("nicknameProblem", () => {
   it("lets mod through inside another word", () => {
     expect(nicknameProblem("Modrak")).toBeNull()
   })
+
+  it.each(["BadmintonPetr", "EcosystemFan"])(
+    "accepts %s, where the reserved word is part of an ordinary one",
+    (value) => {
+      expect(nicknameProblem(value)).toBeNull()
+    },
+  )
 })
 
 describe("normalizeNickname", () => {

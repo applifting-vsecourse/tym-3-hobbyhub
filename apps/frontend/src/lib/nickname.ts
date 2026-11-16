@@ -22,6 +22,9 @@ const RESERVED_NICKNAME_WORDS = [
 ]
 // Too short to refuse inside other words ("Modrak"), refused on its own.
 const RESERVED_NICKNAMES = new Set(["mod"])
+// Ordinary words that contain a reserved one ("badminton" holds "admin"); they
+// are taken out before the search, so "BadmintonPetr" passes.
+const WORDS_NOT_RESERVED = ["badminton", "ecosystem"]
 
 export type NicknameProblem = "required" | "tooShort" | "tooLong" | "invalid" | "reserved"
 
@@ -44,8 +47,9 @@ export function nicknameProblem(value: string): NicknameProblem | null {
   if (value.length > NICKNAME_MAX_LENGTH) return "tooLong"
   if (!NICKNAME_PATTERN.test(value)) return "invalid"
   const normalized = normalizeNickname(value)
+  const searched = WORDS_NOT_RESERVED.reduce((rest, word) => rest.split(word).join(" "), normalized)
   const isReserved =
     RESERVED_NICKNAMES.has(normalized) ||
-    RESERVED_NICKNAME_WORDS.some((word) => normalized.includes(word))
+    RESERVED_NICKNAME_WORDS.some((word) => searched.includes(word))
   return isReserved ? "reserved" : null
 }
