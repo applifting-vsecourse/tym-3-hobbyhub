@@ -18,6 +18,7 @@ const aNotification = (overrides: Partial<Notification> = {}): Notification => (
   changes: [],
   reason: null,
   reminder: null,
+  ratingPrompt: null,
   ...overrides,
 })
 
@@ -179,6 +180,50 @@ describe("notificationText", () => {
     )
     await i18n.changeLanguage("cs")
   })
+})
+
+// #236: the calls to rate an event, with until when.
+describe("rating prompts", () => {
+  const deadline = new Date(2030, 0, 9, 20, 0)
+  const promptOf = (type: "RATING_PROMPT" | "HOSTED_RATING_PROMPT", kind: "FIRST" | "LAST_CALL") =>
+    aNotification({ type, actor: null, ratingPrompt: { kind, deadline } })
+
+  it.each([
+    [
+      "RATING_PROMPT",
+      "FIRST",
+      "Jak se ti líbila akce Čtvrteční florbal? Ohodnoť organizátora, můžeš do zítra v 20:00",
+    ],
+    [
+      "RATING_PROMPT",
+      "LAST_CALL",
+      "Poslední den na ohodnocení organizátora akce Čtvrteční florbal, můžeš do zítra v 20:00",
+    ],
+    [
+      "HOSTED_RATING_PROMPT",
+      "FIRST",
+      "Ohodnoť účastníky své akce Čtvrteční florbal, můžeš do zítra v 20:00",
+    ],
+    [
+      "HOSTED_RATING_PROMPT",
+      "LAST_CALL",
+      "Poslední den na ohodnocení účastníků akce Čtvrteční florbal, můžeš do zítra v 20:00",
+    ],
+  ] as const)("%s %s", (type, kind, expected) => {
+    expect(
+      notificationText(i18n.t, promptOf(type, kind), { now: new Date(2030, 0, 8, 12, 0) }),
+    ).toBe(expected)
+  })
+
+  it.each(["RATING_PROMPT", "HOSTED_RATING_PROMPT"] as const)(
+    "%s leads to the ratings of the event",
+    (type) => {
+      expect(notificationTarget(promptOf(type, "FIRST"))).toEqual({
+        kind: "eventRatings",
+        eventId: "e1",
+      })
+    },
+  )
 })
 
 describe("notificationTarget", () => {

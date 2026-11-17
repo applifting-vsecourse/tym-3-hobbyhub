@@ -25,6 +25,8 @@ export const NOTIFICATION_TYPES = [
   'REPORT_RESOLVED',
   'EVENT_REMINDER',
   'HOSTED_EVENT_REMINDER',
+  'RATING_PROMPT',
+  'HOSTED_RATING_PROMPT',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -54,6 +56,8 @@ export const NOTIFICATION_TYPES_BY_KIND = {
     'EVENT_BOARD',
     'EVENT_REMINDER',
     'HOSTED_EVENT_REMINDER',
+    'RATING_PROMPT',
+    'HOSTED_RATING_PROMPT',
   ],
   groups: ['GROUP_INVITATION'],
   other: ['ONBOARDING_SERIES', 'MONTHLY_RECOMMENDATION', 'REPORT_RESOLVED'],
@@ -89,6 +93,12 @@ export type ReminderOccupancy = {
   missingToMinimum: number;
 };
 
+// #236, ADR-0027: which call to rate an event: FIRST two hours after its end,
+// LAST_CALL on the last day of the rating period. The same values as the
+// `rating_prompt_kind` enum.
+export const RATING_PROMPTS = ['FIRST', 'LAST_CALL'] as const;
+export type RatingPromptKind = (typeof RATING_PROMPTS)[number];
+
 // What the text needs besides the linked rows. Every field is optional; which
 // ones a type carries is written next to each `notify…` method of the service.
 export type NotificationPayload = {
@@ -109,6 +119,10 @@ export type NotificationPayload = {
   startsAt?: string;
   // HOSTED_EVENT_REMINDER
   occupancy?: ReminderOccupancy;
+  // RATING_PROMPT, HOSTED_RATING_PROMPT
+  prompt?: RatingPromptKind;
+  // RATING_PROMPT, HOSTED_RATING_PROMPT: the last moment to rate, an ISO date.
+  deadline?: string;
 };
 
 export type NotificationPerson = { id: string; name: string };
