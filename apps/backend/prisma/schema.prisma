@@ -445,6 +445,10 @@ model Participation {
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId  String
 
+  // #236, ADR-0027: what the organizer and this participant said of each
+  // other after the event, at most one each way.
+  ratings Rating[]
+
   // A person is on an event's roster once.
   @@unique([eventId, userId])
   @@index([userId])
@@ -493,6 +497,53 @@ model ParticipationRequest {
   @@index([eventId, status])
   @@index([userId])
   @@map("participation_request")
+}
+
+// #236, ADR-0027: which way a rating goes. A participant rates the main
+// organizer, the main organizer rates a participant; participants do not rate
+// each other.
+enum RatingDirection {
+  TO_ORGANIZER
+  TO_PARTICIPANT
+
+  @@map("rating_direction")
+}
+
+// #236, ADR-0027: what the organizer and one participant said of each other
+// after an event: 1–5 stars and an optional comment, final once sent. Tied to
+// the participation (ADR-0003) by its (eventId, userId), so `participantId` is
+// the participant whichever way the rating goes: the author of TO_ORGANIZER,
+// the rated one of TO_PARTICIPANT (CHECK rating_participant_side).
+//
+// Nobody sees a rating about them, nor counts it, until the rating period ends
+// (`endAt` + 7 days): the views `rating_revealed`, `user_rating_score` and
+// `event_rating_score` in the migration hold that rule, and the scores are
+// read from them. Every relation is Restrict: a rating outlives nothing it is
+// about, and accounts are only ever deleted softly.
+model Rating {
+  id String @id @default(cuid())
+
+  direction RatingDirection
+  stars     Int             @db.SmallInt
+  comment   String?         @db.VarChar(500)
+  createdAt DateTime        @default(now())
+
+  participation Participation @relation(fields: [eventId, participantId], references: [eventId, userId], onDelete: Restrict)
+  eventId       String
+  participantId String
+  author        User          @relation("RatingAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId      String
+  // The main organizer when the rating was given, for TO_ORGANIZER: the
+  // organizer may hand the event over later.
+  ratedUser     User          @relation("RatingRatedUser", fields: [ratedUserId], references: [id], onDelete: Restrict)
+  ratedUserId   String
+
+  // One rating each way per participation.
+  @@unique([eventId, participantId, direction])
+  @@index([ratedUserId, direction])
+  @@index([eventId, direction])
+  @@index([authorId])
+  @@map("rating")
 }
 
 // #227, ADR-0026: where a friend request stands. A rejected request is kept
@@ -910,6 +961,9 @@ model User {
   receivedFriendRequests FriendRequest[]        @relation("FriendRequestRecipient")
   friendshipsAsA         Friendship[]           @relation("FriendshipUserA")
   friendshipsAsB         Friendship[]           @relation("FriendshipUserB")
+  // #236, ADR-0027: ratings this user gave, and ratings about them.
+  givenRatings           Rating[]               @relation("RatingAuthor")
+  receivedRatings        Rating[]               @relation("RatingRatedUser")
 
   @@unique([email])
   @@unique([username])
