@@ -63,6 +63,8 @@ export const publicProfileSchema = z.object({
   image: z.string().nullable(),
   cover: z.string().nullable(),
   interests: z.array(interestSchema),
+  /** #65: whether I blocked this person; never whether they blocked me. */
+  isBlockedByMe: z.boolean(),
 })
 
 export type PublicProfile = z.infer<typeof publicProfileSchema>

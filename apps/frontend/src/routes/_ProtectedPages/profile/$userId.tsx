@@ -6,6 +6,7 @@ import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { PublicProfilePage } from "@/features/profile/components/PublicProfilePage"
 import { ReportAction } from "@/features/report/components/ReportAction"
+import { BlockUserAction } from "@/features/user-block/components/BlockUserAction"
 
 export const Route = createFileRoute("/_ProtectedPages/profile/$userId")({
   component: ProfileRoute,
@@ -26,6 +27,8 @@ function ProfileRoute() {
       userId={userId}
       ownUserId={user?.id}
       activityLabel={activityLabel}
+      // #65: the person's own block, one way, without the administration.
+      blockAction={(profile) => <BlockUserAction user={profile} />}
       // #240: a report of a person also asks for the two to be blocked.
       reportAction={(profile) => (
         <ReportAction

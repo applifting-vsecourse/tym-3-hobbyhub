@@ -19,6 +19,8 @@ export const membershipRuleViolationSchema = z.enum([
   "IS_MEMBER",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+  // #65: I blocked the owner or an admin, who would never see my request.
+  "BLOCKED_ADMIN",
 ])
 
 // Why an admin cannot decide a request now.

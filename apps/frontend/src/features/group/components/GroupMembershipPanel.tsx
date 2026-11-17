@@ -125,6 +125,22 @@ export function GroupMembershipPanel({
         {decisionMessage}
       </>
     )
+  } else if (view === "blocked") {
+    // #65: the user's own block; the way back is theirs too.
+    content = (
+      <>
+        <Button disabled>{t("groups.detail.membership.request")}</Button>
+        <p className="typo-small text-muted-foreground">
+          {t("groups.membershipRequest.refused.BLOCKED_ADMIN")}{" "}
+          <Link
+            to={ROUTES.settings}
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            {t("userBlocks.manageLink")}
+          </Link>
+        </p>
+      </>
+    )
   } else if (view === "canRequest") {
     content = (
       <>

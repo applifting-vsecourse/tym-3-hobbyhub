@@ -13,6 +13,7 @@ const profile: PublicProfile = {
   image: null,
   cover: null,
   interests: [{ activity: { id: "a1", name: "Běh", icon: "beh" }, level: null }],
+  isBlockedByMe: false,
 }
 
 const renderProfile = (overrides: Partial<PublicProfile> = {}) =>

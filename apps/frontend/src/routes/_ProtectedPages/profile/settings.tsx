@@ -6,12 +6,13 @@ import { BackLink } from "@/components/BackLink"
 import { Seo } from "@/components/Seo"
 
 import { AppSettingsForm } from "@/features/auth/components/AppSettingsForm"
+import { BlockedUsersSection } from "@/features/user-block/components/BlockedUsersSection"
 
 export const Route = createFileRoute("/_ProtectedPages/profile/settings")({
   component: SettingsPage,
 })
 
-// #262: language and theme, out of the header.
+// #262: language and theme, out of the header. #65: the people I blocked.
 function SettingsPage() {
   const { t } = useTranslation()
 
@@ -28,6 +29,7 @@ function SettingsPage() {
           <p className="typo-body text-muted-foreground">{t("settings.description")}</p>
         </div>
         <AppSettingsForm />
+        <BlockedUsersSection />
       </section>
     </>
   )
