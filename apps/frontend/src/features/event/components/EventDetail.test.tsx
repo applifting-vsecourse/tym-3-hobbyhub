@@ -41,6 +41,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1, unknown: 1 } },
   statsMinParticipants: 3,
   hiddenReason: null,
+  rating: { count: null, average: null },
   ...overrides,
 })
 
@@ -327,5 +328,17 @@ describe("EventDetail", () => {
     )
 
     expect(screen.getByRole("button", { name: "Upravit akci" })).toBeInTheDocument()
+  })
+
+  // #236: from three revealed ratings on; an event without them says nothing.
+  it("shows the event's rating only once others may see it", async () => {
+    await renderDetail({ rating: { count: 6, average: 4.25 } })
+    expect(screen.getByRole("heading", { name: "Hodnocení akce" })).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: "Hodnocení 4,3 z 5, 6 hodnocení" })).toBeInTheDocument()
+  })
+
+  it("shows no rating section below three ratings", async () => {
+    await renderDetail()
+    expect(screen.queryByRole("heading", { name: "Hodnocení akce" })).not.toBeInTheDocument()
   })
 })
