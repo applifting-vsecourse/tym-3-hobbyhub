@@ -824,6 +824,7 @@
   "footer": {
     "copyright": "© {{year}} HobbyHub",
     "label": "Footer",
+    "language": "Language",
     "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
   },
   "friends": {
@@ -1557,6 +1558,10 @@
       "empty": "No upcoming events yet. Create one yourself — it will show up here.",
       "title": "Upcoming events"
     }
+  },
+  "language": {
+    "label": "Language",
+    "saveFailed": "The language could not be saved. Please try again."
   },
   "myEvents": {
     "actions": {

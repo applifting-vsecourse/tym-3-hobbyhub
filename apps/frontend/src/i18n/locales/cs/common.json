@@ -834,6 +834,7 @@
   "footer": {
     "copyright": "© {{year}} HobbyHub",
     "label": "Patička",
+    "language": "Jazyk",
     "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
   },
   "friends": {
@@ -1578,6 +1579,10 @@
       "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami — až se objeví, najdete ji tady.",
       "title": "Nejbližší akce"
     }
+  },
+  "language": {
+    "label": "Jazyk",
+    "saveFailed": "Jazyk se nepodařilo uložit. Zkuste to prosím znovu."
   },
   "myEvents": {
     "actions": {
