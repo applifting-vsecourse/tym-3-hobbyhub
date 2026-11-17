@@ -226,18 +226,16 @@ export class RatingsService {
     return rating;
   }
 
-  /** "Moje hodnocení": the revealed ratings the person received one way. */
-  async getReceived(
+  /**
+   * "Moje hodnocení": the revealed ratings the person received one way. The
+   * view already leaves out those of anyone blocked from them (ADR-0022).
+   */
+  getReceived(
     user: Identity,
     direction: RatingDirection,
     page: Page,
   ): Promise<ReceivedRatingPage> {
-    return this.repository.getReceived(
-      user.id,
-      direction,
-      page,
-      await this.blocks.hiddenFor(user.id),
-    );
+    return this.repository.getReceived(user.id, direction, page);
   }
 
   /** The ratings the person gave, and whether the rated one sees them yet. */
