@@ -69,6 +69,10 @@ enum NotificationType {
   // #233, ADR-0021: the event one goes to, or organizes, starts soon.
   EVENT_REMINDER
   HOSTED_EVENT_REMINDER
+  // #236, ADR-0027: the rating period of an event one went to, or organized,
+  // is on; the first call, or the last day of it.
+  RATING_PROMPT
+  HOSTED_RATING_PROMPT
 
   @@map("notification_type")
 }
@@ -414,6 +418,8 @@ model Event {
   // ADR-0023: reports about this event, seen by the administration only.
   reports               Report[]
   reminders             EventReminder[]
+  // #236: the calls to rate it that went out.
+  ratingPrompts         RatingPrompt[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -472,6 +478,32 @@ model EventReminder {
 
   @@unique([eventId, kind, eventStartAt])
   @@map("event_reminder")
+}
+
+// #236, ADR-0027: which call to rate an event after it ended. FIRST two hours
+// after the end, LAST_CALL on the last day of the rating period.
+enum RatingPromptKind {
+  FIRST
+  LAST_CALL
+
+  @@map("rating_prompt_kind")
+}
+
+// #236, ADR-0021, ADR-0027: a call to rate an event that went out. Like
+// `EventReminder`, the cron inserts the row before it sends: whoever fails to
+// insert it sends nothing, so each call goes once per event. An event cannot
+// change after it ended, so unlike a reminder the end is not part of the key.
+model RatingPrompt {
+  id String @id @default(cuid())
+
+  kind   RatingPromptKind
+  sentAt DateTime         @default(now())
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  @@unique([eventId, kind])
+  @@map("rating_prompt")
 }
 
 // F-06.1 request to join an event (ADR-0003). It takes no seat; the
