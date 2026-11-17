@@ -5,6 +5,7 @@ import {
   getOAuthState,
 } from 'better-auth/api';
 import { BetterAuthOptions } from 'better-auth/types';
+import { googleAvatarAsDataUrl } from './google-avatar';
 import {
   consentsAtSignUp,
   Gender,
@@ -72,6 +73,16 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
         },
       },
     };
+  }
+
+  // The app signs in with Google only through the redirect. With an `idToken`
+  // BetterAuth would create the account right in this request, bypassing the
+  // registration step and its stored nickname, gender, year and consents.
+  if (ctx.path === SOCIAL_SIGN_IN_PATH && ctx.body?.idToken) {
+    throw APIError.from('BAD_REQUEST', {
+      code: 'ID_TOKEN_NOT_SUPPORTED',
+      message: 'Sign in with Google through the redirect',
+    });
   }
 
   // Sign-up with Google: the same F-03.1 rules, checked before the user leaves
@@ -160,9 +171,25 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
             });
           }
           const { username, gender, birthYear } = registration;
+          // The nickname was free when the user left for Google; someone may
+          // have taken it since. BetterAuth turns an API error with a code
+          // into `?error=<code>` on the return address.
+          const taken = await ctx.context.adapter.findOne({
+            model: 'user',
+            where: [{ field: 'username', value: username.toLowerCase() }],
+          });
+          if (taken) {
+            throw APIError.from('BAD_REQUEST', {
+              code: 'USERNAME_IS_ALREADY_TAKEN',
+              message: 'Username is already taken. Please try another.',
+            });
+          }
           return {
             data: {
               ...user,
+              // The app keeps only its own pictures in `user.image`: the
+              // Google photo is stored as a WebP data URL, not as a link.
+              image: await googleAvatarAsDataUrl(user.image),
               // #212: the nickname the user typed, not the Google name, is the
               // public name (ADR-0025); `username` is its lower-cased form.
               name: username,

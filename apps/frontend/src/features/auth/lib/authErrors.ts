@@ -77,6 +77,9 @@ export function googleErrorMessage(t: TFunction, code: string) {
   switch (code) {
     case "new_user_signup_disabled":
       return t("auth.errors.googleNoAccount")
+    // The nickname was taken while the user was at Google.
+    case "USERNAME_IS_ALREADY_TAKEN":
+      return t("nickname.taken")
     case "account_not_linked":
     case "unable_to_link_account":
       return t("auth.errors.googleEmailExists")

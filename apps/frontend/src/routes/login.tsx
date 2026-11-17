@@ -13,7 +13,7 @@ import { GoogleButton, OrDivider } from "@/features/auth/components/GoogleButton
 import { SignInForm, type SignInFormValues } from "@/features/auth/components/SignInForm"
 import { useSignIn } from "@/features/auth/hooks/useSignIn"
 import { authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
-import { redirectTarget } from "@/features/auth/lib/redirect"
+import { redirectTargetOutside } from "@/features/auth/lib/redirect"
 import { onboardingQueryOptions } from "@/features/onboarding/api/onboardingQueryOptions"
 
 const loginSearchParamsSchema = z.object({
@@ -37,13 +37,13 @@ export const Route = createFileRoute("/login")({
     if (onboarding?.completedAt === null) {
       throw redirect({ to: ROUTES.onboarding, search: { from: deps.from } })
     }
-    throw redirect({ to: redirectTarget(deps.from, ROUTES.home) })
+    throw redirect({ to: redirectTargetOutside(deps.from, ROUTES.home, ROUTES.login) })
   },
 })
 
 function LoginPage() {
   const { from, error: googleError } = Route.useSearch()
-  const redirectTo = redirectTarget(from, ROUTES.home)
+  const redirectTo = redirectTargetOutside(from, ROUTES.home, ROUTES.login)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslation()

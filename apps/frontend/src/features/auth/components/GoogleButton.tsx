@@ -109,7 +109,7 @@ export function GoogleButton({ from, getRegistration }: GoogleButtonProps) {
         disabled={isPending}
         onClick={handleClick}
       >
-        {isPending ? <Loader2 className="size-4 animate-spin" /> : <GoogleLogo />}
+        {isPending ? <Loader2 className="size-4 motion-safe:animate-spin" /> : <GoogleLogo />}
         {t("auth.google.button")}
       </Button>
     </div>
