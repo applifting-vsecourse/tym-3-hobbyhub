@@ -27,6 +27,10 @@ describe('PublicProfileResponseDto', () => {
       friendsSeeEventHistory: true,
       friendsSeeUpcomingEvents: false,
       nicknameChangeableFrom: new Date('2026-12-01T00:00:00Z'),
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: 4, average: 4.5 },
+      },
     } as unknown as PublicProfile;
     const response = PublicProfileResponseDto.fromDomain(profile);
     expect(response).not.toHaveProperty('email');
@@ -38,6 +42,7 @@ describe('PublicProfileResponseDto', () => {
       'image',
       'interests',
       'name',
+      'ratings',
     ]);
   });
 });
@@ -59,6 +64,10 @@ describe('ProfileResponseDto', () => {
       friendVisibility: {
         friendsSeeEventHistory: false,
         friendsSeeUpcomingEvents: true,
+      },
+      ratings: {
+        asOrganizer: { count: 0, average: null },
+        asParticipant: { count: 0, average: null },
       },
     };
     expect(ProfileResponseDto.fromDomain(profile)).toMatchObject({
