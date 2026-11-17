@@ -42,6 +42,41 @@ describe('PublicProfileResponseDto', () => {
       'relation',
     ]);
   });
+
+  // #226: a friend's events only when the profile carries them.
+  it("carries a friend's events only when they are there", () => {
+    const page = {
+      items: [
+        {
+          id: 'e1',
+          title: 'Florbal',
+          startAt: new Date('2026-11-20T18:00:00Z'),
+          activity: { id: 'a1', name: 'Florbal', icon: 'florbal' },
+          isHidden: false,
+          organizerId: 'secret',
+        },
+      ],
+      total: 1,
+      nextOffset: null,
+    };
+    const base = {
+      id: 'u2',
+      name: 'Petr',
+      relation: 'friends',
+      bio: null,
+      image: null,
+      cover: null,
+      interests: [],
+    };
+    const withPast = PublicProfileResponseDto.fromDomain({
+      ...base,
+      pastEvents: page,
+    } as unknown as PublicProfile);
+    expect(withPast).not.toHaveProperty('upcomingEvents');
+    expect(withPast.pastEvents?.items[0]).not.toHaveProperty('organizerId');
+    expect(withPast.pastEvents?.items[0]).not.toHaveProperty('isHidden');
+    expect(withPast.pastEvents).toMatchObject({ total: 1, nextOffset: null });
+  });
 });
 
 describe('ProfileResponseDto', () => {

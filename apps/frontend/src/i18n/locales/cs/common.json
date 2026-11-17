@@ -702,6 +702,28 @@
       "title": "Nová akce",
       "updateFailed": "Změny se nepodařilo uložit. Zkuste to prosím znovu."
     },
+    "friends": {
+      "and": "a",
+      "less": "Zobrazit méně",
+      "more_few": "a {{count}} další",
+      "more_one": "a {{count}} další",
+      "more_other": "a {{count}} dalších",
+      "past_few": "Akce se zúčastnili vaši přátelé",
+      "past_one": "Akce se z vašich přátel zúčastnil(a)",
+      "past_other": "Akce se zúčastnili vaši přátelé",
+      "upcoming_few": "Jdou vaši přátelé",
+      "upcoming_one": "Z vašich přátel jde",
+      "upcoming_other": "Jdou vaši přátelé"
+    },
+    "friendsEvents": {
+      "all": "Všechny akce přátel",
+      "empty": "Vaši přátelé zatím nikam nejdou. Uvidíte tu akce přátel, kteří je s přáteli sdílejí.",
+      "list": "Akce přátel",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další akce se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Načítáme akce přátel…",
+      "previewTitle": "Kam jdou přátelé"
+    },
     "list": {
       "count_few": "{{count}} akce",
       "count_one": "{{count}} akce",
@@ -771,6 +793,24 @@
       "you": "Tvoje poloha"
     },
     "online": "Online",
+    "personEvents": {
+      "empty": {
+        "past": "Zatím žádné proběhlé akce.",
+        "upcoming": "Žádné nadcházející akce."
+      },
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další akce se nepodařilo načíst. Zkuste to znovu.",
+      "only": {
+        "past": "Proběhlé akce",
+        "upcoming": "Nadcházející akce"
+      },
+      "periods": {
+        "past": "Proběhlé",
+        "upcoming": "Nadcházející"
+      },
+      "periodsLabel": "Nadcházející a proběhlé akce",
+      "title": "Akce"
+    },
     "placeholders": {
       "addressSearch": "Začněte psát ulici a město",
       "city": "Např. Praha 8",
@@ -849,10 +889,40 @@
       "friends": "Zatím tu nikoho nemáte. Až vám někdo přijme žádost o přátelství, uvidíte ho tady.",
       "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady."
     },
+    "list": {
+      "count_few": "{{count}} přátelé",
+      "count_one": "{{count}} přítel",
+      "count_other": "{{count}} přátel",
+      "error": "Přátele se nepodařilo načíst.",
+      "label": "Vaši přátelé",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další přátele se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Načítáme přátele…",
+      "loadingMore": "Načítáme…",
+      "retry": "Zkusit znovu",
+      "since": "Přátelé od {{date}}",
+      "sort": {
+        "name_asc": "A–Z",
+        "name_desc": "Z–A",
+        "newest": "Nejnovější",
+        "oldest": "Nejstarší"
+      },
+      "sortLabel": "Řazení přátel",
+      "title": "Seznam vašich přátel"
+    },
     "relation": {
       "friends": "Přítel",
       "request_received": "Chce se spřátelit",
       "request_sent": "Žádost odeslána"
+    },
+    "remove": {
+      "button": "Odebrat z přátel",
+      "buttonLabel": "Odebrat z přátel: {{name}}",
+      "confirm": "Odebrat z přátel",
+      "error": "Přítele se nepodařilo odebrat. Zkuste to prosím znovu.",
+      "keep": "Ponechat",
+      "text": "{{name}} se to nedozví. Přestanete navzájem vidět své akce. O přátelství můžete požádat znovu.",
+      "title": "Odebrat z přátel?"
     },
     "requests": {
       "accept": "Přijmout",
@@ -891,6 +961,7 @@
       "retry": "Zkusit znovu"
     },
     "tabs": {
+      "events": "Akce přátel",
       "friends": "Přátelé",
       "label": "Části sekce Přátelé",
       "requests": "Žádosti",

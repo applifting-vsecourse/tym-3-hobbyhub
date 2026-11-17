@@ -37,3 +37,15 @@ export async function withdrawFriendRequest(recipientId: string): Promise<Friend
     throw error
   }
 }
+
+/**
+ * #226: ends the friendship with the person, for both of us; they are not
+ * told. Already not friends (removed from another window) is no failure: the
+ * server answers the same.
+ */
+export async function removeFriend(friendId: string): Promise<FriendRelation> {
+  const response = friendRelationResponseSchema.parse(
+    await api.delete(`friends/${encodeURIComponent(friendId)}`).json(),
+  )
+  return response.relation
+}

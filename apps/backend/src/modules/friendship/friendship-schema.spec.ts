@@ -716,4 +716,200 @@ describeDb('friendship schema constraints', () => {
       });
     });
   });
+
+  // #226: the list of friends, which of them allow their events, removing one.
+  describe('friends (#226)', () => {
+    const repositoryOf = (tx: Prisma.TransactionClient): FriendshipRepository =>
+      new FriendshipRepository(tx as unknown as PrismaService);
+
+    const befriend = async (
+      tx: Prisma.TransactionClient,
+      one: string,
+      other: string,
+      createdAt: Date,
+    ): Promise<void> => {
+      await tx.friendship.create({
+        data: { ...friendPairOf(one, other), createdAt },
+      });
+    };
+
+    it('lists my friends from either side of the pair, in each order', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const me = await createUser(tx);
+        // Ids on both sides of mine, so I am userA in one pair and userB in another.
+        const anna = await createUser(tx, `0-${token}`, {
+          name: `Anna ${token}`,
+        });
+        const zdenek = await createUser(tx, `zz-${token}`, {
+          name: `Žaneta ${token}`,
+        });
+        const cyril = await createUser(tx, undefined, {
+          name: `čenda ${token}`,
+        });
+        const stranger = await createUser(tx);
+        await befriend(tx, me, anna, new Date('2026-11-01T10:00:00Z'));
+        await befriend(tx, zdenek, me, new Date('2026-11-03T10:00:00Z'));
+        await befriend(tx, me, cyril, new Date('2026-11-02T10:00:00Z'));
+        await befriend(tx, anna, stranger, new Date('2026-11-04T10:00:00Z'));
+        const repository = repositoryOf(tx);
+        const names = async (
+          sort: 'newest' | 'oldest' | 'name_asc' | 'name_desc',
+        ): Promise<string[]> =>
+          (await repository.listFriends(me, sort, 0, 20)).items.map(
+            (friend) => friend.name,
+          );
+
+        expect(await names('newest')).toEqual([
+          `Žaneta ${token}`,
+          `čenda ${token}`,
+          `Anna ${token}`,
+        ]);
+        expect(await names('oldest')).toEqual([
+          `Anna ${token}`,
+          `čenda ${token}`,
+          `Žaneta ${token}`,
+        ]);
+        // Without case and diacritics: č sorts as c, Ž as z.
+        expect(await names('name_asc')).toEqual([
+          `Anna ${token}`,
+          `čenda ${token}`,
+          `Žaneta ${token}`,
+        ]);
+        expect(await names('name_desc')).toEqual([
+          `Žaneta ${token}`,
+          `čenda ${token}`,
+          `Anna ${token}`,
+        ]);
+        const page = await repository.listFriends(me, 'oldest', 1, 1);
+        expect(page.total).toBe(3);
+        expect(page.items).toEqual([
+          {
+            id: cyril,
+            name: `čenda ${token}`,
+            image: null,
+            friendsSince: new Date('2026-11-02T10:00:00Z'),
+          },
+        ]);
+      });
+    });
+
+    it('leaves blocked, deleted and excluded friends out of the page and the total', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const active = await createUser(tx);
+        const blocked = await createUser(tx, undefined, { status: 'BLOCKED' });
+        const deleted = await createUser(tx, undefined, { status: 'DELETED' });
+        const excluded = await createUser(tx);
+        const when = new Date('2026-11-01T10:00:00Z');
+        for (const friend of [active, blocked, deleted, excluded]) {
+          await befriend(tx, me, friend, when);
+        }
+
+        const page = await repositoryOf(tx).listFriends(me, 'newest', 0, 20, [
+          excluded,
+        ]);
+
+        expect(page.items.map((friend) => friend.id)).toEqual([active]);
+        expect(page.total).toBe(1);
+        await expect(
+          repositoryOf(tx).countFriends(me, [excluded]),
+        ).resolves.toBe(1);
+      });
+    });
+
+    it('gives only friends whose switch allows it', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const both = await createUser(tx, undefined, {
+          friendsSeeUpcomingEvents: true,
+          friendsSeeEventHistory: true,
+        });
+        const historyOnly = await createUser(tx);
+        const none = await createUser(tx, undefined, {
+          friendsSeeEventHistory: false,
+        });
+        const notFriend = await createUser(tx, undefined, {
+          friendsSeeUpcomingEvents: true,
+        });
+        const gone = await createUser(tx, undefined, {
+          status: 'DELETED',
+          friendsSeeUpcomingEvents: true,
+        });
+        const when = new Date();
+        for (const friend of [both, historyOnly, none, gone]) {
+          await befriend(tx, friend, me, when);
+        }
+        expect(notFriend).toBeTruthy();
+        const repository = repositoryOf(tx);
+
+        await expect(
+          repository.findFriendIdsAllowing(me, 'friendsSeeUpcomingEvents'),
+        ).resolves.toEqual([both]);
+        expect(
+          (
+            await repository.findFriendIdsAllowing(me, 'friendsSeeEventHistory')
+          ).sort(),
+        ).toEqual([both, historyOnly].sort());
+      });
+    });
+
+    it("gives a friend's switches, and nothing to someone who is not a friend", async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const friend = await createUser(tx, undefined, {
+          friendsSeeUpcomingEvents: true,
+        });
+        const other = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: me, recipientId: other },
+        });
+        await befriend(tx, me, friend, new Date());
+        const repository = repositoryOf(tx);
+
+        await expect(
+          repository.findFriendVisibility(me, friend),
+        ).resolves.toEqual({
+          friendsSeeEventHistory: true,
+          friendsSeeUpcomingEvents: true,
+        });
+        // A pending request is not a friendship.
+        await expect(
+          repository.findFriendVisibility(me, other),
+        ).resolves.toBeNull();
+      });
+    });
+
+    it('removes the friendship for both and keeps the request as history', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const friend = await createUser(tx);
+        const accepted = await tx.friendRequest.create({
+          data: {
+            senderId: friend,
+            recipientId: me,
+            status: 'ACCEPTED',
+            decidedAt: new Date(),
+          },
+        });
+        await befriend(tx, me, friend, new Date());
+        const repository = repositoryOf(tx);
+
+        await expect(repository.removeFriendship(friend, me)).resolves.toBe(
+          true,
+        );
+        await expect(repository.areFriends(me, friend)).resolves.toBe(false);
+        await expect(repository.removeFriendship(me, friend)).resolves.toBe(
+          false,
+        );
+        expect(
+          await tx.friendRequest.findUniqueOrThrow({
+            where: { id: accepted.id },
+          }),
+        ).toMatchObject({ status: 'ACCEPTED' });
+        // A new request may follow.
+        await repository.createRequest(me, friend);
+      });
+    });
+  });
 });

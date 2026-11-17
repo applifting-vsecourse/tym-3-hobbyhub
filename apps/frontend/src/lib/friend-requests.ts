@@ -10,6 +10,8 @@ import { api, HTTPError } from "@/lib/api-client"
 export const friendshipRootKey = ["friendship"] as const
 export const notificationsRootKey = ["notifications"] as const
 export const profileRootKey = ["profile"] as const
+// #226: the events, where friends show (the detail, „Akce přátel“).
+export const eventsRootKey = ["events"] as const
 
 /**
  * What a decision refreshes: the requests and their number, the
@@ -21,6 +23,13 @@ export const FRIEND_REQUEST_DECISION_REFRESHES = [
   notificationsRootKey,
   profileRootKey,
 ] as const
+
+/**
+ * #226: what removing a friend refreshes: the friends and the search (the
+ * relation), the profile (the relation and the friend's events) and the
+ * events, which no longer name the one removed.
+ */
+export const FRIEND_REMOVAL_REFRESHES = [friendshipRootKey, profileRootKey, eventsRootKey] as const
 
 export type FriendRequestDecision = "accept" | "reject"
 

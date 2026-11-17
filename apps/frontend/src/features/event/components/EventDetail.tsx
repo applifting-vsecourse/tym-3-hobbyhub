@@ -13,6 +13,7 @@ import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { cn } from "@/lib/utils"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
+import { FriendsOnEvent } from "@/features/event/components/FriendsOnEvent"
 import { formatContribution } from "@/features/event/lib/eventDateTime"
 import { eventDay, eventEnd, eventPlace, eventTime } from "@/features/event/lib/eventLabels"
 
@@ -238,6 +239,14 @@ export function EventDetail({
             }}
           />
         </p>
+        {/* #226: which of my friends go, or were there once it is over. */}
+        {event.friends ? (
+          <FriendsOnEvent
+            friends={event.friends}
+            period={event.endAt > now ? "upcoming" : "past"}
+            variant="band"
+          />
+        ) : null}
         {groupLink}
         {organizerActions}
       </header>

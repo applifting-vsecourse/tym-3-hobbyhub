@@ -1,3 +1,4 @@
+import { PersonEventPage } from '@/modules/event/domain/event';
 import {
   FriendRelation,
   FriendVisibility,
@@ -70,6 +71,13 @@ export type PublicProfile = {
   interests: Interest[];
   /** #225: where the viewer stands with the person. Only the viewer gets it. */
   relation: FriendRelation;
+  /**
+   * #226: the first page of the person's upcoming events, only for a friend
+   * and only when the person lets friends see them; absent otherwise.
+   */
+  upcomingEvents?: PersonEventPage;
+  /** #226: the first page of the past events, by the history switch the same way. */
+  pastEvents?: PersonEventPage;
 };
 
 export type ProfileViolation =

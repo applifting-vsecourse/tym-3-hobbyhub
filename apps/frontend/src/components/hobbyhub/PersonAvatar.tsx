@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
 const SIZES = {
+  // #226: a row of friends on an event, beside their names.
+  sm: "size-6 text-[10px]",
   md: "size-10",
   xl: "size-14",
   "2xl": "size-24 text-3xl md:size-28",
@@ -50,8 +52,8 @@ export function PersonAvatar({ name, photo, size = "md", className }: PersonAvat
     return (
       <ActivityAvatar
         avatar={illustration}
-        size={size === "2xl" ? "2xl" : size === "xl" ? "xl" : "md"}
-        className={cn(size === "2xl" && "size-24 md:size-28", className)}
+        size={size === "2xl" ? "2xl" : size === "xl" ? "xl" : size === "sm" ? "xs" : "md"}
+        className={cn(size === "2xl" && "size-24 md:size-28", size === "sm" && "size-6", className)}
       />
     )
   }

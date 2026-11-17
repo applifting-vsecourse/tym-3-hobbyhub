@@ -1,9 +1,16 @@
 import {
   FRIEND_SEARCH_PAGE_SIZE,
+  FriendEventsPeriod,
+  FriendListSort,
+  FriendPage,
   FriendRelation,
+  friendRemovalViolations,
   friendRequestNotifyWindowStart,
   friendRequestViolations,
+  FRIENDS_PAGE_SIZE,
   FriendSearchPage,
+  FriendVisibility,
+  friendVisibilitySwitchOf,
   isFriendRequestNotified,
   RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
   ReceivedFriendRequestPage,
@@ -33,7 +40,8 @@ export type SentFriendRequest = {
 
 // #227, #225, #228, ADR-0026: what other modules ask about friendships,
 // searching people, sending a request, withdrawing it and deciding it. #226
-// adds the list of friends.
+// adds the list of friends, removing a friend and which friends let friends
+// see their events.
 @Injectable()
 export class FriendshipService {
   constructor(
@@ -326,6 +334,85 @@ export class FriendshipService {
         this.notifications.removeFriendRequestNotifications({ id }),
       ),
     );
+  }
+
+  /**
+   * #226: a page of the signed-in person's friends in the order asked, with
+   * how many there are. Nobody blocked with them either way (#239): a block
+   * ends the friendship anyway, this keeps the list right while #65 lands.
+   */
+  /** #226: how many friends the list has (the tab's number), the same people. */
+  async countFriends(user: Identity): Promise<number> {
+    return this.friendshipRepository.countFriends(
+      user.id,
+      await this.blockedWith(user.id),
+    );
+  }
+
+  async listFriends(
+    user: Identity,
+    sort: FriendListSort,
+    offset: number,
+  ): Promise<FriendPage> {
+    const { items, total } = await this.friendshipRepository.listFriends(
+      user.id,
+      sort,
+      offset,
+      FRIENDS_PAGE_SIZE,
+      await this.blockedWith(user.id),
+    );
+    return {
+      items,
+      total,
+      nextOffset:
+        items.length > 0 && offset + items.length < total
+          ? offset + items.length
+          : null,
+    };
+  }
+
+  /**
+   * #226: the signed-in person stops being friends with the other, for both
+   * of them. Silent: nobody is told. Refused to oneself (400). Already not
+   * friends (removed from another window, a block) is the same success, so
+   * the client only reloads; the other may be asked again afterwards.
+   */
+  async removeFriend(
+    user: Identity,
+    friendId: string,
+  ): Promise<FriendRelation> {
+    const violations = friendRemovalViolations(user.id, friendId);
+    if (violations.length > 0) throw new BadRequestException(violations);
+    await this.friendshipRepository.removeFriendship(user.id, friendId);
+    return 'none';
+  }
+
+  /**
+   * #226: the viewer's friends who let friends see their events of the
+   * period (the switches of ADR-0026), filtered in the database. The event
+   * module asks this before it looks for events or names.
+   */
+  async friendIdsShowingEvents(
+    viewerId: string,
+    period: FriendEventsPeriod,
+  ): Promise<string[]> {
+    return this.friendshipRepository.findFriendIdsAllowing(
+      viewerId,
+      friendVisibilitySwitchOf(period),
+    );
+  }
+
+  /**
+   * #226: what the other person lets the viewer see of their events: their
+   * switches when the two are friends, null otherwise (not friends, a pending
+   * request only, oneself).
+   */
+  async friendVisibilityFor(
+    viewerId: string,
+    otherId: string,
+  ): Promise<FriendVisibility | null> {
+    if (viewerId === otherId) return null;
+    return this.friendshipRepository.findFriendVisibility(viewerId, otherId);
   }
 
   // #239: the people blocked with the user either way: by an administrator

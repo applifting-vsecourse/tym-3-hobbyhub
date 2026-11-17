@@ -1,3 +1,4 @@
+import { PersonEventPageResponseDto } from '@/modules/event/controllers/dto/friend-events.response.dto';
 import { SaveActivitiesDto } from '@/modules/onboarding/controllers/dto/save-onboarding.dto';
 import { ProfileService } from '@/modules/profile/services/profile.service';
 import { User } from '@/shared/auth/decorators/user.decorator';
@@ -11,6 +12,7 @@ import {
   Param,
   Patch,
   Put,
+  Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -20,6 +22,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  FriendEventsPageQuery,
+  FriendEventsParams,
+} from './dto/friend-events.params';
 import {
   ProfileResponseDto,
   PublicProfileResponseDto,
@@ -64,6 +70,34 @@ export class ProfileController {
   ): Promise<PublicProfileResponseDto> {
     return PublicProfileResponseDto.fromDomain(
       await this.profileService.getPublicProfile(userId, user),
+    );
+  }
+
+  // #226: further pages of a friend's events; the first comes with the profile.
+  @Get(':userId/events/:period')
+  @ApiOperation({
+    summary:
+      "A page of a friend's upcoming or past events, when they let friends see them",
+  })
+  @ApiResponse({ status: 200, type: PersonEventPageResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid period or offset' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({
+    status: 404,
+    description: 'Not a friend, or they do not let friends see these events',
+  })
+  async getFriendEvents(
+    @User() user: Identity,
+    @Param() params: FriendEventsParams,
+    @Query() query: FriendEventsPageQuery,
+  ): Promise<PersonEventPageResponseDto> {
+    return PersonEventPageResponseDto.fromDomain(
+      await this.profileService.getFriendEvents(
+        params.userId,
+        user,
+        params.period,
+        query.offset,
+      ),
     );
   }
 

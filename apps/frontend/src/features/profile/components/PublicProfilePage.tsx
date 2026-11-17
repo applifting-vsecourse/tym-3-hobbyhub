@@ -24,6 +24,7 @@ export function PublicProfilePage({
   ownUserId,
   activityLabel,
   renderFriendAction,
+  renderEvents,
   reportAction,
 }: {
   userId: string
@@ -40,6 +41,16 @@ export function PublicProfilePage({
     userName: string
     relation: PublicProfile["relation"]
     reload: () => Promise<unknown>
+  }) => ReactNode
+  /**
+   * #226: a friend's events, from the first pages the profile brought; the
+   * event feature owns them. `loadedAt` says how fresh they are.
+   */
+  renderEvents?: (profile: {
+    id: string
+    upcomingEvents: unknown
+    pastEvents: unknown
+    loadedAt: number
   }) => ReactNode
   /** "Nahlásit uživatele" (#240) for the loaded profile; the report feature owns it. */
   reportAction?: (profile: { id: string; name: string }) => ReactNode
@@ -100,6 +111,12 @@ export function PublicProfilePage({
                 userName: profile.data.name,
                 relation: profile.data.relation,
                 reload: () => profile.refetch(),
+              })}
+              events={renderEvents?.({
+                id: profile.data.id,
+                upcomingEvents: profile.data.upcomingEvents,
+                pastEvents: profile.data.pastEvents,
+                loadedAt: profile.dataUpdatedAt,
               })}
             />
             {reportAction ? (

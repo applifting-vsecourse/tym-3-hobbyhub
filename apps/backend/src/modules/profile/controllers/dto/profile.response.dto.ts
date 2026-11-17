@@ -1,4 +1,5 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
+import { PersonEventPageResponseDto } from '@/modules/event/controllers/dto/friend-events.response.dto';
 import {
   FRIEND_RELATIONS,
   FriendRelation,
@@ -10,7 +11,7 @@ import {
 } from '@/modules/onboarding/controllers/dto/onboarding.response.dto';
 import { Profile, PublicProfile } from '@/modules/profile/domain/profile';
 import { GENDERS } from '@/shared/auth/registration/registration';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ProfileResponseDto {
   @ApiProperty({ description: 'The public nickname, unique' })
@@ -132,6 +133,20 @@ export class PublicProfileResponseDto {
   })
   relation!: FriendRelation;
 
+  @ApiPropertyOptional({
+    type: PersonEventPageResponseDto,
+    description:
+      '#226: the first page of upcoming events (approved seat or organized). Only for a friend whose switch allows it; absent otherwise',
+  })
+  upcomingEvents?: PersonEventPageResponseDto;
+
+  @ApiPropertyOptional({
+    type: PersonEventPageResponseDto,
+    description:
+      '#226: the first page of past events (seat or organized). Only for a friend whose switch allows it; absent otherwise',
+  })
+  pastEvents?: PersonEventPageResponseDto;
+
   static fromDomain(profile: PublicProfile): PublicProfileResponseDto {
     return {
       id: profile.id,
@@ -146,6 +161,14 @@ export class PublicProfileResponseDto {
           ? LevelResponseDto.fromDomain(interest.level)
           : null,
       })),
+      ...(profile.upcomingEvents && {
+        upcomingEvents: PersonEventPageResponseDto.fromDomain(
+          profile.upcomingEvents,
+        ),
+      }),
+      ...(profile.pastEvents && {
+        pastEvents: PersonEventPageResponseDto.fromDomain(profile.pastEvents),
+      }),
     };
   }
 }

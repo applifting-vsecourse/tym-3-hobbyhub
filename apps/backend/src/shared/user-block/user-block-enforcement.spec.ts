@@ -7,6 +7,7 @@ import {
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { EventsService } from '@/modules/event/services/events.service';
+import { FriendEventsService } from '@/modules/event/services/friend-events.service';
 import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { Group } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
@@ -127,6 +128,7 @@ describe('blocks between two people (#239)', () => {
         mock<OnboardingService>(),
         mock<FriendshipService>(),
         blockedFromViewer(),
+        mock<FriendEventsService>(),
       );
 
       await expect(

@@ -8,10 +8,10 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 import type { FriendSearchItem } from "@/features/friendship/api/friendshipSchemas"
 import { FriendSearch } from "@/features/friendship/components/FriendSearch"
 
-const { get } = vi.hoisted(() => ({ get: vi.fn() }))
+const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  api: { get },
+  api: { get, post },
 }))
 
 const answer = (body: unknown) => get.mockReturnValueOnce({ json: () => Promise.resolve(body) })
@@ -38,7 +38,10 @@ const renderSearch = (text: string, onTypedChange = vi.fn()) =>
   )
 
 describe("FriendSearch", () => {
-  beforeEach(() => get.mockReset())
+  beforeEach(() => {
+    get.mockReset()
+    post.mockReset()
+  })
 
   it.each(["", "n"])("asks for 2 characters and searches nothing for %j", async (text) => {
     await renderSearch(text)
@@ -81,11 +84,38 @@ describe("FriendSearch", () => {
       "/profile/u5",
     ])
     expect(links[0]).toHaveTextContent("janca_n")
-    expect(links[1]).toHaveTextContent("Žádost odeslána")
-    expect(links[2]).toHaveTextContent("Chce se spřátelit")
-    expect(links[3]).toHaveTextContent("Přítel")
+    const cards = within(list).getAllByRole("listitem")
+    expect(cards[1]).toHaveTextContent("Žádost odeslána")
+    expect(cards[2]).toHaveTextContent("Chce se spřátelit")
+    expect(cards[3]).toHaveTextContent("Přítel")
+    // #226: only a friend can be removed right from the search.
+    expect(within(list).getAllByRole("button", { name: /Odebrat z přátel/ })).toHaveLength(1)
+    expect(
+      within(cards[3]!).getByRole("button", { name: "Odebrat z přátel: Tereza Novotná" }),
+    ).toBeInTheDocument()
+    // #226: and only someone with no relation can be asked right from here.
+    expect(within(list).getAllByRole("button", { name: /^Spřátelit/ })).toHaveLength(1)
+    expect(
+      within(cards[0]!).getByRole("button", { name: "Spřátelit: janca_n" }),
+    ).toBeInTheDocument()
     expect(get).toHaveBeenCalledWith("friends/search", { searchParams: { q: "nov" } })
     expect(screen.queryByRole("button", { name: "Načíst další" })).toBeNull()
+  })
+
+  it("asks for friendship right from the search and loads it again (#226)", async () => {
+    answer({ items: [person({ id: "u2", name: "janca_n" })], nextOffset: null })
+    answer({
+      items: [person({ id: "u2", name: "janca_n", relation: "request_sent" })],
+      nextOffset: null,
+    })
+    post.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "request_sent" }) })
+    await renderSearch("nov")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Spřátelit: janca_n" }))
+
+    expect(post).toHaveBeenCalledWith("friends/requests", { json: { recipientId: "u2" } })
+    expect(await screen.findByText("Žádost odeslána")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^Spřátelit/ })).toBeNull()
   })
 
   it("says nobody was found", async () => {

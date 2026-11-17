@@ -5,9 +5,12 @@ import { api } from "@/lib/api-client"
 import { friendshipKeys } from "@/features/friendship/api/friendshipKeys"
 import {
   FRIEND_SEARCH_MIN_LENGTH,
+  friendCountSchema,
+  friendPageSchema,
   friendRequestCountSchema,
   friendSearchPageSchema,
   receivedFriendRequestPageSchema,
+  type FriendListSort,
 } from "@/features/friendship/api/friendshipSchemas"
 
 /** #225: people whose nickname contains the text, a page at a time. */
@@ -44,6 +47,29 @@ export const receivedFriendRequestsQueryOptions = () =>
       ),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
+  })
+
+/** #226: my friends in the chosen order, 20 at a time, with how many there are. */
+export const friendsListQueryOptions = (sort: FriendListSort) =>
+  infiniteQueryOptions({
+    queryKey: friendshipKeys.list(sort),
+    queryFn: async ({ pageParam }) =>
+      friendPageSchema.parse(
+        await api
+          .get("friends", {
+            searchParams: pageParam ? { sort, offset: pageParam } : { sort },
+          })
+          .json(),
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+  })
+
+/** #226: how many friends I have, without loading them (the tab's number). */
+export const friendCountQueryOptions = () =>
+  queryOptions({
+    queryKey: friendshipKeys.count(),
+    queryFn: async () => friendCountSchema.parse(await api.get("friends/count").json()).count,
   })
 
 /** #228: how many requests wait for me, without loading them (the tab's number). */

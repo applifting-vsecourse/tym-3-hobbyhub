@@ -14,6 +14,8 @@ type PublicProfileViewProps = {
   activityLabel: (activity: { name: string; icon: string }) => string
   /** #225: what I can do about friendship, under the bio. */
   friendAction?: ReactNode
+  /** #226: a friend's events, under the friendship. */
+  events?: ReactNode
 }
 
 /**
@@ -25,6 +27,7 @@ export function PublicProfileView({
   profile,
   activityLabel,
   friendAction,
+  events,
 }: PublicProfileViewProps) {
   const { t } = useTranslation()
 
@@ -53,6 +56,8 @@ export function PublicProfileView({
         </div>
         {friendAction ? <div className="mt-6 px-1">{friendAction}</div> : null}
       </div>
+
+      {events}
 
       {profile.interests.length > 0 ? (
         <section
