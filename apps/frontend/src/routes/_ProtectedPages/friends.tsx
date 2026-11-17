@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { Seo } from "@/components/Seo"
+import { useSearchText } from "@/hooks/useSearchText"
 
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import { FriendsSection } from "@/features/friendship/components/FriendsSection"
 import { friendsSearchSchema } from "@/features/friendship/lib/friendsSearch"
 

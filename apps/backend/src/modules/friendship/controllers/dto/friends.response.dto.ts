@@ -46,12 +46,19 @@ export class FriendSearchPageResponseDto {
   })
   nextOffset!: number | null;
 
+  @ApiProperty({
+    description:
+      'More people match than the search shows (100): narrow the nickname',
+  })
+  isCapped!: boolean;
+
   static fromDomain(page: FriendSearchPage): FriendSearchPageResponseDto {
     return {
       items: page.items.map((item) =>
         FriendSearchItemResponseDto.fromDomain(item),
       ),
       nextOffset: page.nextOffset,
+      isCapped: page.isCapped,
     };
   }
 }

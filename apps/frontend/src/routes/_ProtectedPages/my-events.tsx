@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 import { Seo } from "@/components/Seo"
+import { useSearchText } from "@/hooks/useSearchText"
 
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
@@ -21,7 +22,6 @@ import {
 } from "@/features/event/api/myEventsQueryOptions"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import {
   eventsSearchSchema,
   filtersFromSearch,

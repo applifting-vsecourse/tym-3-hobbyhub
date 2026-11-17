@@ -1,4 +1,5 @@
 import {
+  FRIEND_SEARCH_MAX_RESULTS,
   FRIEND_SEARCH_PAGE_SIZE,
   FriendRequest,
 } from '@/modules/friendship/domain/friendship';
@@ -162,6 +163,7 @@ describe('FriendshipService', () => {
           },
         ],
         nextOffset: null,
+        isCapped: false,
       });
       expect(repository.findRelationsWith).toHaveBeenCalledWith('u1', [
         'u2',
@@ -185,6 +187,42 @@ describe('FriendshipService', () => {
         `p${FRIEND_SEARCH_PAGE_SIZE}`,
       );
       expect(page.nextOffset).toBe(20 + FRIEND_SEARCH_PAGE_SIZE);
+      expect(page.isCapped).toBe(false);
+    });
+
+    // Review of #225: a short text must not page through every user.
+    it('stops at the last page allowed and says more people match', async () => {
+      const { repository, service } = setup();
+      repository.searchUsers.mockResolvedValue(
+        Array.from({ length: FRIEND_SEARCH_PAGE_SIZE + 1 }, (_, i) =>
+          aFound(`p${i}`),
+        ),
+      );
+      repository.findRelationsWith.mockImplementation((_viewerId, ids) =>
+        Promise.resolve(noRelations(ids)),
+      );
+      const page = await service.search(
+        me,
+        'pe',
+        FRIEND_SEARCH_MAX_RESULTS - FRIEND_SEARCH_PAGE_SIZE,
+      );
+      expect(page.items).toHaveLength(FRIEND_SEARCH_PAGE_SIZE);
+      expect(page.nextOffset).toBeNull();
+      expect(page.isCapped).toBe(true);
+    });
+
+    it('is not capped when the last page allowed is also the last match', async () => {
+      const { repository, service } = setup();
+      repository.searchUsers.mockResolvedValue([aFound('p1')]);
+      repository.findRelationsWith.mockImplementation((_viewerId, ids) =>
+        Promise.resolve(noRelations(ids)),
+      );
+      const page = await service.search(
+        me,
+        'pe',
+        FRIEND_SEARCH_MAX_RESULTS - FRIEND_SEARCH_PAGE_SIZE,
+      );
+      expect(page).toMatchObject({ nextOffset: null, isCapped: false });
     });
   });
 

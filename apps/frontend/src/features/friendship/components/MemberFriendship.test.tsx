@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
@@ -60,6 +61,29 @@ describe("MemberFriendship", () => {
     await vi.waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
         "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
+      ),
+    )
+  })
+
+  // Review of #225: a restricted account is told why, not to try again.
+  it("says a restricted account cannot ask", async () => {
+    post.mockReturnValueOnce({
+      json: () =>
+        Promise.reject(
+          new HTTPError(
+            new Response("{}", { status: 403 }),
+            new Request("http://x/api/friends/requests"),
+            {} as never,
+          ),
+        ),
+    })
+    await renderRow("none")
+
+    await userEvent.click(screen.getByRole("button", { name: "Spřátelit: Libor" }))
+
+    await vi.waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "Váš účet je omezený, o přátelství teď žádat nemůžete.",
       ),
     )
   })

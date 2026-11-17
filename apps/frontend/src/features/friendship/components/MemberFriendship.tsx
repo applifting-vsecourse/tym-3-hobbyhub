@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 
+import { sendFriendRequestErrorKey } from "@/features/friendship/api/friendshipRequests"
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRelationBadge } from "@/features/friendship/components/FriendRelationBadge"
 import { useSendFriendRequest } from "@/features/friendship/hooks/useSendFriendRequest"
@@ -36,7 +37,9 @@ export function MemberFriendship({ userId, name, relation, reload }: MemberFrien
       aria-label={t("friends.action.sendShortLabel", { name })}
       disabled={send.isPending}
       onClick={() =>
-        send.mutate(undefined, { onError: () => toast.error(t("friends.action.error")) })
+        send.mutate(undefined, {
+          onError: (error) => toast.error(t(sendFriendRequestErrorKey(error))),
+        })
       }
     >
       <UserPlus aria-hidden />

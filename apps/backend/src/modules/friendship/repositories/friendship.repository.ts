@@ -70,7 +70,7 @@ export class FriendshipRepository {
   }
 
   /**
-   * #225: people whose name or username contains the text, ignoring case and
+   * #225: people whose nickname (`name`, ADR-0025) contains the text, ignoring case and
    * diacritics (unaccent). Never the e-mail, never the viewer, only accounts
    * that are active or restricted, never `excludedIds` (people blocked from the
    * viewer, #239). Ordered by name; `limit` rows from `offset`.

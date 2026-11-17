@@ -28,12 +28,20 @@ describe('SearchFriendsQuery', () => {
     ).resolves.toMatchObject({ offset: 20 });
   });
 
+  it('allows the last page within the 100 people', async () => {
+    await expect(
+      validate(SearchFriendsQuery, { q: 'nov', offset: '80' }, 'query'),
+    ).resolves.toMatchObject({ offset: 80 });
+  });
+
   it.each([
     [{}],
     [{ q: 'n' }],
     [{ q: ' n ' }],
     [{ q: 'x'.repeat(FRIEND_SEARCH_MAX_LENGTH + 1) }],
     [{ q: 'nov', offset: '-1' }],
+    // Review of #225: no page past the 100th person.
+    [{ q: 'nov', offset: '100' }],
     [{ q: 'nov', offset: 'abc' }],
     [{ q: 'nov', email: 'libor@example.com' }],
   ])('refuses %j', async (query) => {
@@ -76,6 +84,7 @@ describe('FriendSearchPageResponseDto', () => {
     const response = FriendSearchPageResponseDto.fromDomain({
       items: [person],
       nextOffset: null,
+      isCapped: false,
     });
     expect(Object.keys(response.items[0]).sort()).toEqual([
       'id',

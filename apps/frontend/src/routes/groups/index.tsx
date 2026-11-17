@@ -7,12 +7,12 @@ import { ROUTES } from "@/app/routes"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
+import { useSearchText } from "@/hooks/useSearchText"
 
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import {
   eventsSearchSchema,
   filtersFromSearch,
