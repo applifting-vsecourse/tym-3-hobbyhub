@@ -14,6 +14,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { ParticipationRequestModule } from './modules/participation-request/participation-request.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { RatingModule } from './modules/rating/rating.module';
 import { ReportReasonModule } from './modules/report-reason/report-reason.module';
 import { ReportModule } from './modules/report/report.module';
 import { UserBlockModule } from './modules/user-block/user-block.module';
@@ -47,6 +48,8 @@ const imports = [
   FriendshipModule,
   ReportReasonModule,
   ReportModule,
+  // #236, ADR-0027: ratings after an event.
+  RatingModule,
 ];
 
 @Module({
