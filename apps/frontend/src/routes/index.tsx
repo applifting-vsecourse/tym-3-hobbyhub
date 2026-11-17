@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { AccountLanguageLinks } from "@/features/auth/components/AccountLanguageLinks"
 import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
@@ -87,7 +88,7 @@ function LandingPage() {
       <AppShell
         className="mx-auto flex w-full max-w-page flex-col gap-8 px-page py-6 md:gap-12 md:py-10"
         search={searchField}
-        footer={<Footer />}
+        footer={<Footer language={<AccountLanguageLinks />} />}
       >
         <FiltersSheet
           isOpen={isFiltersOpen}

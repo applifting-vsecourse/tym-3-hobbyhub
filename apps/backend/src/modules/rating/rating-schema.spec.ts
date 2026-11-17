@@ -397,21 +397,61 @@ describeDb('rating schema constraints and views', () => {
       await inRolledBackTransaction(async (tx) => {
         const event = await aRevealedEvent(tx);
         await rateAll(tx, event, [5, 5, 1]);
-        const hiddenAuthor = event.participantIds[2];
         const page = await repositoryOf(tx).getReceived(
           event.organizerId,
           'TO_ORGANIZER',
           { limit: 10, offset: 0 },
-          [hiddenAuthor],
         );
         expect(page.score).toEqual({ count: 3, average: 11 / 3 });
         expect(page.distribution).toEqual({ 1: 1, 2: 0, 3: 0, 4: 0, 5: 2 });
-        expect(page.total).toBe(2);
+        expect(page.total).toBe(3);
         expect(page.items.map((item) => item.author?.id).sort()).toEqual(
-          event.participantIds.slice(0, 2).sort(),
+          [...event.participantIds].sort(),
         );
       });
     });
+
+    // ADR-0022, review of PR #264: a rating between two people blocked from
+    // each other counts nowhere, so no number differs from the list and
+    // nothing gives the block away. It comes back once the block is lifted.
+    it.each([
+      ['the author blocked the rated one', 'author'],
+      ['the rated one blocked the author', 'rated'],
+    ] as const)(
+      'counts no rating between a blocked pair (%s)',
+      async (_case, blocker) => {
+        await inRolledBackTransaction(async (tx) => {
+          const event = await aRevealedEvent(tx);
+          await rateAll(tx, event, [5, 5, 1]);
+          const author = event.participantIds[2];
+          const block = await tx.userBlock.create({
+            data:
+              blocker === 'author'
+                ? { blockerId: author, blockedId: event.organizerId }
+                : { blockerId: event.organizerId, blockedId: author },
+          });
+          const repository = repositoryOf(tx);
+
+          const page = await repository.getReceived(
+            event.organizerId,
+            'TO_ORGANIZER',
+            { limit: 10, offset: 0 },
+          );
+          expect(page.score).toEqual({ count: 2, average: 5 });
+          expect(page.distribution).toEqual({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 2 });
+          expect(page.total).toBe(2);
+          expect(page.items).toHaveLength(2);
+          await expect(
+            repository.getEventScore(event.eventId),
+          ).resolves.toEqual({ count: 2, average: 5 });
+
+          await tx.userBlock.delete({ where: { id: block.id } });
+          await expect(
+            repository.getUserScores(event.organizerId),
+          ).resolves.toMatchObject({ asOrganizer: { count: 3 } });
+        });
+      },
+    );
   });
 
   // #236, ADR-0021: what the rating-prompt cron reads, and its claim.

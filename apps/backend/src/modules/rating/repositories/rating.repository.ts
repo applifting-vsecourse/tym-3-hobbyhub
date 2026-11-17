@@ -182,20 +182,17 @@ export class RatingRepository {
 
   /**
    * The revealed ratings the person received one way, newest first, with the
-   * score and how many of them have each number of stars. The ratings of
-   * authors in `hiddenAuthorIds` are left out of the list, but they still
-   * count in the score: a block hides people, it does not undo ratings.
+   * score and how many of them have each number of stars. All of it from
+   * `rating_revealed`, which leaves out the ratings between two people
+   * blocked from each other (ADR-0022): the list, the total, the
+   * distribution and the score always count the same ratings, so none of
+   * them gives a block away.
    */
   async getReceived(
     userId: string,
     direction: RatingDirection,
     page: Page,
-    hiddenAuthorIds: readonly string[],
   ): Promise<ReceivedRatingPage> {
-    const notHidden =
-      hiddenAuthorIds.length > 0
-        ? Prisma.sql`AND r."authorId" NOT IN (${Prisma.join(hiddenAuthorIds)})`
-        : Prisma.empty;
     const [items, totals, distribution, scores] = await Promise.all([
       this.prisma.$queryRaw<
         {
@@ -219,15 +216,13 @@ export class RatingRepository {
         JOIN "user" u ON u."id" = r."authorId"
         WHERE r."ratedUserId" = ${userId}
           AND r."direction" = ${direction}::"rating_direction"
-          ${notHidden}
         ORDER BY r."createdAt" DESC, r."id"
         LIMIT ${page.limit} OFFSET ${page.offset}`,
       this.prisma.$queryRaw<{ total: number }[]>`
         SELECT COUNT(*)::integer AS "total"
         FROM "rating_revealed" r
         WHERE r."ratedUserId" = ${userId}
-          AND r."direction" = ${direction}::"rating_direction"
-          ${notHidden}`,
+          AND r."direction" = ${direction}::"rating_direction"`,
       this.prisma.$queryRaw<{ stars: number; count: number }[]>`
         SELECT r."stars", COUNT(*)::integer AS "count"
         FROM "rating_revealed" r

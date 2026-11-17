@@ -110,7 +110,11 @@ export type RatingEventFacts = {
   coOrganizerIds: string[];
 };
 
-const isAnyOrganizerOf = (event: RatingEventFacts, userId: string): boolean =>
+/** The main organizer or a co-organizer of the event. */
+export const isAnyOrganizerOf = (
+  event: Pick<RatingEventFacts, 'organizerId' | 'coOrganizerIds'>,
+  userId: string,
+): boolean =>
   event.organizerId === userId || event.coOrganizerIds.includes(userId);
 
 export type RatingEventViolation =

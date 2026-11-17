@@ -31,7 +31,7 @@ import {
   nicknamePreviousChangeAtMost,
   nicknameViolation,
 } from '@/shared/auth/registration/nickname';
-import { Gender } from '@/shared/auth/registration/registration';
+import { Gender, Language } from '@/shared/auth/registration/registration';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
@@ -232,6 +232,11 @@ export class ProfileService {
       travelRadiusKm: travelRadiusKm ?? TRAVEL_RADIUS_DEFAULT_KM,
     });
     return this.getProfile(user);
+  }
+
+  // #262: no rule beyond the DTO's: any of the app's languages, any time.
+  async updateLanguage(user: Identity, language: Language): Promise<void> {
+    await this.profileRepository.updateLanguage(user.id, language);
   }
 
   // #24: removes the home address, the temporary place and the travel radius in

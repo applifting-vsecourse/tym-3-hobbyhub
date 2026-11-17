@@ -1,6 +1,7 @@
 import {
   EventRatingState,
   GivenRatingPage,
+  isAnyOrganizerOf,
   isRateableSeat,
   organizerRatingViolations,
   Page,
@@ -50,9 +51,6 @@ const violationsError = (violations: RatingViolation[]): BadRequestException =>
   });
 
 export type RatingInput = { stars: number; comment?: string };
-
-const isAnyOrganizerOf = (event: RatingEventFacts, userId: string): boolean =>
-  event.organizerId === userId || event.coOrganizerIds.includes(userId);
 
 // #236, ADR-0027: ratings after an event. A participant rates the main
 // organizer, the main organizer rates the participants; nobody sees a rating
@@ -233,18 +231,16 @@ export class RatingsService {
     return rating;
   }
 
-  /** "Moje hodnocení": the revealed ratings the person received one way. */
-  async getReceived(
+  /**
+   * "Moje hodnocení": the revealed ratings the person received one way. The
+   * view already leaves out those of anyone blocked from them (ADR-0022).
+   */
+  getReceived(
     user: Identity,
     direction: RatingDirection,
     page: Page,
   ): Promise<ReceivedRatingPage> {
-    return this.repository.getReceived(
-      user.id,
-      direction,
-      page,
-      await this.blocks.hiddenFor(user.id),
-    );
+    return this.repository.getReceived(user.id, direction, page);
   }
 
   /** The ratings the person gave, and whether the rated one sees them yet. */

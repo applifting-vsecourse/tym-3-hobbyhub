@@ -1,5 +1,5 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Gender, Prisma } from '@/generated/prisma/client';
+import { Gender, Language, Prisma } from '@/generated/prisma/client';
 import { AdminUserListItem } from '@/modules/profile/domain/profile';
 import {
   ADMIN_PAGE_SIZE,
@@ -180,6 +180,14 @@ export class ProfileRepository {
     await this.prisma.user.update({
       where: { id: userId },
       data: { ...data, updatedAt: new Date() },
+    });
+  }
+
+  // #262: the account's language; the session returns it from the next request.
+  async updateLanguage(userId: string, language: Language): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { preferredLanguage: language, updatedAt: new Date() },
     });
   }
 
