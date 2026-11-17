@@ -69,6 +69,7 @@ describe("FriendSearch", () => {
         person({ id: "u5", name: "Tereza Novotná", relation: "friends" }),
       ],
       nextOffset: null,
+      isCapped: false,
     })
     await renderSearch("nov")
 
@@ -88,16 +89,25 @@ describe("FriendSearch", () => {
     expect(screen.queryByRole("button", { name: "Načíst další" })).toBeNull()
   })
 
+  // Review of #225: the pages stop at 100 people, so nobody lists everyone.
+  it("asks to narrow the nickname when more people match than it shows", async () => {
+    answer({ items: [person({ id: "u2" })], nextOffset: null, isCapped: true })
+    await renderSearch("no")
+
+    expect(await screen.findByText(/Upřesněte přezdívku/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Načíst další" })).toBeNull()
+  })
+
   it("says nobody was found", async () => {
-    answer({ items: [], nextOffset: null })
+    answer({ items: [], nextOffset: null, isCapped: false })
     await renderSearch("libor@example.com")
 
     expect(await screen.findByText(/Nikoho takového jsme nenašli/)).toBeInTheDocument()
   })
 
   it("loads the next page from where the last one ended", async () => {
-    answer({ items: [person({ id: "u2" })], nextOffset: 20 })
-    answer({ items: [person({ id: "u3", name: "Petr Nový" })], nextOffset: null })
+    answer({ items: [person({ id: "u2" })], nextOffset: 20, isCapped: false })
+    answer({ items: [person({ id: "u3", name: "Petr Nový" })], nextOffset: null, isCapped: false })
     await renderSearch("nov")
 
     await userEvent.click(await screen.findByRole("button", { name: "Načíst další" }))
@@ -111,7 +121,7 @@ describe("FriendSearch", () => {
 
   it("says the search failed and lets me try again", async () => {
     get.mockReturnValueOnce({ json: () => Promise.reject(new Error("down")) })
-    answer({ items: [person({})], nextOffset: null })
+    answer({ items: [person({})], nextOffset: null, isCapped: false })
     await renderSearch("nov")
 
     expect(await screen.findByText("Vyhledávání se nepovedlo.")).toBeInTheDocument()

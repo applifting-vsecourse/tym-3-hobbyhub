@@ -38,6 +38,7 @@ export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) 
     placeholderData: keepPreviousData,
   })
   const people = isLongEnough ? search.data?.pages.flatMap((page) => page.items) : undefined
+  const isCapped = search.data?.pages.at(-1)?.isCapped ?? false
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,6 +112,10 @@ export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) 
                   : t("friends.search.loadMore")}
               </Button>
             </div>
+          ) : null}
+          {/* Review of #225: the pages stop at 100 people, so nobody lists everyone. */}
+          {isCapped ? (
+            <p className="typo-body text-muted-foreground">{t("friends.search.capped")}</p>
           ) : null}
         </>
       ) : null}

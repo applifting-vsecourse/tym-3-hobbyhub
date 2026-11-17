@@ -1,4 +1,5 @@
 import {
+  FRIEND_SEARCH_MAX_RESULTS,
   FRIEND_SEARCH_PAGE_SIZE,
   FriendRelation,
   friendRequestNotifyWindowStart,
@@ -77,9 +78,13 @@ export class FriendshipService {
   }
 
   /**
-   * #225: a page of people whose name or username contains the text, each
-   * with the viewer's relation to them. The text arrives trimmed and long
-   * enough (the DTO). People blocked from the viewer (#239) are not found.
+   * #225: a page of people whose nickname contains the text, each with the
+   * viewer's relation to them. The text arrives trimmed and long enough, the
+   * offset within the cap (the DTO). People blocked with the viewer either
+   * way (#239) are not found. The pages stop at `FRIEND_SEARCH_MAX_RESULTS`.
+   *
+   * The three queries run one after another on purpose: the people found
+   * depend on the blocks, the relations on the people found.
    */
   async search(
     viewer: Identity,
@@ -95,6 +100,10 @@ export class FriendshipService {
       await this.blockedWith(viewer.id),
     );
     const page = rows.slice(0, FRIEND_SEARCH_PAGE_SIZE);
+    const hasMore = rows.length > FRIEND_SEARCH_PAGE_SIZE;
+    const next = offset + FRIEND_SEARCH_PAGE_SIZE;
+    // Review of #225: no page past the cap, so nobody lists every user.
+    const isLastAllowed = next >= FRIEND_SEARCH_MAX_RESULTS;
     const relations = await this.friendshipRepository.findRelationsWith(
       viewer.id,
       page.map((row) => row.id),
@@ -106,10 +115,8 @@ export class FriendshipService {
         image: row.image,
         relation: relationOf(viewer.id, relations.get(row.id)!),
       })),
-      nextOffset:
-        rows.length > FRIEND_SEARCH_PAGE_SIZE
-          ? offset + FRIEND_SEARCH_PAGE_SIZE
-          : null,
+      nextOffset: hasMore && !isLastAllowed ? next : null,
+      isCapped: hasMore && isLastAllowed,
     };
   }
 

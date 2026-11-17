@@ -827,6 +827,7 @@
     "action": {
       "error": "The request could not be sent. Please try again.",
       "received": "This person is asking you to be friends.",
+      "restricted": "Your account is restricted, you cannot send friend requests right now.",
       "send": "Ask to be friends",
       "sendShort": "Add Friend",
       "sendShortLabel": "Add Friend: {{name}}",
@@ -865,6 +866,7 @@
       "waiting_other": "{{count}} requests waiting"
     },
     "search": {
+      "capped": "More people match than we can show. Narrow the nickname.",
       "error": "The search failed.",
       "hint_one": "Type at least {{count}} character of a nickname.",
       "hint_other": "Type at least {{count}} characters of a nickname.",

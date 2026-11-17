@@ -97,6 +97,18 @@ describe("FriendRelationAction", () => {
     expect(screen.getByRole("button", { name: "Požádat o přátelství" })).toBeEnabled()
   })
 
+  // Review of #225: a restricted account is told why, not to try again.
+  it("says a restricted account cannot ask", async () => {
+    failWith(403)
+    await renderAction("none")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Požádat o přátelství" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Váš účet je omezený, o přátelství teď žádat nemůžete.",
+    )
+  })
+
   it("shows a sent request as a disabled button", async () => {
     await renderAction("request_sent")
 

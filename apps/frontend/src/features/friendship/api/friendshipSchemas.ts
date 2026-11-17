@@ -27,6 +27,8 @@ export const friendSearchPageSchema = z.object({
   items: z.array(friendSearchItemSchema),
   /** Where the next page starts; null on the last one. */
   nextOffset: z.number().int().nullable(),
+  /** More people match than the search shows (100): narrow the nickname. */
+  isCapped: z.boolean(),
 })
 
 export const friendRelationResponseSchema = z.object({ relation: friendRelationSchema })
