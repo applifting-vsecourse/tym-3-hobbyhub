@@ -1141,6 +1141,7 @@
       "label": "Jazyk"
     },
     "profile": "Můj profil",
+    "settings": "Nastavení",
     "signIn": "Přihlásit se",
     "signOut": "Odhlásit se",
     "theme": {
@@ -2060,6 +2061,11 @@
     },
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
+    "settings": {
+      "action": "Otevřít nastavení",
+      "description": "Jazyk a vzhled aplikace.",
+      "title": "Nastavení aplikace"
+    },
     "title": "Můj profil",
     "upcoming": {
       "all": "Všechny moje akce",
@@ -2132,6 +2138,26 @@
       "textPlaceholder": "Např. opakované zprávy po akci, i přes prosbu, ať toho nechá.",
       "title": "Nahlásit uživatele"
     }
+  },
+  "settings": {
+    "back": "Zpět na profil",
+    "description": "Jak s vámi aplikace mluví a jak vypadá.",
+    "language": {
+      "description": "Platí na všech zařízeních, kde jste přihlášeni.",
+      "label": "Jazyk"
+    },
+    "loading": "Načítáme nastavení",
+    "save": "Uložit",
+    "saveFailed": "Nastavení se nepodařilo uložit. Zkuste to prosím znovu.",
+    "saved": "Nastavení je uložené.",
+    "theme": {
+      "dark": "Tmavý",
+      "description": "Platí jen na tomto zařízení.",
+      "label": "Vzhled",
+      "light": "Světlý",
+      "system": "Podle systému"
+    },
+    "title": "Nastavení"
   },
   "terms": {
     "placeholder": "Znění podmínek připravujeme. Provozovatel HobbyHubu ho doplní před spuštěním.",

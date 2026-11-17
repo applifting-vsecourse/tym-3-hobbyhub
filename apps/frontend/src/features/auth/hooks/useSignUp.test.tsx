@@ -2,6 +2,8 @@ import type { ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { renderHook } from "@testing-library/react"
 
+import { i18n } from "@/i18n"
+
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { useSignUp, type SignUpInput } from "@/features/auth/hooks/useSignUp"
 
@@ -45,6 +47,21 @@ describe("useSignUp", () => {
 
     expect(signUpEmail).toHaveBeenCalledWith(
       expect.objectContaining({ username: "JanaNovakova", name: "JanaNovakova" }),
+    )
+  })
+
+  // #262: the account keeps the language the sign-up was filled in.
+  it.each([
+    ["cs", "CS"],
+    ["en", "EN"],
+  ])("sends the language the form is shown in (%s)", async (language, accountLanguage) => {
+    getSession.mockResolvedValue({ data: null, error: null })
+    await i18n.changeLanguage(language)
+    await signUp(new QueryClient())
+    await i18n.changeLanguage("cs")
+
+    expect(signUpEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ preferredLanguage: accountLanguage }),
     )
   })
 

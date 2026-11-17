@@ -23,3 +23,22 @@ export const LANGUAGES = [
 ] as const
 
 export type Language = (typeof LANGUAGES)[number]["code"]
+
+export const isLanguage = (value: unknown): value is Language =>
+  LANGUAGES.some(({ code }) => code === value)
+
+/** The language the app shows now, as one of its own codes. */
+export const languageOf = (resolved: string | undefined): Language =>
+  isLanguage(resolved) ? resolved : FALLBACK_LANGUAGE
+
+// #262: the account keeps the language as the backend's enum.
+export type AccountLanguage = "CS" | "EN"
+
+const ACCOUNT_LANGUAGES: Record<Language, AccountLanguage> = { cs: "CS", en: "EN" }
+
+export const toAccountLanguage = (language: Language): AccountLanguage =>
+  ACCOUNT_LANGUAGES[language]
+
+/** The app's code for the account's language; null for anything it does not know. */
+export const fromAccountLanguage = (value: unknown): Language | null =>
+  LANGUAGES.find(({ code }) => ACCOUNT_LANGUAGES[code] === value)?.code ?? null
