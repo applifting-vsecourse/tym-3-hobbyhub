@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { userBlockKeys } from "@/features/user-block/api/userBlockKeys"
 import { blockedUsersSchema } from "@/features/user-block/api/userBlockSchemas"
 
-// #65, ADR-0027: the blocker is always the session; only the other person is sent.
+// #65, ADR-0028: the blocker is always the session; only the other person is sent.
 
 export const getBlockedUsers = async () => blockedUsersSchema.parse(await api.get("blocks").json())
 

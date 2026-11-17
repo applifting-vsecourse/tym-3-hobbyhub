@@ -94,7 +94,7 @@ describe('joinRuleViolations', () => {
     },
   );
 
-  // #65, ADR-0027: the blocked organizer would never see the request.
+  // #65, ADR-0028: the blocked organizer would never see the request.
   it.each(['organizer', 'co-organizer'])(
     'refuses someone who blocked the %s',
     (blockedId) => {

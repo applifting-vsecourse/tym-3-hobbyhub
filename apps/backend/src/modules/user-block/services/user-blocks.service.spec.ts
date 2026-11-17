@@ -12,7 +12,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { UserBlocksService } from './user-blocks.service';
 
 // #239, ADR-0022: an administrator blocks two people from each other. #65,
-// ADR-0027: a user blocks another user.
+// ADR-0028: a user blocks another user.
 
 const admin = {
   id: 'admin1',
@@ -208,7 +208,7 @@ describe('UserBlocksService', () => {
       NotFoundException,
     );
   });
-  // #65, ADR-0027: the blocker is the signed-in user.
+  // #65, ADR-0028: the blocker is the signed-in user.
   describe('blockAsUser', () => {
     it('writes the block of the signed-in user, then undoes the ties', async () => {
       const {

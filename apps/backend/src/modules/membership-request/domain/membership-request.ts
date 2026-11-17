@@ -75,7 +75,7 @@ export type PendingMembershipRequest = MembershipRequest & {
 // Why a person cannot ask to join a group now. The client shows the same
 // reasons before sending; the server is the one that counts. A group that is
 // not public and active is "not found" instead, as on its detail.
-// BLOCKED_ADMIN (#65, ADR-0027): the person blocked the owner or an admin of
+// BLOCKED_ADMIN (#65, ADR-0028): the person blocked the owner or an admin of
 // the group, who would never see the request.
 export type MembershipRuleViolation =
   'IS_MEMBER' | 'ALREADY_REQUESTED' | 'REJECTED_BEFORE' | 'BLOCKED_ADMIN';

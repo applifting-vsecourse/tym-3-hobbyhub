@@ -15,7 +15,7 @@ import type { BlockedUser } from "@/features/user-block/api/userBlockSchemas"
 import { useUnblockUser } from "@/features/user-block/hooks/useUserBlockMutations"
 
 /**
- * #65, ADR-0027: the people the user blocked, in Nastavení, each with
+ * #65, ADR-0028: the people the user blocked, in Nastavení, each with
  * "Odblokovat". Only the user sees the list (visibility matrix).
  */
 export function BlockedUsersSection() {

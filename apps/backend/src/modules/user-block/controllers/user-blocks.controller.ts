@@ -24,7 +24,7 @@ import { BlockAsUserDto } from './dto/block-as-user.dto';
 import { BlockedUserResponseDto } from './dto/blocked-user.response.dto';
 import { userBlocksValidationPipe } from './user-blocks-validation.pipe';
 
-// #65, ADR-0027: a signed-in user blocks another user, one way, and can take
+// #65, ADR-0028: a signed-in user blocks another user, one way, and can take
 // it back. The blocker is always the session.
 @ApiTags('blocks')
 @Controller('blocks')

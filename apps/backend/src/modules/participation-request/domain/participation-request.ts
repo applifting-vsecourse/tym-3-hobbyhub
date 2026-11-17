@@ -119,7 +119,7 @@ export type JoinRuleViolation =
   | 'HAS_SEAT'
   | 'ALREADY_REQUESTED'
   | 'REJECTED_BEFORE'
-  // #65, ADR-0027: the applicant blocked one of the organizers, who would
+  // #65, ADR-0028: the applicant blocked one of the organizers, who would
   // never see the request.
   | 'BLOCKED_ORGANIZER';
 

@@ -255,7 +255,7 @@ export class MembershipRequestsService {
     return this.repository.closeBlockedPair(a, b, now);
   }
 
-  // #65, ADR-0027: whether the person blocked someone who runs the group.
+  // #65, ADR-0028: whether the person blocked someone who runs the group.
   private async blocksOf(
     groupId: string,
     user: Identity,

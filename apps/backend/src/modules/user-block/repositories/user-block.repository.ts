@@ -65,7 +65,7 @@ export class UserBlockRepository {
   }
 
   // #65: a user's own block, one way. False when it exists already. Not in
-  // the audit log, which keeps what administrators do (ADR-0027).
+  // the audit log, which keeps what administrators do (ADR-0028).
   async createUserBlock(
     blockerId: string,
     blockedId: string,

@@ -1,5 +1,5 @@
 // #239, ADR-0022: an administrator blocks two people from each other. #65,
-// ADR-0027: a user blocks another user, one way. Plain TypeScript: the
+// ADR-0028: a user blocks another user, one way. Plain TypeScript: the
 // vocabulary of the module, its limits and its rules.
 
 export const USER_BLOCK_REASON_MIN_LENGTH = 10;
@@ -46,7 +46,7 @@ export const userBlockViolations = (
   otherUserId: string,
 ): UserBlockViolation[] => (userId === otherUserId ? ['SAME_USER'] : []);
 
-// #65, ADR-0027: whether any of the people who run something (the organizers
+// #65, ADR-0028: whether any of the people who run something (the organizers
 // of an event, the owner and admins of a group) is someone the person blocked.
 // The blocked would never see the person's request, so it is not sent.
 export const runByBlocked = (

@@ -232,7 +232,7 @@ describe('blocks between two people (#239)', () => {
   });
 });
 
-// #65, ADR-0027: "viewer" blocked "blocked" themselves. The blocked one
+// #65, ADR-0028: "viewer" blocked "blocked" themselves. The blocked one
 // still exists for the viewer, but the viewer sends them no requests.
 describe('a block by a user (#65)', () => {
   const viewerBlocked = (): MockProxy<UserBlockVisibility> => {

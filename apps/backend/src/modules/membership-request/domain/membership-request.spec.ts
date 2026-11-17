@@ -72,7 +72,7 @@ describe('membershipRuleViolations', () => {
     );
   });
 
-  // #65, ADR-0027: the blocked owner or admin would never see the request.
+  // #65, ADR-0028: the blocked owner or admin would never see the request.
   it.each(['owner', 'admin'])('refuses someone who blocked the %s', (id) => {
     expect(
       membershipRuleViolations(null, [], {

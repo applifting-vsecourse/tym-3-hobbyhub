@@ -1,4 +1,4 @@
--- #65, ADR-0027: a user blocks another user, one way. A block now says who
+-- #65, ADR-0028: a user blocks another user, one way. A block now says who
 -- made it, so a user and an administrator may each block the same pair.
 
 -- CreateEnum
