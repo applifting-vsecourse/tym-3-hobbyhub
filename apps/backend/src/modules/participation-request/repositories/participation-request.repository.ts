@@ -452,6 +452,7 @@ export class ParticipationRequestRepository {
       items: seats.map((seat) => ({
         id: seat.id,
         status: 'CANCELLED',
+        userId: seat.userId,
         message: seat.cancellationMessage,
         changedAt: seat.cancelledAt ?? seat.updatedAt,
         asksAgain: askingIds.has(seat.userId),

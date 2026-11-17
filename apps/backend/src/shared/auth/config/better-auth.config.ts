@@ -54,6 +54,15 @@ export const betterAuthCoreConfig: BetterAuthOptions = {
         input: false,
         returned: false,
       },
+      // #262: CS or EN, checked by the registration hook. Returned with the
+      // session, so the app speaks the account's language from the first
+      // page after sign-in. Changed only through PUT /api/profile/language.
+      preferredLanguage: {
+        type: 'string',
+        required: false,
+        input: true,
+        returned: true,
+      },
     },
   },
   // F-03.4: repeated failed sign-ins are cut off by the auth service itself.

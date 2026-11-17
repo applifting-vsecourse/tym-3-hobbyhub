@@ -816,6 +816,27 @@ export async function seedEvents(
       },
       seats: approved(3),
     },
+    {
+      // #236, ADR-0027: over for longer than the rating period, so its
+      // ratings (seed-ratings.ts) are revealed and count in the scores.
+      title: 'Badminton před dvěma týdny',
+      description: 'Proběhlo a hodnocení jsou už odkrytá.',
+      activity: 'Badminton',
+      level: 'Všechny úrovně',
+      startAt: new Date(now - 14 * DAY_IN_MS),
+      min: 2,
+      max: 6,
+      status: EventStatus.FINISHED,
+      place: {
+        ...prague8,
+        street: 'Zenklova 2',
+        postalCode: '18000',
+        placeName: 'Hala Libeň',
+        latitude: 50.1072,
+        longitude: 14.4741,
+      },
+      seats: approved(3),
+    },
   ];
 
   // Enough further events that the list needs more than one page.

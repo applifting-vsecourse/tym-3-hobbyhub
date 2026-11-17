@@ -61,6 +61,17 @@ function TargetLink({
           {children}
         </Link>
       )
+    case "eventRatings":
+      return (
+        <Link
+          to="/events/$eventId/ratings"
+          params={{ eventId: target.eventId }}
+          className={className}
+          onClick={onClick}
+        >
+          {children}
+        </Link>
+      )
     case "event":
       return (
         <Link

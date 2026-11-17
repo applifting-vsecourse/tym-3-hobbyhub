@@ -60,6 +60,33 @@ describe("EventFiltersBar", () => {
     expect(onSearchTextChange).toHaveBeenCalledWith("f")
   })
 
+  // #224: beside the side panel the button opens a folded panel, and is gone while it is open.
+  it("lets the page decide what the filters button does", async () => {
+    const onOpenFilters = vi.fn()
+    renderBar({}, { onOpenFilters })
+
+    await userEvent.click(screen.getByRole("button", { name: "Filtry" }))
+    expect(onOpenFilters).toHaveBeenCalled()
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("leaves the chosen filters to the open side panel, keeping the page's own chips", () => {
+    renderBar(
+      { location: "Praha 8" },
+      { shouldShowChips: false, leadingChips: <button type="button">Nejblíž mně</button> },
+    )
+
+    expect(screen.queryByRole("group", { name: "Vybrané filtry" })).not.toBeInTheDocument()
+    expect(screen.queryByText("Praha 8")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Nejblíž mně" })).toBeInTheDocument()
+  })
+
+  it("has no filters button while the side panel is open", () => {
+    renderBar({}, { onOpenFilters: null })
+
+    expect(screen.queryByRole("button", { name: "Filtry" })).not.toBeInTheDocument()
+  })
+
   it("shows no chips without a filter", () => {
     renderBar()
 

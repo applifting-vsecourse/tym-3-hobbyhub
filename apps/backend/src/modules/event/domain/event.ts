@@ -1,4 +1,5 @@
 import { Activity } from '@/modules/activity/domain/activity';
+import type { ShownRatingScore } from '@/modules/rating/domain/rating';
 
 // Same limits as the CHECK constraints and column widths of `event`.
 export const EVENT_TITLE_MIN_LENGTH = 3;
@@ -536,6 +537,13 @@ export type EventListItem = {
   maxParticipants: number;
   // Approved and attended people plus those the organizer brought along.
   takenCount: number;
+  // Who runs it and the group behind it, public like on the detail (visibility
+  // matrix), so a row on a large screen can say so (#224). Only a public,
+  // active group is named.
+  organizerName: string;
+  group: { id: string; name: string } | null;
+  // Per seat in CZK; information only, nothing is paid in the app.
+  contributionAmount: number | null;
   // #239: only the organizer's own list ever holds a hidden event.
   isHidden: boolean;
 };
@@ -590,17 +598,12 @@ export type ParticipantEventInfo = {
 export type EventDetail = EventListItem & {
   description: string;
   equipment: string | null;
-  // Information only; nothing is paid in the app.
-  contributionAmount: number | null;
   contributionNote: string | null;
   status: PublicEventStatus;
   approvalMode: ApprovalMode;
   organizerId: string;
-  organizerName: string;
   cancellationReason: string | null;
   cancellationNote: string | null;
-  // The group that organizes the event; only a public, active one is linked.
-  group: { id: string; name: string } | null;
   // F-07.2: a group-only event says so; a private one never gets here.
   visibility: 'PUBLIC' | 'GROUP_ONLY';
   stats: ParticipantStats | null;
@@ -609,6 +612,9 @@ export type EventDetail = EventListItem & {
   // #239: set only when an organizer opens their event an administrator hid;
   // nobody else ever gets a hidden event.
   hiddenReason: string | null;
+  // #236, ADR-0027: what the participants' revealed ratings say of the event,
+  // the same for everyone: both null below three ratings.
+  rating: ShownRatingScore;
 };
 
 export type ContactKind = 'email' | 'phone';

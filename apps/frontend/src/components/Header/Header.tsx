@@ -1,8 +1,6 @@
 import type { ReactNode } from "react"
 
 import { HeaderLogo } from "@/components/Header/HeaderLogo"
-import { LanguageSwitcher } from "@/components/Header/LanguageSwitcher"
-import { ThemeSwitcher } from "@/components/Header/ThemeSwitcher"
 
 type HeaderProps = {
   // Auth-aware menu (sign-in CTA / user dropdown). Passed as a slot so
@@ -18,6 +16,9 @@ type HeaderProps = {
   // The notification bell next to the user menu, for a signed-in user (#152).
   // A slot for the same reason as `userMenu`.
   notifications?: ReactNode
+  // #262: the language and theme switchers, for the administration only. The
+  // app keeps them in Nastavení and the language also in the footer.
+  switchers?: ReactNode
 }
 
 /**
@@ -25,17 +26,16 @@ type HeaderProps = {
  * the right-hand group: the search field comes and goes between pages and
  * must not move anything else.
  */
-export function Header({ userMenu, nav, actions, search, notifications }: HeaderProps) {
+export function Header({ userMenu, nav, actions, search, notifications, switchers }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4 sm:gap-4 md:h-16 md:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-page items-center gap-2 px-page sm:gap-4 md:h-16">
         <HeaderLogo />
         {search ? <div className="hidden max-w-xl min-w-0 flex-1 lg:block">{search}</div> : null}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {nav}
           {actions}
-          <LanguageSwitcher />
-          <ThemeSwitcher />
+          {switchers}
           {notifications}
           {userMenu}
         </div>

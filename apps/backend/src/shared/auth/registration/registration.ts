@@ -14,6 +14,14 @@ export const OLDEST_BIRTH_YEAR = 1900;
 export const GENDERS = ['MALE', 'FEMALE'] as const;
 export type Gender = (typeof GENDERS)[number];
 
+// #262: the language the app speaks to the user, kept with the account so it
+// follows them to every device (and, later, to the e-mails). A new account
+// gets the language its sign-up was filled in; accounts from before have the
+// database default, Czech.
+export const LANGUAGES = ['CS', 'EN'] as const;
+export type Language = (typeof LANGUAGES)[number];
+export const DEFAULT_LANGUAGE: Language = 'CS';
+
 // Codes the frontend translates (features/auth/lib/authErrors.ts).
 export type RegistrationErrorCode =
   | NicknameViolation
@@ -21,7 +29,8 @@ export type RegistrationErrorCode =
   | 'INVALID_BIRTH_YEAR'
   | 'UNDERAGE'
   | 'TERMS_NOT_ACCEPTED'
-  | 'ADULTHOOD_NOT_CONFIRMED';
+  | 'ADULTHOOD_NOT_CONFIRMED'
+  | 'INVALID_LANGUAGE';
 
 // The year is the calendar year in Prague, where the app runs, so the server
 // does not move to the new year an hour after the people using it.
@@ -76,7 +85,13 @@ export function birthYearViolation(
 }
 
 export type RegistrationResult =
-  | { ok: true; username: string; gender: Gender; birthYear: number }
+  | {
+      ok: true;
+      username: string;
+      gender: Gender;
+      birthYear: number;
+      preferredLanguage: Language;
+    }
   | { ok: false; code: RegistrationErrorCode };
 
 /** Checks the F-03.1 fields of a sign-up body. */
@@ -84,8 +99,14 @@ export function validateRegistration(
   body: Record<string, unknown>,
   today: Date,
 ): RegistrationResult {
-  const { username, gender, birthYear, termsAccepted, adulthoodConfirmed } =
-    body;
+  const {
+    username,
+    gender,
+    birthYear,
+    termsAccepted,
+    adulthoodConfirmed,
+    preferredLanguage = DEFAULT_LANGUAGE,
+  } = body;
 
   // Whether someone else has it already is checked by BetterAuth's username
   // plugin against the database; its hook runs after this one.
@@ -106,11 +127,18 @@ export function validateRegistration(
     return { ok: false, code: 'ADULTHOOD_NOT_CONFIRMED' };
   }
 
+  // Optional: a client that does not send it gets the default. The app's own
+  // form always sends the language it is showing (#262).
+  if (!LANGUAGES.includes(preferredLanguage as Language)) {
+    return { ok: false, code: 'INVALID_LANGUAGE' };
+  }
+
   return {
     ok: true,
     username: username as string,
     gender: gender as Gender,
     birthYear: birthYear as number,
+    preferredLanguage: preferredLanguage as Language,
   };
 }
 

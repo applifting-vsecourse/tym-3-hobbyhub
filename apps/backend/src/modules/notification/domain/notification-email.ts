@@ -112,6 +112,36 @@ const eventDraft = (
         buttonLabel: 'Zobrazit účastníky',
         path: `${eventPath}/participants?tab=participants`,
       };
+    // #236, ADR-0027: no title and no date; the deadline is behind the
+    // button, and the e-mail may be read later than it went out.
+    case 'RATING_PROMPT':
+      return payload.prompt === 'LAST_CALL'
+        ? {
+            heading: 'Poslední den na ohodnocení organizátora',
+            body: 'Zítra už hodnotit nepůjde. Organizátor tvoje hodnocení uvidí, až lhůta skončí.',
+            buttonLabel: 'Ohodnotit',
+            path: `${eventPath}/ratings`,
+          }
+        : {
+            heading: 'Jak se ti akce líbila? Ohodnoť organizátora',
+            body: 'Hodnotit můžeš týden od konce akce. Organizátor tvoje hodnocení uvidí, až lhůta skončí.',
+            buttonLabel: 'Ohodnotit',
+            path: `${eventPath}/ratings`,
+          };
+    case 'HOSTED_RATING_PROMPT':
+      return payload.prompt === 'LAST_CALL'
+        ? {
+            heading: 'Poslední den na ohodnocení účastníků tvé akce',
+            body: 'Zítra už hodnotit nepůjde. Účastníci tvoje hodnocení uvidí, až lhůta skončí.',
+            buttonLabel: 'Ohodnotit účastníky',
+            path: `${eventPath}/ratings`,
+          }
+        : {
+            heading: 'Jací byli spoluhráči? Ohodnoť účastníky své akce',
+            body: 'Hodnotit můžeš týden od konce akce, i ty, kdo nepřišli. Účastníci tvoje hodnocení uvidí, až lhůta skončí.',
+            buttonLabel: 'Ohodnotit účastníky',
+            path: `${eventPath}/ratings`,
+          };
     case 'EVENT_CANCELLED':
       return {
         heading: 'Akce, na kterou jdeš, byla zrušena',

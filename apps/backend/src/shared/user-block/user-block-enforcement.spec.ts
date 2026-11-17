@@ -17,6 +17,7 @@ import { NotificationsService } from '@/modules/notification/services/notificati
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
 import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
 import { ProfileService } from '@/modules/profile/services/profile.service';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -127,6 +128,7 @@ describe('blocks between two people (#239)', () => {
         mock<OnboardingService>(),
         mock<FriendshipService>(),
         blockedFromViewer(),
+        mock<RatingsService>(),
       );
 
       await expect(

@@ -75,7 +75,15 @@ describe('validateRegistration', () => {
       username: 'CaffeinatedDuck',
       gender: 'FEMALE',
       birthYear: 1995,
+      preferredLanguage: 'CS',
     });
+  });
+
+  // #262: a new account keeps the language its sign-up was filled in.
+  it('keeps the language the sign-up was filled in', () => {
+    expect(
+      validateRegistration(aBody({ preferredLanguage: 'EN' }), TODAY),
+    ).toMatchObject({ ok: true, preferredLanguage: 'EN' });
   });
 
   it('accepts someone who turns 18 this year', () => {
@@ -111,6 +119,12 @@ describe('validateRegistration', () => {
       'a refused confirmation of adulthood',
       { adulthoodConfirmed: false },
       'ADULTHOOD_NOT_CONFIRMED',
+    ],
+    ['an unknown language', { preferredLanguage: 'DE' }, 'INVALID_LANGUAGE'],
+    [
+      'a language in lower case',
+      { preferredLanguage: 'en' },
+      'INVALID_LANGUAGE',
     ],
   ])('rejects %s', (_, overrides, code) => {
     expect(validateRegistration(aBody(overrides), TODAY)).toEqual({

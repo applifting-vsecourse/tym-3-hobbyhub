@@ -82,6 +82,11 @@ describe("GroupMemberList", () => {
     expect(within(items[0]!).getByText("Organizátor")).toBeVisible()
     expect(within(items[1]!).getByText("Správce")).toBeVisible()
     expect(within(items[2]!).getByText("Člen")).toBeVisible()
+    // The row (photo, name and role) opens the member's profile.
+    expect(within(items[2]!).getByRole("link", { name: /Deep Duck Thoughts/ })).toHaveAttribute(
+      "href",
+      "/profile/member",
+    )
   })
 
   it("gives a plain member no menus", async () => {

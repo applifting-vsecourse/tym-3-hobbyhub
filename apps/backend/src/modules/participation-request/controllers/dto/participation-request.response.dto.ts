@@ -212,6 +212,9 @@ export class ParticipantResponseDto {
   @ApiProperty({ enum: PARTICIPANT_STATUSES })
   status!: SeatStatus;
 
+  @ApiProperty({ description: 'Whose seat it is, for a link to their profile' })
+  userId!: string;
+
   @ApiProperty({
     type: String,
     nullable: true,
@@ -239,6 +242,7 @@ export class ParticipantResponseDto {
     return {
       id: participant.id,
       status: participant.status,
+      userId: participant.userId,
       message: participant.message,
       changedAt: participant.changedAt,
       asksAgain: participant.asksAgain,

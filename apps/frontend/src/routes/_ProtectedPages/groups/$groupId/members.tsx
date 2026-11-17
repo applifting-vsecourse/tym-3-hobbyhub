@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { HTTPError } from "@/lib/api-client"
 
+import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { MemberFriendship } from "@/features/friendship/components/MemberFriendship"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
@@ -22,6 +23,7 @@ import {
 } from "@/features/group/api/membershipRequestQueryOptions"
 import { GroupManageTabs } from "@/features/group/components/GroupManageTabs"
 import { GroupMemberList } from "@/features/group/components/GroupMemberList"
+import { GroupSummary } from "@/features/group/components/GroupSummary"
 import { MembershipRequestList } from "@/features/group/components/MembershipRequestList"
 
 const membersSearchSchema = z.object({
@@ -84,8 +86,9 @@ function GroupMembersPage() {
   return (
     <>
       <Seo title={groupQuery.data?.name ?? t("groups.manage.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 md:py-12">
-        <div className="flex flex-col gap-4">
+      {/* On a large screen (#224) the group at a glance sits beside its members. */}
+      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page py-6 md:py-12 lg:grid lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-x-8">
+        <div className="flex flex-col gap-4 lg:col-start-1">
           <BackLink
             to="/groups/$groupId"
             params={{ groupId }}
@@ -110,52 +113,62 @@ function GroupMembersPage() {
           )}
         </div>
 
-        {isPending ? (
-          <div className="flex justify-center py-8">
-            <Loader
-              variant="player"
-              label={t("groups.manage.loading")}
-            />
-          </div>
-        ) : isError ? (
-          <Alert variant="destructive">
-            <AlertTitle>{t("groups.manage.loadError")}</AlertTitle>
-            <AlertDescription className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void groupQuery.refetch()
-                  void shown.refetch()
-                }}
-              >
-                {t("groups.manage.retry")}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : tab === "requests" ? (
-          <MembershipRequestList
-            groupId={groupId}
-            requests={requestsQuery.data ?? []}
-            memberCount={membersQuery.data?.length ?? groupQuery.data?.memberCount ?? 0}
+        {groupQuery.data ? (
+          <GroupSummary
+            group={groupQuery.data}
+            activityLabel={(activity) => activityName(t, activity)}
+            className="hidden lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex"
           />
-        ) : (
-          <GroupMemberList
-            groupId={groupId}
-            groupName={groupQuery.data?.name ?? ""}
-            members={membersQuery.data ?? []}
-            me={me}
-            // #225: ask a member for friendship right here, or see where it stands.
-            renderFriendship={(member) => (
-              <MemberFriendship
-                userId={member.userId}
-                name={member.name}
-                relation={member.relation}
-                reload={() => membersQuery.refetch()}
+        ) : null}
+
+        <div className="min-w-0 lg:col-start-1">
+          {isPending ? (
+            <div className="flex justify-center py-8">
+              <Loader
+                variant="player"
+                label={t("groups.manage.loading")}
               />
-            )}
-          />
-        )}
+            </div>
+          ) : isError ? (
+            <Alert variant="destructive">
+              <AlertTitle>{t("groups.manage.loadError")}</AlertTitle>
+              <AlertDescription className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void groupQuery.refetch()
+                    void shown.refetch()
+                  }}
+                >
+                  {t("groups.manage.retry")}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : tab === "requests" ? (
+            <MembershipRequestList
+              groupId={groupId}
+              requests={requestsQuery.data ?? []}
+              memberCount={membersQuery.data?.length ?? groupQuery.data?.memberCount ?? 0}
+            />
+          ) : (
+            <GroupMemberList
+              groupId={groupId}
+              groupName={groupQuery.data?.name ?? ""}
+              members={membersQuery.data ?? []}
+              me={me}
+              // #225: ask a member for friendship right here, or see where it stands.
+              renderFriendship={(member) => (
+                <MemberFriendship
+                  userId={member.userId}
+                  name={member.name}
+                  relation={member.relation}
+                  reload={() => membersQuery.refetch()}
+                />
+              )}
+            />
+          )}
+        </div>
       </section>
     </>
   )

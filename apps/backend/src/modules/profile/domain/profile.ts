@@ -3,6 +3,7 @@ import {
   FriendVisibility,
 } from '@/modules/friendship/domain/friendship';
 import { Interest } from '@/modules/onboarding/domain/onboarding';
+import { ShownUserRatingScores } from '@/modules/rating/domain/rating';
 import { NicknameViolation } from '@/shared/auth/registration/nickname';
 import {
   birthYearViolation,
@@ -55,6 +56,8 @@ export type Profile = {
   travelRadiusKm: number | null;
   // #227: what friends may see of the user's events. Only the owner sees it.
   friendVisibility: FriendVisibility;
+  // #236: the owner sees both scores whole, even below three ratings.
+  ratings: ShownUserRatingScores;
 };
 
 /**
@@ -70,6 +73,9 @@ export type PublicProfile = {
   interests: Interest[];
   /** #225: where the viewer stands with the person. Only the viewer gets it. */
   relation: FriendRelation;
+  // #236, ADR-0027: as an organizer and as a participant; others see neither
+  // number below three revealed ratings.
+  ratings: ShownUserRatingScores;
 };
 
 export type ProfileViolation =
