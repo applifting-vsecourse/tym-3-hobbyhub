@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query"
 
+import { fromAccountLanguage, type Language } from "@/i18n/resources"
 import { authKeys } from "@/lib/auth-keys"
 
 import { authClient } from "@/features/auth/lib/auth-client"
@@ -10,6 +11,8 @@ export type SessionUser = {
   name: string
   // The organizer sees it next to a request to join (F-06.1).
   emailVerified: boolean
+  // #262: the language the app speaks to this user on every device.
+  language: Language | null
 }
 
 export type Session = {
@@ -32,6 +35,7 @@ export const authSessionQueryOptions = () =>
           email: user.email,
           name: user.name,
           emailVerified: user.emailVerified,
+          language: fromAccountLanguage(user.preferredLanguage),
         },
       }
     },

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { useMediaQuery, WIDE_QUERY } from "@/hooks/useMediaQuery"
 
 import { activityName } from "@/features/activity/activityName"
+import { AppSettingsSection } from "@/features/auth/components/AppSettingsSection"
 import { ChangePassword } from "@/features/auth/components/ChangePassword"
 import { VerifyEmailPrompt } from "@/features/auth/components/VerifyEmailPrompt"
 import { useSession } from "@/features/auth/hooks/useSession"
@@ -84,6 +85,7 @@ function ProfilePage() {
               }
             >
               <ChangePassword />
+              <AppSettingsSection />
             </ProfileView>
           </>
         )}

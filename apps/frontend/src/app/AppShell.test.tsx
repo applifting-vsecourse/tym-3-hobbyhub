@@ -3,6 +3,7 @@ import { screen, within } from "@testing-library/react"
 import { AppShell } from "@/app/AppShell"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
+import type { SessionUser } from "@/features/auth/api/authSessionQueryOptions"
 import { useSession } from "@/features/auth/hooks/useSession"
 
 vi.mock("@/features/auth/hooks/useSession", () => ({ useSession: vi.fn() }))
@@ -12,9 +13,12 @@ vi.mock("@/features/notification/components/NotificationBell", () => ({
   NotificationBell: () => <button type="button">zvoneček</button>,
 }))
 
-const session = (
-  user: { id: string; name: string; email: string; emailVerified: boolean } | null,
-) => vi.mocked(useSession).mockReturnValue({ user, isPending: false, error: null })
+const session = (user: Omit<SessionUser, "language"> | null) =>
+  vi.mocked(useSession).mockReturnValue({
+    user: user && { ...user, language: null },
+    isPending: false,
+    error: null,
+  })
 
 describe("AppShell", () => {
   it("shows the whole navigation, Přidat and the bell to a signed-in user", async () => {

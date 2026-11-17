@@ -824,6 +824,7 @@
   "footer": {
     "copyright": "© {{year}} HobbyHub",
     "label": "Footer",
+    "language": "Language",
     "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
   },
   "friends": {
@@ -1124,6 +1125,7 @@
       "label": "Language"
     },
     "profile": "My profile",
+    "settings": "Settings",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "theme": {
@@ -1556,6 +1558,10 @@
       "empty": "No upcoming events yet. Create one yourself — it will show up here.",
       "title": "Upcoming events"
     }
+  },
+  "language": {
+    "label": "Language",
+    "saveFailed": "The language could not be saved. Please try again."
   },
   "myEvents": {
     "actions": {
@@ -2027,6 +2033,11 @@
     },
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
+    "settings": {
+      "action": "Open settings",
+      "description": "Language and appearance of the app.",
+      "title": "App settings"
+    },
     "title": "My profile",
     "upcoming": {
       "all": "All my events",
@@ -2097,6 +2108,26 @@
       "textPlaceholder": "E.g. repeated messages after the event, despite being asked to stop.",
       "title": "Report user"
     }
+  },
+  "settings": {
+    "back": "Back to profile",
+    "description": "How the app speaks to you and how it looks.",
+    "language": {
+      "description": "Applies on every device where you are signed in.",
+      "label": "Language"
+    },
+    "loading": "Loading settings",
+    "save": "Save",
+    "saveFailed": "The settings could not be saved. Please try again.",
+    "saved": "Your settings are saved.",
+    "theme": {
+      "dark": "Dark",
+      "description": "Applies on this device only.",
+      "label": "Appearance",
+      "light": "Light",
+      "system": "System"
+    },
+    "title": "Settings"
   },
   "terms": {
     "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",
