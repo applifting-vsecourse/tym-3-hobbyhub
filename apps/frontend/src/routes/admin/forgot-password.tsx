@@ -41,6 +41,7 @@ function AdminForgotPasswordPage() {
     <>
       <Seo title={t("admin.forgotPassword.title")} />
       <AuthLayout
+        isAdministration
         title={t("admin.forgotPassword.title")}
         description={t("admin.forgotPassword.description")}
         backTo={ROUTES.adminLogin}

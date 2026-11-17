@@ -18,12 +18,14 @@ const OAUTH_CALLBACK_PREFIX = '/callback/';
 
 // The nickname is changed only through the profile (PATCH /api/profile),
 // which keeps the three columns together and waits 30 days between changes.
+// #262: the language too, through PUT /api/profile/language.
 const PROFILE_ONLY_FIELDS = [
   'name',
   'username',
   'displayUsername',
   'gender',
   'birthYear',
+  'preferredLanguage',
 ];
 
 const MESSAGES: Record<RegistrationErrorCode, string> = {
@@ -38,6 +40,7 @@ const MESSAGES: Record<RegistrationErrorCode, string> = {
   UNDERAGE: 'You must be at least 18 years old to register',
   TERMS_NOT_ACCEPTED: 'You must accept the terms to register',
   ADULTHOOD_NOT_CONFIRMED: 'You must confirm you are at least 18 to register',
+  INVALID_LANGUAGE: 'The language must be CS or EN',
 };
 
 /**
@@ -65,6 +68,7 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
           displayUsername: result.username,
           gender: result.gender,
           birthYear: result.birthYear,
+          preferredLanguage: result.preferredLanguage,
         },
       },
     };
@@ -124,7 +128,8 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
   ) {
     throw APIError.from('BAD_REQUEST', {
       code: 'FIELD_NOT_ALLOWED',
-      message: 'The nickname, gender and birth year cannot be changed here',
+      message:
+        'The nickname, gender, birth year and language cannot be changed here',
     });
   }
 });

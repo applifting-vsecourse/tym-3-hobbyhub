@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
 import { Header } from "@/components/Header/Header"
+import { HeaderSwitchers } from "@/components/Header/HeaderSwitchers"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -42,6 +43,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         {t("hobbyhub.nav.skipToContent")}
       </a>
       <Header
+        switchers={<HeaderSwitchers />}
         userMenu={
           <Button
             variant="outline"
