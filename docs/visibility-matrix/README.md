@@ -78,8 +78,9 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 | Důvod zrušení a poznámka k němu                                                  | ✅                              | ✅       | ✅           | ✅            | ❌          | [#35][35]                                |
 | Jméno organizátora                                                               | ✅                              | ✅       | ✅           | ✅            | ❌          | [#8][8]                                  |
 | Skupina, která akci pořádá                                                       | ✅                              | ✅       | ✅           | ✅            | ❌          | [#9][9]                                  |
-| Veřejná adresa: čtvrť a město, orientační bod z našeptávače a bod na mapě        | ✅                              | ✅       | ✅           | ✅            | ❌          | [#6][6], [#7][7], [PO][po]               |
-| Přesná adresa                                                                    | ❌                              | ✅       | ✅           | ✅            | ❌          | [#43][43], [#67][67], [PO][po]           |
+| Veřejná adresa: čtvrť a město                                                    | ✅                              | ✅       | ✅           | ✅            | ❌          | [#6][6], [#7][7], [PO][po]               |
+| Název místa a bod na mapě                                                        | když zveřejnil adresu           | ✅       | ✅           | ✅            | ❌          | [#6][6], [#7][7], [#218][218]            |
+| Přesná adresa                                                                    | když ji zveřejnil               | ✅       | ✅           | ✅            | ❌          | [#43][43], [#218][218], [PO][po]         |
 | Odkaz na online akci                                                             | ❌                              | ✅       | ✅           | ✅            | ❌          | [ADR-0006](../adr/adr-0006.md), [PO][po] |
 | Praktické pokyny                                                                 | ❌                              | ✅       | ✅           | ✅            | ❌          | [#43][43]                                |
 | Odkaz na externí chat                                                            | ❌                              | ✅       | ✅           | ✅            | ❌          | [#43][43]                                |
@@ -95,6 +96,7 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 | Koncept akce                                                                     | ❌                              | ❌       | ✅           | ✅            | ❌          | [#8][8], [PO][po]                        |
 | Že na nadcházející akci jde nebo ji pořádá můj přítel: jeho jméno a profil       | jen přítel, když povolil        | ✅       | ✅           | ✅            | ❌          | [#226][226], [#227][227]                 |
 
+- **Kdo uvidí přesnou adresu, rozhoduje organizátor** ([#218][218], [ADR-0029](../adr/adr-0029.md)): „Všichni hned“, nebo „Až schválení účastníci“ (výchozí). „Když (ji) zveřejnil“ v tabulce znamená první volbu: zveřejněnou adresu, název místa i bod na mapě pak vidí každý, kdo akci vidí; ulice je jen v detailu, ne ve výpisu. Skrytou vidí jen organizátoři a lidé s místem, ostatní jen čtvrť a město. Kontakt na organizátora a odkaz na chat zůstávají jen pro organizátory a lidi s místem v obou případech.
 - **Veřejná a přesná adresa jsou dvě uložené hodnoty, ne jedna hodnota zobrazená dvakrát.** Veřejná adresa je povinná, organizátor ji vybírá z našeptávače (nejbližší křižovatka, zastávka, park nebo jiný orientační bod) a podle ní se vykresluje bod na mapě. Přesná adresa je nepovinná a zadává se zvlášť. Komu nepřísluší, tomu se nesmí poslat: ani v odpovědi API, ani v náhledu, ani v notifikaci.
 - **Kontakt na organizátora** je text, který organizátor sám vyplní, nikdy e-mail jeho účtu. Veškerá komunikace jde přes aplikaci; kontakt mimo ni je rozhodnutí organizátora, ne vedlejší efekt přihlášky.
 - **Jmenný seznam účastníků vidí ostatní účastníci.** Je to sdílená aktivita a lidé mají právo vědět, s kým někam jdou; organizátor je navíc všechny schválil. Proto se jim nezobrazuje složení účastníků: u malé skupiny jde z agregátu a jmen dopočítat konkrétní člověk.
@@ -259,3 +261,4 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233
 [212]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/212
 [262]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/262
+[218]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/218

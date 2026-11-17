@@ -26,20 +26,22 @@ export const EVENT_PARTICIPANTS_LIMIT = 500;
 export type EventStatus =
   'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'FINISHED' | 'NOT_HELD';
 export type EventVisibility = 'PUBLIC' | 'GROUP_ONLY' | 'PRIVATE';
-export type VenueType = 'PUBLIC_VENUE' | 'PRIVATE_VENUE' | 'ONLINE';
+// #218, ADR-0029: a place or online. Whether a place's exact address is
+// public is the organizer's choice, `isAddressPublic`, not a kind of venue.
+export type VenueType = 'PLACE' | 'ONLINE';
 
 // MANUAL: the organizer decides every request to join (F-05.7). AUTOMATIC: a
 // request takes a free seat at once (F-05.5).
 export const APPROVAL_MODES = ['MANUAL', 'AUTOMATIC'] as const;
 export type ApprovalMode = (typeof APPROVAL_MODES)[number];
 
-// F-05.1 creates events at a place. ONLINE waits for the PO's decision on
-// ADR-0006 and is refused by the API until then.
-export const CREATABLE_VENUE_TYPES = [
-  'PUBLIC_VENUE',
-  'PRIVATE_VENUE',
+// Every venue type, for an edit, which keeps the kind of the event. F-05.1
+// creates events at a place only: ONLINE waits for the PO's decision on
+// ADR-0006, and the API does not offer it for a new event.
+export const VENUE_TYPES = [
+  'PLACE',
+  'ONLINE',
 ] as const satisfies readonly VenueType[];
-export type CreatableVenueType = (typeof CREATABLE_VENUE_TYPES)[number];
 
 // Model datatype `Location` (ADR-0001). The coordinates come from the address
 // the organizer picked from the suggestions (F-02.2); an address typed by hand
@@ -100,6 +102,8 @@ export type Event = Occupancy & {
   status: EventStatus;
   visibility: EventVisibility;
   venueType: VenueType;
+  // #218, ADR-0029: everyone who sees the event sees its exact address.
+  isAddressPublic: boolean;
   approvalMode: ApprovalMode;
   startAt: Date;
   endAt: Date;
@@ -189,7 +193,9 @@ export type CreateEventData = {
   activityId: string;
   description: string;
   equipment?: string;
-  venueType: CreatableVenueType;
+  // #218: whether everyone sees the exact address, or only the people with a
+  // seat. A new event is always at a place (ADR-0006).
+  isAddressPublic: boolean;
   approvalMode: ApprovalMode;
   startAt: Date;
   endAt: Date;
@@ -268,10 +274,7 @@ export const eventRuleViolations = (
 
 // An edit keeps the kind of event: an online event stays online and has no
 // address, the others always have one.
-export type UpdateEventData = Omit<
-  CreateEventData,
-  'venueType' | 'location'
-> & {
+export type UpdateEventData = Omit<CreateEventData, 'location'> & {
   venueType: VenueType;
   location?: CreateEventData['location'];
 };
@@ -308,6 +311,7 @@ export const eventChangeViolations = (
         externalOccupiedSpots: number;
         venueType: VenueType;
         hasLocation: boolean;
+        isAddressPublic: boolean;
       }
     | { kind: 'cancel' },
   now: Date,
@@ -339,7 +343,11 @@ export const eventChangeViolations = (
   if (change.venueType !== 'ONLINE' && !change.hasLocation) {
     violations.push('LOCATION_REQUIRED');
   }
-  if (change.venueType === 'ONLINE' && change.hasLocation) {
+  // An online event has no address to show, nor to make public (#218).
+  if (
+    change.venueType === 'ONLINE' &&
+    (change.hasLocation || change.isAddressPublic)
+  ) {
     violations.push('LOCATION_NOT_ALLOWED');
   }
   return violations;
@@ -511,8 +519,9 @@ export const NO_EVENT_FILTER: EventFilter = { activityIds: [] };
 export { foldForSearch } from '@/shared/search/fold-for-search';
 
 // What a row in the event list needs. The address is deliberately only
-// approximate: the street never leaves the server here, and the name and the
-// coordinates of a private venue (someone's home) are dropped too.
+// approximate: the street never leaves the server here, and unless the
+// organizer made the address public (#218), the name of the place and its
+// coordinates (perhaps someone's home) are dropped too.
 export type EventListItem = {
   id: string;
   title: string;
@@ -520,11 +529,13 @@ export type EventListItem = {
   startAt: Date;
   endAt: Date;
   venueType: VenueType;
+  // #218: whether the organizer made the exact address public.
+  isAddressPublic: boolean;
   placeName: string | null;
   district: string | null;
   city: string | null;
   level: string | null;
-  // Public venues only, for the map; null for private venues and when the
+  // A public address only, for the map; null for a hidden one and when the
   // event has no coordinates yet (geocoding, F-12.3).
   latitude: number | null;
   longitude: number | null;
@@ -611,6 +622,10 @@ export type EventDetail = EventListItem & {
   // #239: set only when an organizer opens their event an administrator hid;
   // nobody else ever gets a hidden event.
   hiddenReason: string | null;
+  // #218, ADR-0029: the exact address, for everyone who sees the event, when
+  // the organizer made it public; null otherwise (then only the people with a
+  // seat get it, through `ParticipantEventInfo`).
+  location: EventLocation | null;
 };
 
 export type ContactKind = 'email' | 'phone';
