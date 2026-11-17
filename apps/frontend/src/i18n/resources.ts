@@ -8,7 +8,13 @@ export const resources = {
   en: { common: enCommon },
 } as const
 
+// The source language: the translations are written in it first and it types
+// the keys. Not what a visitor gets when the browser asks for something else.
 export const DEFAULT_LANGUAGE = "cs"
+
+// #262: what a browser gets when none of its languages is one the app speaks.
+// English is understood more widely than Czech.
+export const FALLBACK_LANGUAGE = "en"
 
 export const LANGUAGES = [
   // Endonyms: a language is always named in itself, so they are not translated.
