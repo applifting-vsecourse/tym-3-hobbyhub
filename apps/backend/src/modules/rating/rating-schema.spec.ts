@@ -482,6 +482,15 @@ describeDb('rating schema constraints and views', () => {
           ({ id }) => id,
         );
         expect(ids).toContain(due);
+        const allSent = await make(6.5);
+        await tx.ratingPrompt.create({
+          data: { eventId: allSent, kind: 'LAST_CALL' },
+        });
+
+        const withoutLastCall = (
+          await promptsOf(tx).findCandidates(new Date())
+        ).map(({ id }) => id);
+        expect(withoutLastCall).not.toContain(allSent);
         for (const id of [tooFresh, over, cancelled, hidden]) {
           expect(ids).not.toContain(id);
         }

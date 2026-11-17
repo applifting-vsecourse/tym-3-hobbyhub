@@ -15,7 +15,8 @@ export class RatingPromptRepository {
   /**
    * Events that took place and whose rating period is on, at least two hours
    * after their end: never one cancelled, not held or hidden by an
-   * administrator, whose ratings would not count.
+   * administrator, whose ratings would not count, nor one whose last call
+   * went out already.
    */
   async findCandidates(now: Date): Promise<RatingPromptCandidate[]> {
     const { endedAfter, endedBefore } = ratingPromptHorizon(now);
@@ -24,6 +25,8 @@ export class RatingPromptRepository {
         status: { in: ['PUBLISHED', 'FINISHED'] },
         isHidden: false,
         endAt: { gt: endedAfter, lte: endedBefore },
+        // Nothing is left to send once the last call went out.
+        ratingPrompts: { none: { kind: 'LAST_CALL' } },
       },
       select: {
         id: true,
