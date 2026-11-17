@@ -154,7 +154,18 @@ export class RatingTargetResponseDto {
   }
 }
 
+class RatingEventResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  title!: string;
+}
+
 export class EventRatingStateResponseDto {
+  @ApiProperty({ type: RatingEventResponseDto })
+  event!: RatingEventResponseDto;
+
   @ApiProperty({
     type: String,
     format: 'date-time',
@@ -179,6 +190,7 @@ export class EventRatingStateResponseDto {
 
   static fromDomain(state: EventRatingState): EventRatingStateResponseDto {
     return {
+      event: { id: state.event.id, title: state.event.title },
       deadline: state.deadline,
       organizer: state.organizer
         ? RatingTargetResponseDto.fromDomain(state.organizer)

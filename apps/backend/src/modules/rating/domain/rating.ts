@@ -307,6 +307,7 @@ export type RatingTarget = {
 };
 
 export type EventRatingState = {
+  event: { id: string; title: string };
   deadline: Date;
   /** The main organizer, when the person had a seat. */
   organizer: RatingTarget | null;

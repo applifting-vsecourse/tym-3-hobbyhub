@@ -138,7 +138,12 @@ export class RatingsService {
       });
     }
 
-    return { deadline: ratingDeadlineOf(event.endAt), organizer, participants };
+    return {
+      event: { id: event.id, title: event.title },
+      deadline: ratingDeadlineOf(event.endAt),
+      organizer,
+      participants,
+    };
   }
 
   /** A participant rates the main organizer of the event. */

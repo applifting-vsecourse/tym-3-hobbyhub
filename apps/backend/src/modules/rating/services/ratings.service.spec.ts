@@ -210,6 +210,7 @@ describe('RatingsService', () => {
       repository.getRatingsByAuthorAt.mockResolvedValue([aRating()]);
       const state = await service.getEventRatingState(asUser('p1'), 'e1', now);
       expect(state).toEqual({
+        event: { id: 'e1', title: 'Badminton' },
         deadline: new Date('2026-11-17T20:00:00Z'),
         organizer: {
           user: { id: 'org', name: 'Tomáš' },
