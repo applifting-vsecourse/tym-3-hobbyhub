@@ -1,6 +1,7 @@
 import {
   EventRatingState,
   GivenRatingPage,
+  isAnyOrganizerOf,
   isRateableSeat,
   organizerRatingViolations,
   Page,
@@ -50,9 +51,6 @@ const violationsError = (violations: RatingViolation[]): BadRequestException =>
   });
 
 export type RatingInput = { stars: number; comment?: string };
-
-const isAnyOrganizerOf = (event: RatingEventFacts, userId: string): boolean =>
-  event.organizerId === userId || event.coOrganizerIds.includes(userId);
 
 // #236, ADR-0027: ratings after an event. A participant rates the main
 // organizer, the main organizer rates the participants; nobody sees a rating
