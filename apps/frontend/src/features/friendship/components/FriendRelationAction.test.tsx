@@ -142,8 +142,10 @@ describe("FriendRelationAction", () => {
       )
 
       expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
-      // Only what a decision changes, the profile among it (review #257).
-      await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] }))
+      // Only what a decision changes: the sender's profile, not every one (review #257).
+      await vi.waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] }),
+      )
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] })
       expect(invalidate).not.toHaveBeenCalledWith()
@@ -159,7 +161,7 @@ describe("FriendRelationAction", () => {
       )
 
       await vi.waitFor(() => expect(toast).toHaveBeenCalledWith("Žádost už není aktuální."))
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] })
       expect(screen.queryByRole("alert")).toBeNull()
     })
 

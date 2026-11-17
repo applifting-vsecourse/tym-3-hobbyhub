@@ -212,7 +212,8 @@ export class FriendshipService {
 
   /**
    * #228: the requests waiting for the signed-in person, newest first, a page
-   * at a time, with how many there are.
+   * at a time, with how many there are. Not from people blocked with them
+   * either way (review #257): deciding those ends in 404, as `checkDecidable`.
    */
   async listReceivedRequests(
     recipient: Identity,
@@ -223,6 +224,7 @@ export class FriendshipService {
         recipient.id,
         offset,
         RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        await this.blockedWith(recipient.id),
       );
     return {
       items,
@@ -234,9 +236,12 @@ export class FriendshipService {
     };
   }
 
-  /** #228: how many requests wait for the signed-in person (the tab's number). */
-  countReceivedRequests(recipient: Identity): Promise<number> {
-    return this.friendshipRepository.countReceivedRequests(recipient.id);
+  /** #228: how many requests wait for the signed-in person (the tab's number), the same ones. */
+  async countReceivedRequests(recipient: Identity): Promise<number> {
+    return this.friendshipRepository.countReceivedRequests(
+      recipient.id,
+      await this.blockedWith(recipient.id),
+    );
   }
 
   /**
@@ -321,18 +326,9 @@ export class FriendshipService {
     now: Date = new Date(),
   ): Promise<void> {
     if (oneId === otherId) return;
-    const closed = await this.friendshipRepository.removeBlockedPair(
-      oneId,
-      otherId,
-      now,
-    );
-    // #228: as with a withdrawn request, its notification goes; otherwise
-    // the recipient keeps an unread line about someone they no longer see.
-    await Promise.all(
-      closed.map((id) =>
-        this.notifications.removeFriendRequestNotifications({ id }),
-      ),
-    );
+    // #228: the notifications of the closed requests go with them, in the
+    // repository's one transaction (review #257).
+    await this.friendshipRepository.removeBlockedPair(oneId, otherId, now);
   }
 
   // #239: the people blocked with the user either way: by an administrator

@@ -46,10 +46,18 @@ export const receivedFriendRequestsQueryOptions = () =>
     getNextPageParam: (lastPage) => lastPage.nextOffset,
   })
 
-/** #228: how many requests wait for me, without loading them (the tab's number). */
+/** As often as the bell asks for its number, so the two agree (review #257). */
+const RECEIVED_COUNT_REFETCH_MS = 60_000
+
+/**
+ * #228: how many requests wait for me, without loading them (the tab's
+ * number). Asked again every minute and on coming back to the window, so a
+ * new request shows without reloading the page.
+ */
 export const receivedFriendRequestCountQueryOptions = () =>
   queryOptions({
     queryKey: friendshipKeys.receivedCount(),
+    refetchInterval: RECEIVED_COUNT_REFETCH_MS,
     queryFn: async () =>
       friendRequestCountSchema.parse(await api.get("friends/requests/received/count").json()).count,
   })

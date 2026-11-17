@@ -4,8 +4,15 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { useDecideFriendRequest } from "@/hooks/useDecideFriendRequest"
-import { FRIEND_REQUEST_STALE_MESSAGE, friendRequestDecisionErrorKey } from "@/lib/friend-requests"
+import {
+  FRIEND_REQUEST_STALE_MESSAGE,
+  friendRequestDecisionErrorKey,
+  StaleFriendRequestError,
+} from "@/lib/friend-requests"
 import { cn } from "@/lib/utils"
+
+// Said in a toast, as the card or band it was in leaves the screen.
+const isStale = (error: unknown) => error instanceof StaleFriendRequestError
 
 type FriendRequestDecisionProps = {
   /** Who asks me. */
@@ -69,7 +76,7 @@ export function FriendRequestDecision({
           {deciding === "reject" ? t("friends.requests.rejecting") : t("friends.requests.reject")}
         </Button>
       </div>
-      {errorAs === "inline" && decide.isError ? (
+      {errorAs === "inline" && decide.isError && !isStale(decide.error) ? (
         <p
           role="alert"
           className="typo-small text-destructive"

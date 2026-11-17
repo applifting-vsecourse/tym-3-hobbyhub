@@ -594,6 +594,16 @@ describeDb('friendship schema constraints', () => {
         await expect(repositoryOf(tx).countReceivedRequests(me)).resolves.toBe(
           2,
         );
+        // Review #257: nor from people blocked with me, in both.
+        await expect(
+          repositoryOf(tx).listReceivedRequests(me, 0, 20, [newer]),
+        ).resolves.toMatchObject({
+          total: 1,
+          items: [{ sender: { id: older } }],
+        });
+        await expect(
+          repositoryOf(tx).countReceivedRequests(me, [newer]),
+        ).resolves.toBe(1);
       });
     });
 
@@ -656,8 +666,12 @@ describeDb('friendship schema constraints', () => {
         new Proxy(tx, {
           get: (target, key, receiver): unknown =>
             key === '$transaction'
-              ? (work: Promise<unknown>[]): Promise<unknown[]> =>
-                  Promise.all(work)
+              ? (
+                  work:
+                    | Promise<unknown>[]
+                    | ((tx: Prisma.TransactionClient) => Promise<unknown>),
+                ): Promise<unknown> =>
+                  typeof work === 'function' ? work(tx) : Promise.all(work)
               : Reflect.get(target, key, receiver),
         }) as unknown as PrismaService,
       );
@@ -686,9 +700,26 @@ describeDb('friendship schema constraints', () => {
         });
         const now = new Date('2030-01-01T12:00:00Z');
 
+        // #228 (review #257): the notification of the closed request goes
+        // in the same transaction; the one of the request outside stays.
+        const notificationOf = (
+          friendRequestId: string,
+          recipientId: string,
+        ): Promise<{ id: string }> =>
+          tx.notification.create({
+            data: { type: 'FRIEND_REQUEST', recipientId, friendRequestId },
+          });
+        const closedNote = await notificationOf(pending.id, b);
+        const otherNote = await notificationOf(other.id, b);
+
+        await repositoryOf(tx).removeBlockedPair(b, a, now);
+
         await expect(
-          repositoryOf(tx).removeBlockedPair(b, a, now),
-        ).resolves.toEqual([pending.id]);
+          tx.notification.count({ where: { id: closedNote.id } }),
+        ).resolves.toBe(0);
+        await expect(
+          tx.notification.count({ where: { id: otherNote.id } }),
+        ).resolves.toBe(1);
 
         await expect(
           tx.friendship.count({ where: friendPairOf(a, b) }),

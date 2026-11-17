@@ -458,7 +458,34 @@ describe('FriendshipService', () => {
         'u1',
         0,
         RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        [],
       );
+    });
+
+    // Review #257: what cannot be decided (404) is not listed or counted.
+    it('leaves out the requests of people blocked with me, either way', async () => {
+      const { repository, blocks, service } = setup();
+      blocks.hiddenFor.mockResolvedValue(['b1']);
+      blocks.hiddenFrom.mockResolvedValue(['b2', 'b1']);
+      repository.listReceivedRequests.mockResolvedValue({
+        items: [],
+        total: 0,
+      });
+      repository.countReceivedRequests.mockResolvedValue(0);
+
+      await service.listReceivedRequests(me, 0);
+      await service.countReceivedRequests(me);
+
+      expect(repository.listReceivedRequests).toHaveBeenCalledWith(
+        'u1',
+        0,
+        RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        ['b1', 'b2'],
+      );
+      expect(repository.countReceivedRequests).toHaveBeenCalledWith('u1', [
+        'b1',
+        'b2',
+      ]);
     });
 
     it('says where the next page starts while more wait', async () => {
@@ -562,7 +589,7 @@ describe('FriendshipService', () => {
     const { repository, service } = setup();
     repository.countReceivedRequests.mockResolvedValue(3);
     await expect(service.countReceivedRequests(me)).resolves.toBe(3);
-    expect(repository.countReceivedRequests).toHaveBeenCalledWith('u1');
+    expect(repository.countReceivedRequests).toHaveBeenCalledWith('u1', []);
   });
 
   it('tells the sender their request was accepted (#228)', async () => {
@@ -590,7 +617,7 @@ describe('FriendshipService', () => {
   describe('removeBlockedPair', () => {
     it('ends the friendship and the pending requests of the pair', async () => {
       const { repository, service } = setup();
-      repository.removeBlockedPair.mockResolvedValue([]);
+      repository.removeBlockedPair.mockResolvedValue();
       const now = new Date('2030-01-01T12:00:00Z');
       await service.removeBlockedPair('u1', 'u2', now);
       expect(repository.removeBlockedPair).toHaveBeenCalledWith(
@@ -598,19 +625,6 @@ describe('FriendshipService', () => {
         'u2',
         now,
       );
-    });
-
-    // #228 (review #257): no unread line about someone no longer visible.
-    it('removes the notifications of the requests it closed', async () => {
-      const { repository, notifications, service } = setup();
-      repository.removeBlockedPair.mockResolvedValue(['r1', 'r2']);
-      await service.removeBlockedPair('u1', 'u2');
-      expect(
-        notifications.removeFriendRequestNotifications,
-      ).toHaveBeenCalledWith({ id: 'r1' });
-      expect(
-        notifications.removeFriendRequestNotifications,
-      ).toHaveBeenCalledWith({ id: 'r2' });
     });
 
     it('does nothing for one person, without asking', async () => {
