@@ -524,6 +524,14 @@
     }
   },
   "events": {
+    "addressVisibility": {
+      "afterApproval": "Approved participants only",
+      "public": "Everyone, right away"
+    },
+    "addressVisibilityHint": {
+      "afterApproval": "Others see only the district and the city, no street and no point on the map. Good for a flat or a clubroom.",
+      "public": "Everyone who sees the event sees the street, the place name and the point on the map. Good for a sports ground or a park."
+    },
     "approvalMode": {
       "AUTOMATIC": "Automatically",
       "MANUAL": "By hand"
@@ -587,6 +595,7 @@
         "seats": "While the event is hidden, nobody new can join and requests wait.",
         "text": "An administrator hid the event, so nobody but its organizers can see it. Reason: {{reason}}"
       },
+      "hiddenContacts": "You'll see the organizer's contact once your seat is confirmed.",
       "hiddenInfo": "You'll see the exact address and the organizer's contact once your seat is confirmed.",
       "join": "Take a seat",
       "linkLabel": "Link",
@@ -639,6 +648,7 @@
     "fields": {
       "activity": "Activity",
       "addressSearch": "Find the address",
+      "addressVisibility": "Who sees the exact address",
       "approvalMode": "Approving participants",
       "city": "City",
       "contact": "Organizer contact (optional)",
@@ -658,8 +668,7 @@
       "startDate": "Date",
       "startTime": "From",
       "street": "Street and number",
-      "title": "Title",
-      "venueType": "Type of place"
+      "title": "Title"
     },
     "form": {
       "activityEmpty": "There are no activities yet",
@@ -815,10 +824,6 @@
       "titleTooShort_other": "At least {{count}} characters",
       "tooLong_one": "Keep it under {{count}} character",
       "tooLong_other": "Keep it under {{count}} characters"
-    },
-    "venueType": {
-      "PRIVATE_VENUE": "Private premises",
-      "PUBLIC_VENUE": "Public place"
     }
   },
   "footer": {

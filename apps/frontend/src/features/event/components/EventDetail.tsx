@@ -39,6 +39,11 @@ type EventDetailProps = {
    * Absent for everyone else, who is told when they appear instead.
    */
   participantInfo?: ReactNode
+  /**
+   * #218: the exact place for everyone else, when the organizer made the
+   * address public. The contacts still wait for a seat.
+   */
+  publicPlace?: ReactNode
   /** "Nahlásit akci" (#240), for a signed-in person who does not organize it. */
   reportAction?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
@@ -79,6 +84,7 @@ export function EventDetail({
   shareAction,
   ownRequest,
   participantInfo,
+  publicPlace,
   reportAction,
   now = new Date(),
 }: EventDetailProps) {
@@ -91,11 +97,11 @@ export function EventDetail({
   const day = eventDay(t, event.startAt, now, locale)
   const isToday = day === t("events.day.today")
   const where = eventPlace(t, event)
-  // A public venue is named above; the others stay vague until approval.
+  // A public address is shown in full (#218); a hidden one stays vague until approval.
   const addressNote =
     event.venueType === "ONLINE"
       ? { label: t("events.detail.linkLabel"), value: t("events.detail.address.online") }
-      : event.venueType === "PRIVATE_VENUE" && !participantInfo
+      : !event.isAddressPublic && !participantInfo
         ? { label: t("events.detail.addressLabel"), value: t("events.detail.address.private") }
         : null
   const practical = [
@@ -322,10 +328,20 @@ export function EventDetail({
           </dl>
         ) : null}
 
-        {participantInfo ??
-          (!isHidden && (state === "open" || state === "full") ? (
-            <p className="typo-small text-muted-foreground">{t("events.detail.hiddenInfo")}</p>
-          ) : null)}
+        {participantInfo ?? (
+          <>
+            {publicPlace}
+            {!isHidden && (state === "open" || state === "full") ? (
+              <p className="typo-small text-muted-foreground">
+                {t(
+                  event.isAddressPublic
+                    ? "events.detail.hiddenContacts"
+                    : "events.detail.hiddenInfo",
+                )}
+              </p>
+            ) : null}
+          </>
+        )}
 
         <section className="flex flex-col gap-3 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.stats.title")}</h2>

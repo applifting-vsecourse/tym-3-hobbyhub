@@ -19,6 +19,7 @@ import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
+import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
 import { participantInfoQueryOptions } from "@/features/event/api/participantInfoQueryOptions"
 import { EventDetail } from "@/features/event/components/EventDetail"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
@@ -38,6 +39,16 @@ import { ReportAction } from "@/features/report/components/ReportAction"
 
 export const Route = createFileRoute("/events/$eventId")({
   component: EventDetailPage,
+})
+
+// The map pin of the event: the place with a seat or without one (#218).
+const pinOf = (event: EventDetailData) => ({
+  activity: event.activity.icon,
+  title: event.title,
+  state:
+    missingCount({ taken: event.takenCount, min: event.minParticipants }) > 0
+      ? ("missing" as const)
+      : ("full" as const),
 })
 
 // Public detail (F-02.4). A visitor is sent to sign up and brought back here;
@@ -228,19 +239,25 @@ function EventDetailPage() {
               ) : (
                 <ParticipantInfo
                   info={infoQuery.data}
-                  pin={{
-                    activity: eventQuery.data.activity.icon,
-                    title: eventQuery.data.title,
-                    state:
-                      missingCount({
-                        taken: eventQuery.data.takenCount,
-                        min: eventQuery.data.minParticipants,
-                      }) > 0
-                        ? "missing"
-                        : "full",
-                  }}
+                  pin={pinOf(eventQuery.data)}
                 />
               )
+            }
+            // #218: an address the organizer made public is for everyone; the
+            // contacts still wait for a seat.
+            publicPlace={
+              !hasInfoRight && eventQuery.data.location ? (
+                <ParticipantInfo
+                  info={{
+                    venueType: eventQuery.data.venueType,
+                    location: eventQuery.data.location,
+                    organizerName: eventQuery.data.organizerName,
+                    contact: null,
+                    externalChatUrl: null,
+                  }}
+                  pin={pinOf(eventQuery.data)}
+                />
+              ) : undefined
             }
             ownRequest={
               isHidden ? undefined : ownView === "organizer" ? (
