@@ -16,6 +16,7 @@ const noBlocks = (): MockProxy<UserBlockVisibility> => {
   const blocks = mock<UserBlockVisibility>();
   blocks.hiddenFor.mockResolvedValue([]);
   blocks.hiddenFrom.mockResolvedValue([]);
+  blocks.blockedBy.mockResolvedValue([]);
   return blocks;
 };
 
@@ -443,8 +444,25 @@ describe('ProfileService', () => {
         'id',
         'image',
         'interests',
+        'isBlockedByMe',
         'name',
       ]);
+    });
+
+    // #65: the viewer sees their own block, to offer undoing it.
+    it('says whether the viewer blocked the person', async () => {
+      const repository = mock<ProfileRepository>();
+      const onboardingService = mock<OnboardingService>();
+      const blocks = noBlocks();
+      blocks.blockedBy.mockResolvedValue(['u2']);
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+      const service = new ProfileService(repository, onboardingService, blocks);
+
+      await expect(service.getPublicProfile('u2', user)).resolves.toMatchObject(
+        { isBlockedByMe: true },
+      );
+      expect(blocks.blockedBy).toHaveBeenCalledWith('u1');
     });
 
     it('answers not found for a user that does not exist', async () => {

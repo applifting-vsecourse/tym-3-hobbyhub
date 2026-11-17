@@ -65,6 +65,9 @@ export type PublicProfile = {
   image: string | null;
   cover: string | null;
   interests: Interest[];
+  // #65, ADR-0027: whether the viewer blocked this person. Only ever about
+  // the viewer's own choice; the blocked never learn of it.
+  isBlockedByMe: boolean;
 };
 
 export type ProfileViolation =

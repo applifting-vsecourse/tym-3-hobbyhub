@@ -30,6 +30,7 @@ const VIOLATION_MESSAGES: Record<
   IS_MEMBER: 'You are already a member of this group',
   ALREADY_REQUESTED: 'You have already asked to join this group',
   REJECTED_BEFORE: 'Your request to join this group was rejected',
+  BLOCKED_ADMIN: 'You blocked the owner or an admin of this group',
   GROUP_CANCELLED: 'The group was cancelled',
   NOT_PENDING: 'The request no longer waits for a decision',
   APPLICANT_IS_MEMBER: 'The applicant is already a member of this group',
@@ -69,14 +70,15 @@ export class MembershipRequestsService {
     groupId: string,
   ): Promise<MyMembershipRequestState> {
     await this.groupsService.getPublicGroup(groupId, user);
-    const [role, requests, applicant] = await Promise.all([
+    const [role, requests, applicant, blocks] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
       this.repository.getApplicantProfile(user.id),
+      this.blocksOf(groupId, user),
     ]);
     return {
       request: currentMembershipRequestOf(requests),
-      violations: membershipRuleViolations(role, requests),
+      violations: membershipRuleViolations(role, requests, blocks),
       applicant,
     };
   }
@@ -104,11 +106,12 @@ export class MembershipRequestsService {
   ): Promise<MembershipRequest> {
     // #239: no request to the group of an owner blocked from the applicant.
     const group = await this.groupsService.getPublicGroup(groupId, user);
-    const [role, requests] = await Promise.all([
+    const [role, requests, blocks] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
+      this.blocksOf(groupId, user),
     ]);
-    const violations = membershipRuleViolations(role, requests);
+    const violations = membershipRuleViolations(role, requests, blocks);
     if (violations.length > 0) throw violationsError(violations);
 
     // The applicant comes from the session, never from the request body.
@@ -250,5 +253,17 @@ export class MembershipRequestsService {
     now: Date = new Date(),
   ): Promise<void> {
     return this.repository.closeBlockedPair(a, b, now);
+  }
+
+  // #65, ADR-0027: whether the person blocked someone who runs the group.
+  private async blocksOf(
+    groupId: string,
+    user: Identity,
+  ): Promise<{ adminIds: string[]; blockedIds: string[] }> {
+    const [adminIds, blockedIds] = await Promise.all([
+      this.groupsService.getAdminIds(groupId),
+      this.blocks.blockedBy(user.id),
+    ]);
+    return { adminIds, blockedIds };
   }
 }

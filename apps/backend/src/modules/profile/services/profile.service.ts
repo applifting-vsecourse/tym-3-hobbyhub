@@ -93,7 +93,10 @@ export class ProfileService {
     userId: string,
     viewer: Identity,
   ): Promise<PublicProfile> {
-    const hidden = await this.blocks.hiddenFor(viewer.id);
+    const [hidden, blocked] = await Promise.all([
+      this.blocks.hiddenFor(viewer.id),
+      this.blocks.blockedBy(viewer.id),
+    ]);
     const row = hidden.includes(userId)
       ? null
       : await this.profileRepository.getPublicRow(userId);
@@ -105,6 +108,7 @@ export class ProfileService {
       image: row.image,
       cover: row.profileCover,
       interests: await this.onboardingService.getInterestsOf(userId),
+      isBlockedByMe: blocked.includes(userId),
     };
   }
 

@@ -71,6 +71,25 @@ describe('membershipRuleViolations', () => {
       [],
     );
   });
+
+  // #65, ADR-0027: the blocked owner or admin would never see the request.
+  it.each(['owner', 'admin'])('refuses someone who blocked the %s', (id) => {
+    expect(
+      membershipRuleViolations(null, [], {
+        adminIds: ['owner', 'admin'],
+        blockedIds: [id],
+      }),
+    ).toEqual(['BLOCKED_ADMIN']);
+  });
+
+  it('lets someone ask who blocked only an ordinary member', () => {
+    expect(
+      membershipRuleViolations(null, [], {
+        adminIds: ['owner'],
+        blockedIds: ['member'],
+      }),
+    ).toEqual([]);
+  });
 });
 
 describe('membershipDecisionViolations', () => {
