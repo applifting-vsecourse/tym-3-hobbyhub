@@ -439,6 +439,14 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('updateLanguage', () => {
+    it("saves the language to the signed-in user's account", async () => {
+      const { service, repository } = setup();
+      await service.updateLanguage(user, 'EN');
+      expect(repository.updateLanguage).toHaveBeenCalledWith('u1', 'EN');
+    });
+  });
+
   describe('removeLocation', () => {
     it('clears the whole location and answers with the profile without it', async () => {
       const { service, repository, onboardingService } = setup(

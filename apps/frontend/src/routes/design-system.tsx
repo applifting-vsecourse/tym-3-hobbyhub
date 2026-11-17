@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { AppShell } from "@/app/AppShell"
+import { ThemeSwitcher } from "@/components/Header/ThemeSwitcher"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { Seo } from "@/components/Seo"
 
@@ -40,8 +41,8 @@ const CONTENTS = [
 /**
  * Living catalogue of the HobbyHub design system (Figma "HobbyHub – návrh
  * designu", pages Design system and Komponenty). Every token and component
- * that screens are built from is shown here, in both themes via the header
- * theme switcher.
+ * that screens are built from is shown here, in both themes via the theme
+ * switcher next to the title (#262: the app's header no longer has one).
  */
 function DesignSystemPage() {
   return (
@@ -50,7 +51,10 @@ function DesignSystemPage() {
       <AppShell>
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-page py-12">
           <header className="flex flex-col gap-4">
-            <Logo className="h-10 self-start" />
+            <div className="flex items-center justify-between gap-4">
+              <Logo className="h-10" />
+              <ThemeSwitcher />
+            </div>
             <h1 className="typo-h1 text-foreground">Rozpis a soupiska</h1>
             <p className="max-w-2xl typo-body-lg text-muted-foreground">
               Design systém aplikace HobbyHub. Místa u stolu místo procent, čárkování znamená chybí

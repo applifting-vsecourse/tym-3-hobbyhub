@@ -69,6 +69,7 @@ function AdminSetPasswordPage() {
       <>
         <Seo title={t("admin.setPassword.title")} />
         <AuthLayout
+          isAdministration
           title={t("admin.setPassword.title")}
           description={t("admin.setPassword.done")}
           footer={null}
@@ -90,6 +91,7 @@ function AdminSetPasswordPage() {
       <>
         <Seo title={t("auth.resetPassword.invalidTitle")} />
         <AuthLayout
+          isAdministration
           title={t("auth.resetPassword.invalidTitle")}
           description={t("admin.setPassword.invalidDescription")}
           footer={null}
@@ -110,6 +112,7 @@ function AdminSetPasswordPage() {
     <>
       <Seo title={t("admin.setPassword.title")} />
       <AuthLayout
+        isAdministration
         title={t("admin.setPassword.title")}
         description={t("admin.setPassword.description", { minimum: ADMIN_PASSWORD_MIN_LENGTH })}
         footer={null}

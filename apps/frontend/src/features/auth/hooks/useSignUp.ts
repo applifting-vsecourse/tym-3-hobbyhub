@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
+import { languageOf, toAccountLanguage } from "@/i18n/resources"
 import { authKeys } from "@/lib/auth-keys"
 
 import { authClient } from "@/features/auth/lib/auth-client"
@@ -28,6 +30,7 @@ type SignUpVariables = SignUpInput & {
 
 export function useSignUp() {
   const queryClient = useQueryClient()
+  const { i18n } = useTranslation()
 
   return useMutation({
     mutationFn: async ({ from, ...input }: SignUpVariables) => {
@@ -39,6 +42,8 @@ export function useSignUp() {
         // BetterAuth requires a name; the server makes it a copy of the
         // nickname whatever is sent (ADR-0025).
         name: input.username,
+        // #262: the account speaks the language its sign-up was filled in.
+        preferredLanguage: toAccountLanguage(languageOf(i18n.resolvedLanguage)),
         // Where the link in the verification e-mail ends. Without it BetterAuth
         // redirects to `/` on the backend, which has no page. It leads back
         // to the page the visitor wanted, if there was one (F-03.2).

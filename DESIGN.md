@@ -22,7 +22,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - **States have four tokens each**: `signal` (people are missing — graphite and dashes), `success` (approved, full), `pending` (waiting for approval), `destructive` (error, irreversible). Solid `bg-{state}` + `text-{state}-foreground`, or a soft surface `bg-{state}-soft` with `text-{state}-ink`.
 - **`signal` means "people are missing" and nothing else.** As line work it marks empty places: the dashes of a missing `Seat`, the dashed free `ActivityAvatar`, the map pin with a missing count, `text-signal-ink` for the missing count in roster rows. As a solid surface it is rare: the `Hero`, the roster band in e-mails, the desktop roster card, the "chybí N" pill and the "Uzávěrka" badge. Nowhere else.
 - How many people are missing is shown with seats (`Seat`, `SeatMeter`, `RosterSeats`), never as a percentage and never inside a status badge. "Missing" always counts towards the minimum.
-- **Every screen works in both themes.** The header theme switcher flips `.dark` on the root; check new UI in both on `/design-system`. `.light` forces light values inside a dark page and exists for the design-system page only.
+- **Every screen works in both themes.** The theme (Nastavení, or the switcher on `/design-system`) flips `.dark` on the root; check new UI in both on `/design-system`. The app's header has no language or theme switcher: they live in Nastavení, the language also in the footer and under the sign-in forms; only the administration keeps both in its header (#262). `.light` forces light values inside a dark page and exists for the design-system page only.
 
 ## Layout
 
