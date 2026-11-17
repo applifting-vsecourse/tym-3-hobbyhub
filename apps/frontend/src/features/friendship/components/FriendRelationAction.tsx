@@ -5,6 +5,7 @@ import FriendHeartIcon from "@/assets/ui-icons/heart.svg?react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
+import { sendFriendRequestErrorKey } from "@/features/friendship/api/friendshipRequests"
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRequestDecision } from "@/features/friendship/components/FriendRequestDecision"
 import { RemoveFriend } from "@/features/friendship/components/RemoveFriend"
@@ -54,7 +55,7 @@ export function FriendRelationAction({
               role="alert"
               className="typo-small text-destructive"
             >
-              {t("friends.action.error")}
+              {t(sendFriendRequestErrorKey(send.error))}
             </p>
           ) : null}
         </div>

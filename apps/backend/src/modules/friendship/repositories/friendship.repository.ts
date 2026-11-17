@@ -49,13 +49,19 @@ const friendsOf = (
 /** Accounts a request can reach and whose requests still count. */
 const REACHABLE_STATUSES = ['ACTIVE', 'RESTRICTED'] as const;
 
-// #228: the requests waiting for the recipient, from accounts that still count.
+// #228: the requests waiting for the recipient, from accounts that still
+// count and (review #257) not from `excludedIds`: people blocked with the
+// recipient, whose request could not be decided anyway (404).
 const receivedWhere = (
   recipientId: string,
+  excludedIds: readonly string[],
 ): Prisma.FriendRequestWhereInput => ({
   recipientId,
   status: 'PENDING',
-  sender: { status: { in: [...REACHABLE_STATUSES] } },
+  sender: {
+    status: { in: [...REACHABLE_STATUSES] },
+    ...(excludedIds.length > 0 && { id: { notIn: [...excludedIds] } }),
+  },
 });
 
 // #226: the order of the list of friends. Fixed SQL per choice, never text
@@ -118,7 +124,7 @@ export class FriendshipRepository {
   }
 
   /**
-   * #225: people whose name or username contains the text, ignoring case and
+   * #225: people whose nickname (`name`, ADR-0025) contains the text, ignoring case and
    * diacritics (unaccent). Never the e-mail, never the viewer, only accounts
    * that are active or restricted, never `excludedIds` (people blocked from the
    * viewer, #239). Ordered by name; `limit` rows from `offset`.
@@ -307,8 +313,9 @@ export class FriendshipRepository {
     recipientId: string,
     offset: number,
     limit: number,
+    excludedIds: readonly string[] = [],
   ): Promise<{ items: ReceivedFriendRequest[]; total: number }> {
-    const where = receivedWhere(recipientId);
+    const where = receivedWhere(recipientId, excludedIds);
     const [rows, total] = await Promise.all([
       this.prisma.friendRequest.findMany({
         where,
@@ -363,17 +370,20 @@ export class FriendshipRepository {
    * in either direction end as REJECTED with today's date: a rejection is
    * silent, so neither learns of the block. Requests are never deleted. Safe
    * to run again.
+   *
+   * #228 (review #257): the notifications of the requests it closes go in
+   * the same transaction, so the recipient never keeps an unread line about
+   * someone they no longer see. The one write of this module into the
+   * notification table (ADR-0026): the row belongs to the request it points to.
    */
   async removeBlockedPair(
     oneId: string,
     otherId: string,
     now: Date,
-  ): Promise<string[]> {
-    const [, closed] = await this.prisma.$transaction([
-      this.prisma.friendship.deleteMany({
-        where: friendPairOf(oneId, otherId),
-      }),
-      this.prisma.friendRequest.updateManyAndReturn({
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.friendship.deleteMany({ where: friendPairOf(oneId, otherId) });
+      const closed = await tx.friendRequest.updateManyAndReturn({
         where: {
           status: 'PENDING',
           OR: [
@@ -383,16 +393,21 @@ export class FriendshipRepository {
         },
         data: { status: 'REJECTED', decidedAt: now },
         select: { id: true },
-      }),
-    ]);
-    // #228: their notifications go too.
-    return closed.map((request) => request.id);
+      });
+      if (closed.length === 0) return;
+      await tx.notification.deleteMany({
+        where: { friendRequestId: { in: closed.map((request) => request.id) } },
+      });
+    });
   }
 
   /** #228: how many requests wait for the recipient, for the number on the tab. */
-  countReceivedRequests(recipientId: string): Promise<number> {
+  countReceivedRequests(
+    recipientId: string,
+    excludedIds: readonly string[] = [],
+  ): Promise<number> {
     return this.prisma.friendRequest.count({
-      where: receivedWhere(recipientId),
+      where: receivedWhere(recipientId, excludedIds),
     });
   }
 

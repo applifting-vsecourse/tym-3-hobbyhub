@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { friendSearchQueryOptions } from "@/features/friendship/api/friendshipQueryOptions"
+import { sendFriendRequestErrorKey } from "@/features/friendship/api/friendshipRequests"
 import {
   FRIEND_SEARCH_MAX_LENGTH,
   FRIEND_SEARCH_MIN_LENGTH,
@@ -40,6 +41,7 @@ export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) 
     placeholderData: keepPreviousData,
   })
   const people = isLongEnough ? search.data?.pages.flatMap((page) => page.items) : undefined
+  const isCapped = search.data?.pages.at(-1)?.isCapped ?? false
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,6 +116,10 @@ export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) 
               </Button>
             </div>
           ) : null}
+          {/* Review of #225: the pages stop at 100 people, so nobody lists everyone. */}
+          {isCapped ? (
+            <p className="typo-body text-muted-foreground">{t("friends.search.capped")}</p>
+          ) : null}
         </>
       ) : null}
     </div>
@@ -162,7 +168,9 @@ function SendFriendRequestIcon({ person }: { person: FriendSearchItem }) {
       title={t("friends.action.send")}
       disabled={send.isPending}
       onClick={() =>
-        send.mutate(undefined, { onError: () => toast.error(t("friends.action.error")) })
+        send.mutate(undefined, {
+          onError: (error) => toast.error(t(sendFriendRequestErrorKey(error))),
+        })
       }
     >
       {send.isPending ? (

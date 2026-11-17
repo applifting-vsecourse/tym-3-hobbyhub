@@ -91,10 +91,10 @@ describe("NotificationItem, a friend request (#228)", () => {
     )
 
     expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
-    // The notifications, the requests and the profile; nothing else (review #257).
+    // The notifications, the requests and the sender's profile; nothing else (review #257).
     await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] }))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] })
     expect(invalidate).not.toHaveBeenCalledWith()
     // Deciding is not opening: the bell stays open.
     expect(onOpen).not.toHaveBeenCalled()

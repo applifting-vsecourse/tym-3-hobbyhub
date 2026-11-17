@@ -76,7 +76,7 @@ export class FriendsController {
   @Get('search')
   @ApiOperation({
     summary:
-      'Find people by part of their name or username (never by e-mail), a page at a time',
+      'Find people by part of their nickname (never by e-mail), a page at a time, at most 100',
   })
   @ApiResponse({ status: 200, type: FriendSearchPageResponseDto })
   @ApiResponse({ status: 400, description: 'Text too short or too long' })

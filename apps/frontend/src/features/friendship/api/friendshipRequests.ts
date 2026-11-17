@@ -23,6 +23,16 @@ export async function sendFriendRequest(recipientId: string): Promise<FriendRela
 }
 
 /**
+ * Review of #225: the sentence for a request that failed. A 403 means my own
+ * account is restricted (`SENDER_NOT_ACTIVE`): trying again will not help.
+ */
+export function sendFriendRequestErrorKey(error: unknown) {
+  return error instanceof HTTPError && error.response.status === 403
+    ? "friends.action.restricted"
+    : "friends.action.error"
+}
+
+/**
  * #225: takes back my pending request to the person. A 409 means there was
  * none any more (decided meanwhile): the caller reloads the real state (`null`).
  */

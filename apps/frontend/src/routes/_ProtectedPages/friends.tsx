@@ -3,11 +3,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { Seo } from "@/components/Seo"
+import { useSearchText } from "@/hooks/useSearchText"
 
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { FriendsEvents, FriendsEventsPreview } from "@/features/event/components/FriendsEvents"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import { FriendsSection } from "@/features/friendship/components/FriendsSection"
 import { friendsSearchSchema } from "@/features/friendship/lib/friendsSearch"
 

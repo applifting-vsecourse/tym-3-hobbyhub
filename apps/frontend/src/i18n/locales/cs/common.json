@@ -877,6 +877,7 @@
     "action": {
       "error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
       "received": "Tento uživatel vás žádá o přátelství.",
+      "restricted": "Váš účet je omezený, o přátelství teď žádat nemůžete.",
       "send": "Požádat o přátelství",
       "sendShort": "Spřátelit",
       "sendShortLabel": "Spřátelit: {{name}}",
@@ -946,6 +947,7 @@
       "waiting_other": "{{count}} nevyřízených žádostí"
     },
     "search": {
+      "capped": "Takových lidí je víc, než můžeme ukázat. Upřesněte přezdívku.",
       "error": "Vyhledávání se nepovedlo.",
       "hint_few": "Napište aspoň {{count}} znaky přezdívky.",
       "hint_one": "Napište aspoň {{count}} znak přezdívky.",

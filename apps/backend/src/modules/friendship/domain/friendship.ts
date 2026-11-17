@@ -114,6 +114,12 @@ export function relationOf(
 export const FRIEND_SEARCH_MIN_LENGTH = 2;
 export const FRIEND_SEARCH_MAX_LENGTH = 100;
 export const FRIEND_SEARCH_PAGE_SIZE = 20;
+/**
+ * Review of #225: at most this many people per text, 5 pages. Without a cap a
+ * two-letter text could be paged through to the end, listing every user;
+ * beyond it the person narrows the nickname instead.
+ */
+export const FRIEND_SEARCH_MAX_RESULTS = 100;
 
 /**
  * One person found by the search: only what the public profile shows (the
@@ -131,6 +137,11 @@ export type FriendSearchPage = {
   items: FriendSearchResult[];
   /** Where the next page starts; null on the last one. */
   nextOffset: number | null;
+  /**
+   * More people match than may be paged through (`FRIEND_SEARCH_MAX_RESULTS`):
+   * this is the last page shown, the person should narrow the nickname.
+   */
+  isCapped: boolean;
 };
 
 // #225: a person may ask the same person again and again (a rejection is

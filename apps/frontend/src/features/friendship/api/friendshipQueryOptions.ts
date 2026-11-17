@@ -49,6 +49,9 @@ export const receivedFriendRequestsQueryOptions = () =>
     getNextPageParam: (lastPage) => lastPage.nextOffset,
   })
 
+/** As often as the bell asks for its number, so the two agree (review #257). */
+const TAB_COUNT_REFETCH_MS = 60_000
+
 /** #226: my friends in the chosen order, 20 at a time, with how many there are. */
 export const friendsListQueryOptions = (sort: FriendListSort) =>
   infiniteQueryOptions({
@@ -65,17 +68,26 @@ export const friendsListQueryOptions = (sort: FriendListSort) =>
     getNextPageParam: (lastPage) => lastPage.nextOffset,
   })
 
-/** #226: how many friends I have, without loading them (the tab's number). */
+/**
+ * #226: how many friends I have, without loading them (the tab's number).
+ * Asked again like the requests' number, so a request someone accepted shows.
+ */
 export const friendCountQueryOptions = () =>
   queryOptions({
     queryKey: friendshipKeys.count(),
+    refetchInterval: TAB_COUNT_REFETCH_MS,
     queryFn: async () => friendCountSchema.parse(await api.get("friends/count").json()).count,
   })
 
-/** #228: how many requests wait for me, without loading them (the tab's number). */
+/**
+ * #228: how many requests wait for me, without loading them (the tab's
+ * number). Asked again every minute and on coming back to the window, so a
+ * new request shows without reloading the page.
+ */
 export const receivedFriendRequestCountQueryOptions = () =>
   queryOptions({
     queryKey: friendshipKeys.receivedCount(),
+    refetchInterval: TAB_COUNT_REFETCH_MS,
     queryFn: async () =>
       friendRequestCountSchema.parse(await api.get("friends/requests/received/count").json()).count,
   })

@@ -97,6 +97,18 @@ describe("FriendRelationAction", () => {
     expect(screen.getByRole("button", { name: "Požádat o přátelství" })).toBeEnabled()
   })
 
+  // Review of #225: a restricted account is told why, not to try again.
+  it("says a restricted account cannot ask", async () => {
+    failWith(403)
+    await renderAction("none")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Požádat o přátelství" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Váš účet je omezený, o přátelství teď žádat nemůžete.",
+    )
+  })
+
   it("shows a sent request as a disabled button", async () => {
     await renderAction("request_sent")
 
@@ -130,8 +142,10 @@ describe("FriendRelationAction", () => {
       )
 
       expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
-      // Only what a decision changes, the profile among it (review #257).
-      await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] }))
+      // Only what a decision changes: the sender's profile, not every one (review #257).
+      await vi.waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] }),
+      )
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] })
       expect(invalidate).not.toHaveBeenCalledWith()
@@ -147,7 +161,7 @@ describe("FriendRelationAction", () => {
       )
 
       await vi.waitFor(() => expect(toast).toHaveBeenCalledWith("Žádost už není aktuální."))
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] })
       expect(screen.queryByRole("alert")).toBeNull()
     })
 
@@ -214,7 +228,7 @@ describe("FriendRelationAction", () => {
       expect(del).toHaveBeenCalledWith("friends/u2")
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] })
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ["events"] })
     })
 

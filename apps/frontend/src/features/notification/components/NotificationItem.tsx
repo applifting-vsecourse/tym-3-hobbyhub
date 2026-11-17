@@ -7,7 +7,11 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useDecideFriendRequest } from "@/hooks/useDecideFriendRequest"
-import { FRIEND_REQUEST_STALE_MESSAGE, friendRequestDecisionErrorKey } from "@/lib/friend-requests"
+import {
+  FRIEND_REQUEST_STALE_MESSAGE,
+  friendRequestDecisionErrorKey,
+  StaleFriendRequestError,
+} from "@/lib/friend-requests"
 import { relativeTime } from "@/lib/relativeTime"
 import { cn } from "@/lib/utils"
 
@@ -26,8 +30,13 @@ type NotificationItemProps = {
   now?: Date
 }
 
-const rowClassName =
-  "flex w-full items-start gap-3 rounded-md px-3 py-2 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring"
+// The layout of every row, the friend request's one included (review #257),
+// so the two never drift apart; a row that is a link adds its states.
+const rowLayout = "flex w-full items-start gap-3 rounded-md px-3 py-2"
+const rowClassName = cn(
+  rowLayout,
+  "text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring",
+)
 
 // Each target is its own `Link`, so the router checks the params and search
 // of every page the notifications can lead to.
@@ -199,7 +208,7 @@ function FriendRequestActions({
           {deciding === "reject" ? t("friends.requests.rejecting") : t("friends.requests.reject")}
         </Button>
       </div>
-      {decide.isError ? (
+      {decide.isError && !(decide.error instanceof StaleFriendRequestError) ? (
         <p
           role="alert"
           className="typo-small text-destructive"
@@ -261,7 +270,7 @@ export function NotificationItem({
   // notification with it.
   if (notification.type === "FRIEND_REQUEST" && notification.friendRequest && notification.actor) {
     return (
-      <div className="flex w-full items-start gap-3 rounded-md px-3 py-2">
+      <div className={rowLayout}>
         <UnreadDot isUnread={isUnread} />
         <span className="flex min-w-0 flex-1 flex-col gap-2">
           {target ? (

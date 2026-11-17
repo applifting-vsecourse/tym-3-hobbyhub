@@ -1,4 +1,5 @@
 import {
+  FRIEND_SEARCH_MAX_RESULTS,
   FRIEND_SEARCH_PAGE_SIZE,
   FriendEventsPeriod,
   FriendListSort,
@@ -85,9 +86,13 @@ export class FriendshipService {
   }
 
   /**
-   * #225: a page of people whose name or username contains the text, each
-   * with the viewer's relation to them. The text arrives trimmed and long
-   * enough (the DTO). People blocked from the viewer (#239) are not found.
+   * #225: a page of people whose nickname contains the text, each with the
+   * viewer's relation to them. The text arrives trimmed and long enough, the
+   * offset within the cap (the DTO). People blocked with the viewer either
+   * way (#239) are not found. The pages stop at `FRIEND_SEARCH_MAX_RESULTS`.
+   *
+   * The three queries run one after another on purpose: the people found
+   * depend on the blocks, the relations on the people found.
    */
   async search(
     viewer: Identity,
@@ -103,6 +108,10 @@ export class FriendshipService {
       await this.blockedWith(viewer.id),
     );
     const page = rows.slice(0, FRIEND_SEARCH_PAGE_SIZE);
+    const hasMore = rows.length > FRIEND_SEARCH_PAGE_SIZE;
+    const next = offset + FRIEND_SEARCH_PAGE_SIZE;
+    // Review of #225: no page past the cap, so nobody lists every user.
+    const isLastAllowed = next >= FRIEND_SEARCH_MAX_RESULTS;
     const relations = await this.friendshipRepository.findRelationsWith(
       viewer.id,
       page.map((row) => row.id),
@@ -114,10 +123,8 @@ export class FriendshipService {
         image: row.image,
         relation: relationOf(viewer.id, relations.get(row.id)!),
       })),
-      nextOffset:
-        rows.length > FRIEND_SEARCH_PAGE_SIZE
-          ? offset + FRIEND_SEARCH_PAGE_SIZE
-          : null,
+      nextOffset: hasMore && !isLastAllowed ? next : null,
+      isCapped: hasMore && isLastAllowed,
     };
   }
 
@@ -213,7 +220,8 @@ export class FriendshipService {
 
   /**
    * #228: the requests waiting for the signed-in person, newest first, a page
-   * at a time, with how many there are.
+   * at a time, with how many there are. Not from people blocked with them
+   * either way (review #257): deciding those ends in 404, as `checkDecidable`.
    */
   async listReceivedRequests(
     recipient: Identity,
@@ -224,6 +232,7 @@ export class FriendshipService {
         recipient.id,
         offset,
         RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        await this.blockedWith(recipient.id),
       );
     return {
       items,
@@ -235,9 +244,12 @@ export class FriendshipService {
     };
   }
 
-  /** #228: how many requests wait for the signed-in person (the tab's number). */
-  countReceivedRequests(recipient: Identity): Promise<number> {
-    return this.friendshipRepository.countReceivedRequests(recipient.id);
+  /** #228: how many requests wait for the signed-in person (the tab's number), the same ones. */
+  async countReceivedRequests(recipient: Identity): Promise<number> {
+    return this.friendshipRepository.countReceivedRequests(
+      recipient.id,
+      await this.blockedWith(recipient.id),
+    );
   }
 
   /**
@@ -322,18 +334,9 @@ export class FriendshipService {
     now: Date = new Date(),
   ): Promise<void> {
     if (oneId === otherId) return;
-    const closed = await this.friendshipRepository.removeBlockedPair(
-      oneId,
-      otherId,
-      now,
-    );
-    // #228: as with a withdrawn request, its notification goes; otherwise
-    // the recipient keeps an unread line about someone they no longer see.
-    await Promise.all(
-      closed.map((id) =>
-        this.notifications.removeFriendRequestNotifications({ id }),
-      ),
-    );
+    // #228: the notifications of the closed requests go with them, in the
+    // repository's one transaction (review #257).
+    await this.friendshipRepository.removeBlockedPair(oneId, otherId, now);
   }
 
   /**

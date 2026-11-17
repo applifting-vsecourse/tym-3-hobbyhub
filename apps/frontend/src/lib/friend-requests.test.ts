@@ -1,7 +1,12 @@
 import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { decideFriendRequest, friendRequestDecisionErrorKey } from "@/lib/friend-requests"
+import {
+  decideFriendRequest,
+  friendRequestDecisionErrorKey,
+  friendRequestDecisionRefreshes,
+  StaleFriendRequestError,
+} from "@/lib/friend-requests"
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
@@ -23,14 +28,17 @@ describe("decideFriendRequest (#228)", () => {
     "sends %s for the sender and says it is decided",
     async (decision) => {
       post.mockResolvedValueOnce(new Response("{}"))
-      await expect(decideFriendRequest("u 2", decision)).resolves.toBe("decided")
+      await expect(decideFriendRequest("u 2", decision)).resolves.toBeUndefined()
       expect(post).toHaveBeenCalledWith(`friends/requests/u%202/${decision}`)
     },
   )
 
-  it("says stale when nothing waited any more (409)", async () => {
+  // Review #257: a failure, so `isSuccess` never means a stale click.
+  it("fails as stale when nothing waited any more (409)", async () => {
     post.mockRejectedValueOnce(httpError(409))
-    await expect(decideFriendRequest("u2", "accept")).resolves.toBe("stale")
+    await expect(decideFriendRequest("u2", "accept")).rejects.toBeInstanceOf(
+      StaleFriendRequestError,
+    )
   })
 
   it.each([404, 500])("passes any other failure on (%i)", async (status) => {
@@ -40,7 +48,25 @@ describe("decideFriendRequest (#228)", () => {
   })
 })
 
+describe("friendRequestDecisionRefreshes (review #257)", () => {
+  it("refreshes the requests, the notifications, the sender's profile and the events", () => {
+    expect(friendRequestDecisionRefreshes("u2")).toEqual([
+      ["friendship"],
+      ["notifications"],
+      ["profile", "user", "u2"],
+      // #226: a new friend shows in „Akce přátel“ and the event detail.
+      ["events"],
+    ])
+  })
+})
+
 describe("friendRequestDecisionErrorKey (#228)", () => {
+  it("says the request is no longer there for a stale one", () => {
+    expect(friendRequestDecisionErrorKey(new StaleFriendRequestError())).toBe(
+      "friends.requests.stale",
+    )
+  })
+
   it("says the account is gone for a 404", () => {
     expect(friendRequestDecisionErrorKey(httpError(404))).toBe("friends.requests.unavailable")
   })
