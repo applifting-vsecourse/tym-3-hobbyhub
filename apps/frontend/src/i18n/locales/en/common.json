@@ -595,6 +595,9 @@
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by <profile>{{name}}</profile>",
+      "rating": {
+        "title": "Event rating"
+      },
       "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
@@ -1670,11 +1673,19 @@
         "started": "Your event {{title}} started {{when}}",
         "upcoming": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken"
       },
+      "HOSTED_RATING_PROMPT": {
+        "FIRST": "Rate the participants of your event {{title}} by {{until}}",
+        "LAST_CALL": "Last day to rate the participants of {{title}}, by {{until}}"
+      },
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
+      "RATING_PROMPT": {
+        "FIRST": "How was {{title}}? Rate the organizer by {{until}}",
+        "LAST_CALL": "Last day to rate the organizer of {{title}}, by {{until}}"
+      },
       "REPORT_RESOLVED": "We have dealt with your report. Thank you for helping keep HobbyHub safe.",
       "REQUEST_DECIDED": {
         "event": {
@@ -2025,6 +2036,14 @@
         "unreadable": "The photo could not be processed. Try another one."
       }
     },
+    "ratings": {
+      "asOrganizer": "As an organizer",
+      "asParticipant": "As a participant",
+      "ownBelowMinimum_one": "You have {{count}} rating; others see it from {{min}} on.",
+      "ownBelowMinimum_other": "You have {{count}} ratings; others see them from {{min}} on.",
+      "ownBelowMinimum_zero": "Others see your rating from {{min}} ratings on.",
+      "title": "Ratings"
+    },
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "title": "My profile",
@@ -2061,6 +2080,33 @@
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }
+  },
+  "rating": {
+    "notEnough": "Not enough ratings yet",
+    "page": {
+      "back": "Back to the event",
+      "empty": "There is nobody for you to rate at this event.",
+      "eyebrow": "Rating after the event",
+      "formsSoon": "The form for rating is coming soon.",
+      "loadError": "Ratings could not be loaded",
+      "loading": "Loading ratings",
+      "notRated": "Not rated yet",
+      "organizer": "Organizer",
+      "participants": "Participants",
+      "phase": {
+        "closed": "Rating closed {{deadline}}.",
+        "notYet": "You can rate once the event is over.",
+        "open": "You can rate until {{deadline}}.",
+        "unavailable": "This event cannot be rated."
+      },
+      "retry": "Try again",
+      "revealNote": "Who rated whom shows only when the period ends, for everyone at once."
+    },
+    "scoreLabel": "Rated {{value}} of {{max}}",
+    "scoreWithCountLabel_one": "Rated {{value}} of {{max}}, {{count}} rating",
+    "scoreWithCountLabel_other": "Rated {{value}} of {{max}}, {{count}} ratings",
+    "starsOf_one": "{{count}} star of {{max}}",
+    "starsOf_other": "{{count}} stars of {{max}}"
   },
   "reports": {
     "done": "Thank you, we have passed your report to the administrators. We will let you know once they deal with it.",
