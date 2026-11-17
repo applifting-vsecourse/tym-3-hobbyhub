@@ -58,7 +58,7 @@ export function RatingScore({ average, count, className }: RatingScoreProps) {
     )
   }
 
-  const value = new Intl.NumberFormat(i18n.language, {
+  const value = new Intl.NumberFormat(i18n.resolvedLanguage, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   }).format(average)

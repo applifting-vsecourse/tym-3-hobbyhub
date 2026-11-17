@@ -64,6 +64,7 @@ function EventRatingsPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="max-md:h-11"
                 onClick={() => void stateQuery.refetch()}
               >
                 {t("rating.page.retry")}

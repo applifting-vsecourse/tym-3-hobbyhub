@@ -37,7 +37,7 @@ const phaseOf = (state: EventRatingState): Phase => {
  */
 export function EventRatingsView({ state }: EventRatingsViewProps) {
   const { t, i18n } = useTranslation()
-  const deadline = new Intl.DateTimeFormat(i18n.language, {
+  const deadline = new Intl.DateTimeFormat(i18n.resolvedLanguage, {
     dateStyle: "long",
     timeStyle: "short",
   }).format(state.deadline)
