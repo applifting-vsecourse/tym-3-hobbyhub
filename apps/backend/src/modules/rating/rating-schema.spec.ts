@@ -18,6 +18,7 @@ import {
   RATING_WINDOW_DAYS,
   RatingDirection,
 } from '@/modules/rating/domain/rating';
+import { RatingPromptRepository } from '@/modules/rating/repositories/rating-prompt.repository';
 import { RatingRepository } from '@/modules/rating/repositories/rating.repository';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
@@ -409,6 +410,73 @@ describeDb('rating schema constraints and views', () => {
         expect(page.items.map((item) => item.author?.id).sort()).toEqual(
           event.participantIds.slice(0, 2).sort(),
         );
+      });
+    });
+  });
+
+  // #236, ADR-0021: what the rating-prompt cron reads, and its claim.
+  describe('rating prompts', () => {
+    const promptsOf = (tx: Prisma.TransactionClient): RatingPromptRepository =>
+      new RatingPromptRepository(tx as unknown as PrismaService);
+
+    it('looks only at events whose rating period is on and that took place', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const organizerId = await createUser(tx);
+        const participantIds = [await createUser(tx)];
+        const make = (
+          endedDaysAgo: number,
+          data: Partial<Prisma.EventUncheckedCreateInput> = {},
+        ): Promise<string> =>
+          createEvent(tx, { organizerId, participantIds, endedDaysAgo, data });
+        const due = await make(1);
+        const tooFresh = await make(1 / 24);
+        const over = await make(RATING_WINDOW_DAYS + 1);
+        const cancelled = await make(1, { status: 'CANCELLED' });
+        const hidden = await make(1, {
+          isHidden: true,
+          hiddenAt: new Date(),
+          hiddenReason: 'Podvodná akce',
+        });
+
+        const ids = (await promptsOf(tx).findCandidates(new Date())).map(
+          ({ id }) => id,
+        );
+        expect(ids).toContain(due);
+        for (const id of [tooFresh, over, cancelled, hidden]) {
+          expect(ids).not.toContain(id);
+        }
+      });
+    });
+
+    it('reads the seats, the calls sent and who rated whom', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const event = await aRevealedEvent(tx, 1);
+        const [p1, p2] = event.participantIds;
+        await rateOrganizer(tx, event.eventId, p1, event.organizerId, 5);
+        await tx.ratingPrompt.create({
+          data: { eventId: event.eventId, kind: 'FIRST' },
+        });
+
+        const candidate = (await promptsOf(tx).findCandidates(new Date())).find(
+          ({ id }) => id === event.eventId,
+        );
+        expect(candidate).toMatchObject({
+          organizerId: event.organizerId,
+          sent: ['FIRST'],
+          ratedOrganizer: [p1],
+          ratedByOrganizer: [],
+        });
+        expect(candidate?.seats.map(({ userId }) => userId)).toContain(p2);
+      });
+    });
+
+    it('lets one caller claim a call for an event, once', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const { eventId } = await aRevealedEvent(tx, 1);
+        const prompts = promptsOf(tx);
+        await expect(prompts.claim(eventId, 'FIRST')).resolves.toBe(true);
+        await expect(prompts.claim(eventId, 'FIRST')).resolves.toBe(false);
+        await expect(prompts.claim(eventId, 'LAST_CALL')).resolves.toBe(true);
       });
     });
   });
