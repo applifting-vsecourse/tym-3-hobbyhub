@@ -12,6 +12,7 @@ vi.mock("@/features/auth/lib/auth-client", () => ({
 const registration: GoogleRegistration = {
   username: "jana.n",
   gender: "FEMALE",
+  preferredLanguage: "EN",
   birthYear: 1990,
   adulthoodConfirmed: true,
   termsAccepted: true,

@@ -44,7 +44,12 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
   it('creates the account with the checked gender, year and consents', async () => {
     jest.mocked(getOAuthState).mockResolvedValue({
       serverContext: {
-        registration: { username: 'Jana.N', gender: 'FEMALE', birthYear: 1990 },
+        registration: {
+          username: 'Jana.N',
+          gender: 'FEMALE',
+          birthYear: 1990,
+          preferredLanguage: 'EN',
+        },
       },
     } as never);
 
@@ -63,6 +68,7 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
       displayUsername: 'Jana.N',
       gender: 'FEMALE',
       birthYear: 1990,
+      preferredLanguage: 'EN',
       image: 'data:image/webp;base64,AAAA',
       termsVersion: expect.any(String) as string,
     });
@@ -83,7 +89,12 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
   it('refuses a nickname taken while the user was at Google', async () => {
     jest.mocked(getOAuthState).mockResolvedValue({
       serverContext: {
-        registration: { username: 'Jana.N', gender: 'FEMALE', birthYear: 1990 },
+        registration: {
+          username: 'Jana.N',
+          gender: 'FEMALE',
+          birthYear: 1990,
+          preferredLanguage: 'EN',
+        },
       },
     } as never);
 
@@ -110,6 +121,7 @@ describe('registrationBeforeHook (sign-in with Google)', () => {
     username: 'Jana.N',
     gender: 'FEMALE',
     birthYear: 1990,
+    preferredLanguage: 'EN',
     termsAccepted: true,
     adulthoodConfirmed: true,
   };
@@ -161,7 +173,12 @@ describe('registrationBeforeHook (sign-in with Google)', () => {
       ...adapter(false),
     });
     expect(addOAuthServerContext).toHaveBeenCalledWith({
-      registration: { username: 'Jana.N', gender: 'FEMALE', birthYear: 1990 },
+      registration: {
+          username: 'Jana.N',
+          gender: 'FEMALE',
+          birthYear: 1990,
+          preferredLanguage: 'EN',
+        },
     });
   });
 });

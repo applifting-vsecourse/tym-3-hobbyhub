@@ -9,6 +9,7 @@ import { googleAvatarAsDataUrl } from './google-avatar';
 import {
   consentsAtSignUp,
   Gender,
+  Language,
   RegistrationErrorCode,
   validateRegistration,
 } from './registration';
@@ -116,6 +117,7 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
         username: result.username,
         gender: result.gender,
         birthYear: result.birthYear,
+        preferredLanguage: result.preferredLanguage,
       },
     });
     return;
@@ -163,14 +165,20 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
           // get here.
           const state = await getOAuthState();
           const registration = state?.serverContext?.registration as
-            { username: string; gender: Gender; birthYear: number } | undefined;
+            | {
+                username: string;
+                gender: Gender;
+                birthYear: number;
+                preferredLanguage: Language;
+              }
+            | undefined;
           if (!registration) {
             throw APIError.from('BAD_REQUEST', {
               code: 'REGISTRATION_REQUIRED',
               message: 'Sign up through the registration form first',
             });
           }
-          const { username, gender, birthYear } = registration;
+          const { username, gender, birthYear, preferredLanguage } = registration;
           // The nickname was free when the user left for Google; someone may
           // have taken it since. BetterAuth turns an API error with a code
           // into `?error=<code>` on the return address.
@@ -197,6 +205,8 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
               displayUsername: username,
               gender,
               birthYear,
+              // The language the sign-up form was shown in, as with e-mail.
+              preferredLanguage,
               ...consentsAtSignUp(new Date()),
             },
           };

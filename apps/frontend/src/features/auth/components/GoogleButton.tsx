@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
+import type { AccountLanguage } from "@/i18n/resources"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
@@ -13,6 +14,8 @@ import { AuthError, authErrorMessage } from "@/features/auth/lib/authErrors"
 export type GoogleRegistration = {
   readonly username: string
   readonly gender: "MALE" | "FEMALE"
+  /** The language the form is shown in, kept as the account's language. */
+  readonly preferredLanguage: AccountLanguage
   readonly birthYear: number
   readonly adulthoodConfirmed: true
   readonly termsAccepted: true

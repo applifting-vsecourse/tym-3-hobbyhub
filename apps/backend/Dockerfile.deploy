@@ -41,7 +41,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 
-RUN pnpm install --frozen-lockfile --prod --no-optional --filter backend
+RUN pnpm install --frozen-lockfile --prod --filter backend
 
 
 # --- Runtime stage: production deps + compiled output, nothing else ---

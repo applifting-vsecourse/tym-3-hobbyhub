@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useNicknameAvailability } from "@/hooks/useNicknameAvailability"
+import { languageOf, toAccountLanguage } from "@/i18n/resources"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
 import {
@@ -120,7 +121,7 @@ type SignUpFormProps = {
 }
 
 export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: SignUpFormProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -160,6 +161,7 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
       username: username.trim(),
       gender,
       birthYear: Number(birthYear.trim()),
+      preferredLanguage: toAccountLanguage(languageOf(i18n.resolvedLanguage)),
       adulthoodConfirmed: true,
       termsAccepted: true,
     }
