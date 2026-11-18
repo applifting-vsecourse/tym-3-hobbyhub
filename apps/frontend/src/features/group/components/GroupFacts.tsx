@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import type { Group } from "@/features/group/api/groupSchemas"
+import { GroupsMap } from "@/features/group/components/GroupsMap"
 
 /**
  * Where and when a group meets, beside its membership (ADR-0028). Only what the
@@ -14,7 +15,16 @@ export function GroupFacts({ group }: { group: Group }) {
     .join(", ")
 
   return (
-    <dl className="flex flex-col divide-y divide-border border-y border-border lg:border-x lg:px-4">
+    <div className="flex flex-col gap-3">
+      {/* Where the group meets, as a small map with the member count (ADR-0028). */}
+      {group.latitude !== null ? (
+        <GroupsMap
+          groups={[group]}
+          isFallbackShown={false}
+          className="h-48"
+        />
+      ) : null}
+      <dl className="flex flex-col divide-y divide-border border-y border-border lg:border-x lg:px-4">
       <div className="flex flex-col gap-1 py-3">
         <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.where")}</dt>
         <dd className="typo-small text-muted-foreground">
@@ -27,6 +37,7 @@ export function GroupFacts({ group }: { group: Group }) {
           {when || t("groups.detail.facts.whenNone")}
         </dd>
       </div>
-    </dl>
+      </dl>
+    </div>
   )
 }

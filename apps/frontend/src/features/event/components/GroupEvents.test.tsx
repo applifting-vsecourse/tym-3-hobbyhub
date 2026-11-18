@@ -85,6 +85,13 @@ describe("GroupEvents", () => {
     expect(screen.getAllByRole("link", { name: /Čtvrteční florbal/ })).toHaveLength(1)
   })
 
+  it("shows the upcoming events of a group on approval only as a number", async () => {
+    await renderEvents({ events: [], total: 0, hiddenCount: 5 })
+
+    expect(screen.getByText("Po schválení členství vás čeká 5 nadcházejících akcí")).toBeVisible()
+    expect(screen.queryByRole("link", { name: /florbal/i })).not.toBeInTheDocument()
+  })
+
   it("says nothing about hidden events when there are none", async () => {
     await renderEvents({ period: "past" })
 

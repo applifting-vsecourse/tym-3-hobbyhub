@@ -1,9 +1,10 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 
 import { NoMatchingResults } from "@/components/hobbyhub/NoMatchingResults"
 import { Button } from "@/components/ui/button"
+import { toggleVariants } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 
 import type { DiscoverGroupsFilters } from "@/features/group/api/groupKeys"
@@ -48,6 +49,8 @@ export function DiscoverGroups({
   onClearFilters,
 }: DiscoverGroupsProps) {
   const { t } = useTranslation()
+  // Below `xl` the map and the list take turns; from `xl` they sit side by side.
+  const [isMapShown, setIsMapShown] = useState(false)
   // The previous list stays on screen while the next one loads, so typing does not flash.
   const discover = useInfiniteQuery({
     ...discoverGroupsQueryOptions(viewerId, filters),
@@ -84,9 +87,35 @@ export function DiscoverGroups({
         {tabs}
         {filtersBar}
         {extraFilters}
+        {renderMap ? (
+          <div
+            role="group"
+            aria-label={t("groups.map.label")}
+            className="flex gap-2 xl:hidden"
+          >
+            {[false, true].map((isMapOption) => (
+              <button
+                key={String(isMapOption)}
+                type="button"
+                aria-pressed={isMapShown === isMapOption}
+                data-state={isMapShown === isMapOption ? "on" : "off"}
+                className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
+                onClick={() => setIsMapShown(isMapOption)}
+              >
+                {isMapOption ? t("groups.map.show") : t("groups.map.list")}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {renderMap && isMapShown ? (
+          <div className="h-[60svh] xl:hidden">{renderMap(groups ?? [])}</div>
+        ) : null}
         <div
           aria-busy={discover.isPlaceholderData}
-          className={discover.isPlaceholderData ? "opacity-60 transition-opacity" : undefined}
+          className={cn(
+            discover.isPlaceholderData && "opacity-60 transition-opacity",
+            isMapShown && "max-xl:hidden",
+          )}
         >
           <GroupGrid
             items={groups}

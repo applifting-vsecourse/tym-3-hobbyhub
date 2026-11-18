@@ -115,7 +115,12 @@ export function GroupEvents({
             </li>
           ))}
         </ul>
-        {hiddenCount > 0 ? <HiddenEvents count={hiddenCount} /> : null}
+        {hiddenCount > 0 ? (
+          <HiddenEvents
+            count={hiddenCount}
+            period={period}
+          />
+        ) : null}
         {hasMore ? (
           <Button
             variant="outline"
@@ -203,7 +208,7 @@ function GroupEventBadges({ event }: { event: GroupEvent }) {
 // Placeholders for the group-only events a non-member may not see. Bars, not the
 // events themselves: nothing about them left the server, and the blur only says
 // so to the eye (#269).
-function HiddenEvents({ count }: { count: number }) {
+function HiddenEvents({ count, period }: { count: number; period: GroupEventPeriod }) {
   const { t } = useTranslation()
   return (
     <div className="relative">
@@ -225,7 +230,14 @@ function HiddenEvents({ count }: { count: number }) {
         ))}
       </ul>
       <p className="absolute inset-0 flex items-center justify-center px-4 text-center typo-label-lg text-foreground">
-        {t("groups.detail.events.hidden", { count })}
+        {t(
+          period === "upcoming"
+            ? "groups.detail.events.hiddenUpcoming"
+            : "groups.detail.events.hidden",
+          {
+            count,
+          },
+        )}
       </p>
     </div>
   )

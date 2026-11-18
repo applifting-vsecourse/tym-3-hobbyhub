@@ -929,6 +929,9 @@
           "upcoming": "Skupina teď nemá žádné nadcházející akce."
         },
         "groupOnly": "Jen pro skupinu",
+        "hiddenUpcoming_few": "Po schválení členství vás čekají {{count}} nadcházející akce",
+        "hiddenUpcoming_one": "Po schválení členství vás čeká 1 nadcházející akce",
+        "hiddenUpcoming_other": "Po schválení členství vás čeká {{count}} nadcházejících akcí",
         "hidden_few": "Další {{count}} akce jsou jen pro členy skupiny",
         "hidden_one": "Další akce je jen pro členy skupiny",
         "hidden_other": "Dalších {{count}} akcí je jen pro členy skupiny",
@@ -1159,8 +1162,10 @@
     },
     "map": {
       "label": "Mapa skupin",
+      "list": "Seznam",
       "noPlace": "Skupiny bez místa na mapě nejsou.",
-      "pin": "{{name}}, {{count}} členů"
+      "pin": "{{name}}, {{count}} členů",
+      "show": "Mapa"
     },
     "membershipRequest": {
       "form": {

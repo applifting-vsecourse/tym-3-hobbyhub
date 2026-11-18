@@ -405,8 +405,24 @@ describe('EventsService', () => {
       expect(groups.getPublicGroup).not.toHaveBeenCalled();
     });
 
+    it('shows the upcoming events of a group that decides on requests only as a number', async () => {
+      const { repository, groups, service } = setup();
+      groups.getPublicGroup.mockResolvedValue({
+        approvalMode: 'APPROVAL',
+      } as Awaited<ReturnType<typeof groups.getPublicGroup>>);
+      repository.countGroupEvents.mockResolvedValue(5);
+
+      await expect(
+        service.getGroupEvents('g1', undefined, 'upcoming', 0, now),
+      ).resolves.toEqual({ items: [], total: 0, hiddenCount: 5 });
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
+    });
+
     it('gives anyone else the upcoming public events of a public group', async () => {
       const { repository, groups, service } = setup();
+      groups.getPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.getPublicGroup>>);
       repository.getGroupEvents.mockResolvedValue(page);
 
       await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);

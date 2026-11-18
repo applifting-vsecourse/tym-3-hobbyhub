@@ -915,6 +915,8 @@
           "upcoming": "The group has no upcoming events right now."
         },
         "groupOnly": "Group only",
+        "hiddenUpcoming_one": "Once you are approved, 1 upcoming event awaits",
+        "hiddenUpcoming_other": "Once you are approved, {{count}} upcoming events await",
         "hidden_one": "One more event is for group members only",
         "hidden_other": "{{count}} more events are for group members only",
         "loadMore": "Load more",
@@ -1142,8 +1144,10 @@
     },
     "map": {
       "label": "Map of groups",
+      "list": "List",
       "noPlace": "Groups without a place are not on the map.",
-      "pin": "{{name}}, {{count}} members"
+      "pin": "{{name}}, {{count}} members",
+      "show": "Map"
     },
     "membershipRequest": {
       "form": {

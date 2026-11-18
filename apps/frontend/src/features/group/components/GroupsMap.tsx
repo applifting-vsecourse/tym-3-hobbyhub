@@ -50,6 +50,8 @@ function GroupPin({ group, isSelected }: { group: Located; isSelected: boolean }
 type GroupsMapProps = {
   groups: Group[]
   className?: string
+  /** Say so when the map cannot start; a small map in a page leaves it out. */
+  isFallbackShown?: boolean
 }
 
 /**
@@ -58,7 +60,7 @@ type GroupsMapProps = {
  * exact spot. A group without a place is only in the list. Without a token or
  * where the map cannot start, the list beside it carries on.
  */
-export function GroupsMap({ groups, className }: GroupsMapProps) {
+export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsMapProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<mapboxgl.Map | null>(null)
@@ -108,6 +110,7 @@ export function GroupsMap({ groups, className }: GroupsMapProps) {
   }, [map, fitKey])
 
   if (isBroken || !env.VITE_MAPBOX_TOKEN) {
+    if (!isFallbackShown) return null
     return (
       <p className={cn("typo-small text-muted-foreground", className)}>{t("groups.map.noPlace")}</p>
     )
