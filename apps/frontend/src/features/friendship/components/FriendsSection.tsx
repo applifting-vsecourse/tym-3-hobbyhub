@@ -4,15 +4,26 @@ import { useTranslation } from "react-i18next"
 import { ROUTES } from "@/app/routes"
 import { Button } from "@/components/ui/button"
 
+import { FriendSearch } from "@/features/friendship/components/FriendSearch"
 import { FriendsTabs } from "@/features/friendship/components/FriendsTabs"
 import type { FriendsTab } from "@/features/friendship/lib/friendsSearch"
 
+type FriendsSectionProps = {
+  tab: FriendsTab
+  /** "Vyhledat uživatele" (#225): the text searched and the one in the field. */
+  search?: {
+    text: string
+    typed: string
+    onTypedChange: (typed: string) => void
+  }
+}
+
 /**
  * Přátelé (#227): one place for finding people, the friends and the friend
- * requests. The tabs are empty for now: #225 fills the search, #226 the
- * friends and #228 the requests. Each says in one sentence what will be there.
+ * requests. #225 fills the search; the friends (#226) and the requests (#228)
+ * still say in one sentence what will be there.
  */
-export function FriendsSection({ tab }: { tab: FriendsTab }) {
+export function FriendsSection({ tab, search }: FriendsSectionProps) {
   const { t } = useTranslation()
 
   return (
@@ -23,20 +34,26 @@ export function FriendsSection({ tab }: { tab: FriendsTab }) {
         aria-label={t(`friends.tabs.${tab}`)}
         className="flex flex-col gap-3"
       >
-        <p className="typo-body text-muted-foreground">{t(`friends.empty.${tab}`)}</p>
-        {tab === "search" ? null : (
-          <Button
-            asChild
-            variant="link"
-            className="w-fit px-0"
-          >
-            <Link
-              to={ROUTES.friends}
-              search={{}}
+        {tab === "search" ? (
+          search ? (
+            <FriendSearch {...search} />
+          ) : null
+        ) : (
+          <>
+            <p className="typo-body text-muted-foreground">{t(`friends.empty.${tab}`)}</p>
+            <Button
+              asChild
+              variant="link"
+              className="w-fit px-0"
             >
-              {t("friends.empty.findPeople")}
-            </Link>
-          </Button>
+              <Link
+                to={ROUTES.friends}
+                search={{}}
+              >
+                {t("friends.empty.findPeople")}
+              </Link>
+            </Button>
+          </>
         )}
       </section>
     </div>

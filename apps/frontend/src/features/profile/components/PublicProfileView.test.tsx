@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
@@ -9,6 +10,7 @@ import { PublicProfileView } from "@/features/profile/components/PublicProfileVi
 const profile: PublicProfile = {
   id: "u2",
   name: "Petr",
+  relation: "none",
   bio: "Běhám po práci",
   image: null,
   cover: null,
@@ -19,11 +21,12 @@ const profile: PublicProfile = {
   },
 }
 
-const renderProfile = (overrides: Partial<PublicProfile> = {}) =>
+const renderProfile = (overrides: Partial<PublicProfile> = {}, friendAction?: ReactNode) =>
   renderWithRouter(
     <PublicProfileView
       profile={{ ...profile, ...overrides }}
       activityLabel={(activity) => activity.name}
+      friendAction={friendAction}
     />,
   )
 
@@ -46,5 +49,12 @@ describe("PublicProfileView", () => {
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Hodnocení",
     ])
+  })
+
+  it("puts the friendship action under the bio", async () => {
+    await renderProfile({}, <button type="button">Požádat o přátelství</button>)
+    const bio = screen.getByText("Běhám po práci")
+    const action = screen.getByRole("button", { name: "Požádat o přátelství" })
+    expect(bio.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

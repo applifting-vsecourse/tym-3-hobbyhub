@@ -1,4 +1,8 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
+import {
+  FRIEND_RELATIONS,
+  FriendRelation,
+} from '@/modules/friendship/domain/friendship';
 import { LevelResponseDto } from '@/modules/level/controllers/dto/level.response.dto';
 import {
   HomeAddressResponseDto,
@@ -131,6 +135,13 @@ export class PublicProfileResponseDto {
   interests!: InterestResponseDto[];
 
   @ApiProperty({
+    enum: FRIEND_RELATIONS,
+    description:
+      "#225: the viewer's relation to the person: none, request_sent, request_received, friends",
+  })
+  relation!: FriendRelation;
+
+  @ApiProperty({
     type: UserRatingScoresResponseDto,
     description:
       'Revealed ratings as an organizer and as a participant (#236); both numbers null below 3 ratings',
@@ -141,6 +152,7 @@ export class PublicProfileResponseDto {
     return {
       id: profile.id,
       name: profile.name,
+      relation: profile.relation,
       bio: profile.bio,
       image: profile.image,
       cover: profile.cover,

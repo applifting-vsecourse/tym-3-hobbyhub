@@ -1,4 +1,5 @@
 import { FriendVisibility } from '@/modules/friendship/domain/friendship';
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import {
   HomeAddress,
   InterestInput,
@@ -44,6 +45,7 @@ export class ProfileService {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly onboardingService: OnboardingService,
+    private readonly friendshipService: FriendshipService,
     private readonly blocks: UserBlockVisibility,
     private readonly ratingsService: RatingsService,
   ) {}
@@ -96,6 +98,7 @@ export class ProfileService {
   // F-04.2: another person's profile: only what the visibility matrix lets any
   // signed-in person see. The e-mail is never part of it.
   // #239: the profile of someone blocked from the viewer does not exist.
+  // #225: with the viewer's relation to the person (friends, a request either way).
   async getPublicProfile(
     userId: string,
     viewer: Identity,
@@ -105,8 +108,9 @@ export class ProfileService {
       ? null
       : await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
-    const [interests, ratings] = await Promise.all([
+    const [interests, relation, ratings] = await Promise.all([
       this.onboardingService.getInterestsOf(userId),
+      this.friendshipService.relationBetween(viewer.id, userId),
       this.ratingsService.getUserScores(userId),
     ]);
     return {
@@ -116,6 +120,7 @@ export class ProfileService {
       image: row.image,
       cover: row.profileCover,
       interests,
+      relation,
       // #236: someone opening their own public profile sees it as others do.
       ratings: shownUserRatingScores(ratings, false),
     };
