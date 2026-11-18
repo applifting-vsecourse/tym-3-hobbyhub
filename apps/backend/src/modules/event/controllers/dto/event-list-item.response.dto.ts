@@ -5,6 +5,7 @@ import {
   EventListPage,
   ParticipantStats,
 } from '@/modules/event/domain/event';
+import { RatingScoreResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 class EventGroupResponseDto {
@@ -231,6 +232,13 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   })
   hiddenReason!: string | null;
 
+  @ApiProperty({
+    type: RatingScoreResponseDto,
+    description:
+      "The participants' revealed ratings of the event (#236); both null below 3 ratings",
+  })
+  rating!: RatingScoreResponseDto;
+
   static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
@@ -248,6 +256,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
         : null,
       statsMinParticipants: event.statsMinParticipants,
       hiddenReason: event.hiddenReason,
+      rating: RatingScoreResponseDto.fromDomain(event.rating),
     };
   }
 }

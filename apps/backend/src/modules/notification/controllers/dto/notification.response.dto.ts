@@ -9,6 +9,8 @@ import {
   NOTIFICATION_TYPES,
   NotificationPage,
   NotificationType,
+  RATING_PROMPTS,
+  RatingPromptKind,
 } from '@/modules/notification/domain/notification';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -48,6 +50,22 @@ class NotificationReminderDto {
       'HOSTED_EVENT_REMINDER: how full the event was when it went out',
   })
   occupancy!: NotificationOccupancyDto | null;
+}
+
+class NotificationRatingPromptDto {
+  @ApiProperty({
+    enum: RATING_PROMPTS,
+    description:
+      'FIRST: 2 h after the end of the event; LAST_CALL: the last day of the rating period',
+  })
+  kind!: RatingPromptKind;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'The last moment to rate',
+  })
+  deadline!: string;
 }
 
 class NotificationPersonDto {
@@ -145,8 +163,17 @@ export class NotificationResponseDto {
   })
   reminder!: NotificationReminderDto | null;
 
+  @ApiProperty({
+    type: NotificationRatingPromptDto,
+    nullable: true,
+    description:
+      'RATING_PROMPT, HOSTED_RATING_PROMPT: which call and until when to rate (#236)',
+  })
+  ratingPrompt!: NotificationRatingPromptDto | null;
+
   static fromDomain(notification: Notification): NotificationResponseDto {
-    const { reminder, startsAt, occupancy } = notification.payload;
+    const { reminder, startsAt, occupancy, prompt, deadline } =
+      notification.payload;
     return {
       id: notification.id,
       type: notification.type,
@@ -163,6 +190,7 @@ export class NotificationResponseDto {
         reminder && startsAt
           ? { kind: reminder, startsAt, occupancy: occupancy ?? null }
           : null,
+      ratingPrompt: prompt && deadline ? { kind: prompt, deadline } : null,
     };
   }
 }

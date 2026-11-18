@@ -748,7 +748,27 @@ export class EventRepository {
       ),
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
       hiddenReason: event.isHidden ? event.hiddenReason : null,
+      rating: await this.getPublicRatingScore(event.id),
     };
+  }
+
+  // #236, ADR-0027: the event's score from the view `event_rating_score`,
+  // which counts only revealed ratings. Others see it from three ratings on
+  // (`publicAverage`); below that neither number, so none cannot be told from
+  // two.
+  private async getPublicRatingScore(
+    eventId: string,
+  ): Promise<EventDetail['rating']> {
+    const rows = await this.prisma.$queryRaw<
+      { count: number; publicAverage: number | null }[]
+    >`
+      SELECT "count", "publicAverage"
+      FROM "event_rating_score"
+      WHERE "eventId" = ${eventId}`;
+    const row = rows[0];
+    return row?.publicAverage != null
+      ? { count: row.count, average: row.publicAverage }
+      : { count: null, average: null };
   }
 
   // F-06.5: what the organizers and approved participants see on top of the

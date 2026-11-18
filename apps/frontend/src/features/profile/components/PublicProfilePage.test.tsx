@@ -43,6 +43,10 @@ describe("PublicProfilePage", () => {
       image: null,
       cover: null,
       interests: [],
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: null, average: null },
+      },
     })
     await renderPage("u2")
 
@@ -52,7 +56,18 @@ describe("PublicProfilePage", () => {
 
   // #240: the route hands in "Nahlásit uživatele" for the loaded person.
   it("offers the report action for the loaded person", async () => {
-    answer({ id: "u2", name: "Petr", bio: null, image: null, cover: null, interests: [] })
+    answer({
+      id: "u2",
+      name: "Petr",
+      bio: null,
+      image: null,
+      cover: null,
+      interests: [],
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: null, average: null },
+      },
+    })
     await renderPage("u2", (profile) => (
       <button type="button">{`Nahlásit ${profile.name} (${profile.id})`}</button>
     ))

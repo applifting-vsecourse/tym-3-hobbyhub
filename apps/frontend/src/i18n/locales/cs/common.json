@@ -606,6 +606,9 @@
       "missingToMin": "chybí {{count}} do minima",
       "organizedByGroup": "Pořádá skupina",
       "organizer": "Pořádá <profile>{{name}}</profile>",
+      "rating": {
+        "title": "Hodnocení akce"
+      },
       "requestToJoin": "Požádat o účast",
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
@@ -1708,11 +1711,19 @@
         "started": "Tvoje akce {{title}} začala {{when}}",
         "upcoming": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}"
       },
+      "HOSTED_RATING_PROMPT": {
+        "FIRST": "Ohodnoť účastníky své akce {{title}}, můžeš do {{until}}",
+        "LAST_CALL": "Poslední den na ohodnocení účastníků akce {{title}}, můžeš do {{until}}"
+      },
       "NEW_REQUESTS": {
         "event": "{{name}} žádá o účast na akci {{title}}",
         "group": "{{name}} žádá o členství ve skupině {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} zrušil(a) svoji účast na akci {{title}}",
+      "RATING_PROMPT": {
+        "FIRST": "Jak se ti líbila akce {{title}}? Ohodnoť organizátora, můžeš do {{until}}",
+        "LAST_CALL": "Poslední den na ohodnocení organizátora akce {{title}}, můžeš do {{until}}"
+      },
       "REPORT_RESOLVED": "Tvoje nahlášení jsme vyřídili. Děkujeme, že pomáháš udržet HobbyHub bezpečný.",
       "REQUEST_DECIDED": {
         "event": {
@@ -2071,6 +2082,15 @@
         "unreadable": "Fotku se nepodařilo zpracovat. Zkuste jinou."
       }
     },
+    "ratings": {
+      "asOrganizer": "Jako organizátor",
+      "asParticipant": "Jako účastník",
+      "ownBelowMinimum_few": "Máš {{count}} hodnocení, ostatním se ukáže od {{min}}.",
+      "ownBelowMinimum_one": "Máš {{count}} hodnocení, ostatním se ukáže od {{min}}.",
+      "ownBelowMinimum_other": "Máš {{count}} hodnocení, ostatním se ukáže od {{min}}.",
+      "ownBelowMinimum_zero": "Ostatním se hodnocení ukáže od {{min}} hodnocení.",
+      "title": "Hodnocení"
+    },
     "save": "Uložit",
     "saveError": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
     "settings": {
@@ -2112,6 +2132,35 @@
       "privateHint": "Tohle ostatní neuvidí.",
       "privateTitle": "Jen pro vás"
     }
+  },
+  "rating": {
+    "notEnough": "Zatím málo hodnocení",
+    "page": {
+      "back": "Zpět na akci",
+      "empty": "Na této akci nemáš koho hodnotit.",
+      "eyebrow": "Hodnocení po akci",
+      "formsSoon": "Formulář pro zadání hodnocení brzy přibude.",
+      "loadError": "Hodnocení se nepodařilo načíst",
+      "loading": "Načítám hodnocení",
+      "notRated": "Zatím neohodnoceno",
+      "organizer": "Organizátor",
+      "participants": "Účastníci",
+      "phase": {
+        "closed": "Hodnocení skončilo {{deadline}}.",
+        "notYet": "Hodnotit půjde po skončení akce.",
+        "open": "Hodnotit můžeš do {{deadline}}.",
+        "unavailable": "Tuto akci hodnotit nejde."
+      },
+      "retry": "Zkusit znovu",
+      "revealNote": "Kdo hodnotil koho, se ukáže až po konci lhůty, všem najednou."
+    },
+    "scoreLabel": "Hodnocení {{value}} z {{max}}",
+    "scoreWithCountLabel_few": "Hodnocení {{value}} z {{max}}, {{count}} hodnocení",
+    "scoreWithCountLabel_one": "Hodnocení {{value}} z {{max}}, {{count}} hodnocení",
+    "scoreWithCountLabel_other": "Hodnocení {{value}} z {{max}}, {{count}} hodnocení",
+    "starsOf_few": "{{count}} hvězdičky z {{max}}",
+    "starsOf_one": "{{count}} hvězdička z {{max}}",
+    "starsOf_other": "{{count}} hvězdiček z {{max}}"
   },
   "reports": {
     "done": "Děkujeme, nahlášení jsme předali správcům. Dáme ti vědět, až ho vyřídí.",

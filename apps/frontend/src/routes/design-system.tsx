@@ -33,6 +33,7 @@ const CONTENTS = [
   { id: "hrdinska-plocha", label: "Hrdinská plocha" },
   { id: "karty", label: "Karty akce" },
   { id: "radek-soupisky", label: "Soupiska a žádosti" },
+  { id: "hodnoceni", label: "Hodnocení" },
   { id: "mapa", label: "Mapa" },
   { id: "navigace", label: "Navigace" },
   { id: "loadery", label: "Loadery" },

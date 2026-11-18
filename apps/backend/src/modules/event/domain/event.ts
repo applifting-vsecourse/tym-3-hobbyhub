@@ -1,4 +1,5 @@
 import { Activity } from '@/modules/activity/domain/activity';
+import type { ShownRatingScore } from '@/modules/rating/domain/rating';
 
 // Same limits as the CHECK constraints and column widths of `event`.
 export const EVENT_TITLE_MIN_LENGTH = 3;
@@ -611,6 +612,9 @@ export type EventDetail = EventListItem & {
   // #239: set only when an organizer opens their event an administrator hid;
   // nobody else ever gets a hidden event.
   hiddenReason: string | null;
+  // #236, ADR-0027: what the participants' revealed ratings say of the event,
+  // the same for everyone: both null below three ratings.
+  rating: ShownRatingScore;
 };
 
 export type ContactKind = 'email' | 'phone';

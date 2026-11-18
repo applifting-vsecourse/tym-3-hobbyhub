@@ -40,6 +40,7 @@ import { Route as AdminAdminPagesIndexRouteImport } from './routes/admin/_AdminP
 import { Route as AdminAdminPagesAdministratorsRouteImport } from './routes/admin/_AdminPages/administrators'
 import { Route as ProtectedPagesEventsEventIdEditRouteImport } from './routes/_ProtectedPages/events/$eventId.edit'
 import { Route as ProtectedPagesEventsEventIdParticipantsRouteImport } from './routes/_ProtectedPages/events/$eventId/participants'
+import { Route as ProtectedPagesEventsEventIdRatingsRouteImport } from './routes/_ProtectedPages/events/$eventId/ratings'
 import { Route as ProtectedPagesGroupsGroupIdMembersRouteImport } from './routes/_ProtectedPages/groups/$groupId/members'
 import { Route as AdminAdminPagesEventsIndexRouteImport } from './routes/admin/_AdminPages/events/index'
 import { Route as AdminAdminPagesEventsEventIdRouteImport } from './routes/admin/_AdminPages/events/$eventId'
@@ -213,6 +214,12 @@ const ProtectedPagesEventsEventIdParticipantsRoute =
     path: '/events/$eventId/participants',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const ProtectedPagesEventsEventIdRatingsRoute =
+  ProtectedPagesEventsEventIdRatingsRouteImport.update({
+    id: '/events/$eventId/ratings',
+    path: '/events/$eventId/ratings',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 const ProtectedPagesGroupsGroupIdMembersRoute =
   ProtectedPagesGroupsGroupIdMembersRouteImport.update({
     id: '/groups/$groupId/members',
@@ -299,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminAdminPagesIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
+  '/events/$eventId/ratings': typeof ProtectedPagesEventsEventIdRatingsRoute
   '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
   '/admin/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
   '/admin/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
@@ -339,6 +347,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminAdminPagesIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
+  '/events/$eventId/ratings': typeof ProtectedPagesEventsEventIdRatingsRoute
   '/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
   '/admin/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
   '/admin/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
@@ -382,6 +391,7 @@ export interface FileRoutesById {
   '/admin/_AdminPages/': typeof AdminAdminPagesIndexRoute
   '/_ProtectedPages/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
   '/_ProtectedPages/events/$eventId/participants': typeof ProtectedPagesEventsEventIdParticipantsRoute
+  '/_ProtectedPages/events/$eventId/ratings': typeof ProtectedPagesEventsEventIdRatingsRoute
   '/_ProtectedPages/groups/$groupId/members': typeof ProtectedPagesGroupsGroupIdMembersRoute
   '/admin/_AdminPages/events/$eventId': typeof AdminAdminPagesEventsEventIdRoute
   '/admin/_AdminPages/groups/$groupId': typeof AdminAdminPagesGroupsGroupIdRoute
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/events/$eventId/edit'
     | '/events/$eventId/participants'
+    | '/events/$eventId/ratings'
     | '/groups/$groupId/members'
     | '/admin/events/$eventId'
     | '/admin/groups/$groupId'
@@ -465,6 +476,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/events/$eventId/edit'
     | '/events/$eventId/participants'
+    | '/events/$eventId/ratings'
     | '/groups/$groupId/members'
     | '/admin/events/$eventId'
     | '/admin/groups/$groupId'
@@ -507,6 +519,7 @@ export interface FileRouteTypes {
     | '/admin/_AdminPages/'
     | '/_ProtectedPages/events/$eventId/edit'
     | '/_ProtectedPages/events/$eventId/participants'
+    | '/_ProtectedPages/events/$eventId/ratings'
     | '/_ProtectedPages/groups/$groupId/members'
     | '/admin/_AdminPages/events/$eventId'
     | '/admin/_AdminPages/groups/$groupId'
@@ -757,6 +770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesEventsEventIdParticipantsRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/events/$eventId/ratings': {
+      id: '/_ProtectedPages/events/$eventId/ratings'
+      path: '/events/$eventId/ratings'
+      fullPath: '/events/$eventId/ratings'
+      preLoaderRoute: typeof ProtectedPagesEventsEventIdRatingsRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/groups/$groupId/members': {
       id: '/_ProtectedPages/groups/$groupId/members'
       path: '/groups/$groupId/members'
@@ -836,6 +856,7 @@ interface ProtectedPagesRouteChildren {
   ProtectedPagesProfileIndexRoute: typeof ProtectedPagesProfileIndexRoute
   ProtectedPagesEventsEventIdEditRoute: typeof ProtectedPagesEventsEventIdEditRoute
   ProtectedPagesEventsEventIdParticipantsRoute: typeof ProtectedPagesEventsEventIdParticipantsRoute
+  ProtectedPagesEventsEventIdRatingsRoute: typeof ProtectedPagesEventsEventIdRatingsRoute
   ProtectedPagesGroupsGroupIdMembersRoute: typeof ProtectedPagesGroupsGroupIdMembersRoute
 }
 
@@ -853,6 +874,8 @@ const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesEventsEventIdEditRoute: ProtectedPagesEventsEventIdEditRoute,
   ProtectedPagesEventsEventIdParticipantsRoute:
     ProtectedPagesEventsEventIdParticipantsRoute,
+  ProtectedPagesEventsEventIdRatingsRoute:
+    ProtectedPagesEventsEventIdRatingsRoute,
   ProtectedPagesGroupsGroupIdMembersRoute:
     ProtectedPagesGroupsGroupIdMembersRoute,
 }
