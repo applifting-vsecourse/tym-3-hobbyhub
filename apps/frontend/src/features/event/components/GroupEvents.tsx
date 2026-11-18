@@ -20,8 +20,8 @@ import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels
 type GroupEventsProps = {
   groupId: string
   period: GroupEventPeriod
-  /** Members see the past too, and get the switch between the two (F-07.2). */
-  isMember: boolean
+  /** A non-member's past: group-only events, which are shown as blurred places only (#269). */
+  hiddenCount?: number
   events: GroupEvent[]
   /** All the events of the period, which can be more than the ones loaded. */
   total: number
@@ -45,7 +45,7 @@ type GroupEventsProps = {
 export function GroupEvents({
   groupId,
   period,
-  isMember,
+  hiddenCount = 0,
   events,
   total,
   activityLabel,
@@ -77,7 +77,7 @@ export function GroupEvents({
         onRetry={onReload}
       />
     )
-  } else if (events.length === 0) {
+  } else if (events.length === 0 && hiddenCount === 0) {
     body = (
       <p className="typo-body text-muted-foreground">{t(`groups.detail.events.empty.${period}`)}</p>
     )
@@ -115,6 +115,7 @@ export function GroupEvents({
             </li>
           ))}
         </ul>
+        {hiddenCount > 0 ? <HiddenEvents count={hiddenCount} /> : null}
         {hasMore ? (
           <Button
             variant="outline"
@@ -149,31 +150,29 @@ export function GroupEvents({
       >
         {t("groups.detail.events.title")}
       </h2>
-      {isMember ? (
-        <nav
-          aria-label={t("groups.detail.events.periodsLabel")}
-          className="flex gap-2"
-        >
-          {GROUP_EVENT_PERIODS.map((each) => {
-            const isActive = each === period
-            return (
-              <Link
-                key={each}
-                to="/groups/$groupId"
-                params={{ groupId }}
-                search={each === "upcoming" ? {} : { events: each }}
-                // The list moves, the page does not.
-                resetScroll={false}
-                aria-current={isActive ? "page" : undefined}
-                data-state={isActive ? "on" : "off"}
-                className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
-              >
-                {t(`groups.detail.events.periods.${each}`)}
-              </Link>
-            )
-          })}
-        </nav>
-      ) : null}
+      <nav
+        aria-label={t("groups.detail.events.periodsLabel")}
+        className="flex gap-2"
+      >
+        {GROUP_EVENT_PERIODS.map((each) => {
+          const isActive = each === period
+          return (
+            <Link
+              key={each}
+              to="/groups/$groupId"
+              params={{ groupId }}
+              search={each === "upcoming" ? {} : { events: each }}
+              // The list moves, the page does not.
+              resetScroll={false}
+              aria-current={isActive ? "page" : undefined}
+              data-state={isActive ? "on" : "off"}
+              className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
+            >
+              {t(`groups.detail.events.periods.${each}`)}
+            </Link>
+          )
+        })}
+      </nav>
       {!isLoading && !(error && events.length === 0) && events.length > 0 ? (
         <p className="typo-small text-muted-foreground">
           {t(`groups.detail.events.count.${period}`, { count: total })}
@@ -197,6 +196,37 @@ function GroupEventBadges({ event }: { event: GroupEvent }) {
       {isGroupOnly ? (
         <StatusBadge status="neutral">{t("groups.detail.events.groupOnly")}</StatusBadge>
       ) : null}
+    </div>
+  )
+}
+
+// Placeholders for the group-only events a non-member may not see. Bars, not the
+// events themselves: nothing about them left the server, and the blur only says
+// so to the eye (#269).
+function HiddenEvents({ count }: { count: number }) {
+  const { t } = useTranslation()
+  return (
+    <div className="relative">
+      <ul
+        aria-hidden
+        className="pointer-events-none select-none"
+      >
+        {Array.from({ length: Math.min(count, 3) }, (_, index) => (
+          <li
+            key={index}
+            className="flex items-center gap-3 border-t border-border py-4 blur-sm"
+          >
+            <div className="h-10 w-16 shrink-0 rounded-md bg-muted" />
+            <div className="flex flex-1 flex-col gap-2">
+              <div className="h-4 w-2/3 rounded-md bg-muted" />
+              <div className="h-3 w-1/2 rounded-md bg-muted" />
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="absolute inset-0 flex items-center justify-center px-4 text-center typo-label-lg text-foreground">
+        {t("groups.detail.events.hidden", { count })}
+      </p>
     </div>
   )
 }

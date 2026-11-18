@@ -104,6 +104,7 @@ const group: Group = {
   createdAt: new Date(2026, 0, 1),
   activity: { id: "a1", name: "Florbal", icon: "florbal" },
   memberCount: 14,
+  isActive: false,
 }
 
 const pending: MembershipRequest = {

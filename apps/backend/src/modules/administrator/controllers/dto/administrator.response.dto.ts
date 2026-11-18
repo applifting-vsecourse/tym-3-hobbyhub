@@ -51,6 +51,14 @@ export class AdministratorResponseDto {
   @ApiProperty({ type: AdministratorRefResponseDto, nullable: true })
   deactivatedBy!: AdministratorRefResponseDto | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Their account in the app under the same address, if they have one (ADR-0010: a separate account)',
+  })
+  appUserId!: string | null;
+
   static fromDomain(
     administrator: AdministratorListItem,
   ): AdministratorResponseDto {
@@ -63,6 +71,7 @@ export class AdministratorResponseDto {
       createdBy: refOf(administrator.createdBy),
       deactivatedAt: administrator.deactivatedAt,
       deactivatedBy: refOf(administrator.deactivatedBy),
+      appUserId: administrator.appUserId ?? null,
     };
   }
 }

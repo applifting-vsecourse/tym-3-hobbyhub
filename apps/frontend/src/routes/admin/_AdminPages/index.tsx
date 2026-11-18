@@ -4,6 +4,6 @@ import { ROUTES } from "@/app/routes"
 
 export const Route = createFileRoute("/admin/_AdminPages/")({
   beforeLoad: () => {
-    throw redirect({ to: ROUTES.adminUsers })
+    throw redirect({ to: ROUTES.adminAttention })
   },
 })

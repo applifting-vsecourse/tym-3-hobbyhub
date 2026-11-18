@@ -15,6 +15,7 @@ import {
 } from "@/features/admin/api/administratorMutations"
 import { administratorsQueryOptions } from "@/features/admin/api/adminQueryOptions"
 import type { Administrator, AdministratorStatus } from "@/features/admin/api/adminSchemas"
+import { AdminLink } from "@/features/admin/components/AdminLink"
 import { AdminState } from "@/features/admin/components/AdminState"
 import { DeactivateAdministratorSheet } from "@/features/admin/components/DeactivateAdministratorSheet"
 import { InviteAdministratorSheet } from "@/features/admin/components/InviteAdministratorSheet"
@@ -139,7 +140,17 @@ export function Administrators() {
           primary={{
             key: "name",
             header: t("admin.administrators.name"),
-            cell: (admin) => admin.name,
+            cell: (admin) => (
+              <span className="flex flex-col gap-1">
+                {admin.name}
+                {/* #272: the same person may use the app too, with an account of their own. */}
+                {admin.appUserId ? (
+                  <AdminLink to={{ kind: "user", id: admin.appUserId }}>
+                    {t("admin.administrators.alsoUser")}
+                  </AdminLink>
+                ) : null}
+              </span>
+            ),
           }}
           columns={[
             {

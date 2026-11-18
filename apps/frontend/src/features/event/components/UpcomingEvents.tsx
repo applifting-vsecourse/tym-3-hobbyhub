@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -16,6 +17,8 @@ type UpcomingEventsProps = {
   isLoading?: boolean
   error?: Error | null
   onReload?: () => void
+  /** What an empty row says; the landing page's own wording by default. */
+  empty?: ReactNode
   /** Injectable so "today" is stable in tests. */
   now?: Date
 }
@@ -27,6 +30,7 @@ export function UpcomingEvents({
   isLoading,
   error,
   onReload,
+  empty,
   now = new Date(),
 }: UpcomingEventsProps) {
   const { t, i18n } = useTranslation()
@@ -53,17 +57,19 @@ export function UpcomingEvents({
   }
 
   if (events.length === 0) {
-    return <p className="typo-body text-muted-foreground">{t("landing.upcoming.empty")}</p>
+    return <p className="typo-body text-muted-foreground">{empty ?? t("landing.upcoming.empty")}</p>
   }
 
   return (
-    // More room adds a column, the cards keep their width (#224). Three rows
-    // fill the smaller grids; the fourth event waits for the fourth column.
-    <ul className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-      {events.map((event, index) => (
+    // A row to scroll sideways (#274): native scrolling snapping to the cards,
+    // no arrows, no dots, nothing moves by itself. The cards keep their width on
+    // every screen; a larger one shows more of them. The row runs to the edge of
+    // the screen, the first card lines up with the page.
+    <ul className="-mx-page scroll-px-page flex snap-x snap-mandatory gap-4 overflow-x-auto px-page pb-2 [--seat-delay:900ms]">
+      {events.map((event) => (
         <li
           key={event.id}
-          className={index >= 3 ? "max-2xl:hidden" : undefined}
+          className="w-72 shrink-0 snap-start sm:w-80"
         >
           <Link
             to="/events/$eventId"

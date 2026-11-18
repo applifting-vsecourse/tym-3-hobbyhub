@@ -4,7 +4,12 @@ import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/ui/badge"
 
 import { adminUsersQueryOptions } from "@/features/admin/api/adminQueryOptions"
-import type { AdminUser } from "@/features/admin/api/adminSchemas"
+import {
+  ADMIN_USER_FILTERS,
+  type AdminUser,
+  type AdminUserFilter,
+} from "@/features/admin/api/adminSchemas"
+import { AdminFilterChips } from "@/features/admin/components/AdminFilterChips"
 import { AdminLink } from "@/features/admin/components/AdminLink"
 import { AdminList } from "@/features/admin/components/AdminList"
 import { useAdminFormat } from "@/features/admin/lib/format"
@@ -12,7 +17,9 @@ import { useAdminFormat } from "@/features/admin/lib/format"
 type ListProps = {
   search: string
   offset: number
+  filter?: AdminUserFilter
   onChange: (next: { search: string; offset: number }) => void
+  onFilterChange: (filter: AdminUserFilter | undefined) => void
 }
 
 /** Whether the account may be used; anything but ACTIVE stands out. */
@@ -25,10 +32,10 @@ export function UserStatusBadge({ status }: { status: AdminUser["status"] }) {
   )
 }
 
-export function AdminUsers({ search, offset, onChange }: ListProps) {
+export function AdminUsers({ search, offset, filter, onChange, onFilterChange }: ListProps) {
   const { t } = useTranslation()
   const format = useAdminFormat()
-  const query = useQuery(adminUsersQueryOptions(search, offset))
+  const query = useQuery(adminUsersQueryOptions(search, offset, filter))
 
   return (
     <AdminList<AdminUser>
@@ -39,6 +46,21 @@ export function AdminUsers({ search, offset, onChange }: ListProps) {
       onChange={onChange}
       query={query}
       empty={t("admin.users.empty")}
+      isFiltered={filter !== undefined}
+      filters={
+        <AdminFilterChips<AdminUserFilter>
+          label={t("admin.users.filter.label")}
+          value={filter}
+          onChange={onFilterChange}
+          options={[
+            { value: undefined, label: t("admin.users.filter.all") },
+            ...ADMIN_USER_FILTERS.map((value) => ({
+              value,
+              label: t(`admin.users.filter.${value}`),
+            })),
+          ]}
+        />
+      }
       rowKey={(user) => user.id}
       primary={{
         key: "name",

@@ -83,3 +83,34 @@ export const upcomingEventsQueryOptions = (limit: number) =>
         await api.get("events", { searchParams: { limit: String(limit), offset: "0" } }).json(),
       ),
   })
+
+// #274: events where a friend of the signed-in user has a seat. Keyed by the
+// viewer, so signing out leaves no friend's seat in the cache.
+export const friendsGoingEventsQueryOptions = (limit: number, viewerId: string | null) =>
+  queryOptions({
+    queryKey: eventKeys.friendsGoing(limit, viewerId),
+    queryFn: async () =>
+      eventListSchema.parse(
+        await api
+          .get("events", {
+            searchParams: { limit: String(limit), offset: "0", friendsGoing: "true" },
+          })
+          .json(),
+      ),
+    enabled: viewerId !== null,
+  })
+
+// #274: the first events in one city, for the row "v tvém okolí".
+export const eventsInCityQueryOptions = (limit: number, city: string) =>
+  queryOptions({
+    queryKey: eventKeys.inCity(limit, city),
+    queryFn: async () =>
+      eventListSchema.parse(
+        await api
+          .get("events", {
+            searchParams: { limit: String(limit), offset: "0", location: city },
+          })
+          .json(),
+      ),
+    enabled: city !== "",
+  })

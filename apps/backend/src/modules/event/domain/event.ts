@@ -487,6 +487,9 @@ export type EventFilter = {
   // #239, ADR-0022: people whose events do not exist for the one asking
   // (`UserBlockVisibility.hiddenFor`); never from the request.
   hiddenOrganizerIds?: string[];
+  // #274: only events where a friend of this user has a seat. Always the
+  // signed-in user, set by the controller, never a value of the request.
+  goingWithFriendsOf?: string;
 };
 
 // What only the public list can be narrowed by besides the `EventFilter` (#214);
@@ -561,7 +564,14 @@ export type GroupEventListItem = EventListItem & {
   visibility: 'PUBLIC' | 'GROUP_ONLY';
 };
 
-export type GroupEventPage = { items: GroupEventListItem[]; total: number };
+export type GroupEventPage = {
+  items: GroupEventListItem[];
+  total: number;
+  // Only for a non-member asking for the past: how many group-only events
+  // there were. A number and nothing else, so the page can show blurred
+  // placeholders without the events leaving the server.
+  hiddenCount?: number;
+};
 
 export const GROUP_EVENTS_PAGE_SIZE = 10;
 

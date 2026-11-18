@@ -38,6 +38,7 @@ import { Route as ProtectedPagesProfileEditRouteImport } from './routes/_Protect
 import { Route as ProtectedPagesProfileSettingsRouteImport } from './routes/_ProtectedPages/profile/settings'
 import { Route as AdminAdminPagesIndexRouteImport } from './routes/admin/_AdminPages/index'
 import { Route as AdminAdminPagesAdministratorsRouteImport } from './routes/admin/_AdminPages/administrators'
+import { Route as AdminAdminPagesAttentionRouteImport } from './routes/admin/_AdminPages/attention'
 import { Route as ProtectedPagesEventsEventIdEditRouteImport } from './routes/_ProtectedPages/events/$eventId.edit'
 import { Route as ProtectedPagesEventsEventIdParticipantsRouteImport } from './routes/_ProtectedPages/events/$eventId/participants'
 import { Route as ProtectedPagesEventsEventIdRatingsRouteImport } from './routes/_ProtectedPages/events/$eventId/ratings'
@@ -202,6 +203,12 @@ const AdminAdminPagesAdministratorsRoute =
     path: '/administrators',
     getParentRoute: () => AdminAdminPagesRoute,
   } as any)
+const AdminAdminPagesAttentionRoute =
+  AdminAdminPagesAttentionRouteImport.update({
+    id: '/attention',
+    path: '/attention',
+    getParentRoute: () => AdminAdminPagesRoute,
+  } as any)
 const ProtectedPagesEventsEventIdEditRoute =
   ProtectedPagesEventsEventIdEditRouteImport.update({
     id: '/events/$eventId/edit',
@@ -302,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/profile/settings': typeof ProtectedPagesProfileSettingsRoute
   '/admin/administrators': typeof AdminAdminPagesAdministratorsRoute
+  '/admin/attention': typeof AdminAdminPagesAttentionRoute
   '/profile/': typeof ProtectedPagesProfileIndexRoute
   '/admin/': typeof AdminAdminPagesIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -343,6 +351,7 @@ export interface FileRoutesByTo {
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/profile/settings': typeof ProtectedPagesProfileSettingsRoute
   '/admin/administrators': typeof AdminAdminPagesAdministratorsRoute
+  '/admin/attention': typeof AdminAdminPagesAttentionRoute
   '/profile': typeof ProtectedPagesProfileIndexRoute
   '/admin': typeof AdminAdminPagesIndexRoute
   '/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -387,6 +396,7 @@ export interface FileRoutesById {
   '/_ProtectedPages/profile/edit': typeof ProtectedPagesProfileEditRoute
   '/_ProtectedPages/profile/settings': typeof ProtectedPagesProfileSettingsRoute
   '/admin/_AdminPages/administrators': typeof AdminAdminPagesAdministratorsRoute
+  '/admin/_AdminPages/attention': typeof AdminAdminPagesAttentionRoute
   '/_ProtectedPages/profile/': typeof ProtectedPagesProfileIndexRoute
   '/admin/_AdminPages/': typeof AdminAdminPagesIndexRoute
   '/_ProtectedPages/events/$eventId/edit': typeof ProtectedPagesEventsEventIdEditRoute
@@ -431,6 +441,7 @@ export interface FileRouteTypes {
     | '/profile/edit'
     | '/profile/settings'
     | '/admin/administrators'
+    | '/admin/attention'
     | '/profile/'
     | '/admin/'
     | '/events/$eventId/edit'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/profile/edit'
     | '/profile/settings'
     | '/admin/administrators'
+    | '/admin/attention'
     | '/profile'
     | '/admin'
     | '/events/$eventId/edit'
@@ -515,6 +527,7 @@ export interface FileRouteTypes {
     | '/_ProtectedPages/profile/edit'
     | '/_ProtectedPages/profile/settings'
     | '/admin/_AdminPages/administrators'
+    | '/admin/_AdminPages/attention'
     | '/_ProtectedPages/profile/'
     | '/admin/_AdminPages/'
     | '/_ProtectedPages/events/$eventId/edit'
@@ -756,6 +769,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminPagesAdministratorsRouteImport
       parentRoute: typeof AdminAdminPagesRoute
     }
+    '/admin/_AdminPages/attention': {
+      id: '/admin/_AdminPages/attention'
+      path: '/attention'
+      fullPath: '/admin/attention'
+      preLoaderRoute: typeof AdminAdminPagesAttentionRouteImport
+      parentRoute: typeof AdminAdminPagesRoute
+    }
     '/_ProtectedPages/events/$eventId/edit': {
       id: '/_ProtectedPages/events/$eventId/edit'
       path: '/events/$eventId/edit'
@@ -886,6 +906,7 @@ const ProtectedPagesRouteWithChildren = ProtectedPagesRoute._addFileChildren(
 
 interface AdminAdminPagesRouteChildren {
   AdminAdminPagesAdministratorsRoute: typeof AdminAdminPagesAdministratorsRoute
+  AdminAdminPagesAttentionRoute: typeof AdminAdminPagesAttentionRoute
   AdminAdminPagesIndexRoute: typeof AdminAdminPagesIndexRoute
   AdminAdminPagesEventsEventIdRoute: typeof AdminAdminPagesEventsEventIdRoute
   AdminAdminPagesGroupsGroupIdRoute: typeof AdminAdminPagesGroupsGroupIdRoute
@@ -899,6 +920,7 @@ interface AdminAdminPagesRouteChildren {
 
 const AdminAdminPagesRouteChildren: AdminAdminPagesRouteChildren = {
   AdminAdminPagesAdministratorsRoute: AdminAdminPagesAdministratorsRoute,
+  AdminAdminPagesAttentionRoute: AdminAdminPagesAttentionRoute,
   AdminAdminPagesIndexRoute: AdminAdminPagesIndexRoute,
   AdminAdminPagesEventsEventIdRoute: AdminAdminPagesEventsEventIdRoute,
   AdminAdminPagesGroupsGroupIdRoute: AdminAdminPagesGroupsGroupIdRoute,

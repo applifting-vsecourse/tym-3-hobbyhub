@@ -425,7 +425,8 @@ export class EventsService {
 
   // F-07.2: the events of a group on its page. Everyone who may see the group
   // gets its upcoming public events (visibility matrix); its members also the
-  // group-only ones and the past ones. To anyone else the past do not exist.
+  // group-only ones and the past ones. Anyone else gets the public past events
+  // and only the number of the group-only ones.
   async getGroupEvents(
     groupId: string,
     viewer: Identity | undefined,
@@ -436,11 +437,29 @@ export class EventsService {
     const role = viewer
       ? await this.groupsService.getMemberRole(groupId, viewer.id)
       : null;
+    const hiddenOrganizerIds = await this.blocks.hiddenFor(viewer?.id);
     if (!role) {
       // Throws "not found" for a group that has no public page, and for
       // one whose owner is blocked from the viewer (#239).
       await this.groupsService.getPublicGroup(groupId, viewer);
-      if (period === 'past') throw new NotFoundException('Group not found');
+      if (period === 'past') {
+        // The past of a public group: its public events in full, the
+        // group-only ones as a count, so the page can blur them (#269).
+        const [page, hiddenCount] = await Promise.all([
+          this.eventRepository.getGroupEvents(
+            groupId,
+            { period, visibilities: ['PUBLIC'], now, hiddenOrganizerIds },
+            { limit: GROUP_EVENTS_PAGE_SIZE, offset },
+          ),
+          this.eventRepository.countGroupEvents(groupId, {
+            period,
+            visibilities: ['GROUP_ONLY'],
+            now,
+            hiddenOrganizerIds,
+          }),
+        ]);
+        return { ...page, hiddenCount };
+      }
     }
     return this.eventRepository.getGroupEvents(
       groupId,
@@ -448,7 +467,7 @@ export class EventsService {
         period,
         visibilities: role ? ['PUBLIC', 'GROUP_ONLY'] : ['PUBLIC'],
         now,
-        hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
+        hiddenOrganizerIds,
       },
       { limit: GROUP_EVENTS_PAGE_SIZE, offset },
     );

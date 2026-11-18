@@ -2,7 +2,7 @@ import { EventsService } from '@/modules/event/services/events.service';
 import { adminValidationPipe } from '@/shared/admin-auth/admin-validation.pipe';
 import { Admin } from '@/shared/admin-auth/decorators/admin.decorator';
 import { AdminIdentity } from '@/shared/admin-auth/domain/administrator';
-import { AdminListQuery } from '@/shared/admin-auth/dto/admin-list.query';
+import { AdminEventsQuery } from '@/shared/admin-auth/dto/admin-events.query';
 import { AdministratorGuard } from '@/shared/admin-auth/guards/administrator.guard';
 import {
   Body,
@@ -44,11 +44,12 @@ export class AdminEventsController {
   @ApiResponse({ status: 200, type: AdminEventPageResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in as administrator' })
   async list(
-    @Query() query: AdminListQuery,
+    @Query() query: AdminEventsQuery,
   ): Promise<AdminEventPageResponseDto> {
     const page = await this.eventsService.listEventsForAdministration({
       search: query.q,
       offset: query.offset,
+      filter: query.filter,
     });
     return AdminEventPageResponseDto.fromDomain(page);
   }

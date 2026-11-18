@@ -5,13 +5,13 @@ import type { AdminReportFilter } from "@/features/admin/api/reportSchemas"
 export const adminKeys = {
   all: () => ["admin"] as const,
   session: () => [...adminKeys.all(), "session"] as const,
-  users: (search: string, offset: number) =>
-    [...adminKeys.all(), "users", { search, offset }] as const,
+  users: (search: string, offset: number, filter?: string) =>
+    [...adminKeys.all(), "users", { search, offset, filter }] as const,
   user: (id: string) => [...adminKeys.all(), "user", id] as const,
   userEvents: (id: string) => [...adminKeys.user(id), "events"] as const,
   userBlocks: (id: string) => [...adminKeys.user(id), "blocks"] as const,
-  events: (search: string, offset: number) =>
-    [...adminKeys.all(), "events", { search, offset }] as const,
+  events: (search: string, offset: number, filter?: string) =>
+    [...adminKeys.all(), "events", { search, offset, filter }] as const,
   event: (id: string) => [...adminKeys.all(), "event", id] as const,
   groups: (search: string, offset: number) =>
     [...adminKeys.all(), "groups", { search, offset }] as const,

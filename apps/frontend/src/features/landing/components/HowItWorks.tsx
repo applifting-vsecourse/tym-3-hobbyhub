@@ -202,7 +202,7 @@ export function HowItWorks({ className, style }: { className?: string; style?: C
               <div
                 className={cn(
                   "flex flex-col gap-6 pt-2 duration-500 motion-safe:transition-transform md:flex-row md:items-start md:justify-between md:gap-12",
-                  isLast ? "pb-2" : "pb-16 lg:pb-24",
+                  isLast ? "pb-2" : "pb-8 lg:pb-12",
                   state === "upcoming" && "motion-safe:translate-y-4",
                 )}
               >
@@ -219,7 +219,6 @@ export function HowItWorks({ className, style }: { className?: string; style?: C
                     {t(`landing.how.${key}.title`)}
                   </h3>
                   <p className="typo-body text-muted-foreground">{t(`landing.how.${key}.p1`)}</p>
-                  <p className="typo-body text-muted-foreground">{t(`landing.how.${key}.p2`)}</p>
                 </div>
                 <div
                   aria-hidden

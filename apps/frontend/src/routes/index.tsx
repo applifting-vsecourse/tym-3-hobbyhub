@@ -2,7 +2,7 @@ import { useMemo, useState, type CSSProperties } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useForm, useWatch } from "react-hook-form"
-import { useTranslation } from "react-i18next"
+import { Trans, useTranslation } from "react-i18next"
 
 import { AppShell } from "@/app/AppShell"
 import { ROUTES } from "@/app/routes"
@@ -18,18 +18,24 @@ import { Button } from "@/components/ui/button"
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { AccountLanguageLinks } from "@/features/auth/components/AccountLanguageLinks"
-import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
-import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
+import { useSession } from "@/features/auth/hooks/useSession"
+import type { EventListItem } from "@/features/event/api/eventSchemas"
+import {
+  eventsInCityQueryOptions,
+  friendsGoingEventsQueryOptions,
+  upcomingEventsQueryOptions,
+} from "@/features/event/api/eventsQueryOptions"
+import { EventRail } from "@/features/event/components/EventRail"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
 import { HowItWorks } from "@/features/landing/components/HowItWorks"
+import { profileQueryOptions } from "@/features/profile/api/profileQueryOptions"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
 })
 
-// Three cards: one row from `lg`, where the landing page is at its widest.
-// Four for the four columns of a large screen; below it the fourth is hidden (#224).
-const UPCOMING_EVENTS_COUNT = 4
+// Eight cards in a row to scroll sideways (#274); a wide screen shows more of them at once.
+const UPCOMING_EVENTS_COUNT = 8
 
 function LandingPage() {
   const { t } = useTranslation()
@@ -49,6 +55,15 @@ function LandingPage() {
     [activitiesQuery.data, t],
   )
   const upcomingQuery = useQuery(upcomingEventsQueryOptions(UPCOMING_EVENTS_COUNT))
+  const activityLabel = (item: EventListItem["activity"]) => activityName(t, item)
+  const { user } = useSession()
+  // The rows for someone signed in: where friends go and what is in their city.
+  const friendsQuery = useQuery(
+    friendsGoingEventsQueryOptions(UPCOMING_EVENTS_COUNT, user?.id ?? null),
+  )
+  const profileQuery = useQuery({ ...profileQueryOptions(), enabled: user !== null })
+  const city = profileQuery.data?.address?.city ?? ""
+  const nearbyQuery = useQuery(eventsInCityQueryOptions(UPCOMING_EVENTS_COUNT, city))
 
   // Searching or filtering from the landing page opens the event list already filtered.
   const openEvents = (filters: { activities?: string[]; location?: string } = {}) => {
@@ -128,25 +143,65 @@ function LandingPage() {
           }
         />
 
-        <section
-          aria-labelledby="upcoming-heading"
-          className="flex enter flex-col gap-3"
+        <EventRail
+          id="upcoming"
+          title={t("landing.upcoming.title")}
+          className="enter"
           style={{ "--enter-index": 1 } as CSSProperties}
-        >
-          <h2
-            id="upcoming-heading"
-            className="typo-h3"
-          >
-            {t("landing.upcoming.title")}
-          </h2>
-          <UpcomingEvents
-            events={upcomingQuery.data?.items ?? []}
-            activityLabel={(item) => activityName(t, item)}
-            isLoading={upcomingQuery.isPending}
-            error={upcomingQuery.error}
-            onReload={() => void upcomingQuery.refetch()}
-          />
-        </section>
+          seeAll={{}}
+          events={upcomingQuery.data?.items ?? []}
+          activityLabel={activityLabel}
+          isLoading={upcomingQuery.isPending}
+          error={upcomingQuery.error}
+          onReload={() => void upcomingQuery.refetch()}
+        />
+
+        {/* Rows that know who is looking (#274): only for someone signed in. */}
+        {user ? (
+          <>
+            <EventRail
+              id="friends"
+              title={t("landing.rails.friends.title")}
+              events={friendsQuery.data?.items ?? []}
+              activityLabel={activityLabel}
+              isLoading={friendsQuery.isPending}
+              error={friendsQuery.error}
+              onReload={() => void friendsQuery.refetch()}
+              empty={t("landing.rails.friends.empty")}
+            />
+            <EventRail
+              id="nearby"
+              title={
+                city
+                  ? t("landing.rails.nearby.title", { city })
+                  : t("landing.rails.nearby.title_noCity")
+              }
+              seeAll={city ? { search: { location: city } } : undefined}
+              events={nearbyQuery.data?.items ?? []}
+              activityLabel={activityLabel}
+              isLoading={Boolean(city) && nearbyQuery.isPending}
+              error={nearbyQuery.error}
+              onReload={() => void nearbyQuery.refetch()}
+              empty={
+                city ? (
+                  t("landing.rails.nearby.empty")
+                ) : (
+                  <Trans
+                    i18nKey="landing.rails.nearby.noCity"
+                    components={{
+                      profile: (
+                        <Link
+                          to={ROUTES.profile}
+                          className="text-accent-foreground underline underline-offset-4"
+                        />
+                      ),
+                    }}
+                  />
+                )
+              }
+            />
+          </>
+        ) : null}
 
         <HowItWorks
           className="enter"

@@ -14,6 +14,7 @@ import { useAdminSession } from "@/features/admin/hooks/useAdminSession"
 import { useAdminSignOut } from "@/features/admin/hooks/useAdminSignOut"
 
 const SECTIONS = [
+  { to: ROUTES.adminAttention, label: "admin.nav.attention" },
   { to: ROUTES.adminReports, label: "admin.nav.reports" },
   { to: ROUTES.adminUsers, label: "admin.nav.users" },
   { to: ROUTES.adminEvents, label: "admin.nav.events" },
@@ -45,15 +46,26 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <Header
         switchers={<HeaderSwitchers />}
         userMenu={
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-11 md:h-9"
-            disabled={signOut.isPending}
-            onClick={() => signOut.mutate()}
-          >
-            {t("admin.signOut.label")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* #272: an administrator may use the app as well, with an account of their own. */}
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-11 md:h-9"
+            >
+              <Link to={ROUTES.home}>{t("admin.toApp")}</Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 md:h-9"
+              disabled={signOut.isPending}
+              onClick={() => signOut.mutate()}
+            >
+              {t("admin.signOut.label")}
+            </Button>
+          </div>
         }
       />
       <div className="border-b border-border">

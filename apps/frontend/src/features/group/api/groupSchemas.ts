@@ -20,6 +20,8 @@ export const groupSchema = z.object({
   createdAt: z.coerce.date(),
   activity: z.object({ id: z.string(), name: z.string(), icon: z.string() }),
   memberCount: z.number(),
+  // A public event upcoming or ended in the last 60 days (#269).
+  isActive: z.boolean(),
 })
 
 export type Group = z.infer<typeof groupSchema>

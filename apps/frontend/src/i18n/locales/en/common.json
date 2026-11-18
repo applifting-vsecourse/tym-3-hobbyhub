@@ -8,6 +8,7 @@
     "administrators": {
       "actionFailed": "That did not work. Please try again.",
       "actions": "Actions",
+      "alsoUser": "Also has an account in the app",
       "byOn": "{{name}}, {{date}}",
       "cancelInvitation": "Cancel the invitation",
       "createdAt": "Created",
@@ -29,6 +30,25 @@
       "status": "Status",
       "thatIsYou": "That is you",
       "title": "Administrators"
+    },
+    "attention": {
+      "all": "Show all",
+      "intro": "Everything that waits for an administrator in one place: reported events, reported people and accounts without a verified e-mail.",
+      "reports": {
+        "EVENT": "Reported events",
+        "USER": "Reported people",
+        "empty": {
+          "EVENT": "No reported event is waiting.",
+          "USER": "No reported person is waiting."
+        }
+      },
+      "title": "Needs attention",
+      "unverified": {
+        "empty": "Everyone has a verified e-mail.",
+        "text_one": "{{count}} account has not verified its e-mail yet.",
+        "text_other": "{{count}} accounts have not verified their e-mail yet.",
+        "title": "Unverified accounts"
+      }
     },
     "blocks": {
       "actions": "Actions",
@@ -99,6 +119,16 @@
     "events": {
       "activity": "Activity",
       "empty": "There are no events yet.",
+      "filter": {
+        "CANCELLED": "Cancelled",
+        "DRAFT": "Drafts",
+        "FINISHED": "Finished",
+        "NOT_HELD": "Not held",
+        "PUBLISHED": "Published",
+        "all": "All",
+        "hidden": "Hidden",
+        "label": "Events filter"
+      },
       "hidden": "Hidden",
       "name": "Title",
       "organizer": "Organizer",
@@ -198,6 +228,7 @@
     },
     "nav": {
       "administrators": "Administrators",
+      "attention": "To resolve",
       "events": "Events",
       "groups": "Groups",
       "label": "Administration navigation",
@@ -339,6 +370,7 @@
       "label": "Sign out"
     },
     "title": "Administration",
+    "toApp": "To the app",
     "user": {
       "account": "Account",
       "address": "Home",
@@ -363,6 +395,13 @@
       "email": "E-mail",
       "emailVerified": "Verified e-mail",
       "empty": "There are no users yet.",
+      "filter": {
+        "all": "Everyone",
+        "blocked": "Blocked",
+        "label": "Users filter",
+        "restricted": "Restricted",
+        "unverified": "Unverified e-mail"
+      },
       "name": "Name",
       "search": "Search by name or e-mail",
       "status": "Status",
@@ -856,6 +895,7 @@
     }
   },
   "groups": {
+    "active": "Active",
     "back": "Back",
     "detail": {
       "backToEvents": "Back to events",
@@ -872,6 +912,8 @@
           "upcoming": "The group has no upcoming events right now."
         },
         "groupOnly": "Group only",
+        "hidden_one": "One more event is for group members only",
+        "hidden_other": "{{count}} more events are for group members only",
         "loadMore": "Load more",
         "loadMoreFailed": "More events could not be loaded. Please try again.",
         "loading": "Loading the group’s events…",
@@ -938,6 +980,7 @@
         "description": "No group matches this selection yet. Try another search, place or activity.",
         "title": "Nothing found"
       },
+      "intro": "A group is a crew that meets regularly. Join one to play with the same people and hear about new events first.",
       "loadError": "Could not load groups",
       "loadMore": "Load more",
       "loadMoreError": "Could not load more groups. Please try again.",
@@ -1503,13 +1546,13 @@
     "groups": {
       "browse": "Browse groups",
       "seatTitle": "Your seat in the crew",
-      "text": "A group is a crew of people around one activity. It has its place, its usual time and members who know each other. A newcomer sees what they are joining before asking for membership, and the group's events are never created from scratch.",
+      "text": "A crew around one activity with its own place and time. You see what you are joining before you ask.",
       "title": "Groups: a crew that meets regularly"
     },
     "hero": {
       "join": "Find a free seat",
       "kicker": "Sports and games near you",
-      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours. And a crew that clicks can keep meeting as a group.",
+      "text": "We show how many people an event is missing. One seat could be yours.",
       "title": "Fill the missing players before the event is cancelled"
     },
     "how": {
@@ -1522,35 +1565,45 @@
         "yourSeatTitle": "Your seat"
       },
       "step1": {
-        "p1": "The organizer says how many people they still need to reach the minimum, and everyone sees it right away: in the list, on the map and on the event card. You are not asking “whether”, you are asking “where one more fits”.",
-        "p2": "When there is no suitable event, you create one in a minute: activity, place, time and how many of you it takes to play.",
+        "p1": "The organizer says how many people they still need. You see it in the list, on the map and on the card.",
         "short": "Find or create an event",
         "subtitle": "Where players are missing to the minimum.",
         "title": "Find an event short of players. Or create one."
       },
       "step2": {
-        "p1": "Free seats look like chairs at a table, in the list and on the map. One tap asks to join, and you can add a few words for the organizer.",
-        "p2": "You can browse everything without an account. You sign up when you want to take a seat.",
+        "p1": "One tap asks to join, with a few words for the organizer.",
         "short": "Ask for a seat",
         "subtitle": "One tap, the organizer gets a message.",
         "title": "Ask for a free seat"
       },
       "step3": {
-        "p1": "The organizer sees who is asking and approves whom they want. Once the minimum is met, the event goes ahead and nobody travels for nothing.",
-        "p2": "Approved participants get the exact address and practical instructions, and see who they are going with.",
+        "p1": "The organizer approves whom they want. Once the minimum is met, the event goes ahead.",
         "short": "Approval, then play",
         "subtitle": "Minimum met, the event goes ahead.",
         "title": "The organizer approves and you play"
       },
       "step4": {
-        "p1": "People who clicked stay together as a group. It has its place, its usual time and members who know each other.",
-        "p2": "Nobody creates the next event from scratch, and a newcomer sees what they are joining before asking for membership.",
+        "p1": "Those who clicked stay together as a group with its own time.",
         "short": "The crew becomes a group",
         "subtitle": "Next time nobody starts from scratch.",
         "title": "The crew becomes a group"
       },
       "stepLabel": "Step {{number}}",
       "title": "How it works"
+    },
+    "rails": {
+      "friends": {
+        "empty": "None of your friends has a seat at an event yet.",
+        "title": "Where friends go"
+      },
+      "loadError": "Could not load events.",
+      "nearby": {
+        "empty": "Nothing near you yet. Be the first to create an event.",
+        "noCity": "<profile>Set your city in your profile</profile> and we will show events near you.",
+        "title": "Near you: {{city}}",
+        "title_noCity": "Near you"
+      },
+      "seeAll": "All events"
     },
     "search": {
       "label": "Search events",

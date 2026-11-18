@@ -70,6 +70,8 @@ export type Group = {
   createdAt: Date;
   activity: Activity;
   memberCount: number;
+  // #269: a public event upcoming or ended in the last 60 days.
+  isActive: boolean;
 };
 
 // F-02.5: who may see a group's public page. Anything else is shown as "not

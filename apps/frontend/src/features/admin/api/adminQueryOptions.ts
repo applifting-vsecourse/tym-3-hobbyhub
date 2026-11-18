@@ -13,21 +13,26 @@ import {
   adminUserDetailSchema,
   adminUserEventsSchema,
   adminUserPageSchema,
+  type AdminEventFilter,
+  type AdminUserFilter,
 } from "@/features/admin/api/adminSchemas"
 import { adminApi } from "@/features/admin/lib/admin-api"
 
 /** `?q=&offset=` of a list; an empty search is left out. */
-const listSearchParams = (search: string, offset: number) => ({
+const listSearchParams = (search: string, offset: number, filter?: string) => ({
   ...(search ? { q: search } : {}),
+  ...(filter ? { filter } : {}),
   offset,
 })
 
-export const adminUsersQueryOptions = (search: string, offset: number) =>
+export const adminUsersQueryOptions = (search: string, offset: number, filter?: AdminUserFilter) =>
   queryOptions({
-    queryKey: adminKeys.users(search, offset),
+    queryKey: adminKeys.users(search, offset, filter),
     queryFn: async () =>
       adminUserPageSchema.parse(
-        await adminApi.get("users", { searchParams: listSearchParams(search, offset) }).json(),
+        await adminApi
+          .get("users", { searchParams: listSearchParams(search, offset, filter) })
+          .json(),
       ),
     placeholderData: keepPreviousData,
   })
@@ -53,12 +58,18 @@ export const adminUserEventsQueryOptions = (id: string) =>
       adminUserEventsSchema.parse(await adminApi.get(`users/${id}/events`).json()),
   })
 
-export const adminEventsQueryOptions = (search: string, offset: number) =>
+export const adminEventsQueryOptions = (
+  search: string,
+  offset: number,
+  filter?: AdminEventFilter,
+) =>
   queryOptions({
-    queryKey: adminKeys.events(search, offset),
+    queryKey: adminKeys.events(search, offset, filter),
     queryFn: async () =>
       adminEventPageSchema.parse(
-        await adminApi.get("events", { searchParams: listSearchParams(search, offset) }).json(),
+        await adminApi
+          .get("events", { searchParams: listSearchParams(search, offset, filter) })
+          .json(),
       ),
     placeholderData: keepPreviousData,
   })

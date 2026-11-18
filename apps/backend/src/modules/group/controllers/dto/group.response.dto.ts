@@ -33,6 +33,11 @@ export class GroupResponseDto {
   @ApiProperty()
   memberCount!: number;
 
+  @ApiProperty({
+    description: 'Has a public event upcoming or ended in the last 60 days',
+  })
+  isActive!: boolean;
+
   static fromDomain(group: Group): GroupResponseDto {
     return {
       id: group.id,
@@ -45,6 +50,7 @@ export class GroupResponseDto {
       createdAt: group.createdAt,
       activity: ActivityResponseDto.fromDomain(group.activity),
       memberCount: group.memberCount,
+      isActive: group.isActive,
     };
   }
 }

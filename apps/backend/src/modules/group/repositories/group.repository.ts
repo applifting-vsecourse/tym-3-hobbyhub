@@ -31,15 +31,34 @@ import { Injectable } from '@nestjs/common';
 // Thrown inside the hand-over transaction only to roll it back.
 class TargetNotMemberError extends Error {}
 
-const include = {
-  activity: true,
-  _count: { select: { memberships: true } },
-} as const;
+// #269: a group is "active" while it has a public event upcoming or ended in
+// this many days; nothing to store, the repository counts them.
+const ACTIVE_WITHIN_DAYS = 60;
+
+const groupInclude = (now = new Date()) =>
+  ({
+    activity: true,
+    _count: {
+      select: {
+        memberships: true,
+        events: {
+          where: {
+            status: 'PUBLISHED',
+            isHidden: false,
+            visibility: 'PUBLIC',
+            endAt: {
+              gt: new Date(now.getTime() - ACTIVE_WITHIN_DAYS * 86_400_000),
+            },
+          },
+        },
+      },
+    },
+  }) as const;
 
 const mapPrismaGroupToDomain = (
   group: PrismaGroup & {
     activity: PrismaActivity;
-    _count: { memberships: number };
+    _count: { memberships: number; events: number };
   },
 ): Group => ({
   id: group.id,
@@ -58,6 +77,7 @@ const mapPrismaGroupToDomain = (
     defaultMaxParticipants: group.activity.defaultMaxParticipants,
   },
   memberCount: group._count.memberships,
+  isActive: group._count.events > 0,
 });
 
 const memberInclude = {
@@ -156,7 +176,7 @@ export class GroupRepository {
           create: { userId: data.ownerId, role: GroupRole.OWNER },
         },
       },
-      include,
+      include: groupInclude(),
     });
     return mapPrismaGroupToDomain(group);
   }
@@ -164,7 +184,7 @@ export class GroupRepository {
   async getGroupById(id: string): Promise<Group | null> {
     const group = await this.prisma.group.findUnique({
       where: { id },
-      include,
+      include: groupInclude(),
     });
     return group ? mapPrismaGroupToDomain(group) : null;
   }
@@ -268,7 +288,7 @@ export class GroupRepository {
   async listGroupsOfUser(userId: string): Promise<MyGroup[]> {
     const memberships = await this.prisma.groupMembership.findMany({
       where: { userId, group: { status: GroupStatus.ACTIVE } },
-      include: { group: { include } },
+      include: { group: { include: groupInclude() } },
       orderBy: { joinedAt: 'desc' },
     });
     return memberships.map((membership) => ({
@@ -291,7 +311,7 @@ export class GroupRepository {
         ...discoverableBy(userId, hiddenManagerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
-      include,
+      include: groupInclude(),
       orderBy,
       take: limit,
     });
@@ -323,7 +343,7 @@ export class GroupRepository {
               ...discoverableBy(userId, hiddenManagerIds),
               ...filterConditions(filter),
             },
-            include,
+            include: groupInclude(),
             orderBy,
             take,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -379,7 +399,7 @@ export class GroupRepository {
     const ids = rows.map((row) => row.id);
     const groups = await this.prisma.group.findMany({
       where: { ...discoverableBy(userId, hiddenManagerIds), id: { in: ids } },
-      include,
+      include: groupInclude(),
     });
     return ids.flatMap((id) => groups.find((group) => group.id === id) ?? []);
   }
@@ -413,7 +433,7 @@ export class GroupRepository {
     const [groups, total] = await Promise.all([
       this.prisma.group.findMany({
         where,
-        include,
+        include: groupInclude(),
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         skip: query.offset,
         take: ADMIN_PAGE_SIZE,

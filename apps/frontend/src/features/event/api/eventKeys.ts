@@ -37,6 +37,10 @@ export const eventKeys = {
   map: (filters: EventListFilters) => [...eventKeys.lists(), "map", filters] as const,
   // The few soonest events on the landing page.
   upcoming: (limit: number) => [...eventKeys.lists(), "upcoming", limit] as const,
+  // The other rows of the landing page (#274): where friends go, and a city.
+  friendsGoing: (limit: number, viewerId: string | null) =>
+    [...eventKeys.lists(), "friends-going", limit, viewerId] as const,
+  inCity: (limit: number, city: string) => [...eventKeys.lists(), "in-city", limit, city] as const,
   // Detail (F-02.4). Keyed by viewer too: a group-only event (F-07.2) shows to
   // its group's members only, so signing out must not leave it in the cache.
   details: () => [...eventKeys.all(), "detail"] as const,

@@ -22,6 +22,7 @@ const anAdministrator = (overrides: Partial<Administrator>): Administrator => ({
   createdBy: { id: "a1", name: "Jana Nováková" },
   deactivatedAt: null,
   deactivatedBy: null,
+  appUserId: null,
   ...overrides,
 })
 

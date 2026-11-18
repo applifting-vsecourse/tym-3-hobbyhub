@@ -225,14 +225,22 @@ export class ProfileRepository {
   async listForAdministration(
     query: AdminListQuery,
   ): Promise<AdminPage<AdminUserListItem>> {
-    const where: Prisma.UserWhereInput = query.search
-      ? {
-          OR: [
-            { name: { contains: query.search, mode: 'insensitive' } },
-            { email: { contains: query.search, mode: 'insensitive' } },
-          ],
-        }
-      : {};
+    const where: Prisma.UserWhereInput = {
+      ...(query.search
+        ? {
+            OR: [
+              { name: { contains: query.search, mode: 'insensitive' } },
+              { email: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      // #271: smart filters, one at a time.
+      ...(query.filter === 'blocked' ? { status: 'BLOCKED' as const } : {}),
+      ...(query.filter === 'restricted'
+        ? { status: 'RESTRICTED' as const }
+        : {}),
+      ...(query.filter === 'unverified' ? { emailVerified: false } : {}),
+    };
     const [items, total] = await Promise.all([
       this.prisma.user.findMany({
         where,

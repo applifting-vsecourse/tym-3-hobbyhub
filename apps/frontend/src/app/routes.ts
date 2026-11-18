@@ -23,6 +23,7 @@ export const ROUTES = {
   adminLogin: "/admin/login",
   adminForgotPassword: "/admin/forgot-password",
   adminSetPassword: "/admin/set-password",
+  adminAttention: "/admin/attention",
   adminUsers: "/admin/users",
   adminEvents: "/admin/events",
   adminGroups: "/admin/groups",

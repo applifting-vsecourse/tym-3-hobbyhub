@@ -424,8 +424,29 @@ describe('EventsService', () => {
       );
     });
 
-    it('answers not found to a non-member asking for the past', async () => {
-      const { repository, service } = setup();
+    it('gives a non-member the public past events and only the count of the group-only ones', async () => {
+      const { repository, groups, service } = setup();
+      repository.getGroupEvents.mockResolvedValue(page);
+      repository.countGroupEvents.mockResolvedValue(3);
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
+      ).resolves.toEqual({ ...page, hiddenCount: 3 });
+      expect(groups.getPublicGroup).toHaveBeenCalled();
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ period: 'past', visibilities: ['PUBLIC'] }),
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
+      );
+      expect(repository.countGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ visibilities: ['GROUP_ONLY'] }),
+      );
+    });
+
+    it('answers not found to a non-member asking for the past of a group without a public page', async () => {
+      const { repository, groups, service } = setup();
+      groups.getPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),

@@ -1,6 +1,6 @@
 import { ProfileService } from '@/modules/profile/services/profile.service';
 import { adminValidationPipe } from '@/shared/admin-auth/admin-validation.pipe';
-import { AdminListQuery } from '@/shared/admin-auth/dto/admin-list.query';
+import { AdminUsersQuery } from '@/shared/admin-auth/dto/admin-users.query';
 import { AdministratorGuard } from '@/shared/admin-auth/guards/administrator.guard';
 import {
   Controller,
@@ -36,11 +36,12 @@ export class AdminUsersController {
   @ApiResponse({ status: 200, type: AdminUserPageResponseDto })
   @ApiResponse({ status: 401, description: 'Not signed in as administrator' })
   async list(
-    @Query() query: AdminListQuery,
+    @Query() query: AdminUsersQuery,
   ): Promise<AdminUserPageResponseDto> {
     const page = await this.profileService.listUsersForAdministration({
       search: query.q,
       offset: query.offset,
+      filter: query.filter,
     });
     return AdminUserPageResponseDto.fromDomain(page);
   }

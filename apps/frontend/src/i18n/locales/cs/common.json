@@ -8,6 +8,7 @@
     "administrators": {
       "actionFailed": "Akce se nepodařila. Zkuste to prosím znovu.",
       "actions": "Akce",
+      "alsoUser": "Má i účet v aplikaci",
       "byOn": "{{name}}, {{date}}",
       "cancelInvitation": "Zrušit pozvánku",
       "createdAt": "Založen",
@@ -29,6 +30,26 @@
       "status": "Stav",
       "thatIsYou": "To jste vy",
       "title": "Správci"
+    },
+    "attention": {
+      "all": "Zobrazit vše",
+      "intro": "Všechno, co čeká na správce, na jednom místě: nahlášené akce, nahlášení lidé a účty bez ověřeného e-mailu.",
+      "reports": {
+        "EVENT": "Nahlášené akce",
+        "USER": "Nahlášení lidé",
+        "empty": {
+          "EVENT": "Žádná nahlášená akce nečeká.",
+          "USER": "Žádný nahlášený člověk nečeká."
+        }
+      },
+      "title": "Potřeba k řešení",
+      "unverified": {
+        "empty": "Každý má ověřený e-mail.",
+        "text_few": "{{count}} účty zatím neověřily e-mail.",
+        "text_one": "{{count}} účet zatím neověřil e-mail.",
+        "text_other": "{{count}} účtů zatím neověřilo e-mail.",
+        "title": "Neověřené účty"
+      }
     },
     "blocks": {
       "actions": "Akce",
@@ -99,6 +120,16 @@
     "events": {
       "activity": "Aktivita",
       "empty": "Zatím tu nejsou žádné akce.",
+      "filter": {
+        "CANCELLED": "Zrušené",
+        "DRAFT": "Koncepty",
+        "FINISHED": "Proběhlé",
+        "NOT_HELD": "Nekonaly se",
+        "PUBLISHED": "Zveřejněné",
+        "all": "Všechny",
+        "hidden": "Skryté",
+        "label": "Filtr akcí"
+      },
       "hidden": "Skrytá",
       "name": "Název",
       "organizer": "Organizátor",
@@ -199,6 +230,7 @@
     },
     "nav": {
       "administrators": "Správci",
+      "attention": "K řešení",
       "events": "Akce",
       "groups": "Skupiny",
       "label": "Navigace administrace",
@@ -342,6 +374,7 @@
       "label": "Odhlásit"
     },
     "title": "Administrace",
+    "toApp": "Do aplikace",
     "user": {
       "account": "Účet",
       "address": "Bydliště",
@@ -366,6 +399,13 @@
       "email": "E-mail",
       "emailVerified": "Ověřený e-mail",
       "empty": "Zatím tu nejsou žádní uživatelé.",
+      "filter": {
+        "all": "Všichni",
+        "blocked": "Zablokovaní",
+        "label": "Filtr uživatelů",
+        "restricted": "Omezení",
+        "unverified": "Neověřený e-mail"
+      },
       "name": "Jméno",
       "search": "Hledat podle jména nebo e-mailu",
       "status": "Stav",
@@ -867,6 +907,7 @@
     }
   },
   "groups": {
+    "active": "Aktivní",
     "back": "Zpět",
     "detail": {
       "backToEvents": "Zpět na akce",
@@ -885,6 +926,9 @@
           "upcoming": "Skupina teď nemá žádné nadcházející akce."
         },
         "groupOnly": "Jen pro skupinu",
+        "hidden_few": "Další {{count}} akce jsou jen pro členy skupiny",
+        "hidden_one": "Další akce je jen pro členy skupiny",
+        "hidden_other": "Dalších {{count}} akcí je jen pro členy skupiny",
         "loadMore": "Načíst další",
         "loadMoreFailed": "Další akce se nepodařilo načíst. Zkuste to prosím znovu.",
         "loading": "Načítáme akce skupiny…",
@@ -952,6 +996,7 @@
         "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
         "title": "Nic nenalezeno"
       },
+      "intro": "Skupina je parta, která se pravidelně schází. Najdete v ní lidi na pravidelné hraní a první na nové akce se dozvíte vy.",
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",
@@ -1524,13 +1569,13 @@
     "groups": {
       "browse": "Prohlédnout skupiny",
       "seatTitle": "Vaše místo v partě",
-      "text": "Skupina je parta lidí kolem jedné aktivity. Má své místo, obvyklý termín a členy, kteří se znají. Nováček vidí, do čeho jde, ještě než požádá o členství, a akce skupiny se nevypisují od nuly.",
+      "text": "Parta kolem jedné aktivity s vlastním místem a termínem. Vidíte, do čeho jdete, než o členství požádáte.",
       "title": "Skupiny: parta, která se schází pravidelně"
     },
     "hero": {
       "join": "Najít volné místo",
       "kicker": "Sport a hry ve vašem okolí",
-      "text": "Organizátoři ukážou, kolik lidí jim chybí do minima. Jedno z volných míst může být vaše. A parta, která vám sedne, se může scházet dál jako skupina.",
+      "text": "Ukážeme, kolik lidí akci chybí. Jedno místo může být vaše.",
       "title": "Doplňte chybějící hráče dřív, než se akce zruší"
     },
     "how": {
@@ -1543,35 +1588,45 @@
         "yourSeatTitle": "Tvoje místo"
       },
       "step1": {
-        "p1": "Organizátor řekne, kolik lidí mu chybí do minima, a všichni to vidí hned: v seznamu, na mapě i na kartě akce. Nehledáte „jestli“, hledáte „kde se hodí ještě jeden“.",
-        "p2": "Když vhodná akce není, vypíšete ji za minutu: aktivita, místo, termín a kolik vás musí být, aby se hrálo.",
+        "p1": "Organizátor řekne, kolik lidí mu chybí. Vidíte to v seznamu, na mapě i na kartě.",
         "short": "Najděte nebo vypište akci",
         "subtitle": "Kde chybí hráči do minima.",
         "title": "Najděte akci, kde chybí hráči. Nebo ji vypište."
       },
       "step2": {
-        "p1": "Volná místa vidíte jako židle u stolu, v seznamu i na mapě. Jedním klepnutím požádáte o účast a můžete připsat pár slov organizátorovi.",
-        "p2": "Bez registrace si všechno prohlédnete. Účet si založíte, až budete chtít sednout na místo.",
+        "p1": "Jedním klepnutím požádáte o účast a připíšete pár slov organizátorovi.",
         "short": "Požádejte o místo",
         "subtitle": "Jedno klepnutí, organizátor dostane zprávu.",
         "title": "Požádejte o volné místo"
       },
       "step3": {
-        "p1": "Organizátor vidí, kdo se hlásí, a schválí, koho chce. Jakmile je minimum splněné, akce se uskuteční a nikdo nejede zbytečně.",
-        "p2": "Schválení účastníci dostanou přesnou adresu a praktické pokyny a vidí, s kým jdou.",
+        "p1": "Organizátor schválí, koho chce. Při splněném minimu se akce uskuteční.",
         "short": "Schválení a hraje se",
         "subtitle": "Minimum splněno, akce se uskuteční.",
         "title": "Organizátor schválí a hraje se"
       },
       "step4": {
-        "p1": "Lidé, kteří si sedli, zůstanou spolu jako skupina. Má své místo, obvyklý termín a členy, kteří se znají.",
-        "p2": "Příští akci už nikdo nevypisuje od nuly a nováček vidí, do čeho jde, ještě než požádá o členství.",
+        "p1": "Kdo si sedl, zůstane spolu jako skupina s vlastním termínem.",
         "short": "Z party je skupina",
         "subtitle": "Příště už nikdo nevypisuje od nuly.",
         "title": "Z party je skupina"
       },
       "stepLabel": "Krok {{number}}",
       "title": "Jak to funguje"
+    },
+    "rails": {
+      "friends": {
+        "empty": "Zatím nikdo z vašich přátel nemá na žádné akci místo.",
+        "title": "Kam chodí přátelé"
+      },
+      "loadError": "Akce se nepodařilo načíst.",
+      "nearby": {
+        "empty": "V okolí zatím nic není. Vypište akci jako první.",
+        "noCity": "<profile>Nastavte si město v profilu</profile> a ukážeme vám akce ve vašem okolí.",
+        "title": "V okolí: {{city}}",
+        "title_noCity": "V tvém okolí"
+      },
+      "seeAll": "Všechny akce"
     },
     "search": {
       "label": "Hledat akce",

@@ -186,6 +186,8 @@ export const administratorSchema = z.object({
   createdBy: refSchema.nullable(),
   deactivatedAt: z.coerce.date().nullable(),
   deactivatedBy: refSchema.nullable(),
+  // The same person's account in the app, if they have one (#272).
+  appUserId: z.string().nullable(),
 })
 export type Administrator = z.infer<typeof administratorSchema>
 
@@ -239,3 +241,16 @@ export type UserBlockViolation = z.infer<typeof userBlockViolationSchema>
 export const userBlockRefusalSchema = z.object({
   violations: z.array(userBlockViolationSchema),
 })
+
+/** The smart filters of the lists (#271); the server takes the same values. */
+export const ADMIN_USER_FILTERS = ["blocked", "restricted", "unverified"] as const
+export type AdminUserFilter = (typeof ADMIN_USER_FILTERS)[number]
+export const ADMIN_EVENT_FILTERS = [
+  "DRAFT",
+  "PUBLISHED",
+  "CANCELLED",
+  "FINISHED",
+  "NOT_HELD",
+  "hidden",
+] as const
+export type AdminEventFilter = (typeof ADMIN_EVENT_FILTERS)[number]

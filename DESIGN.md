@@ -37,6 +37,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
 - **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands. The administration (`/admin/*`) keeps its own chrome, `AdminShell`, instead of the user one.
 - **Tables are for the administration only.** A list of records to scan and compare (users, events, groups in `/admin`) is the kit's `Table` from `md` up; below `md` each row stacks into lines separated by a hairline, never into a card. The rest of the app lists items as cards or rows, not tables.
 - Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
+- **The one carousel is the landing page's event rows** (#274): "Nejbližší akce", "Kam chodí přátelé", "V tvém okolí" (`EventRail`). A row of `EventCard`s scrolls sideways with native scrolling and `snap-x`; no arrows, no dots, no autoplay, and each row has its own loading, empty and error state. It is the one way to put three questions of a visitor on one screen; everywhere else a list is a list.
 
 ## Spacing
 

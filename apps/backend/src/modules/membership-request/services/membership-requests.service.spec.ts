@@ -47,6 +47,7 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
     defaultMaxParticipants: 12,
   },
   memberCount: 5,
+  isActive: false,
   ...overrides,
 });
 

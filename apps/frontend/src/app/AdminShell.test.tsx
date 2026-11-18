@@ -41,6 +41,7 @@ describe("AdminShell", () => {
         .getAllByRole("link")
         .map((link) => link.getAttribute("href")),
     ).toEqual([
+      "/admin/attention",
       "/admin/reports",
       "/admin/users",
       "/admin/events",
@@ -57,6 +58,12 @@ describe("AdminShell", () => {
     expect(screen.getByText(/Správce Jan/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Odhlásit" }))
     expect(mutate).toHaveBeenCalled()
+  })
+
+  it("leads back to the app, where an administrator may be a user too", async () => {
+    await renderWithRouter(withQueries(<AdminShell>obsah</AdminShell>))
+
+    expect(screen.getByRole("link", { name: "Do aplikace" })).toHaveAttribute("href", "/")
   })
 
   it("says how many reports nobody has taken up yet", async () => {

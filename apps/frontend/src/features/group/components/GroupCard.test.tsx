@@ -19,6 +19,7 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
   createdAt: new Date("2026-01-01T12:00:00Z"),
   activity: { id: "a1", name: "Florbal", icon: "florbal" },
   memberCount: 14,
+  isActive: false,
   ...overrides,
 })
 
@@ -44,6 +45,17 @@ describe("GroupCard", () => {
     expect(link).toHaveAttribute("href", "/groups/g1")
     expect(screen.getByText("Praha 8 · florbal · 14 členů")).toBeInTheDocument()
     expect(screen.getByText("Organizátor")).toBeInTheDocument()
+  })
+
+  it("marks an active group", async () => {
+    renderInRouter(
+      <GroupCard
+        group={aGroup({ isActive: true })}
+        activityLabel={activityLabel}
+      />,
+    )
+
+    expect(await screen.findByText("Aktivní")).toBeInTheDocument()
   })
 
   it("shows the visibility of a group the viewer is not in", async () => {

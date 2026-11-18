@@ -43,9 +43,22 @@ export const eventFilterConditions = ({
   dateFrom,
   dateTo,
   hiddenOrganizerIds = [],
+  goingWithFriendsOf,
 }: EventFilter): Prisma.Sql[] => [
   ...(hiddenOrganizerIds.length > 0
     ? [notOrganizedBy(hiddenOrganizerIds)]
+    : []),
+  // Friends who hold a seat (approved or attended), the only thing the matrix
+  // lets a friendship show about an event (#274).
+  ...(goingWithFriendsOf
+    ? [
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM "participation" p
+          JOIN "friendship" f ON (
+            (f."userAId" = ${goingWithFriendsOf} AND f."userBId" = p."userId")
+            OR (f."userBId" = ${goingWithFriendsOf} AND f."userAId" = p."userId"))
+          WHERE p."eventId" = e."id" AND p."status" IN ('APPROVED', 'ATTENDED'))`,
+      ]
     : []),
   ...(activityIds.length > 0
     ? [Prisma.sql`e."activityId" IN (${Prisma.join(activityIds)})`]

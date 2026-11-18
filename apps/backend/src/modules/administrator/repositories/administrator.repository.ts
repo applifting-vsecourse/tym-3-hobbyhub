@@ -50,7 +50,21 @@ export class AdministratorRepository {
       select,
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
-    return rows.map(toListItem);
+    // #272: an administrator may be an ordinary user too, under another
+    // account with the same address.
+    const users = await this.prisma.user.findMany({
+      where: {
+        email: { in: rows.map((row) => row.email), mode: 'insensitive' },
+      },
+      select: { id: true, email: true },
+    });
+    const userIdByEmail = new Map(
+      users.map((user) => [user.email.toLowerCase(), user.id]),
+    );
+    return rows.map((row) => ({
+      ...toListItem(row),
+      appUserId: userIdByEmail.get(row.email.toLowerCase()) ?? null,
+    }));
   }
 
   async getAdministrator(id: string): Promise<AdministratorListItem | null> {

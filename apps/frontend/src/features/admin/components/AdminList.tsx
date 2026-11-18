@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { AdminTable, type AdminColumn } from "@/components/hobbyhub/AdminTable"
@@ -25,6 +25,9 @@ type AdminListProps<T> = {
     refetch: () => unknown
   }
   empty: string
+  /** The smart filters under the search (#271); `isFiltered` says one is on. */
+  filters?: ReactNode
+  isFiltered?: boolean
   rowKey: (row: T) => string
   primary: AdminColumn<T>
   columns: AdminColumn<T>[]
@@ -39,6 +42,8 @@ export function AdminList<T>({
   onChange,
   query,
   empty,
+  filters,
+  isFiltered = false,
   rowKey,
   primary,
   columns,
@@ -75,11 +80,12 @@ export function AdminList<T>({
         onChange={(event) => setTyped(event.target.value)}
         className="md:max-w-md"
       />
+      {filters}
 
       {page ? (
         page.items.length === 0 ? (
           <p className="py-8 text-center typo-body text-muted-foreground">
-            {search ? t("admin.list.noMatch") : empty}
+            {search || isFiltered ? t("admin.list.noMatch") : empty}
           </p>
         ) : (
           <>

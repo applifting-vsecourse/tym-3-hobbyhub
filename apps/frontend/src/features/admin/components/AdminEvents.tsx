@@ -4,7 +4,12 @@ import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/ui/badge"
 
 import { adminEventsQueryOptions } from "@/features/admin/api/adminQueryOptions"
-import type { AdminEvent } from "@/features/admin/api/adminSchemas"
+import {
+  ADMIN_EVENT_FILTERS,
+  type AdminEvent,
+  type AdminEventFilter,
+} from "@/features/admin/api/adminSchemas"
+import { AdminFilterChips } from "@/features/admin/components/AdminFilterChips"
 import { AdminLink } from "@/features/admin/components/AdminLink"
 import { AdminList } from "@/features/admin/components/AdminList"
 import { useAdminFormat } from "@/features/admin/lib/format"
@@ -12,7 +17,9 @@ import { useAdminFormat } from "@/features/admin/lib/format"
 type ListProps = {
   search: string
   offset: number
+  filter?: AdminEventFilter
   onChange: (next: { search: string; offset: number }) => void
+  onFilterChange: (filter: AdminEventFilter | undefined) => void
 }
 
 /** The status, and the marks that only the administration sees. */
@@ -35,10 +42,10 @@ export function EventBadges({
   )
 }
 
-export function AdminEvents({ search, offset, onChange }: ListProps) {
+export function AdminEvents({ search, offset, filter, onChange, onFilterChange }: ListProps) {
   const { t } = useTranslation()
   const format = useAdminFormat()
-  const query = useQuery(adminEventsQueryOptions(search, offset))
+  const query = useQuery(adminEventsQueryOptions(search, offset, filter))
 
   return (
     <AdminList<AdminEvent>
@@ -49,6 +56,21 @@ export function AdminEvents({ search, offset, onChange }: ListProps) {
       onChange={onChange}
       query={query}
       empty={t("admin.events.empty")}
+      isFiltered={filter !== undefined}
+      filters={
+        <AdminFilterChips<AdminEventFilter>
+          label={t("admin.events.filter.label")}
+          value={filter}
+          onChange={onFilterChange}
+          options={[
+            { value: undefined, label: t("admin.events.filter.all") },
+            ...ADMIN_EVENT_FILTERS.map((value) => ({
+              value,
+              label: t(`admin.events.filter.${value}`),
+            })),
+          ]}
+        />
+      }
       rowKey={(event) => event.id}
       primary={{
         key: "title",

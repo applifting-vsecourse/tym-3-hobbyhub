@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  UnauthorizedException,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -57,14 +58,22 @@ export class EventsController {
     status: 400,
     description: 'Invalid limit, offset or filter',
   })
+  @ApiResponse({
+    status: 401,
+    description: 'friendsGoing asked without a session',
+  })
   async list(
     @OptionalUser() user: Identity | undefined,
     @Query() query: ListEventsQuery,
   ): Promise<EventListResponseDto> {
+    if (query.friendsGoing && !user) {
+      throw new UnauthorizedException('Friends are known only when signed in');
+    }
     const page = await this.eventsService.getUpcomingPublicEvents(
       { limit: query.limit, offset: query.offset },
       {
         ...eventFilterOf(query),
+        goingWithFriendsOf: query.friendsGoing ? user?.id : undefined,
         onlyWithFreeSpots: query.onlyWithFreeSpots,
         priceFrom: query.priceFrom,
         priceTo: query.priceTo,

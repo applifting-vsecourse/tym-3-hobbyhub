@@ -53,6 +53,20 @@ export class ListEventsRangesQuery extends EventFilterQuery {
   @IsBoolean()
   onlyWithFreeSpots?: boolean;
 
+  @ApiPropertyOptional({
+    description:
+      'Only events where a friend of the signed-in user has a seat (needs a session)',
+  })
+  @Transform(({ value }: { value: unknown }) => {
+    const text = String(value).toLowerCase();
+    if (text === 'true' || text === '1') return true;
+    if (text === 'false' || text === '0') return false;
+    return value;
+  })
+  @IsOptional()
+  @IsBoolean()
+  friendsGoing?: boolean;
+
   @optionalNumber(
     'Lowest contribution per seat in CZK (an event without one costs 0)',
     EVENT_CONTRIBUTION_MAX_AMOUNT,

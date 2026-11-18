@@ -65,6 +65,14 @@ describe('ListEventsQuery', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('takes the friends switch like the free-seat one', async () => {
+    expect((await validate({ friendsGoing: 'true' })).friendsGoing).toBe(true);
+    expect((await validate({})).friendsGoing).toBeUndefined();
+    await expect(validate({ friendsGoing: 'maybe' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
   it('reads a blank number as no value, not as 0', async () => {
     const query = await validate({ priceFrom: '', capacityTo: '' });
     expect(query.priceFrom).toBeUndefined();

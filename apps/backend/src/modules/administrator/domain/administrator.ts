@@ -14,6 +14,9 @@ export type AdministratorListItem = {
   createdBy: AdministratorRef | null;
   deactivatedAt: Date | null;
   deactivatedBy: AdministratorRef | null;
+  // #272: the person's account in the app itself, when they have one under the
+  // same address. Two separate accounts (ADR-0010); only the list looks it up.
+  appUserId?: string | null;
 };
 
 /**
