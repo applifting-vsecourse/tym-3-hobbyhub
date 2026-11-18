@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next"
 
 import { NoMatchingResults } from "@/components/hobbyhub/NoMatchingResults"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 import type { DiscoverGroupsFilters } from "@/features/group/api/groupKeys"
 import { discoverGroupsQueryOptions } from "@/features/group/api/groupListQueryOptions"
+import type { Group } from "@/features/group/api/groupSchemas"
 import { GroupCard, type ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupGrid } from "@/features/group/components/GroupGrid"
 
@@ -20,6 +22,10 @@ type DiscoverGroupsProps = {
   filtersBar: ReactNode
   /** The filters open beside the list on a large screen (#224); nothing where there is no room. */
   filtersPanel?: ReactNode
+  /** The extra filters of groups under the search (days, joining, radius, order). */
+  extraFilters?: ReactNode
+  /** The map of the groups on screen, beside the list from `xl` (ADR-0028). */
+  renderMap?: (groups: Group[]) => ReactNode
   /** The page's tabs for a signed-in viewer, above the search beside the filters. */
   tabs?: ReactNode
   onClearFilters: () => void
@@ -36,6 +42,8 @@ export function DiscoverGroups({
   filters,
   filtersBar,
   filtersPanel,
+  extraFilters,
+  renderMap,
   tabs,
   onClearFilters,
 }: DiscoverGroupsProps) {
@@ -46,13 +54,24 @@ export function DiscoverGroups({
     placeholderData: keepPreviousData,
   })
   const isFiltered =
-    filters.activityIds.length > 0 || filters.search !== "" || filters.location !== ""
+    filters.activityIds.length > 0 ||
+    filters.search !== "" ||
+    filters.location !== "" ||
+    (filters.weekdays?.length ?? 0) > 0 ||
+    filters.approvalMode !== undefined ||
+    filters.onlyWithUpcomingEvent === true ||
+    filters.near !== undefined
   const groups = discover.data?.pages.flatMap((page) => page.items)
 
   return (
     <section
       aria-labelledby="discover-groups-heading"
-      className="flex flex-col gap-6 xl:grid xl:grid-cols-[auto_minmax(0,1fr)] xl:items-start xl:gap-8"
+      className={cn(
+        "flex flex-col gap-6 xl:grid xl:items-start xl:gap-8",
+        renderMap
+          ? "xl:grid-cols-[auto_minmax(0,1fr)_minmax(0,26rem)]"
+          : "xl:grid-cols-[auto_minmax(0,1fr)]",
+      )}
     >
       <h2
         id="discover-groups-heading"
@@ -64,6 +83,7 @@ export function DiscoverGroups({
       <div className="flex min-w-0 flex-col gap-6">
         {tabs}
         {filtersBar}
+        {extraFilters}
         <div
           aria-busy={discover.isPlaceholderData}
           className={discover.isPlaceholderData ? "opacity-60 transition-opacity" : undefined}
@@ -119,6 +139,11 @@ export function DiscoverGroups({
           </div>
         ) : null}
       </div>
+      {renderMap ? (
+        <div className="hidden xl:sticky xl:top-20 xl:block xl:h-[calc(100svh-6rem)]">
+          {renderMap(groups ?? [])}
+        </div>
+      ) : null}
     </section>
   )
 }

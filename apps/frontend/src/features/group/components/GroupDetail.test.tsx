@@ -105,6 +105,11 @@ const group: Group = {
   activity: { id: "a1", name: "Florbal", icon: "florbal" },
   memberCount: 14,
   isActive: false,
+  approvalMode: "APPROVAL" as const,
+  meetingDays: [] as number[],
+  latitude: null,
+  longitude: null,
+  nextEvent: null,
 }
 
 const pending: MembershipRequest = {
@@ -215,7 +220,9 @@ describe("GroupDetail", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Čtvrteční florbalisté" }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Veřejná skupina · Praha 8 · Čtvrtky 19:00 · 14 členů/)).toBeVisible()
+    expect(screen.getByText("Na schválení")).toBeVisible()
+    expect(screen.getByText("14")).toBeVisible()
+    expect(screen.getByText("Čtvrtky 19:00")).toBeVisible()
     expect(screen.getByText("Rekreační florbal každý čtvrtek.")).toBeVisible()
     expect(screen.queryByRole("heading", { name: /Členové/ })).not.toBeInTheDocument()
 

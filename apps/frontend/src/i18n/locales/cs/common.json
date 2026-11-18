@@ -907,6 +907,10 @@
   },
   "groups": {
     "active": "Aktivní",
+    "approval": {
+      "APPROVAL": "Na schválení",
+      "OPEN": "Otevřená, bez schvalování"
+    },
     "back": "Zpět",
     "detail": {
       "backToEvents": "Zpět na akce",
@@ -938,6 +942,19 @@
         "periodsLabel": "Nadcházející a minulé akce",
         "title": "Akce skupiny"
       },
+      "facts": {
+        "every": "Každé {{day}}",
+        "when": "Kdy",
+        "whenNone": "Termín skupina neuvedla.",
+        "where": "Kde se schází",
+        "whereNone": "Místo skupina neuvedla."
+      },
+      "join": {
+        "cta": "Připojit se ke skupině",
+        "failed": "Do skupiny se nepodařilo vstoupit. Zkuste to prosím znovu.",
+        "note": "Skupina je otevřená. Připojte se hned a uvidíte všechny akce.",
+        "title": "Hrajte s námi"
+      },
       "loadError": "Skupinu se nepodařilo načíst",
       "loading": "Načítáme skupinu…",
       "members_few": "{{count}} členové",
@@ -965,13 +982,22 @@
         "title": "Členství",
         "withdraw": "Zrušit žádost"
       },
+      "stats": {
+        "average": "hráčů na akci v průměru",
+        "meets": "schází se",
+        "members": "členů",
+        "none": "—",
+        "played": "odehraných akcí"
+      },
       "title": "Detail skupiny",
       "visibilityPublic": "Veřejná skupina"
     },
     "fields": {
       "activity": "Aktivita",
+      "approvalMode": "Přijímání členů",
       "description": "Popis",
       "location": "Lokalita (nepovinné)",
+      "meetingDays": "Dny, kdy se scházíte (nepovinné)",
       "name": "Název skupiny",
       "usualSchedule": "Obvyklý termín (nepovinné)"
     },
@@ -980,9 +1006,17 @@
       "activityError": "Aktivity se nepodařilo načíst.",
       "activityLoading": "Načítáme aktivity…",
       "activityPlaceholder": "Vyberte aktivitu",
+      "approvalApproval": "Členy schvaluje správce.",
+      "approvalOpen": "Kdokoli se připojí hned.",
       "createFailed": "Skupinu se nepodařilo založit. Zkuste to prosím znovu.",
       "created": "Skupina je založená.",
+      "editTitle": "Upravit skupinu",
+      "place": "Vyberte adresu místa setkání",
+      "placeClear": "Odebrat místo",
+      "placeHint": "Na mapě se ukáže jen přibližná poloha místa.",
       "retry": "Zkusit znovu",
+      "save": "Uložit změny",
+      "saved": "Změny jsou uložené",
       "submit": "Vytvořit skupinu",
       "title": "Nová skupina"
     },
@@ -994,6 +1028,19 @@
         "clear": "Vymazat filtry",
         "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
         "title": "Nic nenalezeno"
+      },
+      "filters": {
+        "approval": "Přijímání členů",
+        "approvalAll": "Všechny",
+        "clear": "Zrušit filtry",
+        "radius": "Okruh od domova",
+        "radiusValue": "{{km}} km",
+        "sort": "Řadit",
+        "sortMembers": "Nejvíc členů",
+        "sortNearest": "Nejbližší",
+        "sortNewest": "Nejnovější",
+        "upcoming": "Mají nadcházející akci",
+        "weekdays": "Kdy se schází"
       },
       "intro": "Skupina je parta, která se pravidelně schází. Najdete v ní lidi na pravidelné hraní a první na nové akce se dozvíte vy.",
       "loadError": "Skupiny se nepodařilo načíst",
@@ -1075,6 +1122,7 @@
         "messageLabel": "Zpráva pro žadatele (nepovinné)",
         "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků."
       },
+      "editLink": "Upravit skupinu",
       "loadError": "Nepodařilo se načíst",
       "loading": "Načítáme…",
       "membersEmpty": "Skupina zatím nemá žádné členy.",
@@ -1108,6 +1156,11 @@
       },
       "tabsLabel": "Členové a žádosti",
       "title": "Správa členů"
+    },
+    "map": {
+      "label": "Mapa skupin",
+      "noPlace": "Skupiny bez místa na mapě nejsou.",
+      "pin": "{{name}}, {{count}} členů"
     },
     "membershipRequest": {
       "form": {
@@ -1166,6 +1219,12 @@
         "WITHDRAWN": "Staženo"
       }
     },
+    "nextEvent": {
+      "freeSeats": "Volná místa",
+      "full": "Obsazeno",
+      "label": "Příští akce {{when}}",
+      "none": "Zatím bez naplánované akce"
+    },
     "placeholders": {
       "description": "Např. Hrajeme každý čtvrtek v hale ZŠ Kobylisy, nováčci vítáni.",
       "location": "Např. Praha 8",
@@ -1182,6 +1241,24 @@
       "tooLong_few": "Maximálně {{count}} znaky",
       "tooLong_one": "Maximálně {{count}} znak",
       "tooLong_other": "Maximálně {{count}} znaků"
+    },
+    "weekdays": {
+      "1": "Po",
+      "2": "Út",
+      "3": "St",
+      "4": "Čt",
+      "5": "Pá",
+      "6": "So",
+      "7": "Ne"
+    },
+    "weekdaysLong": {
+      "1": "pondělí",
+      "2": "úterý",
+      "3": "středu",
+      "4": "čtvrtek",
+      "5": "pátek",
+      "6": "sobotu",
+      "7": "neděli"
     }
   },
   "header": {

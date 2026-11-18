@@ -1,3 +1,5 @@
+import type { ReactNode } from "react"
+
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -18,6 +20,10 @@ type GroupRowProps = {
   badge?: string
   /** Wording of the "active group" mark next to the title; none means no mark (#269). */
   activeLabel?: string
+  /** How the group takes people in, in the accent colour under the details (ADR-0028). */
+  approval?: string
+  /** The next event of the group: a tinted band under the row, like the roster band of a card. */
+  nextEvent?: ReactNode
   className?: string
 }
 
@@ -34,6 +40,8 @@ export function GroupRow({
   description,
   badge,
   activeLabel,
+  approval,
+  nextEvent,
   className,
 }: GroupRowProps) {
   return (
@@ -62,7 +70,13 @@ export function GroupRow({
             {description}
           </p>
         ) : null}
+        {approval ? <p className="typo-small text-primary">{approval}</p> : null}
         {badge ? <p className="typo-small text-primary">{badge}</p> : null}
+        {nextEvent ? (
+          <p className="mt-2 rounded-md bg-accent px-3 py-2 typo-small text-accent-foreground">
+            {nextEvent}
+          </p>
+        ) : null}
       </div>
     </div>
   )

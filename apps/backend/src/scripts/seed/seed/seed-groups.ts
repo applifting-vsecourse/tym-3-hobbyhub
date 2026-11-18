@@ -122,6 +122,62 @@ const EXAMPLE_GROUPS: ExampleGroup[] = [
   },
 ];
 
+// ADR-0028: how a group takes people in, when it meets and where, by name.
+// Prague centres are enough for a map of examples.
+const GROUP_EXTRAS: Record<
+  string,
+  {
+    approvalMode: 'OPEN' | 'APPROVAL';
+    meetingDays: number[];
+    latitude?: number;
+    longitude?: number;
+  }
+> = {
+  'Čtvrteční florbalisté': {
+    approvalMode: 'OPEN',
+    meetingDays: [4],
+    latitude: 50.1297,
+    longitude: 14.4421,
+  },
+  'Deskovky Holešovice': {
+    approvalMode: 'APPROVAL',
+    meetingDays: [5],
+    latitude: 50.1006,
+    longitude: 14.4386,
+  },
+  'Volejbal na hřišti': {
+    approvalMode: 'OPEN',
+    meetingDays: [6],
+    latitude: 50.1021,
+    longitude: 14.4505,
+  },
+  'Tenis pro začátečníky': {
+    approvalMode: 'APPROVAL',
+    meetingDays: [3],
+    latitude: 50.1166,
+    longitude: 14.4141,
+  },
+  'Deskovky na Žižkově': {
+    approvalMode: 'OPEN',
+    meetingDays: [4],
+    latitude: 50.0845,
+    longitude: 14.4604,
+  },
+  'Běhání na Letné': {
+    approvalMode: 'OPEN',
+    meetingDays: [7],
+    latitude: 50.0966,
+    longitude: 14.4244,
+  },
+  'Šachy v Lužánkách': {
+    approvalMode: 'APPROVAL',
+    meetingDays: [2],
+    latitude: 49.2069,
+    longitude: 16.6141,
+  },
+  'Cyklovýlety bez cíle': { approvalMode: 'APPROVAL', meetingDays: [6, 7] },
+};
+
 /**
  * Example groups with members, so the group list has something to show. Skips
  * each one whose name is already taken, so it never duplicates them and still
@@ -142,7 +198,20 @@ export async function seedGroups(
   const user = (index: number): User => users[index % users.length];
 
   for (const example of EXAMPLE_GROUPS) {
+    const extra = GROUP_EXTRAS[example.name];
     if (await prisma.group.findFirst({ where: { name: example.name } })) {
+      // Groups from an earlier seed get the new attributes too.
+      if (extra) {
+        await prisma.group.updateMany({
+          where: { name: example.name },
+          data: {
+            approvalMode: extra.approvalMode,
+            meetingDays: extra.meetingDays,
+            locationLatitude: extra.latitude ?? null,
+            locationLongitude: extra.longitude ?? null,
+          },
+        });
+      }
       continue;
     }
     const owner = user(example.owner);
@@ -164,6 +233,10 @@ export async function seedGroups(
         description: example.description,
         locationName: example.locationName,
         usualSchedule: example.usualSchedule,
+        approvalMode: extra?.approvalMode ?? 'APPROVAL',
+        meetingDays: extra?.meetingDays ?? [],
+        locationLatitude: extra?.latitude ?? null,
+        locationLongitude: extra?.longitude ?? null,
         status: example.status ?? GroupStatus.ACTIVE,
         createdAt,
         activity: { connect: { name: example.activity } },

@@ -33,10 +33,12 @@ import { GroupPageResponseDto } from './dto/group-page.response.dto';
 import {
   GroupMembershipResponseDto,
   GroupResponseDto,
+  GroupStatsResponseDto,
 } from './dto/group.response.dto';
 import { MyGroupResponseDto } from './dto/my-group.response.dto';
 import { NearbyGroupsResponseDto } from './dto/nearby-groups.response.dto';
 import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { groupsValidationPipe } from './groups-validation.pipe';
 
@@ -64,6 +66,10 @@ export class GroupsController {
       description: body.description,
       locationName: body.locationName,
       usualSchedule: body.usualSchedule,
+      approvalMode: body.approvalMode,
+      meetingDays: body.meetingDays,
+      latitude: body.latitude,
+      longitude: body.longitude,
     });
     return GroupResponseDto.fromDomain(group);
   }
@@ -110,6 +116,18 @@ export class GroupsController {
         activityIds: query.activityIds,
         search: query.search,
         location: query.location,
+        weekdays: query.weekdays,
+        approvalMode: query.approvalMode,
+        onlyWithUpcomingEvent: query.onlyWithUpcomingEvent,
+        near:
+          query.lat !== undefined && query.lng !== undefined
+            ? {
+                latitude: query.lat,
+                longitude: query.lng,
+                radiusKm: query.radiusKm ?? 15,
+              }
+            : undefined,
+        sort: query.sort,
       }),
     );
   }
@@ -127,6 +145,48 @@ export class GroupsController {
   ): Promise<GroupResponseDto> {
     const group = await this.groupsService.getPublicGroup(id, user);
     return GroupResponseDto.fromDomain(group);
+  }
+
+  @Get(':id/stats')
+  @UseGuards(OptionalUserGuard)
+  @ApiOperation({ summary: "A public group's played events and average size" })
+  @ApiResponse({ status: 200, type: GroupStatsResponseDto })
+  @ApiResponse({ status: 404, description: 'Group not found or not public' })
+  async stats(
+    @OptionalUser() user: Identity | undefined,
+    @Param('id') id: string,
+  ): Promise<GroupStatsResponseDto> {
+    return this.groupsService.getStats(id, user);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthenticatedUserGuard)
+  @ApiOperation({ summary: 'Change a group (its owner and admins)' })
+  @ApiResponse({ status: 200, type: GroupResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input or activity' })
+  @ApiResponse({ status: 404, description: 'Not a group you manage' })
+  async update(
+    @User() user: Identity,
+    @Param('id') id: string,
+    @Body() body: UpdateGroupDto,
+  ): Promise<GroupResponseDto> {
+    return GroupResponseDto.fromDomain(
+      await this.groupsService.updateGroup(id, user, body),
+    );
+  }
+
+  @Post(':id/membership')
+  @UseGuards(AuthenticatedUserGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Join a group that lets anyone in' })
+  @ApiResponse({ status: 204, description: 'Joined' })
+  @ApiResponse({
+    status: 400,
+    description: 'The group decides on requests, or already a member',
+  })
+  @ApiResponse({ status: 404, description: 'Group not found or not public' })
+  async join(@User() user: Identity, @Param('id') id: string): Promise<void> {
+    await this.groupsService.joinOpenGroup(id, user);
   }
 
   @Get(':id/membership')

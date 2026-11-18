@@ -11,6 +11,7 @@ import {
   GroupMemberListItem,
   GroupPage,
   GroupRole,
+  GroupStats,
   hasGroupAdminRights,
   isPubliclyVisible,
   MemberAction,
@@ -18,6 +19,7 @@ import {
   MyGroup,
   NEARBY_GROUPS_LIMIT,
   NearbyGroups,
+  UpdateGroupData,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import {
@@ -65,6 +67,50 @@ export class GroupsService {
       // from the request body.
       ownerId: user.id,
     });
+  }
+
+  // ADR-0028: what the admins of a group may change. A place comes with its
+  // position or not at all.
+  async updateGroup(
+    groupId: string,
+    user: Identity,
+    data: UpdateGroupData,
+  ): Promise<Group> {
+    await this.getManagedGroup(groupId, user);
+    if (
+      data.activityId !== undefined &&
+      !(await this.activitiesService.isAvailable(data.activityId))
+    ) {
+      throw new BadRequestException(
+        'Activity does not exist or is no longer offered',
+      );
+    }
+    const group = await this.groupRepository.updateGroup(groupId, data);
+    if (!group) throw new NotFoundException('Group not found');
+    return group;
+  }
+
+  // ADR-0028: a group that lets anyone in. One that decides on requests is
+  // joined through `MembershipRequestsService`.
+  async joinOpenGroup(groupId: string, user: Identity): Promise<void> {
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('joining a group');
+    }
+    const group = await this.getPublicGroup(groupId, user);
+    if (group.approvalMode !== 'OPEN') {
+      throw new BadRequestException('This group decides on requests to join');
+    }
+    const isNew = await this.groupRepository.addMember(groupId, user.id);
+    if (!isNew) throw new BadRequestException('You are already a member');
+  }
+
+  async getStats(
+    groupId: string,
+    viewer?: Identity,
+    now = new Date(),
+  ): Promise<GroupStats> {
+    await this.getPublicGroup(groupId, viewer);
+    return this.groupRepository.getGroupStats(groupId, now);
   }
 
   // F-02.5: the detail is public, so only a public, active group is shown.

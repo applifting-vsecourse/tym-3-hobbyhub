@@ -22,9 +22,32 @@ export const groupSchema = z.object({
   memberCount: z.number(),
   // A public event upcoming or ended in the last 60 days (#269).
   isActive: z.boolean(),
+  // ADR-0028: OPEN lets anyone in at once, APPROVAL keeps the request.
+  approvalMode: z.enum(["OPEN", "APPROVAL"]),
+  // ISO weekdays the group meets on, 1 = Monday .. 7 = Sunday.
+  meetingDays: z.array(z.number().int().min(1).max(7)),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  nextEvent: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      startAt: z.coerce.date(),
+      hasFreeSeats: z.boolean(),
+    })
+    .nullable(),
 })
 
 export type Group = z.infer<typeof groupSchema>
+
+export type GroupApprovalMode = Group["approvalMode"]
+
+export const MEETING_DAYS = [1, 2, 3, 4, 5, 6, 7] as const
+
+export const groupStatsSchema = z.object({
+  playedEvents: z.number(),
+  averageParticipants: z.number(),
+})
 
 export const groupRoleSchema = z.enum(["OWNER", "ADMIN", "MEMBER"])
 
@@ -62,4 +85,10 @@ export type CreateGroupInput = {
   description: string
   locationName?: string
   usualSchedule?: string
+  approvalMode?: GroupApprovalMode
+  meetingDays?: number[]
+  latitude?: number
+  longitude?: number
 }
+
+export type UpdateGroupInput = Partial<CreateGroupInput> & { clearLocation?: boolean }

@@ -895,6 +895,10 @@
   },
   "groups": {
     "active": "Active",
+    "approval": {
+      "APPROVAL": "Approval needed",
+      "OPEN": "Open, no approval"
+    },
     "back": "Back",
     "detail": {
       "backToEvents": "Back to events",
@@ -923,6 +927,19 @@
         "periodsLabel": "Upcoming and past events",
         "title": "Group events"
       },
+      "facts": {
+        "every": "Every {{day}}",
+        "when": "When",
+        "whenNone": "The group has not said when.",
+        "where": "Where we meet",
+        "whereNone": "The group has not said where."
+      },
+      "join": {
+        "cta": "Join the group",
+        "failed": "Could not join the group. Please try again.",
+        "note": "The group is open. Join now and see all its events.",
+        "title": "Play with us"
+      },
       "loadError": "Could not load the group",
       "loading": "Loading the group…",
       "members_one": "{{count}} member",
@@ -949,13 +966,22 @@
         "title": "Membership",
         "withdraw": "Withdraw request"
       },
+      "stats": {
+        "average": "players per event on average",
+        "meets": "meets",
+        "members": "members",
+        "none": "—",
+        "played": "events played"
+      },
       "title": "Group detail",
       "visibilityPublic": "Public group"
     },
     "fields": {
       "activity": "Activity",
+      "approvalMode": "Joining",
       "description": "Description",
       "location": "Location (optional)",
+      "meetingDays": "Days you meet on (optional)",
       "name": "Group name",
       "usualSchedule": "Usual time (optional)"
     },
@@ -964,9 +990,17 @@
       "activityError": "Could not load activities.",
       "activityLoading": "Loading activities…",
       "activityPlaceholder": "Choose an activity",
+      "approvalApproval": "An admin approves the members.",
+      "approvalOpen": "Anyone joins at once.",
       "createFailed": "Could not create the group. Please try again.",
       "created": "The group has been created.",
+      "editTitle": "Edit the group",
+      "place": "Pick the address where you meet",
+      "placeClear": "Remove the place",
+      "placeHint": "The map shows only the approximate position.",
       "retry": "Try again",
+      "save": "Save changes",
+      "saved": "Changes saved",
       "submit": "Create group",
       "title": "New group"
     },
@@ -978,6 +1012,19 @@
         "clear": "Clear filters",
         "description": "No group matches this selection yet. Try another search, place or activity.",
         "title": "Nothing found"
+      },
+      "filters": {
+        "approval": "Joining",
+        "approvalAll": "All",
+        "clear": "Clear filters",
+        "radius": "Radius from home",
+        "radiusValue": "{{km}} km",
+        "sort": "Sort",
+        "sortMembers": "Most members",
+        "sortNearest": "Nearest",
+        "sortNewest": "Newest",
+        "upcoming": "Have an upcoming event",
+        "weekdays": "Meets on"
       },
       "intro": "A group is a crew that meets regularly. Join one to play with the same people and hear about new events first.",
       "loadError": "Could not load groups",
@@ -1059,6 +1106,7 @@
         "messageLabel": "Message for the applicant (optional)",
         "messageTooLong": "The message can have at most {{count}} characters."
       },
+      "editLink": "Edit the group",
       "loadError": "Could not load",
       "loading": "Loading…",
       "membersEmpty": "The group has no members yet.",
@@ -1091,6 +1139,11 @@
       },
       "tabsLabel": "Members and requests",
       "title": "Member management"
+    },
+    "map": {
+      "label": "Map of groups",
+      "noPlace": "Groups without a place are not on the map.",
+      "pin": "{{name}}, {{count}} members"
     },
     "membershipRequest": {
       "form": {
@@ -1149,6 +1202,12 @@
         "WITHDRAWN": "Withdrawn"
       }
     },
+    "nextEvent": {
+      "freeSeats": "Free seats",
+      "full": "Full",
+      "label": "Next event {{when}}",
+      "none": "No event planned yet"
+    },
     "placeholders": {
       "description": "E.g. We play every Thursday in the school gym, newcomers welcome.",
       "location": "E.g. Prague 8",
@@ -1163,6 +1222,24 @@
       "nameTooShort_other": "At least {{count}} characters",
       "tooLong_one": "Keep it under {{count}} character",
       "tooLong_other": "Keep it under {{count}} characters"
+    },
+    "weekdays": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
+    "weekdaysLong": {
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday",
+      "7": "Sunday"
     }
   },
   "header": {

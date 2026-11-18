@@ -20,6 +20,8 @@ type GroupMembershipPanelProps = {
   groupId: string
   membership: GroupMembershipState
   groupName: string
+  /** An open group is joined with one click; the others with a request (ADR-0028). */
+  approvalMode?: "OPEN" | "APPROVAL"
   /** Encoded address of this page, so signing in or up returns here. */
   from: string
   /** Opens the request form, which the page owns. */
@@ -37,6 +39,7 @@ export function GroupMembershipPanel({
   groupId,
   membership,
   groupName,
+  approvalMode = "APPROVAL",
   from,
   onRequest,
   onWithdraw,
@@ -125,6 +128,27 @@ export function GroupMembershipPanel({
         {decisionMessage}
       </>
     )
+  } else if (view === "canRequest" && approvalMode === "OPEN") {
+    content = (
+      <>
+        <Button
+          disabled={membership.isJoining}
+          onClick={() => void membership.join().catch(() => undefined)}
+        >
+          {t("groups.detail.join.cta")}
+        </Button>
+        {membership.joinFailed ? (
+          <p
+            role="alert"
+            className="typo-small text-destructive"
+          >
+            {t("groups.detail.join.failed")}
+          </p>
+        ) : (
+          <p className="typo-small text-muted-foreground">{t("groups.detail.join.note")}</p>
+        )}
+      </>
+    )
   } else if (view === "canRequest") {
     content = (
       <>
@@ -144,7 +168,9 @@ export function GroupMembershipPanel({
             to={ROUTES.signup}
             search={{ from }}
           >
-            {t("groups.detail.membership.request")}
+            {approvalMode === "OPEN"
+              ? t("groups.detail.join.cta")
+              : t("groups.detail.membership.request")}
           </Link>
         </Button>
         <p className="typo-small text-muted-foreground">

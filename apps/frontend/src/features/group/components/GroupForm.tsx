@@ -8,14 +8,23 @@ import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import { toggleVariants } from "@/components/ui/toggle"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { cn } from "@/lib/utils"
 
-import { GROUP_LIMITS, type CreateGroupInput } from "@/features/group/api/groupSchemas"
+import {
+  GROUP_LIMITS,
+  MEETING_DAYS,
+  type CreateGroupInput,
+} from "@/features/group/api/groupSchemas"
 
 // Characters as the server and database count them: an emoji is one, not the
 // two UTF-16 units of `string.length`.
@@ -39,6 +48,11 @@ const createSchema = (t: TFunction) => {
     activityId: z.string().min(1, t("groups.validation.activityRequired")),
     locationName: text(GROUP_LIMITS.locationMax),
     usualSchedule: text(GROUP_LIMITS.scheduleMax),
+    approvalMode: z.enum(["OPEN", "APPROVAL"]),
+    meetingDays: z.array(z.number().int().min(1).max(7)),
+    // The position of the place picked in the address search; both or none.
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
     description: text(GROUP_LIMITS.descriptionMax).min(
       1,
       t("groups.validation.descriptionRequired"),
@@ -46,13 +60,17 @@ const createSchema = (t: TFunction) => {
   })
 }
 
-type FormValues = z.infer<ReturnType<typeof createSchema>>
+export type FormValues = z.infer<ReturnType<typeof createSchema>>
 
 const defaultValues: FormValues = {
   name: "",
   activityId: "",
   locationName: "",
   usualSchedule: "",
+  approvalMode: "APPROVAL",
+  meetingDays: [],
+  latitude: undefined,
+  longitude: undefined,
   description: "",
 }
 
@@ -61,6 +79,10 @@ const toInput = ({ locationName, usualSchedule, ...values }: FormValues): Create
   ...values,
   locationName: locationName || undefined,
   usualSchedule: usualSchedule || undefined,
+  // A position without a place name is of no use; both go or neither.
+  latitude: locationName ? values.latitude : undefined,
+  longitude: locationName ? values.longitude : undefined,
+  meetingDays: values.meetingDays.length > 0 ? values.meetingDays : undefined,
 })
 
 export type ActivityOption = {
@@ -78,6 +100,10 @@ type GroupFormProps = {
   readonly isSubmitting: boolean
   readonly errorMessage?: string | null
   readonly onSubmit: (values: CreateGroupInput) => void | Promise<void>
+  /** The values of a group being changed; a new group starts empty. */
+  readonly initialValues?: Partial<FormValues>
+  /** Wording of the submit button; "Vytvořit skupinu" by default. */
+  readonly submitLabel?: string
 }
 
 export function GroupForm({
@@ -88,12 +114,14 @@ export function GroupForm({
   isSubmitting,
   errorMessage,
   onSubmit,
+  initialValues,
+  submitLabel,
 }: GroupFormProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues,
+    defaultValues: { ...defaultValues, ...initialValues },
   })
   useRevalidateOnLanguageChange(form)
 
@@ -178,12 +206,67 @@ export function GroupForm({
           <FormItem>
             <FormLabel>{t("groups.fields.location")}</FormLabel>
             <FormControl>
-              <Input
-                placeholder={t("groups.placeholders.location")}
-                autoComplete="address-level2"
-                {...field}
+              <AddressSearch
+                value={field.value}
+                placeholder={t("groups.form.place")}
+                onSelect={(address) => {
+                  // The group shows the city, not the street: where it meets, not an address.
+                  field.onChange(address.city || address.label)
+                  form.setValue("latitude", address.latitude)
+                  form.setValue("longitude", address.longitude)
+                }}
               />
             </FormControl>
+            <p className="typo-small text-muted-foreground">{t("groups.form.placeHint")}</p>
+            {field.value ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="self-start"
+                onClick={() => {
+                  field.onChange("")
+                  form.setValue("latitude", undefined)
+                  form.setValue("longitude", undefined)
+                }}
+              >
+                {t("groups.form.placeClear")}
+              </Button>
+            ) : null}
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="meetingDays"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.meetingDays")}</FormLabel>
+            <div className="flex flex-wrap gap-2">
+              {MEETING_DAYS.map((day) => {
+                const isOn = field.value.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={isOn}
+                    data-state={isOn ? "on" : "off"}
+                    className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
+                    onClick={() =>
+                      field.onChange(
+                        isOn
+                          ? field.value.filter((each) => each !== day)
+                          : [...field.value, day].sort(),
+                      )
+                    }
+                  >
+                    {t(`groups.weekdays.${day}`)}
+                  </button>
+                )
+              })}
+            </div>
             <FormMessage />
           </FormItem>
         )}
@@ -200,6 +283,50 @@ export function GroupForm({
                 placeholder={t("groups.placeholders.usualSchedule")}
                 {...field}
               />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="approvalMode"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.approvalMode")}</FormLabel>
+            <FormControl>
+              <RadioGroup
+                value={field.value}
+                onValueChange={field.onChange}
+                className="gap-3"
+              >
+                {(["OPEN", "APPROVAL"] as const).map((mode) => (
+                  <div
+                    key={mode}
+                    className="flex items-start gap-3"
+                  >
+                    <RadioGroupItem
+                      id={`approval-${mode}`}
+                      value={mode}
+                      className="mt-1"
+                    />
+                    <Label
+                      htmlFor={`approval-${mode}`}
+                      className="flex flex-col items-start gap-0.5"
+                    >
+                      {t(`groups.approval.${mode}`)}
+                      <span className="typo-small font-normal text-muted-foreground">
+                        {t(
+                          mode === "OPEN"
+                            ? "groups.form.approvalOpen"
+                            : "groups.form.approvalApproval",
+                        )}
+                      </span>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -237,7 +364,7 @@ export function GroupForm({
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-          {t("groups.form.submit")}
+          {submitLabel ?? t("groups.form.submit")}
         </Button>
       </div>
     </AppForm>

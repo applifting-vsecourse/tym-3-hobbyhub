@@ -20,7 +20,19 @@ type GroupCardProps = {
  * to the group. Groups have no photos yet, so the row shows the activity icon.
  */
 export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const next = group.nextEvent
+  const nextLabel = next
+    ? t("groups.nextEvent.label", {
+        when: new Intl.DateTimeFormat(i18n.language, {
+          weekday: "short",
+          day: "numeric",
+          month: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(next.startAt),
+      })
+    : null
   const meta = [
     group.locationName,
     activityLabel(group.activity),
@@ -40,9 +52,16 @@ export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
         schedule={group.usualSchedule}
         description={group.description}
         activeLabel={group.isActive ? t("groups.active") : undefined}
-        badge={
-          myRole ? t(`groups.list.role.${myRole}`) : t(`groups.list.visibility.${group.visibility}`)
+        approval={t(`groups.approval.${group.approvalMode}`)}
+        nextEvent={
+          next ? (
+            <>
+              {nextLabel} ·{" "}
+              {next.hasFreeSeats ? t("groups.nextEvent.freeSeats") : t("groups.nextEvent.full")}
+            </>
+          ) : undefined
         }
+        badge={myRole ? t(`groups.list.role.${myRole}`) : undefined}
       />
     </Link>
   )

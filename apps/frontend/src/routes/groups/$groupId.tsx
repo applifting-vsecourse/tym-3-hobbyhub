@@ -140,6 +140,7 @@ function GroupDetailPage() {
                 groupId={groupId}
                 membership={membership}
                 groupName={groupQuery.data.name}
+                approvalMode={groupQuery.data.approvalMode}
                 from={encodeRedirectUri(location)}
                 onRequest={() => setSheetStep("form")}
                 onWithdraw={() => setSheetStep("withdraw")}

@@ -177,6 +177,69 @@ describe('GroupsService', () => {
     expect(repository.getMemberRole).toHaveBeenCalledWith('g1', 'u1');
   });
 
+  describe('joining an open group (ADR-0028)', () => {
+    const user = { id: 'u1', emailVerified: true } as Identity;
+
+    it('adds the person at once to a group that lets anyone in', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(
+        aGroup({ approvalMode: 'OPEN' }),
+      );
+      repository.getMemberRole.mockResolvedValue(null);
+      repository.addMember.mockResolvedValue(true);
+
+      await service.joinOpenGroup('g1', user);
+
+      expect(repository.addMember).toHaveBeenCalledWith('g1', 'u1');
+    });
+
+    it('sends a group that decides on requests to the request', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue(null);
+
+      await expect(service.joinOpenGroup('g1', user)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.addMember).not.toHaveBeenCalled();
+    });
+
+    it('refuses someone who is in already', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(
+        aGroup({ approvalMode: 'OPEN' }),
+      );
+      repository.getMemberRole.mockResolvedValue('MEMBER');
+      repository.addMember.mockResolvedValue(false);
+
+      await expect(service.joinOpenGroup('g1', user)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('changing a group (ADR-0028)', () => {
+    it('lets an admin change it, and nobody else', async () => {
+      const { repository, service } = setup();
+      repository.getGroupById.mockResolvedValue(aGroup());
+      repository.updateGroup.mockResolvedValue(
+        aGroup({ approvalMode: 'OPEN' }),
+      );
+      repository.getMemberRole.mockResolvedValue('ADMIN');
+      const admin = { id: 'u1' } as Identity;
+
+      await service.updateGroup('g1', admin, { approvalMode: 'OPEN' });
+      expect(repository.updateGroup).toHaveBeenCalledWith('g1', {
+        approvalMode: 'OPEN',
+      });
+
+      repository.getMemberRole.mockResolvedValue('MEMBER');
+      await expect(
+        service.updateGroup('g1', admin, { approvalMode: 'APPROVAL' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
   describe('managing a group (F-07.3)', () => {
     const user = { id: 'u1', emailVerified: true } as Identity;
 

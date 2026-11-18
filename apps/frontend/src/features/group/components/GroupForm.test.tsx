@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
@@ -13,16 +14,19 @@ const ACTIVITIES: ActivityOption[] = [
 
 const renderForm = async (props: Partial<Parameters<typeof GroupForm>[0]> = {}) => {
   const onSubmit = vi.fn()
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   await renderWithRouter(
-    <GroupForm
-      activities={ACTIVITIES}
-      isActivitiesLoading={false}
-      isActivitiesError={false}
-      onRetryActivities={vi.fn()}
-      isSubmitting={false}
-      onSubmit={onSubmit}
-      {...props}
-    />,
+    <QueryClientProvider client={queryClient}>
+      <GroupForm
+        activities={ACTIVITIES}
+        isActivitiesLoading={false}
+        isActivitiesError={false}
+        onRetryActivities={vi.fn()}
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        {...props}
+      />
+    </QueryClientProvider>,
   )
   return { onSubmit, user: userEvent.setup() }
 }
@@ -74,7 +78,28 @@ describe("GroupForm", () => {
       description: "Hrajeme každý čtvrtek.",
       locationName: undefined,
       usualSchedule: undefined,
+      approvalMode: "APPROVAL",
+      meetingDays: undefined,
+      latitude: undefined,
+      longitude: undefined,
     })
+  })
+
+  it("sends how the group takes people in and the days it meets on", async () => {
+    const { onSubmit, user } = await renderForm()
+
+    await user.type(screen.getByLabelText("Název skupiny"), "Čtvrteční florbalisté")
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+    await user.click(await screen.findByRole("option", { name: "Florbal" }))
+    await user.click(screen.getByRole("radio", { name: /Otevřená, bez schvalování/ }))
+    await user.click(screen.getByRole("button", { name: "Čt" }))
+    await user.type(screen.getByLabelText("Popis"), "Hrajeme každý čtvrtek.")
+    await user.click(screen.getByRole("button", { name: "Vytvořit skupinu" }))
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ approvalMode: "OPEN", meetingDays: [4] }),
+    )
   })
 
   it("offers a retry when activities fail to load", async () => {

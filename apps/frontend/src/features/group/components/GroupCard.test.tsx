@@ -20,6 +20,11 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
   activity: { id: "a1", name: "Florbal", icon: "florbal" },
   memberCount: 14,
   isActive: false,
+  approvalMode: "APPROVAL" as const,
+  meetingDays: [] as number[],
+  latitude: null,
+  longitude: null,
+  nextEvent: null,
   ...overrides,
 })
 
@@ -58,16 +63,27 @@ describe("GroupCard", () => {
     expect(await screen.findByText("Aktivní")).toBeInTheDocument()
   })
 
-  it("shows the visibility of a group the viewer is not in", async () => {
+  it("says how a group takes people in and when it meets next", async () => {
     renderInRouter(
       <GroupCard
-        group={aGroup({ locationName: null, memberCount: 1 })}
+        group={aGroup({
+          locationName: null,
+          memberCount: 1,
+          approvalMode: "OPEN",
+          nextEvent: {
+            id: "e1",
+            title: "Florbal",
+            startAt: new Date(2030, 0, 3, 19, 0),
+            hasFreeSeats: true,
+          },
+        })}
         activityLabel={activityLabel}
       />,
     )
 
     expect(await screen.findByText("florbal · 1 člen")).toBeInTheDocument()
-    expect(screen.getByText("Veřejná")).toBeInTheDocument()
+    expect(screen.getByText("Otevřená, bez schvalování")).toBeInTheDocument()
+    expect(screen.getByText(/Příští akce .* · Volná místa/)).toBeInTheDocument()
   })
 })
 

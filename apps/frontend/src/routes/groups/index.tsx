@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -30,9 +31,15 @@ import {
 } from "@/features/event/lib/eventsSearch"
 import { DiscoverGroups } from "@/features/group/components/DiscoverGroups"
 import type { ActivityLabel } from "@/features/group/components/GroupCard"
+import {
+  GroupExtraFilters,
+  type GroupExtraFilterValues,
+} from "@/features/group/components/GroupExtraFilters"
+import { GroupsMap } from "@/features/group/components/GroupsMap"
 import { GroupTabs } from "@/features/group/components/GroupTabs"
 import { MyGroups } from "@/features/group/components/MyGroups"
 import { MyMembershipRequests } from "@/features/group/components/MyMembershipRequests"
+import { profileQueryOptions } from "@/features/profile/api/profileQueryOptions"
 
 // "Objevit" is always the first tab and the default, so it has no param (like the
 // event pages); anything unknown falls back to it. The filters of the list are
@@ -41,6 +48,12 @@ const groupsSearchSchema = eventsSearchSchema
   .pick({ activity: true, q: true, location: true })
   .extend({
     // An old link with ?tab=discover is the same page as no param.
+    // ADR-0028: the filters only groups have.
+    days: z.array(z.number().int().min(1).max(7)).optional().catch(undefined),
+    approval: z.enum(["OPEN", "APPROVAL"]).optional().catch(undefined),
+    upcoming: z.boolean().optional().catch(undefined),
+    sort: z.enum(["newest", "nearest", "members"]).optional().catch(undefined),
+    radius: z.number().int().min(1).max(200).optional().catch(undefined),
     tab: z
       .enum(["discover", "mine", "requests"])
       .optional()
@@ -71,10 +84,29 @@ function DiscoverTab({
   const { t } = useTranslation()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
+  // The radius is measured from the viewer's home address, when they have one.
+  const profile = useQuery({ ...profileQueryOptions(), enabled: viewerId !== null })
+  const home = profile.data?.address ?? null
+  const near =
+    home && search.radius
+      ? { latitude: home.latitude, longitude: home.longitude, radiusKm: search.radius }
+      : undefined
+  const extra: GroupExtraFilterValues = {
+    weekdays: search.days ?? [],
+    approvalMode: search.approval,
+    onlyWithUpcomingEvent: search.upcoming ?? false,
+    sort: search.sort ?? "newest",
+    radiusKm: search.radius,
+  }
   const filters = {
     activityIds: search.activity ?? [],
     search: search.q ?? "",
     location: search.location ?? "",
+    weekdays: extra.weekdays,
+    approvalMode: extra.approvalMode,
+    onlyWithUpcomingEvent: extra.onlyWithUpcomingEvent || undefined,
+    near,
+    sort: extra.sort === "nearest" && !near ? undefined : extra.sort,
   }
   // The field is what the user typed; the address follows after a pause.
   const [searchText, setSearchText] = useSearchText(
@@ -102,6 +134,30 @@ function DiscoverTab({
       activityLabel={activityLabel}
       filters={filters}
       tabs={tabs}
+      extraFilters={
+        <GroupExtraFilters
+          value={extra}
+          canUseDistance={home !== null}
+          onChange={(next) =>
+            void navigate({
+              search: (previous) => ({
+                ...previous,
+                days: next.weekdays.length > 0 ? next.weekdays : undefined,
+                approval: next.approvalMode,
+                upcoming: next.onlyWithUpcomingEvent || undefined,
+                sort: next.sort === "newest" ? undefined : next.sort,
+                radius: next.radiusKm,
+              }),
+            })
+          }
+        />
+      }
+      renderMap={(groups) => (
+        <GroupsMap
+          groups={groups}
+          className="size-full"
+        />
+      )}
       // On a large screen the filters are open beside the list (#224).
       filtersPanel={
         <EventFiltersPanel
