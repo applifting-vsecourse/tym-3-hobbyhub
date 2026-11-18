@@ -154,8 +154,11 @@ function GroupsPage() {
     <>
       <Seo title={t("groups.list.title")} />
       <AppShell className="mx-auto flex w-full max-w-page flex-col gap-6 px-page py-6 md:py-10">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="typo-h1 text-foreground">{t("groups.list.title")}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="typo-h1 text-foreground">{t("groups.list.title")}</h1>
+            <p className="max-w-prose typo-body text-muted-foreground">{t("groups.list.intro")}</p>
+          </div>
           <Button asChild>
             <Link to={ROUTES.newGroup}>{t("groups.list.create")}</Link>
           </Button>

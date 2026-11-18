@@ -44,6 +44,12 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
     defaultMaxParticipants: 12,
   },
   memberCount: 1,
+  isActive: false,
+  approvalMode: 'APPROVAL',
+  meetingDays: [],
+  latitude: null,
+  longitude: null,
+  nextEvent: null,
   ...overrides,
 });
 

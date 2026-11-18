@@ -3,6 +3,7 @@ import {
   GroupRole,
   GroupStatus,
   GroupVisibility,
+  ParticipationStatus,
   Prisma,
   Activity as PrismaActivity,
   Group as PrismaGroup,
@@ -16,8 +17,10 @@ import {
   GroupDiscoverFilter,
   GroupMember,
   GroupPage,
+  GroupStats,
   MyGroup,
   TransferOwnershipResult,
+  UpdateGroupData,
 } from '@/modules/group/domain/group';
 import {
   ADMIN_PAGE_SIZE,
@@ -31,34 +34,108 @@ import { Injectable } from '@nestjs/common';
 // Thrown inside the hand-over transaction only to roll it back.
 class TargetNotMemberError extends Error {}
 
-const include = {
-  activity: true,
-  _count: { select: { memberships: true } },
-} as const;
+// #269: a group is "active" while it has a public event upcoming or ended in
+// this many days; nothing to store, the repository counts them.
+const ACTIVE_WITHIN_DAYS = 60;
+
+const TAKEN_STATUSES = [
+  ParticipationStatus.APPROVED,
+  ParticipationStatus.ATTENDED,
+];
+
+const groupInclude = (now = new Date()) =>
+  ({
+    activity: true,
+    _count: {
+      select: {
+        memberships: true,
+        events: {
+          where: {
+            status: 'PUBLISHED',
+            isHidden: false,
+            visibility: 'PUBLIC',
+            endAt: {
+              gt: new Date(now.getTime() - ACTIVE_WITHIN_DAYS * 86_400_000),
+            },
+          },
+        },
+      },
+    },
+    // The next public event, for the list (ADR-0028): when, and whether a seat
+    // is free.
+    events: {
+      where: {
+        status: 'PUBLISHED',
+        isHidden: false,
+        visibility: 'PUBLIC',
+        endAt: { gt: now },
+      },
+      orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+      take: 1,
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        maxParticipants: true,
+        externalOccupiedSpots: true,
+        _count: {
+          select: {
+            participations: { where: { status: { in: TAKEN_STATUSES } } },
+          },
+        },
+      },
+    },
+  }) satisfies Prisma.GroupInclude;
 
 const mapPrismaGroupToDomain = (
   group: PrismaGroup & {
     activity: PrismaActivity;
-    _count: { memberships: number };
+    _count: { memberships: number; events: number };
+    events: {
+      id: string;
+      title: string;
+      startAt: Date;
+      maxParticipants: number;
+      externalOccupiedSpots: number;
+      _count: { participations: number };
+    }[];
   },
-): Group => ({
-  id: group.id,
-  name: group.name,
-  description: group.description,
-  locationName: group.locationName,
-  usualSchedule: group.usualSchedule,
-  visibility: group.visibility,
-  status: group.status,
-  createdAt: group.createdAt,
-  activity: {
-    id: group.activity.id,
-    name: group.activity.name,
-    icon: group.activity.icon,
-    defaultMinParticipants: group.activity.defaultMinParticipants,
-    defaultMaxParticipants: group.activity.defaultMaxParticipants,
-  },
-  memberCount: group._count.memberships,
-});
+): Group => {
+  const next = group.events[0];
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    locationName: group.locationName,
+    usualSchedule: group.usualSchedule,
+    visibility: group.visibility,
+    status: group.status,
+    createdAt: group.createdAt,
+    activity: {
+      id: group.activity.id,
+      name: group.activity.name,
+      icon: group.activity.icon,
+      defaultMinParticipants: group.activity.defaultMinParticipants,
+      defaultMaxParticipants: group.activity.defaultMaxParticipants,
+    },
+    memberCount: group._count.memberships,
+    isActive: group._count.events > 0,
+    approvalMode: group.approvalMode,
+    meetingDays: group.meetingDays,
+    latitude: group.locationLatitude ? Number(group.locationLatitude) : null,
+    longitude: group.locationLongitude ? Number(group.locationLongitude) : null,
+    nextEvent: next
+      ? {
+          id: next.id,
+          title: next.title,
+          startAt: next.startAt,
+          hasFreeSeats:
+            next._count.participations + next.externalOccupiedSpots <
+            next.maxParticipants,
+        }
+      : null,
+  };
+};
 
 const memberInclude = {
   user: { select: { name: true, image: true } },
@@ -107,12 +184,6 @@ const discoverableBy = (
     : {}),
 });
 
-// The activity filter as a Prisma condition; the text ones are `textConditionsOf`.
-const filterConditions = ({
-  activityIds,
-}: GroupDiscoverFilter): Prisma.GroupWhereInput =>
-  activityIds.length > 0 ? { activityId: { in: activityIds } } : {};
-
 // Every word of the search has to match the name, place or activity, and every
 // word of the location the place, ignoring case and diacritics (aliases: `g` the
 // group, `a` its activity).
@@ -151,12 +222,16 @@ export class GroupRepository {
         description: data.description,
         locationName: data.locationName ?? null,
         usualSchedule: data.usualSchedule ?? null,
+        approvalMode: data.approvalMode ?? 'APPROVAL',
+        meetingDays: data.meetingDays ?? [],
+        locationLatitude: data.latitude ?? null,
+        locationLongitude: data.longitude ?? null,
         activity: { connect: { id: data.activityId } },
         memberships: {
           create: { userId: data.ownerId, role: GroupRole.OWNER },
         },
       },
-      include,
+      include: groupInclude(),
     });
     return mapPrismaGroupToDomain(group);
   }
@@ -164,7 +239,7 @@ export class GroupRepository {
   async getGroupById(id: string): Promise<Group | null> {
     const group = await this.prisma.group.findUnique({
       where: { id },
-      include,
+      include: groupInclude(),
     });
     return group ? mapPrismaGroupToDomain(group) : null;
   }
@@ -268,7 +343,7 @@ export class GroupRepository {
   async listGroupsOfUser(userId: string): Promise<MyGroup[]> {
     const memberships = await this.prisma.groupMembership.findMany({
       where: { userId, group: { status: GroupStatus.ACTIVE } },
-      include: { group: { include } },
+      include: { group: { include: groupInclude() } },
       orderBy: { joinedAt: 'desc' },
     });
     return memberships.map((membership) => ({
@@ -291,13 +366,18 @@ export class GroupRepository {
         ...discoverableBy(userId, hiddenManagerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
-      include,
+      include: groupInclude(),
       orderBy,
       take: limit,
     });
     return groups.map(mapPrismaGroupToDomain);
   }
 
+  // The cursor is the offset of the next page: the list can be ordered by
+  // newest, by distance or by members (ADR-0028), and only an offset follows
+  // every order. SQL picks the ids of the page in that order; Prisma loads the
+  // rows and applies the visibility rules again, so SQL never decides who may
+  // see a group.
   async listDiscoverableGroups(
     userId: string | undefined,
     pageSize: number,
@@ -305,48 +385,45 @@ export class GroupRepository {
     filter: GroupDiscoverFilter = { activityIds: [] },
     hiddenManagerIds: string[] = [],
   ): Promise<GroupPage> {
-    const textConditions = textConditionsOf(filter);
+    const offset = Number.parseInt(cursor ?? '0', 10);
+    const start = Number.isInteger(offset) && offset > 0 ? offset : 0;
     // One extra row tells whether another page exists.
     const take = pageSize + 1;
-    const groups =
-      textConditions.length > 0
-        ? await this.pageMatchingText(
-            userId,
-            filter,
-            textConditions,
-            take,
-            cursor,
-            hiddenManagerIds,
-          )
-        : await this.prisma.group.findMany({
-            where: {
-              ...discoverableBy(userId, hiddenManagerIds),
-              ...filterConditions(filter),
-            },
-            include,
-            orderBy,
-            take,
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-          });
-    const items = groups.slice(0, pageSize).map(mapPrismaGroupToDomain);
+    const ids = await this.pageIds(
+      userId,
+      filter,
+      take,
+      start,
+      hiddenManagerIds,
+    );
+    const groups = await this.prisma.group.findMany({
+      where: { ...discoverableBy(userId, hiddenManagerIds), id: { in: ids } },
+      include: groupInclude(),
+    });
+    const ordered = ids.flatMap(
+      (id) => groups.find((group) => group.id === id) ?? [],
+    );
+    const items = ordered.slice(0, pageSize).map(mapPrismaGroupToDomain);
     return {
       items,
-      nextCursor: groups.length > pageSize ? items[items.length - 1].id : null,
+      nextCursor: ids.length > pageSize ? String(start + pageSize) : null,
     };
   }
 
-  // A page of a search with text. The text needs folding that Prisma cannot
-  // express, so (like the event list) SQL picks the ids of the page, in the
-  // order of the list and after the cursor; Prisma loads the rows and applies
-  // the visibility rules again, so SQL never decides who may see a group.
-  private async pageMatchingText(
+  private async pageIds(
     userId: string | undefined,
-    { activityIds }: GroupDiscoverFilter,
-    textConditions: Prisma.Sql[],
+    filter: GroupDiscoverFilter,
     take: number,
-    cursor?: string,
-    hiddenManagerIds: string[] = [],
-  ): Promise<Parameters<typeof mapPrismaGroupToDomain>[0][]> {
+    offset: number,
+    hiddenManagerIds: string[],
+  ): Promise<string[]> {
+    const { activityIds, near, weekdays = [] } = filter;
+    const distance = near
+      ? Prisma.sql`(6371 * 2 * asin(sqrt(
+          power(sin(radians(g."locationLatitude"::float8 - ${near.latitude}) / 2), 2)
+          + cos(radians(${near.latitude})) * cos(radians(g."locationLatitude"::float8))
+          * power(sin(radians(g."locationLongitude"::float8 - ${near.longitude}) / 2), 2))))`
+      : null;
     const conditions = [
       Prisma.sql`g."visibility" = 'PUBLIC' AND g."status" = 'ACTIVE'`,
       ...(userId
@@ -363,25 +440,129 @@ export class GroupRepository {
             Prisma.sql`NOT EXISTS (SELECT 1 FROM "group_membership" m WHERE m."groupId" = g."id" AND m."role" IN ('OWNER', 'ADMIN') AND m."userId" IN (${Prisma.join(hiddenManagerIds)}))`,
           ]
         : []),
-      ...(cursor
+      ...(weekdays.length > 0
         ? [
-            Prisma.sql`(g."createdAt", g."id") < (SELECT c."createdAt", c."id" FROM "group" c WHERE c."id" = ${cursor})`,
+            Prisma.sql`g."meetingDays" && ARRAY[${Prisma.join(weekdays)}]::integer[]`,
           ]
         : []),
-      ...textConditions,
+      ...(filter.approvalMode
+        ? [
+            Prisma.sql`g."approvalMode" = ${filter.approvalMode}::"group_approval_mode"`,
+          ]
+        : []),
+      ...(filter.onlyWithUpcomingEvent
+        ? [
+            Prisma.sql`EXISTS (SELECT 1 FROM "event" e WHERE e."groupId" = g."id" AND e."status" = 'PUBLISHED' AND NOT e."isHidden" AND e."visibility" = 'PUBLIC' AND e."endAt" > now())`,
+          ]
+        : []),
+      ...(distance && near
+        ? [
+            Prisma.sql`g."locationLatitude" IS NOT NULL AND ${distance} <= ${near.radiusKm}`,
+          ]
+        : []),
+      ...textConditionsOf(filter),
     ];
+    const order =
+      filter.sort === 'nearest' && distance
+        ? Prisma.sql`${distance} ASC, g."id" DESC`
+        : filter.sort === 'members'
+          ? Prisma.sql`(SELECT count(*) FROM "group_membership" c WHERE c."groupId" = g."id") DESC, g."id" DESC`
+          : Prisma.sql`g."createdAt" DESC, g."id" DESC`;
     const rows = await this.prisma.$queryRaw<{ id: string }[]>`
       SELECT g."id" FROM "group" g
       JOIN "activity" a ON a."id" = g."activityId"
       WHERE ${Prisma.join(conditions, ' AND ')}
-      ORDER BY g."createdAt" DESC, g."id" DESC
-      LIMIT ${take}`;
-    const ids = rows.map((row) => row.id);
-    const groups = await this.prisma.group.findMany({
-      where: { ...discoverableBy(userId, hiddenManagerIds), id: { in: ids } },
-      include,
+      ORDER BY ${order}
+      LIMIT ${take} OFFSET ${offset}`;
+    return rows.map((row) => row.id);
+  }
+
+  // A group's numbers: its public events that have happened, and how many
+  // people came on average (ADR-0028). Public facts.
+  async getGroupStats(groupId: string, now: Date): Promise<GroupStats> {
+    const events = await this.prisma.event.findMany({
+      where: {
+        groupId,
+        status: { in: ['PUBLISHED', 'FINISHED'] },
+        isHidden: false,
+        visibility: 'PUBLIC',
+        endAt: { lte: now },
+      },
+      select: {
+        externalOccupiedSpots: true,
+        _count: {
+          select: {
+            participations: { where: { status: { in: TAKEN_STATUSES } } },
+          },
+        },
+      },
+      take: 500,
     });
-    return ids.flatMap((id) => groups.find((group) => group.id === id) ?? []);
+    const total = events.reduce(
+      (sum, event) =>
+        sum + event._count.participations + event.externalOccupiedSpots,
+      0,
+    );
+    return {
+      playedEvents: events.length,
+      averageParticipants:
+        events.length === 0 ? 0 : Math.round((total / events.length) * 10) / 10,
+    };
+  }
+
+  async updateGroup(id: string, data: UpdateGroupData): Promise<Group | null> {
+    const group = await this.prisma.group
+      .update({
+        where: { id },
+        data: {
+          ...(data.name !== undefined ? { name: data.name } : {}),
+          ...(data.description !== undefined
+            ? { description: data.description }
+            : {}),
+          ...(data.activityId !== undefined
+            ? { activity: { connect: { id: data.activityId } } }
+            : {}),
+          ...(data.usualSchedule !== undefined
+            ? { usualSchedule: data.usualSchedule }
+            : {}),
+          ...(data.approvalMode !== undefined
+            ? { approvalMode: data.approvalMode }
+            : {}),
+          ...(data.meetingDays !== undefined
+            ? { meetingDays: data.meetingDays }
+            : {}),
+          ...(data.clearLocation
+            ? {
+                locationName: null,
+                locationLatitude: null,
+                locationLongitude: null,
+              }
+            : {
+                ...(data.locationName !== undefined
+                  ? { locationName: data.locationName }
+                  : {}),
+                ...(data.latitude !== undefined && data.longitude !== undefined
+                  ? {
+                      locationLatitude: data.latitude,
+                      locationLongitude: data.longitude,
+                    }
+                  : {}),
+              }),
+        },
+        include: groupInclude(),
+      })
+      .catch(() => null);
+    return group ? mapPrismaGroupToDomain(group) : null;
+  }
+
+  // Joining a group that lets anyone in (ADR-0028). False when the person was
+  // already in.
+  async addMember(groupId: string, userId: string): Promise<boolean> {
+    const { count } = await this.prisma.groupMembership.createMany({
+      data: [{ groupId, userId, role: GroupRole.MEMBER }],
+      skipDuplicates: true,
+    });
+    return count > 0;
   }
 
   async getUserCity(userId: string, now: Date): Promise<string | null> {
@@ -413,7 +594,7 @@ export class GroupRepository {
     const [groups, total] = await Promise.all([
       this.prisma.group.findMany({
         where,
-        include,
+        include: groupInclude(),
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         skip: query.offset,
         take: ADMIN_PAGE_SIZE,

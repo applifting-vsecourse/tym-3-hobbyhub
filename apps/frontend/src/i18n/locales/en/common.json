@@ -894,6 +894,7 @@
     }
   },
   "groups": {
+    "active": "Active",
     "back": "Back",
     "detail": {
       "backToEvents": "Back to events",
@@ -910,6 +911,8 @@
           "upcoming": "The group has no upcoming events right now."
         },
         "groupOnly": "Group only",
+        "hidden_one": "One more event is for group members only",
+        "hidden_other": "{{count}} more events are for group members only",
         "loadMore": "Load more",
         "loadMoreFailed": "More events could not be loaded. Please try again.",
         "loading": "Loading the group’s events…",
@@ -976,6 +979,7 @@
         "description": "No group matches this selection yet. Try another search, place or activity.",
         "title": "Nothing found"
       },
+      "intro": "A group is a crew that meets regularly. Join one to play with the same people and hear about new events first.",
       "loadError": "Could not load groups",
       "loadMore": "Load more",
       "loadMoreError": "Could not load more groups. Please try again.",

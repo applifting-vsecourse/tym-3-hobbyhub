@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { Badge } from "@/components/ui/badge"
 
 import type { Group } from "@/features/group/api/groupSchemas"
 
@@ -53,7 +54,10 @@ export function GroupDetail({
           ) : null}
           {activityLabel}
         </p>
-        <h1 className="typo-h1 text-foreground">{group.name}</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h1 className="typo-h1 text-foreground">{group.name}</h1>
+          {group.isActive ? <Badge variant="success">{t("groups.active")}</Badge> : null}
+        </div>
         <p className="typo-body text-muted-foreground">{meta.join(" · ")}</p>
       </header>
 

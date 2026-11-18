@@ -561,7 +561,14 @@ export type GroupEventListItem = EventListItem & {
   visibility: 'PUBLIC' | 'GROUP_ONLY';
 };
 
-export type GroupEventPage = { items: GroupEventListItem[]; total: number };
+export type GroupEventPage = {
+  items: GroupEventListItem[];
+  total: number;
+  // Only for a non-member asking for the past: how many group-only events
+  // there were. A number and nothing else, so the page can show blurred
+  // placeholders without the events leaving the server.
+  hiddenCount?: number;
+};
 
 export const GROUP_EVENTS_PAGE_SIZE = 10;
 

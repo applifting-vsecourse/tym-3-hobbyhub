@@ -906,6 +906,7 @@
     }
   },
   "groups": {
+    "active": "Aktivní",
     "back": "Zpět",
     "detail": {
       "backToEvents": "Zpět na akce",
@@ -924,6 +925,9 @@
           "upcoming": "Skupina teď nemá žádné nadcházející akce."
         },
         "groupOnly": "Jen pro skupinu",
+        "hidden_few": "Další {{count}} akce jsou jen pro členy skupiny",
+        "hidden_one": "Další akce je jen pro členy skupiny",
+        "hidden_other": "Dalších {{count}} akcí je jen pro členy skupiny",
         "loadMore": "Načíst další",
         "loadMoreFailed": "Další akce se nepodařilo načíst. Zkuste to prosím znovu.",
         "loading": "Načítáme akce skupiny…",
@@ -991,6 +995,7 @@
         "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
         "title": "Nic nenalezeno"
       },
+      "intro": "Skupina je parta, která se pravidelně schází. Najdete v ní lidi na pravidelné hraní a první na nové akce se dozvíte vy.",
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",

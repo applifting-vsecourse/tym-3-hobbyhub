@@ -182,7 +182,11 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 | Veřejná skupina: nadcházející veřejné akce                                     | ✅                              | ✅          | ✅            | ✅          | ❌          | [#9][9], [#47][47]                      |
 | Soukromá skupina: akce, členové, dění                                          | ❌                              | ✅          | ✅            | ✅          | ❌          | [#93][93], [PO][po]                     |
 | Akce jen pro skupinu                                                           | ❌                              | ✅          | ✅            | ✅          | ❌          | [#47][47]                               |
-| Minulé akce skupiny                                                            | ❌                              | ✅          | ✅            | ✅          | ❌          | [#47][47]                               |
+| Minulé veřejné akce skupiny                                                    | ✅                              | ✅          | ✅            | ✅          | ❌          | [#47][47], [#223][223]                  |
+| Minulé akce jen pro skupinu                                                    | ❌ (jen počet, rozmazaně)       | ✅          | ✅            | ✅          | ❌          | [#47][47], [#223][223]                  |
+| Že je skupina aktivní (veřejná akce nadcházející nebo do 60 dní zpátky)        | ✅                              | ✅          | ✅            | ✅          | ❌          | [#223][223]                             |
+| Způsob přijímání (otevřená, na schválení), dny setkání, poloha místa setkání   | ✅                              | ✅          | ✅            | ✅          | ❌          | [#223][223], ADR-0028                   |
+| Příští veřejná akce skupiny, počet odehraných akcí a průměr hráčů na akci      | ✅                              | ✅          | ✅            | ✅          | ❌          | [#223][223]                             |
 | Seznam členů: jméno, fotka, role (kdo je vlastník a kdo správce), datum vstupu | ❌                              | ✅          | ✅            | ✅          | ❌          | [#9][9], [#47][47], [#94][94], [PO][po] |
 | U každého člena stav přátelství se mnou                                        | ❌                              | jen se mnou | jen se mnou   | jen se mnou | ❌          | [#225][225]                             |
 | Počet čekajících žádostí                                                       | ❌                              | ❌          | ✅            | ✅          | ❌          | [#48][48], [PO][po]                     |
@@ -266,6 +270,8 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [226]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/226
 [227]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/227
 [239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
+[223]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/223
+[269]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/269
 [240]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/240
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
 [233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233

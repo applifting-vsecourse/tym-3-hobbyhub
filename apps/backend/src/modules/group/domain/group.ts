@@ -57,6 +57,23 @@ export const memberActionViolations = (
   return isAllowed(actor.role, target.role, action) ? [] : ['NOT_ALLOWED'];
 };
 
+// ADR-0028: OPEN lets anyone in at once, APPROVAL keeps the request the admins
+// decide on (ADR-0008).
+export type GroupApprovalMode = 'OPEN' | 'APPROVAL';
+export const GROUP_APPROVAL_MODES = ['OPEN', 'APPROVAL'] as const;
+
+// ISO weekdays, 1 = Monday .. 7 = Sunday.
+export const GROUP_MEETING_DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+// What the list says about a group's next event: when, and whether a seat is
+// free. Public facts of a public event.
+export type GroupNextEvent = {
+  id: string;
+  title: string;
+  startAt: Date;
+  hasFreeSeats: boolean;
+};
+
 export type GroupVisibility = 'PUBLIC' | 'PRIVATE';
 export type GroupStatus = 'ACTIVE' | 'CANCELLED';
 
@@ -71,6 +88,14 @@ export type Group = {
   createdAt: Date;
   activity: Activity;
   memberCount: number;
+  // #269: a public event upcoming or ended in the last 60 days.
+  isActive: boolean;
+  approvalMode: GroupApprovalMode;
+  meetingDays: number[];
+  // Where the group meets, for the map; both or none (CHECK in the migration).
+  latitude: number | null;
+  longitude: number | null;
+  nextEvent: GroupNextEvent | null;
 };
 
 // F-02.5: who may see a group's public page. Anything else is shown as "not
@@ -85,7 +110,22 @@ export type CreateGroupData = {
   description: string;
   locationName?: string;
   usualSchedule?: string;
+  approvalMode?: GroupApprovalMode;
+  meetingDays?: number[];
+  latitude?: number;
+  longitude?: number;
 };
+
+// What a group's admins may change (ADR-0028); anything left out stays.
+export type UpdateGroupData = Partial<CreateGroupData> & {
+  // `null` clears the place and its position.
+  clearLocation?: boolean;
+};
+
+// A group's numbers on its page, from its public events that have happened.
+export type GroupStats = { playedEvents: number; averageParticipants: number };
+
+export type GroupSort = 'newest' | 'nearest' | 'members';
 
 // F-07.3: a member as the group's admins see them in member management.
 export type GroupMember = {
@@ -125,6 +165,14 @@ export type GroupDiscoverFilter = {
   search?: string;
   /** Part of the place. */
   location?: string;
+  /** Meets on any of these ISO weekdays. */
+  weekdays?: number[];
+  approvalMode?: GroupApprovalMode;
+  /** Has a public event that has not ended yet. */
+  onlyWithUpcomingEvent?: boolean;
+  /** Within `radiusKm` of a point; groups without a position are left out. */
+  near?: { latitude: number; longitude: number; radiusKm: number };
+  sort?: GroupSort;
 };
 
 export type NearbyGroups = {

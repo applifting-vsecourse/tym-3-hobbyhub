@@ -40,7 +40,6 @@ const renderEvents = (props: Partial<ComponentProps<typeof GroupEvents>> = {}) =
     <GroupEvents
       groupId="g1"
       period="upcoming"
-      isMember={false}
       events={[anEvent()]}
       total={1}
       activityLabel={(activity) => activity.name}
@@ -65,14 +64,8 @@ describe("GroupEvents", () => {
     expect(within(section).getByText("1 nadcházející akce")).toBeVisible()
   })
 
-  it("gives a non-member no switch to the past", async () => {
-    await renderEvents()
-
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument()
-  })
-
-  it("gives a member the switch, with the period in the URL", async () => {
-    await renderEvents({ isMember: true, period: "past" })
+  it("gives everyone the switch, with the period in the URL", async () => {
+    await renderEvents({ period: "past" })
 
     const periods = screen.getByRole("navigation", { name: "Nadcházející a minulé akce" })
     expect(within(periods).getByRole("link", { name: "Nadcházející" })).toHaveAttribute(
@@ -82,6 +75,20 @@ describe("GroupEvents", () => {
     const past = within(periods).getByRole("link", { name: "Minulé" })
     expect(past).toHaveAttribute("href", "/groups/g1?events=past")
     expect(past).toHaveAttribute("aria-current", "page")
+  })
+
+  it("shows the group-only events of the past as blurred places, with no content", async () => {
+    await renderEvents({ period: "past", hiddenCount: 2 })
+
+    expect(screen.getByText("Další 2 akce jsou jen pro členy skupiny")).toBeVisible()
+    // Only the real event is a link; the placeholders are hidden from assistive tech.
+    expect(screen.getAllByRole("link", { name: /Čtvrteční florbal/ })).toHaveLength(1)
+  })
+
+  it("says nothing about hidden events when there are none", async () => {
+    await renderEvents({ period: "past" })
+
+    expect(screen.queryByText(/jen pro členy skupiny/)).not.toBeInTheDocument()
   })
 
   it("marks cancelled and group-only events", async () => {
@@ -104,7 +111,7 @@ describe("GroupEvents", () => {
     ["upcoming", "Skupina teď nemá žádné nadcházející akce."],
     ["past", "Skupina zatím nemá žádné minulé akce."],
   ] as const)("says when there are no %s events", async (period, text) => {
-    await renderEvents({ period, isMember: true, events: [], total: 0 })
+    await renderEvents({ period, events: [], total: 0 })
 
     expect(screen.getByText(text)).toBeVisible()
   })

@@ -1,4 +1,5 @@
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 type GroupRowProps = {
@@ -15,6 +16,8 @@ type GroupRowProps = {
   description?: string | null
   /** What the viewer is to the group, or its visibility; under the subtitle. */
   badge?: string
+  /** Wording of the "active group" mark next to the title; none means no mark (#269). */
+  activeLabel?: string
   className?: string
 }
 
@@ -30,6 +33,7 @@ export function GroupRow({
   schedule,
   description,
   badge,
+  activeLabel,
   className,
 }: GroupRowProps) {
   return (
@@ -46,7 +50,10 @@ export function GroupRow({
         ) : null}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <h3 className="typo-title text-foreground">{title}</h3>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h3 className="typo-title text-foreground">{title}</h3>
+          {activeLabel ? <Badge variant="success">{activeLabel}</Badge> : null}
+        </div>
         <p className="typo-small text-muted-foreground">{subtitle}</p>
         {schedule ? <p className="hidden typo-small text-foreground lg:block">{schedule}</p> : null}
         {/* Two lines at most and no wider than a line of reading, however wide the list. */}
