@@ -25,18 +25,18 @@ export function GroupFacts({ group }: { group: Group }) {
         />
       ) : null}
       <dl className="flex flex-col divide-y divide-border border-y border-border lg:border-x lg:px-4">
-      <div className="flex flex-col gap-1 py-3">
-        <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.where")}</dt>
-        <dd className="typo-small text-muted-foreground">
-          {group.locationName ?? t("groups.detail.facts.whereNone")}
-        </dd>
-      </div>
-      <div className="flex flex-col gap-1 py-3">
-        <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.when")}</dt>
-        <dd className="typo-small text-muted-foreground">
-          {when || t("groups.detail.facts.whenNone")}
-        </dd>
-      </div>
+        <div className="flex flex-col gap-1 py-3">
+          <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.where")}</dt>
+          <dd className="typo-small text-muted-foreground">
+            {group.locationName ?? t("groups.detail.facts.whereNone")}
+          </dd>
+        </div>
+        <div className="flex flex-col gap-1 py-3">
+          <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.when")}</dt>
+          <dd className="typo-small text-muted-foreground">
+            {when || t("groups.detail.facts.whenNone")}
+          </dd>
+        </div>
       </dl>
     </div>
   )

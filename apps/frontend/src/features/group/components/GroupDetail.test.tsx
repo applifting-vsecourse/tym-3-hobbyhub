@@ -36,6 +36,9 @@ const { leaveGroup, requestMembership, withdrawMembershipRequest, toast } = vi.h
   withdrawMembershipRequest: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
 }))
+// The map needs WebGL, which jsdom has not.
+vi.mock("@/features/group/components/GroupsMap", () => ({ GroupsMap: () => null }))
+
 vi.mock("@/features/group/api/leaveGroup", () => ({ leaveGroup }))
 vi.mock("@/features/group/api/membershipRequestMutations", async (importOriginal) => ({
   ...(await importOriginal<object>()),
