@@ -31,6 +31,11 @@ export const filterSearchParams = (filters: EventListFilters, limit: number, off
     searchParams.set("lat", String(filters.near.latitude))
     searchParams.set("lng", String(filters.near.longitude))
   }
+  if (filters.around) {
+    searchParams.set("aroundLat", String(filters.around.latitude))
+    searchParams.set("aroundLng", String(filters.around.longitude))
+    searchParams.set("radiusKm", String(filters.around.radiusKm))
+  }
   return searchParams
 }
 

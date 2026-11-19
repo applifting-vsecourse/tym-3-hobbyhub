@@ -17,8 +17,8 @@ import { containsInAny } from '@/shared/search/folded-search';
 
 // TODO(F-02.1b #91): this is an exact "contains" match, so "Brno" misses a
 // typo like "Brnoo". Similarity search (e.g. pg_trgm `similarity`, ranked by
-// closeness) belongs here, and so does a radius filter once every event has
-// coordinates (geocoding on save, F-12.3).
+// closeness) belongs here. The radius filter is not text: see `listCondition`
+// in event.repository.ts (#261).
 // A private venue is someone's home: its name is never matched, like it is
 // never shown.
 const PLACE_COLUMNS = [
