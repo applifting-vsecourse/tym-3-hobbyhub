@@ -4,42 +4,57 @@ import type { Group } from "@/features/group/api/groupSchemas"
 import { GroupsMap } from "@/features/group/components/GroupsMap"
 
 /**
- * Where and when a group meets, beside its membership (ADR-0028). Only what the
- * group put on its public page: the place as a name, never the exact address.
+ * Where and when a group meets (ADR-0028): the map, then the place and the
+ * time in plain words. Only what the group put on its public page: the place as
+ * a name, never the exact address. When the group meets is its own to tell, so
+ * without it the row is not there.
  */
 export function GroupFacts({ group, hasMap = true }: { group: Group; hasMap?: boolean }) {
   const { t } = useTranslation()
-  const days = group.meetingDays.map((day) => t(`groups.weekdaysLong.${day}`)).join(", ")
-  const when = [days ? t("groups.detail.facts.every", { day: days }) : null, group.usualSchedule]
-    .filter(Boolean)
-    .join(", ")
+  const [onlyDay] = group.meetingDays
+  const days =
+    group.meetingDays.length === 1 && onlyDay
+      ? t(`groups.weekdaysEvery.${onlyDay}`)
+      : group.meetingDays.length > 1
+        ? t("groups.detail.facts.everyWeek", {
+            days: group.meetingDays.map((day) => t(`groups.weekdays.${day}`)).join(", "),
+          })
+        : null
+  const when = [days, group.usualSchedule].filter(Boolean).join(", ")
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Where the group meets, as a small map with the member count (ADR-0028). */}
+    <section
+      aria-labelledby="group-where-heading"
+      className="flex flex-col gap-3"
+    >
+      <h2
+        id="group-where-heading"
+        className="typo-h3 text-foreground lg:sr-only"
+      >
+        {t("groups.detail.facts.title")}
+      </h2>
+      {/* Where the group meets, as a small map with the member count. */}
       {hasMap && group.latitude !== null ? (
         <GroupsMap
           groups={[group]}
           isFallbackShown={false}
-          className="h-48"
+          className="h-44 lg:h-48"
         />
       ) : null}
-      {/* Hairlines only where there is room; on a phone the facts are just spaced apart. */}
-      <dl className="flex flex-col gap-3 lg:gap-0 lg:divide-y lg:divide-border lg:rounded-lg lg:border lg:border-border lg:px-4">
-        <div className="flex flex-col gap-1 lg:py-3">
-          <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.where")}</dt>
-          <dd className="typo-small text-muted-foreground">
+      <dl className="flex flex-col gap-3">
+        <div className="flex flex-col">
+          <dt className="typo-small text-muted-foreground">{t("groups.detail.facts.where")}</dt>
+          <dd className="typo-body-lg text-foreground">
             {group.locationName ?? t("groups.detail.facts.whereNone")}
           </dd>
         </div>
-        {/* When the group meets is its own to tell: without it the row is not there. */}
         {when ? (
-          <div className="flex flex-col gap-1 lg:py-3">
-            <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.when")}</dt>
-            <dd className="typo-small text-muted-foreground">{when}</dd>
+          <div className="flex flex-col">
+            <dt className="typo-small text-muted-foreground">{t("groups.detail.facts.when")}</dt>
+            <dd className="typo-body-lg text-foreground">{when}</dd>
           </div>
         ) : null}
       </dl>
-    </div>
+    </section>
   )
 }

@@ -901,6 +901,7 @@
     },
     "back": "Back",
     "detail": {
+      "about": "About the group",
       "backToEvents": "Back to events",
       "events": {
         "cancelled": "Cancelled",
@@ -930,7 +931,8 @@
         "title": "Group events"
       },
       "facts": {
-        "every": "Every {{day}}",
+        "everyWeek": "Every week: {{days}}",
+        "title": "Where and when we meet",
         "when": "When",
         "whenNone": "The group has not said when.",
         "where": "Where we meet",
@@ -969,11 +971,11 @@
         "withdraw": "Withdraw request"
       },
       "stats": {
-        "average": "players per event on average",
+        "average": "players on average",
         "meets": "meets",
         "members": "members",
         "none": "—",
-        "played": "events played"
+        "played": "events"
       },
       "title": "Group detail",
       "visibilityPublic": "Public group"
@@ -1241,14 +1243,14 @@
       "6": "Sat",
       "7": "Sun"
     },
-    "weekdaysLong": {
-      "1": "Monday",
-      "2": "Tuesday",
-      "3": "Wednesday",
-      "4": "Thursday",
-      "5": "Friday",
-      "6": "Saturday",
-      "7": "Sunday"
+    "weekdaysEvery": {
+      "1": "Every Monday",
+      "2": "Every Tuesday",
+      "3": "Every Wednesday",
+      "4": "Every Thursday",
+      "5": "Every Friday",
+      "6": "Every Saturday",
+      "7": "Every Sunday"
     }
   },
   "header": {

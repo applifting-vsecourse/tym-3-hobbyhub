@@ -42,19 +42,20 @@ export function GroupStats({ group }: { group: Group }) {
   ]
 
   return (
+    // One tinted band instead of four floating numbers; a phone keeps all of them in one row.
     <dl
       className={cn(
-        "grid grid-cols-2 gap-x-4 gap-y-1 divide-border md:divide-x md:border-y md:border-border",
-        items.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3",
+        "grid gap-x-2 rounded-lg bg-muted px-3 py-3 md:gap-x-4 md:px-4",
+        items.length === 4 ? "grid-cols-4" : "grid-cols-3",
       )}
     >
       {items.map((item) => (
         <div
           key={item.key}
-          className="flex flex-col gap-1 py-2 md:px-4 md:py-3 md:first:pl-0"
+          className="flex flex-col gap-0.5"
         >
-          <dd className="typo-h3 text-foreground md:typo-h2">{item.value}</dd>
-          <dt className="typo-small text-muted-foreground">{item.label}</dt>
+          <dd className="typo-h3 text-foreground">{item.value}</dd>
+          <dt className="typo-caption text-muted-foreground">{item.label}</dt>
         </div>
       ))}
     </dl>

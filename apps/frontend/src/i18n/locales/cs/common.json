@@ -913,6 +913,7 @@
     },
     "back": "Zpět",
     "detail": {
+      "about": "O skupině",
       "backToEvents": "Zpět na akce",
       "events": {
         "cancelled": "Zrušeno",
@@ -946,7 +947,8 @@
         "title": "Akce skupiny"
       },
       "facts": {
-        "every": "Každé {{day}}",
+        "everyWeek": "Každý týden: {{days}}",
+        "title": "Kde a kdy se schází",
         "when": "Kdy",
         "whenNone": "Termín skupina neuvedla.",
         "where": "Kde se schází",
@@ -986,11 +988,11 @@
         "withdraw": "Zrušit žádost"
       },
       "stats": {
-        "average": "hráčů na akci v průměru",
+        "average": "hráčů v průměru",
         "meets": "schází se",
         "members": "členů",
         "none": "—",
-        "played": "odehraných akcí"
+        "played": "akcí"
       },
       "title": "Detail skupiny",
       "visibilityPublic": "Veřejná skupina"
@@ -1261,14 +1263,14 @@
       "6": "So",
       "7": "Ne"
     },
-    "weekdaysLong": {
-      "1": "pondělí",
-      "2": "úterý",
-      "3": "středu",
-      "4": "čtvrtek",
-      "5": "pátek",
-      "6": "sobotu",
-      "7": "neděli"
+    "weekdaysEvery": {
+      "1": "Každé pondělí",
+      "2": "Každé úterý",
+      "3": "Každou středu",
+      "4": "Každý čtvrtek",
+      "5": "Každý pátek",
+      "6": "Každou sobotu",
+      "7": "Každou neděli"
     }
   },
   "header": {

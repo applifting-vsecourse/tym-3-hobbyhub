@@ -39,6 +39,6 @@ describe("GroupFacts", () => {
     render(<GroupFacts group={aGroup({ meetingDays: [4], usualSchedule: "19:00 až 21:00" })} />)
 
     expect(screen.getByText("Kdy")).toBeInTheDocument()
-    expect(screen.getByText("Každé čtvrtek, 19:00 až 21:00")).toBeInTheDocument()
+    expect(screen.getByText("Každý čtvrtek, 19:00 až 21:00")).toBeInTheDocument()
   })
 })
