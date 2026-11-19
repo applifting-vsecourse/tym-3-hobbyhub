@@ -1145,6 +1145,7 @@
       "title": "Member management"
     },
     "map": {
+      "cluster": "{{count}} groups, zoom in",
       "label": "Map of groups",
       "list": "List",
       "pin": "{{name}}, {{count}} members",

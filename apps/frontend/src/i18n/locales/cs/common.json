@@ -1163,6 +1163,7 @@
       "title": "Správa členů"
     },
     "map": {
+      "cluster": "{{count}} skupin, přiblížit",
       "label": "Mapa skupin",
       "list": "Seznam",
       "pin": "{{name}}, {{count}} členů",

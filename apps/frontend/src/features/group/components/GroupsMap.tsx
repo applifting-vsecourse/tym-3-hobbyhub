@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { UsersIcon } from "lucide-react"
 import mapboxgl from "mapbox-gl"
@@ -65,6 +65,7 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
   const containerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<mapboxgl.Map | null>(null)
   const [isBroken, setIsBroken] = useState(false)
+  const [zoom, setZoom] = useState(FALLBACK_ZOOM)
   const located = groups.filter(isLocated)
 
   useEffect(() => {
@@ -91,12 +92,15 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
     )
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
     setMap(created)
+    created.on("zoomend", () => setZoom(created.getZoom()))
     return () => {
       observer.disconnect()
       created.remove()
       setMap(null)
     }
   }, [])
+
+  const clusters = clusterGroups(located, zoom)
 
   // Fit the pins whenever the groups on the map change.
   const fitKey = located.map((group) => group.id).join(",")
@@ -129,33 +133,96 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
         className="size-full min-h-80"
       />
       {map
-        ? located.map((group) => (
+        ? clusters.map((cluster) => (
             <GroupMarker
-              key={group.id}
+              key={cluster.key}
               map={map}
-              group={group}
-            />
+              latitude={cluster.latitude}
+              longitude={cluster.longitude}
+            >
+              {cluster.single ? (
+                <GroupPin
+                  group={cluster.single}
+                  isSelected={false}
+                />
+              ) : (
+                <ClusterPin
+                  count={cluster.groups.length}
+                  onClick={() =>
+                    map.easeTo({
+                      center: [cluster.longitude, cluster.latitude],
+                      zoom: Math.min(map.getZoom() + 2.5, 15),
+                    })
+                  }
+                />
+              )}
+            </GroupMarker>
           ))
         : null}
     </div>
   )
 }
 
-function GroupMarker({ map, group }: { map: mapboxgl.Map; group: Located }) {
+type Cluster = {
+  key: string
+  latitude: number
+  longitude: number
+  groups: Located[]
+  /** Set when the cluster is just one group. */
+  single: Located | null
+}
+
+// Pins closer than about 56 px on screen become one; zoomed in they fall apart.
+function clusterGroups(groups: Located[], zoom: number): Cluster[] {
+  const cell = (56 * 360) / (256 * 2 ** zoom)
+  const cells = new Map<string, Located[]>()
+  for (const group of groups) {
+    const key = `${Math.round(group.latitude / cell)}:${Math.round(group.longitude / cell)}`
+    cells.set(key, [...(cells.get(key) ?? []), group])
+  }
+  return [...cells].map(([key, inCell]) => ({
+    key: inCell.length === 1 ? (inCell[0]?.id ?? key) : key,
+    single: inCell.length === 1 ? (inCell[0] ?? null) : null,
+    latitude: inCell.reduce((sum, group) => sum + group.latitude, 0) / inCell.length,
+    longitude: inCell.reduce((sum, group) => sum + group.longitude, 0) / inCell.length,
+    groups: inCell,
+  }))
+}
+
+/** Several groups in one place: how many, and a click zooms in on them. */
+function ClusterPin({ count, onClick }: { count: number; onClick: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type="button"
+      aria-label={t("groups.map.cluster", { count })}
+      onClick={onClick}
+      className="flex size-11 items-center justify-center rounded-full border-2 border-primary bg-card typo-label text-primary shadow-float outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+    >
+      {count}
+    </button>
+  )
+}
+
+function GroupMarker({
+  map,
+  latitude,
+  longitude,
+  children,
+}: {
+  map: mapboxgl.Map
+  latitude: number
+  longitude: number
+  children: ReactNode
+}) {
   const [element] = useState(() => document.createElement("div"))
   useEffect(() => {
     const marker = new mapboxgl.Marker({ element, anchor: "center" })
-      .setLngLat([group.longitude, group.latitude])
+      .setLngLat([longitude, latitude])
       .addTo(map)
     return () => {
       marker.remove()
     }
-  }, [map, element, group.latitude, group.longitude])
-  return createPortal(
-    <GroupPin
-      group={group}
-      isSelected={false}
-    />,
-    element,
-  )
+  }, [map, element, latitude, longitude])
+  return createPortal(children, element)
 }
