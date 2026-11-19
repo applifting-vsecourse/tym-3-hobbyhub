@@ -5,8 +5,6 @@ export type DiscoverGroupsFilters = {
   activityIds: string[]
   search: string
   location: string
-  /** ISO weekdays; the group meets on any of them. */
-  weekdays?: number[]
   approvalMode?: "OPEN" | "APPROVAL"
   onlyWithUpcomingEvent?: boolean
   near?: { latitude: number; longitude: number; radiusKm: number }

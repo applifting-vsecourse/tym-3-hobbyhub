@@ -7,7 +7,6 @@ import {
 } from "@/features/group/components/GroupExtraFilters"
 
 const EMPTY: GroupExtraFilterValues = {
-  weekdays: [],
   onlyWithUpcomingEvent: false,
   sort: "newest",
 }
@@ -25,19 +24,30 @@ const renderFilters = (value = EMPTY, canUseDistance = false) => {
 }
 
 describe("GroupExtraFilters", () => {
-  it("adds and removes the days a group meets on", async () => {
-    const { onChange, user } = renderFilters({ ...EMPTY, weekdays: [4] })
+  it("keeps the filters folded until asked, with the order in sight", async () => {
+    const { user } = renderFilters()
 
-    expect(screen.getByRole("button", { name: "Čt" })).toHaveAttribute("aria-pressed", "true")
-    await user.click(screen.getByRole("button", { name: "So" }))
-    expect(onChange).toHaveBeenCalledWith({ ...EMPTY, weekdays: [4, 6] })
-    await user.click(screen.getByRole("button", { name: "Čt" }))
-    expect(onChange).toHaveBeenLastCalledWith({ ...EMPTY, weekdays: [] })
+    expect(
+      screen.queryByRole("checkbox", { name: "Mají nadcházející akci" }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole("combobox")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Filtry" }))
+    expect(screen.getByRole("checkbox", { name: "Mají nadcházející akci" })).toBeVisible()
+  })
+
+  it("says how many filters are on, and opens when some are", () => {
+    renderFilters({ ...EMPTY, approvalMode: "OPEN", onlyWithUpcomingEvent: true })
+
+    expect(screen.getByRole("button", { name: /Filtry\s?\(2\)/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    )
   })
 
   it("narrows by how a group takes people in", async () => {
     const { onChange, user } = renderFilters()
 
+    await user.click(screen.getByRole("button", { name: "Filtry" }))
     await user.click(screen.getByRole("button", { name: "Otevřená, bez schvalování" }))
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY, approvalMode: "OPEN" })
   })
@@ -45,12 +55,26 @@ describe("GroupExtraFilters", () => {
   it("keeps only groups with an event ahead", async () => {
     const { onChange, user } = renderFilters()
 
+    await user.click(screen.getByRole("button", { name: "Filtry" }))
     await user.click(screen.getByRole("checkbox", { name: "Mají nadcházející akci" }))
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY, onlyWithUpcomingEvent: true })
   })
 
-  it("offers a radius only where there is a place to measure from", () => {
-    renderFilters()
+  it("clears the filters in one go", async () => {
+    const { onChange, user } = renderFilters({ ...EMPTY, approvalMode: "APPROVAL" })
+
+    await user.click(screen.getByRole("button", { name: "Zrušit filtry" }))
+    expect(onChange).toHaveBeenCalledWith({
+      ...EMPTY,
+      approvalMode: undefined,
+      radiusKm: undefined,
+    })
+  })
+
+  it("offers a radius only where there is a place to measure from", async () => {
+    const { user } = renderFilters()
+    await user.click(screen.getByRole("button", { name: "Filtry" }))
+
     expect(screen.queryByText("Okruh od domova")).not.toBeInTheDocument()
   })
 })

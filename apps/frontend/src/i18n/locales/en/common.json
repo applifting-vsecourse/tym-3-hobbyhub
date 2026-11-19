@@ -982,7 +982,7 @@
       "activity": "Activity",
       "approvalMode": "Joining",
       "description": "Description",
-      "location": "Location (optional)",
+      "location": "Where you meet",
       "meetingDays": "Days you meet on (optional)",
       "name": "Group name",
       "usualSchedule": "Usual time (optional)"
@@ -1025,8 +1025,8 @@
         "sortMembers": "Most members",
         "sortNearest": "Nearest",
         "sortNewest": "Newest",
-        "upcoming": "Have an upcoming event",
-        "weekdays": "Meets on"
+        "title": "Filters",
+        "upcoming": "Have an upcoming event"
       },
       "intro": "A group is a crew that meets regularly. Join one to play with the same people and hear about new events first.",
       "loadError": "Could not load groups",
@@ -1221,6 +1221,7 @@
     "validation": {
       "activityRequired": "Choose an activity",
       "descriptionRequired": "Write a few words about the group",
+      "locationRequired": "Pick where you meet",
       "nameRequired": "Enter a group name",
       "nameTooShort_one": "At least {{count}} character",
       "nameTooShort_other": "At least {{count}} characters",

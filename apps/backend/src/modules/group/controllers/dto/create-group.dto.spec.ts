@@ -6,6 +6,9 @@ const validBody = {
   name: 'Čtvrteční florbalisté',
   activityId: 'a1',
   description: 'Hrajeme každý čtvrtek.',
+  locationName: 'Praha 8',
+  latitude: 50.1297,
+  longitude: 14.4421,
 };
 
 // What the endpoint does with a request body before the handler sees it.
@@ -17,19 +20,34 @@ const validate = (body: Record<string, unknown>): Promise<CreateGroupDto> =>
 
 describe('CreateGroupDto', () => {
   describe('through the endpoint pipe', () => {
-    it('trims the text and drops blank optional fields', async () => {
+    it('trims the text and drops a blank schedule', async () => {
       await expect(
         validate({
           ...validBody,
           name: '  Čtvrteční florbalisté  ',
-          locationName: '   ',
+          locationName: '  Praha 8 ',
           usualSchedule: ' čtvrtky 19:00 ',
         }),
       ).resolves.toEqual({
         ...validBody,
-        locationName: undefined,
         usualSchedule: 'čtvrtky 19:00',
       });
+    });
+
+    // ADR-0028: a group needs a place on the map.
+    it.each(['locationName', 'latitude', 'longitude'])(
+      'refuses a group without %s',
+      async (field) => {
+        await expect(
+          validate({ ...validBody, [field]: undefined }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      },
+    );
+
+    it('refuses a blank place', async () => {
+      await expect(
+        validate({ ...validBody, locationName: '   ' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it.each(['visibility', 'role', 'ownerId'])(

@@ -108,19 +108,17 @@ export type CreateGroupData = {
   name: string;
   activityId: string;
   description: string;
-  locationName?: string;
+  // ADR-0028: every group has a place, with its position.
+  locationName: string;
+  latitude: number;
+  longitude: number;
   usualSchedule?: string;
   approvalMode?: GroupApprovalMode;
   meetingDays?: number[];
-  latitude?: number;
-  longitude?: number;
 };
 
 // What a group's admins may change (ADR-0028); anything left out stays.
-export type UpdateGroupData = Partial<CreateGroupData> & {
-  // `null` clears the place and its position.
-  clearLocation?: boolean;
-};
+export type UpdateGroupData = Partial<CreateGroupData>;
 
 // A group's numbers on its page, from its public events that have happened.
 export type GroupStats = { playedEvents: number; averageParticipants: number };
@@ -165,8 +163,6 @@ export type GroupDiscoverFilter = {
   search?: string;
   /** Part of the place. */
   location?: string;
-  /** Meets on any of these ISO weekdays. */
-  weekdays?: number[];
   approvalMode?: GroupApprovalMode;
   /** Has a public event that has not ended yet. */
   onlyWithUpcomingEvent?: boolean;

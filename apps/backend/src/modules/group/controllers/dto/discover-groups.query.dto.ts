@@ -11,7 +11,6 @@ import {
   IsArray,
   IsBoolean,
   IsIn,
-  IsInt,
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
@@ -71,21 +70,6 @@ export class DiscoverGroupsQueryDto {
   @IsString()
   @MaxLength(GROUP_LIST_LOCATION_MAX_LENGTH)
   location?: string;
-
-  @ApiPropertyOptional({
-    type: [Number],
-    description: 'Meets on any of these ISO weekdays (repeat the parameter)',
-  })
-  @IsOptional()
-  @Transform(({ value }: { value: unknown }) =>
-    (Array.isArray(value) ? value : [value]).map(Number),
-  )
-  @IsArray()
-  @ArrayMaxSize(7)
-  @IsInt({ each: true })
-  @Min(1, { each: true })
-  @Max(7, { each: true })
-  weekdays?: number[];
 
   @ApiPropertyOptional({ enum: GROUP_APPROVAL_MODES })
   @IsOptional()

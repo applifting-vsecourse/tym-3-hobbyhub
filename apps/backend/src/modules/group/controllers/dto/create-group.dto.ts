@@ -22,7 +22,6 @@ import {
   IsString,
   Max,
   Min,
-  ValidateIf,
 } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }): unknown =>
@@ -58,15 +57,16 @@ export class CreateGroupDto {
   @CharLength(0, GROUP_DESCRIPTION_MAX_LENGTH)
   description!: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'Praha 8',
     maxLength: GROUP_LOCATION_MAX_LENGTH,
+    description: 'Where the group meets, as a name (a city or district)',
   })
-  @Transform(trimToUndefined)
-  @IsOptional()
+  @Transform(trim)
   @IsString()
-  @CharLength(0, GROUP_LOCATION_MAX_LENGTH)
-  locationName?: string;
+  @IsNotEmpty()
+  @CharLength(1, GROUP_LOCATION_MAX_LENGTH)
+  locationName!: string;
 
   @ApiPropertyOptional({
     example: 'Čtvrtky 19:00',
@@ -101,14 +101,11 @@ export class CreateGroupDto {
   @Max(7, { each: true })
   meetingDays?: number[];
 
-  @ApiPropertyOptional({ description: 'With longitude, or neither' })
-  @ValidateIf((dto: CreateGroupDto) => dto.latitude !== undefined)
+  @ApiProperty({ example: 50.1297, description: 'Position of the place' })
   @IsLatitude()
-  @ValidateIf((dto: CreateGroupDto) => dto.longitude !== undefined)
-  latitude?: number;
+  latitude!: number;
 
-  @ApiPropertyOptional({ description: 'With latitude, or neither' })
-  @ValidateIf((dto: CreateGroupDto) => dto.longitude !== undefined)
+  @ApiProperty({ example: 14.4421, description: 'Position of the place' })
   @IsLongitude()
-  longitude?: number;
+  longitude!: number;
 }

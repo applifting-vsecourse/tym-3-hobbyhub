@@ -220,12 +220,12 @@ export class GroupRepository {
       data: {
         name: data.name,
         description: data.description,
-        locationName: data.locationName ?? null,
+        locationName: data.locationName,
         usualSchedule: data.usualSchedule ?? null,
         approvalMode: data.approvalMode ?? 'APPROVAL',
         meetingDays: data.meetingDays ?? [],
-        locationLatitude: data.latitude ?? null,
-        locationLongitude: data.longitude ?? null,
+        locationLatitude: data.latitude,
+        locationLongitude: data.longitude,
         activity: { connect: { id: data.activityId } },
         memberships: {
           create: { userId: data.ownerId, role: GroupRole.OWNER },
@@ -417,7 +417,7 @@ export class GroupRepository {
     offset: number,
     hiddenManagerIds: string[],
   ): Promise<string[]> {
-    const { activityIds, near, weekdays = [] } = filter;
+    const { activityIds, near } = filter;
     const distance = near
       ? Prisma.sql`(6371 * 2 * asin(sqrt(
           power(sin(radians(g."locationLatitude"::float8 - ${near.latitude}) / 2), 2)
@@ -438,11 +438,6 @@ export class GroupRepository {
       ...(hiddenManagerIds.length > 0
         ? [
             Prisma.sql`NOT EXISTS (SELECT 1 FROM "group_membership" m WHERE m."groupId" = g."id" AND m."role" IN ('OWNER', 'ADMIN') AND m."userId" IN (${Prisma.join(hiddenManagerIds)}))`,
-          ]
-        : []),
-      ...(weekdays.length > 0
-        ? [
-            Prisma.sql`g."meetingDays" && ARRAY[${Prisma.join(weekdays)}]::integer[]`,
           ]
         : []),
       ...(filter.approvalMode
@@ -531,23 +526,15 @@ export class GroupRepository {
           ...(data.meetingDays !== undefined
             ? { meetingDays: data.meetingDays }
             : {}),
-          ...(data.clearLocation
+          ...(data.locationName !== undefined
+            ? { locationName: data.locationName }
+            : {}),
+          ...(data.latitude !== undefined && data.longitude !== undefined
             ? {
-                locationName: null,
-                locationLatitude: null,
-                locationLongitude: null,
+                locationLatitude: data.latitude,
+                locationLongitude: data.longitude,
               }
-            : {
-                ...(data.locationName !== undefined
-                  ? { locationName: data.locationName }
-                  : {}),
-                ...(data.latitude !== undefined && data.longitude !== undefined
-                  ? {
-                      locationLatitude: data.latitude,
-                      locationLongitude: data.longitude,
-                    }
-                  : {}),
-              }),
+            : {}),
         },
         include: groupInclude(),
       })

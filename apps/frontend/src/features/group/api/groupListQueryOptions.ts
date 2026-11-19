@@ -34,7 +34,6 @@ export const discoverGroupsQueryOptions = (
       for (const id of filters.activityIds) searchParams.append("activityIds", id)
       if (filters.search) searchParams.set("search", filters.search)
       if (filters.location) searchParams.set("location", filters.location)
-      for (const day of filters.weekdays ?? []) searchParams.append("weekdays", String(day))
       if (filters.approvalMode) searchParams.set("approvalMode", filters.approvalMode)
       if (filters.onlyWithUpcomingEvent) searchParams.set("onlyWithUpcomingEvent", "true")
       if (filters.near) {

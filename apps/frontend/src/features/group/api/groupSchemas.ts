@@ -83,12 +83,13 @@ export type CreateGroupInput = {
   name: string
   activityId: string
   description: string
-  locationName?: string
+  // ADR-0028: every group has a place, with its position.
+  locationName: string
+  latitude: number
+  longitude: number
   usualSchedule?: string
   approvalMode?: GroupApprovalMode
   meetingDays?: number[]
-  latitude?: number
-  longitude?: number
 }
 
-export type UpdateGroupInput = Partial<CreateGroupInput> & { clearLocation?: boolean }
+export type UpdateGroupInput = Partial<CreateGroupInput>

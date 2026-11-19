@@ -999,7 +999,7 @@
       "activity": "Aktivita",
       "approvalMode": "Přijímání členů",
       "description": "Popis",
-      "location": "Lokalita (nepovinné)",
+      "location": "Místo setkání",
       "meetingDays": "Dny, kdy se scházíte (nepovinné)",
       "name": "Název skupiny",
       "usualSchedule": "Obvyklý termín (nepovinné)"
@@ -1042,8 +1042,8 @@
         "sortMembers": "Nejvíc členů",
         "sortNearest": "Nejbližší",
         "sortNewest": "Nejnovější",
-        "upcoming": "Mají nadcházející akci",
-        "weekdays": "Kdy se schází"
+        "title": "Filtry",
+        "upcoming": "Mají nadcházející akci"
       },
       "intro": "Skupina je parta, která se pravidelně schází. Najdete v ní lidi na pravidelné hraní a první na nové akce se dozvíte vy.",
       "loadError": "Skupiny se nepodařilo načíst",
@@ -1239,6 +1239,7 @@
     "validation": {
       "activityRequired": "Vyberte aktivitu",
       "descriptionRequired": "Napište pár vět o skupině",
+      "locationRequired": "Vyberte místo setkání",
       "nameRequired": "Zadejte název skupiny",
       "nameTooShort_few": "Alespoň {{count}} znaky",
       "nameTooShort_one": "Alespoň {{count}} znak",

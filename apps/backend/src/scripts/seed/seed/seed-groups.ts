@@ -10,7 +10,7 @@ type ExampleGroup = {
   name: string;
   activity: string;
   description: string;
-  locationName: string | null;
+  locationName: string;
   usualSchedule: string | null;
   status?: GroupStatus;
   daysAgo: number;
@@ -102,7 +102,7 @@ const EXAMPLE_GROUPS: ExampleGroup[] = [
     name: 'Cyklovýlety bez cíle',
     activity: 'Cyklistika',
     description: 'Vyrážíme, kam nás vítr zanese. Místo domluvíme vždy předem.',
-    locationName: null,
+    locationName: 'Praha',
     usualSchedule: null,
     daysAgo: 3,
     owner: 2,
@@ -175,7 +175,12 @@ const GROUP_EXTRAS: Record<
     latitude: 49.2069,
     longitude: 16.6141,
   },
-  'Cyklovýlety bez cíle': { approvalMode: 'APPROVAL', meetingDays: [6, 7] },
+  'Cyklovýlety bez cíle': {
+    approvalMode: 'APPROVAL',
+    meetingDays: [6, 7],
+    latitude: 50.0755,
+    longitude: 14.4378,
+  },
 };
 
 /**
@@ -207,6 +212,7 @@ export async function seedGroups(
           data: {
             approvalMode: extra.approvalMode,
             meetingDays: extra.meetingDays,
+            locationName: example.locationName,
             locationLatitude: extra.latitude ?? null,
             locationLongitude: extra.longitude ?? null,
           },

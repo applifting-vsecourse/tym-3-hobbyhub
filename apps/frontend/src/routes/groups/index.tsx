@@ -49,7 +49,6 @@ const groupsSearchSchema = eventsSearchSchema
   .extend({
     // An old link with ?tab=discover is the same page as no param.
     // ADR-0028: the filters only groups have.
-    days: z.array(z.number().int().min(1).max(7)).optional().catch(undefined),
     approval: z.enum(["OPEN", "APPROVAL"]).optional().catch(undefined),
     upcoming: z.boolean().optional().catch(undefined),
     sort: z.enum(["newest", "nearest", "members"]).optional().catch(undefined),
@@ -92,7 +91,6 @@ function DiscoverTab({
       ? { latitude: home.latitude, longitude: home.longitude, radiusKm: search.radius }
       : undefined
   const extra: GroupExtraFilterValues = {
-    weekdays: search.days ?? [],
     approvalMode: search.approval,
     onlyWithUpcomingEvent: search.upcoming ?? false,
     sort: search.sort ?? "newest",
@@ -102,7 +100,6 @@ function DiscoverTab({
     activityIds: search.activity ?? [],
     search: search.q ?? "",
     location: search.location ?? "",
-    weekdays: extra.weekdays,
     approvalMode: extra.approvalMode,
     onlyWithUpcomingEvent: extra.onlyWithUpcomingEvent || undefined,
     near,
@@ -142,7 +139,6 @@ function DiscoverTab({
             void navigate({
               search: (previous) => ({
                 ...previous,
-                days: next.weekdays.length > 0 ? next.weekdays : undefined,
                 approval: next.approvalMode,
                 upcoming: next.onlyWithUpcomingEvent || undefined,
                 sort: next.sort === "newest" ? undefined : next.sort,

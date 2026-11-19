@@ -57,6 +57,9 @@ const input = {
   name: 'Čtvrteční florbalisté',
   activityId: 'a1',
   description: 'Hrajeme každý čtvrtek.',
+  locationName: 'Praha 8',
+  latitude: 50.1297,
+  longitude: 14.4421,
 };
 
 describe('GroupsService', () => {

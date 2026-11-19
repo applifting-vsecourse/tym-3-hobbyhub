@@ -23,7 +23,7 @@ type DiscoverGroupsProps = {
   filtersBar: ReactNode
   /** The filters open beside the list on a large screen (#224); nothing where there is no room. */
   filtersPanel?: ReactNode
-  /** The extra filters of groups under the search (days, joining, radius, order). */
+  /** The extra filters of groups under the search (joining, upcoming, radius, order). */
   extraFilters?: ReactNode
   /** The map of the groups on screen, beside the list from `xl` (ADR-0028). */
   renderMap?: (groups: Group[]) => ReactNode
@@ -60,7 +60,6 @@ export function DiscoverGroups({
     filters.activityIds.length > 0 ||
     filters.search !== "" ||
     filters.location !== "" ||
-    (filters.weekdays?.length ?? 0) > 0 ||
     filters.approvalMode !== undefined ||
     filters.onlyWithUpcomingEvent === true ||
     filters.near !== undefined

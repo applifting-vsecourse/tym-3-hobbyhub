@@ -116,7 +116,6 @@ export class GroupsController {
         activityIds: query.activityIds,
         search: query.search,
         location: query.location,
-        weekdays: query.weekdays,
         approvalMode: query.approvalMode,
         onlyWithUpcomingEvent: query.onlyWithUpcomingEvent,
         near:

@@ -46,13 +46,17 @@ const createSchema = (t: TFunction) => {
         t("groups.validation.nameTooShort", { count: GROUP_LIMITS.nameMin }),
       ),
     activityId: z.string().min(1, t("groups.validation.activityRequired")),
-    locationName: text(GROUP_LIMITS.locationMax),
+    // The place is picked from the address search, so it comes with its position.
+    locationName: text(GROUP_LIMITS.locationMax).refine(
+      (value) => value.length > 0,
+      t("groups.validation.locationRequired"),
+    ),
     usualSchedule: text(GROUP_LIMITS.scheduleMax),
     approvalMode: z.enum(["OPEN", "APPROVAL"]),
     meetingDays: z.array(z.number().int().min(1).max(7)),
     // The position of the place picked in the address search; both or none.
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
+    latitude: z.number({ error: t("groups.validation.locationRequired") }),
+    longitude: z.number({ error: t("groups.validation.locationRequired") }),
     description: text(GROUP_LIMITS.descriptionMax).min(
       1,
       t("groups.validation.descriptionRequired"),
@@ -62,26 +66,20 @@ const createSchema = (t: TFunction) => {
 
 export type FormValues = z.infer<ReturnType<typeof createSchema>>
 
-const defaultValues: FormValues = {
+const defaultValues: Partial<FormValues> = {
   name: "",
   activityId: "",
   locationName: "",
   usualSchedule: "",
   approvalMode: "APPROVAL",
   meetingDays: [],
-  latitude: undefined,
-  longitude: undefined,
   description: "",
 }
 
 // Optional fields left empty are not sent at all.
-const toInput = ({ locationName, usualSchedule, ...values }: FormValues): CreateGroupInput => ({
+const toInput = ({ usualSchedule, ...values }: FormValues): CreateGroupInput => ({
   ...values,
-  locationName: locationName || undefined,
   usualSchedule: usualSchedule || undefined,
-  // A position without a place name is of no use; both go or neither.
-  latitude: locationName ? values.latitude : undefined,
-  longitude: locationName ? values.longitude : undefined,
   meetingDays: values.meetingDays.length > 0 ? values.meetingDays : undefined,
 })
 
@@ -212,27 +210,12 @@ export function GroupForm({
                 onSelect={(address) => {
                   // The group shows the city, not the street: where it meets, not an address.
                   field.onChange(address.city || address.label)
-                  form.setValue("latitude", address.latitude)
-                  form.setValue("longitude", address.longitude)
+                  form.setValue("latitude", address.latitude, { shouldValidate: true })
+                  form.setValue("longitude", address.longitude, { shouldValidate: true })
                 }}
               />
             </FormControl>
             <p className="typo-small text-muted-foreground">{t("groups.form.placeHint")}</p>
-            {field.value ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="self-start"
-                onClick={() => {
-                  field.onChange("")
-                  form.setValue("latitude", undefined)
-                  form.setValue("longitude", undefined)
-                }}
-              >
-                {t("groups.form.placeClear")}
-              </Button>
-            ) : null}
             <FormMessage />
           </FormItem>
         )}

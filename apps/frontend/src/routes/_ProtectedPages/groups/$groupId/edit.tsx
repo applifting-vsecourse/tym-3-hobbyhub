@@ -45,11 +45,9 @@ function EditGroupPage() {
   const handleSubmit = async (values: CreateGroupInput) => {
     await updateGroup(groupId, {
       ...values,
-      // An emptied place or day list is a change too, not "leave as it is".
-      locationName: values.locationName ?? "",
+      // A cleared schedule or day list is a change too, not "leave as it is".
       usualSchedule: values.usualSchedule ?? "",
       meetingDays: values.meetingDays ?? [],
-      clearLocation: values.locationName === undefined,
     })
     await queryClient.invalidateQueries({ queryKey: groupKeys.all() })
     toast.success(t("groups.form.saved"))
@@ -79,7 +77,8 @@ function EditGroupPage() {
                 name: group.name,
                 activityId: group.activity.id,
                 description: group.description,
-                locationName: group.locationName ?? "",
+                // A group from before places were required has none: it has to pick one now.
+                locationName: group.latitude === null ? "" : (group.locationName ?? ""),
                 usualSchedule: group.usualSchedule ?? "",
                 approvalMode: group.approvalMode,
                 meetingDays: group.meetingDays,
