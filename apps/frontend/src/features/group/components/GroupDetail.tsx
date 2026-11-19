@@ -81,13 +81,8 @@ export function GroupDetail({
           {group.description}
         </p>
 
-        {/* A phone gets where and when after the story, without the map. */}
-        {isWide ? null : (
-          <GroupFacts
-            group={group}
-            hasMap={false}
-          />
-        )}
+        {/* A phone gets where and when, with the map, after the story. */}
+        {isWide ? null : <GroupFacts group={group} />}
 
         {events}
       </div>
