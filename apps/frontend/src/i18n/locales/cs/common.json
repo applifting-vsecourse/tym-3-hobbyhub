@@ -1022,7 +1022,7 @@
       "save": "Uložit změny",
       "saved": "Změny jsou uložené",
       "submit": "Vytvořit skupinu",
-      "taglineHint": "Jedna věta pod názvem, můžete použít emoji. Delší povídání patří do popisu níže.",
+      "taglineHint": "Jedna věta pod názvem, emoji vítány.",
       "title": "Nová skupina"
     },
     "list": {
@@ -1044,10 +1044,10 @@
         "sortMembers": "Nejvíc členů",
         "sortNearest": "Nejbližší",
         "sortNewest": "Nejnovější",
-        "title": "Filtry",
+        "title": "Další filtry",
         "upcoming": "Mají nadcházející akci"
       },
-      "intro": "Skupina je parta, která se pravidelně schází. Najdete v ní lidi na pravidelné hraní a první na nové akce se dozvíte vy.",
+      "intro": "Skupina je parta, která se pravidelně schází. Najděte tu svou, nebo založte novou.",
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",

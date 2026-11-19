@@ -44,7 +44,7 @@ export function GroupStats({ group }: { group: Group }) {
   return (
     <dl
       className={cn(
-        "grid grid-cols-2 gap-x-4 divide-border md:divide-x md:border-y md:border-border",
+        "grid grid-cols-2 gap-x-4 gap-y-1 divide-border md:divide-x md:border-y md:border-border",
         items.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3",
       )}
     >
@@ -53,7 +53,7 @@ export function GroupStats({ group }: { group: Group }) {
           key={item.key}
           className="flex flex-col gap-1 py-2 md:px-4 md:py-3 md:first:pl-0"
         >
-          <dd className="typo-h2 text-foreground">{item.value}</dd>
+          <dd className="typo-h3 text-foreground md:typo-h2">{item.value}</dd>
           <dt className="typo-small text-muted-foreground">{item.label}</dt>
         </div>
       ))}

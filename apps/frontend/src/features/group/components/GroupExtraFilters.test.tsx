@@ -31,14 +31,14 @@ describe("GroupExtraFilters", () => {
       screen.queryByRole("checkbox", { name: "Mají nadcházející akci" }),
     ).not.toBeInTheDocument()
     expect(screen.getByRole("combobox")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "Filtry" }))
+    await user.click(screen.getByRole("button", { name: "Další filtry" }))
     expect(screen.getByRole("checkbox", { name: "Mají nadcházející akci" })).toBeVisible()
   })
 
   it("says how many filters are on, and opens when some are", () => {
     renderFilters({ ...EMPTY, approvalMode: "OPEN", onlyWithUpcomingEvent: true })
 
-    expect(screen.getByRole("button", { name: /Filtry\s?\(2\)/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /Další filtry\s?\(2\)/ })).toHaveAttribute(
       "aria-expanded",
       "true",
     )
@@ -47,7 +47,7 @@ describe("GroupExtraFilters", () => {
   it("narrows by how a group takes people in", async () => {
     const { onChange, user } = renderFilters()
 
-    await user.click(screen.getByRole("button", { name: "Filtry" }))
+    await user.click(screen.getByRole("button", { name: "Další filtry" }))
     await user.click(screen.getByRole("button", { name: "Otevřená, bez schvalování" }))
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY, approvalMode: "OPEN" })
   })
@@ -55,7 +55,7 @@ describe("GroupExtraFilters", () => {
   it("keeps only groups with an event ahead", async () => {
     const { onChange, user } = renderFilters()
 
-    await user.click(screen.getByRole("button", { name: "Filtry" }))
+    await user.click(screen.getByRole("button", { name: "Další filtry" }))
     await user.click(screen.getByRole("checkbox", { name: "Mají nadcházející akci" }))
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY, onlyWithUpcomingEvent: true })
   })
@@ -73,7 +73,7 @@ describe("GroupExtraFilters", () => {
 
   it("offers a radius only where there is a place to measure from", async () => {
     const { user } = renderFilters()
-    await user.click(screen.getByRole("button", { name: "Filtry" }))
+    await user.click(screen.getByRole("button", { name: "Další filtry" }))
 
     expect(screen.queryByText("Okruh od domova")).not.toBeInTheDocument()
   })

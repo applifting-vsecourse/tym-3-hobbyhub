@@ -131,8 +131,9 @@ function DiscoverTab({
       activityLabel={activityLabel}
       filters={filters}
       tabs={tabs}
-      extraFilters={
+      extraFilters={(mapToggle) => (
         <GroupExtraFilters
+          mapToggle={mapToggle}
           value={extra}
           canUseDistance={home !== null}
           onChange={(next) =>
@@ -147,7 +148,7 @@ function DiscoverTab({
             })
           }
         />
-      }
+      )}
       renderMap={(groups) => (
         <GroupsMap
           groups={groups}
@@ -206,14 +207,14 @@ function GroupsPage() {
     <>
       <Seo title={t("groups.list.title")} />
       <AppShell className="mx-auto flex w-full max-w-page flex-col gap-6 px-page py-6 md:py-10">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
             <h1 className="typo-h1 text-foreground">{t("groups.list.title")}</h1>
-            <p className="max-w-prose typo-body text-muted-foreground">{t("groups.list.intro")}</p>
+            <Button asChild>
+              <Link to={ROUTES.newGroup}>{t("groups.list.create")}</Link>
+            </Button>
           </div>
-          <Button asChild>
-            <Link to={ROUTES.newGroup}>{t("groups.list.create")}</Link>
-          </Button>
+          <p className="max-w-prose typo-body text-muted-foreground">{t("groups.list.intro")}</p>
         </div>
         {isSessionPending ? (
           <div className="flex justify-center py-8">

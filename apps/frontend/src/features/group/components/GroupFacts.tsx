@@ -7,7 +7,7 @@ import { GroupsMap } from "@/features/group/components/GroupsMap"
  * Where and when a group meets, beside its membership (ADR-0028). Only what the
  * group put on its public page: the place as a name, never the exact address.
  */
-export function GroupFacts({ group }: { group: Group }) {
+export function GroupFacts({ group, hasMap = true }: { group: Group; hasMap?: boolean }) {
   const { t } = useTranslation()
   const days = group.meetingDays.map((day) => t(`groups.weekdaysLong.${day}`)).join(", ")
   const when = [days ? t("groups.detail.facts.every", { day: days }) : null, group.usualSchedule]
@@ -17,7 +17,7 @@ export function GroupFacts({ group }: { group: Group }) {
   return (
     <div className="flex flex-col gap-3">
       {/* Where the group meets, as a small map with the member count (ADR-0028). */}
-      {group.latitude !== null ? (
+      {hasMap && group.latitude !== null ? (
         <GroupsMap
           groups={[group]}
           isFallbackShown={false}

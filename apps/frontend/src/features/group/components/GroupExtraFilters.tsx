@@ -1,4 +1,4 @@
-import { useId, useState } from "react"
+import { useId, useState, type ReactNode } from "react"
 import { ChevronDownIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -33,6 +33,8 @@ type Props = {
   onChange: (next: GroupExtraFilterValues) => void
   /** Distance needs a place to measure from: the viewer's home address. */
   canUseDistance: boolean
+  /** The list/map switch of a phone, which sits in the first row of the filters. */
+  mapToggle?: ReactNode
 }
 
 const chipClass = cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")
@@ -49,7 +51,7 @@ export const activeExtraFilterCount = (value: GroupExtraFilterValues): number =>
  * around home. They are folded away under one "Filtry" button, which says how
  * many are on; the order stays in sight beside it. The URL keeps all of it.
  */
-export function GroupExtraFilters({ value, onChange, canUseDistance }: Props) {
+export function GroupExtraFilters({ value, onChange, canUseDistance, mapToggle }: Props) {
   const { t } = useTranslation()
   const panelId = useId()
   const upcomingId = useId()
@@ -60,7 +62,7 @@ export function GroupExtraFilters({ value, onChange, canUseDistance }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="outline"
@@ -80,13 +82,19 @@ export function GroupExtraFilters({ value, onChange, canUseDistance }: Props) {
           />
         </Button>
 
-        <div className="flex items-center gap-2">
-          <Label>{t("groups.list.filters.sort")}</Label>
+        {mapToggle}
+
+        {/* The label is only for assistive technology on a phone, where the row is tight. */}
+        <div className="ml-auto flex items-center gap-2">
+          <Label className="sr-only sm:not-sr-only">{t("groups.list.filters.sort")}</Label>
           <Select
             value={value.sort}
             onValueChange={(next) => set({ sort: next as GroupExtraFilterValues["sort"] })}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger
+              aria-label={t("groups.list.filters.sort")}
+              className="w-36 sm:w-40"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

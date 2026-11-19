@@ -194,7 +194,7 @@ export function GroupMembershipPanel({
     >
       <h2
         id="membership-heading"
-        className="typo-label-lg text-muted-foreground"
+        className="sr-only lg:not-sr-only lg:typo-label-lg lg:text-muted-foreground"
       >
         {t("groups.detail.membership.title")}
       </h2>

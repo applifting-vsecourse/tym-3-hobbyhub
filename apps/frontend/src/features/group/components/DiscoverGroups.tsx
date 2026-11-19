@@ -24,7 +24,7 @@ type DiscoverGroupsProps = {
   /** The filters open beside the list on a large screen (#224); nothing where there is no room. */
   filtersPanel?: ReactNode
   /** The extra filters of groups under the search (joining, upcoming, radius, order). */
-  extraFilters?: ReactNode
+  extraFilters?: (mapToggle: ReactNode) => ReactNode
   /** The map of the groups on screen, beside the list from `xl` (ADR-0028). */
   renderMap?: (groups: Group[]) => ReactNode
   /** The page's tabs for a signed-in viewer, above the search beside the filters. */
@@ -85,27 +85,20 @@ export function DiscoverGroups({
       <div className="flex min-w-0 flex-col gap-6">
         {tabs}
         {filtersBar}
-        {extraFilters}
-        {renderMap ? (
-          <div
-            role="group"
-            aria-label={t("groups.map.label")}
-            className="flex gap-2 xl:hidden"
-          >
-            {[false, true].map((isMapOption) => (
-              <button
-                key={String(isMapOption)}
-                type="button"
-                aria-pressed={isMapShown === isMapOption}
-                data-state={isMapShown === isMapOption ? "on" : "off"}
-                className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
-                onClick={() => setIsMapShown(isMapOption)}
-              >
-                {isMapOption ? t("groups.map.show") : t("groups.map.list")}
-              </button>
-            ))}
-          </div>
-        ) : null}
+        {extraFilters?.(
+          renderMap ? (
+            // One chip beside the filters; from `xl` the map is always beside the list.
+            <button
+              type="button"
+              aria-pressed={isMapShown}
+              data-state={isMapShown ? "on" : "off"}
+              className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9 xl:hidden")}
+              onClick={() => setIsMapShown((isShown) => !isShown)}
+            >
+              {t("groups.map.show")}
+            </button>
+          ) : null,
+        )}
         {renderMap && isMapShown ? (
           <div className="h-[60svh] xl:hidden">{renderMap(groups ?? [])}</div>
         ) : null}

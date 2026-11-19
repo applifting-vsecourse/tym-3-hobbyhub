@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { Badge } from "@/components/ui/badge"
+import { useMediaQuery, WIDE_QUERY } from "@/hooks/useMediaQuery"
 
 import type { Group } from "@/features/group/api/groupSchemas"
 import { GroupFacts } from "@/features/group/components/GroupFacts"
@@ -35,7 +36,7 @@ export function GroupDetail({
   events,
 }: GroupDetailProps) {
   const { t } = useTranslation()
-  const meta = [group.locationName, activityLabel].filter(Boolean)
+  const isWide = useMediaQuery(WIDE_QUERY)
 
   return (
     // From `xl` the page is wider (#224): the side panel gets more room, the
@@ -55,7 +56,10 @@ export function GroupDetail({
           <h1 className="typo-h1 text-foreground">{group.name}</h1>
           {group.isActive ? <Badge variant="success">{t("groups.active")}</Badge> : null}
         </div>
-        <p className="typo-body text-muted-foreground">{meta.join(" · ")}</p>
+        {/* The activity is named above the title already. */}
+        {group.locationName ? (
+          <p className="typo-body text-muted-foreground">{group.locationName}</p>
+        ) : null}
         {group.tagline ? (
           <p className="typo-body-lg break-words text-foreground">{group.tagline}</p>
         ) : null}
@@ -64,7 +68,8 @@ export function GroupDetail({
 
       <div className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         {membershipPanel}
-        <GroupFacts group={group} />
+        {/* With its map, beside the membership. */}
+        {isWide ? <GroupFacts group={group} /> : null}
         {/* Beside the membership, not at the foot of a long page. */}
         {membersPreview}
         {adminPanel}
@@ -75,6 +80,14 @@ export function GroupDetail({
         <p className="max-w-prose typo-body-lg break-words whitespace-pre-line text-foreground">
           {group.description}
         </p>
+
+        {/* A phone gets where and when after the story, without the map. */}
+        {isWide ? null : (
+          <GroupFacts
+            group={group}
+            hasMap={false}
+          />
+        )}
 
         {events}
       </div>

@@ -1005,7 +1005,7 @@
       "save": "Save changes",
       "saved": "Changes saved",
       "submit": "Create group",
-      "taglineHint": "One line under the name, emoji welcome. A longer story belongs in the description below.",
+      "taglineHint": "One line under the name, emoji welcome.",
       "title": "New group"
     },
     "list": {
@@ -1027,10 +1027,10 @@
         "sortMembers": "Most members",
         "sortNearest": "Nearest",
         "sortNewest": "Newest",
-        "title": "Filters",
+        "title": "More filters",
         "upcoming": "Have an upcoming event"
       },
-      "intro": "A group is a crew that meets regularly. Join one to play with the same people and hear about new events first.",
+      "intro": "A group is a crew that meets regularly. Find yours, or start a new one.",
       "loadError": "Could not load groups",
       "loadMore": "Load more",
       "loadMoreError": "Could not load more groups. Please try again.",

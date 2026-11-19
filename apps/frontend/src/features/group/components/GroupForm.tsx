@@ -166,24 +166,6 @@ export function GroupForm({
 
       <FormField
         control={form.control}
-        name="tagline"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("groups.fields.tagline")}</FormLabel>
-            <FormControl>
-              <Input
-                placeholder={t("groups.placeholders.tagline")}
-                {...field}
-              />
-            </FormControl>
-            <p className="typo-small text-muted-foreground">{t("groups.form.taglineHint")}</p>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
         name="activityId"
         render={({ field }) => (
           <FormItem>
@@ -244,57 +226,6 @@ export function GroupForm({
 
       <FormField
         control={form.control}
-        name="meetingDays"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("groups.fields.meetingDays")}</FormLabel>
-            <div className="flex flex-wrap gap-2">
-              {MEETING_DAYS.map((day) => {
-                const isOn = field.value.includes(day)
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    aria-pressed={isOn}
-                    data-state={isOn ? "on" : "off"}
-                    className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
-                    onClick={() =>
-                      field.onChange(
-                        isOn
-                          ? field.value.filter((each) => each !== day)
-                          : [...field.value, day].sort(),
-                      )
-                    }
-                  >
-                    {t(`groups.weekdays.${day}`)}
-                  </button>
-                )
-              })}
-            </div>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="usualSchedule"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("groups.fields.usualSchedule")}</FormLabel>
-            <FormControl>
-              <Input
-                placeholder={t("groups.placeholders.usualSchedule")}
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
         name="approvalMode"
         render={({ field }) => (
           <FormItem>
@@ -347,6 +278,75 @@ export function GroupForm({
               <Textarea
                 rows={4}
                 placeholder={t("groups.placeholders.description")}
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="tagline"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.tagline")}</FormLabel>
+            <FormControl>
+              <Input
+                placeholder={t("groups.placeholders.tagline")}
+                {...field}
+              />
+            </FormControl>
+            <p className="typo-small text-muted-foreground">{t("groups.form.taglineHint")}</p>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="meetingDays"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.meetingDays")}</FormLabel>
+            <div className="flex flex-wrap gap-2">
+              {MEETING_DAYS.map((day) => {
+                const isOn = field.value.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={isOn}
+                    data-state={isOn ? "on" : "off"}
+                    className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
+                    onClick={() =>
+                      field.onChange(
+                        isOn
+                          ? field.value.filter((each) => each !== day)
+                          : [...field.value, day].sort(),
+                      )
+                    }
+                  >
+                    {t(`groups.weekdays.${day}`)}
+                  </button>
+                )
+              })}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="usualSchedule"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.usualSchedule")}</FormLabel>
+            <FormControl>
+              <Input
+                placeholder={t("groups.placeholders.usualSchedule")}
                 {...field}
               />
             </FormControl>
