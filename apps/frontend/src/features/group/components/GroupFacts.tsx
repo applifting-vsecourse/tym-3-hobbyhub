@@ -24,19 +24,21 @@ export function GroupFacts({ group }: { group: Group }) {
           className="h-48"
         />
       ) : null}
-      <dl className="flex flex-col divide-y divide-border border-y border-border lg:border-x lg:px-4">
-        <div className="flex flex-col gap-1 py-3">
+      {/* Hairlines only where there is room; on a phone the facts are just spaced apart. */}
+      <dl className="flex flex-col gap-3 lg:gap-0 lg:divide-y lg:divide-border lg:rounded-lg lg:border lg:border-border lg:px-4">
+        <div className="flex flex-col gap-1 lg:py-3">
           <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.where")}</dt>
           <dd className="typo-small text-muted-foreground">
             {group.locationName ?? t("groups.detail.facts.whereNone")}
           </dd>
         </div>
-        <div className="flex flex-col gap-1 py-3">
-          <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.when")}</dt>
-          <dd className="typo-small text-muted-foreground">
-            {when || t("groups.detail.facts.whenNone")}
-          </dd>
-        </div>
+        {/* When the group meets is its own to tell: without it the row is not there. */}
+        {when ? (
+          <div className="flex flex-col gap-1 lg:py-3">
+            <dt className="typo-label-lg text-foreground">{t("groups.detail.facts.when")}</dt>
+            <dd className="typo-small text-muted-foreground">{when}</dd>
+          </div>
+        ) : null}
       </dl>
     </div>
   )

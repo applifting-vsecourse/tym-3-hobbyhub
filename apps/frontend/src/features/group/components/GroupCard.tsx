@@ -50,7 +50,7 @@ export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
         subtitle={meta.join(" · ")}
         activity={group.activity.icon}
         schedule={group.usualSchedule}
-        description={group.description}
+        description={group.tagline ?? group.description}
         activeLabel={group.isActive ? t("groups.active") : undefined}
         approval={t(`groups.approval.${group.approvalMode}`)}
         nextEvent={

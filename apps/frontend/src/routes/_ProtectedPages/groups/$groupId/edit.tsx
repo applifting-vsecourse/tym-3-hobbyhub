@@ -47,6 +47,7 @@ function EditGroupPage() {
       ...values,
       // A cleared schedule or day list is a change too, not "leave as it is".
       usualSchedule: values.usualSchedule ?? "",
+      tagline: values.tagline ?? "",
       meetingDays: values.meetingDays ?? [],
     })
     await queryClient.invalidateQueries({ queryKey: groupKeys.all() })
@@ -80,6 +81,7 @@ function EditGroupPage() {
                 // A group from before places were required has none: it has to pick one now.
                 locationName: group.latitude === null ? "" : (group.locationName ?? ""),
                 usualSchedule: group.usualSchedule ?? "",
+                tagline: group.tagline ?? "",
                 approvalMode: group.approvalMode,
                 meetingDays: group.meetingDays,
                 latitude: group.latitude ?? undefined,

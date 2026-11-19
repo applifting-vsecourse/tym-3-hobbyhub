@@ -6,6 +6,7 @@ import {
   GROUP_NAME_MAX_LENGTH,
   GROUP_NAME_MIN_LENGTH,
   GROUP_SCHEDULE_MAX_LENGTH,
+  GROUP_TAGLINE_MAX_LENGTH,
 } from '@/modules/group/domain/group';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -67,6 +68,17 @@ export class CreateGroupDto {
   @IsNotEmpty()
   @CharLength(1, GROUP_LOCATION_MAX_LENGTH)
   locationName!: string;
+
+  @ApiPropertyOptional({
+    example: '🏐 Pravidelný volejbal pro každého',
+    maxLength: GROUP_TAGLINE_MAX_LENGTH,
+    description: "The group's own short line under its name; emoji welcome",
+  })
+  @Transform(trimToUndefined)
+  @IsOptional()
+  @IsString()
+  @CharLength(0, GROUP_TAGLINE_MAX_LENGTH)
+  tagline?: string;
 
   @ApiPropertyOptional({
     example: 'Čtvrtky 19:00',

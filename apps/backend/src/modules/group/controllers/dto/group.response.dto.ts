@@ -18,6 +18,9 @@ export class GroupResponseDto {
   @ApiProperty({ type: String, nullable: true })
   usualSchedule!: string | null;
 
+  @ApiProperty({ type: String, nullable: true })
+  tagline!: string | null;
+
   @ApiProperty({ enum: ['PUBLIC', 'PRIVATE'] })
   visibility!: Group['visibility'];
 
@@ -80,6 +83,7 @@ export class GroupResponseDto {
       description: group.description,
       locationName: group.locationName,
       usualSchedule: group.usualSchedule,
+      tagline: group.tagline,
       visibility: group.visibility,
       status: group.status,
       createdAt: group.createdAt,

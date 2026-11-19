@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 
+import { cn } from "@/lib/utils"
+
 import type { Group } from "@/features/group/api/groupSchemas"
 import { groupStatsQueryOptions } from "@/features/group/api/groupStatsQueryOptions"
 
@@ -15,11 +17,16 @@ export function GroupStats({ group }: { group: Group }) {
   const day = group.meetingDays[0]
   const items = [
     { key: "members", value: String(group.memberCount), label: t("groups.detail.stats.members") },
-    {
-      key: "meets",
-      value: day ? t(`groups.weekdays.${day}`) : t("groups.detail.stats.none"),
-      label: t("groups.detail.stats.meets"),
-    },
+    // When the group meets is its own to tell: without it the cell is not there.
+    ...(day
+      ? [
+          {
+            key: "meets",
+            value: t(`groups.weekdays.${day}`),
+            label: t("groups.detail.stats.meets"),
+          },
+        ]
+      : []),
     {
       key: "played",
       value: stats.data ? String(stats.data.playedEvents) : t("groups.detail.stats.none"),
@@ -35,11 +42,16 @@ export function GroupStats({ group }: { group: Group }) {
   ]
 
   return (
-    <dl className="grid grid-cols-2 divide-border border-y border-border md:grid-cols-4 md:divide-x">
+    <dl
+      className={cn(
+        "grid grid-cols-2 gap-x-4 divide-border md:divide-x md:border-y md:border-border",
+        items.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3",
+      )}
+    >
       {items.map((item) => (
         <div
           key={item.key}
-          className="flex flex-col gap-1 py-3 md:px-4 md:first:pl-0"
+          className="flex flex-col gap-1 py-2 md:px-4 md:py-3 md:first:pl-0"
         >
           <dd className="typo-h2 text-foreground">{item.value}</dd>
           <dt className="typo-small text-muted-foreground">{item.label}</dt>

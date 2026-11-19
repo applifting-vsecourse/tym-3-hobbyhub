@@ -6,6 +6,7 @@ export const GROUP_NAME_MAX_LENGTH = 80;
 export const GROUP_DESCRIPTION_MAX_LENGTH = 2000;
 export const GROUP_LOCATION_MAX_LENGTH = 100;
 export const GROUP_SCHEDULE_MAX_LENGTH = 100;
+export const GROUP_TAGLINE_MAX_LENGTH = 120;
 
 export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
@@ -83,6 +84,8 @@ export type Group = {
   description: string;
   locationName: string | null;
   usualSchedule: string | null;
+  // The group's own short line under its name; emoji welcome.
+  tagline: string | null;
   visibility: GroupVisibility;
   status: GroupStatus;
   createdAt: Date;
@@ -113,6 +116,7 @@ export type CreateGroupData = {
   latitude: number;
   longitude: number;
   usualSchedule?: string;
+  tagline?: string;
   approvalMode?: GroupApprovalMode;
   meetingDays?: number[];
 };

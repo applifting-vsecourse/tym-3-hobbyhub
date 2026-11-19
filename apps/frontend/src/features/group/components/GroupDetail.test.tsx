@@ -102,6 +102,7 @@ const group: Group = {
   description: "Rekreační florbal každý čtvrtek.",
   locationName: "Praha 8",
   usualSchedule: "Čtvrtky 19:00",
+  tagline: null,
   visibility: "PUBLIC",
   status: "ACTIVE",
   createdAt: new Date(2026, 0, 1),

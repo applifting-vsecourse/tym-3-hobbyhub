@@ -68,6 +68,23 @@ describe("GroupForm", () => {
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
+  it("sends the group's own tagline, emoji included", async () => {
+    const { onSubmit, user } = await renderForm()
+
+    await user.type(screen.getByLabelText("Název skupiny"), "Čtvrteční florbalisté")
+    await user.type(screen.getByLabelText("Krátký popisek (nepovinné)"), "🏑 Florbal pro radost")
+    await user.click(screen.getByRole("combobox", { name: "Aktivita" }))
+    await user.click(await screen.findByRole("option", { name: "Florbal" }))
+    await user.click(screen.getByRole("button", { name: "Vyberte adresu místa setkání" }))
+    await user.type(screen.getByLabelText("Popis"), "Hrajeme každý čtvrtek.")
+    await user.click(screen.getByRole("button", { name: "Vytvořit skupinu" }))
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ tagline: "🏑 Florbal pro radost" }),
+    )
+  })
+
   it("asks for the place of the group, which every group has", async () => {
     const { onSubmit, user } = await renderForm()
 

@@ -56,6 +56,9 @@ export function GroupDetail({
           {group.isActive ? <Badge variant="success">{t("groups.active")}</Badge> : null}
         </div>
         <p className="typo-body text-muted-foreground">{meta.join(" · ")}</p>
+        {group.tagline ? (
+          <p className="typo-body-lg break-words text-foreground">{group.tagline}</p>
+        ) : null}
         <p className="typo-label text-primary">{t(`groups.approval.${group.approvalMode}`)}</p>
       </header>
 

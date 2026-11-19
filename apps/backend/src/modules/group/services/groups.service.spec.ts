@@ -33,6 +33,7 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
   description: 'Hrajeme každý čtvrtek.',
   locationName: 'Praha 8',
   usualSchedule: 'Čtvrtky 19:00',
+  tagline: null,
   visibility: 'PUBLIC',
   status: 'ACTIVE',
   createdAt: new Date('2026-01-01T12:00:00Z'),

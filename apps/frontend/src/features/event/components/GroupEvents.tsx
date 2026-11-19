@@ -147,7 +147,7 @@ export function GroupEvents({
   return (
     <section
       aria-labelledby="group-events-heading"
-      className="flex flex-col gap-3 border-t border-border pt-4"
+      className="flex flex-col gap-3 md:border-t md:border-border md:pt-4"
     >
       <h2
         id="group-events-heading"

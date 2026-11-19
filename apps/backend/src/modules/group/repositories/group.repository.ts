@@ -108,6 +108,7 @@ const mapPrismaGroupToDomain = (
     description: group.description,
     locationName: group.locationName,
     usualSchedule: group.usualSchedule,
+    tagline: group.tagline,
     visibility: group.visibility,
     status: group.status,
     createdAt: group.createdAt,
@@ -222,6 +223,7 @@ export class GroupRepository {
         description: data.description,
         locationName: data.locationName,
         usualSchedule: data.usualSchedule ?? null,
+        tagline: data.tagline ?? null,
         approvalMode: data.approvalMode ?? 'APPROVAL',
         meetingDays: data.meetingDays ?? [],
         locationLatitude: data.latitude,
@@ -520,6 +522,7 @@ export class GroupRepository {
           ...(data.usualSchedule !== undefined
             ? { usualSchedule: data.usualSchedule }
             : {}),
+          ...(data.tagline !== undefined ? { tagline: data.tagline } : {}),
           ...(data.approvalMode !== undefined
             ? { approvalMode: data.approvalMode }
             : {}),

@@ -985,6 +985,7 @@
       "location": "Where you meet",
       "meetingDays": "Days you meet on (optional)",
       "name": "Group name",
+      "tagline": "Short tagline (optional)",
       "usualSchedule": "Usual time (optional)"
     },
     "form": {
@@ -1004,6 +1005,7 @@
       "save": "Save changes",
       "saved": "Changes saved",
       "submit": "Create group",
+      "taglineHint": "One line under the name, emoji welcome. A longer story belongs in the description below.",
       "title": "New group"
     },
     "list": {
@@ -1216,6 +1218,7 @@
       "description": "E.g. We play every Thursday in the school gym, newcomers welcome.",
       "location": "E.g. Prague 8",
       "name": "E.g. Thursday floorball crew",
+      "tagline": "🏐 Regular volleyball for everyone",
       "usualSchedule": "E.g. Thursdays 7 pm"
     },
     "validation": {

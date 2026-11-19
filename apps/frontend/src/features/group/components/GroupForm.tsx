@@ -52,6 +52,7 @@ const createSchema = (t: TFunction) => {
       t("groups.validation.locationRequired"),
     ),
     usualSchedule: text(GROUP_LIMITS.scheduleMax),
+    tagline: text(GROUP_LIMITS.taglineMax),
     approvalMode: z.enum(["OPEN", "APPROVAL"]),
     meetingDays: z.array(z.number().int().min(1).max(7)),
     // The position of the place picked in the address search; both or none.
@@ -71,15 +72,17 @@ const defaultValues: Partial<FormValues> = {
   activityId: "",
   locationName: "",
   usualSchedule: "",
+  tagline: "",
   approvalMode: "APPROVAL",
   meetingDays: [],
   description: "",
 }
 
 // Optional fields left empty are not sent at all.
-const toInput = ({ usualSchedule, ...values }: FormValues): CreateGroupInput => ({
+const toInput = ({ usualSchedule, tagline, ...values }: FormValues): CreateGroupInput => ({
   ...values,
   usualSchedule: usualSchedule || undefined,
+  tagline: tagline || undefined,
   meetingDays: values.meetingDays.length > 0 ? values.meetingDays : undefined,
 })
 
@@ -156,6 +159,24 @@ export function GroupForm({
                 {...field}
               />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="tagline"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.tagline")}</FormLabel>
+            <FormControl>
+              <Input
+                placeholder={t("groups.placeholders.tagline")}
+                {...field}
+              />
+            </FormControl>
+            <p className="typo-small text-muted-foreground">{t("groups.form.taglineHint")}</p>
             <FormMessage />
           </FormItem>
         )}

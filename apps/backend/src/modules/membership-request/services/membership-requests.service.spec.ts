@@ -36,6 +36,7 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
   description: 'Test',
   locationName: 'Praha 8',
   usualSchedule: null,
+  tagline: null,
   visibility: 'PUBLIC',
   status: 'ACTIVE',
   createdAt: now,

@@ -7,6 +7,7 @@ export const GROUP_LIMITS = {
   descriptionMax: 2000,
   locationMax: 100,
   scheduleMax: 100,
+  taglineMax: 120,
 } as const
 
 export const groupSchema = z.object({
@@ -15,6 +16,8 @@ export const groupSchema = z.object({
   description: z.string(),
   locationName: z.string().nullable(),
   usualSchedule: z.string().nullable(),
+  // The group's own short line under its name; emoji welcome.
+  tagline: z.string().nullable(),
   visibility: z.enum(["PUBLIC", "PRIVATE"]),
   status: z.enum(["ACTIVE", "CANCELLED"]),
   createdAt: z.coerce.date(),
@@ -88,6 +91,7 @@ export type CreateGroupInput = {
   latitude: number
   longitude: number
   usualSchedule?: string
+  tagline?: string
   approvalMode?: GroupApprovalMode
   meetingDays?: number[]
 }
