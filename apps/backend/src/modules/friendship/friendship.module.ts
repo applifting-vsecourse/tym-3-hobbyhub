@@ -1,13 +1,16 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
+import { AuthModule } from '@/shared/auth/auth.module';
+import { UserBlockVisibilityModule } from '@/shared/user-block/user-block.module';
 import { Module } from '@nestjs/common';
+import { FriendsController } from './controllers/friends.controller';
 import { FriendshipRepository } from './repositories/friendship.repository';
 import { FriendshipService } from './services/friendship.service';
 
-// #227, ADR-0026: friendships and friend requests. No controller yet: the
-// endpoints come with #225 (search, send a request), #228 (decide) and #226
-// (the list of friends, remove a friend).
+// #227, #225, ADR-0026: friendships and friend requests. #225 adds searching
+// people and sending a request; #228 deciding it and #226 the list of friends.
 @Module({
-  imports: [PrismaModule],
+  imports: [AuthModule, PrismaModule, UserBlockVisibilityModule],
+  controllers: [FriendsController],
   providers: [FriendshipService, FriendshipRepository],
   exports: [FriendshipService],
 })

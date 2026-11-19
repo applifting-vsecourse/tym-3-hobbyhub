@@ -27,6 +27,7 @@ const renderPage = (
         userId={userId}
         ownUserId="me"
         activityLabel={(activity) => activity.name}
+        renderFriendAction={({ relation }) => <p>{`relation:${relation}`}</p>}
         reportAction={reportAction}
       />
     </QueryClientProvider>,
@@ -39,6 +40,7 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
+      relation: "request_sent",
       bio: null,
       image: null,
       cover: null,
@@ -52,6 +54,8 @@ describe("PublicProfilePage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Petr" })).toBeInTheDocument()
     expect(get).toHaveBeenCalledWith("profile/u2")
+    // #225: my relation to the person comes with the profile.
+    expect(screen.getByText("relation:request_sent")).toBeInTheDocument()
   })
 
   // #240: the route hands in "Nahlásit uživatele" for the loaded person.
@@ -59,6 +63,7 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
+      relation: "none",
       bio: null,
       image: null,
       cover: null,

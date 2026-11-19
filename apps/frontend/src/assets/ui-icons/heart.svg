@@ -1,0 +1,16 @@
+<svg
+  width="24"
+  height="24"
+  viewBox="13.7 5.8 10 10"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    id="Heart"
+    d="M21.5 11.6C22.096 11.016 22.7 10.316 22.7 9.4A2.2 2.2 0 0 0 20.5 7.2C19.796 7.2 19.3 7.4 18.7 8C18.1 7.4 17.604 7.2 16.9 7.2A2.2 2.2 0 0 0 14.7 9.4C14.7 10.32 15.3 11.02 15.9 11.6L18.7 14.4Z"
+    stroke="currentColor"
+    stroke-width="0.85"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

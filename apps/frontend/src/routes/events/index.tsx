@@ -12,6 +12,7 @@ import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 import { useFiltersPanel } from "@/hooks/useFiltersPanel"
+import { useSearchText } from "@/hooks/useSearchText"
 import { cn } from "@/lib/utils"
 
 import { activityName } from "@/features/activity/activityName"
@@ -26,7 +27,6 @@ import {
 import { EventList } from "@/features/event/components/EventList"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import { useNearMe } from "@/features/event/hooks/useNearMe"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import { eventsInBounds, type MapBounds } from "@/features/event/lib/clusterEvents"
 import {
   eventsListSearchSchema,

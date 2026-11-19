@@ -1,4 +1,5 @@
 import { ActivitiesService } from '@/modules/activity/services/activities.service';
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import {
   AdminGroupDetail,
   AssignableGroupRole,
@@ -7,6 +8,7 @@ import {
   Group,
   GroupDiscoverFilter,
   GroupMember,
+  GroupMemberListItem,
   GroupPage,
   GroupRole,
   hasGroupAdminRights,
@@ -43,6 +45,7 @@ export class GroupsService {
   constructor(
     private readonly groupRepository: GroupRepository,
     private readonly activitiesService: ActivitiesService,
+    private readonly friendshipService: FriendshipService,
     private readonly blocks: UserBlockVisibility,
   ) {}
 
@@ -122,14 +125,28 @@ export class GroupsService {
   // F-07.3: the member list is for the group's members (visibility matrix);
   // F-02.5 shows a visitor the count, never the members. Anyone else gets
   // "not found", as for the admin-only features.
-  async listMembers(groupId: string, user: Identity): Promise<GroupMember[]> {
+  // #225: each member with the viewer's friendship to them, so the list can
+  // offer a friend request or show where one stands.
+  async listMembers(
+    groupId: string,
+    user: Identity,
+  ): Promise<GroupMemberListItem[]> {
     const role = await this.groupRepository.getMemberRole(groupId, user.id);
     if (!role) throw new NotFoundException('Group not found');
     // #239: members blocked from the one asking are not on the list.
-    return this.groupRepository.listMembers(
+    const members = await this.groupRepository.listMembers(
       groupId,
       await this.blocks.hiddenFor(user.id),
     );
+    // #225: each with the asker's relation to them.
+    const relations = await this.friendshipService.relationsWith(
+      user.id,
+      members.map((member) => member.userId),
+    );
+    return members.map((member) => ({
+      ...member,
+      relation: relations.get(member.userId) ?? 'none',
+    }));
   }
 
   // F-07.3b: who acts comes from the session. ADR-0007 decides who may do

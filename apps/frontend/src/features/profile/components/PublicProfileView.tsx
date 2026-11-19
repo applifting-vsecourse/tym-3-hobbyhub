@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
@@ -12,6 +13,8 @@ type PublicProfileViewProps = {
   profile: PublicProfile
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: { name: string; icon: string }) => string
+  /** #225: what I can do about friendship, under the bio. */
+  friendAction?: ReactNode
 }
 
 /**
@@ -20,7 +23,11 @@ type PublicProfileViewProps = {
  * they play. Nothing else: the
  * visibility matrix has no more for a signed-in stranger.
  */
-export function PublicProfileView({ profile, activityLabel }: PublicProfileViewProps) {
+export function PublicProfileView({
+  profile,
+  activityLabel,
+  friendAction,
+}: PublicProfileViewProps) {
   const { t } = useTranslation()
 
   return (
@@ -46,6 +53,7 @@ export function PublicProfileView({ profile, activityLabel }: PublicProfileViewP
             </p>
           ) : null}
         </div>
+        {friendAction ? <div className="mt-6 px-1">{friendAction}</div> : null}
       </div>
 
       <ProfileRatings ratings={profile.ratings} />

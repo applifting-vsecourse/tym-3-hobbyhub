@@ -10,6 +10,7 @@ import { Loader } from "@/components/hobbyhub/Loader"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 import { useFiltersPanel } from "@/hooks/useFiltersPanel"
+import { useSearchText } from "@/hooks/useSearchText"
 
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
@@ -20,7 +21,6 @@ import {
   isPanelOpen,
   panelFiltersButton,
 } from "@/features/event/components/EventFiltersPanel"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import {
   eventsSearchSchema,
   filtersFromSearch,

@@ -848,11 +848,42 @@
     "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
   },
   "friends": {
+    "action": {
+      "error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu.",
+      "received": "Tento uživatel vás žádá o přátelství.",
+      "restricted": "Váš účet je omezený, o přátelství teď žádat nemůžete.",
+      "send": "Požádat o přátelství",
+      "sendShort": "Spřátelit",
+      "sendShortLabel": "Spřátelit: {{name}}",
+      "sending": "Odesíláme žádost…",
+      "sendingShort": "Odesíláme…",
+      "sent": "Žádost odeslána"
+    },
     "empty": {
       "findPeople": "Vyhledat uživatele",
       "friends": "Zatím tu nikoho nemáte. Až vám někdo přijme žádost o přátelství, uvidíte ho tady.",
-      "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady.",
-      "search": "Zatím tu nic není. Brzy tu půjde najít lidi podle přezdívky nebo jména a příjmení."
+      "requests": "Zatím tu nic není. Žádosti o přátelství, které vám lidé pošlou, uvidíte tady."
+    },
+    "relation": {
+      "friends": "Přítel",
+      "request_received": "Chce se spřátelit",
+      "request_sent": "Žádost odeslána"
+    },
+    "search": {
+      "capped": "Takových lidí je víc, než můžeme ukázat. Upřesněte přezdívku.",
+      "error": "Vyhledávání se nepovedlo.",
+      "hint_few": "Napište aspoň {{count}} znaky přezdívky.",
+      "hint_one": "Napište aspoň {{count}} znak přezdívky.",
+      "hint_other": "Napište aspoň {{count}} znaků přezdívky.",
+      "label": "Hledat lidi podle přezdívky",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další lidi se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Hledáme lidi…",
+      "loadingMore": "Načítáme…",
+      "noResults": "Nikoho takového jsme nenašli. Zkuste jen část přezdívky.",
+      "placeholder": "Přezdívka",
+      "results": "Nalezení lidé",
+      "retry": "Zkusit znovu"
     },
     "tabs": {
       "friends": "Přátelé",
@@ -860,7 +891,15 @@
       "requests": "Žádosti",
       "search": "Vyhledat uživatele"
     },
-    "title": "Přátelé"
+    "title": "Přátelé",
+    "withdraw": {
+      "button": "Zrušit žádost",
+      "confirm": "Zrušit žádost",
+      "error": "Žádost se nepodařilo zrušit. Zkuste to prosím znovu.",
+      "keep": "Ponechat",
+      "text": "Žádost o přátelství zmizí. Požádat můžete znovu kdykoli.",
+      "title": "Zrušit žádost o přátelství?"
+    }
   },
   "geo": {
     "address": {

@@ -12,6 +12,7 @@ import { z } from "zod"
 
 import { Seo } from "@/components/Seo"
 import { useFiltersPanel } from "@/hooks/useFiltersPanel"
+import { useSearchText } from "@/hooks/useSearchText"
 
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
@@ -27,7 +28,6 @@ import {
   panelFiltersButton,
 } from "@/features/event/components/EventFiltersPanel"
 import { MyEventsOverview, type MyEventsList } from "@/features/event/components/MyEventsOverview"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import {
   eventsSearchSchema,
   filtersFromSearch,
