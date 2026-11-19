@@ -1163,9 +1163,9 @@
     "map": {
       "label": "Mapa skupin",
       "list": "Seznam",
-      "noPlace": "Skupiny bez místa na mapě nejsou.",
       "pin": "{{name}}, {{count}} členů",
-      "show": "Mapa"
+      "show": "Mapa",
+      "unavailable": "Mapa teď není dostupná."
     },
     "membershipRequest": {
       "form": {

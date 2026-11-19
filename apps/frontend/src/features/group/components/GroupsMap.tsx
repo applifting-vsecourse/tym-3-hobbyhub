@@ -112,7 +112,7 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
   if (isBroken || !env.VITE_MAPBOX_TOKEN) {
     if (!isFallbackShown) return null
     return (
-      <p className={cn("typo-small text-muted-foreground", className)}>{t("groups.map.noPlace")}</p>
+      <p className={cn("typo-small text-muted-foreground", className)}>{t("groups.map.unavailable")}</p>
     )
   }
 

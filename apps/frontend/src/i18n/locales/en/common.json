@@ -1145,9 +1145,9 @@
     "map": {
       "label": "Map of groups",
       "list": "List",
-      "noPlace": "Groups without a place are not on the map.",
       "pin": "{{name}}, {{count}} members",
-      "show": "Map"
+      "show": "Map",
+      "unavailable": "The map is not available right now."
     },
     "membershipRequest": {
       "form": {
