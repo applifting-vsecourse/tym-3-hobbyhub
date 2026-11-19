@@ -110,6 +110,15 @@ export function GroupMembershipPanel({
         <p className="typo-small text-muted-foreground">
           {t("groups.detail.membership.pendingText")}
         </p>
+        {/* The group opened up since: no need to wait, joining closes the request. */}
+        {approvalMode === "OPEN" ? (
+          <Button
+            disabled={membership.isJoining}
+            onClick={() => void membership.join().catch(() => undefined)}
+          >
+            {t("groups.detail.join.cta")}
+          </Button>
+        ) : null}
         <Button
           variant="outline"
           onClick={onWithdraw}

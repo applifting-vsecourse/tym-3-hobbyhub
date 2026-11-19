@@ -14,6 +14,7 @@ import {
   CreateGroupData,
   GroupRole as DomainGroupRole,
   Group,
+  GroupAccess,
   GroupDiscoverFilter,
   GroupMember,
   GroupPage,
@@ -236,6 +237,14 @@ export class GroupRepository {
       include: groupInclude(),
     });
     return mapPrismaGroupToDomain(group);
+  }
+
+  // For checks of access: no counts, no next event.
+  async getGroupAccess(id: string): Promise<GroupAccess | null> {
+    return this.prisma.group.findUnique({
+      where: { id },
+      select: { id: true, visibility: true, status: true, approvalMode: true },
+    });
   }
 
   async getGroupById(id: string): Promise<Group | null> {

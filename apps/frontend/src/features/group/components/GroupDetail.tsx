@@ -63,7 +63,7 @@ export function GroupDetail({
         {/* The two things a newcomer asks first: where, and can I just join. */}
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
           {group.locationName ? (
-            <li className="flex items-center gap-1.5 typo-label-lg text-foreground">
+            <li className="flex items-center gap-2 typo-label-lg text-foreground">
               <MapPinIcon
                 aria-hidden
                 className="size-4 text-muted-foreground"

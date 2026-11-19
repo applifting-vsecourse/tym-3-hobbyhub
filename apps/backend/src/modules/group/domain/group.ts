@@ -127,6 +127,25 @@ export type UpdateGroupData = Partial<
   Omit<CreateGroupData, 'tagline' | 'usualSchedule'>
 > & { tagline?: string | null; usualSchedule?: string | null };
 
+// Rules between the place fields of a change (ADR-0028): the name and both
+// coordinates come together or not at all, so the pin never disagrees with the
+// name.
+export type GroupPlaceViolation = 'PLACE_INCOMPLETE';
+export const groupPlaceViolations = (
+  data: Pick<UpdateGroupData, 'locationName' | 'latitude' | 'longitude'>,
+): GroupPlaceViolation[] => {
+  const given = [data.locationName, data.latitude, data.longitude].filter(
+    (value) => value !== undefined,
+  ).length;
+  return given === 0 || given === 3 ? [] : ['PLACE_INCOMPLETE'];
+};
+
+// What a check of access needs of a group; the full group is for pages that show it.
+export type GroupAccess = Pick<
+  Group,
+  'id' | 'visibility' | 'status' | 'approvalMode'
+>;
+
 // A group's numbers on its page, from its public events that have happened.
 export type GroupStats = { playedEvents: number; averageParticipants: number };
 

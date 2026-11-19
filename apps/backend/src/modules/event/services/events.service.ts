@@ -427,8 +427,8 @@ export class EventsService {
   // gets its upcoming public events (visibility matrix); its members also the
   // group-only ones and the past ones. Anyone else gets the public events of a
   // group that lets anyone in, and of the past the public ones and only the
-  // number of the group-only ones. A group that decides on requests shows its
-  // upcoming events as a number.
+  // number of the group-only ones. A group that decides on requests shows both
+  // periods as a number.
   async getGroupEvents(
     groupId: string,
     viewer: Identity | undefined,
@@ -443,11 +443,11 @@ export class EventsService {
     if (!role) {
       // Throws "not found" for a group that has no public page, and for
       // one whose owner is blocked from the viewer (#239).
-      const group = await this.groupsService.getPublicGroup(groupId, viewer);
-      if (period === 'upcoming' && group.approvalMode === 'APPROVAL') {
-        // A group that decides on requests shows what is coming only as a
-        // number: the applicant sees there is something to join, not what
-        // (ADR-0028).
+      const group = await this.groupsService.assertPublicGroup(groupId, viewer);
+      if (group.approvalMode === 'APPROVAL') {
+        // A group that decides on requests shows what is coming, and what has
+        // been, only as a number: the applicant sees there is something to
+        // join, not what (ADR-0028).
         return {
           items: [],
           total: 0,

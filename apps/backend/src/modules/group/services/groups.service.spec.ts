@@ -181,51 +181,10 @@ describe('GroupsService', () => {
     expect(repository.getMemberRole).toHaveBeenCalledWith('g1', 'u1');
   });
 
-  describe('joining an open group (ADR-0028)', () => {
-    const user = { id: 'u1', emailVerified: true } as Identity;
-
-    it('adds the person at once to a group that lets anyone in', async () => {
-      const { repository, service } = setup();
-      repository.getGroupById.mockResolvedValue(
-        aGroup({ approvalMode: 'OPEN' }),
-      );
-      repository.getMemberRole.mockResolvedValue(null);
-      repository.addMember.mockResolvedValue(true);
-
-      await service.joinOpenGroup('g1', user);
-
-      expect(repository.addMember).toHaveBeenCalledWith('g1', 'u1');
-    });
-
-    it('sends a group that decides on requests to the request', async () => {
-      const { repository, service } = setup();
-      repository.getGroupById.mockResolvedValue(aGroup());
-      repository.getMemberRole.mockResolvedValue(null);
-
-      await expect(service.joinOpenGroup('g1', user)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
-      expect(repository.addMember).not.toHaveBeenCalled();
-    });
-
-    it('refuses someone who is in already', async () => {
-      const { repository, service } = setup();
-      repository.getGroupById.mockResolvedValue(
-        aGroup({ approvalMode: 'OPEN' }),
-      );
-      repository.getMemberRole.mockResolvedValue('MEMBER');
-      repository.addMember.mockResolvedValue(false);
-
-      await expect(service.joinOpenGroup('g1', user)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
-    });
-  });
-
   describe('changing a group (ADR-0028)', () => {
     it('lets an admin change it, and nobody else', async () => {
       const { repository, service } = setup();
-      repository.getGroupById.mockResolvedValue(aGroup());
+      repository.getGroupAccess.mockResolvedValue(aGroup());
       repository.updateGroup.mockResolvedValue(
         aGroup({ approvalMode: 'OPEN' }),
       );
@@ -241,6 +200,34 @@ describe('GroupsService', () => {
       await expect(
         service.updateGroup('g1', admin, { approvalMode: 'APPROVAL' }),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    // ADR-0028: the pin must not disagree with the name of the place.
+    it.each([
+      [{ locationName: 'Brno' }],
+      [{ latitude: 49.2 }],
+      [{ locationName: 'Brno', latitude: 49.2 }],
+    ])('refuses a place without all of its parts: %j', async (place) => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('OWNER');
+
+      await expect(
+        service.updateGroup('g1', { id: 'u1' } as Identity, place),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.updateGroup).not.toHaveBeenCalled();
+    });
+
+    it('takes a whole place', async () => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('OWNER');
+      repository.updateGroup.mockResolvedValue(aGroup());
+      const place = { locationName: 'Brno', latitude: 49.2, longitude: 16.6 };
+
+      await service.updateGroup('g1', { id: 'u1' } as Identity, place);
+
+      expect(repository.updateGroup).toHaveBeenCalledWith('g1', place);
     });
   });
 

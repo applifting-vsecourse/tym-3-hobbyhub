@@ -98,6 +98,7 @@ describe('MembershipRequestsService', () => {
     const groups = mock<GroupsService>();
     const notifications = mock<NotificationsService>();
     groups.getPublicGroup.mockResolvedValue(aGroup());
+    groups.assertPublicGroup.mockResolvedValue(aGroup());
     groups.getManagedGroup.mockResolvedValue(aGroup());
     groups.getMemberRole.mockResolvedValue(null);
     groups.getAdminIds.mockResolvedValue(['owner', 'admin']);
@@ -115,6 +116,93 @@ describe('MembershipRequestsService', () => {
       ),
     };
   };
+
+  describe('joining a group that lets anyone in (ADR-0028)', () => {
+    // Joining needs a verified e-mail, like founding a group.
+    const verifiedUser = { id: 'u1', emailVerified: true } as Identity;
+
+    const open = (
+      setupResult: ReturnType<typeof setup>,
+      overrides: Partial<Group> = {},
+    ) => {
+      setupResult.groups.assertPublicGroup.mockResolvedValue(
+        aGroup({ approvalMode: 'OPEN', ...overrides }),
+      );
+      setupResult.groups.getMemberRole.mockResolvedValue(null);
+      setupResult.groups.addMember.mockResolvedValue(true);
+      setupResult.repository.getRequestsOf.mockResolvedValue([]);
+    };
+
+    it('adds the person at once', async () => {
+      const setupResult = setup();
+      open(setupResult);
+
+      await setupResult.service.joinOpenGroup(verifiedUser, 'g1');
+
+      expect(setupResult.groups.addMember).toHaveBeenCalledWith('g1', 'u1');
+    });
+
+    it('sends a group that decides on requests to the request', async () => {
+      const setupResult = setup();
+      open(setupResult);
+      setupResult.groups.assertPublicGroup.mockResolvedValue(aGroup());
+
+      await expect(
+        setupResult.service.joinOpenGroup(verifiedUser, 'g1'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(setupResult.groups.addMember).not.toHaveBeenCalled();
+    });
+
+    // ADR-0014: a rejection is final for the group, open or not.
+    it('refuses someone who was rejected before', async () => {
+      const setupResult = setup();
+      open(setupResult);
+      setupResult.repository.getRequestsOf.mockResolvedValue([
+        aRequest({ status: 'REJECTED' }),
+      ]);
+
+      await expect(
+        violationsOf(setupResult.service.joinOpenGroup(verifiedUser, 'g1')),
+      ).resolves.toContain('REJECTED_BEFORE');
+      expect(setupResult.groups.addMember).not.toHaveBeenCalled();
+    });
+
+    it('refuses a member', async () => {
+      const setupResult = setup();
+      open(setupResult);
+      setupResult.groups.getMemberRole.mockResolvedValue('MEMBER');
+
+      await expect(
+        violationsOf(setupResult.service.joinOpenGroup(verifiedUser, 'g1')),
+      ).resolves.toContain('IS_MEMBER');
+    });
+
+    it('asks for a verified e-mail first', async () => {
+      const setupResult = setup();
+      open(setupResult);
+
+      await expect(
+        setupResult.service.joinOpenGroup(user, 'g1'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(setupResult.groups.addMember).not.toHaveBeenCalled();
+    });
+
+    it('closes a request that still waits', async () => {
+      const setupResult = setup();
+      open(setupResult);
+      setupResult.repository.getRequestsOf.mockResolvedValue([
+        aRequest({ status: 'PENDING' }),
+      ]);
+
+      await setupResult.service.joinOpenGroup(verifiedUser, 'g1');
+
+      expect(setupResult.repository.withdrawPending).toHaveBeenCalledWith(
+        'g1',
+        'u1',
+        expect.any(Date),
+      );
+    });
+  });
 
   describe('asking to join', () => {
     it('creates a waiting request for the signed-in user', async () => {

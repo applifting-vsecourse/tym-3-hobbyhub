@@ -16,6 +16,7 @@ import {
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
@@ -68,7 +69,7 @@ export class MembershipRequestsService {
     user: Identity,
     groupId: string,
   ): Promise<MyMembershipRequestState> {
-    await this.groupsService.getPublicGroup(groupId, user);
+    await this.groupsService.assertPublicGroup(groupId, user);
     const [role, requests, applicant] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
@@ -93,6 +94,35 @@ export class MembershipRequestsService {
       MY_MEMBERSHIP_REQUESTS_PAGE_SIZE,
       cursor,
     );
+  }
+
+  // ADR-0028: joining a group that lets anyone in. The person is a member at
+  // once, but the rules are the request's: a member cannot join again and a
+  // rejection is final for the group (ADR-0014). A request that still waits is
+  // withdrawn, so nothing is left in the admins' queue.
+  async joinOpenGroup(user: Identity, groupId: string): Promise<void> {
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('joining a group');
+    }
+    const group = await this.groupsService.assertPublicGroup(groupId, user);
+    if (group.approvalMode !== 'OPEN') {
+      throw new BadRequestException(
+        'This group decides on requests to join: ask to join instead',
+      );
+    }
+    const [role, requests] = await Promise.all([
+      this.groupsService.getMemberRole(groupId, user.id),
+      this.repository.getRequestsOf(groupId, user.id),
+    ]);
+    // A waiting request is no obstacle here: it is closed below.
+    const violations = membershipRuleViolations(role, requests).filter(
+      (violation) => violation !== 'ALREADY_REQUESTED',
+    );
+    if (violations.length > 0) throw violationsError(violations);
+    if (!(await this.groupsService.addMember(groupId, user.id))) {
+      throw violationsError(['IS_MEMBER']);
+    }
+    await this.repository.withdrawPending(groupId, user.id, new Date());
   }
 
   // F-07.3: a request waits for the group's admins; automatic approval is

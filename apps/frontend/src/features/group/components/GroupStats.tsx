@@ -52,7 +52,7 @@ export function GroupStats({ group }: { group: Group }) {
       {items.map((item) => (
         <div
           key={item.key}
-          className="flex flex-col gap-0.5"
+          className="flex flex-col gap-1"
         >
           <dd className="typo-h3 text-foreground">{item.value}</dd>
           <dt className="typo-caption text-muted-foreground">{item.label}</dt>

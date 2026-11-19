@@ -205,10 +205,16 @@ export async function seedGroups(
   for (const example of EXAMPLE_GROUPS) {
     const extra = GROUP_EXTRAS[example.name];
     if (await prisma.group.findFirst({ where: { name: example.name } })) {
-      // Groups from an earlier seed get the new attributes too.
+      // Groups from an earlier seed get the new attributes too, but only
+      // while they still have the migration defaults: what someone has edited
+      // since stays.
       if (extra) {
         await prisma.group.updateMany({
-          where: { name: example.name },
+          where: {
+            name: example.name,
+            meetingDays: { isEmpty: true },
+            locationLatitude: null,
+          },
           data: {
             approvalMode: extra.approvalMode,
             meetingDays: extra.meetingDays,

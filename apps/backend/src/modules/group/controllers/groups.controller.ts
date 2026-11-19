@@ -174,20 +174,6 @@ export class GroupsController {
     );
   }
 
-  @Post(':id/membership')
-  @UseGuards(AuthenticatedUserGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Join a group that lets anyone in' })
-  @ApiResponse({ status: 204, description: 'Joined' })
-  @ApiResponse({
-    status: 400,
-    description: 'The group decides on requests, or already a member',
-  })
-  @ApiResponse({ status: 404, description: 'Group not found or not public' })
-  async join(@User() user: Identity, @Param('id') id: string): Promise<void> {
-    await this.groupsService.joinOpenGroup(id, user);
-  }
-
   @Get(':id/membership')
   @UseGuards(AuthenticatedUserGuard)
   @ApiOperation({ summary: 'Is the signed-in user a member of the group' })

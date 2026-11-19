@@ -9,6 +9,7 @@ import { env } from "@/config/env"
 import { cn } from "@/lib/utils"
 
 import type { Group } from "@/features/group/api/groupSchemas"
+import { clusterGroups, type LocatedGroup } from "@/features/group/lib/clusterGroups"
 
 import "mapbox-gl/dist/mapbox-gl.css"
 
@@ -21,12 +22,11 @@ const FIT_MAX_ZOOM = 13
 
 const isDark = () => document.documentElement.classList.contains("dark")
 
-type Located = Group & { latitude: number; longitude: number }
-const isLocated = (group: Group): group is Located =>
+const isLocated = (group: Group): group is LocatedGroup =>
   group.latitude !== null && group.longitude !== null
 
 /** A pin: the person and the member count in a pill. The group has no exact spot on the map, only a dashed ring. */
-function GroupPin({ group, isSelected }: { group: Located; isSelected: boolean }) {
+function GroupPin({ group }: { group: LocatedGroup }) {
   const { t } = useTranslation()
   return (
     <Link
@@ -35,7 +35,6 @@ function GroupPin({ group, isSelected }: { group: Located; isSelected: boolean }
       aria-label={t("groups.map.pin", { name: group.name, count: group.memberCount })}
       className={cn(
         "relative flex min-h-11 items-center gap-1 rounded-md border-2 border-primary bg-card px-3 py-1 typo-label text-primary shadow-float outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
-        isSelected && "bg-primary text-primary-foreground",
       )}
     >
       <UsersIcon
@@ -141,10 +140,7 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
               longitude={cluster.longitude}
             >
               {cluster.single ? (
-                <GroupPin
-                  group={cluster.single}
-                  isSelected={false}
-                />
+                <GroupPin group={cluster.single} />
               ) : (
                 <ClusterPin
                   count={cluster.groups.length}
@@ -161,32 +157,6 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
         : null}
     </div>
   )
-}
-
-type Cluster = {
-  key: string
-  latitude: number
-  longitude: number
-  groups: Located[]
-  /** Set when the cluster is just one group. */
-  single: Located | null
-}
-
-// Pins closer than about 56 px on screen become one; zoomed in they fall apart.
-function clusterGroups(groups: Located[], zoom: number): Cluster[] {
-  const cell = (56 * 360) / (256 * 2 ** zoom)
-  const cells = new Map<string, Located[]>()
-  for (const group of groups) {
-    const key = `${Math.round(group.latitude / cell)}:${Math.round(group.longitude / cell)}`
-    cells.set(key, [...(cells.get(key) ?? []), group])
-  }
-  return [...cells].map(([key, inCell]) => ({
-    key: inCell.length === 1 ? (inCell[0]?.id ?? key) : key,
-    single: inCell.length === 1 ? (inCell[0] ?? null) : null,
-    latitude: inCell.reduce((sum, group) => sum + group.latitude, 0) / inCell.length,
-    longitude: inCell.reduce((sum, group) => sum + group.longitude, 0) / inCell.length,
-    groups: inCell,
-  }))
 }
 
 /** Several groups in one place: how many, and a click zooms in on them. */
