@@ -34,7 +34,7 @@ function GroupPin({ group, isSelected }: { group: Located; isSelected: boolean }
       params={{ groupId: group.id }}
       aria-label={t("groups.map.pin", { name: group.name, count: group.memberCount })}
       className={cn(
-        "relative flex items-center gap-1 rounded-md border-2 border-primary bg-card px-2 py-1 typo-label text-primary shadow-float outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
+        "relative flex min-h-11 items-center gap-1 rounded-md border-2 border-primary bg-card px-3 py-1 typo-label text-primary shadow-float outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
         isSelected && "bg-primary text-primary-foreground",
       )}
     >

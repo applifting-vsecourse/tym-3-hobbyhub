@@ -1,21 +1,24 @@
 import { useMemo } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { BackLink } from "@/components/BackLink"
+import { NotFound } from "@/components/Error/NotFound"
 import { Loader } from "@/components/hobbyhub/Loader"
 import { Seo } from "@/components/Seo"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { useSession } from "@/features/auth/hooks/useSession"
 import { groupKeys } from "@/features/group/api/groupKeys"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
 import type { CreateGroupInput } from "@/features/group/api/groupSchemas"
 import { updateGroup } from "@/features/group/api/updateGroup"
 import { GroupForm } from "@/features/group/components/GroupForm"
+import { useGroupMembershipState } from "@/features/group/hooks/useGroupMembershipState"
 
 export const Route = createFileRoute("/_ProtectedPages/groups/$groupId/edit")({
   component: EditGroupPage,
@@ -41,18 +44,40 @@ function EditGroupPage() {
     [activitiesQuery.data, t],
   )
   const group = groupQuery.data
+  // The server decides who may change a group; the page only spares everyone
+  // else a form that cannot work.
+  const { user, isPending: isSessionPending } = useSession()
+  const membership = useGroupMembershipState(groupId, {
+    userId: user?.id ?? null,
+    isPending: isSessionPending,
+  })
+  const save = useMutation({
+    mutationFn: (values: CreateGroupInput) =>
+      updateGroup(groupId, {
+        ...values,
+        // A cleared tagline, schedule or day list is a change too, not "leave as it is".
+        usualSchedule: values.usualSchedule ?? null,
+        tagline: values.tagline ?? null,
+        meetingDays: values.meetingDays ?? [],
+      }),
+  })
 
+  // A failed save throws on purpose: the form keeps guarding what was typed,
+  // and the message comes from the mutation state.
   const handleSubmit = async (values: CreateGroupInput) => {
-    await updateGroup(groupId, {
-      ...values,
-      // A cleared schedule or day list is a change too, not "leave as it is".
-      usualSchedule: values.usualSchedule ?? "",
-      tagline: values.tagline ?? "",
-      meetingDays: values.meetingDays ?? [],
-    })
+    await save.mutateAsync(values)
     await queryClient.invalidateQueries({ queryKey: groupKeys.all() })
     toast.success(t("groups.form.saved"))
     await navigate({ to: "/groups/$groupId", params: { groupId } })
+  }
+
+  if (membership.view !== "loading" && !membership.isAdmin) {
+    return (
+      <>
+        <Seo title={t("groups.form.editTitle")} />
+        <NotFound />
+      </>
+    )
   }
 
   return (
@@ -72,7 +97,8 @@ function EditGroupPage() {
               isActivitiesLoading={activitiesQuery.isPending}
               isActivitiesError={activitiesQuery.isError}
               onRetryActivities={() => void activitiesQuery.refetch()}
-              isSubmitting={false}
+              isSubmitting={save.isPending}
+              errorMessage={save.isError ? t("groups.form.saveFailed") : null}
               submitLabel={t("groups.form.save")}
               initialValues={{
                 name: group.name,

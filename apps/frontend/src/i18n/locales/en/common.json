@@ -1005,6 +1005,7 @@
       "placeHint": "The map shows only the approximate position.",
       "retry": "Try again",
       "save": "Save changes",
+      "saveFailed": "Could not save the changes. Please try again.",
       "saved": "Changes saved",
       "submit": "Create group",
       "taglineHint": "One line under the name, emoji welcome.",

@@ -122,7 +122,10 @@ export type CreateGroupData = {
 };
 
 // What a group's admins may change (ADR-0028); anything left out stays.
-export type UpdateGroupData = Partial<CreateGroupData>;
+// `null` takes the tagline or the schedule away; a place cannot be taken away.
+export type UpdateGroupData = Partial<
+  Omit<CreateGroupData, 'tagline' | 'usualSchedule'>
+> & { tagline?: string | null; usualSchedule?: string | null };
 
 // A group's numbers on its page, from its public events that have happened.
 export type GroupStats = { playedEvents: number; averageParticipants: number };

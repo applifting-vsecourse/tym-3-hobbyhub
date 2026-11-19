@@ -146,6 +146,17 @@ describe('MembershipRequestsService', () => {
       });
     });
 
+    // ADR-0028: an open group has nothing to decide; the person joins directly.
+    it('refuses a request to a group that lets anyone in', async () => {
+      const { groups, repository, service } = setup();
+      groups.getPublicGroup.mockResolvedValue(aGroup({ approvalMode: 'OPEN' }));
+
+      await expect(
+        service.requestMembership(user, 'g1'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.createPending).not.toHaveBeenCalled();
+    });
+
     it('refuses a group that is not public and active', async () => {
       const { groups, repository, service } = setup();
       groups.getPublicGroup.mockRejectedValue(new NotFoundException());

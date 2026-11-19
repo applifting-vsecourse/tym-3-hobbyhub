@@ -375,11 +375,11 @@ export class GroupRepository {
     return groups.map(mapPrismaGroupToDomain);
   }
 
-  // The cursor is the offset of the next page: the list can be ordered by
-  // newest, by distance or by members (ADR-0028), and only an offset follows
-  // every order. SQL picks the ids of the page in that order; Prisma loads the
-  // rows and applies the visibility rules again, so SQL never decides who may
-  // see a group.
+  // The newest-first list pages by keyset (createdAt, id), so a group created
+  // while someone reads never repeats or skips a row. The other orders (by
+  // distance, by members) have no stable key, so their cursor is an offset
+  // (ADR-0028). SQL picks the ids of the page; Prisma loads the rows and applies
+  // the visibility rules again, so SQL never decides who may see a group.
   async listDiscoverableGroups(
     userId: string | undefined,
     pageSize: number,
@@ -387,15 +387,18 @@ export class GroupRepository {
     filter: GroupDiscoverFilter = { activityIds: [] },
     hiddenManagerIds: string[] = [],
   ): Promise<GroupPage> {
+    const isKeyset =
+      filter.sort !== 'members' && !(filter.sort === 'nearest' && filter.near);
     const offset = Number.parseInt(cursor ?? '0', 10);
-    const start = Number.isInteger(offset) && offset > 0 ? offset : 0;
+    const start =
+      !isKeyset && Number.isInteger(offset) && offset > 0 ? offset : 0;
     // One extra row tells whether another page exists.
     const take = pageSize + 1;
     const ids = await this.pageIds(
       userId,
       filter,
       take,
-      start,
+      { offset: start, afterId: isKeyset ? cursor : undefined },
       hiddenManagerIds,
     );
     const groups = await this.prisma.group.findMany({
@@ -406,9 +409,16 @@ export class GroupRepository {
       (id) => groups.find((group) => group.id === id) ?? [],
     );
     const items = ordered.slice(0, pageSize).map(mapPrismaGroupToDomain);
+    const lastItem = items[items.length - 1];
+    const hasMore = ids.length > pageSize;
     return {
       items,
-      nextCursor: ids.length > pageSize ? String(start + pageSize) : null,
+      nextCursor:
+        !hasMore || !lastItem
+          ? null
+          : isKeyset
+            ? lastItem.id
+            : String(start + pageSize),
     };
   }
 
@@ -416,7 +426,7 @@ export class GroupRepository {
     userId: string | undefined,
     filter: GroupDiscoverFilter,
     take: number,
-    offset: number,
+    page: { offset: number; afterId?: string },
     hiddenManagerIds: string[],
   ): Promise<string[]> {
     const { activityIds, near } = filter;
@@ -457,6 +467,11 @@ export class GroupRepository {
             Prisma.sql`g."locationLatitude" IS NOT NULL AND ${distance} <= ${near.radiusKm}`,
           ]
         : []),
+      ...(page.afterId
+        ? [
+            Prisma.sql`(g."createdAt", g."id") < (SELECT c."createdAt", c."id" FROM "group" c WHERE c."id" = ${page.afterId})`,
+          ]
+        : []),
       ...textConditionsOf(filter),
     ];
     const order =
@@ -470,40 +485,32 @@ export class GroupRepository {
       JOIN "activity" a ON a."id" = g."activityId"
       WHERE ${Prisma.join(conditions, ' AND ')}
       ORDER BY ${order}
-      LIMIT ${take} OFFSET ${offset}`;
+      LIMIT ${take} OFFSET ${page.offset}`;
     return rows.map((row) => row.id);
   }
 
   // A group's numbers: its public events that have happened, and how many
   // people came on average (ADR-0028). Public facts.
   async getGroupStats(groupId: string, now: Date): Promise<GroupStats> {
-    const events = await this.prisma.event.findMany({
-      where: {
-        groupId,
-        status: { in: ['PUBLISHED', 'FINISHED'] },
-        isHidden: false,
-        visibility: 'PUBLIC',
-        endAt: { lte: now },
-      },
-      select: {
-        externalOccupiedSpots: true,
-        _count: {
-          select: {
-            participations: { where: { status: { in: TAKEN_STATUSES } } },
-          },
-        },
-      },
-      take: 500,
-    });
-    const total = events.reduce(
-      (sum, event) =>
-        sum + event._count.participations + event.externalOccupiedSpots,
-      0,
-    );
+    const [row] = await this.prisma.$queryRaw<
+      { played: number; average: number }[]
+    >`
+      SELECT count(*)::int AS played, COALESCE(avg(t.taken), 0)::float AS average
+      FROM (
+        SELECT (
+          SELECT count(*) FROM "participation" p
+          WHERE p."eventId" = e."id" AND p."status" IN ('APPROVED', 'ATTENDED')
+        ) + e."externalOccupiedSpots" AS taken
+        FROM "event" e
+        WHERE e."groupId" = ${groupId}
+          AND e."status" IN ('PUBLISHED', 'FINISHED')
+          AND NOT e."isHidden"
+          AND e."visibility" = 'PUBLIC'
+          AND e."endAt" <= ${now}
+      ) t`;
     return {
-      playedEvents: events.length,
-      averageParticipants:
-        events.length === 0 ? 0 : Math.round((total / events.length) * 10) / 10,
+      playedEvents: row?.played ?? 0,
+      averageParticipants: Math.round((row?.average ?? 0) * 10) / 10,
     };
   }
 
@@ -541,7 +548,17 @@ export class GroupRepository {
         },
         include: groupInclude(),
       })
-      .catch(() => null);
+      .catch((error: unknown) => {
+        // Only a group that is gone is "not found"; a failing database or a
+        // broken constraint must not look like one.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          return null;
+        }
+        throw error;
+      });
     return group ? mapPrismaGroupToDomain(group) : null;
   }
 

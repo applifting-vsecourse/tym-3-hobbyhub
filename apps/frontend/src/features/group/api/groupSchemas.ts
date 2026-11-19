@@ -96,4 +96,8 @@ export type CreateGroupInput = {
   meetingDays?: number[]
 }
 
-export type UpdateGroupInput = Partial<CreateGroupInput>
+// `null` takes the tagline or the usual schedule away; a place cannot be taken away.
+export type UpdateGroupInput = Partial<Omit<CreateGroupInput, "tagline" | "usualSchedule">> & {
+  tagline?: string | null
+  usualSchedule?: string | null
+}

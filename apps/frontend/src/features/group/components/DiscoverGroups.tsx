@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { NoMatchingResults } from "@/components/hobbyhub/NoMatchingResults"
 import { Button } from "@/components/ui/button"
 import { toggleVariants } from "@/components/ui/toggle"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
 
 import type { DiscoverGroupsFilters } from "@/features/group/api/groupKeys"
@@ -12,6 +13,9 @@ import { discoverGroupsQueryOptions } from "@/features/group/api/groupListQueryO
 import type { Group } from "@/features/group/api/groupSchemas"
 import { GroupCard, type ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupGrid } from "@/features/group/components/GroupGrid"
+
+// Tailwind's `xl` breakpoint, where the map sits beside the list.
+const XL_QUERY = "(min-width: 80rem)"
 
 type DiscoverGroupsProps = {
   /** The signed-in user, or null for a visitor, who sees every public group. */
@@ -51,6 +55,8 @@ export function DiscoverGroups({
   const { t } = useTranslation()
   // Below `xl` the map and the list take turns; from `xl` they sit side by side.
   const [isMapShown, setIsMapShown] = useState(false)
+  // The map is built only where it is on screen: a phone never starts Mapbox for the xl one.
+  const isXl = useMediaQuery(XL_QUERY)
   // The previous list stays on screen while the next one loads, so typing does not flash.
   const discover = useInfiniteQuery({
     ...discoverGroupsQueryOptions(viewerId, filters),
@@ -99,7 +105,7 @@ export function DiscoverGroups({
             </button>
           ) : null,
         )}
-        {renderMap && isMapShown ? (
+        {renderMap && isMapShown && !isXl ? (
           <div className="h-[60svh] xl:hidden">{renderMap(groups ?? [])}</div>
         ) : null}
         <div
@@ -160,8 +166,8 @@ export function DiscoverGroups({
           </div>
         ) : null}
       </div>
-      {renderMap ? (
-        <div className="hidden xl:sticky xl:top-20 xl:block xl:h-[calc(100svh-6rem)]">
+      {renderMap && isXl ? (
+        <div className="xl:sticky xl:top-20 xl:h-[calc(100svh-6rem)]">
           {renderMap(groups ?? [])}
         </div>
       ) : null}
