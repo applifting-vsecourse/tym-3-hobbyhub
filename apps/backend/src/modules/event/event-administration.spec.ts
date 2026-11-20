@@ -99,7 +99,7 @@ describeDb('EventRepository: administration', () => {
         description: 'Test',
         status: EventStatus.PUBLISHED,
         approvalMode: ApprovalMode.MANUAL,
-        venueType: VenueType.PUBLIC_VENUE,
+        venueType: VenueType.PLACE,
         startAt: start,
         endAt: new Date(start.getTime() + 2 * 3600 * 1000),
         minParticipants: 2,

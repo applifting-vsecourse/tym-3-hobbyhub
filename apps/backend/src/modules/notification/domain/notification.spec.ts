@@ -51,7 +51,7 @@ describe('eventChangesOf', () => {
   const before = (): EventWhenAndWhere => ({
     startAt: new Date('2030-01-01T18:00:00Z'),
     endAt: new Date('2030-01-01T20:00:00Z'),
-    venueType: 'PUBLIC_VENUE',
+    venueType: 'PLACE',
     location: {
       street: 'Chabařovická 4',
       city: 'Praha 8',

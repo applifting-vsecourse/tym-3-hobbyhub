@@ -103,7 +103,7 @@ describeDb('rating schema constraints and views', () => {
         title: 'Badminton',
         description: 'Test',
         status: 'PUBLISHED',
-        venueType: VenueType.PUBLIC_VENUE,
+        venueType: VenueType.PLACE,
         startAt: new Date(endAt.getTime() - 2 * 3600 * 1000),
         endAt,
         minParticipants: 2,
