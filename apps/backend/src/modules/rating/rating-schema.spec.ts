@@ -481,10 +481,26 @@ describeDb('rating schema constraints and views', () => {
         // Created out of order, so the order cannot come from the inserts.
         await tx.participation.createMany({
           data: [
-            { userId: third, status: ParticipationStatus.NO_SHOW, createdAt: takenAt(3) },
-            { userId: first, status: ParticipationStatus.APPROVED, createdAt: takenAt(1) },
-            { userId: gone, status: ParticipationStatus.ATTENDED, createdAt: takenAt(0) },
-            { userId: second, status: ParticipationStatus.ATTENDED, createdAt: takenAt(2) },
+            {
+              userId: third,
+              status: ParticipationStatus.NO_SHOW,
+              createdAt: takenAt(3),
+            },
+            {
+              userId: first,
+              status: ParticipationStatus.APPROVED,
+              createdAt: takenAt(1),
+            },
+            {
+              userId: gone,
+              status: ParticipationStatus.ATTENDED,
+              createdAt: takenAt(0),
+            },
+            {
+              userId: second,
+              status: ParticipationStatus.ATTENDED,
+              createdAt: takenAt(2),
+            },
           ].map((seat) => ({ ...seat, eventId })),
         });
         await deleteAccount(tx, gone);

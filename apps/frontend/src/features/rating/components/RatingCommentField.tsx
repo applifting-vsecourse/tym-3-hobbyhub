@@ -57,10 +57,15 @@ export function RatingCommentField<TFieldValues extends FieldValues>({
               placeholder={placeholder ?? t("rating.form.commentPlaceholder")}
               disabled={isDisabled}
               {...field}
-              value={(field.value) ?? ""}
+              value={field.value ?? ""}
             />
           </FormControl>
-          <div className={cn("flex flex-wrap gap-x-4 gap-y-1", hint ? "justify-between" : "justify-end")}>
+          <div
+            className={cn(
+              "flex flex-wrap gap-x-4 gap-y-1",
+              hint ? "justify-between" : "justify-end",
+            )}
+          >
             {hint ? <FormDescription>{hint}</FormDescription> : null}
             <p
               className={cn(

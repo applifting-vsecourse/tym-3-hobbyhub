@@ -88,7 +88,8 @@ const three = () => [
   aParticipant("u3", "Jana"),
 ]
 
-const starsOf = (name: string) => screen.getByRole("radiogroup", { name: `Hodnocení účastníka ${name}` })
+const starsOf = (name: string) =>
+  screen.getByRole("radiogroup", { name: `Hodnocení účastníka ${name}` })
 
 const pick = async (user: ReturnType<typeof userEvent.setup>, name: string, stars: string) => {
   await user.click(within(starsOf(name)).getByRole("radio", { name: stars }))
@@ -154,7 +155,9 @@ describe("RateParticipantsForm (#235)", () => {
 
     await user.click(reviewButton())
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Vyber hvězdičky aspoň u jednoho účastníka.")
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Vyber hvězdičky aspoň u jednoho účastníka.",
+    )
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 
@@ -276,7 +279,9 @@ describe("RateParticipantsForm (#235)", () => {
     await pick(user, "Jana", "4 hvězdičky z 5")
     await user.click(screen.getByRole("button", { name: "Zrušit předvyplnění" }))
 
-    expect(within(starsOf("Petra")).getByRole("radio", { name: "5 hvězdiček z 5" })).not.toBeChecked()
+    expect(
+      within(starsOf("Petra")).getByRole("radio", { name: "5 hvězdiček z 5" }),
+    ).not.toBeChecked()
     expect(within(starsOf("Jana")).getByRole("radio", { name: "4 hvězdičky z 5" })).toBeChecked()
     expect(within(starsOf("Ondra")).getByRole("radio", { name: "3 hvězdičky z 5" })).toBeChecked()
     expect(screen.queryByText("Předvyplněno")).toBeNull()

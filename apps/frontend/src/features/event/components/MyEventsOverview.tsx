@@ -89,7 +89,9 @@ export type MyEventsList<T> = {
 type MyEventsOverviewProps = {
   applications: MyEventsList<MyApplication>
   /** The organizer's own events; `isHidden` marks one an administrator hid (#239). */
-  hosted: MyEventsList<EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>>
+  hosted: MyEventsList<
+    EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>
+  >
   /** The list on screen, from the URL. */
   tab: MyEventsTab
   /** Search and filters of both lists, shown under the tabs. */

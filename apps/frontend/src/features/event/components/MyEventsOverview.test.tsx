@@ -62,9 +62,9 @@ type Options = {
 // Through a router: the tabs and the rows are links.
 const renderOverview = (
   applications: MyEventsList<MyApplication> = list([]),
-  hosted: MyEventsList<
-    EventListItem & { isHidden?: boolean; participantsToRate?: number }
-  > = list([]),
+  hosted: MyEventsList<EventListItem & { isHidden?: boolean; participantsToRate?: number }> = list(
+    [],
+  ),
   { tab = "applications", isFiltered = false, onClearFilters, onApplicationAction }: Options = {},
 ) =>
   renderWithRouter(
@@ -199,8 +199,16 @@ describe("MyEventsOverview", () => {
     await renderOverview(
       list([]),
       list([
-        { ...event({ id: "h1", title: "Proběhlý florbal" }), isHidden: false, participantsToRate: 3 },
-        { ...event({ id: "h2", title: "Ohodnocený florbal" }), isHidden: false, participantsToRate: 0 },
+        {
+          ...event({ id: "h1", title: "Proběhlý florbal" }),
+          isHidden: false,
+          participantsToRate: 3,
+        },
+        {
+          ...event({ id: "h2", title: "Ohodnocený florbal" }),
+          isHidden: false,
+          participantsToRate: 0,
+        },
       ]),
       { tab: "hosted" },
     )

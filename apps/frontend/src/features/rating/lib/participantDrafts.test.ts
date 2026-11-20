@@ -106,7 +106,12 @@ describe("participant drafts (#235)", () => {
     })
 
     it("takes the higher stars when two groups are as large", () => {
-      const { group, singles } = reviewOf([ready("a", 3), ready("b", 4), ready("c", 3), ready("d", 4)])
+      const { group, singles } = reviewOf([
+        ready("a", 3),
+        ready("b", 4),
+        ready("c", 3),
+        ready("d", 4),
+      ])
 
       expect(group?.stars).toBe(4)
       expect(names(singles)).toEqual(["a", "c"])
