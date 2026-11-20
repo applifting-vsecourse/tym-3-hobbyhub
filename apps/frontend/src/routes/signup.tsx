@@ -9,15 +9,18 @@ import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
+import { GoogleButton } from "@/features/auth/components/GoogleButton"
 import { SignUpForm, type SignUpFormValues } from "@/features/auth/components/SignUpForm"
 import { useSignUp } from "@/features/auth/hooks/useSignUp"
-import { authErrorMessage } from "@/features/auth/lib/authErrors"
+import { authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
 import { redirectTarget } from "@/features/auth/lib/redirect"
 
 // `from` is the page to return to after signing up, e.g. the event the
 // visitor wanted to join (F-03.1). Sign-in passes it on, and back.
 const signUpSearchParamsSchema = z.object({
   from: z.string().optional(),
+  // Set by BetterAuth when the round trip to Google fails.
+  error: z.string().optional(),
 })
 
 export const Route = createFileRoute("/signup")({
@@ -31,7 +34,7 @@ export const Route = createFileRoute("/signup")({
 })
 
 function SignUpPage() {
-  const { from } = Route.useSearch()
+  const { from, error: googleError } = Route.useSearch()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signUp = useSignUp()
@@ -74,7 +77,19 @@ function SignUpPage() {
       >
         <SignUpForm
           isLoading={signUp.isPending}
-          errorMessage={error ? authErrorMessage(t, error, "signUpFailed") : null}
+          errorMessage={
+            error
+              ? authErrorMessage(t, error, "signUpFailed")
+              : googleError
+                ? googleErrorMessage(t, googleError)
+                : null
+          }
+          renderGoogle={(getRegistration) => (
+            <GoogleButton
+              from={from}
+              getRegistration={getRegistration}
+            />
+          )}
           onSubmit={handleSubmit}
         />
       </AuthLayout>
