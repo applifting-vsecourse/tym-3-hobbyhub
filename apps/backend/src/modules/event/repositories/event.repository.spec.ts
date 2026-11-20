@@ -275,7 +275,14 @@ describe('EventRepository.getShowableEventById', () => {
         organizer: { name: 'Jana Nováková' },
         participations: [],
       });
-      const prisma = { event: { findFirst } } as unknown as PrismaService;
+      // #236: the detail also asks for the event's revealed ratings.
+      const $queryRaw = jest
+        .fn()
+        .mockResolvedValue([{ count: 0, publicAverage: null }]);
+      const prisma = {
+        event: { findFirst },
+        $queryRaw,
+      } as unknown as PrismaService;
       return new EventRepository(prisma).getShowableEventById('e1');
     };
 

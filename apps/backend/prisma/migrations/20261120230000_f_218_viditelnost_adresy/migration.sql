@@ -1,10 +1,13 @@
 -- #218, ADR-0029: the organizer no longer picks a type of place (public venue
 -- or private premises). They choose whether the exact address is public; a
--- venue is a place or online. A public venue keeps its pin and name and now
--- shows its street to everyone; private premises stay hidden until approval.
+-- venue is a place or online.
+--
+-- Every existing event keeps its address hidden, as it was until now: only
+-- the organizers and the people with a seat see it. Nobody's address becomes
+-- public without the organizer choosing so by editing the event (review of
+-- PR #268).
 
 ALTER TABLE "event" ADD COLUMN "isAddressPublic" BOOLEAN NOT NULL DEFAULT false;
-UPDATE "event" SET "isAddressPublic" = true WHERE "venueType" = 'PUBLIC_VENUE';
 
 -- The CHECKs on the venue type are dropped while its enum changes, then put back.
 ALTER TABLE "event" DROP CONSTRAINT "event_online_has_no_location";
