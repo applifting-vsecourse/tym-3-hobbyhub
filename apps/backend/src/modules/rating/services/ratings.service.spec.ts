@@ -47,10 +47,13 @@ const setup = ({
   event = anEvent(),
   seats = { p1: 'APPROVED' },
   hidden = [],
+  blocked = [],
 }: {
   event?: RatingEventFacts | null;
   seats?: Record<string, SeatStatus>;
   hidden?: string[];
+  /** #65: the people the one asking blocked themselves. */
+  blocked?: string[];
 } = {}): {
   repository: MockProxy<RatingRepository>;
   service: RatingsService;
@@ -67,6 +70,8 @@ const setup = ({
   );
   const blocks = mock<UserBlockVisibility>();
   blocks.hiddenFor.mockResolvedValue(hidden);
+  blocks.blockedBy.mockResolvedValue(blocked);
+  blocks.mutedFor.mockResolvedValue([...new Set([...hidden, ...blocked])]);
   return { repository, service: new RatingsService(repository, blocks) };
 };
 
@@ -118,6 +123,15 @@ describe('RatingsService', () => {
       await expect(
         service.rateOrganizer(asUser('p1'), 'e1', { stars: 5 }, now),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    // #65, ADR-0028: whoever blocked someone says nothing to them.
+    it('does not let someone rate an organizer they blocked', async () => {
+      const { repository, service } = setup({ blocked: ['org'] });
+      await expect(
+        service.rateOrganizer(asUser('p1'), 'e1', { stars: 1 }, now),
+      ).rejects.toThrow('Organizer not found');
+      expect(repository.create).not.toHaveBeenCalled();
     });
 
     it('refuses a second rating', async () => {
@@ -189,6 +203,8 @@ describe('RatingsService', () => {
     it.each([
       ['without any seat', { seats: {} }],
       ['blocked from the organizer', { hidden: ['p1'] }],
+      // #65, ADR-0028: the organizer blocked them themselves.
+      ['the organizer blocked', { blocked: ['p1'] }],
     ])('does not find a participant %s', async (_case, options) => {
       const { service } = setup(options);
       await expect(
@@ -223,7 +239,10 @@ describe('RatingsService', () => {
     });
 
     it('offers the main organizer the participants, without organizers and blocked people', async () => {
-      const { repository, service } = setup({ hidden: ['blocked'] });
+      const { repository, service } = setup({
+        hidden: ['blocked'],
+        blocked: ['mine'],
+      });
       repository.getRateableParticipants.mockResolvedValue([
         { id: 'p1', name: 'Petra', seat: 'APPROVED' },
       ]);
@@ -232,11 +251,18 @@ describe('RatingsService', () => {
         'org',
         'co',
         'blocked',
+        'mine',
       ]);
       expect(state.organizer).toBeNull();
       expect(state.participants).toEqual([
         { user: { id: 'p1', name: 'Petra' }, rating: null, violations: [] },
       ]);
+    });
+
+    it('offers nobody to a participant who blocked the organizer', async () => {
+      const { service } = setup({ blocked: ['org'] });
+      const state = await service.getEventRatingState(asUser('p1'), 'e1', now);
+      expect(state.organizer).toBeNull();
     });
 
     it('offers a co-organizer nobody', async () => {
