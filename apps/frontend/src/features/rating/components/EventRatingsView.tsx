@@ -1,8 +1,10 @@
+import { useId } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
 import { RatingStars } from "@/components/hobbyhub/RatingScore"
+import { ScrollToTopButton } from "@/components/hobbyhub/ScrollToTopButton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RATING_STARS_MAX } from "@/lib/ratingScore"
 
@@ -192,22 +194,42 @@ function ParticipantsSection({
   const { t } = useTranslation()
   const { rated, total } = progressOf(participants)
   const isLeft = participants.some(isOpenTarget)
+  const sectionId = useId()
 
   return (
-    <section className="flex flex-col gap-3 border-t border-border pt-6">
-      <h2 className="typo-h3 text-foreground">{t("rating.page.participants")}</h2>
+    // The way up from a long list brings the section back under the sticky
+    // header (h-14, md:h-16), its heading first, and takes focus there.
+    <section
+      id={sectionId}
+      tabIndex={-1}
+      aria-labelledby={`${sectionId}-title`}
+      className="flex scroll-mt-14 flex-col gap-3 border-t border-border pt-6 outline-none md:scroll-mt-16"
+    >
+      <h2
+        id={`${sectionId}-title`}
+        className="typo-h3 text-foreground"
+      >
+        {t("rating.page.participants")}
+      </h2>
       {isOpen && isLeft ? (
-        // Under the sticky header (h-14, md:h-16), so it stays in sight.
-        <p
-          role="status"
-          className="sticky top-14 z-20 bg-background py-2 typo-label text-foreground md:top-16"
-        >
-          {t("rating.participants.progress", { rated, total })}
-          <span className="text-muted-foreground">
-            {" · "}
-            {t("rating.participants.until", { deadline })}
-          </span>
-        </p>
+        // Under the sticky header (h-14, md:h-16), so it stays in sight, with
+        // the way back up from far down a long list.
+        <div className="sticky top-14 z-20 flex items-center justify-between gap-3 bg-background py-1 md:top-16">
+          <p
+            role="status"
+            className="typo-label text-foreground"
+          >
+            {t("rating.participants.progress", { rated, total })}
+            <span className="text-muted-foreground">
+              {" · "}
+              {t("rating.participants.until", { deadline })}
+            </span>
+          </p>
+          <ScrollToTopButton
+            targetId={sectionId}
+            className="-mr-2 md:mr-0"
+          />
+        </div>
       ) : null}
       {isOpen && isLeft ? (
         <RateParticipantsForm

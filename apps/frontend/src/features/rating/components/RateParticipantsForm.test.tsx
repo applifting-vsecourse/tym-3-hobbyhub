@@ -108,6 +108,9 @@ describe("RateParticipantsForm (#235)", () => {
     expect(screen.getByRole("heading", { name: "Účastníci" })).toBeInTheDocument()
     expect(screen.getByText(/Ohodnoceno 1 z 3/)).toBeInTheDocument()
     expect(screen.getByText(/hodnotit můžeš do 9\. ledna 2030/)).toBeInTheDocument()
+    // The way back up from far down a long list sits in the same bar; at the
+    // top of the list it has nowhere to go, so it waits hidden.
+    expect(screen.getByLabelText("Zpět nahoru")).toHaveClass("invisible")
     // The one already rated is only shown.
     expect(screen.getByText("3 hvězdičky z 5")).toBeInTheDocument()
     expect(screen.queryByRole("radiogroup", { name: "Hodnocení účastníka Petra" })).toBeNull()

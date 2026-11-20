@@ -504,6 +504,7 @@
   },
   "common": {
     "close": "Close",
+    "scrollToTop": "Back to top",
     "unsavedChanges": {
       "description": "You have changes that were not submitted. Leaving loses them.",
       "leave": "Leave",

@@ -507,6 +507,7 @@
   },
   "common": {
     "close": "Zavřít",
+    "scrollToTop": "Zpět nahoru",
     "unsavedChanges": {
       "description": "Máte rozpracované změny, které nejsou odeslané. Když odejdete, ztratí se.",
       "leave": "Odejít",
