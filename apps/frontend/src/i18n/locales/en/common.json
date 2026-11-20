@@ -732,13 +732,16 @@
         },
         "freeSpots": "Free spots",
         "open": "Filters",
+        "place": "{{place}}, within {{radius}} km",
         "price": {
           "from": "from {{value}}",
           "range": "{{from}}–{{to}}",
           "to": "up to {{value}}"
         },
         "selected": "Selected filters",
-        "unknownActivity": "Unknown activity"
+        "unknownActivity": "Unknown activity",
+        "withoutLocation_one": "{{count}} event without a known location is hidden.",
+        "withoutLocation_other": "{{count}} events without a known location are hidden."
       },
       "free": "Free",
       "inMapArea": "Events in the map area",
@@ -1372,6 +1375,9 @@
       "locationPlaceholder": "Prague 8",
       "panelHide": "Hide filters",
       "panelShow": "Show filters",
+      "place": "Place",
+      "placeClear": "Clear the place",
+      "placePlaceholder": "Address, street or city",
       "preset": {
         "capacity": {
           "from13": "13 and more",
@@ -1393,6 +1399,8 @@
         }
       },
       "price": "Price per spot (CZK)",
+      "radius": "Radius",
+      "radiusOption": "{{km}} km",
       "rangeFrom": "From",
       "rangeInvalid": "Enter a number within the allowed range (capacity a whole number up to {{capacity}}, length up to {{hours}} h).",
       "rangeReversed": "\"From\" must not be greater than \"To\".",

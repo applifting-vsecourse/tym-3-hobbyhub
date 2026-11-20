@@ -739,13 +739,17 @@
         },
         "freeSpots": "Volná místa",
         "open": "Filtry",
+        "place": "{{place}}, do {{radius}} km",
         "price": {
           "from": "od {{value}}",
           "range": "{{from}}–{{to}}",
           "to": "do {{value}}"
         },
         "selected": "Vybrané filtry",
-        "unknownActivity": "Neznámá aktivita"
+        "unknownActivity": "Neznámá aktivita",
+        "withoutLocation_few": "Skryty {{count}} akce bez určené polohy.",
+        "withoutLocation_one": "Skryta {{count}} akce bez určené polohy.",
+        "withoutLocation_other": "Skryto {{count}} akcí bez určené polohy."
       },
       "free": "Zdarma",
       "inMapArea": "Akce z oblasti na mapě",
@@ -1392,6 +1396,9 @@
       "locationPlaceholder": "Praha 8",
       "panelHide": "Skrýt filtry",
       "panelShow": "Zobrazit filtry",
+      "place": "Místo",
+      "placeClear": "Zrušit výběr místa",
+      "placePlaceholder": "Adresa, ulice nebo město",
       "preset": {
         "capacity": {
           "from13": "13 a více",
@@ -1413,6 +1420,8 @@
         }
       },
       "price": "Cena za místo (Kč)",
+      "radius": "Okruh",
+      "radiusOption": "{{km}} km",
       "rangeFrom": "Od",
       "rangeInvalid": "Zadejte číslo v povoleném rozsahu (kapacita celé číslo do {{capacity}}, délka do {{hours}} h).",
       "rangeReversed": "Hodnota „Od“ nesmí být větší než „Do“.",
