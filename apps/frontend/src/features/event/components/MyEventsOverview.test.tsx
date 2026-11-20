@@ -62,7 +62,9 @@ type Options = {
 // Through a router: the tabs and the rows are links.
 const renderOverview = (
   applications: MyEventsList<MyApplication> = list([]),
-  hosted: MyEventsList<EventListItem> = list([]),
+  hosted: MyEventsList<
+    EventListItem & { isHidden?: boolean; participantsToRate?: number }
+  > = list([]),
   { tab = "applications", isFiltered = false, onClearFilters, onApplicationAction }: Options = {},
 ) =>
   renderWithRouter(
@@ -189,6 +191,32 @@ describe("MyEventsOverview", () => {
 
     expect(screen.getByRole("link", { name: /Skrytá/ })).toHaveTextContent("Skrytá správcem")
     expect(screen.getByRole("link", { name: /Viditelná/ })).not.toHaveTextContent("Skrytá správcem")
+  })
+
+  // #235: the organizer is pointed to the participants they may still rate.
+  it("marks a hosted event with participants to rate and leads to the rating from its menu", async () => {
+    const user = userEvent.setup()
+    await renderOverview(
+      list([]),
+      list([
+        { ...event({ id: "h1", title: "Proběhlý florbal" }), isHidden: false, participantsToRate: 3 },
+        { ...event({ id: "h2", title: "Ohodnocený florbal" }), isHidden: false, participantsToRate: 0 },
+      ]),
+      { tab: "hosted" },
+    )
+
+    expect(screen.getByRole("link", { name: /Proběhlý florbal/ })).toHaveTextContent("K hodnocení")
+    expect(screen.getByRole("link", { name: /Ohodnocený florbal/ })).not.toHaveTextContent(
+      "K hodnocení",
+    )
+    expect(screen.getAllByRole("button", { name: /Možnosti akce/ })).toHaveLength(1)
+
+    await user.click(screen.getByRole("button", { name: /Proběhlý florbal/ }))
+
+    expect(await screen.findByRole("menuitem", { name: "Ohodnotit účastníky" })).toHaveAttribute(
+      "href",
+      "/events/h1/ratings",
+    )
   })
 
   it("says so in a tab that has nothing", async () => {

@@ -596,8 +596,12 @@
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by <profile>{{name}}</profile>",
       "rating": {
+        "participantsPrompt_one": "You can rate the participants until {{deadline}}. {{count}} of {{total}} left.",
+        "participantsPrompt_other": "You can rate the participants until {{deadline}}. {{count}} of {{total}} left.",
+        "participantsRated": "You have rated the participants.",
         "prompt": "You can rate the organizer until {{deadline}}.",
         "rate": "Rate the organizer",
+        "rateParticipants": "Rate the participants",
         "rated": "You have already rated the organizer.",
         "show": "See the rating",
         "title": "Event rating"
@@ -1610,6 +1614,7 @@
   },
   "myEvents": {
     "actions": {
+      "hostedLabel": "Options for the event: {{title}}",
       "label": "Application options: {{title}}"
     },
     "applications": {
@@ -1628,6 +1633,7 @@
     "loadMore": "Load more",
     "loading": "Loading your events",
     "rate": "Rate the organizer",
+    "rateParticipants": "Rate the participants",
     "sortNote": "Events still ahead of you come first, soonest first. Then past, rejected and cancelled ones, latest first.",
     "status": {
       "APPROVED": "Approved",

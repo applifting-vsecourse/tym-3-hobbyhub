@@ -89,7 +89,7 @@ export type MyEventsList<T> = {
 type MyEventsOverviewProps = {
   applications: MyEventsList<MyApplication>
   /** The organizer's own events; `isHidden` marks one an administrator hid (#239). */
-  hosted: MyEventsList<EventListItem & Partial<Pick<HostedEvent, "isHidden">>>
+  hosted: MyEventsList<EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>>
   /** The list on screen, from the URL. */
   tab: MyEventsTab
   /** Search and filters of both lists, shown under the tabs. */
@@ -176,6 +176,39 @@ function ApplicationActionMenu({
             </Link>
           </DropdownMenuItem>
         ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/**
+ * #235: the menu of an event the person organized, while they may still rate
+ * its participants. The rating is a page, so its item is a link.
+ */
+function RateParticipantsMenu({ event }: { event: EventListItem }) {
+  const { t } = useTranslation()
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={t("myEvents.actions.hostedLabel", { title: event.title })}
+        >
+          <Ellipsis className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link
+            to="/events/$eventId/ratings"
+            params={{ eventId: event.id }}
+          >
+            {t("myEvents.rateParticipants")}
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -304,11 +337,16 @@ export function MyEventsOverview({
     )
   }
 
+  // #235: once one of the organizer's rows has a menu, the others keep its
+  // room, so the seats stay in one column down the list.
+  const hasHostedMenu = hosted.items.some((event) => (event.participantsToRate ?? 0) > 0)
+
   const row = (
-    event: EventListItem & Partial<Pick<HostedEvent, "isHidden">>,
+    event: EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>,
     application?: MyApplication,
   ) => {
     const status = application?.status
+    const isToRate = !application && (event.participantsToRate ?? 0) > 0
     const action = application && onApplicationAction ? applicationActionOf(application, now) : null
     return (
       // The row's top line runs under the menu too; the menu sits centred
@@ -357,6 +395,9 @@ export function MyEventsOverview({
               ) : event.isHidden ? (
                 // #239: only the organizer still sees it; the detail says why.
                 <StatusBadge status="neutral">{t("myEvents.hidden")}</StatusBadge>
+              ) : isToRate ? (
+                // #235: something to do; the menu beside the row does it.
+                <StatusBadge status="pending">{t("myEvents.awaitingRating")}</StatusBadge>
               ) : undefined
             }
           />
@@ -369,7 +410,9 @@ export function MyEventsOverview({
             action={action}
             onAction={onApplicationAction}
           />
-        ) : application && onApplicationAction ? (
+        ) : isToRate ? (
+          <RateParticipantsMenu event={event} />
+        ) : (application && onApplicationAction) || (!application && hasHostedMenu) ? (
           // A row with nothing to offer (decided, or over and rated) keeps the
           // menu's room, so the seats stay in one column down the list (#177).
           <span

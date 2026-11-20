@@ -70,7 +70,7 @@ describe("MyUpcomingEvents", () => {
         { status: "APPROVED", canRateOrganizer: false, event: event("e4", "Už proběhlo", 2) },
       ],
       // The hosted list says whether an administrator hid the event (#239).
-      [{ ...event("e1", "Můj florbal", 11), isHidden: false }],
+      [{ ...event("e1", "Můj florbal", 11), isHidden: false, participantsToRate: 0 }],
     )
     await renderPanel()
 

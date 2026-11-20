@@ -600,8 +600,13 @@
       "organizedByGroup": "Pořádá skupina",
       "organizer": "Pořádá <profile>{{name}}</profile>",
       "rating": {
+        "participantsPrompt_few": "Účastníky můžeš ohodnotit do {{deadline}}. Zbývají {{count}} z {{total}}.",
+        "participantsPrompt_one": "Účastníky můžeš ohodnotit do {{deadline}}. Zbývá {{count}} z {{total}}.",
+        "participantsPrompt_other": "Účastníky můžeš ohodnotit do {{deadline}}. Zbývá {{count}} z {{total}}.",
+        "participantsRated": "Účastníky máš ohodnocené.",
         "prompt": "Organizátora můžeš ohodnotit do {{deadline}}.",
         "rate": "Ohodnotit organizátora",
+        "rateParticipants": "Ohodnotit účastníky",
         "rated": "Organizátora už máš ohodnoceného.",
         "show": "Zobrazit hodnocení",
         "title": "Hodnocení akce"
@@ -1632,6 +1637,7 @@
   },
   "myEvents": {
     "actions": {
+      "hostedLabel": "Možnosti akce: {{title}}",
       "label": "Možnosti přihlášky: {{title}}"
     },
     "applications": {
@@ -1650,6 +1656,7 @@
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
+    "rateParticipants": "Ohodnotit účastníky",
     "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",
