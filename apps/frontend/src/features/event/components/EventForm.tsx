@@ -38,8 +38,8 @@ import {
   APPROVAL_MODES,
   EVENT_LIMITS,
   VENUE_TYPES,
-  type UpdateEventInput,
   type Event,
+  type UpdateEventInput,
 } from "@/features/event/api/eventSchemas"
 import { EventPreview } from "@/features/event/components/EventPreview"
 import { contactKind } from "@/features/event/lib/contact"

@@ -3,8 +3,8 @@ import { api } from "@/lib/api-client"
 import {
   eventSchema,
   type CancelEventInput,
-  type UpdateEventInput,
   type Event,
+  type UpdateEventInput,
 } from "@/features/event/api/eventSchemas"
 
 export async function updateEvent(id: string, input: UpdateEventInput): Promise<Event> {

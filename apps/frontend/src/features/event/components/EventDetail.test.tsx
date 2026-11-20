@@ -165,7 +165,9 @@ describe("EventDetail", () => {
 
     expect(screen.getByText("Chabařovická 4")).toBeInTheDocument()
     expect(
-      screen.getByText("Kontakt na organizátora a odkaz na chat, pokud je vyplnil, uvidíš po potvrzení účasti."),
+      screen.getByText(
+        "Kontakt na organizátora a odkaz na chat, pokud je vyplnil, uvidíš po potvrzení účasti.",
+      ),
     ).toBeInTheDocument()
     expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
   })
