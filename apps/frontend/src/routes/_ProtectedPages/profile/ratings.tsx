@@ -79,7 +79,7 @@ function MyRatingsPage() {
       <Seo title={t("rating.mine.title")} />
       {/* More room under the page on a phone: "Načíst další" ends the list, and
           the raised "Přidat akci" of the BottomNav would sit on it. */}
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page pt-6 pb-16 md:py-12">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-6 px-page pt-6 pb-16 md:py-12">
         <div className="flex flex-col">
           <BackLink
             to={ROUTES.profile}
