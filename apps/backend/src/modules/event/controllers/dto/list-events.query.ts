@@ -3,6 +3,7 @@ import {
   EVENT_LIST_DEFAULT_LIMIT,
   EVENT_LIST_MAX_DURATION_HOURS,
   EVENT_LIST_MAX_LIMIT,
+  EVENT_LIST_MAX_RADIUS_KM,
   EVENT_PARTICIPANTS_LIMIT,
 } from '@/modules/event/domain/event';
 import { applyDecorators } from '@nestjs/common';
@@ -124,4 +125,50 @@ export class ListEventsQuery extends ListEventsRangesQuery {
   @Type(() => Number)
   @IsLongitude()
   lng?: number;
+
+  @ApiPropertyOptional({
+    minimum: -90,
+    maximum: 90,
+    description:
+      'Latitude of the place picked for the radius filter; sent with `aroundLng` and `radiusKm`',
+  })
+  @Transform(blankToUndefined)
+  @ValidateIf(
+    (query: ListEventsQuery) =>
+      query.aroundLng !== undefined || query.radiusKm !== undefined,
+  )
+  @Type(() => Number)
+  @IsLatitude()
+  aroundLat?: number;
+
+  @ApiPropertyOptional({
+    minimum: -180,
+    maximum: 180,
+    description: 'Longitude of the place picked for the radius filter',
+  })
+  @Transform(blankToUndefined)
+  @ValidateIf(
+    (query: ListEventsQuery) =>
+      query.aroundLat !== undefined || query.radiusKm !== undefined,
+  )
+  @Type(() => Number)
+  @IsLongitude()
+  aroundLng?: number;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: EVENT_LIST_MAX_RADIUS_KM,
+    description:
+      'Only events within this many km of the place; online events and events without a position are left out',
+  })
+  @Transform(blankToUndefined)
+  @ValidateIf(
+    (query: ListEventsQuery) =>
+      query.aroundLat !== undefined || query.aroundLng !== undefined,
+  )
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(EVENT_LIST_MAX_RADIUS_KM)
+  radiusKm?: number;
 }

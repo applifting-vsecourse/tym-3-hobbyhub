@@ -81,6 +81,7 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 | Jméno organizátora                                                               | ✅                              | ✅       | ✅               | ✅            | ❌          | [#8][8]                                  |
 | Skupina, která akci pořádá                                                       | ✅                              | ✅       | ✅               | ✅            | ❌          | [#9][9]                                  |
 | Veřejná adresa: čtvrť a město, orientační bod z našeptávače a bod na mapě        | ✅                              | ✅       | ✅               | ✅            | ❌          | [#6][6], [#7][7], [PO][po]               |
+| Počet akcí, které filtr okruhu vynechal, protože nemají určenou polohu           | ✅                              | ✅       | ✅               | ✅            | ❌          | [#261][261]                              |
 | Přesná adresa                                                                    | ❌                              | ✅       | ✅               | ✅            | ❌          | [#43][43], [#67][67], [PO][po]           |
 | Odkaz na online akci                                                             | ❌                              | ✅       | ✅               | ✅            | ❌          | [ADR-0006](../adr/adr-0006.md), [PO][po] |
 | Praktické pokyny                                                                 | ❌                              | ✅       | ✅               | ✅            | ❌          | [#43][43]                                |
@@ -268,6 +269,7 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [226]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/226
 [227]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/227
 [239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
+[261]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/261
 [240]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/240
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
 [233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233

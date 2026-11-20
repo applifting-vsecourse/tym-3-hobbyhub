@@ -32,6 +32,15 @@ export class Config {
   @IsNotEmpty()
   readonly betterAuthSecret!: string;
 
+  // Sign-in with Google is on only when both are set (see better-auth.provider).
+  @Env('GOOGLE_CLIENT_ID')
+  @IsOptional()
+  readonly googleClientId?: string;
+
+  @Env('GOOGLE_CLIENT_SECRET')
+  @IsOptional()
+  readonly googleClientSecret?: string;
+
   @Env('SUPERADMIN_EMAIL')
   readonly superadminEmail!: string;
 
@@ -59,6 +68,20 @@ export class Config {
   @IsUrl({ require_tld: false })
   @IsNotEmpty()
   readonly frontendUrl!: string;
+
+  // Comma-separated extra frontend origins (e.g. a second production domain)
+  // allowed to call the API and to receive the Google sign-in redirect.
+  @Env('FRONTEND_EXTRA_ORIGINS', { expose: true, defaultValue: '' })
+  @IsOptional()
+  readonly frontendExtraOriginsRaw!: string;
+
+  get frontendOrigins(): string[] {
+    const extra = this.frontendExtraOriginsRaw
+      .split(',')
+      .map((origin) => origin.trim().replace(/\/$/, ''))
+      .filter(Boolean);
+    return [this.frontendUrl, ...extra];
+  }
 
   @Env('FRONTEND_RESET_PASSWORD_ROUTE', {
     defaultValue: 'reset-password',

@@ -65,6 +65,8 @@ describe("filtersFromSearch", () => {
         activityIds: ["a1"],
         search: "tenis",
         location: "Brno",
+        place: null,
+        radiusKm: 10,
         dateFrom: "2026-11-01",
         dateTo: "",
         freeSpotsOnly: false,
@@ -81,6 +83,8 @@ describe("filtersFromSearch", () => {
       activityIds: [],
       search: "",
       location: "",
+      place: null,
+      radiusKm: 10,
       dateFrom: "",
       dateTo: "",
       freeSpotsOnly: false,
@@ -210,5 +214,63 @@ describe("hasFilters", () => {
     expect(hasFilters({ ...none, dateTo: "2026-11-30" })).toBe(true)
     expect(hasFilters({ ...none, freeSpotsOnly: true })).toBe(true)
     expect(hasFilters({ ...none, capacityFrom: "4" })).toBe(true)
+  })
+})
+
+// #261: the place and radius of the public list live in the address.
+describe("place and radius", () => {
+  const place = { label: "Praha 8", latitude: 50.1, longitude: 14.45 }
+
+  it("reads the place with a default radius of 10 km", () => {
+    const { filters } = filtersFromSearch(
+      eventsListSearchSchema.parse({ place: "Praha 8", placeLat: 50.1, placeLng: 14.45 }),
+    )
+    expect(filters.place).toEqual(place)
+    expect(filters.radiusKm).toBe(10)
+  })
+
+  it("is no filter without a position, and drops a radius that is not on offer", () => {
+    const parsed = eventsListSearchSchema.parse({ place: "Praha", radius: 7 })
+    expect(filtersFromSearch(parsed).filters.place).toBeNull()
+    expect(parsed.radius).toBeUndefined()
+  })
+
+  it("writes a picked place with its radius into the address", () => {
+    expect(searchWithFilters({}, { place, radiusKm: 25 })).toMatchObject({
+      place: "Praha 8",
+      placeLat: 50.1,
+      placeLng: 14.45,
+      radius: 25,
+    })
+  })
+
+  it("clears the place and the radius in one step", () => {
+    const previous = { place: "Praha 8", placeLat: 50.1, placeLng: 14.45, radius: 25 }
+    expect(searchWithFilters(previous, { place: null })).toMatchObject({
+      place: undefined,
+      placeLat: undefined,
+      placeLng: undefined,
+      radius: undefined,
+    })
+  })
+
+  it("counts as a filter", () => {
+    const { filters } = filtersFromSearch(
+      eventsListSearchSchema.parse({ placeLat: 50.1, placeLng: 14.45 }),
+    )
+    expect(hasFilters(filters)).toBe(true)
+  })
+})
+
+describe("a blank position in the address", () => {
+  it("is no position, not the point 0,0", () => {
+    const parsed = eventsListSearchSchema.parse({ placeLat: "", placeLng: "" })
+    expect(parsed.placeLat).toBeUndefined()
+    expect(parsed.placeLng).toBeUndefined()
+    expect(filtersFromSearch(parsed).filters.place).toBeNull()
+  })
+
+  it("drops a position outside the globe", () => {
+    expect(eventsListSearchSchema.parse({ placeLat: 91, placeLng: 14 }).placeLat).toBeUndefined()
   })
 })

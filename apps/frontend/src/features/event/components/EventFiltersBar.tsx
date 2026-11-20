@@ -60,6 +60,8 @@ export const toPanelFilters = (filters: EventFilterValues): EventFilters => ({
   ...EMPTY_FILTERS,
   activities: filters.activityIds,
   location: filters.location,
+  place: filters.place,
+  radiusKm: filters.radiusKm,
   dateFrom: filters.dateFrom,
   dateTo: filters.dateTo,
   freeSpotsOnly: filters.freeSpotsOnly,
@@ -77,7 +79,9 @@ export const fromPanelFilters = (
   fields: FiltersSheetField[],
 ): EventFilterChange => ({
   activityIds: applied.activities,
-  location: applied.location,
+  // The place picker replaces the text of the place where a page offers it (#261).
+  location: fields.includes("place") ? "" : applied.location,
+  ...(fields.includes("place") && { place: applied.place, radiusKm: applied.radiusKm }),
   dateFrom: applied.dateFrom,
   dateTo: applied.dateTo,
   ...(fields.includes("freeSpots") && { freeSpotsOnly: applied.freeSpotsOnly }),
@@ -181,6 +185,7 @@ export function EventFiltersBar({
     shouldShowChips &&
     (selectedActivities.length > 0 ||
       filters.location !== "" ||
+      filters.place !== null ||
       dateLabel !== "" ||
       filters.freeSpotsOnly ||
       rangeChips.some(({ label }) => label !== ""))
@@ -243,6 +248,25 @@ export function EventFiltersBar({
                     className="size-4 text-muted-foreground"
                   />
                   {filters.location}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.place ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ place: null })}
+                >
+                  <MapPin
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                  {t("events.list.filters.place", {
+                    place: filters.place.label,
+                    radius: filters.radiusKm,
+                  })}
                   <X
                     aria-hidden
                     className="size-4 text-muted-foreground"

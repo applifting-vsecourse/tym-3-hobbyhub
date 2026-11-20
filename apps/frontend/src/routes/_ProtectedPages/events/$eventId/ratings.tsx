@@ -64,7 +64,7 @@ function EventRatingsPage() {
       <Seo title={stateQuery.data?.event.title ?? t("rating.page.eyebrow")} />
       {/* More room under the page on a phone: its one action is the last thing
           on it, and the raised "Přidat akci" of the BottomNav would sit on it. */}
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-page pt-6 pb-16 md:py-12">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-2 px-page pt-6 pb-16 md:py-12">
         <BackLink
           to="/events/$eventId"
           params={{ eventId }}
