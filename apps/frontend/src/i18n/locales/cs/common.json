@@ -606,7 +606,7 @@
         "seats": "Dokud je akce skrytá, nikdo nový se nepřihlásí a žádosti počkají.",
         "text": "Správce akci skryl, takže ji kromě organizátorů nikdo nevidí. Důvod: {{reason}}"
       },
-      "hiddenContacts": "Kontakt na organizátora uvidíš po potvrzení účasti.",
+      "hiddenContacts": "Kontakt na organizátora a odkaz na chat, pokud je vyplnil, uvidíš po potvrzení účasti.",
       "hiddenInfo": "Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti.",
       "join": "Obsadit místo",
       "linkLabel": "Odkaz",

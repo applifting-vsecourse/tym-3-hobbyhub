@@ -602,7 +602,7 @@
         "seats": "While the event is hidden, nobody new can join and requests wait.",
         "text": "An administrator hid the event, so nobody but its organizers can see it. Reason: {{reason}}"
       },
-      "hiddenContacts": "You'll see the organizer's contact once your seat is confirmed.",
+      "hiddenContacts": "You'll see the organizer's contact and chat link, if they gave any, once your seat is confirmed.",
       "hiddenInfo": "You'll see the exact address and the organizer's contact once your seat is confirmed.",
       "join": "Take a seat",
       "linkLabel": "Link",

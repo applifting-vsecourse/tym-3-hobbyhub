@@ -22,6 +22,7 @@ import { eventKeys } from "@/features/event/api/eventKeys"
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
 import { participantInfoQueryOptions } from "@/features/event/api/participantInfoQueryOptions"
 import { EventDetail } from "@/features/event/components/EventDetail"
+import { EventPlace } from "@/features/event/components/EventPlace"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
 import { ParticipantInfo } from "@/features/event/components/ParticipantInfo"
 import { ShareEventAction } from "@/features/event/components/ShareEventAction"
@@ -247,14 +248,8 @@ function EventDetailPage() {
             // contacts still wait for a seat.
             publicPlace={
               !hasInfoRight && eventQuery.data.location ? (
-                <ParticipantInfo
-                  info={{
-                    venueType: eventQuery.data.venueType,
-                    location: eventQuery.data.location,
-                    organizerName: eventQuery.data.organizerName,
-                    contact: null,
-                    externalChatUrl: null,
-                  }}
+                <EventPlace
+                  location={eventQuery.data.location}
                   pin={pinOf(eventQuery.data)}
                 />
               ) : undefined

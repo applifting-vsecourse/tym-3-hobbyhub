@@ -93,11 +93,6 @@ export type CreateEventInput = {
   activityId: string
   description: string
   equipment?: string
-  /**
-   * Sent with an edit only: an online event cannot be created yet, but one
-   * that exists can be edited, and keeps its kind.
-   */
-  venueType: Event["venueType"]
   /** #218: everyone sees the exact address, or only the people with a seat. */
   isAddressPublic: boolean
   approvalMode: ApprovalMode
@@ -124,6 +119,13 @@ export type CreateEventInput = {
   externalChatUrl?: string
   contact?: string
 }
+
+/**
+ * #218: an edit also says the kind of venue: an online event cannot be
+ * created yet, but one that exists can be edited, and keeps its kind. A new
+ * event is always at a place, so the API refuses the field there.
+ */
+export type UpdateEventInput = CreateEventInput & { venueType: Event["venueType"] }
 
 export const eventListItemSchema = z.object({
   id: z.string(),

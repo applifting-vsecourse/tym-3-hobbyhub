@@ -38,7 +38,7 @@ import {
   APPROVAL_MODES,
   EVENT_LIMITS,
   VENUE_TYPES,
-  type CreateEventInput,
+  type UpdateEventInput,
   type Event,
 } from "@/features/event/api/eventSchemas"
 import { EventPreview } from "@/features/event/components/EventPreview"
@@ -269,7 +269,7 @@ const withPosition = async (values: FormValues, language: string): Promise<FormV
 }
 
 // Optional fields left empty are not sent at all. Dates are validated by then.
-const toInput = (values: FormValues): CreateEventInput => {
+const toInput = (values: FormValues): UpdateEventInput => {
   const start = combineDateTime(values.startDate, values.startTime)
   const end = combineDateTime(values.endDate, values.endTime)
   if (!start || !end) throw new Error("EventForm: submitted without a valid date")
@@ -360,7 +360,7 @@ type EventFormProps = {
   readonly onRetryActivities: () => void
   readonly isSubmitting: boolean
   readonly errorMessage?: string | null
-  readonly onSubmit: (values: CreateEventInput) => void | Promise<void>
+  readonly onSubmit: (values: UpdateEventInput) => void | Promise<void>
   /** The event being edited (F-05.10); without it the form creates a new one. */
   readonly event?: Event
   /** Round back button of the first phone step (a link to the previous page). */
