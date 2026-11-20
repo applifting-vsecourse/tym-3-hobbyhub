@@ -2248,7 +2248,7 @@
       "ties": "Waiting requests between you close, their seats at your events and memberships in your groups end, and so do yours with them. Unblocking brings none of it back.",
       "title": "Block {{name}}?"
     },
-    "manageLink": "You manage blocked users in Settings.",
+    "manageLink": "Blocked users are managed in Settings.",
     "profile": {
       "blocked": "You blocked {{name}}. They see neither your profile nor what you run, and cannot ask you for anything."
     },

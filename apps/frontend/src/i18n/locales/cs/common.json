@@ -2289,7 +2289,7 @@
       "ties": "Čekající žádosti mezi vámi se uzavřou a jeho místa na vašich akcích a členství ve vašich skupinách skončí, stejně jako vaše místa a členství u něj. Po odblokování se nic z toho neobnoví.",
       "title": "Zablokovat uživatele {{name}}?"
     },
-    "manageLink": "Zablokované uživatele spravujete v Nastavení.",
+    "manageLink": "Správa zablokovaných uživatelů je v Nastavení.",
     "profile": {
       "blocked": "Uživatele {{name}} máte zablokovaného. Nevidí váš profil ani to, co pořádáte, a nemůže vás o nic žádat."
     },
