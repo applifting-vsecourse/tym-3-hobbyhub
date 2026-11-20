@@ -44,8 +44,13 @@ export function AuthLayout({
         userMenu={null}
         switchers={isAdministration ? <HeaderSwitchers /> : null}
       />
-      <main className="min-h-svh">
-        <section className="mx-auto w-full max-w-sm px-page py-6 md:py-16">
+      {/*
+       * The fluid gutter sits on the frame, not on the column: on the column
+       * it would come out of `max-w-sm` and the form would get narrower the
+       * wider the window is.
+       */}
+      <main className="min-h-svh px-page">
+        <section className="mx-auto w-full max-w-sm py-6 md:py-16">
           {backTo ? (
             <Button
               asChild
