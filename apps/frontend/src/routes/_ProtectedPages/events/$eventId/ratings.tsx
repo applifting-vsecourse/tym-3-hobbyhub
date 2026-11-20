@@ -44,7 +44,7 @@ function EventRatingsPage() {
   return (
     <>
       <Seo title={stateQuery.data?.event.title ?? t("rating.page.eyebrow")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-page py-6 md:py-12">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-2 px-page py-6 md:py-12">
         <BackLink
           to="/events/$eventId"
           params={{ eventId }}
