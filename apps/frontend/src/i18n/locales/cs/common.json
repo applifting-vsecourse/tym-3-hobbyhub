@@ -514,6 +514,7 @@
   },
   "common": {
     "close": "Zavřít",
+    "scrollToTop": "Zpět nahoru",
     "unsavedChanges": {
       "description": "Máte rozpracované změny, které nejsou odeslané. Když odejdete, ztratí se.",
       "leave": "Odejít",
@@ -607,8 +608,13 @@
       "organizedByGroup": "Pořádá skupina",
       "organizer": "Pořádá <profile>{{name}}</profile>",
       "rating": {
+        "participantsPrompt_few": "Účastníky můžeš ohodnotit do {{deadline}}. Zbývají {{count}} z {{total}}.",
+        "participantsPrompt_one": "Účastníky můžeš ohodnotit do {{deadline}}. Zbývá {{count}} z {{total}}.",
+        "participantsPrompt_other": "Účastníky můžeš ohodnotit do {{deadline}}. Zbývá {{count}} z {{total}}.",
+        "participantsRated": "Účastníky máš ohodnocené.",
         "prompt": "Organizátora můžeš ohodnotit do {{deadline}}.",
         "rate": "Ohodnotit organizátora",
+        "rateParticipants": "Ohodnotit účastníky",
         "rated": "Organizátora už máš ohodnoceného.",
         "show": "Zobrazit hodnocení",
         "title": "Hodnocení akce"
@@ -1647,6 +1653,7 @@
   },
   "myEvents": {
     "actions": {
+      "hostedLabel": "Možnosti akce: {{title}}",
       "label": "Možnosti přihlášky: {{title}}"
     },
     "applications": {
@@ -1665,6 +1672,7 @@
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
+    "rateParticipants": "Ohodnotit účastníky",
     "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",
@@ -2235,7 +2243,6 @@
       "back": "Zpět na akci",
       "empty": "Na této akci nemáš koho hodnotit.",
       "eyebrow": "Hodnocení po akci",
-      "formsSoon": "Formulář pro hodnocení účastníků brzy přibude.",
       "loadError": "Hodnocení se nepodařilo načíst",
       "loading": "Načítám hodnocení",
       "notRated": "Zatím neohodnoceno",
@@ -2252,6 +2259,30 @@
       "revealNote": "Kdo hodnotil koho, se ukáže až po konci lhůty, všem najednou.",
       "sent": "Hodnocení máš odeslané. Organizátor ho uvidí až po konci lhůty.",
       "yourComment": "Tvůj komentář"
+    },
+    "participants": {
+      "addComment": "Komentář",
+      "backToEdit": "Zpět k úpravám",
+      "commentWithoutStars": "Bez hvězdiček se komentář neodešle. Vyber hvězdičky, nebo komentář smaž.",
+      "done": "Hotovo, všechny účastníky máš ohodnocené. Hodnocení se jim odkryjí po {{deadline}}, všem najednou.",
+      "groupCount": "{{count}}×",
+      "leftForLater_few": "{{count}} účastníci zůstanou neohodnocení. Vrátit se k nim můžeš do {{deadline}}.",
+      "leftForLater_one": "{{count}} účastník zůstane neohodnocený. Vrátit se k němu můžeš do {{deadline}}.",
+      "leftForLater_other": "{{count}} účastníků zůstane neohodnocených. Vrátit se k nim můžeš do {{deadline}}.",
+      "nothingChosen": "Vyber hvězdičky aspoň u jednoho účastníka.",
+      "prefill": "Předvyplnit zbývajícím 5★",
+      "prefilled": "Předvyplněno",
+      "progress": "Ohodnoceno {{rated}} z {{total}}",
+      "review": "Zkontrolovat a odeslat ({{count}})",
+      "reviewFinal": "Odeslaná hodnocení už nepůjde změnit ani smazat. Účastníci je uvidí po {{deadline}}.",
+      "reviewTitle": "Zkontrolovat hodnocení",
+      "send_few": "Odeslat {{count}} hodnocení",
+      "send_one": "Odeslat {{count}} hodnocení",
+      "send_other": "Odeslat {{count}} hodnocení",
+      "starsLabel": "Hodnocení účastníka {{name}}",
+      "undoPrefill": "Zrušit předvyplnění",
+      "until": "hodnotit můžeš do {{deadline}}",
+      "whyPlaceholder": "Napiš proč, pomůže to dalším organizátorům…"
     },
     "refused": {
       "ALREADY_RATED": "Toto hodnocení už máš odeslané.",

@@ -38,6 +38,7 @@ describe('MyEventsService', () => {
     requests = mock<ParticipationRequestsService>();
     ratings = mock<RatingsService>();
     ratings.getEventsToRateOrganizer.mockResolvedValue([]);
+    ratings.getParticipantsToRate.mockResolvedValue(new Map());
     service = new MyEventsService(events, requests, ratings);
   });
 
@@ -143,16 +144,44 @@ describe('MyEventsService', () => {
 
   describe('getHosted', () => {
     it('returns the page of events the user organizes', async () => {
-      const hosted = { items: [anItem('mine')], total: 1 };
-      events.getOrganizedEvents.mockResolvedValue(hosted);
+      events.getOrganizedEvents.mockResolvedValue({
+        items: [anItem('mine')],
+        total: 1,
+      });
 
-      await expect(service.getHosted(user, page, filter, now)).resolves.toBe(
-        hosted,
+      await expect(service.getHosted(user, page, filter, now)).resolves.toEqual(
+        { items: [{ ...anItem('mine'), participantsToRate: 0 }], total: 1 },
       );
       expect(events.getOrganizedEvents).toHaveBeenCalledWith(
         user,
         page,
         filter,
+        now,
+      );
+    });
+
+    // #235: the rating rules, not this overview, decide whom they may rate.
+    it('says how many participants the organizer may still rate, page by page', async () => {
+      events.getOrganizedEvents.mockResolvedValue({
+        items: [anItem('over'), anItem('soon')],
+        total: 2,
+      });
+      ratings.getParticipantsToRate.mockResolvedValue(new Map([['over', 3]]));
+
+      const hosted = await service.getHosted(user, page, filter, now);
+
+      expect(
+        hosted.items.map(({ id, participantsToRate }) => [
+          id,
+          participantsToRate,
+        ]),
+      ).toEqual([
+        ['over', 3],
+        ['soon', 0],
+      ]);
+      expect(ratings.getParticipantsToRate).toHaveBeenCalledWith(
+        user,
+        ['over', 'soon'],
         now,
       );
     });

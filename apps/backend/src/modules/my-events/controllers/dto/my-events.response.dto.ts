@@ -1,10 +1,11 @@
 import { EventListItemResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
-import { EventListItem, EventListPage } from '@/modules/event/domain/event';
 import {
   APPLICATION_STATUSES,
   ApplicationStatus,
   MyApplication,
   MyApplicationPage,
+  MyHostedEvent,
+  MyHostedEventPage,
 } from '@/modules/my-events/domain/my-events';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -61,10 +62,17 @@ export class HostedEventResponseDto extends EventListItemResponseDto {
   @ApiProperty({ description: 'Hidden by an administrator (#239)' })
   isHidden!: boolean;
 
-  static fromHosted(event: EventListItem): HostedEventResponseDto {
+  @ApiProperty({
+    description:
+      'How many participants the signed-in main organizer may still rate (#235): the event is over and its rating period is on; 0 otherwise',
+  })
+  participantsToRate!: number;
+
+  static fromHosted(event: MyHostedEvent): HostedEventResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
       isHidden: event.isHidden,
+      participantsToRate: event.participantsToRate,
     };
   }
 }
@@ -79,7 +87,7 @@ export class MyHostedEventsResponseDto {
   })
   total!: number;
 
-  static fromDomain(page: EventListPage): MyHostedEventsResponseDto {
+  static fromDomain(page: MyHostedEventPage): MyHostedEventsResponseDto {
     return {
       items: page.items.map((event) =>
         HostedEventResponseDto.fromHosted(event),

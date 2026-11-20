@@ -1,7 +1,7 @@
 import { useId, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
@@ -9,23 +9,13 @@ import { AppForm } from "@/components/form/AppForm"
 import { StarRatingInput } from "@/components/hobbyhub/StarRatingInput"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Textarea } from "@/components/ui/textarea"
+import { FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { RATING_STARS_MAX } from "@/lib/ratingScore"
 import { cn } from "@/lib/utils"
 
 import { RATING_COMMENT_MAX_LENGTH, type RatingInput } from "@/features/rating/api/ratingSchemas"
-
-// Characters as the server and the database count them: code points, after
-// the same `trim()` the server does.
-const charCount = (value: string) => [...value.trim()].length
+import { RatingCommentField } from "@/features/rating/components/RatingCommentField"
+import { charCount } from "@/features/rating/lib/ratingComment"
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
@@ -76,8 +66,6 @@ export function RatingForm({
     resolver: zodResolver(schema),
     defaultValues: { stars: null, comment: "" },
   })
-  const comment = useWatch({ control: form.control, name: "comment" })
-  const left = RATING_COMMENT_MAX_LENGTH - charCount(comment)
 
   return (
     <AppForm
@@ -122,36 +110,10 @@ export function RatingForm({
         )}
       />
 
-      <FormField
-        control={form.control}
+      <RatingCommentField<FormValues>
         name="comment"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("rating.form.commentLabel")}</FormLabel>
-            <FormControl>
-              <Textarea
-                rows={4}
-                placeholder={t("rating.form.commentPlaceholder")}
-                disabled={isPending}
-                {...field}
-              />
-            </FormControl>
-            <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-              <FormDescription>{t("rating.form.commentHint")}</FormDescription>
-              <p
-                className={cn(
-                  "typo-small",
-                  left < 0 ? "text-destructive-ink" : "text-muted-foreground",
-                )}
-              >
-                {left < 0
-                  ? t("rating.form.commentOver", { count: -left })
-                  : t("rating.form.commentLeft", { count: left })}
-              </p>
-            </div>
-            <FormMessage />
-          </FormItem>
-        )}
+        hint={t("rating.form.commentHint")}
+        isDisabled={isPending}
       />
 
       <div className="flex flex-col gap-3">

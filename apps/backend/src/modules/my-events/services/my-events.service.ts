@@ -1,7 +1,6 @@
 import {
   EventFilter,
   eventListFilterViolations,
-  EventListPage,
   Page,
 } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
@@ -9,6 +8,7 @@ import {
   applicationStatusOf,
   MyApplication,
   MyApplicationPage,
+  MyHostedEventPage,
 } from '@/modules/my-events/domain/my-events';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import { RatingsService } from '@/modules/rating/services/ratings.service';
@@ -66,8 +66,26 @@ export class MyEventsService {
     page: Page,
     filter: EventFilter,
     now: Date = new Date(),
-  ): Promise<EventListPage> {
+  ): Promise<MyHostedEventPage> {
     assertValidFilter(filter);
-    return await this.eventsService.getOrganizedEvents(user, page, filter, now);
+    const { items, total } = await this.eventsService.getOrganizedEvents(
+      user,
+      page,
+      filter,
+      now,
+    );
+    // #235: the rating rules decide whom the organizer may still rate.
+    const toRate = await this.ratingsService.getParticipantsToRate(
+      user,
+      items.map(({ id }) => id),
+      now,
+    );
+    return {
+      items: items.map((event) => ({
+        ...event,
+        participantsToRate: toRate.get(event.id) ?? 0,
+      })),
+      total,
+    };
   }
 }

@@ -15,7 +15,7 @@ import { useSession } from "@/features/auth/hooks/useSession"
 import { ratingKeys } from "@/features/rating/api/ratingKeys"
 import { eventRatingStateQueryOptions } from "@/features/rating/api/ratingQueryOptions"
 import type { RatingInput } from "@/features/rating/api/ratingSchemas"
-import { rateOrganizer } from "@/features/rating/api/submitRating"
+import { rateOrganizer, rateParticipant } from "@/features/rating/api/submitRating"
 import { EventRatingsView } from "@/features/rating/components/EventRatingsView"
 import { ratingErrorMessage } from "@/features/rating/lib/ratingRefusal"
 
@@ -41,13 +41,14 @@ function EventRatingsPage() {
   // #234: a participant rates the organizer. Saved or refused, what the page
   // and the lists that point here show is out of date: a refusal means the
   // period ended or the rating is there already.
+  const refreshRatings = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ratingKeys.all() }),
+      queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
+    ])
   const rateOrganizerMutation = useMutation({
     mutationFn: (input: RatingInput) => rateOrganizer(eventId, input),
-    onSettled: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ratingKeys.all() }),
-        queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
-      ]),
+    onSettled: refreshRatings,
   })
 
   if (isNotFound(stateQuery.error)) {
@@ -103,6 +104,12 @@ function EventRatingsPage() {
                 ? ratingErrorMessage(t, rateOrganizerMutation.error)
                 : null
             }
+            // #235: the organizer sends several ratings at once, and the list
+            // says per participant what went out; the page re-reads after.
+            onRateParticipant={async (participantId, input) => {
+              await rateParticipant(eventId, participantId, input)
+            }}
+            onParticipantsRated={refreshRatings}
           />
         )}
       </section>

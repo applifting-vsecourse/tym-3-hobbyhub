@@ -36,6 +36,7 @@ import {
 import { decisionMessageOf, ownSeatView } from "@/features/participation-request/lib/joinPanel"
 import { eventRatingStateQueryOptions } from "@/features/rating/api/ratingQueryOptions"
 import { RateOrganizerPrompt } from "@/features/rating/components/RateOrganizerPrompt"
+import { RateParticipantsPrompt } from "@/features/rating/components/RateParticipantsPrompt"
 import { ReportAction } from "@/features/report/components/ReportAction"
 
 export const Route = createFileRoute("/events/$eventId")({
@@ -87,12 +88,14 @@ function EventDetailPage() {
     enabled: hasInfoRight,
   })
   // #234: someone who had a seat may rate the organizer once the event is
-  // over. Asked only then, since the answer is 404 for anyone without a seat;
-  // the server says whether the period is still on and what was sent.
+  // over, #235: the main organizer the participants. Asked only then, since
+  // the answer is 404 for anyone else; the server says whether the period is
+  // still on and what was sent.
+  const isMainOrganizer = user !== null && user.id === event?.organizerId
   const canHaveRating =
     !isHidden &&
     user !== null &&
-    ownView === "approved" &&
+    (ownView === "approved" || isMainOrganizer) &&
     event !== undefined &&
     (event.status === "PUBLISHED" || event.status === "FINISHED") &&
     event.endAt <= new Date()
@@ -203,9 +206,11 @@ function EventDetailPage() {
             ratingPrompt={
               // Quiet while loading and when it fails: the notification and
               // the overview of one's events lead to the rating too.
-              canHaveRating && ratingQuery.data ? (
+              !canHaveRating || !ratingQuery.data ? undefined : isMainOrganizer ? (
+                <RateParticipantsPrompt state={ratingQuery.data} />
+              ) : (
                 <RateOrganizerPrompt state={ratingQuery.data} />
-              ) : undefined
+              )
             }
             reportAction={
               canReport ? (

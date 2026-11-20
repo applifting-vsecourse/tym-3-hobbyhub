@@ -10,6 +10,7 @@ import {
   ratingDeadlineOf,
   RatingDirection,
   RatingEventFacts,
+  ratingEventViolations,
   RatingScore,
   RatingTarget,
   RatingViolation,
@@ -178,6 +179,57 @@ export class RatingsService {
         );
       })
       .map(({ id }) => id);
+  }
+
+  /**
+   * #235: how many participants the main organizer may still rate at each of
+   * these events, by the same rules as the rating itself; events with nobody
+   * left are not in the map. Only ever about the person asking: nobody else
+   * learns who rated whom. In a fixed number of queries whatever the length of
+   * the list.
+   */
+  async getParticipantsToRate(
+    user: Identity,
+    eventIds: readonly string[],
+    now: Date = new Date(),
+  ): Promise<Map<string, number>> {
+    if (eventIds.length === 0) return new Map();
+    const events = (await this.repository.getEventFactsOf(eventIds)).filter(
+      (event) =>
+        event.organizerId === user.id &&
+        ratingEventViolations(event, now).length === 0,
+    );
+    if (events.length === 0) return new Map();
+
+    const ids = events.map(({ id }) => id);
+    const [seats, rated, hidden] = await Promise.all([
+      this.repository.getRateableSeatsAt(ids),
+      this.repository.getParticipantsRatedBy(user.id, ids),
+      this.blocks.hiddenFor(user.id),
+    ]);
+    const isRated = (eventId: string, participantId: string): boolean =>
+      rated.some(
+        (rating) =>
+          rating.eventId === eventId && rating.participantId === participantId,
+      );
+    return new Map(
+      events.flatMap((event): [string, number][] => {
+        const left = seats.filter(
+          (seat) =>
+            seat.eventId === event.id &&
+            !hidden.includes(seat.userId) &&
+            participantRatingViolations({
+              event,
+              authorId: user.id,
+              participantId: seat.userId,
+              participantSeat: seat.status,
+              alreadyRated: isRated(event.id, seat.userId),
+              now,
+            }).length === 0,
+        ).length;
+        return left > 0 ? [[event.id, left]] : [];
+      }),
+    );
   }
 
   /** A participant rates the main organizer of the event. */
