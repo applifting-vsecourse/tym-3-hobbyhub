@@ -174,8 +174,8 @@ function OrganizerSection({
 
 /**
  * #235: the main organizer and the participants. While the period is on and
- * someone is left, the list to rate them, with how far along they are kept in
- * sight; otherwise what they gave.
+ * someone is left, the list to rate them; otherwise what they gave. How far
+ * along they are, and the way back up, stay in sight either way.
  */
 function ParticipantsSection({
   participants,
@@ -211,26 +211,28 @@ function ParticipantsSection({
       >
         {t("rating.page.participants")}
       </h2>
-      {isOpen && isLeft ? (
-        // Under the sticky header (h-14, md:h-16), so it stays in sight, with
-        // the way back up from far down a long list.
-        <div className="sticky top-14 z-20 flex items-center justify-between gap-3 bg-background py-1 md:top-16">
-          <p
-            role="status"
-            className="typo-label text-foreground"
-          >
-            {t("rating.participants.progress", { rated, total })}
+      {/* Under the sticky header (h-14, md:h-16), so it stays in sight, with
+        the way back up from far down a long list. It stays once everyone is
+        rated or the period is over, without the deadline, which no longer
+        applies: the list is just as long then. */}
+      <div className="sticky top-14 z-20 flex items-center justify-between gap-3 bg-background py-1 md:top-16">
+        <p
+          role="status"
+          className="typo-label text-foreground"
+        >
+          {t("rating.participants.progress", { rated, total })}
+          {isOpen && isLeft ? (
             <span className="text-muted-foreground">
               {" · "}
               {t("rating.participants.until", { deadline })}
             </span>
-          </p>
-          <ScrollToTopButton
-            targetId={sectionId}
-            className="-mr-2 md:mr-0"
-          />
-        </div>
-      ) : null}
+          ) : null}
+        </p>
+        <ScrollToTopButton
+          targetId={sectionId}
+          className="-mr-2 md:mr-0"
+        />
+      </div>
       {isOpen && isLeft ? (
         <RateParticipantsForm
           participants={participants}

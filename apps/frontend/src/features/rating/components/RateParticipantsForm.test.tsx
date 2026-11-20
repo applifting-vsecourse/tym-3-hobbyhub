@@ -320,7 +320,10 @@ describe("RateParticipantsForm (#235)", () => {
       await screen.findByText(/Hotovo, všechny účastníky máš ohodnocené\. .* po 9\. ledna 2030/),
     ).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Zkontrolovat a odeslat/ })).toBeNull()
-    expect(screen.queryByText(/Ohodnoceno/)).toBeNull()
+    // The bar stays, with the way back up, just without the deadline.
+    expect(screen.getByText("Ohodnoceno 1 z 1")).toBeInTheDocument()
+    expect(screen.queryByText(/hodnotit můžeš do/)).toBeNull()
+    expect(screen.getByLabelText("Zpět nahoru")).toBeInTheDocument()
     // What was written stays in sight.
     expect(screen.getByText("Přišla pozdě")).toBeInTheDocument()
   })
@@ -341,6 +344,9 @@ describe("RateParticipantsForm (#235)", () => {
 
     expect(screen.getByText(/Hodnocení skončilo/)).toBeInTheDocument()
     expect(screen.getByText("4 hvězdičky z 5")).toBeInTheDocument()
+    expect(screen.getByText("Ohodnoceno 1 z 2")).toBeInTheDocument()
+    expect(screen.queryByText(/hodnotit můžeš do/)).toBeNull()
+    expect(screen.getByLabelText("Zpět nahoru")).toBeInTheDocument()
     expect(screen.getByText("Zatím neohodnoceno")).toBeInTheDocument()
     expect(screen.queryByRole("radiogroup")).toBeNull()
     expect(screen.queryByRole("button", { name: /Zkontrolovat a odeslat/ })).toBeNull()
