@@ -258,6 +258,18 @@ describeDb('blocks between two people in the database (#239)', () => {
       await expect(visibility.hiddenFor(smaller)).resolves.toEqual([larger]);
     });
 
+    // Review of PR #267: the blocked may block back, and stays protected once
+    // the first block ends.
+    it('lives beside a block the other one made', async () => {
+      const [a, b] = [await aUser(), await aUser()];
+      await blocks.createUserBlock(a, b);
+
+      await expect(blocks.createUserBlock(b, a)).resolves.toBe(true);
+      await expect(blocks.deleteUserBlock(a, b)).resolves.toBe(true);
+      await expect(visibility.hiddenFor(a)).resolves.toEqual([b]);
+      await expect(visibility.hiddenFor(b)).resolves.toEqual([]);
+    });
+
     it('ends only once, and only the blocker can end it', async () => {
       const [blocker, blocked] = [await aUser(), await aUser()];
       await blocks.createUserBlock(blocker, blocked);
@@ -278,7 +290,7 @@ describeDb('blocks between two people in the database (#239)', () => {
       const [blocker, blocked] = [await aUser(), await aUser()];
       await blocks.createUserBlock(blocker, blocked);
 
-      await expect(blocks.listAdminBlocksOf(blocker)).resolves.toEqual([
+      await expect(blocks.listBlocksOf(blocker)).resolves.toEqual([
         expect.objectContaining({
           source: 'USER',
           otherUser: expect.objectContaining({ id: blocked }),
@@ -287,7 +299,7 @@ describeDb('blocks between two people in the database (#239)', () => {
           createdBy: null,
         }),
       ]);
-      await expect(blocks.listAdminBlocksOf(blocked)).resolves.toEqual([
+      await expect(blocks.listBlocksOf(blocked)).resolves.toEqual([
         expect.objectContaining({ source: 'USER', isBlocker: false }),
       ]);
     });
@@ -354,7 +366,7 @@ describeDb('blocks between two people in the database (#239)', () => {
       const [a, b] = [await aUser(), await aUser()];
       await blockPair(a, b);
 
-      await expect(blocks.listAdminBlocksOf(a)).resolves.toEqual([
+      await expect(blocks.listBlocksOf(a)).resolves.toEqual([
         expect.objectContaining({
           source: 'ADMINISTRATOR',
           otherUser: expect.objectContaining({ id: b }),
@@ -363,7 +375,7 @@ describeDb('blocks between two people in the database (#239)', () => {
           createdBy: expect.objectContaining({ name: 'Správce' }),
         }),
       ]);
-      await expect(blocks.listAdminBlocksOf(b)).resolves.toEqual([
+      await expect(blocks.listBlocksOf(b)).resolves.toEqual([
         expect.objectContaining({
           otherUser: expect.objectContaining({ id: a }),
         }),

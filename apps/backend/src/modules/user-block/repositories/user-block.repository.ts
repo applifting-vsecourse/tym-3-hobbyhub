@@ -26,7 +26,7 @@ export class UserBlockRepository {
   // #239: the blocks an administrator made with this person on either side.
   // #65: and the blocks a user made, whichever of the two made it. The newest
   // first.
-  async listAdminBlocksOf(userId: string): Promise<AdminUserBlock[]> {
+  async listBlocksOf(userId: string): Promise<AdminUserBlock[]> {
     const rows = await this.prisma.userBlock.findMany({
       where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
       include: {

@@ -11,7 +11,6 @@ import {
 import { UserBlockRepository } from '@/modules/user-block/repositories/user-block.repository';
 import { AdminIdentity } from '@/shared/admin-auth/domain/administrator';
 import { Identity } from '@/shared/auth/domain/identity';
-import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   Injectable,
@@ -46,7 +45,6 @@ export class UserBlocksService {
     private readonly membershipRequests: MembershipRequestsService,
     private readonly groups: GroupsService,
     private readonly friendships: FriendshipService,
-    private readonly visibility: UserBlockVisibility,
   ) {}
 
   // #65: the people the user blocked, for their settings.
@@ -54,10 +52,12 @@ export class UserBlocksService {
     return this.repository.listBlockedBy(user.id);
   }
 
-  // #65, ADR-0028: the blocker comes from the session. Only someone the user
-  // can see can be blocked; anyone else answers as if they did not exist.
-  // The ties go as with an administrator's block, quietly, and blocking again
-  // finishes a clean-up that failed halfway.
+  // #65, ADR-0028: the blocker comes from the session. Anyone who exists can
+  // be blocked, also someone who blocked the user first or a pair an
+  // administrator blocked: each block stands on its own and protects its
+  // blocker once the other ends (review of PR #267). The ties go as with an
+  // administrator's block, quietly, and blocking again finishes a clean-up
+  // that failed halfway.
   async blockAsUser(
     user: Identity,
     otherUserId: string,
@@ -65,10 +65,6 @@ export class UserBlocksService {
   ): Promise<void> {
     const violations = userBlockViolations(user.id, otherUserId);
     if (violations.length > 0) throw violationsError(violations);
-    const hidden = await this.visibility.hiddenFor(user.id);
-    if (hidden.includes(otherUserId)) {
-      throw new NotFoundException('User not found');
-    }
     await this.assertUsersExist([otherUserId]);
 
     const created = await this.repository.createUserBlock(user.id, otherUserId);
@@ -84,7 +80,7 @@ export class UserBlocksService {
 
   async listBlocksOf(userId: string): Promise<AdminUserBlock[]> {
     await this.assertUsersExist([userId]);
-    return this.repository.listAdminBlocksOf(userId);
+    return this.repository.listBlocksOf(userId);
   }
 
   // The block first, so nothing new ties the two together while the old ties
@@ -111,7 +107,7 @@ export class UserBlocksService {
     });
     await this.undoTies(userId, otherUserId, now);
     if (!created) throw violationsError(['ALREADY_BLOCKED']);
-    return this.repository.listAdminBlocksOf(userId);
+    return this.repository.listBlocksOf(userId);
   }
 
   // Ends the block; what it undid stays undone (ADR-0022).

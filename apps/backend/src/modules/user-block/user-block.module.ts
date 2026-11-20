@@ -5,7 +5,6 @@ import { MembershipRequestModule } from '@/modules/membership-request/membership
 import { ParticipationRequestModule } from '@/modules/participation-request/participation-request.module';
 import { AdminAuthModule } from '@/shared/admin-auth/admin-auth.module';
 import { AuthModule } from '@/shared/auth/auth.module';
-import { UserBlockVisibilityModule } from '@/shared/user-block/user-block.module';
 import { Module } from '@nestjs/common';
 import { AdminUserBlocksController } from './controllers/admin-user-blocks.controller';
 import { UserBlocksController } from './controllers/user-blocks.controller';
@@ -25,7 +24,6 @@ import { UserBlocksService } from './services/user-blocks.service';
     MembershipRequestModule,
     ParticipationRequestModule,
     FriendshipModule,
-    UserBlockVisibilityModule,
   ],
   controllers: [AdminUserBlocksController, UserBlocksController],
   providers: [UserBlocksService, UserBlockRepository],

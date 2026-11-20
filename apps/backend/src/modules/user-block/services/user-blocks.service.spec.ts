@@ -6,7 +6,6 @@ import { AdminUserBlock } from '@/modules/user-block/domain/user-block';
 import { UserBlockRepository } from '@/modules/user-block/repositories/user-block.repository';
 import { AdminIdentity } from '@/shared/admin-auth/domain/administrator';
 import { Identity } from '@/shared/auth/domain/identity';
-import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { UserBlocksService } from './user-blocks.service';
@@ -42,7 +41,6 @@ describe('UserBlocksService', () => {
     membershipRequests: MockProxy<MembershipRequestsService>;
     groups: MockProxy<GroupsService>;
     friendships: MockProxy<FriendshipService>;
-    visibility: MockProxy<UserBlockVisibility>;
     service: UserBlocksService;
   } => {
     const repository = mock<UserBlockRepository>();
@@ -51,29 +49,25 @@ describe('UserBlocksService', () => {
     );
     repository.createAdminBlock.mockResolvedValue(true);
     repository.deleteAdminBlock.mockResolvedValue(true);
-    repository.listAdminBlocksOf.mockResolvedValue([aBlock]);
+    repository.listBlocksOf.mockResolvedValue([aBlock]);
     const participationRequests = mock<ParticipationRequestsService>();
     const membershipRequests = mock<MembershipRequestsService>();
     const groups = mock<GroupsService>();
     const friendships = mock<FriendshipService>();
     repository.createUserBlock.mockResolvedValue(true);
     repository.deleteUserBlock.mockResolvedValue(true);
-    const visibility = mock<UserBlockVisibility>();
-    visibility.hiddenFor.mockResolvedValue([]);
     return {
       repository,
       participationRequests,
       membershipRequests,
       groups,
       friendships,
-      visibility,
       service: new UserBlocksService(
         repository,
         participationRequests,
         membershipRequests,
         groups,
         friendships,
-        visibility,
       ),
     };
   };
@@ -264,15 +258,16 @@ describe('UserBlocksService', () => {
       expect(repository.createUserBlock).not.toHaveBeenCalled();
     });
 
-    // Someone hidden from the user does not exist for them, here too.
-    it('answers 404 for someone hidden from the user', async () => {
-      const { repository, visibility, service } = setup();
-      visibility.hiddenFor.mockResolvedValue(['u2']);
+    // Review of PR #267: each block stands on its own. Someone the other
+    // blocked first, or a pair an administrator blocked, may still block, so
+    // they stay protected once the other block ends. Nothing here asks who
+    // blocked whom: the answer would give the other block away.
+    it('blocks someone who blocked the user first', async () => {
+      const { repository, service } = setup();
 
-      await expect(service.blockAsUser(user, 'u2', NOW)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
-      expect(repository.createUserBlock).not.toHaveBeenCalled();
+      await service.blockAsUser(user, 'u2', NOW);
+
+      expect(repository.createUserBlock).toHaveBeenCalledWith('u1', 'u2');
     });
 
     it('refuses someone blocked already, but finishes undoing the ties', async () => {
