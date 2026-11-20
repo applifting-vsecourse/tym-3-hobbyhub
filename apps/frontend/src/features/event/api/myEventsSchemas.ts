@@ -5,6 +5,8 @@ import { eventListItemSchema } from "@/features/event/api/eventSchemas"
 /** An event the person organizes; only this list holds one an administrator hid (#239). */
 export const hostedEventSchema = eventListItemSchema.extend({
   isHidden: z.boolean(),
+  /** #235: participants the organizer may still rate; 0 when nobody or the period is not on. */
+  participantsToRate: z.number().int(),
 })
 
 export type HostedEvent = z.infer<typeof hostedEventSchema>
@@ -30,6 +32,8 @@ export type ApplicationStatus = z.infer<typeof applicationStatusSchema>
 export const myApplicationSchema = z.object({
   status: applicationStatusSchema,
   event: eventListItemSchema,
+  /** The event is over and the person may still rate its organizer (#234). */
+  canRateOrganizer: z.boolean(),
 })
 
 export type MyApplication = z.infer<typeof myApplicationSchema>

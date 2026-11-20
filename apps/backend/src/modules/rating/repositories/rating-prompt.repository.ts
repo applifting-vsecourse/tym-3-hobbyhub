@@ -33,7 +33,11 @@ export class RatingPromptRepository {
         endAt: true,
         organizerId: true,
         coOrganizers: { select: { id: true } },
-        participations: { select: { userId: true, status: true } },
+        // A deleted account is nobody to call nor anyone left to rate (#235).
+        participations: {
+          where: { user: { status: { not: 'DELETED' } } },
+          select: { userId: true, status: true },
+        },
         ratingPrompts: { select: { kind: true } },
       },
       orderBy: { endAt: 'asc' },
