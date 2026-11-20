@@ -513,6 +513,40 @@ describeDb('rating schema constraints and views', () => {
       });
     });
 
+    it('reads the seats and the ratings of several events at once (#235)', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const first = await aRevealedEvent(tx, 1);
+        const second = await aRevealedEvent(tx, 1);
+        const [p1, p2, gone] = first.participantIds;
+        await deleteAccount(tx, gone);
+        await tx.rating.create({
+          data: {
+            eventId: first.eventId,
+            participantId: p1,
+            direction: 'TO_PARTICIPANT',
+            authorId: first.organizerId,
+            ratedUserId: p1,
+            stars: 4,
+          },
+        });
+        await rateOrganizer(tx, first.eventId, p2, first.organizerId, 5);
+
+        const repository = repositoryOf(tx);
+        const seats = await repository.getRateableSeatsAt([
+          first.eventId,
+          second.eventId,
+        ]);
+        expect(seats).toHaveLength(5);
+        expect(seats.map(({ userId }) => userId)).not.toContain(gone);
+        await expect(
+          repository.getParticipantsRatedBy(first.organizerId, [
+            first.eventId,
+            second.eventId,
+          ]),
+        ).resolves.toEqual([{ eventId: first.eventId, participantId: p1 }]);
+      });
+    });
+
     it('leaves deleted accounts out of the seats the rating prompts read', async () => {
       await inRolledBackTransaction(async (tx) => {
         const { eventId, participantIds } = await aRevealedEvent(tx, 1);

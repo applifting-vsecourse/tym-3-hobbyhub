@@ -56,6 +56,13 @@ export type MyApplication = {
   canRateOrganizer: boolean;
 };
 
+// #235: an event the person organizes, with how many participants they may
+// still rate now (0 when nobody, or when the rating period is not on). Only
+// ever about the person asking.
+export type MyHostedEvent = EventListItem & { participantsToRate: number };
+
+export type MyHostedEventPage = { items: MyHostedEvent[]; total: number };
+
 export type MyApplicationPage = {
   items: MyApplication[];
   total: number;

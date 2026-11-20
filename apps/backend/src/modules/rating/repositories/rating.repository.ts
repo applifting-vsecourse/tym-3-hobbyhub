@@ -122,6 +122,39 @@ export class RatingRepository {
   }
 
   /**
+   * #235: the seats the main organizer rates at these events, of accounts not
+   * deleted, whether the person came or not. Organizers and blocked people are
+   * the caller's to leave out.
+   */
+  async getRateableSeatsAt(
+    eventIds: readonly string[],
+  ): Promise<{ eventId: string; userId: string; status: SeatStatus }[]> {
+    return this.prisma.participation.findMany({
+      where: {
+        eventId: { in: [...eventIds] },
+        status: { in: [...RATEABLE_SEAT_STATUSES] },
+        user: { status: { not: 'DELETED' } },
+      },
+      select: { eventId: true, userId: true, status: true },
+    });
+  }
+
+  /** #235: whom the person rated as a participant at these events. */
+  async getParticipantsRatedBy(
+    authorId: string,
+    eventIds: readonly string[],
+  ): Promise<{ eventId: string; participantId: string }[]> {
+    return this.prisma.rating.findMany({
+      where: {
+        authorId,
+        direction: 'TO_PARTICIPANT',
+        eventId: { in: [...eventIds] },
+      },
+      select: { eventId: true, participantId: true },
+    });
+  }
+
+  /**
    * The person's seat at the event, whatever its state; null when none, and
    * for a deleted account (#235): nobody rates or is rated by it any more.
    */
