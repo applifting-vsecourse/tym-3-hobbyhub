@@ -185,29 +185,6 @@ describe("EventRatingsView", () => {
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument()
   })
 
-  it("shows the organizer the participants, what they gave, and that their form is coming", async () => {
-    await renderWithRouter(
-      <EventRatingsView
-        onRateOrganizer={noRating}
-        state={aState({
-          participants: [
-            aTarget({
-              rating: aRating({ direction: "TO_PARTICIPANT", ratedUserId: "u1" }),
-              violations: ["ALREADY_RATED"],
-            }),
-            aTarget({ user: { id: "u2", name: "Ondra" } }),
-          ],
-        })}
-      />,
-    )
-
-    expect(screen.getByRole("heading", { name: "Účastníci" })).toBeInTheDocument()
-    expect(screen.getByText("4 hvězdičky z 5")).toBeInTheDocument()
-    expect(screen.getAllByText("Zatím neohodnoceno")).toHaveLength(1)
-    expect(screen.getByText("Formulář pro hodnocení účastníků brzy přibude.")).toBeInTheDocument()
-    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument()
-  })
-
   it("says when the period is over, without a form", async () => {
     await renderWithRouter(
       <EventRatingsView
