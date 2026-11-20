@@ -34,6 +34,8 @@ import {
   type RequestSheetStep,
 } from "@/features/participation-request/components/ParticipationRequestSheet"
 import { decisionMessageOf, ownSeatView } from "@/features/participation-request/lib/joinPanel"
+import { eventRatingStateQueryOptions } from "@/features/rating/api/ratingQueryOptions"
+import { RateOrganizerPrompt } from "@/features/rating/components/RateOrganizerPrompt"
 import { ReportAction } from "@/features/report/components/ReportAction"
 
 export const Route = createFileRoute("/events/$eventId")({
@@ -83,6 +85,20 @@ function EventDetailPage() {
   const infoQuery = useQuery({
     ...participantInfoQueryOptions(eventId, user?.id ?? ""),
     enabled: hasInfoRight,
+  })
+  // #234: someone who had a seat may rate the organizer once the event is
+  // over. Asked only then, since the answer is 404 for anyone without a seat;
+  // the server says whether the period is still on and what was sent.
+  const canHaveRating =
+    !isHidden &&
+    user !== null &&
+    ownView === "approved" &&
+    event !== undefined &&
+    (event.status === "PUBLISHED" || event.status === "FINISHED") &&
+    event.endAt <= new Date()
+  const ratingQuery = useQuery({
+    ...eventRatingStateQueryOptions(eventId, user?.id ?? ""),
+    enabled: canHaveRating,
   })
 
   const queryClient = useQueryClient()
@@ -184,6 +200,13 @@ function EventDetailPage() {
             joinAction={joinAction}
             isOrganizerLinked={Boolean(user)}
             shareAction={<ShareEventAction event={eventQuery.data} />}
+            ratingPrompt={
+              // Quiet while loading and when it fails: the notification and
+              // the overview of one's events lead to the rating too.
+              canHaveRating && ratingQuery.data ? (
+                <RateOrganizerPrompt state={ratingQuery.data} />
+              ) : undefined
+            }
             reportAction={
               canReport ? (
                 <ReportAction

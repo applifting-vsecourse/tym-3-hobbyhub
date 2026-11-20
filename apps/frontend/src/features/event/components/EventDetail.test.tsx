@@ -73,6 +73,22 @@ describe("EventDetail", () => {
     expect(screen.getByRole("button", { name: "Nahlásit akci" })).toBeInTheDocument()
   })
 
+  // #234: the page asks the server whether the organizer may be rated; the
+  // detail only places what it hands in, under the event's state.
+  it("shows the way to rate the organizer when the page hands one in", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event()}
+        activityLabel="Florbal"
+        joinAction={null}
+        ratingPrompt={<a href="/events/e1/ratings">Ohodnotit organizátora</a>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("link", { name: "Ohodnotit organizátora" })).toBeInTheDocument()
+  })
+
   it("links the organizer to their profile", async () => {
     await renderDetail({ organizerId: "org-1", organizerName: "Jana" }, true)
 

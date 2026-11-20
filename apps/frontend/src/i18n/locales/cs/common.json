@@ -600,6 +600,10 @@
       "organizedByGroup": "Pořádá skupina",
       "organizer": "Pořádá <profile>{{name}}</profile>",
       "rating": {
+        "prompt": "Organizátora můžeš ohodnotit do {{deadline}}.",
+        "rate": "Ohodnotit organizátora",
+        "rated": "Organizátora už máš ohodnoceného.",
+        "show": "Zobrazit hodnocení",
         "title": "Hodnocení akce"
       },
       "requestToJoin": "Požádat o účast",
@@ -1644,6 +1648,8 @@
     },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
+    "rate": "Ohodnotit organizátora",
+    "rateLabel": "Ohodnotit organizátora akce {{title}}",
     "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",

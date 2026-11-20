@@ -30,6 +30,8 @@ export type ApplicationStatus = z.infer<typeof applicationStatusSchema>
 export const myApplicationSchema = z.object({
   status: applicationStatusSchema,
   event: eventListItemSchema,
+  /** The event is over and the person may still rate its organizer (#234). */
+  canRateOrganizer: z.boolean(),
 })
 
 export type MyApplication = z.infer<typeof myApplicationSchema>

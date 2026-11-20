@@ -596,6 +596,10 @@
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by <profile>{{name}}</profile>",
       "rating": {
+        "prompt": "You can rate the organizer until {{deadline}}.",
+        "rate": "Rate the organizer",
+        "rated": "You have already rated the organizer.",
+        "show": "See the rating",
         "title": "Event rating"
       },
       "requestToJoin": "Ask to join",
@@ -1622,6 +1626,8 @@
     },
     "loadMore": "Load more",
     "loading": "Loading your events",
+    "rate": "Rate the organizer",
+    "rateLabel": "Rate the organizer of {{title}}",
     "sortNote": "Events still ahead of you come first, soonest first. Then past, rejected and cancelled ones, latest first.",
     "status": {
       "APPROVED": "Approved",
