@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { publicProfileQueryOptions } from "@/features/profile/api/profileQueryOptions"
+import type { PublicProfile } from "@/features/profile/api/profileSchemas"
 import { PublicProfileView } from "@/features/profile/components/PublicProfileView"
 
 /**
@@ -22,6 +23,7 @@ export function PublicProfilePage({
   userId,
   ownUserId,
   activityLabel,
+  renderFriendAction,
   reportAction,
   blockAction,
 }: {
@@ -30,6 +32,15 @@ export function PublicProfilePage({
   ownUserId?: string
   /** Display name of an activity; the activity feature owns the translation. */
   activityLabel: (activity: { name: string; icon: string }) => string
+  /**
+   * #225: what I can do about friendship with the person; the friendship
+   * feature owns it. `reload` fetches the profile again after a change.
+   */
+  renderFriendAction?: (props: {
+    userId: string
+    relation: PublicProfile["relation"]
+    reload: () => Promise<unknown>
+  }) => ReactNode
   /** "Nahlásit uživatele" (#240) for the loaded profile; the report feature owns it. */
   reportAction?: (profile: { id: string; name: string }) => ReactNode
   /** "Zablokovat" or "Odblokovat" (#65) for the loaded profile; the user-block feature owns it. */
@@ -53,7 +64,7 @@ export function PublicProfilePage({
   return (
     <>
       <Seo title={profile.data?.name ?? t("profile.userProfile.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page py-6 md:py-12">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-6 px-page py-6 md:py-12">
         {profile.isPending ? (
           <div className="flex justify-center py-8">
             <Loader
@@ -86,6 +97,11 @@ export function PublicProfilePage({
             <PublicProfileView
               profile={profile.data}
               activityLabel={activityLabel}
+              friendAction={renderFriendAction?.({
+                userId: profile.data.id,
+                relation: profile.data.relation,
+                reload: () => profile.refetch(),
+              })}
             />
             {reportAction || blockAction ? (
               <div className="flex flex-col gap-2 border-t border-border pt-4">

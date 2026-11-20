@@ -11,6 +11,7 @@ import type { Notification } from "@/features/notification/api/notificationSchem
 export type NotificationTarget =
   | { kind: "eventRequests"; eventId: string }
   | { kind: "eventParticipants"; eventId: string }
+  | { kind: "eventRatings"; eventId: string }
   | { kind: "event"; eventId: string }
   | { kind: "groupRequests"; groupId: string }
   | { kind: "group"; groupId: string }
@@ -26,6 +27,10 @@ export function notificationTarget(notification: Notification): NotificationTarg
     if (type === "NEW_REQUESTS") return { kind: "eventRequests", eventId: event.id }
     // #233: the organizers see who is coming.
     if (type === "HOSTED_EVENT_REMINDER") return { kind: "eventParticipants", eventId: event.id }
+    // #236: straight to the ratings of the event.
+    if (type === "RATING_PROMPT" || type === "HOSTED_RATING_PROMPT") {
+      return { kind: "eventRatings", eventId: event.id }
+    }
     return { kind: "event", eventId: event.id }
   }
   if (group) {
@@ -133,6 +138,14 @@ export function notificationText(
             count: occupancy.missingToMinimum,
           })
         : t("notifications.text.HOSTED_EVENT_REMINDER.upcoming", values)
+    }
+    // #236: until when one may rate, as the reader sees it now.
+    case "RATING_PROMPT":
+    case "HOSTED_RATING_PROMPT": {
+      const { ratingPrompt } = notification
+      if (!ratingPrompt) return t("notifications.text.other", { title })
+      const until = startsWhen(t, ratingPrompt.deadline, now, locale)
+      return t(`notifications.text.${type}.${ratingPrompt.kind}`, { title, until })
     }
     default:
       // Types without a trigger yet (F-05.8, F-05.9, F-07.4…): a plain line

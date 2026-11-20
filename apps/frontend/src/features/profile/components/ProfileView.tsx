@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 
 import type { Profile } from "@/features/profile/api/profileSchemas"
 import { ActivityChip } from "@/features/profile/components/ActivityChip"
+import { ProfileRatings } from "@/features/profile/components/ProfileRatings"
 import { firstSportIcon } from "@/features/profile/lib/firstSport"
 
 type ProfileViewProps = {
@@ -83,6 +84,11 @@ export function ProfileView({ profile, activityLabel, aside, children }: Profile
               </p>
             )}
           </div>
+
+          <ProfileRatings
+            ratings={profile.ratings}
+            isOwn
+          />
 
           <section
             aria-labelledby="profile-activities"

@@ -11,6 +11,7 @@ describe('PublicProfileResponseDto', () => {
     const profile = {
       id: 'u2',
       name: 'Petr',
+      relation: 'none',
       bio: null,
       image: null,
       cover: null,
@@ -27,6 +28,10 @@ describe('PublicProfileResponseDto', () => {
       friendsSeeEventHistory: true,
       friendsSeeUpcomingEvents: false,
       nicknameChangeableFrom: new Date('2026-12-01T00:00:00Z'),
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: 4, average: 4.5 },
+      },
       // #262: the language is the owner's own business.
       preferredLanguage: 'EN',
       isBlockedByMe: false,
@@ -43,6 +48,8 @@ describe('PublicProfileResponseDto', () => {
       'interests',
       'isBlockedByMe',
       'name',
+      'ratings',
+      'relation',
     ]);
   });
 });
@@ -64,6 +71,10 @@ describe('ProfileResponseDto', () => {
       friendVisibility: {
         friendsSeeEventHistory: false,
         friendsSeeUpcomingEvents: true,
+      },
+      ratings: {
+        asOrganizer: { count: 0, average: null },
+        asParticipant: { count: 0, average: null },
       },
     };
     expect(ProfileResponseDto.fromDomain(profile)).toMatchObject({

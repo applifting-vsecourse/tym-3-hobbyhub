@@ -39,6 +39,7 @@ describeDb('friendship schema constraints', () => {
   const createUser = async (
     tx: Prisma.TransactionClient,
     id = `test-${unique()}`,
+    data: Partial<Prisma.UserUncheckedCreateInput> = {},
   ): Promise<string> => {
     const now = new Date();
     await tx.user.create({
@@ -49,6 +50,7 @@ describeDb('friendship schema constraints', () => {
         emailVerified: true,
         createdAt: now,
         updatedAt: now,
+        ...data,
       },
     });
     return id;
@@ -87,6 +89,7 @@ describeDb('friendship schema constraints', () => {
       ['PENDING with a decision date', 'PENDING', new Date()],
       ['ACCEPTED without a decision date', 'ACCEPTED', null],
       ['REJECTED without a decision date', 'REJECTED', null],
+      ['WITHDRAWN without a decision date', 'WITHDRAWN', null],
     ] as const)(
       'rejects %s (friend_request_decided_at)',
       async (_case, status, decidedAt) => {
@@ -124,7 +127,7 @@ describeDb('friendship schema constraints', () => {
       ).rejects.toThrow(/Unique constraint failed/);
     });
 
-    it.each(['REJECTED', 'ACCEPTED'] as const)(
+    it.each(['REJECTED', 'ACCEPTED', 'WITHDRAWN'] as const)(
       'allows a new pending request after a %s one',
       async (status) => {
         await inRolledBackTransaction(async (tx) => {
@@ -217,6 +220,223 @@ describeDb('friendship schema constraints', () => {
         expect(
           await tx.friendship.count({ where: { userAId: pair.userAId } }),
         ).toBe(0);
+      });
+    });
+  });
+  // #225: the search query runs on PostgreSQL itself (unaccent, LIKE), so it
+  // is checked here. Every name carries a token unique to the case, so other
+  // rows in the database never match.
+  describe('searchUsers', () => {
+    const search = (
+      tx: Prisma.TransactionClient,
+      viewerId: string,
+      text: string,
+    ): Promise<string[]> =>
+      new FriendshipRepository(tx as unknown as PrismaService)
+        .searchUsers(viewerId, text, 0, 50)
+        .then((rows) => rows.map((row) => row.name));
+
+    it('finds a part of the name, whatever the case and the diacritics', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, { name: `Šimon Nováček ${token}` });
+        expect(await search(tx, viewer, `simon novacek ${token}`)).toEqual([
+          `Šimon Nováček ${token}`,
+        ]);
+        expect(await search(tx, viewer, `ÁČEK ${token.toUpperCase()}`)).toEqual(
+          [`Šimon Nováček ${token}`],
+        );
+      });
+    });
+
+    // ADR-0025: the nickname is the one name; `name` is its copy as typed.
+    it('finds the nickname whatever the case, and returns it as typed', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, {
+          name: `NovyHrac${token}`,
+          username: `novyhrac${token}`,
+          displayUsername: `NovyHrac${token}`,
+        });
+        const rows = await new FriendshipRepository(
+          tx as unknown as PrismaService,
+        ).searchUsers(viewer, `HRAC${token}`, 0, 50);
+        expect(rows).toEqual([
+          expect.objectContaining({ name: `NovyHrac${token}` }),
+        ]);
+        expect(Object.keys(rows[0]).sort()).toEqual(['id', 'image', 'name']);
+      });
+    });
+
+    it('never finds anybody by the e-mail', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, {
+          name: 'Libor',
+          email: `libor-${token}@example.com`,
+        });
+        expect(await search(tx, viewer, `libor-${token}@example.com`)).toEqual(
+          [],
+        );
+        expect(await search(tx, viewer, `${token}@example`)).toEqual([]);
+      });
+    });
+
+    it('leaves out the viewer and blocked or deleted accounts', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx, undefined, { name: `Me ${token}` });
+        for (const status of [
+          'ACTIVE',
+          'RESTRICTED',
+          'BLOCKED',
+          'DELETED',
+        ] as const) {
+          await createUser(tx, undefined, {
+            name: `${status} ${token}`,
+            status,
+          });
+        }
+        expect((await search(tx, viewer, token)).sort()).toEqual([
+          `ACTIVE ${token}`,
+          `RESTRICTED ${token}`,
+        ]);
+      });
+    });
+
+    // #239: the service hands over the people blocked from the viewer.
+    it('leaves out the people it is told to', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        const shown = await createUser(tx, undefined, {
+          name: `Shown ${token}`,
+        });
+        const blocked = await createUser(tx, undefined, {
+          name: `Blocked ${token}`,
+        });
+        const rows = await new FriendshipRepository(
+          tx as unknown as PrismaService,
+        ).searchUsers(viewer, token, 0, 50, [blocked]);
+        expect(rows.map((row) => row.id)).toEqual([shown]);
+      });
+    });
+
+    it('takes % and _ as typed, not as wildcards', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const token = unique();
+        const viewer = await createUser(tx);
+        await createUser(tx, undefined, { name: `Ana ${token}` });
+        await createUser(tx, undefined, { name: `A_a ${token}` });
+        expect(await search(tx, viewer, `a_a ${token}`)).toEqual([
+          `A_a ${token}`,
+        ]);
+        expect(await search(tx, viewer, `%${token}`)).toEqual([]);
+      });
+    });
+  });
+
+  // #225: withdrawing and counting requests run on the database itself.
+  // #225, ADR-0026: only an active account may send a request.
+  describe('isActive', () => {
+    it.each([
+      ['ACTIVE', true],
+      ['RESTRICTED', false],
+      ['BLOCKED', false],
+      ['DELETED', false],
+    ] as const)('answers %s as %p', async (status, expected) => {
+      await inRolledBackTransaction(async (tx) => {
+        const id = await createUser(tx, undefined, { status });
+        await expect(
+          new FriendshipRepository(tx as unknown as PrismaService).isActive(id),
+        ).resolves.toBe(expected);
+      });
+    });
+  });
+
+  describe('withdrawPendingRequest and countRequestsSince', () => {
+    const repositoryOf = (tx: Prisma.TransactionClient): FriendshipRepository =>
+      new FriendshipRepository(tx as unknown as PrismaService);
+
+    it('withdraws only my pending request, never one sent to me', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const other = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: other, recipientId: me },
+        });
+        const repository = repositoryOf(tx);
+        await expect(
+          repository.withdrawPendingRequest(me, other, new Date()),
+        ).resolves.toBe(false);
+        expect(
+          await tx.friendRequest.findFirstOrThrow({
+            where: { senderId: other },
+          }),
+        ).toMatchObject({ status: 'PENDING', decidedAt: null });
+      });
+    });
+
+    it('withdraws my pending request, which then stops no new one', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const other = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: me, recipientId: other },
+        });
+        const repository = repositoryOf(tx);
+        const now = new Date();
+        await expect(
+          repository.withdrawPendingRequest(me, other, now),
+        ).resolves.toBe(true);
+        expect(
+          await tx.friendRequest.findFirstOrThrow({ where: { senderId: me } }),
+        ).toMatchObject({ status: 'WITHDRAWN', decidedAt: now });
+        await repository.createRequest(me, other);
+      });
+    });
+
+    it('counts every request of the sender to the recipient since then', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const other = await createUser(tx);
+        const third = await createUser(tx);
+        const decided = { decidedAt: new Date() };
+        await tx.friendRequest.createMany({
+          data: [
+            {
+              senderId: me,
+              recipientId: other,
+              status: 'WITHDRAWN',
+              ...decided,
+            },
+            {
+              senderId: me,
+              recipientId: other,
+              status: 'REJECTED',
+              ...decided,
+            },
+            {
+              senderId: me,
+              recipientId: other,
+              status: 'WITHDRAWN',
+              requestedAt: new Date('2020-01-01T00:00:00Z'),
+              ...decided,
+            },
+            { senderId: other, recipientId: me },
+            { senderId: me, recipientId: third },
+          ],
+        });
+        await expect(
+          repositoryOf(tx).countRequestsSince(
+            me,
+            other,
+            new Date(Date.now() - 60 * 60 * 1000),
+          ),
+        ).resolves.toBe(2);
       });
     });
   });

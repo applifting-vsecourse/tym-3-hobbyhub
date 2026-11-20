@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
+import { FriendRelationAction } from "@/features/friendship/components/FriendRelationAction"
 import { PublicProfilePage } from "@/features/profile/components/PublicProfilePage"
 import { ReportAction } from "@/features/report/components/ReportAction"
 import { BlockUserAction } from "@/features/user-block/components/BlockUserAction"
@@ -27,6 +28,8 @@ function ProfileRoute() {
       userId={userId}
       ownUserId={user?.id}
       activityLabel={activityLabel}
+      // #225: ask for friendship, or see where the request stands.
+      renderFriendAction={(friendship) => <FriendRelationAction {...friendship} />}
       // #65: the person's own block, one way, without the administration.
       blockAction={(profile) => <BlockUserAction user={profile} />}
       // #240: a report of a person also asks for the two to be blocked.

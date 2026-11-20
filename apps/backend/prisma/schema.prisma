@@ -69,6 +69,10 @@ enum NotificationType {
   // #233, ADR-0021: the event one goes to, or organizes, starts soon.
   EVENT_REMINDER
   HOSTED_EVENT_REMINDER
+  // #236, ADR-0027: the rating period of an event one went to, or organized,
+  // is on; the first call, or the last day of it.
+  RATING_PROMPT
+  HOSTED_RATING_PROMPT
 
   @@map("notification_type")
 }
@@ -414,6 +418,8 @@ model Event {
   // ADR-0023: reports about this event, seen by the administration only.
   reports               Report[]
   reminders             EventReminder[]
+  // #236: the calls to rate it that went out.
+  ratingPrompts         RatingPrompt[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -445,6 +451,10 @@ model Participation {
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId  String
 
+  // #236, ADR-0027: what the organizer and this participant said of each
+  // other after the event, at most one each way.
+  ratings Rating[]
+
   // A person is on an event's roster once.
   @@unique([eventId, userId])
   @@index([userId])
@@ -468,6 +478,32 @@ model EventReminder {
 
   @@unique([eventId, kind, eventStartAt])
   @@map("event_reminder")
+}
+
+// #236, ADR-0027: which call to rate an event after it ended. FIRST two hours
+// after the end, LAST_CALL on the last day of the rating period.
+enum RatingPromptKind {
+  FIRST
+  LAST_CALL
+
+  @@map("rating_prompt_kind")
+}
+
+// #236, ADR-0021, ADR-0027: a call to rate an event that went out. Like
+// `EventReminder`, the cron inserts the row before it sends: whoever fails to
+// insert it sends nothing, so each call goes once per event. An event cannot
+// change after it ended, so unlike a reminder the end is not part of the key.
+model RatingPrompt {
+  id String @id @default(cuid())
+
+  kind   RatingPromptKind
+  sentAt DateTime         @default(now())
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  @@unique([eventId, kind])
+  @@map("rating_prompt")
 }
 
 // F-06.1 request to join an event (ADR-0003). It takes no seat; the
@@ -495,6 +531,53 @@ model ParticipationRequest {
   @@map("participation_request")
 }
 
+// #236, ADR-0027: which way a rating goes. A participant rates the main
+// organizer, the main organizer rates a participant; participants do not rate
+// each other.
+enum RatingDirection {
+  TO_ORGANIZER
+  TO_PARTICIPANT
+
+  @@map("rating_direction")
+}
+
+// #236, ADR-0027: what the organizer and one participant said of each other
+// after an event: 1–5 stars and an optional comment, final once sent. Tied to
+// the participation (ADR-0003) by its (eventId, userId), so `participantId` is
+// the participant whichever way the rating goes: the author of TO_ORGANIZER,
+// the rated one of TO_PARTICIPANT (CHECK rating_participant_side).
+//
+// Nobody sees a rating about them, nor counts it, until the rating period ends
+// (`endAt` + 7 days): the views `rating_revealed`, `user_rating_score` and
+// `event_rating_score` in the migration hold that rule, and the scores are
+// read from them. Every relation is Restrict: a rating outlives nothing it is
+// about, and accounts are only ever deleted softly.
+model Rating {
+  id String @id @default(cuid())
+
+  direction RatingDirection
+  stars     Int             @db.SmallInt
+  comment   String?         @db.VarChar(500)
+  createdAt DateTime        @default(now())
+
+  participation Participation @relation(fields: [eventId, participantId], references: [eventId, userId], onDelete: Restrict)
+  eventId       String
+  participantId String
+  author        User          @relation("RatingAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId      String
+  // The main organizer when the rating was given, for TO_ORGANIZER: the
+  // organizer may hand the event over later.
+  ratedUser     User          @relation("RatingRatedUser", fields: [ratedUserId], references: [id], onDelete: Restrict)
+  ratedUserId   String
+
+  // One rating each way per participation.
+  @@unique([eventId, participantId, direction])
+  @@index([ratedUserId, direction])
+  @@index([eventId, direction])
+  @@index([authorId])
+  @@map("rating")
+}
+
 // #227, ADR-0026: where a friend request stands. A rejected request is kept
 // (decidedAt) but does not stop a new one between the same two people.
 // #65, ADR-0028: who blocked: an administrator (both ways) or the blocker
@@ -508,6 +591,8 @@ enum FriendRequestStatus {
   PENDING
   ACCEPTED
   REJECTED
+  // #225: the sender took the request back before it was decided.
+  WITHDRAWN
 
   @@map("friend_request_status")
 }
@@ -917,6 +1002,9 @@ model User {
   receivedFriendRequests FriendRequest[]        @relation("FriendRequestRecipient")
   friendshipsAsA         Friendship[]           @relation("FriendshipUserA")
   friendshipsAsB         Friendship[]           @relation("FriendshipUserB")
+  // #236, ADR-0027: ratings this user gave, and ratings about them.
+  givenRatings           Rating[]               @relation("RatingAuthor")
+  receivedRatings        Rating[]               @relation("RatingRatedUser")
 
   @@unique([email])
   @@unique([username])

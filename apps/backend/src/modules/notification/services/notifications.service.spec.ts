@@ -392,6 +392,59 @@ describe('NotificationsService', () => {
     });
   });
 
+  // #236, ADR-0027: the calls to rate an event.
+  describe('notifyRatingPrompt', () => {
+    const deadline = new Date('2030-01-09T19:00:00Z');
+
+    it('writes one call to the organizer and one to each participant', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyRatingPrompt({
+        event: { id: 'e1' },
+        prompt: 'FIRST',
+        deadline,
+        organizerId: 'organizer',
+        participantIds: ['p1', 'p2'],
+      });
+
+      const payload = {
+        prompt: 'FIRST',
+        deadline: '2030-01-09T19:00:00.000Z',
+      };
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'HOSTED_RATING_PROMPT',
+        recipientIds: ['organizer'],
+        actorId: null,
+        eventId: 'e1',
+        payload,
+      });
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'RATING_PROMPT',
+        recipientIds: ['p1', 'p2'],
+        actorId: null,
+        eventId: 'e1',
+        payload,
+      });
+    });
+
+    it('writes nothing to an organizer with nobody left to rate', async () => {
+      const { repository, service } = setup();
+
+      await service.notifyRatingPrompt({
+        event: { id: 'e1' },
+        prompt: 'LAST_CALL',
+        deadline,
+        organizerId: null,
+        participantIds: ['p1'],
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledTimes(1);
+      expect(repository.createForRecipients).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'RATING_PROMPT' }),
+      );
+    });
+  });
+
   describe('a group', () => {
     it('tells the founder and the admins about a new request', async () => {
       const { repository, service } = setup();

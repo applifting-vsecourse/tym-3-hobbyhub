@@ -127,7 +127,7 @@ function EditEventPage() {
   return (
     <>
       <Seo title={t("events.form.editTitle")} />
-      <section className="mx-auto w-full max-w-4xl px-page py-6 md:py-12">
+      <section className="mx-auto w-full max-w-column-4xl px-page py-6 md:py-12">
         {eventQuery.isPending ? (
           <div className="flex justify-center py-16">
             <Loader

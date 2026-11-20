@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { userRatingScoresSchema } from "@/lib/ratingScore"
+
 const activitySchema = z.object({ id: z.string(), name: z.string(), icon: z.string() })
 
 const interestSchema = z.object({
@@ -49,6 +51,8 @@ export const profileSchema = z.object({
   friendsSeeEventHistory: z.boolean(),
   /** #227: friends see the upcoming events and my name in an event's detail. */
   friendsSeeUpcomingEvents: z.boolean(),
+  /** #236: my scores as an organizer and as a participant, always whole. */
+  ratings: userRatingScoresSchema,
 })
 
 export type Profile = z.infer<typeof profileSchema>
@@ -59,10 +63,14 @@ export type Profile = z.infer<typeof profileSchema>
 export const publicProfileSchema = z.object({
   id: z.string(),
   name: z.string(),
+  /** #225: where I stand with the person; the same values as the friendship feature's. */
+  relation: z.enum(["none", "request_sent", "request_received", "friends"]),
   bio: z.string().nullable(),
   image: z.string().nullable(),
   cover: z.string().nullable(),
   interests: z.array(interestSchema),
+  /** #236: both numbers null below three ratings. */
+  ratings: userRatingScoresSchema,
   /** #65: whether I blocked this person; never whether they blocked me. */
   isBlockedByMe: z.boolean(),
 })

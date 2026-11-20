@@ -9,6 +9,7 @@ import {
   NotificationPage,
   NotificationPayload,
   Page,
+  RatingPromptKind,
   recipientsExcept,
   ReminderOccupancy,
 } from '@/modules/notification/domain/notification';
@@ -292,6 +293,40 @@ export class NotificationsService {
       actorId: null,
       eventId: input.event.id,
       payload: { reminder: input.reminder, startsAt },
+    });
+  }
+
+  // #236, ADR-0027: the rating period of an event is on. The main organizer
+  // gets one call for the whole event, each participant one to rate the
+  // organizer; the caller decides who still has someone to rate. Nobody
+  // caused it, so nobody is left out for a block here: the caller already
+  // left out the participants blocked from the organizer.
+  async notifyRatingPrompt(input: {
+    event: AnEvent;
+    prompt: RatingPromptKind;
+    deadline: Date;
+    organizerId: string | null;
+    participantIds: readonly string[];
+  }): Promise<void> {
+    const payload = {
+      prompt: input.prompt,
+      deadline: input.deadline.toISOString(),
+    };
+    if (input.organizerId) {
+      await this.record({
+        type: 'HOSTED_RATING_PROMPT',
+        recipientIds: [input.organizerId],
+        actorId: null,
+        eventId: input.event.id,
+        payload,
+      });
+    }
+    await this.record({
+      type: 'RATING_PROMPT',
+      recipientIds: recipientsExcept(input.participantIds, input.organizerId),
+      actorId: null,
+      eventId: input.event.id,
+      payload,
     });
   }
 

@@ -1,10 +1,15 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
+import {
+  FRIEND_RELATIONS,
+  FriendRelation,
+} from '@/modules/friendship/domain/friendship';
 import { LevelResponseDto } from '@/modules/level/controllers/dto/level.response.dto';
 import {
   HomeAddressResponseDto,
   InterestResponseDto,
 } from '@/modules/onboarding/controllers/dto/onboarding.response.dto';
 import { Profile, PublicProfile } from '@/modules/profile/domain/profile';
+import { UserRatingScoresResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
 import { GENDERS } from '@/shared/auth/registration/registration';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -70,6 +75,13 @@ export class ProfileResponseDto {
   })
   friendsSeeUpcomingEvents!: boolean;
 
+  @ApiProperty({
+    type: UserRatingScoresResponseDto,
+    description:
+      'Revealed ratings as an organizer and as a participant (#236); the owner sees both numbers even below 3 ratings',
+  })
+  ratings!: UserRatingScoresResponseDto;
+
   static fromDomain(profile: Profile): ProfileResponseDto {
     return {
       name: profile.name,
@@ -90,6 +102,7 @@ export class ProfileResponseDto {
       friendsSeeEventHistory: profile.friendVisibility.friendsSeeEventHistory,
       friendsSeeUpcomingEvents:
         profile.friendVisibility.friendsSeeUpcomingEvents,
+      ratings: UserRatingScoresResponseDto.fromDomain(profile.ratings),
     };
   }
 }
@@ -122,6 +135,20 @@ export class PublicProfileResponseDto {
   interests!: InterestResponseDto[];
 
   @ApiProperty({
+    enum: FRIEND_RELATIONS,
+    description:
+      "#225: the viewer's relation to the person: none, request_sent, request_received, friends",
+  })
+  relation!: FriendRelation;
+
+  @ApiProperty({
+    type: UserRatingScoresResponseDto,
+    description:
+      'Revealed ratings as an organizer and as a participant (#236); both numbers null below 3 ratings',
+  })
+  ratings!: UserRatingScoresResponseDto;
+
+  @ApiProperty({
     description:
       'Whether the viewer blocked this person (#65); never says whether the person blocked the viewer',
   })
@@ -131,6 +158,7 @@ export class PublicProfileResponseDto {
     return {
       id: profile.id,
       name: profile.name,
+      relation: profile.relation,
       bio: profile.bio,
       image: profile.image,
       cover: profile.cover,
@@ -140,6 +168,7 @@ export class PublicProfileResponseDto {
           ? LevelResponseDto.fromDomain(interest.level)
           : null,
       })),
+      ratings: UserRatingScoresResponseDto.fromDomain(profile.ratings),
       isBlockedByMe: profile.isBlockedByMe,
     };
   }

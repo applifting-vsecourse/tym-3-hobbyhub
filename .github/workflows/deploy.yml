@@ -42,8 +42,9 @@ jobs:
           context: .
           file: apps/backend/Dockerfile.deploy
           push: true
-          # Mail (F-09.5, ADR-0018) comes in at build time: Coolify's own
-          # variables are fixed by the course. Unset = e-mails only logged.
+          # Mail (F-09.5, ADR-0018) and Google sign-in come in at build time:
+          # Coolify's own variables are fixed by the course. Unset SMTP_HOST =
+          # e-mails only logged; unset Google keys = no Google sign-in.
           build-args: |
             SMTP_HOST=${{ vars.SMTP_HOST }}
             SMTP_PORT=${{ vars.SMTP_PORT || '465' }}
@@ -51,6 +52,8 @@ jobs:
             SMTP_FROM=${{ vars.SMTP_FROM }}
             SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
             SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+            GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           tags: ${{ env.REGISTRY }}/${{ steps.slug.outputs.slug }}-backend:latest
       - name: Build & push frontend
         uses: docker/build-push-action@v6

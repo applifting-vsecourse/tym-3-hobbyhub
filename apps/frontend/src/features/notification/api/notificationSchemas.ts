@@ -20,6 +20,9 @@ export const notificationTypeSchema = z.enum([
   "REPORT_RESOLVED",
   "EVENT_REMINDER",
   "HOSTED_EVENT_REMINDER",
+  // #236: the rating period of an event one went to, or organized, is on.
+  "RATING_PROMPT",
+  "HOSTED_RATING_PROMPT",
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
@@ -45,6 +48,13 @@ export const reminderSchema = z.object({
     .nullable(),
 })
 
+// #236: the first call two hours after the end, or the last day of the
+// rating period, and until when one may rate.
+export const ratingPromptSchema = z.object({
+  kind: z.enum(["FIRST", "LAST_CALL"]),
+  deadline: z.coerce.date(),
+})
+
 export const notificationSchema = z.object({
   id: z.string(),
   type: notificationTypeSchema,
@@ -59,6 +69,7 @@ export const notificationSchema = z.object({
   /** EVENT_HIDDEN: why an administrator hid it; only the organizers' copy has it (#239). */
   reason: z.string().nullable(),
   reminder: reminderSchema.nullable(),
+  ratingPrompt: ratingPromptSchema.nullable().default(null),
 })
 
 export const notificationPageSchema = z.object({
