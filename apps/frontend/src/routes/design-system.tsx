@@ -50,7 +50,7 @@ function DesignSystemPage() {
     <>
       <Seo title="Design system" />
       <AppShell>
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-page py-12">
+        <div className="mx-auto flex w-full max-w-column-4xl flex-col gap-12 px-page py-12">
           <header className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
               <Logo className="h-10" />
