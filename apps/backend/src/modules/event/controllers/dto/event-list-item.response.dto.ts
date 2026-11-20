@@ -6,7 +6,7 @@ import {
   ParticipantStats,
 } from '@/modules/event/domain/event';
 import { RatingScoreResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class EventGroupResponseDto {
   @ApiProperty()
@@ -135,10 +135,17 @@ export class EventListResponseDto {
   })
   total!: number;
 
+  @ApiPropertyOptional({
+    description:
+      'Only with a radius filter: events that fit every other filter but have no position, so they are left out',
+  })
+  withoutLocationCount?: number;
+
   static fromDomain(page: EventListPage): EventListResponseDto {
     return {
       items: page.items.map(EventListItemResponseDto.fromDomain),
       total: page.total,
+      withoutLocationCount: page.withoutLocationCount,
     };
   }
 }

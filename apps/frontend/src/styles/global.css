@@ -426,6 +426,47 @@
 }
 
 /*
+ * The hero's free seats breathe, one after another, once the roster has filled
+ * in: a nudge that the dashed places are for the visitor. Stills under reduced
+ * motion.
+ */
+@keyframes seat-invite {
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+@utility seat-invite {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: seat-invite 2.4s ease-in-out infinite;
+    animation-delay: calc(var(--seat-delay, 0ms) + 1400ms + var(--seat-index, 0) * 240ms);
+  }
+}
+
+/*
+ * Reveal on scroll (#216): a section below the fold rises into place as it
+ * enters the viewport, driven by the scroll itself, no script. Where scroll
+ * timelines are not supported, or under reduced motion, it simply is there.
+ */
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@utility reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      /* --reveal-index staggers the items of one row: each starts a bit later. */
+      animation-range: entry calc(var(--reveal-index, 0) * 12%) entry
+        calc(40% + var(--reveal-index, 0) * 12%);
+    }
+  }
+}
+
+/*
  * Roster seats appear one after another (130ms apart, after --seat-delay) so
  * the table visibly fills up. Reduced motion keeps a plain cross-fade.
  */

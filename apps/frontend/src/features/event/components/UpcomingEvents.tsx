@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { EventCard } from "@/components/hobbyhub/EventCard"
 import { Loader } from "@/components/hobbyhub/Loader"
+import { cn } from "@/lib/utils"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
@@ -57,13 +58,18 @@ export function UpcomingEvents({
   }
 
   return (
-    // More room adds a column, the cards keep their width (#224). Three rows
-    // fill the smaller grids; the fourth event waits for the fourth column.
-    <ul className="grid gap-4 [--seat-delay:900ms] md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+    // More room adds a column, the cards keep their width (#224): `md` and `lg`
+    // show two full rows of six, the last two wait for the fourth column. A phone
+    // swipes through the six in one strip, the next card peeking in from the right
+    // (#216; a deliberate exception to "no carousels" in DESIGN.md).
+    <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [--seat-delay:900ms] md:grid md:snap-none md:grid-cols-2 md:gap-4 md:overflow-visible md:pb-0 lg:grid-cols-3 2xl:grid-cols-4">
       {events.map((event, index) => (
         <li
           key={event.id}
-          className={index >= 3 ? "max-2xl:hidden" : undefined}
+          className={cn(
+            "w-[85%] shrink-0 snap-start md:w-auto md:shrink",
+            index >= 6 && "max-2xl:hidden",
+          )}
         >
           <Link
             to="/events/$eventId"

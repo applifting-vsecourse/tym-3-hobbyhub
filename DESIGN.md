@@ -37,7 +37,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
   - **A column narrower than the frame takes `max-w-column-*`, never a plain `max-w-*`, beside `px-page`.** The gutter is padding, so `max-w-sm px-page` loses it from its own width and the column gets narrower the wider the window is — the sign-in form was down to 244 px on a 2000 px window. `max-w-column-sm px-page` keeps the content at the width the name says. `max-w-page` is the frame itself and stays as it is.
 - **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands. The administration (`/admin/*`) keeps its own chrome, `AdminShell`, instead of the user one.
 - **Tables are for the administration only.** A list of records to scan and compare (users, events, groups in `/admin`) is the kit's `Table` from `md` up; below `md` each row stacks into lines separated by a hairline, never into a card. The rest of the app lists items as cards or rows, not tables.
-- Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
+- Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full. The one carousel is the landing page's upcoming events on a phone (#216): a plain scroll-snap strip with the next card peeking in, a grid from `md`.
 
 ## Spacing
 

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { CSSProperties, ReactNode } from "react"
 
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { cn } from "@/lib/utils"
@@ -12,10 +12,10 @@ type HeroProps = {
   capacity: number
   /** Primary action, e.g. <Button>Obsadit místo</Button>. */
   action: ReactNode
-  /** Desktop-only secondary action, e.g. <Button variant="secondary">Vypsat akci</Button>. */
+  /** Secondary action, e.g. <Button variant="secondary">Vypsat akci</Button>: under the primary on a phone, beside it from `md`. */
   secondaryAction?: ReactNode
   titleAs?: "h1" | "h2"
-  /** Seats pop in one by one on first render. */
+  /** Seats pop in one by one on first render, the text rises in step by step, the free seats then breathe. */
   isAnimated?: boolean
   className?: string
 }
@@ -37,6 +37,12 @@ export function Hero({
   isAnimated = false,
   className,
 }: HeroProps) {
+  // The texts rise in one after another, ahead of the seats (`--seat-delay`).
+  const rise = (index: number) =>
+    isAnimated
+      ? { className: "enter", style: { "--enter-index": index } as CSSProperties }
+      : { className: undefined, style: undefined }
+
   return (
     <section
       className={cn(
@@ -45,8 +51,19 @@ export function Hero({
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4">
-        <p className="typo-small text-signal-soft">{kicker}</p>
-        <Title className="typo-h1 text-balance text-signal-foreground lg:typo-display">
+        <p
+          className={cn("typo-small text-signal-soft", rise(0).className)}
+          style={rise(0).style}
+        >
+          {kicker}
+        </p>
+        <Title
+          className={cn(
+            "typo-h1 text-balance text-signal-foreground lg:typo-display",
+            rise(1).className,
+          )}
+          style={rise(1).style}
+        >
           {title}
         </Title>
         <RosterSeats
@@ -55,12 +72,18 @@ export function Hero({
           taken={taken}
           capacity={capacity}
           isAnimated={isAnimated}
+          isInviting={isAnimated}
           className="md:hidden"
         />
-        <p className="typo-body text-signal-soft md:typo-body-lg">{text}</p>
-        <div className="flex gap-3 *:max-md:w-full">
+        <p
+          className={cn("typo-body text-signal-soft md:typo-body-lg", rise(2).className)}
+          style={rise(2).style}
+        >
+          {text}
+        </p>
+        <div className="flex flex-col gap-3 pt-1 *:max-md:w-full md:flex-row">
           {action}
-          {secondaryAction ? <div className="hidden md:contents">{secondaryAction}</div> : null}
+          {secondaryAction}
         </div>
       </div>
       <RosterSeats
@@ -69,6 +92,7 @@ export function Hero({
         taken={taken}
         capacity={capacity}
         isAnimated={isAnimated}
+        isInviting={isAnimated}
         className="hidden md:grid xl:hidden"
       />
       <RosterSeats
@@ -77,6 +101,7 @@ export function Hero({
         taken={taken}
         capacity={capacity}
         isAnimated={isAnimated}
+        isInviting={isAnimated}
         className="hidden xl:grid"
       />
     </section>
