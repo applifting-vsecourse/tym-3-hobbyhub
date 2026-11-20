@@ -2131,16 +2131,32 @@
     }
   },
   "rating": {
+    "form": {
+      "commentHint": "Only the rated person sees the comment, and only once the rating period ends.",
+      "commentLabel": "Comment (optional)",
+      "commentLeft_one": "{{count}} character left",
+      "commentLeft_other": "{{count}} characters left",
+      "commentOver_one": "{{count}} character over the limit",
+      "commentOver_other": "{{count}} characters over the limit",
+      "commentPlaceholder": "E.g. what went well and what could be better next time",
+      "commentTooLong": "The comment can have at most {{max}} characters.",
+      "failed": "The rating could not be sent. Try again.",
+      "finalNote": "Once sent, a rating cannot be changed or deleted.",
+      "starsRequired": "Choose 1 to 5 stars.",
+      "submit": "Send rating",
+      "submitting": "Sending…"
+    },
     "notEnough": "Not enough ratings yet",
     "page": {
       "back": "Back to the event",
       "empty": "There is nobody for you to rate at this event.",
       "eyebrow": "Rating after the event",
-      "formsSoon": "The form for rating is coming soon.",
+      "formsSoon": "The form for rating participants is coming soon.",
       "loadError": "Ratings could not be loaded",
       "loading": "Loading ratings",
       "notRated": "Not rated yet",
       "organizer": "Organizer",
+      "organizerStarsLabel": "How do you rate the organizer?",
       "participants": "Participants",
       "phase": {
         "closed": "Rating closed {{deadline}}.",
@@ -2149,7 +2165,21 @@
         "unavailable": "This event cannot be rated."
       },
       "retry": "Try again",
-      "revealNote": "Who rated whom shows only when the period ends, for everyone at once."
+      "revealNote": "Who rated whom shows only when the period ends, for everyone at once.",
+      "sent": "Your rating is sent. The organizer will see it once the rating period ends.",
+      "yourComment": "Your comment"
+    },
+    "refused": {
+      "ALREADY_RATED": "You have already sent this rating.",
+      "EVENT_CANCELLED": "The event was cancelled, it cannot be rated.",
+      "EVENT_HIDDEN": "This event cannot be rated right now.",
+      "EVENT_NOT_HELD": "The event did not take place, it cannot be rated.",
+      "EVENT_NOT_OVER": "The event is not over yet; you can rate once it is.",
+      "IS_ORGANIZER": "You cannot rate your own event.",
+      "NOT_MAIN_ORGANIZER": "Only the main organizer rates the participants.",
+      "NO_SEAT": "Only someone who had an approved seat at the event can rate.",
+      "PARTICIPANT_IS_ORGANIZER": "Organizers of the event are not rated as participants.",
+      "RATING_CLOSED": "The time to rate this event is over."
     },
     "scoreLabel": "Rated {{value}} of {{max}}",
     "scoreWithCountLabel_one": "Rated {{value}} of {{max}}, {{count}} rating",

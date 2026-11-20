@@ -2166,16 +2166,34 @@
     }
   },
   "rating": {
+    "form": {
+      "commentHint": "Komentář uvidí jen hodnocený, a to až po konci lhůty.",
+      "commentLabel": "Komentář (nepovinný)",
+      "commentLeft_few": "Zbývají {{count}} znaky",
+      "commentLeft_one": "Zbývá {{count}} znak",
+      "commentLeft_other": "Zbývá {{count}} znaků",
+      "commentOver_few": "O {{count}} znaky víc, než se vejde",
+      "commentOver_one": "O {{count}} znak víc, než se vejde",
+      "commentOver_other": "O {{count}} znaků víc, než se vejde",
+      "commentPlaceholder": "Např. co se povedlo a co by šlo příště líp",
+      "commentTooLong": "Komentář může mít nejvýš {{max}} znaků.",
+      "failed": "Hodnocení se nepodařilo odeslat. Zkus to znovu.",
+      "finalNote": "Odeslané hodnocení už nepůjde změnit ani smazat.",
+      "starsRequired": "Vyber 1 až 5 hvězdiček.",
+      "submit": "Odeslat hodnocení",
+      "submitting": "Odesílám…"
+    },
     "notEnough": "Zatím málo hodnocení",
     "page": {
       "back": "Zpět na akci",
       "empty": "Na této akci nemáš koho hodnotit.",
       "eyebrow": "Hodnocení po akci",
-      "formsSoon": "Formulář pro zadání hodnocení brzy přibude.",
+      "formsSoon": "Formulář pro hodnocení účastníků brzy přibude.",
       "loadError": "Hodnocení se nepodařilo načíst",
       "loading": "Načítám hodnocení",
       "notRated": "Zatím neohodnoceno",
       "organizer": "Organizátor",
+      "organizerStarsLabel": "Jak hodnotíš organizátora?",
       "participants": "Účastníci",
       "phase": {
         "closed": "Hodnocení skončilo {{deadline}}.",
@@ -2184,7 +2202,21 @@
         "unavailable": "Tuto akci hodnotit nejde."
       },
       "retry": "Zkusit znovu",
-      "revealNote": "Kdo hodnotil koho, se ukáže až po konci lhůty, všem najednou."
+      "revealNote": "Kdo hodnotil koho, se ukáže až po konci lhůty, všem najednou.",
+      "sent": "Hodnocení máš odeslané. Organizátor ho uvidí až po konci lhůty.",
+      "yourComment": "Tvůj komentář"
+    },
+    "refused": {
+      "ALREADY_RATED": "Toto hodnocení už máš odeslané.",
+      "EVENT_CANCELLED": "Akce byla zrušena, hodnotit ji nejde.",
+      "EVENT_HIDDEN": "Tuto akci teď hodnotit nejde.",
+      "EVENT_NOT_HELD": "Akce se neuskutečnila, hodnotit ji nejde.",
+      "EVENT_NOT_OVER": "Akce ještě neskončila, hodnotit půjde až po ní.",
+      "IS_ORGANIZER": "Vlastní akci hodnotit nejde.",
+      "NOT_MAIN_ORGANIZER": "Účastníky hodnotí jen hlavní organizátor.",
+      "NO_SEAT": "Hodnotit může jen ten, kdo měl na akci schválené místo.",
+      "PARTICIPANT_IS_ORGANIZER": "Organizátoři akce se jako účastníci nehodnotí.",
+      "RATING_CLOSED": "Lhůta na hodnocení už vypršela."
     },
     "scoreLabel": "Hodnocení {{value}} z {{max}}",
     "scoreWithCountLabel_few": "Hodnocení {{value}} z {{max}}, {{count}} hodnocení",
