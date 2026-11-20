@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { i18n } from "@/i18n"
 
-import { AuthError, authErrorMessage } from "@/features/auth/lib/authErrors"
+import { AuthError, authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
 
 describe("authErrorMessage", () => {
   it("translates known BetterAuth codes", () => {
@@ -45,5 +45,23 @@ describe("authErrorMessage", () => {
     expect(authErrorMessage(i18n.t, new Error("boom"), "signInFailed")).toBe(
       "Přihlášení se nezdařilo.",
     )
+  })
+})
+
+describe("googleErrorMessage", () => {
+  it("sends someone without an account to sign up", () => {
+    expect(googleErrorMessage(i18n.t, "new_user_signup_disabled")).toBe(
+      "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
+    )
+  })
+
+  it("explains an e-mail that already has a password account", () => {
+    expect(googleErrorMessage(i18n.t, "account_not_linked")).toBe(
+      "Účet s tímto e-mailem už existuje. Přihlaste se heslem.",
+    )
+  })
+
+  it("falls back to a generic message", () => {
+    expect(googleErrorMessage(i18n.t, "access_denied")).toBe("Přihlášení přes Google se nezdařilo.")
   })
 })

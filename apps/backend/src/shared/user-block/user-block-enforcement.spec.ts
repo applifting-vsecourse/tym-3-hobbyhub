@@ -7,6 +7,7 @@ import {
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { EventsService } from '@/modules/event/services/events.service';
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { Group } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
@@ -16,6 +17,7 @@ import { NotificationsService } from '@/modules/notification/services/notificati
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
 import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
 import { ProfileService } from '@/modules/profile/services/profile.service';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -124,7 +126,9 @@ describe('blocks between two people (#239)', () => {
       const service = new ProfileService(
         repository,
         mock<OnboardingService>(),
+        mock<FriendshipService>(),
         blockedFromViewer(),
+        mock<RatingsService>(),
       );
 
       await expect(
@@ -152,6 +156,7 @@ describe('blocks between two people (#239)', () => {
         service: new GroupsService(
           repository,
           mock<ActivitiesService>(),
+          mock<FriendshipService>(),
           blockedFromViewer(),
         ),
       };
@@ -177,6 +182,7 @@ describe('blocks between two people (#239)', () => {
 
     it('leaves the blocked person off the member list', async () => {
       const { repository, service } = setup();
+      repository.listMembers.mockResolvedValue([]);
 
       await service.listMembers('g1', viewer);
 

@@ -7,6 +7,7 @@ import MapPinIcon from "@/assets/ui-icons/map-pin.svg?react"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { missingCount } from "@/components/hobbyhub/capacity"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
+import { RatingScore } from "@/components/hobbyhub/RatingScore"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
@@ -341,6 +342,18 @@ export function EventDetail({
               </p>
             ) : null}
           </>
+        )}
+
+        {/* #236: from three revealed ratings on; before that nothing at all,
+          since an upcoming event has none to show. */}
+        {event.rating.average === null ? null : (
+          <section className="flex flex-col gap-3 border-t border-border pt-4">
+            <h2 className="typo-h3 text-foreground">{t("events.detail.rating.title")}</h2>
+            <RatingScore
+              average={event.rating.average}
+              count={event.rating.count}
+            />
+          </section>
         )}
 
         <section className="flex flex-col gap-3 border-t border-border pt-4">

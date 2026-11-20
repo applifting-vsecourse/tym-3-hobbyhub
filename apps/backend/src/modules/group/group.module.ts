@@ -1,5 +1,6 @@
 import { PrismaModule } from '@/core/prisma/prisma.module';
 import { ActivityModule } from '@/modules/activity/activity.module';
+import { FriendshipModule } from '@/modules/friendship/friendship.module';
 import { AdminAuthModule } from '@/shared/admin-auth/admin-auth.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { UserBlockVisibilityModule } from '@/shared/user-block/user-block.module';
@@ -16,6 +17,7 @@ import { GroupsService } from './services/groups.service';
     AdminAuthModule,
     PrismaModule,
     ActivityModule,
+    FriendshipModule,
   ],
   controllers: [GroupsController, AdminGroupsController],
   providers: [GroupsService, GroupRepository],

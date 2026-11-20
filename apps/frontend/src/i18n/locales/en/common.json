@@ -375,6 +375,9 @@
     "errors": {
       "adulthoodNotConfirmed": "You need to confirm you are 18 or older to register.",
       "emailNotVerified": "Your email is not verified yet.",
+      "googleEmailExists": "An account with this e-mail already exists. Sign in with your password.",
+      "googleFailed": "Signing in with Google failed.",
+      "googleNoAccount": "There is no account for this Google account yet. Please sign up.",
       "invalidBirthYear": "Invalid year of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
@@ -408,6 +411,10 @@
     "gender": {
       "female": "Female",
       "male": "Male"
+    },
+    "google": {
+      "button": "Continue with Google",
+      "divider": "or"
     },
     "password": {
       "hide": "Hide",
@@ -604,6 +611,9 @@
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by <profile>{{name}}</profile>",
+      "rating": {
+        "title": "Event rating"
+      },
       "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
@@ -731,13 +741,16 @@
         },
         "freeSpots": "Free spots",
         "open": "Filters",
+        "place": "{{place}}, within {{radius}} km",
         "price": {
           "from": "from {{value}}",
           "range": "{{from}}–{{to}}",
           "to": "up to {{value}}"
         },
         "selected": "Selected filters",
-        "unknownActivity": "Unknown activity"
+        "unknownActivity": "Unknown activity",
+        "withoutLocation_one": "{{count}} event without a known location is hidden.",
+        "withoutLocation_other": "{{count}} events without a known location are hidden."
       },
       "free": "Free",
       "inMapArea": "Events in the map area",
@@ -833,11 +846,41 @@
     "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
   },
   "friends": {
+    "action": {
+      "error": "The request could not be sent. Please try again.",
+      "received": "This person is asking you to be friends.",
+      "restricted": "Your account is restricted, you cannot send friend requests right now.",
+      "send": "Ask to be friends",
+      "sendShort": "Add Friend",
+      "sendShortLabel": "Add Friend: {{name}}",
+      "sending": "Sending the request…",
+      "sendingShort": "Sending…",
+      "sent": "Request sent"
+    },
     "empty": {
       "findPeople": "Find people",
       "friends": "Nobody here yet. Once someone accepts your friend request, you will see them here.",
-      "requests": "Nothing here yet. Friend requests people send you will show up here.",
-      "search": "Nothing here yet. Soon you will be able to find people by nickname or by first and last name."
+      "requests": "Nothing here yet. Friend requests people send you will show up here."
+    },
+    "relation": {
+      "friends": "Friend",
+      "request_received": "Wants to be friends",
+      "request_sent": "Request sent"
+    },
+    "search": {
+      "capped": "More people match than we can show. Narrow the nickname.",
+      "error": "The search failed.",
+      "hint_one": "Type at least {{count}} character of a nickname.",
+      "hint_other": "Type at least {{count}} characters of a nickname.",
+      "label": "Search people by nickname",
+      "loadMore": "Load more",
+      "loadMoreError": "More people could not be loaded. Try again.",
+      "loading": "Looking for people…",
+      "loadingMore": "Loading…",
+      "noResults": "Nobody like that was found. Try just part of a nickname.",
+      "placeholder": "Nickname",
+      "results": "People found",
+      "retry": "Try again"
     },
     "tabs": {
       "friends": "Friends",
@@ -845,7 +888,15 @@
       "requests": "Requests",
       "search": "Find people"
     },
-    "title": "Friends"
+    "title": "Friends",
+    "withdraw": {
+      "button": "Cancel request",
+      "confirm": "Cancel request",
+      "error": "The request could not be cancelled. Please try again.",
+      "keep": "Keep it",
+      "text": "The friend request will disappear. You can ask again at any time.",
+      "title": "Cancel the friend request?"
+    }
   },
   "geo": {
     "address": {
@@ -1329,6 +1380,9 @@
       "locationPlaceholder": "Prague 8",
       "panelHide": "Hide filters",
       "panelShow": "Show filters",
+      "place": "Place",
+      "placeClear": "Clear the place",
+      "placePlaceholder": "Address, street or city",
       "preset": {
         "capacity": {
           "from13": "13 and more",
@@ -1350,6 +1404,8 @@
         }
       },
       "price": "Price per spot (CZK)",
+      "radius": "Radius",
+      "radiusOption": "{{km}} km",
       "rangeFrom": "From",
       "rangeInvalid": "Enter a number within the allowed range (capacity a whole number up to {{capacity}}, length up to {{hours}} h).",
       "rangeReversed": "\"From\" must not be greater than \"To\".",
@@ -1500,7 +1556,24 @@
   "landing": {
     "actions": {
       "create": "Create an event",
-      "find": "Find an event"
+      "find": "Find a free seat"
+    },
+    "audience": {
+      "organizer": {
+        "b1": "You approve who comes",
+        "b2": "The event goes ahead once the minimum is met",
+        "b3": "Turn a crew that clicked into a group",
+        "text": "Create an event in a minute and everyone sees how many players you need.",
+        "title": "Short of people for the minimum"
+      },
+      "player": {
+        "b1": "See free seats in the list and on the map",
+        "b2": "Browse everything without signing up",
+        "b3": "Create an account only when you want a seat",
+        "text": "Find an event that is short a player and ask for a seat with one tap.",
+        "title": "Want to play"
+      },
+      "title": "Whether you play or organize"
     },
     "groups": {
       "browse": "Browse groups",
@@ -1509,49 +1582,29 @@
       "title": "Groups: a crew that meets regularly"
     },
     "hero": {
-      "join": "Find a free seat",
       "kicker": "Sports and games near you",
-      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours. And a crew that clicks can keep meeting as a group.",
-      "title": "Fill the missing players before the event is cancelled"
+      "kickerCount_one": "{{count}} event open right now",
+      "kickerCount_other": "{{count}} events open right now",
+      "text": "HobbyHub connects organizers who are short of people with players looking for a free seat.",
+      "title": "Missing a player? Or looking for a game?"
     },
     "how": {
-      "preview": {
-        "scheduleSubtitle": "Dolní school hall · Prague 8 · advanced",
-        "scheduleTime": "Thu 19:00",
-        "scheduleTitle": "Thursday floorball crew",
-        "take": "Take the seat",
-        "yourSeatText": "Thursday floorball · today 19:00",
-        "yourSeatTitle": "Your seat"
-      },
       "step1": {
-        "p1": "The organizer says how many people they still need to reach the minimum, and everyone sees it right away: in the list, on the map and on the event card. You are not asking “whether”, you are asking “where one more fits”.",
-        "p2": "When there is no suitable event, you create one in a minute: activity, place, time and how many of you it takes to play.",
-        "short": "Find or create an event",
-        "subtitle": "Where players are missing to the minimum.",
-        "title": "Find an event short of players. Or create one."
+        "text": "They say how many people they still need. Everyone sees it right away.",
+        "title": "The organizer creates an event"
       },
       "step2": {
-        "p1": "Free seats look like chairs at a table, in the list and on the map. One tap asks to join, and you can add a few words for the organizer.",
-        "p2": "You can browse everything without an account. You sign up when you want to take a seat.",
-        "short": "Ask for a seat",
-        "subtitle": "One tap, the organizer gets a message.",
-        "title": "Ask for a free seat"
+        "text": "One tap. You can browse without an account.",
+        "title": "A player asks for a seat"
       },
       "step3": {
-        "p1": "The organizer sees who is asking and approves whom they want. Once the minimum is met, the event goes ahead and nobody travels for nothing.",
-        "p2": "Approved participants get the exact address and practical instructions, and see who they are going with.",
-        "short": "Approval, then play",
-        "subtitle": "Minimum met, the event goes ahead.",
-        "title": "The organizer approves and you play"
+        "text": "Once the minimum is met, the event goes ahead.",
+        "title": "The organizer approves"
       },
       "step4": {
-        "p1": "People who clicked stay together as a group. It has its place, its usual time and members who know each other.",
-        "p2": "Nobody creates the next event from scratch, and a newcomer sees what they are joining before asking for membership.",
-        "short": "The crew becomes a group",
-        "subtitle": "Next time nobody starts from scratch.",
+        "text": "Those who clicked stay together, and nobody starts from scratch next time.",
         "title": "The crew becomes a group"
       },
-      "stepLabel": "Step {{number}}",
       "title": "How it works"
     },
     "search": {
@@ -1560,7 +1613,8 @@
     },
     "seoTitle": "Home",
     "upcoming": {
-      "empty": "No upcoming events yet. Create one yourself — it will show up here.",
+      "all": "All events",
+      "empty": "No upcoming events yet. Create one yourself and it will show up here.",
       "title": "Upcoming events"
     }
   },
@@ -1681,11 +1735,19 @@
         "started": "Your event {{title}} started {{when}}",
         "upcoming": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken"
       },
+      "HOSTED_RATING_PROMPT": {
+        "FIRST": "Rate the participants of your event {{title}} by {{until}}",
+        "LAST_CALL": "Last day to rate the participants of {{title}}, by {{until}}"
+      },
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
+      "RATING_PROMPT": {
+        "FIRST": "How was {{title}}? Rate the organizer by {{until}}",
+        "LAST_CALL": "Last day to rate the organizer of {{title}}, by {{until}}"
+      },
       "REPORT_RESOLVED": "We have dealt with your report. Thank you for helping keep HobbyHub safe.",
       "REQUEST_DECIDED": {
         "event": {
@@ -2036,6 +2098,14 @@
         "unreadable": "The photo could not be processed. Try another one."
       }
     },
+    "ratings": {
+      "asOrganizer": "As an organizer",
+      "asParticipant": "As a participant",
+      "ownBelowMinimum_one": "You have {{count}} rating; others see it from {{min}} on.",
+      "ownBelowMinimum_other": "You have {{count}} ratings; others see them from {{min}} on.",
+      "ownBelowMinimum_zero": "Others see your rating from {{min}} ratings on.",
+      "title": "Ratings"
+    },
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
     "settings": {
@@ -2077,6 +2147,33 @@
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }
+  },
+  "rating": {
+    "notEnough": "Not enough ratings yet",
+    "page": {
+      "back": "Back to the event",
+      "empty": "There is nobody for you to rate at this event.",
+      "eyebrow": "Rating after the event",
+      "formsSoon": "The form for rating is coming soon.",
+      "loadError": "Ratings could not be loaded",
+      "loading": "Loading ratings",
+      "notRated": "Not rated yet",
+      "organizer": "Organizer",
+      "participants": "Participants",
+      "phase": {
+        "closed": "Rating closed {{deadline}}.",
+        "notYet": "You can rate once the event is over.",
+        "open": "You can rate until {{deadline}}.",
+        "unavailable": "This event cannot be rated."
+      },
+      "retry": "Try again",
+      "revealNote": "Who rated whom shows only when the period ends, for everyone at once."
+    },
+    "scoreLabel": "Rated {{value}} of {{max}}",
+    "scoreWithCountLabel_one": "Rated {{value}} of {{max}}, {{count}} rating",
+    "scoreWithCountLabel_other": "Rated {{value}} of {{max}}, {{count}} ratings",
+    "starsOf_one": "{{count}} star of {{max}}",
+    "starsOf_other": "{{count}} stars of {{max}}"
   },
   "reports": {
     "done": "Thank you, we have passed your report to the administrators. We will let you know once they deal with it.",

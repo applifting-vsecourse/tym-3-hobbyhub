@@ -65,6 +65,14 @@ export const groupMemberSchema = z.object({
   joinedAt: z.coerce.date(),
 })
 
+/**
+ * #225: a member in the list of members, with my friendship to them (`none`
+ * for me); the same values as the friendship feature's.
+ */
+export const groupMemberListItemSchema = groupMemberSchema.extend({
+  relation: z.enum(["none", "request_sent", "request_received", "friends"]),
+})
+
 // F-07.7: the applicant's own view of a request. GROUP_CANCELLED is a waiting
 // request on a cancelled group, which nobody will decide any more.
 export const myMembershipRequestStatusSchema = z.enum([
@@ -110,4 +118,5 @@ export type MyMembershipRequestState = z.infer<typeof myMembershipRequestStateSc
 export type ApplicantProfile = z.infer<typeof applicantSchema>
 export type PendingMembershipRequest = z.infer<typeof pendingMembershipRequestSchema>
 export type GroupMember = z.infer<typeof groupMemberSchema>
+export type GroupMemberListItem = z.infer<typeof groupMemberListItemSchema>
 export type MyMembershipRequest = z.infer<typeof myMembershipRequestSchema>

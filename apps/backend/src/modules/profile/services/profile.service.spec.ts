@@ -1,3 +1,4 @@
+import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
 import { PROFILE_IMAGE_PREFIX } from '@/modules/profile/domain/profile';
@@ -5,6 +6,11 @@ import {
   ProfileRepository,
   ProfileRow,
 } from '@/modules/profile/repositories/profile.repository';
+import {
+  NO_USER_RATING_SCORES,
+  UserRatingScores,
+} from '@/modules/rating/domain/rating';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -51,9 +57,11 @@ describe('ProfileService', () => {
   const setup = (
     row: ProfileRow | null = aRow(),
     onboarding: Onboarding = anOnboarding(),
+    scores: UserRatingScores = NO_USER_RATING_SCORES,
   ): {
     repository: MockProxy<ProfileRepository>;
     onboardingService: MockProxy<OnboardingService>;
+    friendshipService: MockProxy<FriendshipService>;
     service: ProfileService;
   } => {
     const repository = mock<ProfileRepository>();
@@ -62,12 +70,64 @@ describe('ProfileService', () => {
     const onboardingService = mock<OnboardingService>();
     onboardingService.getOnboarding.mockResolvedValue(onboarding);
     onboardingService.getOnboardingOf.mockResolvedValue(onboarding);
+    const friendshipService = mock<FriendshipService>();
+    friendshipService.relationBetween.mockResolvedValue('none');
+    const ratingsService = mock<RatingsService>();
+    ratingsService.getUserScores.mockResolvedValue(scores);
     return {
       repository,
       onboardingService,
-      service: new ProfileService(repository, onboardingService, noBlocks()),
+      friendshipService,
+      service: new ProfileService(
+        repository,
+        onboardingService,
+        friendshipService,
+        noBlocks(),
+        ratingsService,
+      ),
     };
   };
+
+  // #236, ADR-0027: the scores, as an organizer and as a participant.
+  describe('ratings', () => {
+    const twoAndThree: UserRatingScores = {
+      asOrganizer: { count: 3, average: 4 },
+      asParticipant: { count: 2, average: 5 },
+    };
+
+    it('gives the owner both scores whole, even below three ratings', async () => {
+      const { service } = setup(aRow(), anOnboarding(), twoAndThree);
+      await expect(service.getProfile(user)).resolves.toMatchObject({
+        ratings: {
+          asOrganizer: { count: 3, average: 4 },
+          asParticipant: { count: 2, average: 5 },
+        },
+      });
+    });
+
+    it('hides both numbers from others below three ratings', async () => {
+      const { repository, service } = setup(
+        aRow(),
+        anOnboarding(),
+        twoAndThree,
+      );
+      repository.getPublicRow.mockResolvedValue({
+        id: 'u2',
+        name: 'Petr',
+        bio: null,
+        image: null,
+        profileCover: null,
+      });
+      await expect(service.getPublicProfile('u2', user)).resolves.toMatchObject(
+        {
+          ratings: {
+            asOrganizer: { count: 3, average: 4 },
+            asParticipant: { count: null, average: null },
+          },
+        },
+      );
+    });
+  });
 
   it('puts the account and the onboarding answers together', async () => {
     const { service } = setup(aRow({ bio: 'Hraju rok' }));
@@ -444,8 +504,29 @@ describe('ProfileService', () => {
         'image',
         'interests',
         'name',
+        'ratings',
+        'relation',
       ]);
     });
+
+    // #225: the profile says where the signed-in viewer stands with the person.
+    it.each(['none', 'request_sent', 'request_received', 'friends'] as const)(
+      "carries the viewer's relation (%s)",
+      async (relation) => {
+        const { service, repository, onboardingService, friendshipService } =
+          setup();
+        repository.getPublicRow.mockResolvedValue(publicRow);
+        onboardingService.getInterestsOf.mockResolvedValue([]);
+        friendshipService.relationBetween.mockResolvedValue(relation);
+        await expect(
+          service.getPublicProfile('u2', user),
+        ).resolves.toMatchObject({ relation });
+        expect(friendshipService.relationBetween).toHaveBeenCalledWith(
+          'u1',
+          'u2',
+        );
+      },
+    );
 
     it('answers not found for a user that does not exist', async () => {
       const { service, repository } = setup();

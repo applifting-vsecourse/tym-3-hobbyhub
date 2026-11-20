@@ -33,8 +33,16 @@ type RosterSeatsProps = {
   size?: keyof typeof avatarSize
   /** `dark` for the signal surface (hero, roster band in e-mails). */
   surface?: "light" | "dark"
+  /**
+   * Most seats drawn (flex sizes only): a bigger roster shows the first ones and
+   * a "+N" for the rest, so a card never grows a third row. The accessible name
+   * still counts everyone.
+   */
+  maxVisible?: number
   /** Seats pop in one after another on first render. Off by default: rosters in lists must not replay it. */
   isAnimated?: boolean
+  /** The missing seats breathe (with `isAnimated`, once the roster has filled in): the hero and the landing page invitations. */
+  isInviting?: boolean
   className?: string
 }
 
@@ -49,12 +57,17 @@ export function RosterSeats({
   min = capacity,
   size = "md",
   surface = "light",
+  maxVisible,
   isAnimated = false,
+  isInviting = false,
   className,
 }: RosterSeatsProps) {
   const { t } = useTranslation()
   const filled = Math.min(Math.max(taken, 0), capacity)
-  const seats = seatStates({ taken: filled, min: Math.min(min, capacity), max: capacity })
+  const allSeats = seatStates({ taken: filled, min: Math.min(min, capacity), max: capacity })
+  const isCut = maxVisible !== undefined && allSeats.length > maxVisible
+  const seats = isCut ? allSeats.slice(0, maxVisible - 1) : allSeats
+  const hiddenCount = allSeats.length - seats.length
 
   return (
     <div
@@ -79,18 +92,33 @@ export function RosterSeats({
           />
         )
         // Seats have no identity beyond their position.
-        return isAnimated ? (
+        return isAnimated || isInviting ? (
           <span
             key={index}
-            className="flex seat-enter"
+            className={cn("flex", isAnimated && "seat-enter")}
             style={{ "--seat-index": index } as CSSProperties}
           >
-            {seat}
+            {isInviting && state === "missing" ? (
+              <span className="flex seat-invite">{seat}</span>
+            ) : (
+              seat
+            )}
           </span>
         ) : (
           <Fragment key={index}>{seat}</Fragment>
         )
       })}
+      {isCut ? (
+        <span
+          aria-hidden
+          className={cn(
+            "flex items-center px-1 typo-label text-muted-foreground",
+            size === "sm" ? "h-8" : size === "md" ? "h-10" : "h-5.5",
+          )}
+        >
+          +{hiddenCount}
+        </span>
+      ) : null}
     </div>
   )
 }

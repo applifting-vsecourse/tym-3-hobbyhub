@@ -6,7 +6,8 @@ import {
   ParticipantStats,
   VENUE_TYPES,
 } from '@/modules/event/domain/event';
-import { ApiProperty } from '@nestjs/swagger';
+import { RatingScoreResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventLocationResponseDto } from './event.response.dto';
 
 class EventGroupResponseDto {
@@ -143,10 +144,17 @@ export class EventListResponseDto {
   })
   total!: number;
 
+  @ApiPropertyOptional({
+    description:
+      'Only with a radius filter: events that fit every other filter but have no position, so they are left out',
+  })
+  withoutLocationCount?: number;
+
   static fromDomain(page: EventListPage): EventListResponseDto {
     return {
       items: page.items.map(EventListItemResponseDto.fromDomain),
       total: page.total,
+      withoutLocationCount: page.withoutLocationCount,
     };
   }
 }
@@ -241,6 +249,13 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   hiddenReason!: string | null;
 
   @ApiProperty({
+    type: RatingScoreResponseDto,
+    description:
+      "The participants' revealed ratings of the event (#236); both null below 3 ratings",
+  })
+  rating!: RatingScoreResponseDto;
+
+  @ApiProperty({
     type: EventLocationResponseDto,
     nullable: true,
     description:
@@ -265,6 +280,7 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
         : null,
       statsMinParticipants: event.statsMinParticipants,
       hiddenReason: event.hiddenReason,
+      rating: RatingScoreResponseDto.fromDomain(event.rating),
       location: event.location
         ? EventLocationResponseDto.fromDomain(event.location)
         : null,

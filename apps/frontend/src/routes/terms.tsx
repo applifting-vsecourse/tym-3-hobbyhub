@@ -16,7 +16,7 @@ function TermsPage() {
   return (
     <>
       <Seo title={t("terms.title")} />
-      <AppShell className="mx-auto w-full max-w-2xl px-page py-10">
+      <AppShell className="mx-auto w-full max-w-column-2xl px-page py-10">
         <h1 className="typo-h1 text-foreground">{t("terms.title")}</h1>
         <p className="mt-4 typo-body text-muted-foreground">{t("terms.placeholder")}</p>
       </AppShell>

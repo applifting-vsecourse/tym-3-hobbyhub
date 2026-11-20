@@ -12,6 +12,7 @@ import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Seo } from "@/components/Seo"
 import { Button } from "@/components/ui/button"
 import { useFiltersPanel } from "@/hooks/useFiltersPanel"
+import { useSearchText } from "@/hooks/useSearchText"
 import { cn } from "@/lib/utils"
 
 import { activityName } from "@/features/activity/activityName"
@@ -26,7 +27,6 @@ import {
 import { EventList } from "@/features/event/components/EventList"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import { useNearMe } from "@/features/event/hooks/useNearMe"
-import { useSearchText } from "@/features/event/hooks/useSearchText"
 import { eventsInBounds, type MapBounds } from "@/features/event/lib/clusterEvents"
 import {
   eventsListSearchSchema,
@@ -48,7 +48,7 @@ const EventsMap = lazy(() =>
 const EVENT_LIST_FILTER_FIELDS: FiltersSheetField[] = [
   "activity",
   "when",
-  "location",
+  "place",
   "freeSpots",
   "price",
   "duration",
@@ -60,10 +60,8 @@ export const Route = createFileRoute("/events/")({
   validateSearch: eventsListSearchSchema,
 })
 
-// TODO(F-02.1b #91): `location` and `q` are plain text matches. Similar
-// spellings and "within X km of a place" need every event to have coordinates
-// (geocoding, F-12.3) and a place to measure from; for now only the visitor's
-// own position sorts the list.
+// TODO(F-02.1b #91): `q` is a plain text match; similar spellings ("Brno" ~
+// "Brnoo") need matching by similarity. The place and radius are #261.
 
 // Pages are cut by offset, so an event that moved between two requests can come
 // back on the next page; keep its first appearance.
@@ -95,15 +93,26 @@ function EventsPage() {
       ?.scrollIntoView({ block: "start", behavior: isReduced ? "auto" : "smooth" })
   }, [selectedId])
   // The previous list stays on screen while the next one loads, so typing does not flash.
+  const listFilters = {
+    ...filters,
+    near: nearMe.position ?? undefined,
+    around: filters.place ? { ...filters.place, radiusKm: filters.radiusKm } : undefined,
+  }
   const eventsQuery = useInfiniteQuery({
-    ...eventsQueryOptions({ ...filters, near: nearMe.position ?? undefined }),
+    ...eventsQueryOptions(listFilters),
     placeholderData: keepPreviousData,
   })
   // The map shows every event of the filter, not the page of the list.
   const mapQuery = useQuery({
-    ...eventsMapQueryOptions({ ...filters, near: nearMe.position ?? undefined }),
+    ...eventsMapQueryOptions(listFilters),
     placeholderData: keepPreviousData,
   })
+  // Events a radius cannot place, said above the list so they do not vanish unexplained.
+  // Not from the previous filter's list that stays on screen while the next loads.
+  const withoutLocationCount =
+    filters.place && !eventsQuery.isPlaceholderData
+      ? (eventsQuery.data?.pages[0]?.withoutLocationCount ?? 0)
+      : 0
   const mapEvents = mapQuery.data ?? []
   // Once the map is moved the list is what is on screen; the map query holds every event.
   const eventsOnMap = eventsInBounds(mapEvents, mapBounds)
@@ -194,6 +203,14 @@ function EventsPage() {
                   className="typo-small text-muted-foreground"
                 >
                   {t(`events.list.nearMe.${nearMe.status}`)}
+                </p>
+              ) : null}
+              {withoutLocationCount > 0 ? (
+                <p
+                  role="status"
+                  className="typo-small text-muted-foreground"
+                >
+                  {t("events.list.filters.withoutLocation", { count: withoutLocationCount })}
                 </p>
               ) : null}
             </EventFiltersBar>

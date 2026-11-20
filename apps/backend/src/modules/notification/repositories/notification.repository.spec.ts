@@ -101,6 +101,8 @@ describe('NotificationRepository', () => {
           'EVENT_BOARD',
           'EVENT_REMINDER',
           'HOSTED_EVENT_REMINDER',
+          'RATING_PROMPT',
+          'HOSTED_RATING_PROMPT',
         ],
       },
     });

@@ -230,7 +230,14 @@ describe('EventRepository.getShowableEventById', () => {
       organizer: { name: 'Jana Nováková' },
       participations: [{ user: { birthYear: 1990, gender: 'MALE' } }],
     });
-    const prisma = { event: { findFirst } } as unknown as PrismaService;
+    // #236: two revealed ratings, below what others may see.
+    const $queryRaw = jest
+      .fn()
+      .mockResolvedValue([{ count: 2, publicAverage: null }]);
+    const prisma = {
+      event: { findFirst },
+      $queryRaw,
+    } as unknown as PrismaService;
 
     const detail = await new EventRepository(prisma).getShowableEventById('e1');
 
@@ -239,6 +246,7 @@ describe('EventRepository.getShowableEventById', () => {
       contributionAmount: 80,
       takenCount: 3,
       stats: null,
+      rating: { count: null, average: null },
     });
     expect(detail).not.toHaveProperty('onlineUrl');
     expect(detail).not.toHaveProperty('locationStreet');

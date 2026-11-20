@@ -76,6 +76,16 @@ export class EventsController {
           query.lat !== undefined && query.lng !== undefined
             ? { latitude: query.lat, longitude: query.lng }
             : undefined,
+        around:
+          query.aroundLat !== undefined &&
+          query.aroundLng !== undefined &&
+          query.radiusKm !== undefined
+            ? {
+                latitude: query.aroundLat,
+                longitude: query.aroundLng,
+                radiusKm: query.radiusKm,
+              }
+            : undefined,
       },
       undefined,
       user,

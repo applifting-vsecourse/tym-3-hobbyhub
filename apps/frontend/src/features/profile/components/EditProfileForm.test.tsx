@@ -37,6 +37,7 @@ const profile: Profile = {
   address: null,
   friendsSeeEventHistory: true,
   friendsSeeUpcomingEvents: false,
+  ratings: { asOrganizer: { count: 0, average: null }, asParticipant: { count: 0, average: null } },
 }
 
 const renderForm = (shown: Profile = profile) =>

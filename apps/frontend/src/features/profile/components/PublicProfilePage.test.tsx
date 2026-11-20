@@ -27,6 +27,7 @@ const renderPage = (
         userId={userId}
         ownUserId="me"
         activityLabel={(activity) => activity.name}
+        renderFriendAction={({ relation }) => <p>{`relation:${relation}`}</p>}
         reportAction={reportAction}
       />
     </QueryClientProvider>,
@@ -39,20 +40,39 @@ describe("PublicProfilePage", () => {
     answer({
       id: "u2",
       name: "Petr",
+      relation: "request_sent",
       bio: null,
       image: null,
       cover: null,
       interests: [],
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: null, average: null },
+      },
     })
     await renderPage("u2")
 
     expect(await screen.findByRole("heading", { level: 1, name: "Petr" })).toBeInTheDocument()
     expect(get).toHaveBeenCalledWith("profile/u2")
+    // #225: my relation to the person comes with the profile.
+    expect(screen.getByText("relation:request_sent")).toBeInTheDocument()
   })
 
   // #240: the route hands in "Nahlásit uživatele" for the loaded person.
   it("offers the report action for the loaded person", async () => {
-    answer({ id: "u2", name: "Petr", bio: null, image: null, cover: null, interests: [] })
+    answer({
+      id: "u2",
+      name: "Petr",
+      relation: "none",
+      bio: null,
+      image: null,
+      cover: null,
+      interests: [],
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: null, average: null },
+      },
+    })
     await renderPage("u2", (profile) => (
       <button type="button">{`Nahlásit ${profile.name} (${profile.id})`}</button>
     ))

@@ -13,6 +13,7 @@ import { HTTPError } from "@/lib/api-client"
 
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
+import { MemberFriendship } from "@/features/friendship/components/MemberFriendship"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
 import { groupQueryOptions } from "@/features/group/api/groupQueryOptions"
 import { hasGroupAdminRights } from "@/features/group/api/groupSchemas"
@@ -86,7 +87,7 @@ function GroupMembersPage() {
     <>
       <Seo title={groupQuery.data?.name ?? t("groups.manage.title")} />
       {/* On a large screen (#224) the group at a glance sits beside its members. */}
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page py-6 md:py-12 lg:grid lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-x-8">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-6 px-page py-6 md:py-12 lg:grid lg:max-w-column-5xl lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-x-8">
         <div className="flex flex-col gap-4 lg:col-start-1">
           <BackLink
             to="/groups/$groupId"
@@ -156,6 +157,15 @@ function GroupMembersPage() {
               groupName={groupQuery.data?.name ?? ""}
               members={membersQuery.data ?? []}
               me={me}
+              // #225: ask a member for friendship right here, or see where it stands.
+              renderFriendship={(member) => (
+                <MemberFriendship
+                  userId={member.userId}
+                  name={member.name}
+                  relation={member.relation}
+                  reload={() => membersQuery.refetch()}
+                />
+              )}
             />
           )}
         </div>

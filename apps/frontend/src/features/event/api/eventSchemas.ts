@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { ratingScoreSchema } from "@/lib/ratingScore"
+
 // Mirrors the server-side DTO, so the form can tell the user before sending.
 export const EVENT_LIMITS = {
   titleMin: 3,
@@ -160,6 +162,8 @@ export const eventListSchema = z.object({
   items: z.array(eventListItemSchema),
   /** All upcoming public events, not just this page. */
   total: z.number(),
+  /** With a radius filter: events left out because they have no known position (#261). */
+  withoutLocationCount: z.number().optional(),
 })
 
 export type EventListItem = z.infer<typeof eventListItemSchema>
@@ -195,6 +199,8 @@ export const eventDetailSchema = eventListItemSchema.extend({
    * hidden event, so anyone else always sees null.
    */
   hiddenReason: z.string().nullable(),
+  /** #236: the participants' revealed ratings; both null below three. */
+  rating: ratingScoreSchema,
   /**
    * #218: the exact address, when the organizer made it public; null when
    * only the people with a seat get it, from the participant info.

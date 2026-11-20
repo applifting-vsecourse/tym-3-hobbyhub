@@ -41,7 +41,7 @@ function ProfilePage() {
       <Seo title={t("profile.title")} />
       {/* On a large screen the person's own upcoming events sit beside the
           profile (#224). Only here: nobody else sees them (visibility matrix). */}
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-page py-6 md:py-12 lg:max-w-5xl">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-6 px-page py-6 md:py-12 lg:max-w-column-5xl">
         <VerifyEmailPrompt />
         <div className="empty:hidden">
           <ProfilePrompt />
