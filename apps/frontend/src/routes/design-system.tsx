@@ -53,7 +53,8 @@ function DesignSystemPage() {
         <div className="mx-auto flex w-full max-w-column-4xl flex-col gap-12 px-page py-12">
           <header className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
-              <Logo className="h-10" />
+              {/* May shrink: at its full height the logo and the switcher are wider than a phone. */}
+              <Logo className="h-auto max-h-10 min-w-0 shrink" />
               <ThemeSwitcher />
             </div>
             <h1 className="typo-h1 text-foreground">Rozpis a soupiska</h1>
