@@ -197,7 +197,7 @@ export function RateParticipantsForm({
       form={form}
       onSubmit={submit}
       // On a phone the bar is fixed over the end of the page: keep room for it.
-      className="flex flex-col gap-4 max-md:pb-20"
+      className="group/ratings flex flex-col gap-4 max-md:pb-20"
     >
       {prefilledIds.length > 0 || canPrefill ? (
         <Button
@@ -231,8 +231,10 @@ export function RateParticipantsForm({
 
       {/* On phones fixed above the BottomNav (and under its raised "Přidat
         akci"), on larger screens stuck to the bottom of the window while the
-        list is longer than it. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-2 border-t border-border bg-background px-page pt-3 pb-above-bottom-nav md:sticky md:inset-x-auto md:px-0 md:py-4">
+        list is longer than it. While a comment is typed on a phone it steps
+        aside: iOS lifts fixed bars over the on-screen keyboard, where it
+        would cover the very field being typed in. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-2 border-t border-border bg-background px-page pt-3 pb-above-bottom-nav max-md:group-has-[textarea:focus]/ratings:hidden md:sticky md:inset-x-auto md:px-0 md:py-4">
         {isNothingChosen ? (
           <p
             role="alert"
@@ -380,13 +382,15 @@ function ParticipantRow({
                   </FormItem>
                 )}
               />
-              {/* Once the comment is open the button keeps its room, hidden,
-                so the stars stay in line with the other rows. */}
+              {/* Once the comment is open the button is hidden; beside the
+                stars it keeps its room, so they stay in line with the rows. */}
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className={cn("max-md:h-11", isCommentShown && "invisible")}
+                // Hidden but keeping its room beside the stars from `md`; on a
+                // phone it has a line of its own, which would stay empty.
+                className={cn("max-md:h-11", isCommentShown && "max-md:hidden md:invisible")}
                 aria-hidden={isCommentShown || undefined}
                 tabIndex={isCommentShown ? -1 : undefined}
                 disabled={isDisabled}
