@@ -2127,6 +2127,7 @@
       "ownBelowMinimum_one": "Máš {{count}} hodnocení, ostatním se ukáže od {{min}}.",
       "ownBelowMinimum_other": "Máš {{count}} hodnocení, ostatním se ukáže od {{min}}.",
       "ownBelowMinimum_zero": "Ostatním se hodnocení ukáže od {{min}} hodnocení.",
+      "showMine": "Zobrazit moje hodnocení",
       "title": "Hodnocení"
     },
     "save": "Uložit",
@@ -2188,6 +2189,31 @@
       "starsRequired": "Vyber 1 až 5 hvězdiček.",
       "submit": "Odeslat hodnocení",
       "submitting": "Odesílám…"
+    },
+    "mine": {
+      "back": "Zpět na profil",
+      "deletedAuthor": "Smazaný uživatel",
+      "distribution": "Kolikrát padla která známka",
+      "empty": {
+        "asOrganizer": "Jako organizátor tu zatím žádné hodnocení nemáš.",
+        "asParticipant": "Jako účastník tu zatím žádné hodnocení nemáš.",
+        "given": "Zatím tu není žádné odeslané hodnocení."
+      },
+      "given": {
+        "hidden": "Odkryje se po konci lhůty",
+        "revealed": "Odkryté",
+        "toOrganizer": "Hodnocení organizátora",
+        "toParticipant": "Hodnocení účastníka"
+      },
+      "loadMore": "Načíst další",
+      "receivedNote": "Hodnocení od ostatních se tu ukáže až po konci lhůty na hodnocení akce.",
+      "tabs": {
+        "asOrganizer": "Jako organizátor",
+        "asParticipant": "Jako účastník",
+        "given": "Odeslaná",
+        "label": "Části přehledu hodnocení"
+      },
+      "title": "Moje hodnocení"
     },
     "notEnough": "Zatím málo hodnocení",
     "page": {

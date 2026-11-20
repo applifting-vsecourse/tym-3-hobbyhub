@@ -1,6 +1,8 @@
 import { useId } from "react"
+import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { ROUTES } from "@/app/routes"
 import { RatingScore } from "@/components/hobbyhub/RatingScore"
 import { RATING_MIN_COUNT_TO_SHOW, type UserRatingScores } from "@/lib/ratingScore"
 
@@ -61,6 +63,15 @@ export function ProfileRatings({ ratings, isOwn = false }: ProfileRatingsProps) 
           </div>
         ))}
       </dl>
+      {/* #234: who rated them and what they sent themselves; nobody else's. */}
+      {isOwn ? (
+        <Link
+          to={ROUTES.profileRatings}
+          className="self-start typo-label text-foreground underline underline-offset-4"
+        >
+          {t("profile.ratings.showMine")}
+        </Link>
+      ) : null}
     </section>
   )
 }

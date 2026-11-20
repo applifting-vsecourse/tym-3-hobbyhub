@@ -2092,6 +2092,7 @@
       "ownBelowMinimum_one": "You have {{count}} rating; others see it from {{min}} on.",
       "ownBelowMinimum_other": "You have {{count}} ratings; others see them from {{min}} on.",
       "ownBelowMinimum_zero": "Others see your rating from {{min}} ratings on.",
+      "showMine": "See my ratings",
       "title": "Ratings"
     },
     "save": "Save",
@@ -2151,6 +2152,31 @@
       "starsRequired": "Choose 1 to 5 stars.",
       "submit": "Send rating",
       "submitting": "Sending…"
+    },
+    "mine": {
+      "back": "Back to the profile",
+      "deletedAuthor": "Deleted user",
+      "distribution": "How many times each number of stars came up",
+      "empty": {
+        "asOrganizer": "You have no ratings as an organizer here yet.",
+        "asParticipant": "You have no ratings as a participant here yet.",
+        "given": "There are no sent ratings here yet."
+      },
+      "given": {
+        "hidden": "Shows when the rating period ends",
+        "revealed": "Revealed",
+        "toOrganizer": "Rating of the organizer",
+        "toParticipant": "Rating of a participant"
+      },
+      "loadMore": "Load more",
+      "receivedNote": "Ratings from others show here only once the event's rating period ends.",
+      "tabs": {
+        "asOrganizer": "As an organizer",
+        "asParticipant": "As a participant",
+        "given": "Sent",
+        "label": "Parts of the ratings overview"
+      },
+      "title": "My ratings"
     },
     "notEnough": "Not enough ratings yet",
     "page": {
