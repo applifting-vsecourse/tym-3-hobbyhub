@@ -1,6 +1,8 @@
 import { useId } from "react"
+import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { ROUTES } from "@/app/routes"
 import { Button } from "@/components/ui/button"
 
 import type { MyRequestState } from "@/features/participation-request/api/participationRequestSchemas"
@@ -40,6 +42,18 @@ export function JoinRequestAction({ label, state, isLoading, onRequest }: JoinRe
           className="text-center typo-small text-accent-foreground"
         >
           {t(`participationRequests.refused.${refusal}`)}
+          {/* #65: the block is the person's own, and so is the way back. */}
+          {refusal === "BLOCKED_ORGANIZER" ? (
+            <>
+              {" "}
+              <Link
+                to={ROUTES.settings}
+                className="underline underline-offset-4"
+              >
+                {t("userBlocks.manageLink")}
+              </Link>
+            </>
+          ) : null}
         </p>
       </>
     )

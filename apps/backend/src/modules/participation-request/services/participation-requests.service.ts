@@ -46,6 +46,7 @@ const VIOLATION_MESSAGES: Record<Violation, string> = {
   HAS_SEAT: 'You already have a seat at this event',
   ALREADY_REQUESTED: 'You have already asked to join this event',
   REJECTED_BEFORE: 'Your request to join this event was rejected',
+  BLOCKED_ORGANIZER: 'You blocked an organizer of this event',
   NOT_PENDING: 'The request no longer waits for a decision',
   APPLICANT_HAS_SEAT: 'The applicant already has a seat at this event',
   NO_SEAT: 'You have no seat at this event to cancel',
@@ -105,14 +106,15 @@ export class ParticipationRequestsService {
     now: Date = new Date(),
   ): Promise<MyRequestState> {
     const event = await this.getEvent(eventId, user);
-    const [requests, seat, applicant] = await Promise.all([
+    const [requests, seat, applicant, blockedIds] = await Promise.all([
       this.repository.getRequestsOf(eventId, user.id),
       this.repository.getSeatStatus(eventId, user.id),
       this.repository.getApplicantProfile(user.id),
+      this.blocks.blockedBy(user.id),
     ]);
     return {
       request: currentRequestOf(requests),
-      violations: joinRuleViolations(event, user.id, requests, now),
+      violations: joinRuleViolations(event, user.id, requests, now, blockedIds),
       seat,
       cancelViolations: cancelRuleViolations(event, now),
       applicant,
@@ -131,8 +133,17 @@ export class ParticipationRequestsService {
     const event = await this.getEvent(eventId, user);
     // F-03.2 (#13): asking to join deliberately needs no verified e-mail, to
     // keep the friction for participants low; the organizer sees the status.
-    const requests = await this.repository.getRequestsOf(eventId, user.id);
-    const violations = joinRuleViolations(event, user.id, requests, now);
+    const [requests, blockedIds] = await Promise.all([
+      this.repository.getRequestsOf(eventId, user.id),
+      this.blocks.blockedBy(user.id),
+    ]);
+    const violations = joinRuleViolations(
+      event,
+      user.id,
+      requests,
+      now,
+      blockedIds,
+    );
     if (violations.length > 0) throw violationsError(violations);
 
     // The applicant comes from the session, never from the request body.

@@ -19,6 +19,7 @@ const profile: PublicProfile = {
     asOrganizer: { count: null, average: null },
     asParticipant: { count: null, average: null },
   },
+  isBlockedByMe: false,
 }
 
 const renderProfile = (overrides: Partial<PublicProfile> = {}, friendAction?: ReactNode) =>

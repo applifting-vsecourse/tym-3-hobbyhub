@@ -1,5 +1,6 @@
 import { Group, GroupRole } from '@/modules/group/domain/group';
 import { RequestStatus } from '@/modules/participation-request/domain/participation-request';
+import { runByBlocked } from '@/modules/user-block/domain/user-block';
 
 // Same limits as the columns `membership_request.message` and
 // `membership_request.decisionMessage`.
@@ -74,8 +75,10 @@ export type PendingMembershipRequest = MembershipRequest & {
 // Why a person cannot ask to join a group now. The client shows the same
 // reasons before sending; the server is the one that counts. A group that is
 // not public and active is "not found" instead, as on its detail.
+// BLOCKED_ADMIN (#65, ADR-0028): the person blocked the owner or an admin of
+// the group, who would never see the request.
 export type MembershipRuleViolation =
-  'IS_MEMBER' | 'ALREADY_REQUESTED' | 'REJECTED_BEFORE';
+  'IS_MEMBER' | 'ALREADY_REQUESTED' | 'REJECTED_BEFORE' | 'BLOCKED_ADMIN';
 
 // Why an admin cannot decide a request now. APPLICANT_IS_MEMBER shows only
 // once the membership exists, so the repository reports it.
@@ -106,6 +109,12 @@ export const currentMembershipRequestOf = (
 export const membershipRuleViolations = (
   applicantRole: GroupRole | null,
   requests: Pick<MembershipRequest, 'status'>[],
+  // #65: the owner and the admins of the group, and the people the applicant
+  // blocked.
+  blocks: { adminIds: string[]; blockedIds: string[] } = {
+    adminIds: [],
+    blockedIds: [],
+  },
 ): MembershipRuleViolation[] => {
   const violations: MembershipRuleViolation[] = [];
   if (applicantRole !== null) {
@@ -116,6 +125,9 @@ export const membershipRuleViolations = (
   }
   if (requests.some((request) => request.status === 'REJECTED')) {
     violations.push('REJECTED_BEFORE');
+  }
+  if (runByBlocked(blocks.adminIds, blocks.blockedIds)) {
+    violations.push('BLOCKED_ADMIN');
   }
   return violations;
 };

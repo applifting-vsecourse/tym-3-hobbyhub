@@ -42,7 +42,8 @@ export class NotificationsService {
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  // #239: without what people blocked from the user caused.
+  // #239: without what people blocked from the user caused. #65: nor what
+  // the people the user blocked caused.
   async listMine(
     user: Identity,
     page: Page,
@@ -52,14 +53,14 @@ export class NotificationsService {
       user.id,
       page,
       filter,
-      await this.blocks.hiddenFor(user.id),
+      await this.blocks.mutedFor(user.id),
     );
   }
 
   async countUnread(user: Identity): Promise<number> {
     return this.repository.countUnread(
       user.id,
-      await this.blocks.hiddenFor(user.id),
+      await this.blocks.mutedFor(user.id),
     );
   }
 
@@ -370,9 +371,10 @@ export class NotificationsService {
     if (data.recipientIds.length === 0) return;
     let ids: string[];
     try {
-      // #239: nobody hears from someone blocked from them.
+      // #239: nobody hears from someone blocked from them. #65: nor from
+      // someone they blocked.
       const hidden = data.actorId
-        ? await this.blocks.hiddenFrom(data.actorId)
+        ? await this.blocks.notHearingFrom(data.actorId)
         : [];
       const recipientIds = data.recipientIds.filter(
         (id) => !hidden.includes(id),

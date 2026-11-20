@@ -5,11 +5,13 @@ import { ParticipationRequestsService } from '@/modules/participation-request/se
 import { AdminUserBlock } from '@/modules/user-block/domain/user-block';
 import { UserBlockRepository } from '@/modules/user-block/repositories/user-block.repository';
 import { AdminIdentity } from '@/shared/admin-auth/domain/administrator';
+import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { UserBlocksService } from './user-blocks.service';
 
-// #239, ADR-0022: an administrator blocks two people from each other.
+// #239, ADR-0022: an administrator blocks two people from each other. #65,
+// ADR-0028: a user blocks another user.
 
 const admin = {
   id: 'admin1',
@@ -19,8 +21,12 @@ const admin = {
 const NOW = new Date('2030-01-01T12:00:00Z');
 const REASON = 'Opakované obtěžování po akci.';
 
+const user = new Identity('u1', 'jana@example.com', 'Jana', true);
+
 const aBlock: AdminUserBlock = {
+  source: 'ADMINISTRATOR',
   otherUser: { id: 'u2', name: 'Petr' },
+  isBlocker: false,
   reason: REASON,
   createdAt: NOW,
   createdBy: { id: 'admin1', name: 'Správce' },
@@ -43,11 +49,13 @@ describe('UserBlocksService', () => {
     );
     repository.createAdminBlock.mockResolvedValue(true);
     repository.deleteAdminBlock.mockResolvedValue(true);
-    repository.listAdminBlocksOf.mockResolvedValue([aBlock]);
+    repository.listBlocksOf.mockResolvedValue([aBlock]);
     const participationRequests = mock<ParticipationRequestsService>();
     const membershipRequests = mock<MembershipRequestsService>();
     const groups = mock<GroupsService>();
     const friendships = mock<FriendshipService>();
+    repository.createUserBlock.mockResolvedValue(true);
+    repository.deleteUserBlock.mockResolvedValue(true);
     return {
       repository,
       participationRequests,
@@ -193,5 +201,111 @@ describe('UserBlocksService', () => {
     await expect(service.listBlocksOf('nobody')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+  // #65, ADR-0028: the blocker is the signed-in user.
+  describe('blockAsUser', () => {
+    it('writes the block of the signed-in user, then undoes the ties', async () => {
+      const {
+        repository,
+        participationRequests,
+        membershipRequests,
+        groups,
+        friendships,
+        service,
+      } = setup();
+
+      await service.blockAsUser(user, 'u2', NOW);
+
+      expect(repository.createUserBlock).toHaveBeenCalledWith('u1', 'u2');
+      expect(participationRequests.detachBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
+      expect(membershipRequests.closeBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
+      expect(groups.removeBlockedPair).toHaveBeenCalledWith('u1', 'u2');
+      expect(friendships.removeBlockedPair).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        NOW,
+      );
+      expect(
+        repository.createUserBlock.mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        participationRequests.detachBlockedPair.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('refuses to block oneself', async () => {
+      const { repository, service } = setup();
+
+      await expect(service.blockAsUser(user, 'u1', NOW)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.createUserBlock).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 for someone who does not exist', async () => {
+      const { repository, service } = setup(['u1']);
+
+      await expect(service.blockAsUser(user, 'u2', NOW)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(repository.createUserBlock).not.toHaveBeenCalled();
+    });
+
+    // Review of PR #267: each block stands on its own. Someone the other
+    // blocked first, or a pair an administrator blocked, may still block, so
+    // they stay protected once the other block ends. Nothing here asks who
+    // blocked whom: the answer would give the other block away.
+    it('blocks someone who blocked the user first', async () => {
+      const { repository, service } = setup();
+
+      await service.blockAsUser(user, 'u2', NOW);
+
+      expect(repository.createUserBlock).toHaveBeenCalledWith('u1', 'u2');
+    });
+
+    it('refuses someone blocked already, but finishes undoing the ties', async () => {
+      const { repository, groups, service } = setup();
+      repository.createUserBlock.mockResolvedValue(false);
+
+      await expect(service.blockAsUser(user, 'u2', NOW)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(groups.removeBlockedPair).toHaveBeenCalledWith('u1', 'u2');
+    });
+  });
+
+  describe('unblockAsUser', () => {
+    it("ends the signed-in user's own block", async () => {
+      const { repository, service } = setup();
+
+      await service.unblockAsUser(user, 'u2');
+
+      expect(repository.deleteUserBlock).toHaveBeenCalledWith('u1', 'u2');
+    });
+
+    it('refuses someone the user had not blocked', async () => {
+      const { repository, service } = setup();
+      repository.deleteUserBlock.mockResolvedValue(false);
+
+      await expect(service.unblockAsUser(user, 'u2')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+  });
+
+  it('lists the people the signed-in user blocked', async () => {
+    const { repository, service } = setup();
+    const blocked = [{ id: 'u2', name: 'Petr', image: null, blockedAt: NOW }];
+    repository.listBlockedBy.mockResolvedValue(blocked);
+
+    await expect(service.listMine(user)).resolves.toEqual(blocked);
+    expect(repository.listBlockedBy).toHaveBeenCalledWith('u1');
   });
 });
