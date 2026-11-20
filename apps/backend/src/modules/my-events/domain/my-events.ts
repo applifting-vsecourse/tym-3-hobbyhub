@@ -51,6 +51,9 @@ export const applicationStatusOf = (
 export type MyApplication = {
   status: ApplicationStatus;
   event: EventListItem;
+  // #234: the event is over and the person may still rate its organizer, so
+  // the overview points to the rating page. Only ever about the person asking.
+  canRateOrganizer: boolean;
 };
 
 export type MyApplicationPage = {

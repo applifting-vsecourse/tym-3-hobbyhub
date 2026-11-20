@@ -2,6 +2,7 @@ import { EventFilter, EventListItem } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import { EventApplicationFacts } from '@/modules/participation-request/domain/participation-request';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -29,12 +30,15 @@ const facts = (
 describe('MyEventsService', () => {
   let events: MockProxy<EventsService>;
   let requests: MockProxy<ParticipationRequestsService>;
+  let ratings: MockProxy<RatingsService>;
   let service: MyEventsService;
 
   beforeEach(() => {
     events = mock<EventsService>();
     requests = mock<ParticipationRequestsService>();
-    service = new MyEventsService(events, requests);
+    ratings = mock<RatingsService>();
+    ratings.getEventsToRateOrganizer.mockResolvedValue([]);
+    service = new MyEventsService(events, requests, ratings);
   });
 
   describe('getApplications', () => {
@@ -69,6 +73,39 @@ describe('MyEventsService', () => {
         user,
         page,
         filter,
+        now,
+      );
+    });
+
+    // #234: the rating rules say which events; the overview only marks them.
+    it('marks the events whose organizer the person may still rate', async () => {
+      requests.getMyApplicationFacts.mockResolvedValue({
+        items: [
+          facts('played', { seat: 'APPROVED', requests: ['APPROVED'] }),
+          facts('rated', { seat: 'APPROVED', requests: ['APPROVED'] }),
+        ],
+        total: 2,
+      });
+      events.getListItemsByIds.mockResolvedValue([
+        anItem('played'),
+        anItem('rated'),
+      ]);
+      ratings.getEventsToRateOrganizer.mockResolvedValue(['played']);
+
+      const result = await service.getApplications(user, page, filter, now);
+
+      expect(
+        result.items.map(({ event, canRateOrganizer }) => [
+          event.id,
+          canRateOrganizer,
+        ]),
+      ).toEqual([
+        ['played', true],
+        ['rated', false],
+      ]);
+      expect(ratings.getEventsToRateOrganizer).toHaveBeenCalledWith(
+        user,
+        ['played', 'rated'],
         now,
       );
     });

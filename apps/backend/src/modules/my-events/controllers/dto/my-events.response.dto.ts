@@ -15,10 +15,17 @@ export class MyApplicationResponseDto {
   @ApiProperty({ type: EventListItemResponseDto })
   event!: EventListItemResponseDto;
 
+  @ApiProperty({
+    description:
+      'The event is over and the signed-in person may still rate its organizer (#234): they had a seat, the rating period is on and they have not rated yet',
+  })
+  canRateOrganizer!: boolean;
+
   static fromDomain(application: MyApplication): MyApplicationResponseDto {
     return {
       status: application.status,
       event: EventListItemResponseDto.fromDomain(application.event),
+      canRateOrganizer: application.canRateOrganizer,
     };
   }
 }
