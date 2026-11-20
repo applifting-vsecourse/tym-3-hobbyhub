@@ -11,7 +11,9 @@ import type {
   RatingInput,
   RatingTarget,
 } from "@/features/rating/api/ratingSchemas"
+import { RateParticipantsForm } from "@/features/rating/components/RateParticipantsForm"
 import { RatingForm } from "@/features/rating/components/RatingForm"
+import { isOpenTarget, progressOf } from "@/features/rating/lib/participantDrafts"
 
 type EventRatingsViewProps = {
   state: EventRatingState
@@ -20,6 +22,10 @@ type EventRatingsViewProps = {
   isRatingOrganizer?: boolean
   /** Why the last try was not saved, in the person's language. */
   organizerRatingError?: string | null
+  /** The main organizer rates one participant (#235). Throws when it is not saved. */
+  onRateParticipant?: (participantId: string, input: RatingInput) => Promise<void>
+  /** After the organizer sent ratings: the page reads again what is saved. */
+  onParticipantsRated?: () => Promise<unknown>
 }
 
 type Phase = "open" | "notYet" | "closed" | "unavailable"
@@ -44,14 +50,15 @@ const phaseOf = (state: EventRatingState): Phase => {
 /**
  * #236: the ratings of one event, as the signed-in person sees them: until
  * when, and whom they may rate, with what they gave. A participant rates the
- * organizer right here (#234); the form for the participants comes with #235,
- * and until then the page says so.
+ * organizer right here (#234), the main organizer the participants (#235).
  */
 export function EventRatingsView({
   state,
   onRateOrganizer,
   isRatingOrganizer = false,
   organizerRatingError = null,
+  onRateParticipant = () => Promise.resolve(),
+  onParticipantsRated = () => Promise.resolve(),
 }: EventRatingsViewProps) {
   const { t, i18n } = useTranslation()
   const deadline = new Intl.DateTimeFormat(i18n.resolvedLanguage, {
@@ -87,14 +94,13 @@ export function EventRatingsView({
       ) : null}
 
       {state.participants.length > 0 ? (
-        <TargetSection
-          title={t("rating.page.participants")}
-          targets={state.participants}
+        <ParticipantsSection
+          participants={state.participants}
+          isOpen={phase === "open"}
+          deadline={deadline}
+          onRate={onRateParticipant}
+          onSent={onParticipantsRated}
         />
-      ) : null}
-
-      {state.participants.length > 0 && phase === "open" ? (
-        <p className="typo-small text-muted-foreground">{t("rating.page.formsSoon")}</p>
       ) : null}
     </div>
   )
@@ -164,18 +170,70 @@ function OrganizerSection({
   )
 }
 
-function TargetSection({ title, targets }: { title: string; targets: RatingTarget[] }) {
+/**
+ * #235: the main organizer and the participants. While the period is on and
+ * someone is left, the list to rate them, with how far along they are kept in
+ * sight; otherwise what they gave.
+ */
+function ParticipantsSection({
+  participants,
+  isOpen,
+  deadline,
+  onRate,
+  onSent,
+}: {
+  participants: RatingTarget[]
+  /** The rating period is on. */
+  isOpen: boolean
+  deadline: string
+  onRate: (participantId: string, input: RatingInput) => Promise<void>
+  onSent: () => Promise<unknown>
+}) {
+  const { t } = useTranslation()
+  const { rated, total } = progressOf(participants)
+  const isLeft = participants.some(isOpenTarget)
+
   return (
     <section className="flex flex-col gap-3 border-t border-border pt-6">
-      <h2 className="typo-h3 text-foreground">{title}</h2>
-      <ul className="flex flex-col divide-y divide-border">
-        {targets.map((target) => (
-          <TargetRow
-            key={target.user.id}
-            target={target}
-          />
-        ))}
-      </ul>
+      <h2 className="typo-h3 text-foreground">{t("rating.page.participants")}</h2>
+      {isOpen && isLeft ? (
+        // Under the sticky header (h-14, md:h-16), so it stays in sight.
+        <p
+          role="status"
+          className="sticky top-14 z-20 bg-background py-2 typo-label text-foreground md:top-16"
+        >
+          {t("rating.participants.progress", { rated, total })}
+          <span className="text-muted-foreground">
+            {" · "}
+            {t("rating.participants.until", { deadline })}
+          </span>
+        </p>
+      ) : null}
+      {isOpen && isLeft ? (
+        <RateParticipantsForm
+          participants={participants}
+          deadline={deadline}
+          onRate={onRate}
+          onSent={onSent}
+        />
+      ) : (
+        <ul className="flex flex-col divide-y divide-border">
+          {participants.map((target) => (
+            <TargetRow
+              key={target.user.id}
+              target={target}
+            />
+          ))}
+        </ul>
+      )}
+      {isOpen && !isLeft ? (
+        <p
+          role="status"
+          className="typo-body text-foreground"
+        >
+          {t("rating.participants.done", { deadline })}
+        </p>
+      ) : null}
     </section>
   )
 }
