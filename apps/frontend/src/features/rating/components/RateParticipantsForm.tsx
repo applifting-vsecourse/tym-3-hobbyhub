@@ -15,6 +15,7 @@ import { StarRatingInput } from "@/components/hobbyhub/StarRatingInput"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { DESKTOP_QUERY } from "@/hooks/useMediaQuery"
 import { RATING_STARS_MAX } from "@/lib/ratingScore"
 import { cn } from "@/lib/utils"
 
@@ -42,6 +43,18 @@ import { ratingErrorMessage } from "@/features/rating/lib/ratingRefusal"
 import { sendEach } from "@/features/rating/lib/sendRatings"
 
 type FormValues = { drafts: ParticipantDrafts }
+
+/**
+ * Phones only: once the on-screen keyboard is up, scrolls the comment so that
+ * its `scroll-margin` keeps it clear of the bars fixed to the bottom. iOS
+ * scrolls a focused field only just above the keyboard, where those bars sit.
+ */
+function keepAboveBottomBar(element: HTMLElement) {
+  if (window.matchMedia(DESKTOP_QUERY).matches) return
+  const scroll = () => element.scrollIntoView({ block: "nearest" })
+  window.visualViewport?.addEventListener("resize", scroll, { once: true })
+  window.setTimeout(scroll, 400)
+}
 
 // Built per render so validation messages follow the current language.
 const createSchema = (t: TFunction) =>
@@ -197,7 +210,7 @@ export function RateParticipantsForm({
       form={form}
       onSubmit={submit}
       // On a phone the bar is fixed over the end of the page: keep room for it.
-      className="group/ratings flex flex-col gap-4 max-md:pb-20"
+      className="flex flex-col gap-4 max-md:pb-20"
     >
       {prefilledIds.length > 0 || canPrefill ? (
         <Button
@@ -231,10 +244,9 @@ export function RateParticipantsForm({
 
       {/* On phones fixed above the BottomNav (and under its raised "Přidat
         akci"), on larger screens stuck to the bottom of the window while the
-        list is longer than it. While a comment is typed on a phone it steps
-        aside: iOS lifts fixed bars over the on-screen keyboard, where it
-        would cover the very field being typed in. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-2 border-t border-border bg-background px-page pt-3 pb-above-bottom-nav max-md:group-has-[textarea:focus]/ratings:hidden md:sticky md:inset-x-auto md:px-0 md:py-4">
+        list is longer than it. It stays while a comment is typed: the
+        comment scrolls above it instead (`keepAboveBottomBar`). */}
+      <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-2 border-t border-border bg-background px-page pt-3 pb-above-bottom-nav md:sticky md:inset-x-auto md:px-0 md:py-4">
         {isNothingChosen ? (
           <p
             role="alert"
@@ -413,12 +425,20 @@ function ParticipantRow({
       ) : null}
 
       {isCommentShown ? (
-        <RatingCommentField<FormValues>
-          name={`${name}.comment`}
-          rows={3}
-          placeholder={isLow ? t("rating.participants.whyPlaceholder") : undefined}
-          isDisabled={isDisabled}
-        />
+        // On a phone the bar to send stays fixed at the bottom, over the
+        // on-screen keyboard on iOS: the field, with its counter, is scrolled
+        // to sit above the bar and the BottomNav.
+        <div
+          className="scroll-mb-[calc(var(--bottom-nav-height,0px)+6rem)]"
+          onFocus={(event) => keepAboveBottomBar(event.currentTarget)}
+        >
+          <RatingCommentField<FormValues>
+            name={`${name}.comment`}
+            rows={3}
+            placeholder={isLow ? t("rating.participants.whyPlaceholder") : undefined}
+            isDisabled={isDisabled}
+          />
+        </div>
       ) : null}
 
       {error ? (
