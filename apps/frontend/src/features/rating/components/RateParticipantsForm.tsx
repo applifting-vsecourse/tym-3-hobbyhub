@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { RATING_STARS_MAX } from "@/lib/ratingScore"
+import { cn } from "@/lib/utils"
 
 import {
   RATING_COMMENT_MAX_LENGTH,
@@ -30,11 +31,11 @@ import {
   emptyDrafts,
   isOpenTarget,
   LOW_STARS,
-  type ParticipantDrafts,
   prefill,
   readyRatings,
-  type ReadyRating,
   reviewOf,
+  type ParticipantDrafts,
+  type ReadyRating,
 } from "@/features/rating/lib/participantDrafts"
 import { charCount } from "@/features/rating/lib/ratingComment"
 import { ratingErrorMessage } from "@/features/rating/lib/ratingRefusal"
@@ -327,13 +328,21 @@ function ParticipantRow({
           name={user.name}
           size="md"
         />
-        <Link
-          to="/profile/$userId"
-          params={{ userId: user.id }}
-          className="truncate typo-label-lg text-foreground underline-offset-4 hover:underline"
-        >
-          {user.name}
-        </Link>
+        {/* What may come and go sits under the name, so the stars never move. */}
+        <div className="flex min-w-0 flex-col">
+          <Link
+            to="/profile/$userId"
+            params={{ userId: user.id }}
+            className="truncate typo-label-lg text-foreground underline-offset-4 hover:underline"
+          >
+            {user.name}
+          </Link>
+          {isPrefilled ? (
+            <span className="typo-caption text-muted-foreground">
+              {t("rating.participants.prefilled")}
+            </span>
+          ) : null}
+        </div>
 
         <div className="col-start-2 flex flex-wrap items-center gap-x-2 gap-y-1 md:col-start-3 md:row-start-1">
           {rating ? (
@@ -371,25 +380,21 @@ function ParticipantRow({
                   </FormItem>
                 )}
               />
-              {isPrefilled ? (
-                <span className="typo-caption text-muted-foreground">
-                  {t("rating.participants.prefilled")}
-                </span>
-              ) : null}
-              {isCommentShown ? null : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="max-md:h-11"
-                  disabled={isDisabled}
-                  onClick={() => setIsCommentOpen(true)}
-                >
-                  <Plus aria-hidden="true" />
-                  {t("rating.participants.addComment")}{" "}
-                  <span className="sr-only">{user.name}</span>
-                </Button>
-              )}
+              {/* Once the comment is open the button keeps its room, hidden,
+                so the stars stay in line with the other rows. */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn("max-md:h-11", isCommentShown && "invisible")}
+                aria-hidden={isCommentShown || undefined}
+                tabIndex={isCommentShown ? -1 : undefined}
+                disabled={isDisabled}
+                onClick={() => setIsCommentOpen(true)}
+              >
+                <Plus aria-hidden="true" />
+                {t("rating.participants.addComment")} <span className="sr-only">{user.name}</span>
+              </Button>
             </>
           ) : (
             <span className="typo-small text-muted-foreground">{t("rating.page.notRated")}</span>

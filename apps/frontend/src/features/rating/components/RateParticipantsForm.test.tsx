@@ -303,7 +303,8 @@ describe("RateParticipantsForm (#235)", () => {
   it("says it is done once everyone is rated, and when they will see it", async () => {
     const { user } = await renderList([aParticipant("u1", "Petra")])
 
-    await pick(user, "Petra", "5 hvězdiček z 5")
+    await pick(user, "Petra", "2 hvězdičky z 5")
+    await user.type(screen.getByLabelText("Komentář (nepovinný)"), "Přišla pozdě")
     await user.click(reviewButton())
     await user.click(await screen.findByRole("button", { name: "Odeslat 1 hodnocení" }))
 
@@ -312,6 +313,8 @@ describe("RateParticipantsForm (#235)", () => {
     ).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Zkontrolovat a odeslat/ })).toBeNull()
     expect(screen.queryByText(/Ohodnoceno/)).toBeNull()
+    // What was written stays in sight.
+    expect(screen.getByText("Přišla pozdě")).toBeInTheDocument()
   })
 
   it("shows only what was given once the period is over", async () => {

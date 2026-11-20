@@ -65,8 +65,11 @@ export function RateParticipantsPrompt({ state }: RateParticipantsPromptProps) {
           total: participants.length,
         })}
       </p>
+      {/* Outline: the roster card beside it holds the organizer's one primary
+        action ("Žádosti a přehled účastníků"). */}
       <Button
         asChild
+        variant="outline"
         className="w-full sm:w-auto"
       >
         <Link

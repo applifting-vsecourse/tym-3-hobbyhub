@@ -222,6 +222,7 @@ function ParticipantsSection({
             <TargetRow
               key={target.user.id}
               target={target}
+              isCommentShown
             />
           ))}
         </ul>
@@ -238,33 +239,47 @@ function ParticipantsSection({
   )
 }
 
-function TargetRow({ target }: { target: RatingTarget }) {
+function TargetRow({
+  target,
+  isCommentShown = false,
+}: {
+  target: RatingTarget
+  /** Show what the person wrote too (the participants; the organizer's has its own place). */
+  isCommentShown?: boolean
+}) {
   const { t } = useTranslation()
   const { user, rating } = target
 
   return (
-    <li className="flex items-center gap-3 py-3">
-      <PersonAvatar
-        name={user.name}
-        size="md"
-      />
-      <Link
-        to="/profile/$userId"
-        params={{ userId: user.id }}
-        className="min-w-0 flex-1 truncate typo-label-lg text-foreground underline-offset-4 hover:underline"
-      >
-        {user.name}
-      </Link>
-      {rating ? (
-        <span className="flex items-center gap-2">
-          <RatingStars stars={rating.stars} />
-          <span className="sr-only">
-            {t("rating.starsOf", { count: rating.stars, max: RATING_STARS_MAX })}
+    <li className="flex flex-col gap-2 py-3">
+      <div className="flex items-center gap-3">
+        <PersonAvatar
+          name={user.name}
+          size="md"
+        />
+        <Link
+          to="/profile/$userId"
+          params={{ userId: user.id }}
+          className="min-w-0 flex-1 truncate typo-label-lg text-foreground underline-offset-4 hover:underline"
+        >
+          {user.name}
+        </Link>
+        {rating ? (
+          <span className="flex items-center gap-2">
+            <RatingStars stars={rating.stars} />
+            <span className="sr-only">
+              {t("rating.starsOf", { count: rating.stars, max: RATING_STARS_MAX })}
+            </span>
           </span>
-        </span>
-      ) : (
-        <span className="typo-small text-muted-foreground">{t("rating.page.notRated")}</span>
-      )}
+        ) : (
+          <span className="typo-small text-muted-foreground">{t("rating.page.notRated")}</span>
+        )}
+      </div>
+      {isCommentShown && rating?.comment ? (
+        <p className="max-w-prose typo-body break-words whitespace-pre-line text-muted-foreground">
+          {rating.comment}
+        </p>
+      ) : null}
     </li>
   )
 }
