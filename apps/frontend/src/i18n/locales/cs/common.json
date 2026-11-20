@@ -2247,6 +2247,8 @@
       "leftForLater_one": "{{count}} účastník zůstane neohodnocený. Vrátit se k němu můžeš do {{deadline}}.",
       "leftForLater_other": "{{count}} účastníků zůstane neohodnocených. Vrátit se k nim můžeš do {{deadline}}.",
       "nothingChosen": "Vyber hvězdičky aspoň u jednoho účastníka.",
+      "prefill": "Předvyplnit zbývajícím 5★",
+      "prefilled": "Předvyplněno",
       "progress": "Ohodnoceno {{rated}} z {{total}}",
       "review": "Zkontrolovat a odeslat ({{count}})",
       "reviewFinal": "Odeslaná hodnocení už nepůjde změnit ani smazat. Účastníci je uvidí po {{deadline}}.",
@@ -2255,6 +2257,7 @@
       "send_one": "Odeslat {{count}} hodnocení",
       "send_other": "Odeslat {{count}} hodnocení",
       "starsLabel": "Hodnocení účastníka {{name}}",
+      "undoPrefill": "Zrušit předvyplnění",
       "until": "hodnotit můžeš do {{deadline}}",
       "whyPlaceholder": "Napiš proč, pomůže to dalším organizátorům…"
     },

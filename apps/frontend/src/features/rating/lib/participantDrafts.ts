@@ -22,6 +22,9 @@ export const EMPTY_DRAFT: ParticipantDraft = { stars: null, comment: "" }
 /** Stars at or below this ask for a reason, still optionally. */
 export const LOW_STARS = 2
 
+/** The stars the organizer fills in for everyone left at once. */
+export const PREFILL_STARS = 5
+
 /** May the organizer rate this participant now: not rated yet, nothing against it. */
 export const isOpenTarget = (target: RatingTarget) =>
   target.rating === null && target.violations.length === 0
@@ -52,6 +55,37 @@ export function progressOf(targets: RatingTarget[]) {
     rated: targets.filter((target) => target.rating !== null).length,
     total: targets.length,
   }
+}
+
+/**
+ * Fills the most stars into every draft of a participant who may be rated and
+ * has no stars yet. Stars the organizer chose stay; nothing is sent.
+ * Returns whose drafts were filled, so they can be emptied again.
+ */
+export function prefill(
+  targets: RatingTarget[],
+  drafts: ParticipantDrafts,
+): { drafts: ParticipantDrafts; prefilledIds: string[] } {
+  const prefilledIds = targets
+    .filter((target) => isOpenTarget(target) && draftOf(drafts, target.user.id).stars === null)
+    .map((target) => target.user.id)
+  const next = { ...drafts }
+  for (const userId of prefilledIds) {
+    next[draftKey(userId)] = { ...draftOf(drafts, userId), stars: PREFILL_STARS }
+  }
+  return { drafts: next, prefilledIds }
+}
+
+/** Empties the stars that `prefill` put in; everything else stays. */
+export function clearPrefill(
+  drafts: ParticipantDrafts,
+  prefilledIds: readonly string[],
+): ParticipantDrafts {
+  const next = { ...drafts }
+  for (const userId of prefilledIds) {
+    next[draftKey(userId)] = { ...draftOf(drafts, userId), stars: null }
+  }
+  return next
 }
 
 /**

@@ -2209,6 +2209,8 @@
       "leftForLater_one": "{{count}} participant stays unrated. You can come back to them until {{deadline}}.",
       "leftForLater_other": "{{count}} participants stay unrated. You can come back to them until {{deadline}}.",
       "nothingChosen": "Choose the stars for at least one participant.",
+      "prefill": "Prefill the rest with 5★",
+      "prefilled": "Prefilled",
       "progress": "{{rated}} of {{total}} rated",
       "review": "Review and send ({{count}})",
       "reviewFinal": "Once sent, ratings cannot be changed or deleted. Participants will see them after {{deadline}}.",
@@ -2216,6 +2218,7 @@
       "send_one": "Send {{count}} rating",
       "send_other": "Send {{count}} ratings",
       "starsLabel": "Rating of participant {{name}}",
+      "undoPrefill": "Undo prefill",
       "until": "you can rate until {{deadline}}",
       "whyPlaceholder": "Say why, it helps other organizers…"
     },

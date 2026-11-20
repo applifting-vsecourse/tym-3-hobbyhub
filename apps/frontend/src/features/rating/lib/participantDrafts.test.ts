@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import type { RatingTarget } from "@/features/rating/api/ratingSchemas"
 import {
+  clearPrefill,
   draftKey,
   emptyDrafts,
+  prefill,
   progressOf,
   readyRatings,
   reviewOf,
@@ -64,6 +66,27 @@ describe("participant drafts (#235)", () => {
       rated: 1,
       total: 3,
     })
+  })
+
+  it("prefills five stars only where nothing is chosen, and takes back only that", () => {
+    const targets = [aTarget("a"), aTarget("b"), aTarget("c", rated), aTarget("d")]
+    const drafts = {
+      u_a: { stars: 2, comment: "" },
+      u_b: { stars: null, comment: "Fajn" },
+      u_c: { stars: null, comment: "" },
+      u_d: { stars: null, comment: "" },
+    }
+
+    const filled = prefill(targets, drafts)
+
+    expect(filled.prefilledIds).toEqual(["b", "d"])
+    expect(filled.drafts).toEqual({
+      u_a: { stars: 2, comment: "" },
+      u_b: { stars: 5, comment: "Fajn" },
+      u_c: { stars: null, comment: "" },
+      u_d: { stars: 5, comment: "" },
+    })
+    expect(clearPrefill(filled.drafts, filled.prefilledIds)).toEqual(drafts)
   })
 
   describe("review", () => {

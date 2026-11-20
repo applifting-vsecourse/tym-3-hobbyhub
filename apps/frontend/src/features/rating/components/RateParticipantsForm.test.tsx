@@ -259,6 +259,38 @@ describe("RateParticipantsForm (#235)", () => {
     expect(screen.getAllByRole("alert")).toHaveLength(1)
   })
 
+  it("prefills five stars for the rest without touching what was chosen, and undoes only that", async () => {
+    const { user, onRate } = await renderList(three())
+
+    await pick(user, "Ondra", "3 hvězdičky z 5")
+    await user.click(screen.getByRole("button", { name: "Předvyplnit zbývajícím 5★" }))
+
+    expect(within(starsOf("Petra")).getByRole("radio", { name: "5 hvězdiček z 5" })).toBeChecked()
+    expect(within(starsOf("Jana")).getByRole("radio", { name: "5 hvězdiček z 5" })).toBeChecked()
+    expect(within(starsOf("Ondra")).getByRole("radio", { name: "3 hvězdičky z 5" })).toBeChecked()
+    expect(screen.getAllByText("Předvyplněno")).toHaveLength(2)
+    expect(reviewButton()).toHaveTextContent("(3)")
+    expect(onRate).not.toHaveBeenCalled()
+
+    // A prefilled row changed by hand is the organizer's own.
+    await pick(user, "Jana", "4 hvězdičky z 5")
+    await user.click(screen.getByRole("button", { name: "Zrušit předvyplnění" }))
+
+    expect(within(starsOf("Petra")).getByRole("radio", { name: "5 hvězdiček z 5" })).not.toBeChecked()
+    expect(within(starsOf("Jana")).getByRole("radio", { name: "4 hvězdičky z 5" })).toBeChecked()
+    expect(within(starsOf("Ondra")).getByRole("radio", { name: "3 hvězdičky z 5" })).toBeChecked()
+    expect(screen.queryByText("Předvyplněno")).toBeNull()
+    expect(screen.getByRole("button", { name: "Předvyplnit zbývajícím 5★" })).toBeInTheDocument()
+  })
+
+  it("offers no prefill when everyone left has stars", async () => {
+    const { user } = await renderList([aParticipant("u1", "Petra")])
+
+    await pick(user, "Petra", "4 hvězdičky z 5")
+
+    expect(screen.queryByRole("button", { name: "Předvyplnit zbývajícím 5★" })).toBeNull()
+  })
+
   it("asks before leaving with drafts that were not sent", async () => {
     const { user, navigateAway } = await renderList(three())
 

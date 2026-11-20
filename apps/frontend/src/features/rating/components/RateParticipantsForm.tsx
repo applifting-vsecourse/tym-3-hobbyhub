@@ -24,12 +24,14 @@ import {
 } from "@/features/rating/api/ratingSchemas"
 import { RatingCommentField } from "@/features/rating/components/RatingCommentField"
 import {
+  clearPrefill,
   draftKey,
   EMPTY_DRAFT,
   emptyDrafts,
   isOpenTarget,
   LOW_STARS,
   type ParticipantDrafts,
+  prefill,
   readyRatings,
   type ReadyRating,
   reviewOf,
@@ -75,6 +77,8 @@ type RateParticipantsFormProps = {
  * #235: the main organizer rates the participants from one list. Tapping the
  * stars only drafts; the drafts go out together after a review that says,
  * once, that a sent rating is final. Any part may go now and the rest later.
+ * Five stars can be filled in for everyone left, and taken back, so a large
+ * event takes a few taps and the exceptions by hand.
  * Each rating is sent on its own, so one refusal stops nothing else, and the
  * row says why. The drafts stay on this page only: the participant learns
  * nothing until the rating period ends.
@@ -102,6 +106,28 @@ export function RateParticipantsForm({
   /** Why a row's last try was not saved, by participant. */
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({})
   const [retryingId, setRetryingId] = useState<string | null>(null)
+  /** Whose stars the prefill put in, until the organizer changes them. */
+  const [prefilledIds, setPrefilledIds] = useState<string[]>([])
+  const canPrefill = participants.some(
+    (target) => isOpenTarget(target) && drafts[draftKey(target.user.id)]?.stars == null,
+  )
+
+  const togglePrefill = () => {
+    const current = form.getValues("drafts")
+    if (prefilledIds.length > 0) {
+      form.setValue("drafts", clearPrefill(current, prefilledIds), { shouldDirty: true })
+      setPrefilledIds([])
+      return
+    }
+    const filled = prefill(participants, current)
+    form.setValue("drafts", filled.drafts, { shouldDirty: true })
+    setPrefilledIds(filled.prefilledIds)
+  }
+
+  // A prefilled row the organizer touches is theirs: undoing the prefill
+  // leaves it alone.
+  const keepByHand = (userId: string) =>
+    setPrefilledIds((ids) => (ids.includes(userId) ? ids.filter((id) => id !== userId) : ids))
 
   // Everything went out: start clean, so a draft begun now is guarded again
   // (a successful submit otherwise keeps the guard down).
@@ -135,6 +161,7 @@ export function RateParticipantsForm({
     }
     form.reset({ drafts: next }, { keepDefaultValues: true })
     setRowErrors(errors)
+    setPrefilledIds((ids) => ids.filter((id) => id in errors))
     setIsReviewOpen(false)
     await onSent()
     // A failed rating is still a draft: the submit did not succeed, so
@@ -152,6 +179,7 @@ export function RateParticipantsForm({
       await send(rating)
       form.resetField(name)
       setRowErrors(({ [target.user.id]: _sent, ...rest }) => rest)
+      keepByHand(target.user.id)
     } catch (error) {
       setRowErrors((errors) => ({ ...errors, [target.user.id]: ratingErrorMessage(t, error) }))
     } finally {
@@ -170,11 +198,28 @@ export function RateParticipantsForm({
       // On a phone the bar is fixed over the end of the page: keep room for it.
       className="flex flex-col gap-4 max-md:pb-20"
     >
+      {prefilledIds.length > 0 || canPrefill ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="self-start max-md:h-11"
+          disabled={isBusy}
+          onClick={togglePrefill}
+        >
+          {prefilledIds.length > 0
+            ? t("rating.participants.undoPrefill")
+            : t("rating.participants.prefill")}
+        </Button>
+      ) : null}
+
       <ul className="flex flex-col divide-y divide-border">
         {participants.map((target) => (
           <ParticipantRow
             key={target.user.id}
             target={target}
+            isPrefilled={prefilledIds.includes(target.user.id)}
+            onStarsChosen={() => keepByHand(target.user.id)}
             error={isOpenTarget(target) ? (rowErrors[target.user.id] ?? null) : null}
             isDisabled={isBusy}
             isRetrying={retryingId === target.user.id}
@@ -248,12 +293,18 @@ export function RateParticipantsForm({
 
 function ParticipantRow({
   target,
+  isPrefilled,
+  onStarsChosen,
   error,
   isDisabled,
   isRetrying,
   onRetry,
 }: {
   target: RatingTarget
+  /** The stars came from the prefill, not from the organizer. */
+  isPrefilled: boolean
+  /** The organizer chose the stars of this row. */
+  onStarsChosen: () => void
   error: string | null
   isDisabled: boolean
   isRetrying: boolean
@@ -306,7 +357,10 @@ function ParticipantRow({
                   <FormItem className="gap-1">
                     <StarRatingInput
                       value={field.value as number | null}
-                      onValueChange={field.onChange}
+                      onValueChange={(stars) => {
+                        field.onChange(stars)
+                        onStarsChosen()
+                      }}
                       aria-labelledby={labelId}
                       aria-invalid={fieldState.invalid}
                       isDisabled={isDisabled}
@@ -317,6 +371,11 @@ function ParticipantRow({
                   </FormItem>
                 )}
               />
+              {isPrefilled ? (
+                <span className="typo-caption text-muted-foreground">
+                  {t("rating.participants.prefilled")}
+                </span>
+              ) : null}
               {isCommentShown ? null : (
                 <Button
                   type="button"
