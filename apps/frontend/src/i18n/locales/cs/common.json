@@ -378,6 +378,9 @@
     "errors": {
       "adulthoodNotConfirmed": "Bez potvrzení plnoletosti se nelze zaregistrovat.",
       "emailNotVerified": "E-mail zatím není ověřený.",
+      "googleEmailExists": "Účet s tímto e-mailem už existuje. Přihlaste se heslem.",
+      "googleFailed": "Přihlášení přes Google se nezdařilo.",
+      "googleNoAccount": "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
       "invalidBirthYear": "Neplatný rok narození.",
       "invalidCredentials": "Nesprávný e-mail nebo heslo.",
       "invalidEmail": "Neplatný e-mail.",
@@ -411,6 +414,10 @@
     "gender": {
       "female": "Žena",
       "male": "Muž"
+    },
+    "google": {
+      "button": "Pokračovat přes Google",
+      "divider": "nebo"
     },
     "password": {
       "hide": "Skrýt",

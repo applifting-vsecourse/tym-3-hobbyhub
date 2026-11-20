@@ -41,7 +41,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 
-RUN pnpm install --frozen-lockfile --prod --no-optional --filter backend
+RUN pnpm install --frozen-lockfile --prod --filter backend
 
 
 # --- Runtime stage: production deps + compiled output, nothing else ---
@@ -81,6 +81,13 @@ ARG SMTP_USERNAME=""
 ENV SMTP_USERNAME=$SMTP_USERNAME
 ARG SMTP_PASSWORD=""
 ENV SMTP_PASSWORD=$SMTP_PASSWORD
+
+# Sign-in with Google, the same way. Empty = Google sign-in is off. The secret
+# is readable by anyone who can pull this image.
+ARG GOOGLE_CLIENT_ID=""
+ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+ARG GOOGLE_CLIENT_SECRET=""
+ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
 
 USER node
 WORKDIR /app/apps/backend
