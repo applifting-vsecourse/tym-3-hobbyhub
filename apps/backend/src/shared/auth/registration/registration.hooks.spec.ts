@@ -174,11 +174,11 @@ describe('registrationBeforeHook (sign-in with Google)', () => {
     });
     expect(addOAuthServerContext).toHaveBeenCalledWith({
       registration: {
-          username: 'Jana.N',
-          gender: 'FEMALE',
-          birthYear: 1990,
-          preferredLanguage: 'EN',
-        },
+        username: 'Jana.N',
+        gender: 'FEMALE',
+        birthYear: 1990,
+        preferredLanguage: 'EN',
+      },
     });
   });
 });

@@ -178,7 +178,8 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
               message: 'Sign up through the registration form first',
             });
           }
-          const { username, gender, birthYear, preferredLanguage } = registration;
+          const { username, gender, birthYear, preferredLanguage } =
+            registration;
           // The nickname was free when the user left for Google; someone may
           // have taken it since. BetterAuth turns an API error with a code
           // into `?error=<code>` on the return address.

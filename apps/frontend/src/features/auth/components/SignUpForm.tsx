@@ -30,8 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useNicknameAvailability } from "@/hooks/useNicknameAvailability"
-import { languageOf, toAccountLanguage } from "@/i18n/resources"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { languageOf, toAccountLanguage } from "@/i18n/resources"
 import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
 import {
   NICKNAME_LIMITS,

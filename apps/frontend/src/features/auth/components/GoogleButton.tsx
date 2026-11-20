@@ -3,9 +3,9 @@ import { Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
-import type { AccountLanguage } from "@/i18n/resources"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import type { AccountLanguage } from "@/i18n/resources"
 
 import { authClient } from "@/features/auth/lib/auth-client"
 import { AuthError, authErrorMessage } from "@/features/auth/lib/authErrors"
