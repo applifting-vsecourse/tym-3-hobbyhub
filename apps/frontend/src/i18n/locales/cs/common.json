@@ -1637,6 +1637,7 @@
     "applications": {
       "empty": "Zatím nemáte žádnou přihlášku na akci."
     },
+    "awaitingRating": "K hodnocení",
     "empty": {
       "description": "Až se přihlásíte na akci nebo nějakou vypíšete, najdete ji tady.",
       "find": "Najít akci",
@@ -1649,7 +1650,6 @@
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
-    "rateLabel": "Ohodnotit organizátora akce {{title}}",
     "sortNote": "Nejdřív akce, které vás teprve čekají, od nejbližší. Pak proběhlé, zamítnuté a zrušené, od nejnovější.",
     "status": {
       "APPROVED": "Schváleno",

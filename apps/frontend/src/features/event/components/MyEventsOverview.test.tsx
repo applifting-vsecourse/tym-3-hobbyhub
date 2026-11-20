@@ -278,31 +278,6 @@ describe("MyEventsOverview", () => {
     expect(onRetry).toHaveBeenCalledOnce()
   })
 
-  // #234: one tap from the overview to the rating; the server says when.
-  it("points to the rating of an event whose organizer may still be rated", async () => {
-    await renderOverview(
-      list([
-        {
-          status: "APPROVED",
-          canRateOrganizer: true,
-          event: event({ id: "e1", title: "Florbal" }),
-        },
-        {
-          status: "APPROVED",
-          canRateOrganizer: false,
-          event: event({ id: "e2", title: "Deskovky" }),
-        },
-      ]),
-    )
-
-    const rate = screen.getByRole("link", { name: "Ohodnotit organizátora akce Florbal" })
-    expect(rate).toHaveAttribute("href", "/events/e1/ratings")
-    expect(rate).toHaveTextContent("Ohodnotit organizátora")
-    expect(
-      screen.queryByRole("link", { name: "Ohodnotit organizátora akce Deskovky" }),
-    ).not.toBeInTheDocument()
-  })
-
   // #171: the way out of an application, right from the overview.
   describe("the row's menu", () => {
     const started = event({
@@ -334,6 +309,40 @@ describe("MyEventsOverview", () => {
 
       // The row itself still leads to the detail.
       expect(screen.getByRole("link", { name: /Deskovky/ })).toHaveAttribute("href", "/events/e2")
+    })
+
+    // #234: the server says when the organizer may still be rated. The row
+    // says so with a badge and the menu leads to the rating.
+    it("offers the rating of the organizer once the event is over", async () => {
+      await renderOverview(
+        list([
+          {
+            status: "APPROVED",
+            canRateOrganizer: true,
+            event: { ...started, id: "e1", title: "Turnaj" },
+          },
+          {
+            status: "APPROVED",
+            canRateOrganizer: false,
+            event: { ...started, id: "e2", title: "Deskovky" },
+          },
+        ]),
+        list([]),
+        { onApplicationAction: vi.fn() },
+      )
+
+      expect(screen.getAllByText("K hodnocení")).toHaveLength(1)
+      expect(screen.getByRole("link", { name: /Turnaj/ })).toHaveTextContent("K hodnocení")
+      // Rated or past the period: no badge and nothing in the menu's place.
+      expect(
+        screen.queryByRole("button", { name: "Možnosti přihlášky: Deskovky" }),
+      ).not.toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole("button", { name: "Možnosti přihlášky: Turnaj" }))
+      const rate = await screen.findByRole("menuitem", { name: "Ohodnotit organizátora" })
+      expect(rate).toHaveAttribute("href", "/events/e1/ratings")
+      // Too late to leave the event: the rating is the only thing offered.
+      expect(screen.getAllByRole("menuitem")).toHaveLength(1)
     })
 
     it.each([

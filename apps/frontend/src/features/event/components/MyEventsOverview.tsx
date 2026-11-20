@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import type { ParseKeys } from "i18next"
-import { Ellipsis, Star } from "lucide-react"
+import { Ellipsis } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { ROUTES } from "@/app/routes"
@@ -113,11 +113,15 @@ type MyEventsOverviewProps = {
 }
 
 /**
- * The row's menu with its one action. The dialog opens only once the menu has
- * closed and handed focus back to its button: opened from `onSelect`, the
- * closing menu and the opening dialog fight over focus and the body's
- * `pointer-events`, which can leave the page unclickable. Non-modal, the menu
- * does not lock the page at all, so nothing is left to restore.
+ * The row's menu with the one thing the row offers: its way out before the
+ * event starts (#171), or the rating of the organizer once it is over (#234).
+ * Never both: the first ends where the second begins.
+ *
+ * The dialog of an action opens only once the menu has closed and handed focus
+ * back to its button: opened from `onSelect`, the closing menu and the opening
+ * dialog fight over focus and the body's `pointer-events`, which can leave the
+ * page unclickable. Non-modal, the menu does not lock the page at all, so
+ * nothing is left to restore. The rating is a page, so its item is a link.
  */
 function ApplicationActionMenu({
   application,
@@ -125,8 +129,8 @@ function ApplicationActionMenu({
   onAction,
 }: {
   application: MyApplication
-  action: ApplicationAction
-  onAction: (action: ApplicationAction, application: MyApplication) => void
+  action: ApplicationAction | null
+  onAction?: (action: ApplicationAction, application: MyApplication) => void
 }) {
   const { t } = useTranslation()
   const isChosenRef = useRef(false)
@@ -148,18 +152,30 @@ function ApplicationActionMenu({
         onCloseAutoFocus={() => {
           // Runs once the menu is gone, as focus goes back to its button, so
           // the dialog returns focus to the button when it closes.
-          if (!isChosenRef.current) return
+          if (!isChosenRef.current || !action) return
           isChosenRef.current = false
-          onAction(action, application)
+          onAction?.(action, application)
         }}
       >
-        <DropdownMenuItem
-          onSelect={() => {
-            isChosenRef.current = true
-          }}
-        >
-          {t(ACTION_LABELS[action])}
-        </DropdownMenuItem>
+        {action ? (
+          <DropdownMenuItem
+            onSelect={() => {
+              isChosenRef.current = true
+            }}
+          >
+            {t(ACTION_LABELS[action])}
+          </DropdownMenuItem>
+        ) : null}
+        {application.canRateOrganizer ? (
+          <DropdownMenuItem asChild>
+            <Link
+              to="/events/$eventId/ratings"
+              params={{ eventId: application.event.id }}
+            >
+              {t("myEvents.rate")}
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -299,84 +315,67 @@ export function MyEventsOverview({
       // beside the row whatever its height.
       <li
         key={event.id}
-        className="border-t border-border"
+        className="flex items-center gap-1 border-t border-border"
       >
-        <div className="flex items-center gap-1">
-          <Link
-            to="/events/$eventId"
-            params={{ eventId: event.id }}
-            className="-ml-3 block min-w-0 flex-1 rounded-lg pr-1 pl-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            <ScheduleRow
-              time={eventTime(event.startAt, i18n.language)}
-              title={event.title}
-              subtitle={[
-                eventDay(t, event.startAt, now, i18n.language),
-                eventMeta(t, event, activityLabel(event.activity)),
-              ].join(" · ")}
-              taken={event.takenCount}
-              min={event.minParticipants}
-              max={event.maxParticipants}
-              // The title next to it says what the photo shows.
-              photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
-              activity={event.activity.icon}
-              // Who runs it says nothing new on the person's own events.
-              details={
-                application
-                  ? eventHostAndPrice(t, event, i18n.language)
-                  : eventPrice(t, event, i18n.language)
-              }
-              className="border-t-0"
-              badge={
-                status ? (
+        <Link
+          to="/events/$eventId"
+          params={{ eventId: event.id }}
+          className="-ml-3 block min-w-0 flex-1 rounded-lg pr-1 pl-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <ScheduleRow
+            time={eventTime(event.startAt, i18n.language)}
+            title={event.title}
+            subtitle={[
+              eventDay(t, event.startAt, now, i18n.language),
+              eventMeta(t, event, activityLabel(event.activity)),
+            ].join(" · ")}
+            taken={event.takenCount}
+            min={event.minParticipants}
+            max={event.maxParticipants}
+            // The title next to it says what the photo shows.
+            photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
+            activity={event.activity.icon}
+            // Who runs it says nothing new on the person's own events.
+            details={
+              application
+                ? eventHostAndPrice(t, event, i18n.language)
+                : eventPrice(t, event, i18n.language)
+            }
+            className="border-t-0"
+            badge={
+              status ? (
+                <span className="flex flex-wrap gap-2">
                   <StatusBadge status={BADGES[status]}>
                     {t(`myEvents.status.${status}`)}
                   </StatusBadge>
-                ) : event.isHidden ? (
-                  // #239: only the organizer still sees it; the detail says why.
-                  <StatusBadge status="neutral">{t("myEvents.hidden")}</StatusBadge>
-                ) : undefined
-              }
-            />
-          </Link>
-          {/* Next to the link, not inside it: a button in an anchor is not valid
+                  {/* #234: says there is something to do; the menu beside
+                      the row does it. */}
+                  {application?.canRateOrganizer ? (
+                    <StatusBadge status="pending">{t("myEvents.awaitingRating")}</StatusBadge>
+                  ) : null}
+                </span>
+              ) : event.isHidden ? (
+                // #239: only the organizer still sees it; the detail says why.
+                <StatusBadge status="neutral">{t("myEvents.hidden")}</StatusBadge>
+              ) : undefined
+            }
+          />
+        </Link>
+        {/* Next to the link, not inside it: a button in an anchor is not valid
             HTML, and a tap on it must not open the detail. */}
-          {application && action && onApplicationAction ? (
-            <ApplicationActionMenu
-              application={application}
-              action={action}
-              onAction={onApplicationAction}
-            />
-          ) : application && onApplicationAction ? (
-            // A row without an action (decided, or already over) keeps the
-            // menu's room, so the seats stay in one column down the list (#177).
-            <span
-              aria-hidden
-              className="size-11 shrink-0"
-            />
-          ) : null}
-        </div>
-        {/* #234: one tap from the overview to the rating, while the server
-            says the organizer may still be rated. Under the row, so the seats
-            stay in their column. */}
-        {application?.canRateOrganizer ? (
-          <div className="pb-4">
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="max-md:h-11"
-            >
-              <Link
-                to="/events/$eventId/ratings"
-                params={{ eventId: event.id }}
-                aria-label={t("myEvents.rateLabel", { title: event.title })}
-              >
-                <Star aria-hidden />
-                {t("myEvents.rate")}
-              </Link>
-            </Button>
-          </div>
+        {application && (action || application.canRateOrganizer) ? (
+          <ApplicationActionMenu
+            application={application}
+            action={action}
+            onAction={onApplicationAction}
+          />
+        ) : application && onApplicationAction ? (
+          // A row with nothing to offer (decided, or over and rated) keeps the
+          // menu's room, so the seats stay in one column down the list (#177).
+          <span
+            aria-hidden
+            className="size-11 shrink-0"
+          />
         ) : null}
       </li>
     )
