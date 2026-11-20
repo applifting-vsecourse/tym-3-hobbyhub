@@ -36,7 +36,7 @@ These are rules, not suggestions. When a rule and a "nicer looking" idea disagre
   - **The header and the footer are `max-w-page`** on every page, whatever the column under them, so the navigation on the right stays put between pages.
 - **Every page keeps the app chrome.** The header is present on every route, including login and sign-up. Pages never render as standalone islands. The administration (`/admin/*`) keeps its own chrome, `AdminShell`, instead of the user one.
 - **Tables are for the administration only.** A list of records to scan and compare (users, events, groups in `/admin`) is the kit's `Table` from `md` up; below `md` each row stacks into lines separated by a hairline, never into a card. The rest of the app lists items as cards or rows, not tables.
-- Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full.
+- Forbidden by default: the centred-hero-plus-three-feature-cards layout, carousels, and any section whose only purpose is to look full. The one carousel is the landing page's upcoming events on a phone (#216): a plain scroll-snap strip with the next card peeking in, a grid from `md`.
 
 ## Spacing
 
