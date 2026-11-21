@@ -63,7 +63,9 @@ type Options = {
 // Through a router: the tabs and the rows are links.
 const renderOverview = (
   applications: MyEventsList<MyApplication> = list([]),
-  hosted: MyEventsList<EventListItem> = list([]),
+  hosted: MyEventsList<EventListItem & { isHidden?: boolean; participantsToRate?: number }> = list(
+    [],
+  ),
   { tab = "applications", isFiltered = false, onClearFilters, onApplicationAction }: Options = {},
 ) =>
   renderWithRouter(
@@ -84,11 +86,31 @@ describe("MyEventsOverview", () => {
   it("shows every application with its state and links to the event", async () => {
     await renderOverview(
       list([
-        { status: "PENDING", event: event({ id: "e1", title: "Florbal" }) },
-        { status: "APPROVED", event: event({ id: "e2", title: "Deskovky" }) },
-        { status: "REJECTED", event: event({ id: "e3", title: "Squash" }) },
-        { status: "WITHDRAWN", event: event({ id: "e4", title: "Plavání" }) },
-        { status: "EVENT_CANCELLED", event: event({ id: "e5", title: "Šachy" }) },
+        {
+          status: "PENDING",
+          canRateOrganizer: false,
+          event: event({ id: "e1", title: "Florbal" }),
+        },
+        {
+          status: "APPROVED",
+          canRateOrganizer: false,
+          event: event({ id: "e2", title: "Deskovky" }),
+        },
+        {
+          status: "REJECTED",
+          canRateOrganizer: false,
+          event: event({ id: "e3", title: "Squash" }),
+        },
+        {
+          status: "WITHDRAWN",
+          canRateOrganizer: false,
+          event: event({ id: "e4", title: "Plavání" }),
+        },
+        {
+          status: "EVENT_CANCELLED",
+          canRateOrganizer: false,
+          event: event({ id: "e5", title: "Šachy" }),
+        },
       ]),
     )
 
@@ -111,7 +133,10 @@ describe("MyEventsOverview", () => {
 
   it("shows the totals in the tabs, not the number of loaded rows", async () => {
     await renderOverview(
-      list([{ status: "PENDING", event: event() }], { total: 45, hasMore: true }),
+      list([{ status: "PENDING", canRateOrganizer: false, event: event() }], {
+        total: 45,
+        hasMore: true,
+      }),
       list([event({ id: "h1" })], { total: 12 }),
     )
 
@@ -121,7 +146,10 @@ describe("MyEventsOverview", () => {
 
   // #177: the tab lives in the URL, so a link can open either one.
   it("links the tabs to their URL and marks the one on screen", async () => {
-    await renderOverview(list([{ status: "PENDING", event: event() }]), list([event()]))
+    await renderOverview(
+      list([{ status: "PENDING", canRateOrganizer: false, event: event() }]),
+      list([event()]),
+    )
 
     const tabs = screen.getByRole("navigation", { name: "Moje akce" })
     const applications = within(tabs).getByRole("link", { name: /Přihlášky/ })
@@ -134,7 +162,13 @@ describe("MyEventsOverview", () => {
 
   it("lists hosted events in their own tab without an application state", async () => {
     await renderOverview(
-      list([{ status: "APPROVED", event: event({ id: "e1", title: "Cizí akce" }) }]),
+      list([
+        {
+          status: "APPROVED",
+          canRateOrganizer: false,
+          event: event({ id: "e1", title: "Cizí akce" }),
+        },
+      ]),
       list([event({ id: "h1", title: "Moje akce" })]),
       { tab: "hosted" },
     )
@@ -160,16 +194,54 @@ describe("MyEventsOverview", () => {
     expect(screen.getByRole("link", { name: /Viditelná/ })).not.toHaveTextContent("Skrytá správcem")
   })
 
+  // #235: the organizer is pointed to the participants they may still rate.
+  it("marks a hosted event with participants to rate and leads to the rating from its menu", async () => {
+    const user = userEvent.setup()
+    await renderOverview(
+      list([]),
+      list([
+        {
+          ...event({ id: "h1", title: "Proběhlý florbal" }),
+          isHidden: false,
+          participantsToRate: 3,
+        },
+        {
+          ...event({ id: "h2", title: "Ohodnocený florbal" }),
+          isHidden: false,
+          participantsToRate: 0,
+        },
+      ]),
+      { tab: "hosted" },
+    )
+
+    expect(screen.getByRole("link", { name: /Proběhlý florbal/ })).toHaveTextContent("K hodnocení")
+    expect(screen.getByRole("link", { name: /Ohodnocený florbal/ })).not.toHaveTextContent(
+      "K hodnocení",
+    )
+    expect(screen.getAllByRole("button", { name: /Možnosti akce/ })).toHaveLength(1)
+
+    await user.click(screen.getByRole("button", { name: /Proběhlý florbal/ }))
+
+    expect(await screen.findByRole("menuitem", { name: "Ohodnotit účastníky" })).toHaveAttribute(
+      "href",
+      "/events/h1/ratings",
+    )
+  })
+
   it("says so in a tab that has nothing", async () => {
-    await renderOverview(list([{ status: "PENDING", event: event() }]), list([]), {
-      tab: "hosted",
-    })
+    await renderOverview(
+      list([{ status: "PENDING", canRateOrganizer: false, event: event() }]),
+      list([]),
+      {
+        tab: "hosted",
+      },
+    )
 
     expect(screen.getByText("Zatím nepořádáte žádnou akci.")).toBeInTheDocument()
   })
 
   it("shows the filters with the tabs", async () => {
-    await renderOverview(list([{ status: "PENDING", event: event() }]))
+    await renderOverview(list([{ status: "PENDING", canRateOrganizer: false, event: event() }]))
 
     expect(screen.getByText("filters-slot")).toBeInTheDocument()
   })
@@ -187,7 +259,9 @@ describe("MyEventsOverview", () => {
   })
 
   it("marks the rows of the previous filter while the new ones load", async () => {
-    await renderOverview(list([{ status: "PENDING", event: event() }], { isStale: true }))
+    await renderOverview(
+      list([{ status: "PENDING", canRateOrganizer: false, event: event() }], { isStale: true }),
+    )
 
     expect(screen.getByRole("list").parentElement?.parentElement).toHaveAttribute(
       "aria-busy",
@@ -205,7 +279,7 @@ describe("MyEventsOverview", () => {
   it("loads the next page on request and keeps the rows loaded", async () => {
     const onLoadMore = vi.fn()
     await renderOverview(
-      list([{ status: "PENDING", event: event({ title: "Florbal" }) }], {
+      list([{ status: "PENDING", canRateOrganizer: false, event: event({ title: "Florbal" }) }], {
         total: 30,
         hasMore: true,
         onLoadMore,
@@ -219,7 +293,9 @@ describe("MyEventsOverview", () => {
   })
 
   it("hides the button on the last page", async () => {
-    await renderOverview(list([{ status: "PENDING", event: event() }], { hasMore: false }))
+    await renderOverview(
+      list([{ status: "PENDING", canRateOrganizer: false, event: event() }], { hasMore: false }),
+    )
 
     expect(screen.queryByRole("button", { name: "Načíst další" })).not.toBeInTheDocument()
   })
@@ -227,7 +303,7 @@ describe("MyEventsOverview", () => {
   it("keeps the rows when a later page or a reload fails, and retries that", async () => {
     const onRetry = vi.fn()
     await renderOverview(
-      list([{ status: "PENDING", event: event({ title: "Florbal" }) }], {
+      list([{ status: "PENDING", canRateOrganizer: false, event: event({ title: "Florbal" }) }], {
         error: new Error("boom"),
         hasMore: true,
         onRetry,
@@ -248,8 +324,16 @@ describe("MyEventsOverview", () => {
 
     it("offers to withdraw a waiting request and to cancel a seat", async () => {
       const onApplicationAction = vi.fn()
-      const waiting = { status: "PENDING", event: event({ id: "e1", title: "Florbal" }) } as const
-      const seated = { status: "APPROVED", event: event({ id: "e2", title: "Deskovky" }) } as const
+      const waiting = {
+        status: "PENDING",
+        canRateOrganizer: false,
+        event: event({ id: "e1", title: "Florbal" }),
+      } as const
+      const seated = {
+        status: "APPROVED",
+        canRateOrganizer: false,
+        event: event({ id: "e2", title: "Deskovky" }),
+      } as const
       await renderOverview(list([waiting, seated]), list([]), { onApplicationAction })
 
       await userEvent.click(screen.getByRole("button", { name: "Možnosti přihlášky: Florbal" }))
@@ -264,12 +348,52 @@ describe("MyEventsOverview", () => {
       expect(screen.getByRole("link", { name: /Deskovky/ })).toHaveAttribute("href", "/events/e2")
     })
 
+    // #234: the server says when the organizer may still be rated. The row
+    // says so with a badge and the menu leads to the rating.
+    it("offers the rating of the organizer once the event is over", async () => {
+      await renderOverview(
+        list([
+          {
+            status: "APPROVED",
+            canRateOrganizer: true,
+            event: { ...started, id: "e1", title: "Turnaj" },
+          },
+          {
+            status: "APPROVED",
+            canRateOrganizer: false,
+            event: { ...started, id: "e2", title: "Deskovky" },
+          },
+        ]),
+        list([]),
+        { onApplicationAction: vi.fn() },
+      )
+
+      expect(screen.getAllByText("K hodnocení")).toHaveLength(1)
+      expect(screen.getByRole("link", { name: /Turnaj/ })).toHaveTextContent("K hodnocení")
+      // Rated or past the period: no badge and nothing in the menu's place.
+      expect(
+        screen.queryByRole("button", { name: "Možnosti přihlášky: Deskovky" }),
+      ).not.toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole("button", { name: "Možnosti přihlášky: Turnaj" }))
+      const rate = await screen.findByRole("menuitem", { name: "Ohodnotit organizátora" })
+      expect(rate).toHaveAttribute("href", "/events/e1/ratings")
+      // Too late to leave the event: the rating is the only thing offered.
+      expect(screen.getAllByRole("menuitem")).toHaveLength(1)
+    })
+
     it.each([
-      ["a rejected request", { status: "REJECTED", event: event() }],
-      ["a seat given back", { status: "WITHDRAWN", event: event() }],
-      ["a cancelled event", { status: "EVENT_CANCELLED", event: event() }],
-      ["a seat on an event that started", { status: "APPROVED", event: started }],
-      ["a request on an event that started", { status: "PENDING", event: started }],
+      ["a rejected request", { status: "REJECTED", canRateOrganizer: false, event: event() }],
+      ["a seat given back", { status: "WITHDRAWN", canRateOrganizer: false, event: event() }],
+      ["a cancelled event", { status: "EVENT_CANCELLED", canRateOrganizer: false, event: event() }],
+      [
+        "a seat on an event that started",
+        { status: "APPROVED", canRateOrganizer: false, event: started },
+      ],
+      [
+        "a request on an event that started",
+        { status: "PENDING", canRateOrganizer: false, event: started },
+      ],
     ] as const)("has nothing for %s", async (_, application) => {
       await renderOverview(list([application]), list([]), { onApplicationAction: vi.fn() })
 
@@ -284,7 +408,9 @@ describe("MyEventsOverview", () => {
         vi.setSystemTime(new Date(startAt.getTime() - 30_000))
         await renderWithRouter(
           <MyEventsOverview
-            applications={list([{ status: "APPROVED", event: event({ startAt }) }])}
+            applications={list([
+              { status: "APPROVED", canRateOrganizer: false, event: event({ startAt }) },
+            ])}
             hosted={list([])}
             tab="applications"
             activityLabel={(activity) => activity.name}
@@ -304,7 +430,7 @@ describe("MyEventsOverview", () => {
     })
 
     it("is not there when the page offers no action", async () => {
-      await renderOverview(list([{ status: "APPROVED", event: event() }]))
+      await renderOverview(list([{ status: "APPROVED", canRateOrganizer: false, event: event() }]))
 
       expect(screen.queryByRole("button", { name: /Možnosti přihlášky/ })).not.toBeInTheDocument()
     })

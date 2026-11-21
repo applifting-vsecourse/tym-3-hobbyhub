@@ -35,6 +35,7 @@ import { Route as ProtectedPagesGroupsNewRouteImport } from './routes/_Protected
 import { Route as ProtectedPagesProfileIndexRouteImport } from './routes/_ProtectedPages/profile/index'
 import { Route as ProtectedPagesProfileUserIdRouteImport } from './routes/_ProtectedPages/profile/$userId'
 import { Route as ProtectedPagesProfileEditRouteImport } from './routes/_ProtectedPages/profile/edit'
+import { Route as ProtectedPagesProfileRatingsRouteImport } from './routes/_ProtectedPages/profile/ratings'
 import { Route as ProtectedPagesProfileSettingsRouteImport } from './routes/_ProtectedPages/profile/settings'
 import { Route as AdminAdminPagesIndexRouteImport } from './routes/admin/_AdminPages/index'
 import { Route as AdminAdminPagesAdministratorsRouteImport } from './routes/admin/_AdminPages/administrators'
@@ -185,6 +186,12 @@ const ProtectedPagesProfileEditRoute =
     path: '/profile/edit',
     getParentRoute: () => ProtectedPagesRoute,
   } as any)
+const ProtectedPagesProfileRatingsRoute =
+  ProtectedPagesProfileRatingsRouteImport.update({
+    id: '/profile/ratings',
+    path: '/profile/ratings',
+    getParentRoute: () => ProtectedPagesRoute,
+  } as any)
 const ProtectedPagesProfileSettingsRoute =
   ProtectedPagesProfileSettingsRouteImport.update({
     id: '/profile/settings',
@@ -300,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
+  '/profile/ratings': typeof ProtectedPagesProfileRatingsRoute
   '/profile/settings': typeof ProtectedPagesProfileSettingsRoute
   '/admin/administrators': typeof AdminAdminPagesAdministratorsRoute
   '/profile/': typeof ProtectedPagesProfileIndexRoute
@@ -341,6 +349,7 @@ export interface FileRoutesByTo {
   '/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/profile/edit': typeof ProtectedPagesProfileEditRoute
+  '/profile/ratings': typeof ProtectedPagesProfileRatingsRoute
   '/profile/settings': typeof ProtectedPagesProfileSettingsRoute
   '/admin/administrators': typeof AdminAdminPagesAdministratorsRoute
   '/profile': typeof ProtectedPagesProfileIndexRoute
@@ -385,6 +394,7 @@ export interface FileRoutesById {
   '/_ProtectedPages/groups/new': typeof ProtectedPagesGroupsNewRoute
   '/_ProtectedPages/profile/$userId': typeof ProtectedPagesProfileUserIdRoute
   '/_ProtectedPages/profile/edit': typeof ProtectedPagesProfileEditRoute
+  '/_ProtectedPages/profile/ratings': typeof ProtectedPagesProfileRatingsRoute
   '/_ProtectedPages/profile/settings': typeof ProtectedPagesProfileSettingsRoute
   '/admin/_AdminPages/administrators': typeof AdminAdminPagesAdministratorsRoute
   '/_ProtectedPages/profile/': typeof ProtectedPagesProfileIndexRoute
@@ -429,6 +439,7 @@ export interface FileRouteTypes {
     | '/groups/new'
     | '/profile/$userId'
     | '/profile/edit'
+    | '/profile/ratings'
     | '/profile/settings'
     | '/admin/administrators'
     | '/profile/'
@@ -470,6 +481,7 @@ export interface FileRouteTypes {
     | '/groups/new'
     | '/profile/$userId'
     | '/profile/edit'
+    | '/profile/ratings'
     | '/profile/settings'
     | '/admin/administrators'
     | '/profile'
@@ -513,6 +525,7 @@ export interface FileRouteTypes {
     | '/_ProtectedPages/groups/new'
     | '/_ProtectedPages/profile/$userId'
     | '/_ProtectedPages/profile/edit'
+    | '/_ProtectedPages/profile/ratings'
     | '/_ProtectedPages/profile/settings'
     | '/admin/_AdminPages/administrators'
     | '/_ProtectedPages/profile/'
@@ -735,6 +748,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPagesProfileEditRouteImport
       parentRoute: typeof ProtectedPagesRoute
     }
+    '/_ProtectedPages/profile/ratings': {
+      id: '/_ProtectedPages/profile/ratings'
+      path: '/profile/ratings'
+      fullPath: '/profile/ratings'
+      preLoaderRoute: typeof ProtectedPagesProfileRatingsRouteImport
+      parentRoute: typeof ProtectedPagesRoute
+    }
     '/_ProtectedPages/profile/settings': {
       id: '/_ProtectedPages/profile/settings'
       path: '/profile/settings'
@@ -852,6 +872,7 @@ interface ProtectedPagesRouteChildren {
   ProtectedPagesGroupsNewRoute: typeof ProtectedPagesGroupsNewRoute
   ProtectedPagesProfileUserIdRoute: typeof ProtectedPagesProfileUserIdRoute
   ProtectedPagesProfileEditRoute: typeof ProtectedPagesProfileEditRoute
+  ProtectedPagesProfileRatingsRoute: typeof ProtectedPagesProfileRatingsRoute
   ProtectedPagesProfileSettingsRoute: typeof ProtectedPagesProfileSettingsRoute
   ProtectedPagesProfileIndexRoute: typeof ProtectedPagesProfileIndexRoute
   ProtectedPagesEventsEventIdEditRoute: typeof ProtectedPagesEventsEventIdEditRoute
@@ -869,6 +890,7 @@ const ProtectedPagesRouteChildren: ProtectedPagesRouteChildren = {
   ProtectedPagesGroupsNewRoute: ProtectedPagesGroupsNewRoute,
   ProtectedPagesProfileUserIdRoute: ProtectedPagesProfileUserIdRoute,
   ProtectedPagesProfileEditRoute: ProtectedPagesProfileEditRoute,
+  ProtectedPagesProfileRatingsRoute: ProtectedPagesProfileRatingsRoute,
   ProtectedPagesProfileSettingsRoute: ProtectedPagesProfileSettingsRoute,
   ProtectedPagesProfileIndexRoute: ProtectedPagesProfileIndexRoute,
   ProtectedPagesEventsEventIdEditRoute: ProtectedPagesEventsEventIdEditRoute,

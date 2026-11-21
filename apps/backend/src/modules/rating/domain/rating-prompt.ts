@@ -66,7 +66,7 @@ export type RatingPromptCandidate = {
   endAt: Date;
   organizerId: string;
   coOrganizerIds: string[];
-  /** Every seat on the event, whatever its state. */
+  /** Every seat on the event, whatever its state; none of a deleted account. */
   seats: { userId: string; status: SeatStatus }[];
   /** The calls that went out already. */
   sent: RatingPromptKind[];

@@ -171,6 +171,8 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Připomínka před začátkem akce** ([#233][233], [ADR-0021](../adr/adr-0021.md)) chodí 24 a 2 hodiny před začátkem účastníkům se schváleným místem a organizátorům (hlavnímu i spoluorganizátorům). Ve zvonečku nese název akce a začátek, organizátorům navíc obsazenost (obsazeno z kapacity, kolik chybí do minima), kterou vidí už v přehledu účastníků. E-mail podle pravidla výše říká jen „akce se blíží“: bez názvu, času, místa i počtů.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec. Hodnocený ho vidí až po konci lhůty ([ADR-0027](../adr/adr-0027.md)). Hodnocení mezi dvojicí, která je zablokovaná, se nepočítá nikde: není v seznamu, v počtu, v průměru ani v rozložení hvězdiček, aby z rozdílu nešlo poznat, že blokace existuje ([ADR-0022](../adr/adr-0022.md)); po zrušení blokace se vrátí. Autor se smazaným účtem se ukazuje jako smazaný uživatel.
 - **„Od 3“:** pod třemi odkrytými hodnoceními nevidí ostatní ani průměr, ani počet. Vlastník svá čísla vidí vždy ve vlastním profilu a v přehledu „Moje hodnocení“; svůj veřejný profil vidí stejně jako ostatní.
+- **Že můžu organizátora ještě ohodnotit** ([#234][234]) se dozvím jen já sám: v přehledu svých přihlášek a v detailu akce, na které jsem měl schválené místo, dokud běží lhůta a hodnocení jsem neodeslal. Nikdo jiný, ani organizátor, nevidí, kdo ještě hodnotit může a kdo už hodnotil; organizátor se to dozví až po konci lhůty z odkrytých hodnocení. Přehled „Moje hodnocení“ je dostupný jen z vlastního profilu a ukazuje výhradně řádky „Hodnocení, která obdržel“ a „Hodnocení, která sám dal“ z tabulky výše.
+- **Kolik účastníků můžu ještě ohodnotit** ([#235][235]) vidí jen hlavní organizátor sám: v přehledu akcí, které pořádá, a v detailu akce, dokud běží lhůta. Spoluorganizátoři ani účastníci to nevidí a účastník se nedozví, jestli už ho organizátor ohodnotil. Rozpracované hodnocení (vybrané, ale neodeslané hvězdičky) zůstává jen na otevřené stránce organizátora a nikam se neukládá. V seznamu k hodnocení nejsou spoluorganizátoři, lidé zablokovaní s organizátorem ani smazané účty.
 
 ## Skupina
 
@@ -241,6 +243,8 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [42]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/42
 [43]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/43
 [44]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/44
+[234]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/234
+[235]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/235
 [236]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/236
 [45]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/45
 [47]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/47
