@@ -37,6 +37,8 @@ export function GroupCard({ group, activityLabel, myRole }: GroupCardProps) {
         title={group.name}
         subtitle={meta.join(" · ")}
         activity={group.activity.icon}
+        schedule={group.usualSchedule}
+        description={group.description}
         badge={
           myRole ? t(`groups.list.role.${myRole}`) : t(`groups.list.visibility.${group.visibility}`)
         }

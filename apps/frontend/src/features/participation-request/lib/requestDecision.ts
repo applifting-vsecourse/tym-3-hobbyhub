@@ -24,6 +24,8 @@ export type ManagedEvent = {
 
 /** The occupancy the participants page shows on top of it (F-05.6). */
 export type ManagedEventOverview = ManagedEvent & {
+  /** Where it takes place, e.g. "ZŠ Kobylisy, Praha"; shown next to the time. */
+  where?: string
   /** Approved participants with an account. */
   approved: number
   /** Seats the organizer took for people outside the app. */

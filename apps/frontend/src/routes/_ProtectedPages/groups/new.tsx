@@ -55,7 +55,7 @@ function NewGroupPage() {
   return (
     <>
       <Seo title={t("groups.form.title")} />
-      <section className="mx-auto w-full max-w-2xl px-4 py-6 md:py-12">
+      <section className="mx-auto w-full max-w-2xl px-page py-6 md:py-12">
         <BackLink
           to={ROUTES.groups}
           label={t("groups.back")}

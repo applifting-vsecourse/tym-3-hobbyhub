@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { AccountLanguageLinks } from "@/features/auth/components/AccountLanguageLinks"
 import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
@@ -27,7 +28,8 @@ export const Route = createFileRoute("/")({
 })
 
 // Three cards: one row from `lg`, where the landing page is at its widest.
-const UPCOMING_EVENTS_COUNT = 3
+// Four for the four columns of a large screen; below it the fourth is hidden (#224).
+const UPCOMING_EVENTS_COUNT = 4
 
 function LandingPage() {
   const { t } = useTranslation()
@@ -84,9 +86,9 @@ function LandingPage() {
     <>
       <Seo title={t("landing.seoTitle")} />
       <AppShell
-        className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8"
+        className="mx-auto flex w-full max-w-page flex-col gap-8 px-page py-6 md:gap-12 md:py-10"
         search={searchField}
-        footer={<Footer />}
+        footer={<Footer language={<AccountLanguageLinks />} />}
       >
         <FiltersSheet
           isOpen={isFiltersOpen}
@@ -167,7 +169,9 @@ function LandingPage() {
           >
             {t("landing.groups.title")}
           </h2>
-          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:gap-12 md:px-12 md:py-10">
+          {/* Centred as one block: on a wide screen the seats and the text sit in
+              the middle of the invitation, not at its left edge (#224). */}
+          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:justify-center md:gap-12 md:px-12 md:py-10">
             <div
               aria-hidden
               className="shrink-0"

@@ -20,6 +20,8 @@ import {
   ProfileRepository,
   ProfileRow,
 } from '@/modules/profile/repositories/profile.repository';
+import { shownUserRatingScores } from '@/modules/rating/domain/rating';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import {
   AdminListQuery,
   AdminPage,
@@ -30,7 +32,7 @@ import {
   nicknamePreviousChangeAtMost,
   nicknameViolation,
 } from '@/shared/auth/registration/nickname';
-import { Gender } from '@/shared/auth/registration/registration';
+import { Gender, Language } from '@/shared/auth/registration/registration';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
@@ -45,6 +47,7 @@ export class ProfileService {
     private readonly onboardingService: OnboardingService,
     private readonly friendshipService: FriendshipService,
     private readonly blocks: UserBlockVisibility,
+    private readonly ratingsService: RatingsService,
   ) {}
 
   async getProfile(user: Identity, now = new Date()): Promise<Profile> {
@@ -65,7 +68,10 @@ export class ProfileService {
     userId: string,
     now: Date,
   ): Promise<Profile> {
-    const onboarding = await this.onboardingService.getOnboardingOf(userId);
+    const [onboarding, ratings] = await Promise.all([
+      this.onboardingService.getOnboardingOf(userId),
+      this.ratingsService.getUserScores(userId),
+    ]);
     return {
       name: row.name,
       nicknameChangeableFrom: nicknameChangeableFrom(
@@ -85,6 +91,7 @@ export class ProfileService {
         friendsSeeEventHistory: row.friendsSeeEventHistory,
         friendsSeeUpcomingEvents: row.friendsSeeUpcomingEvents,
       },
+      ratings: shownUserRatingScores(ratings, true),
     };
   }
 
@@ -101,9 +108,10 @@ export class ProfileService {
       ? null
       : await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
-    const [interests, relation] = await Promise.all([
+    const [interests, relation, ratings] = await Promise.all([
       this.onboardingService.getInterestsOf(userId),
       this.friendshipService.relationBetween(viewer.id, userId),
+      this.ratingsService.getUserScores(userId),
     ]);
     return {
       id: row.id,
@@ -113,6 +121,8 @@ export class ProfileService {
       cover: row.profileCover,
       interests,
       relation,
+      // #236: someone opening their own public profile sees it as others do.
+      ratings: shownUserRatingScores(ratings, false),
     };
   }
 
@@ -227,6 +237,11 @@ export class ProfileService {
       travelRadiusKm: travelRadiusKm ?? TRAVEL_RADIUS_DEFAULT_KM,
     });
     return this.getProfile(user);
+  }
+
+  // #262: no rule beyond the DTO's: any of the app's languages, any time.
+  async updateLanguage(user: Identity, language: Language): Promise<void> {
+    await this.profileRepository.updateLanguage(user.id, language);
   }
 
   // #24: removes the home address, the temporary place and the travel radius in

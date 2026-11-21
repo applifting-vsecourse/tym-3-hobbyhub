@@ -26,6 +26,25 @@ describe("translations", () => {
   })
 })
 
+// #262: the first of the browser's languages the app speaks; with none, English.
+describe("language of a new visitor", () => {
+  afterEach(async () => {
+    await i18n.changeLanguage("cs")
+  })
+
+  // The browser detector hands i18next the list of the browser's languages.
+  it.each([
+    [["cs-CZ"], "cs"],
+    [["en-GB"], "en"],
+    [["de-DE", "cs"], "cs"],
+    [["de-DE", "sk"], "en"],
+    [["pl"], "en"],
+  ])("browser %j gets %s", async (codes, expected) => {
+    await i18n.changeLanguage(codes as unknown as string)
+    expect(i18n.resolvedLanguage).toBe(expected)
+  })
+})
+
 describe("plurals", () => {
   const cases = [
     ["cs", 1, "Maximálně 1 znak"],

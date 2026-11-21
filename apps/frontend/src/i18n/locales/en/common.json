@@ -595,6 +595,9 @@
       "missingToMin": "{{count}} missing to the minimum",
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by <profile>{{name}}</profile>",
+      "rating": {
+        "title": "Event rating"
+      },
       "requestToJoin": "Ask to join",
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
@@ -669,6 +672,7 @@
       "address": "Place",
       "addressHint": "Pick the address from the suggestions so the event shows on the map. The fields below fill in by themselves.",
       "addressLocated": "The address position is saved, the event will show on the map.",
+      "addressStreetPicked": "The street is filled in. Add the house number, or pick the whole address so the event shows on the map.",
       "cancel": "Cancel",
       "contactsHint": "Only people with a confirmed seat, and you, see the chat and contact.",
       "continue": "Continue",
@@ -729,6 +733,7 @@
         "selected": "Selected filters",
         "unknownActivity": "Unknown activity"
       },
+      "free": "Free",
       "inMapArea": "Events in the map area",
       "loadError": "Could not load events",
       "loadMore": "Load more",
@@ -738,6 +743,7 @@
         "label": "Nearest to me",
         "unavailable": "We couldn't find your location. Please try again."
       },
+      "organizedBy": "Organized by {{name}}",
       "reload": "Reload",
       "searchPlaceholder": "Title, place or activity",
       "seoTitle": "Events",
@@ -821,6 +827,7 @@
   "footer": {
     "copyright": "© {{year}} HobbyHub",
     "label": "Footer",
+    "language": "Language",
     "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
   },
   "friends": {
@@ -1074,6 +1081,7 @@
       "membersLink": "Show all members",
       "membersMore": "+{{count}}",
       "membersTitle": "Members ({{count}})",
+      "openGroup": "View group",
       "outcome_one": "After approval there will be {{count}} member.",
       "outcome_other": "After approval there will be {{count}} members.",
       "refused": {
@@ -1092,6 +1100,7 @@
       "requestsEmpty": "No membership requests are waiting.",
       "requestsLink": "Membership requests ({{count}})",
       "retry": "Try again",
+      "summary": "About the group",
       "tabs": {
         "members": "Members {{count}}",
         "requests": "Requests {{count}}"
@@ -1177,6 +1186,7 @@
       "label": "Language"
     },
     "profile": "My profile",
+    "settings": "Settings",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "theme": {
@@ -1354,12 +1364,15 @@
       "until": "until {{time}}"
     },
     "filters": {
+      "activeCount_one": "{{count}} active filter",
+      "activeCount_other": "{{count}} active filters",
       "activitiesEmpty": "There are no activities yet.",
       "activitiesError": "Could not load the activities",
       "activitiesLoading": "Loading activities…",
       "activitiesRetry": "Try again",
       "activity": "Activity",
       "activityPlaceholder": "All activities",
+      "apply": "Apply",
       "capacity": "How many people fit (spots)",
       "chosenActivities": "Chosen activities",
       "clear": "Clear",
@@ -1370,6 +1383,8 @@
       "freeSpots": "Only with free spots",
       "location": "Location",
       "locationPlaceholder": "Prague 8",
+      "panelHide": "Hide filters",
+      "panelShow": "Show filters",
       "preset": {
         "capacity": {
           "from13": "13 and more",
@@ -1400,6 +1415,7 @@
       "showResults": "Show results",
       "sortNote": "Results are sorted by the nearest date.",
       "title": "Filters",
+      "unapplied": "Changes take effect when you press Apply.",
       "week": "This week",
       "weekend": "Weekend",
       "when": "When"
@@ -1604,6 +1620,10 @@
       "title": "Upcoming events"
     }
   },
+  "language": {
+    "label": "Language",
+    "saveFailed": "The language could not be saved. Please try again."
+  },
   "myEvents": {
     "actions": {
       "label": "Application options: {{title}}"
@@ -1723,11 +1743,19 @@
         "started": "Your event {{title}} started {{when}}",
         "upcoming": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken"
       },
+      "HOSTED_RATING_PROMPT": {
+        "FIRST": "Rate the participants of your event {{title}} by {{until}}",
+        "LAST_CALL": "Last day to rate the participants of {{title}}, by {{until}}"
+      },
       "NEW_REQUESTS": {
         "event": "{{name}} asks to join the event {{title}}",
         "group": "{{name}} asks to join the group {{title}}"
       },
       "PARTICIPANT_CANCELLED": "{{name}} cancelled their place at {{title}}",
+      "RATING_PROMPT": {
+        "FIRST": "How was {{title}}? Rate the organizer by {{until}}",
+        "LAST_CALL": "Last day to rate the organizer of {{title}}, by {{until}}"
+      },
       "REPORT_RESOLVED": "We have dealt with your report. Thank you for helping keep HobbyHub safe.",
       "REQUEST_DECIDED": {
         "event": {
@@ -1963,6 +1991,7 @@
       "rejected": "Request rejected",
       "requests": "Waiting",
       "retry": "Try again",
+      "summary": "Event summary",
       "tabs": {
         "participants": "Participants",
         "participantsCount": "Participants {{count}}",
@@ -2077,9 +2106,32 @@
         "unreadable": "The photo could not be processed. Try another one."
       }
     },
+    "ratings": {
+      "asOrganizer": "As an organizer",
+      "asParticipant": "As a participant",
+      "ownBelowMinimum_one": "You have {{count}} rating; others see it from {{min}} on.",
+      "ownBelowMinimum_other": "You have {{count}} ratings; others see them from {{min}} on.",
+      "ownBelowMinimum_zero": "Others see your rating from {{min}} ratings on.",
+      "title": "Ratings"
+    },
     "save": "Save",
     "saveError": "Could not save the changes. Please try again.",
+    "settings": {
+      "action": "Open settings",
+      "description": "Language and appearance of the app.",
+      "title": "App settings"
+    },
     "title": "My profile",
+    "upcoming": {
+      "all": "All my events",
+      "empty": "You are not going anywhere or organizing anything yet.",
+      "find": "Find an event",
+      "hosting": "You organize",
+      "loadError": "Could not load the events.",
+      "loading": "Loading events…",
+      "retry": "Try again",
+      "title": "My upcoming events"
+    },
     "userProfile": {
       "interests": "What they play",
       "notFound": "Profile not found.",
@@ -2103,6 +2155,33 @@
       "privateHint": "Others do not see this.",
       "privateTitle": "Only you"
     }
+  },
+  "rating": {
+    "notEnough": "Not enough ratings yet",
+    "page": {
+      "back": "Back to the event",
+      "empty": "There is nobody for you to rate at this event.",
+      "eyebrow": "Rating after the event",
+      "formsSoon": "The form for rating is coming soon.",
+      "loadError": "Ratings could not be loaded",
+      "loading": "Loading ratings",
+      "notRated": "Not rated yet",
+      "organizer": "Organizer",
+      "participants": "Participants",
+      "phase": {
+        "closed": "Rating closed {{deadline}}.",
+        "notYet": "You can rate once the event is over.",
+        "open": "You can rate until {{deadline}}.",
+        "unavailable": "This event cannot be rated."
+      },
+      "retry": "Try again",
+      "revealNote": "Who rated whom shows only when the period ends, for everyone at once."
+    },
+    "scoreLabel": "Rated {{value}} of {{max}}",
+    "scoreWithCountLabel_one": "Rated {{value}} of {{max}}, {{count}} rating",
+    "scoreWithCountLabel_other": "Rated {{value}} of {{max}}, {{count}} ratings",
+    "starsOf_one": "{{count}} star of {{max}}",
+    "starsOf_other": "{{count}} stars of {{max}}"
   },
   "reports": {
     "done": "Thank you, we have passed your report to the administrators. We will let you know once they deal with it.",
@@ -2139,6 +2218,26 @@
       "textPlaceholder": "E.g. repeated messages after the event, despite being asked to stop.",
       "title": "Report user"
     }
+  },
+  "settings": {
+    "back": "Back to profile",
+    "description": "How the app speaks to you and how it looks.",
+    "language": {
+      "description": "Applies on every device where you are signed in.",
+      "label": "Language"
+    },
+    "loading": "Loading settings",
+    "save": "Save",
+    "saveFailed": "The settings could not be saved. Please try again.",
+    "saved": "Your settings are saved.",
+    "theme": {
+      "dark": "Dark",
+      "description": "Applies on this device only.",
+      "label": "Appearance",
+      "light": "Light",
+      "system": "System"
+    },
+    "title": "Settings"
   },
   "terms": {
     "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",

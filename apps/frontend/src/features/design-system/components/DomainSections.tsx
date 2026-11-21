@@ -18,11 +18,13 @@ import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
 import { Loader, type LoaderVariant } from "@/components/hobbyhub/Loader"
 import { MapPin } from "@/components/hobbyhub/MapPin"
+import { RatingScore } from "@/components/hobbyhub/RatingScore"
 import { RosterRow } from "@/components/hobbyhub/RosterRow"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 import { Seat } from "@/components/hobbyhub/Seat"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
+import { StarRatingInput } from "@/components/hobbyhub/StarRatingInput"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { Badge } from "@/components/ui/badge"
@@ -59,6 +61,7 @@ function AddressSearchExample() {
   return (
     <div className="w-full max-w-sm">
       <AddressSearch
+        isStreetAllowed
         value={address}
         onSelect={(picked) => setAddress(picked.label)}
         placeholder="Najít adresu"
@@ -76,6 +79,31 @@ function BottomNavExample() {
         hasNewRequests
       />
     </div>
+  )
+}
+
+function RatingInputDemo() {
+  const [stars, setStars] = useState<number | null>(null)
+  return (
+    <Example
+      label="Zadání hvězdiček"
+      className="flex-col items-start gap-2"
+    >
+      <span
+        id="rating-input-demo"
+        className="typo-label-lg text-foreground"
+      >
+        Jak se ti akce líbila?
+      </span>
+      <StarRatingInput
+        value={stars}
+        onValueChange={setStars}
+        aria-labelledby="rating-input-demo"
+      />
+      <span className="typo-small text-muted-foreground">
+        {stars === null ? "Nic nevybráno" : `Vybráno ${stars} z 5`}
+      </span>
+    </Example>
   )
 }
 
@@ -209,6 +237,7 @@ export function DomainSections() {
               taken={7}
               min={10}
               photo={{ src: florbalPhoto, alt: "Hráči florbalu v tělocvičně" }}
+              details="Pořádá Florbal Kobylisy · 80 Kč"
               badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
@@ -227,6 +256,8 @@ export function DomainSections() {
               title="Čtvrteční florbalisté"
               subtitle="Praha 8 · florbal · 14 členů"
               activity="florbal"
+              schedule="Každý čtvrtek 19:00"
+              description="Hrajeme pro radost, ne o body. Hledáme hlavně lidi, kteří chtějí chodit pravidelně a nevadí jim, že se po hře jde na pivo."
               badge="Veřejná"
             />
             <GroupRow
@@ -361,6 +392,31 @@ export function DomainSections() {
             className="max-w-sm"
             message="Čtvrtek florbal, chybí 2. Potvrď, jestli jdeš:"
             url="https://hobbyhub.cz/akce/ctvrtecni-florbal"
+          />
+        </Example>
+      </ShowcaseSection>
+
+      <ShowcaseSection
+        id="hodnoceni"
+        title="Hodnocení"
+        description="Zadání 1–5 hvězdiček je skupina přepínačů z kitu: šipky, čtečka řekne „4 hvězdičky z 5“, vybrané hvězdy primary jako vlastní volba. Skóre je průměr na desetiny s počtem; pod 3 hodnoceními ho ostatní nevidí."
+      >
+        <RatingInputDemo />
+        <Example
+          label="Skóre — průměr s počtem, bez počtu, málo hodnocení"
+          className="flex-col items-start gap-3"
+        >
+          <RatingScore
+            average={4.8}
+            count={23}
+          />
+          <RatingScore
+            average={3.666}
+            count={null}
+          />
+          <RatingScore
+            average={null}
+            count={null}
           />
         </Example>
       </ShowcaseSection>

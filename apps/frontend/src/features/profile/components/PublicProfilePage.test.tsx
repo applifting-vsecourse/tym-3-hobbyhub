@@ -45,6 +45,10 @@ describe("PublicProfilePage", () => {
       image: null,
       cover: null,
       interests: [],
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: null, average: null },
+      },
     })
     await renderPage("u2")
 
@@ -64,6 +68,10 @@ describe("PublicProfilePage", () => {
       image: null,
       cover: null,
       interests: [],
+      ratings: {
+        asOrganizer: { count: null, average: null },
+        asParticipant: { count: null, average: null },
+      },
     })
     await renderPage("u2", (profile) => (
       <button type="button">{`Nahlásit ${profile.name} (${profile.id})`}</button>

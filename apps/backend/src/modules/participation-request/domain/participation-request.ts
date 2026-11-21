@@ -91,6 +91,9 @@ export type Participant = {
   // The seat.
   id: string;
   status: SeatStatus;
+  // Whose seat it is, so the organizer can open their profile (visibility
+  // matrix: the organizer sees the names and profiles of the participants).
+  userId: string;
   // APPROVED: the message of the request that led to the seat, if any.
   // CANCELLED: the participant's words when cancelling (ADR-0017).
   message: string | null;

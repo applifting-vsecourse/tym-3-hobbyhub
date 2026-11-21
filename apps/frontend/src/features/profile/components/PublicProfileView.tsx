@@ -6,6 +6,7 @@ import { ProfileCover } from "@/components/hobbyhub/ProfileCover"
 
 import type { PublicProfile } from "@/features/profile/api/profileSchemas"
 import { ActivityChip } from "@/features/profile/components/ActivityChip"
+import { ProfileRatings } from "@/features/profile/components/ProfileRatings"
 import { firstSportIcon } from "@/features/profile/lib/firstSport"
 
 type PublicProfileViewProps = {
@@ -18,7 +19,8 @@ type PublicProfileViewProps = {
 
 /**
  * Profil uživatele (F-04.2): what another signed-in person sees — the cover,
- * the photo, the nickname, the bio and what they play. Nothing else: the
+ * the photo, the nickname, the bio, the two rating scores (#236) and what
+ * they play. Nothing else: the
  * visibility matrix has no more for a signed-in stranger.
  */
 export function PublicProfileView({
@@ -53,6 +55,8 @@ export function PublicProfileView({
         </div>
         {friendAction ? <div className="mt-6 px-1">{friendAction}</div> : null}
       </div>
+
+      <ProfileRatings ratings={profile.ratings} />
 
       {profile.interests.length > 0 ? (
         <section

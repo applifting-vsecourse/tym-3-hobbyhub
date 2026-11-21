@@ -5,7 +5,16 @@ import {
   EventListPage,
   ParticipantStats,
 } from '@/modules/event/domain/event';
+import { RatingScoreResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
+
+class EventGroupResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+}
 
 export class EventListItemResponseDto {
   @ApiProperty()
@@ -74,6 +83,23 @@ export class EventListItemResponseDto {
   })
   takenCount!: number;
 
+  @ApiProperty()
+  organizerName!: string;
+
+  @ApiProperty({
+    type: EventGroupResponseDto,
+    nullable: true,
+    description: 'The public group that organizes the event, if any',
+  })
+  group!: EventGroupResponseDto | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Contribution per seat in CZK, information only',
+  })
+  contributionAmount!: number | null;
+
   static fromDomain(event: EventListItem): EventListItemResponseDto {
     return {
       id: event.id,
@@ -93,6 +119,9 @@ export class EventListItemResponseDto {
       minParticipants: event.minParticipants,
       maxParticipants: event.maxParticipants,
       takenCount: event.takenCount,
+      organizerName: event.organizerName,
+      group: event.group,
+      contributionAmount: event.contributionAmount,
     };
   }
 }
@@ -150,27 +179,12 @@ export class ParticipantStatsResponseDto {
   }
 }
 
-class EventGroupResponseDto {
-  @ApiProperty()
-  id!: string;
-
-  @ApiProperty()
-  name!: string;
-}
-
 export class EventDetailResponseDto extends EventListItemResponseDto {
   @ApiProperty()
   description!: string;
 
   @ApiProperty({ type: String, nullable: true })
   equipment!: string | null;
-
-  @ApiProperty({
-    type: Number,
-    nullable: true,
-    description: 'Contribution per seat in CZK, information only',
-  })
-  contributionAmount!: number | null;
 
   @ApiProperty({ type: String, nullable: true })
   contributionNote!: string | null;
@@ -180,9 +194,6 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
 
   @ApiProperty({ enum: ['MANUAL', 'AUTOMATIC'] })
   approvalMode!: EventDetail['approvalMode'];
-
-  @ApiProperty()
-  organizerName!: string;
 
   @ApiProperty({
     description: 'Lets the client offer editing to the organizer',
@@ -194,13 +205,6 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
 
   @ApiProperty({ type: String, nullable: true })
   cancellationNote!: string | null;
-
-  @ApiProperty({
-    type: EventGroupResponseDto,
-    nullable: true,
-    description: 'The public group that organizes the event, if any',
-  })
-  group!: EventGroupResponseDto | null;
 
   @ApiProperty({
     enum: ['PUBLIC', 'GROUP_ONLY'],
@@ -228,26 +232,31 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   })
   hiddenReason!: string | null;
 
+  @ApiProperty({
+    type: RatingScoreResponseDto,
+    description:
+      "The participants' revealed ratings of the event (#236); both null below 3 ratings",
+  })
+  rating!: RatingScoreResponseDto;
+
   static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
       description: event.description,
       equipment: event.equipment,
-      contributionAmount: event.contributionAmount,
       contributionNote: event.contributionNote,
       status: event.status,
       approvalMode: event.approvalMode,
-      organizerName: event.organizerName,
       organizerId: event.organizerId,
       cancellationReason: event.cancellationReason,
       cancellationNote: event.cancellationNote,
-      group: event.group,
       visibility: event.visibility,
       stats: event.stats
         ? ParticipantStatsResponseDto.fromDomain(event.stats)
         : null,
       statsMinParticipants: event.statsMinParticipants,
       hiddenReason: event.hiddenReason,
+      rating: RatingScoreResponseDto.fromDomain(event.rating),
     };
   }
 }

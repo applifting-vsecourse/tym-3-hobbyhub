@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
-import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
+import { eventDay, eventHostAndPrice, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
 
 /** Id of a row, so the page can scroll to the event that was opened on the map. */
 export const eventRowId = (eventId: string) => `event-row-${eventId}`
@@ -137,6 +137,7 @@ export function EventList({
                     // The title next to it says what the photo shows.
                     photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
                     activity={event.activity.icon}
+                    details={eventHostAndPrice(t, event, i18n.language)}
                   />
                 </Link>
               </li>

@@ -63,7 +63,7 @@ function VerifyEmailPage() {
   return (
     <>
       <Seo title={t(`auth.verifyEmail.${outcome}.title`)} />
-      <AppShell className="mx-auto flex w-full max-w-md flex-col items-center gap-6 px-4 py-12 text-center md:py-24">
+      <AppShell className="mx-auto flex w-full max-w-md flex-col items-center gap-6 px-page py-12 text-center md:py-24">
         {/* The seat is yours: a person where there was a dashed empty place. */}
         <div className="flex enter flex-col items-center gap-4">
           <ActivityAvatar
