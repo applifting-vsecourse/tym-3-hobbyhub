@@ -855,6 +855,20 @@ export class EventRepository {
   // first. Past: over, newest first. Cancelled ones stay, drafts, private and
   // hidden ones never show; which visibilities the viewer gets is the
   // service's to decide.
+  async countGroupEvents(
+    groupId: string,
+    filter: {
+      period: GroupEventsPeriod;
+      visibilities: GroupEventListItem['visibility'][];
+      now: Date;
+      hiddenOrganizerIds?: string[];
+    },
+  ): Promise<number> {
+    return this.prisma.event.count({
+      where: groupEventsWhere(groupId, filter),
+    });
+  }
+
   async getGroupEvents(
     groupId: string,
     {
@@ -871,19 +885,12 @@ export class EventRepository {
     },
     { limit, offset }: Page,
   ): Promise<GroupEventPage> {
-    const where: Prisma.EventWhereInput = {
-      groupId,
-      status: { not: EventStatus.DRAFT },
-      isHidden: false,
-      visibility: { in: visibilities },
-      endAt: period === 'upcoming' ? { gt: now } : { lte: now },
-      ...(hiddenOrganizerIds.length > 0
-        ? {
-            organizerId: { notIn: hiddenOrganizerIds },
-            coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
-          }
-        : {}),
-    };
+    const where = groupEventsWhere(groupId, {
+      period,
+      visibilities,
+      now,
+      hiddenOrganizerIds,
+    });
     const direction = period === 'upcoming' ? 'asc' : 'desc';
     const [events, total] = await Promise.all([
       this.prisma.event.findMany({
@@ -1009,4 +1016,33 @@ export class EventRepository {
       })),
     };
   }
+}
+
+function groupEventsWhere(
+  groupId: string,
+  {
+    period,
+    visibilities,
+    now,
+    hiddenOrganizerIds = [],
+  }: {
+    period: GroupEventsPeriod;
+    visibilities: GroupEventListItem['visibility'][];
+    now: Date;
+    hiddenOrganizerIds?: string[];
+  },
+): Prisma.EventWhereInput {
+  return {
+    groupId,
+    status: { not: EventStatus.DRAFT },
+    isHidden: false,
+    visibility: { in: visibilities },
+    endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+    ...(hiddenOrganizerIds.length > 0
+      ? {
+          organizerId: { notIn: hiddenOrganizerIds },
+          coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
+        }
+      : {}),
+  };
 }
