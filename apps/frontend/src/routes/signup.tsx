@@ -88,10 +88,12 @@ function SignUpPage() {
                 : null
           }
           noticeMessage={notice === "google" ? t("auth.signUp.googleNotice") : null}
+          isGoogleOnly={notice === "google"}
           renderGoogle={(getRegistration) => (
             <GoogleButton
               from={from}
               getRegistration={getRegistration}
+              isPrimary={notice === "google"}
             />
           )}
           onSubmit={handleSubmit}

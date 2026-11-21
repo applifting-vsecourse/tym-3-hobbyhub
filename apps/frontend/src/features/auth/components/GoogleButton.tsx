@@ -30,6 +30,8 @@ type GoogleButtonProps = {
    * Without it the button only signs in an account that already exists.
    */
   readonly getRegistration?: () => Promise<GoogleRegistration | null>
+  /** The way to finish the page, not an alternative to a form below it. */
+  readonly isPrimary?: boolean
 }
 
 function GoogleLogo() {
@@ -64,7 +66,7 @@ const addressOf = (path: string, from: string | undefined) =>
   `${window.location.origin}${path}${from ? `?from=${encodeURIComponent(from)}` : ""}`
 
 /** "Continue with Google": leaves for Google and comes back signed in. */
-export function GoogleButton({ from, getRegistration }: GoogleButtonProps) {
+export function GoogleButton({ from, getRegistration, isPrimary = false }: GoogleButtonProps) {
   const { t } = useTranslation()
   const [isPending, setIsPending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -106,7 +108,7 @@ export function GoogleButton({ from, getRegistration }: GoogleButtonProps) {
       ) : null}
       <Button
         type="button"
-        variant="outline"
+        variant={isPrimary ? "default" : "outline"}
         size="lg"
         className="w-full"
         disabled={isPending}
