@@ -71,7 +71,9 @@ export function authErrorMessage(
 
 /** The Google account has no account here: sign-up is the way on. */
 export const isGoogleSignUpRequired = (code: string | undefined) =>
-  code === "signup_disabled" || code === "new_user_signup_disabled"
+  code === "GOOGLE_SIGNUP_REQUIRED" ||
+  code === "signup_disabled" ||
+  code === "new_user_signup_disabled"
 
 /**
  * The message for the `error` code BetterAuth puts on the return address when
@@ -82,6 +84,7 @@ export function googleErrorMessage(t: TFunction, code: string) {
     // BetterAuth's code for a Google account with no account here, when the
     // sign-in page does not create one: "signup disabled" with spaces turned
     // into underscores. The other spelling is its older/generic-OAuth one.
+    case "GOOGLE_SIGNUP_REQUIRED":
     case "signup_disabled":
     case "new_user_signup_disabled":
       return t("auth.errors.googleNoAccount")

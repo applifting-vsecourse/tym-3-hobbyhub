@@ -18,6 +18,9 @@ const SIGN_UP_PATH = '/sign-up/email';
 const SOCIAL_SIGN_IN_PATH = '/sign-in/social';
 const OAUTH_CALLBACK_PREFIX = '/callback/';
 
+/** Code on the return address when a Google account still has to sign up. */
+export const GOOGLE_SIGNUP_REQUIRED = 'GOOGLE_SIGNUP_REQUIRED';
+
 // The nickname is changed only through the profile (PATCH /api/profile),
 // which keeps the three columns together and waits 30 days between changes.
 // #262: the language too, through PUT /api/profile/language.
@@ -173,9 +176,13 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
               }
             | undefined;
           if (!registration) {
+            // A Google account with no account here, signing in. BetterAuth
+            // puts the code and this message on the return address
+            // (`error`, `error_description`): the message carries the Google
+            // e-mail, so the sign-up page can greet that account.
             throw APIError.from('BAD_REQUEST', {
-              code: 'REGISTRATION_REQUIRED',
-              message: 'Sign up through the registration form first',
+              code: GOOGLE_SIGNUP_REQUIRED,
+              message: user.email,
             });
           }
           const { username, gender, birthYear, preferredLanguage } =

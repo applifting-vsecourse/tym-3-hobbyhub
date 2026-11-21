@@ -76,13 +76,14 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
     expect(result.data.adulthoodConfirmedAt).toBeInstanceOf(Date);
   });
 
-  it('refuses an account created without going through the sign-up form', async () => {
+  it('refuses an account created without the sign-up form, and says which Google e-mail it was', async () => {
     jest.mocked(getOAuthState).mockResolvedValue({} as never);
 
     await expect(
       createBefore(user, { path: '/callback/google' } as never),
     ).rejects.toMatchObject({
-      body: { code: 'REGISTRATION_REQUIRED' },
+      // The message is the Google e-mail: the sign-up page greets that account.
+      body: { code: 'GOOGLE_SIGNUP_REQUIRED', message: 'jana@example.com' },
     });
   });
 

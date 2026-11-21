@@ -52,9 +52,9 @@ const createAuth = (
             google: {
               clientId: config.googleClientId,
               clientSecret: config.googleClientSecret,
-              // Signing in never creates an account: that takes the sign-up
-              // form (gender, year of birth, 18+, terms), see the hooks.
-              disableImplicitSignUp: true,
+              // An account is created only through the sign-up form (gender,
+              // year of birth, 18+, terms): the database hook refuses a Google
+              // user that did not come through it, see the hooks.
               // Always let the user pick the Google account; otherwise Google
               // silently signs in the one used last in this browser.
               prompt: 'select_account' as const,

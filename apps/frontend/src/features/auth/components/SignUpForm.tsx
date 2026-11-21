@@ -118,8 +118,6 @@ const defaultValues: DefaultValues<FormValues> = {
 type SignUpFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
-  /** Information above the form, not an error. */
-  readonly noticeMessage?: string | null
   /**
    * The visitor signs up with Google: no e-mail or password, only the personal
    * fields and consents, and Google is the way to finish.
@@ -136,7 +134,6 @@ type SignUpFormProps = {
 export function SignUpForm({
   isLoading,
   errorMessage,
-  noticeMessage,
   isGoogleOnly = false,
   onSubmit,
   renderGoogle,
@@ -195,12 +192,6 @@ export function SignUpForm({
       isGuarded={false}
       className="flex flex-col gap-4"
     >
-      {noticeMessage ? (
-        <Alert>
-          <AlertDescription>{noticeMessage}</AlertDescription>
-        </Alert>
-      ) : null}
-
       {errorMessage ? (
         <Alert variant="destructive">
           <AlertDescription>{errorMessage}</AlertDescription>

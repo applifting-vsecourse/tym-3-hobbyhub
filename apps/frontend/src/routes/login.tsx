@@ -24,19 +24,28 @@ const loginSearchParamsSchema = z.object({
   from: z.string().optional(),
   // Set by BetterAuth when the round trip to Google fails.
   error: z.string().optional(),
+  // With `GOOGLE_SIGNUP_REQUIRED`: the e-mail of the Google account.
+  error_description: z.string().optional(),
 })
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   validateSearch: loginSearchParamsSchema,
-  loaderDeps: ({ search }) => ({ from: search.from, error: search.error }),
+  loaderDeps: ({ search }) => ({
+    from: search.from,
+    error: search.error,
+    email: search.error_description,
+  }),
   loader: async ({ context, deps }) => {
     const session = await context.queryClient.ensureQueryData(authSessionQueryOptions())
     if (!session) {
       // A Google account without an account here is not an error: it signs up,
       // which asks what Google cannot tell us (nickname, year, consents).
       if (isGoogleSignUpRequired(deps.error)) {
-        throw redirect({ to: ROUTES.signup, search: { from: deps.from, notice: "google" } })
+        throw redirect({
+          to: ROUTES.signup,
+          search: { from: deps.from, googleEmail: deps.email ?? "" },
+        })
       }
       return
     }

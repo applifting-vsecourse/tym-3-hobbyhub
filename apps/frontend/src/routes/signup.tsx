@@ -21,9 +21,9 @@ const signUpSearchParamsSchema = z.object({
   from: z.string().optional(),
   // Set by BetterAuth when the round trip to Google fails.
   error: z.string().optional(),
-  // "google": the visitor came from signing in with a Google account that has no
-  // account here yet.
-  notice: z.literal("google").optional(),
+  // Set (possibly empty) when the visitor came from signing in with a Google
+  // account that has no account here yet: its e-mail.
+  googleEmail: z.string().optional(),
 })
 
 export const Route = createFileRoute("/signup")({
@@ -37,7 +37,8 @@ export const Route = createFileRoute("/signup")({
 })
 
 function SignUpPage() {
-  const { from, error: googleError, notice } = Route.useSearch()
+  const { from, error: googleError, googleEmail } = Route.useSearch()
+  const isGoogleSignUp = googleEmail !== undefined
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signUp = useSignUp()
@@ -59,23 +60,33 @@ function SignUpPage() {
 
   return (
     <>
-      <Seo title={t("auth.signUp.title")} />
+      <Seo title={t(isGoogleSignUp ? "auth.signUp.googleTitle" : "auth.signUp.title")} />
       <AuthLayout
-        title={t("auth.signUp.title")}
-        description={t(from ? "auth.signUp.descriptionReturn" : "auth.signUp.description")}
+        title={t(isGoogleSignUp ? "auth.signUp.googleTitle" : "auth.signUp.title")}
+        description={
+          isGoogleSignUp
+            ? googleEmail
+              ? t("auth.signUp.googleDescription", { email: googleEmail })
+              : t("auth.signUp.googleDescriptionNoEmail")
+            : t(from ? "auth.signUp.descriptionReturn" : "auth.signUp.description")
+        }
         backTo={redirectTarget(from, ROUTES.home)}
+        // Someone who has just come from Google has no use for "I already
+        // have an account".
         footer={
-          <Button
-            asChild
-            variant="link"
-          >
-            <Link
-              to={ROUTES.login}
-              search={{ from }}
+          isGoogleSignUp ? null : (
+            <Button
+              asChild
+              variant="link"
             >
-              {t("auth.signUp.signInLink")}
-            </Link>
-          </Button>
+              <Link
+                to={ROUTES.login}
+                search={{ from }}
+              >
+                {t("auth.signUp.signInLink")}
+              </Link>
+            </Button>
+          )
         }
       >
         <SignUpForm
@@ -87,13 +98,14 @@ function SignUpPage() {
                 ? googleErrorMessage(t, googleError)
                 : null
           }
-          noticeMessage={notice === "google" ? t("auth.signUp.googleNotice") : null}
-          isGoogleOnly={notice === "google"}
+          isGoogleOnly={isGoogleSignUp}
           renderGoogle={(getRegistration) => (
             <GoogleButton
               from={from}
               getRegistration={getRegistration}
-              isPrimary={notice === "google"}
+              isPrimary={isGoogleSignUp}
+              label={isGoogleSignUp ? t("auth.signUp.finishGoogle") : undefined}
+              loginHint={googleEmail === "" ? undefined : googleEmail}
             />
           )}
           onSubmit={handleSubmit}

@@ -78,6 +78,7 @@ describe("googleErrorMessage", () => {
 
 describe("isGoogleSignUpRequired", () => {
   it("recognises a Google account without an account here", () => {
+    expect(isGoogleSignUpRequired("GOOGLE_SIGNUP_REQUIRED")).toBe(true)
     expect(isGoogleSignUpRequired("signup_disabled")).toBe(true)
     expect(isGoogleSignUpRequired("new_user_signup_disabled")).toBe(true)
   })
