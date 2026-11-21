@@ -3,11 +3,11 @@ import { api } from "@/lib/api-client"
 import {
   eventSchema,
   type CancelEventInput,
-  type CreateEventInput,
   type Event,
+  type UpdateEventInput,
 } from "@/features/event/api/eventSchemas"
 
-export async function updateEvent(id: string, input: CreateEventInput): Promise<Event> {
+export async function updateEvent(id: string, input: UpdateEventInput): Promise<Event> {
   const json = await api.patch(`events/${id}`, { json: input }).json()
   return eventSchema.parse(json)
 }

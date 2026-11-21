@@ -19,10 +19,10 @@ import { containsInAny } from '@/shared/search/folded-search';
 // typo like "Brnoo". Similarity search (e.g. pg_trgm `similarity`, ranked by
 // closeness) belongs here. The radius filter is not text: see `listCondition`
 // in event.repository.ts (#261).
-// A private venue is someone's home: its name is never matched, like it is
-// never shown.
+// A hidden address may be someone's home: its name is never matched, like it
+// is never shown (#218).
 const PLACE_COLUMNS = [
-  Prisma.sql`CASE WHEN e."venueType" = 'PUBLIC_VENUE' THEN e."locationPlaceName" END`,
+  Prisma.sql`CASE WHEN e."isAddressPublic" THEN e."locationPlaceName" END`,
   Prisma.sql`e."locationCity"`,
   Prisma.sql`e."locationDistrict"`,
 ];

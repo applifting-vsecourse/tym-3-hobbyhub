@@ -36,14 +36,18 @@ import { cn } from "@/lib/utils"
 
 import {
   APPROVAL_MODES,
-  CREATABLE_VENUE_TYPES,
   EVENT_LIMITS,
-  type CreateEventInput,
+  VENUE_TYPES,
   type Event,
+  type UpdateEventInput,
 } from "@/features/event/api/eventSchemas"
 import { EventPreview } from "@/features/event/components/EventPreview"
 import { contactKind } from "@/features/event/lib/contact"
 import { combineDateTime, splitDateTime } from "@/features/event/lib/eventDateTime"
+
+// #218, ADR-0029: who sees the exact address of a place. Sent as
+// `isAddressPublic`; the hidden one comes first, as the safer default.
+const ADDRESS_VISIBILITIES = ["afterApproval", "public"] as const
 
 // Characters as the server and database count them: an emoji is one, not the
 // two UTF-16 units of `string.length`.
@@ -117,7 +121,8 @@ const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOn
           (value) => value === "" || contactKind(value) !== null,
           t("events.validation.contactInvalid"),
         ),
-        venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
+        venueType: z.enum(VENUE_TYPES),
+        addressVisibility: z.enum(ADDRESS_VISIBILITIES),
         approvalMode: z.enum(APPROVAL_MODES),
       })
       // Rules between fields. Each lands on the field the organizer has to change.
@@ -203,7 +208,9 @@ const defaultValues = (t: TFunction): FormValues => ({
   equipment: "",
   externalChatUrl: "",
   contact: "",
-  venueType: "PUBLIC_VENUE",
+  venueType: "PLACE",
+  // #218: safer by default; the organizer makes an address public on purpose.
+  addressVisibility: "afterApproval",
   approvalMode: "MANUAL",
 })
 
@@ -247,6 +254,7 @@ const valuesOfEvent = (event: Event): FormValues => {
     externalChatUrl: event.externalChatUrl ?? "",
     contact: event.contact ?? "",
     venueType: event.venueType,
+    addressVisibility: event.isAddressPublic ? "public" : "afterApproval",
     approvalMode: event.approvalMode,
   }
 }
@@ -261,7 +269,7 @@ const withPosition = async (values: FormValues, language: string): Promise<FormV
 }
 
 // Optional fields left empty are not sent at all. Dates are validated by then.
-const toInput = (values: FormValues): CreateEventInput => {
+const toInput = (values: FormValues): UpdateEventInput => {
   const start = combineDateTime(values.startDate, values.startTime)
   const end = combineDateTime(values.endDate, values.endTime)
   if (!start || !end) throw new Error("EventForm: submitted without a valid date")
@@ -272,6 +280,7 @@ const toInput = (values: FormValues): CreateEventInput => {
     description: values.description.trim(),
     equipment: values.equipment.trim() || undefined,
     venueType: values.venueType,
+    isAddressPublic: values.venueType !== "ONLINE" && values.addressVisibility === "public",
     approvalMode: values.approvalMode,
     startAt: start.toISOString(),
     endAt: end.toISOString(),
@@ -321,6 +330,7 @@ const STEP_FIELDS: Record<Step, (keyof FormValues)[]> = {
     "postalCode",
     "country",
     "placeName",
+    "addressVisibility",
   ],
   who: [
     "minParticipants",
@@ -330,7 +340,7 @@ const STEP_FIELDS: Record<Step, (keyof FormValues)[]> = {
     "contributionAmount",
     "contributionNote",
   ],
-  details: ["description", "equipment", "externalChatUrl", "contact", "venueType"],
+  details: ["description", "equipment", "externalChatUrl", "contact"],
 }
 
 export type ActivityOption = {
@@ -350,7 +360,7 @@ type EventFormProps = {
   readonly onRetryActivities: () => void
   readonly isSubmitting: boolean
   readonly errorMessage?: string | null
-  readonly onSubmit: (values: CreateEventInput) => void | Promise<void>
+  readonly onSubmit: (values: UpdateEventInput) => void | Promise<void>
   /** The event being edited (F-05.10); without it the form creates a new one. */
   readonly event?: Event
   /** Round back button of the first phone step (a link to the previous page). */
@@ -597,7 +607,10 @@ function WhatFields({
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
   // An online event has no address to ask for.
-  const venueType = useWatch({ control: form.control, name: "venueType" })
+  const [venueType, addressVisibility] = useWatch({
+    control: form.control,
+    name: ["venueType", "addressVisibility"],
+  })
 
   const activityPlaceholder = isActivitiesLoading
     ? t("events.form.activityLoading")
@@ -738,6 +751,14 @@ function WhatFields({
             name="placeName"
             label={t("events.fields.placeName")}
             placeholder={t("events.placeholders.placeName")}
+          />
+          {/* #218: instead of a type of place, who sees the exact address. */}
+          <ChipChoiceField
+            name="addressVisibility"
+            label={t("events.fields.addressVisibility")}
+            options={ADDRESS_VISIBILITIES}
+            optionLabel={(option) => t(`events.addressVisibility.${option}`)}
+            description={t(`events.addressVisibilityHint.${addressVisibility}`)}
           />
         </fieldset>
       )}
@@ -887,8 +908,6 @@ function WhoFields() {
 function DetailsFields() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
-  // The kind of an online event is not up to the organizer (ADR-0006).
-  const venueType = useWatch({ control: form.control, name: "venueType" })
 
   return (
     <>
@@ -928,14 +947,6 @@ function DetailsFields() {
         label={t("events.fields.contact")}
         placeholder={t("events.placeholders.contact")}
       />
-      {venueType === "ONLINE" ? null : (
-        <ChipChoiceField
-          name="venueType"
-          label={t("events.fields.venueType")}
-          options={CREATABLE_VENUE_TYPES}
-          optionLabel={(venueType) => t(`events.venueType.${venueType}`)}
-        />
-      )}
     </>
   )
 }
@@ -1038,7 +1049,7 @@ function TextField({ name, label, description, ...inputProps }: TextFieldProps) 
 }
 
 type ChipChoiceFieldProps<Option extends string> = {
-  readonly name: "venueType" | "approvalMode"
+  readonly name: "addressVisibility" | "approvalMode"
   readonly label: string
   readonly options: readonly Option[]
   readonly optionLabel: (option: Option) => string

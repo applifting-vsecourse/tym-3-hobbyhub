@@ -3,6 +3,7 @@ import {
   Event,
   EventLocation,
   ParticipantEventInfo,
+  VENUE_TYPES,
 } from '@/modules/event/domain/event';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -62,8 +63,14 @@ export class EventResponseDto {
   @ApiProperty({ enum: ['PUBLIC', 'GROUP_ONLY', 'PRIVATE'] })
   visibility!: Event['visibility'];
 
-  @ApiProperty({ enum: ['PUBLIC_VENUE', 'PRIVATE_VENUE', 'ONLINE'] })
+  @ApiProperty({ enum: VENUE_TYPES })
   venueType!: Event['venueType'];
+
+  @ApiProperty({
+    description:
+      'Whether everyone who sees the event sees its exact address (#218)',
+  })
+  isAddressPublic!: boolean;
 
   @ApiProperty({ type: String, format: 'date-time' })
   startAt!: Date;
@@ -144,6 +151,7 @@ export class EventResponseDto {
       status: event.status,
       visibility: event.visibility,
       venueType: event.venueType,
+      isAddressPublic: event.isAddressPublic,
       startAt: event.startAt,
       endAt: event.endAt,
       publishedAt: event.publishedAt,
@@ -174,7 +182,7 @@ export class EventResponseDto {
 
 // F-06.5: only for the organizers and the approved participants of an event.
 export class ParticipantEventInfoResponseDto {
-  @ApiProperty({ enum: ['PUBLIC_VENUE', 'PRIVATE_VENUE', 'ONLINE'] })
+  @ApiProperty({ enum: VENUE_TYPES })
   venueType!: ParticipantEventInfo['venueType'];
 
   @ApiProperty({ type: EventLocationResponseDto, nullable: true })
