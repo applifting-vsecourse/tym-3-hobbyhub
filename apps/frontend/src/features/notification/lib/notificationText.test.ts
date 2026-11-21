@@ -13,6 +13,7 @@ const aNotification = (overrides: Partial<Notification> = {}): Notification => (
   actor: { id: "u2", name: "Honza_K" },
   event: { id: "e1", title: "Čtvrteční florbal" },
   group: null,
+  friendRequest: null,
   decision: null,
   message: null,
   changes: [],
@@ -290,4 +291,28 @@ describe("notificationTarget", () => {
   it("leads nowhere once the event is gone", () => {
     expect(notificationTarget(aNotification({ event: null }))).toBeNull()
   })
+})
+
+// #228: a friend request and its acceptance are about a person, not an event.
+describe("friend requests", () => {
+  const aboutFriendship = (type: "FRIEND_REQUEST" | "FRIEND_REQUEST_ACCEPTED"): Notification =>
+    aNotification({
+      type,
+      event: null,
+      friendRequest: { id: "fr1", status: "PENDING" },
+    })
+
+  it.each([
+    ["FRIEND_REQUEST", "Honza_K vás žádá o přátelství"],
+    ["FRIEND_REQUEST_ACCEPTED", "Honza_K přijal(a) vaši žádost o přátelství"],
+  ] as const)("says %s in a sentence", (type, text) => {
+    expect(notificationText(i18n.t, aboutFriendship(type))).toBe(text)
+  })
+
+  it.each(["FRIEND_REQUEST", "FRIEND_REQUEST_ACCEPTED"] as const)(
+    "sends %s to the profile of the other person",
+    (type) => {
+      expect(notificationTarget(aboutFriendship(type))).toEqual({ kind: "profile", userId: "u2" })
+    },
+  )
 })

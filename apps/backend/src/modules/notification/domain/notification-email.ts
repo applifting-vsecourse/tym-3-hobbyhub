@@ -222,6 +222,18 @@ const groupDraft = (
   }
 };
 
+// #228: a friend request. Like every e-mail it does not say who asks; the
+// name is behind the button. Its acceptance has no e-mail, only the bell.
+const friendRequestDraft = (notification: Notification): Draft | null =>
+  notification.type === 'FRIEND_REQUEST'
+    ? {
+        heading: 'Máš novou žádost o přátelství',
+        body: 'Kdo tě žádá, uvidíš v aplikaci. Žádost můžeš přijmout nebo zamítnout v sekci Přátelé.',
+        buttonLabel: 'Zobrazit žádosti',
+        path: '/friends?tab=requests',
+      }
+    : null;
+
 /**
  * The e-mail of a notification, or null when it has none: a type nothing
  * creates yet (F-05.8, F-05.9 …), or the event or group is gone.
@@ -245,11 +257,13 @@ const standaloneDraft = (notification: Notification): Draft | null => {
 export const notificationEmailOf = (
   notification: Notification,
 ): NotificationEmailContent | null => {
-  const draft = notification.event
-    ? eventDraft(notification, notification.event.id)
-    : notification.group
-      ? groupDraft(notification, notification.group.id)
-      : standaloneDraft(notification);
+  const draft = notification.friendRequest
+    ? friendRequestDraft(notification)
+    : notification.event
+      ? eventDraft(notification, notification.event.id)
+      : notification.group
+        ? groupDraft(notification, notification.group.id)
+        : standaloneDraft(notification);
   if (!draft) return null;
   return {
     ...draft,

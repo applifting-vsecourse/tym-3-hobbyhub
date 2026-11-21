@@ -19,6 +19,7 @@ const include = {
   actor: { select: { id: true, name: true } },
   event: { select: { id: true, title: true } },
   group: { select: { id: true, name: true } },
+  friendRequest: { select: { id: true, status: true } },
 } as const satisfies Prisma.NotificationInclude;
 
 type NotificationRow = Prisma.NotificationGetPayload<{
@@ -51,6 +52,7 @@ const mapToDomain = (row: NotificationRow): Notification => ({
   actor: row.actor,
   event: row.event,
   group: row.group,
+  friendRequest: row.friendRequest,
 });
 
 // A kind is the set of its types; without one, every type.
@@ -72,6 +74,7 @@ export class NotificationRepository {
         actorId: data.actorId,
         eventId: data.eventId ?? null,
         groupId: data.groupId ?? null,
+        friendRequestId: data.friendRequestId ?? null,
         payload: (data.payload ?? {}) as Prisma.InputJsonObject,
       })),
       select: { id: true },
@@ -150,6 +153,29 @@ export class NotificationRepository {
       include,
     });
     return row ? mapToDomain(row) : null;
+  }
+
+  // #228: a withdrawn friend request takes its notifications away, read or
+  // not. Returns how many went.
+  async deleteOfFriendRequest(friendRequestId: string): Promise<number> {
+    const { count } = await this.prisma.notification.deleteMany({
+      where: { friendRequestId },
+    });
+    return count;
+  }
+
+  // #228: the recipient decided the request elsewhere (the tab, the profile),
+  // so its notification counts as seen.
+  async markReadOfFriendRequest(
+    recipientId: string,
+    friendRequestId: string,
+    at: Date,
+  ): Promise<number> {
+    const { count } = await this.prisma.notification.updateMany({
+      where: { recipientId, friendRequestId, readAt: null },
+      data: { readAt: at },
+    });
+    return count;
   }
 
   // Returns how many were unread until now.

@@ -371,7 +371,7 @@ describeDb('friendship schema constraints', () => {
         const repository = repositoryOf(tx);
         await expect(
           repository.withdrawPendingRequest(me, other, new Date()),
-        ).resolves.toBe(false);
+        ).resolves.toBeNull();
         expect(
           await tx.friendRequest.findFirstOrThrow({
             where: { senderId: other },
@@ -389,9 +389,12 @@ describeDb('friendship schema constraints', () => {
         });
         const repository = repositoryOf(tx);
         const now = new Date();
+        const request = await tx.friendRequest.findFirstOrThrow({
+          where: { senderId: me },
+        });
         await expect(
           repository.withdrawPendingRequest(me, other, now),
-        ).resolves.toBe(true);
+        ).resolves.toBe(request.id);
         expect(
           await tx.friendRequest.findFirstOrThrow({ where: { senderId: me } }),
         ).toMatchObject({ status: 'WITHDRAWN', decidedAt: now });
@@ -441,6 +444,219 @@ describeDb('friendship schema constraints', () => {
     });
   });
 
+  // #228: deciding a request, the list of requests and their notifications.
+  describe('deciding requests', () => {
+    // The repository opens its own transaction to accept; inside the rolled
+    // back one of the test it runs in that one instead.
+    const repositoryOf = (tx: Prisma.TransactionClient): FriendshipRepository =>
+      new FriendshipRepository(
+        new Proxy(tx, {
+          get: (target, key, receiver): unknown =>
+            key === '$transaction'
+              ? (
+                  work: (inner: Prisma.TransactionClient) => Promise<unknown>,
+                ): Promise<unknown> => work(target)
+              : Reflect.get(target, key, receiver),
+        }) as unknown as PrismaService,
+      );
+
+    it('accepts: the request is ACCEPTED and the two become friends', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const sender = await createUser(tx);
+        const recipient = await createUser(tx);
+        const request = await tx.friendRequest.create({
+          data: { senderId: sender, recipientId: recipient },
+        });
+        const now = new Date();
+        await expect(
+          repositoryOf(tx).acceptPendingRequest(sender, recipient, now),
+        ).resolves.toBe(request.id);
+        expect(
+          await tx.friendRequest.findUniqueOrThrow({
+            where: { id: request.id },
+          }),
+        ).toMatchObject({ status: 'ACCEPTED', decidedAt: now });
+        await expect(
+          repositoryOf(tx).areFriends(recipient, sender),
+        ).resolves.toBe(true);
+      });
+    });
+
+    it('decides a request only once', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const sender = await createUser(tx);
+        const recipient = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: sender, recipientId: recipient },
+        });
+        const repository = repositoryOf(tx);
+        await repository.acceptPendingRequest(sender, recipient, new Date());
+        await expect(
+          repository.acceptPendingRequest(sender, recipient, new Date()),
+        ).resolves.toBeNull();
+        await expect(
+          repository.rejectPendingRequest(sender, recipient, new Date()),
+        ).resolves.toBeNull();
+        expect(
+          await tx.friendship.count({ where: friendPairOf(sender, recipient) }),
+        ).toBe(1);
+      });
+    });
+
+    it('lets only the recipient decide, never the sender', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const sender = await createUser(tx);
+        const recipient = await createUser(tx);
+        await tx.friendRequest.create({
+          data: { senderId: sender, recipientId: recipient },
+        });
+        const repository = repositoryOf(tx);
+        // The sender would ask "accept what `recipient` sent me".
+        await expect(
+          repository.acceptPendingRequest(recipient, sender, new Date()),
+        ).resolves.toBeNull();
+        await expect(
+          repository.rejectPendingRequest(recipient, sender, new Date()),
+        ).resolves.toBeNull();
+        await expect(repository.areFriends(sender, recipient)).resolves.toBe(
+          false,
+        );
+      });
+    });
+
+    it('rejects: the request is REJECTED, nobody becomes friends, a new one may come', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const sender = await createUser(tx);
+        const recipient = await createUser(tx);
+        const request = await tx.friendRequest.create({
+          data: { senderId: sender, recipientId: recipient },
+        });
+        const repository = repositoryOf(tx);
+        const now = new Date();
+        await expect(
+          repository.rejectPendingRequest(sender, recipient, now),
+        ).resolves.toBe(request.id);
+        expect(
+          await tx.friendRequest.findUniqueOrThrow({
+            where: { id: request.id },
+          }),
+        ).toMatchObject({ status: 'REJECTED', decidedAt: now });
+        await expect(repository.areFriends(sender, recipient)).resolves.toBe(
+          false,
+        );
+        await repository.createRequest(sender, recipient);
+      });
+    });
+
+    it('lists the pending requests to me, newest first, without blocked senders', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const me = await createUser(tx);
+        const older = await createUser(tx, undefined, { name: 'Older' });
+        const newer = await createUser(tx, undefined, { name: 'Newer' });
+        const blocked = await createUser(tx, undefined, { status: 'BLOCKED' });
+        const decided = await createUser(tx);
+        const mine = await createUser(tx);
+        await tx.friendRequest.createMany({
+          data: [
+            {
+              senderId: older,
+              recipientId: me,
+              requestedAt: new Date('2026-11-15T10:00:00Z'),
+            },
+            {
+              senderId: newer,
+              recipientId: me,
+              requestedAt: new Date('2026-11-15T11:00:00Z'),
+            },
+            { senderId: blocked, recipientId: me },
+            {
+              senderId: decided,
+              recipientId: me,
+              status: 'REJECTED',
+              decidedAt: new Date(),
+            },
+            { senderId: me, recipientId: mine },
+          ],
+        });
+        const page = await repositoryOf(tx).listReceivedRequests(me, 0, 20);
+        expect(page.total).toBe(2);
+        expect(page.items.map((item) => item.sender)).toEqual([
+          { id: newer, name: 'Newer', image: null },
+          { id: older, name: 'Older', image: null },
+        ]);
+        await expect(
+          repositoryOf(tx).listReceivedRequests(me, 1, 20),
+        ).resolves.toMatchObject({
+          total: 2,
+          items: [{ sender: { id: older } }],
+        });
+        // The tab's number counts the same requests.
+        await expect(repositoryOf(tx).countReceivedRequests(me)).resolves.toBe(
+          2,
+        );
+        // Review #257: nor from people blocked with me, in both.
+        await expect(
+          repositoryOf(tx).listReceivedRequests(me, 0, 20, [newer]),
+        ).resolves.toMatchObject({
+          total: 1,
+          items: [{ sender: { id: older } }],
+        });
+        await expect(
+          repositoryOf(tx).countReceivedRequests(me, [newer]),
+        ).resolves.toBe(1);
+      });
+    });
+
+    it('takes its notifications with a deleted request (notification_friendRequestId_fkey)', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const sender = await createUser(tx);
+        const recipient = await createUser(tx);
+        const request = await tx.friendRequest.create({
+          data: { senderId: sender, recipientId: recipient },
+        });
+        await tx.notification.create({
+          data: {
+            type: 'FRIEND_REQUEST',
+            recipientId: recipient,
+            actorId: sender,
+            friendRequestId: request.id,
+          },
+        });
+        // A deleted sender takes the request (friend_request_senderId_fkey)
+        // and the request its notification. Not deleted through the user
+        // here: within the one transaction that also wrote the notification,
+        // PostgreSQL rechecks this key when SET NULL clears `actorId` of the
+        // row first, which a notification written earlier never meets.
+        await tx.friendRequest.delete({ where: { id: request.id } });
+        await expect(
+          tx.notification.count({ where: { recipientId: recipient } }),
+        ).resolves.toBe(0);
+      });
+    });
+
+    it('notifications of a request go with its recipient', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const sender = await createUser(tx);
+        const recipient = await createUser(tx);
+        const request = await tx.friendRequest.create({
+          data: { senderId: sender, recipientId: recipient },
+        });
+        await tx.notification.create({
+          data: {
+            type: 'FRIEND_REQUEST_ACCEPTED',
+            recipientId: sender,
+            actorId: recipient,
+            friendRequestId: request.id,
+          },
+        });
+        await tx.user.delete({ where: { id: sender } });
+        await expect(
+          tx.notification.count({ where: { friendRequestId: request.id } }),
+        ).resolves.toBe(0);
+      });
+    });
+  });
+
   // #239, ADR-0022, ADR-0026: blocking a pair ends what ties them together.
   describe('removeBlockedPair', () => {
     // The repository opens its own transaction; inside the rolled back one of
@@ -450,8 +666,12 @@ describeDb('friendship schema constraints', () => {
         new Proxy(tx, {
           get: (target, key, receiver): unknown =>
             key === '$transaction'
-              ? (work: Promise<unknown>[]): Promise<unknown[]> =>
-                  Promise.all(work)
+              ? (
+                  work:
+                    | Promise<unknown>[]
+                    | ((tx: Prisma.TransactionClient) => Promise<unknown>),
+                ): Promise<unknown> =>
+                  typeof work === 'function' ? work(tx) : Promise.all(work)
               : Reflect.get(target, key, receiver),
         }) as unknown as PrismaService,
       );
@@ -480,7 +700,26 @@ describeDb('friendship schema constraints', () => {
         });
         const now = new Date('2030-01-01T12:00:00Z');
 
+        // #228 (review #257): the notification of the closed request goes
+        // in the same transaction; the one of the request outside stays.
+        const notificationOf = (
+          friendRequestId: string,
+          recipientId: string,
+        ): Promise<{ id: string }> =>
+          tx.notification.create({
+            data: { type: 'FRIEND_REQUEST', recipientId, friendRequestId },
+          });
+        const closedNote = await notificationOf(pending.id, b);
+        const otherNote = await notificationOf(other.id, b);
+
         await repositoryOf(tx).removeBlockedPair(b, a, now);
+
+        await expect(
+          tx.notification.count({ where: { id: closedNote.id } }),
+        ).resolves.toBe(0);
+        await expect(
+          tx.notification.count({ where: { id: otherNote.id } }),
+        ).resolves.toBe(1);
 
         await expect(
           tx.friendship.count({ where: friendPairOf(a, b) }),

@@ -23,15 +23,18 @@ import {
 } from '@nestjs/swagger';
 import {
   FriendRelationResponseDto,
+  FriendRequestCountResponseDto,
   FriendSearchPageResponseDto,
+  ReceivedFriendRequestPageResponseDto,
 } from './dto/friends.response.dto';
+import { ListReceivedFriendRequestsQuery } from './dto/list-received-friend-requests.query';
 import { SearchFriendsQuery } from './dto/search-friends.query';
 import { SendFriendRequestDto } from './dto/send-friend-request.dto';
 import { friendsValidationPipe } from './friends-validation.pipe';
 
-// #225, ADR-0026: finding people, asking them to become friends and taking
-// the request back. Who acts
-// is the signed-in user, never an id from the request.
+// #225, #228, ADR-0026: finding people, asking them to become friends, taking
+// the request back, and deciding the requests I received. Who acts is the
+// signed-in user, never an id from the request.
 @ApiTags('friends')
 @Controller('friends')
 @UseGuards(AuthenticatedUserGuard)
@@ -96,6 +99,81 @@ export class FriendsController {
   ): Promise<FriendRelationResponseDto> {
     return {
       relation: await this.friendshipService.withdrawRequest(user, recipientId),
+    };
+  }
+
+  @Get('requests/received')
+  @ApiOperation({
+    summary: 'The friend requests waiting for my decision, newest first',
+  })
+  @ApiResponse({ status: 200, type: ReceivedFriendRequestPageResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid offset' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async listReceivedRequests(
+    @User() user: Identity,
+    @Query() query: ListReceivedFriendRequestsQuery,
+  ): Promise<ReceivedFriendRequestPageResponseDto> {
+    return ReceivedFriendRequestPageResponseDto.fromDomain(
+      await this.friendshipService.listReceivedRequests(user, query.offset),
+    );
+  }
+
+  @Get('requests/received/count')
+  @ApiOperation({
+    summary: 'How many friend requests wait for my decision (the tab badge)',
+  })
+  @ApiResponse({ status: 200, type: FriendRequestCountResponseDto })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async countReceivedRequests(
+    @User() user: Identity,
+  ): Promise<FriendRequestCountResponseDto> {
+    return {
+      count: await this.friendshipService.countReceivedRequests(user),
+    };
+  }
+
+  @Post('requests/:senderId/accept')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Accept the pending friend request this person sent me',
+  })
+  @ApiResponse({ status: 200, type: FriendRelationResponseDto })
+  @ApiResponse({ status: 400, description: 'From oneself' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 404, description: 'No such user' })
+  @ApiResponse({
+    status: 409,
+    description: 'No pending request from them (decided or withdrawn)',
+  })
+  async acceptRequest(
+    @User() user: Identity,
+    @Param('senderId') senderId: string,
+  ): Promise<FriendRelationResponseDto> {
+    return {
+      relation: await this.friendshipService.acceptRequest(user, senderId),
+    };
+  }
+
+  @Post('requests/:senderId/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Reject the pending friend request this person sent me; they are not told',
+  })
+  @ApiResponse({ status: 200, type: FriendRelationResponseDto })
+  @ApiResponse({ status: 400, description: 'From oneself' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  @ApiResponse({ status: 404, description: 'No such user' })
+  @ApiResponse({
+    status: 409,
+    description: 'No pending request from them (decided or withdrawn)',
+  })
+  async rejectRequest(
+    @User() user: Identity,
+    @Param('senderId') senderId: string,
+  ): Promise<FriendRelationResponseDto> {
+    return {
+      relation: await this.friendshipService.rejectRequest(user, senderId),
     };
   }
 }

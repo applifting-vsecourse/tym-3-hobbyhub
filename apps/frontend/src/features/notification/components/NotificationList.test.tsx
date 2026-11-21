@@ -24,6 +24,7 @@ const aNotification = (n: number) => ({
   actor: { id: "u2", name: "Honza_K" },
   event: { id: `e${n}`, title: `Akce číslo ${String(n).padStart(2, "0")}` },
   group: null,
+  friendRequest: null,
   decision: null,
   message: null,
   changes: [],

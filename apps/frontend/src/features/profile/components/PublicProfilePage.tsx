@@ -37,6 +37,7 @@ export function PublicProfilePage({
    */
   renderFriendAction?: (props: {
     userId: string
+    userName: string
     relation: PublicProfile["relation"]
     reload: () => Promise<unknown>
   }) => ReactNode
@@ -96,6 +97,7 @@ export function PublicProfilePage({
               activityLabel={activityLabel}
               friendAction={renderFriendAction?.({
                 userId: profile.data.id,
+                userName: profile.data.name,
                 relation: profile.data.relation,
                 reload: () => profile.refetch(),
               })}

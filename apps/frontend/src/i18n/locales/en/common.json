@@ -871,6 +871,26 @@
       "request_received": "Wants to be friends",
       "request_sent": "Request sent"
     },
+    "requests": {
+      "accept": "Accept",
+      "acceptLabel": "Accept the friend request from {{name}}",
+      "accepting": "Accepting…",
+      "decideError": "The request could not be handled. Please try again.",
+      "error": "The requests could not be loaded.",
+      "list": "Friend requests",
+      "loadMore": "Load more",
+      "loadMoreError": "More requests could not be loaded. Try again.",
+      "loading": "Loading the requests…",
+      "loadingMore": "Loading…",
+      "reject": "Decline",
+      "rejectLabel": "Decline the friend request from {{name}}",
+      "rejecting": "Declining…",
+      "retry": "Try again",
+      "stale": "This request is no longer current.",
+      "unavailable": "This account is no longer available, so the request cannot be handled.",
+      "waiting_one": "{{count}} request waiting",
+      "waiting_other": "{{count}} requests waiting"
+    },
     "search": {
       "capped": "More people match than we can show. Narrow the nickname.",
       "error": "The search failed.",
@@ -1685,6 +1705,10 @@
     "bellUnread_one": "Notifications, {{count}} unread",
     "bellUnread_other": "Notifications, {{count}} unread",
     "deletedTarget": "a deleted event",
+    "friendRequest": {
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Declined"
+    },
     "justNow": "just now",
     "kinds": {
       "all": "All",
@@ -1737,6 +1761,8 @@
         "upcoming": "{{title}} starts {{when}}"
       },
       "EVENT_RESTORED": "The event {{title}} is back",
+      "FRIEND_REQUEST": "{{name}} is asking you to be friends",
+      "FRIEND_REQUEST_ACCEPTED": "{{name}} accepted your friend request",
       "HOSTED_EVENT_REMINDER": {
         "belowMinimum_one": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participant short of the minimum",
         "belowMinimum_other": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participants short of the minimum",
