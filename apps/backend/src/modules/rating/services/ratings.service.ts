@@ -162,17 +162,20 @@ export class RatingsService {
     now: Date = new Date(),
   ): Promise<string[]> {
     if (eventIds.length === 0) return [];
-    const [events, seats, rated, hidden] = await Promise.all([
+    const [events, seats, rated, hidden, blocked] = await Promise.all([
       this.repository.getEventFactsOf(eventIds),
       this.repository.getSeatStatuses(user.id, eventIds),
       this.repository.getOrganizerRatedEventIds(user.id, eventIds),
       this.blocks.hiddenFor(user.id),
+      this.blocks.blockedBy(user.id),
     ]);
     return events
       .filter((event) => {
         // Blocked from an organizer, the event does not exist for them.
         const organizerIds = [event.organizerId, ...event.coOrganizerIds];
         if (organizerIds.some((id) => hidden.includes(id))) return false;
+        // #65, ADR-0028: whoever blocked the organizer does not rate them.
+        if (blocked.includes(event.organizerId)) return false;
         return (
           organizerRatingViolations({
             event,
@@ -207,10 +210,12 @@ export class RatingsService {
     if (events.length === 0) return new Map();
 
     const ids = events.map(({ id }) => id);
+    // #65, ADR-0028: the same people as the list to rate, so the count can
+    // reach zero; whoever the organizer blocked is not rated.
     const [seats, rated, hidden] = await Promise.all([
       this.repository.getRateableSeatsAt(ids),
       this.repository.getParticipantsRatedBy(user.id, ids),
-      this.blocks.hiddenFor(user.id),
+      this.blocks.mutedFor(user.id),
     ]);
     const isRated = (eventId: string, participantId: string): boolean =>
       rated.some(

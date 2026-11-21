@@ -227,11 +227,14 @@ describe('RatingsService', () => {
       seats = {},
       rated = [],
       hidden = [],
+      blocked = [],
     }: {
       events: RatingEventFacts[];
       seats?: Record<string, SeatStatus>;
       rated?: string[];
       hidden?: string[];
+      /** #65: the people the one asking blocked themselves. */
+      blocked?: string[];
     }): {
       repository: MockProxy<RatingRepository>;
       service: RatingsService;
@@ -244,6 +247,7 @@ describe('RatingsService', () => {
       repository.getOrganizerRatedEventIds.mockResolvedValue(rated);
       const blocks = mock<UserBlockVisibility>();
       blocks.hiddenFor.mockResolvedValue(hidden);
+      blocks.blockedBy.mockResolvedValue(blocked);
       return { repository, service: new RatingsService(repository, blocks) };
     };
 
@@ -309,6 +313,39 @@ describe('RatingsService', () => {
       ).resolves.toEqual([]);
     });
 
+    // #65, ADR-0028: rateOrganizer refuses them, so the list must not offer it.
+    it('leaves out an event whose main organizer the person blocked', async () => {
+      const { service } = listSetup({
+        events: [
+          anEvent({ id: 'blocked' }),
+          anEvent({ id: 'other', organizerId: 'org2' }),
+        ],
+        seats: { blocked: 'APPROVED', other: 'APPROVED' },
+        blocked: ['org'],
+      });
+
+      await expect(
+        service.getEventsToRateOrganizer(
+          asUser('p1'),
+          ['blocked', 'other'],
+          now,
+        ),
+      ).resolves.toEqual(['other']);
+    });
+
+    it('keeps an event whose co-organizer the person blocked', async () => {
+      const { service } = listSetup({
+        events: [anEvent({ id: 'e1' })],
+        seats: { e1: 'APPROVED' },
+        blocked: ['co'],
+      });
+
+      // Only the main organizer is rated, and the person did not block them.
+      await expect(
+        service.getEventsToRateOrganizer(asUser('p1'), ['e1'], now),
+      ).resolves.toEqual(['e1']);
+    });
+
     it('asks nothing for an empty page', async () => {
       const { repository, service } = listSetup({ events: [] });
 
@@ -326,11 +363,14 @@ describe('RatingsService', () => {
       seats = [],
       rated = [],
       hidden = [],
+      blocked = [],
     }: {
       events: RatingEventFacts[];
       seats?: { eventId: string; userId: string; status: SeatStatus }[];
       rated?: { eventId: string; participantId: string }[];
       hidden?: string[];
+      /** #65: the people the organizer blocked themselves. */
+      blocked?: string[];
     }): {
       repository: MockProxy<RatingRepository>;
       service: RatingsService;
@@ -341,6 +381,8 @@ describe('RatingsService', () => {
       repository.getParticipantsRatedBy.mockResolvedValue(rated);
       const blocks = mock<UserBlockVisibility>();
       blocks.hiddenFor.mockResolvedValue(hidden);
+      blocks.blockedBy.mockResolvedValue(blocked);
+      blocks.mutedFor.mockResolvedValue([...new Set([...hidden, ...blocked])]);
       return { repository, service: new RatingsService(repository, blocks) };
     };
 
@@ -382,6 +424,27 @@ describe('RatingsService', () => {
         'open',
         'done',
       ]);
+    });
+
+    // #65, ADR-0028: the same people as the list to rate, so it reaches zero.
+    it('does not count a participant the organizer blocked', async () => {
+      const { service } = hostedSetup({
+        events: [anEvent({ id: 'open' }), anEvent({ id: 'onlyBlocked' })],
+        seats: [
+          { eventId: 'open', userId: 'p1', status: 'APPROVED' },
+          { eventId: 'open', userId: 'p2', status: 'APPROVED' },
+          { eventId: 'onlyBlocked', userId: 'p2', status: 'ATTENDED' },
+        ],
+        blocked: ['p2'],
+      });
+
+      const toRate = await service.getParticipantsToRate(
+        asUser('org'),
+        ['open', 'onlyBlocked'],
+        now,
+      );
+
+      expect([...toRate]).toEqual([['open', 1]]);
     });
 
     it('asks nothing more when no event is open to the person', async () => {
