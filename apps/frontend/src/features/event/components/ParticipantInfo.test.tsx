@@ -57,7 +57,7 @@ beforeAll(() => {
 })
 
 const info = (overrides: Partial<ParticipantInfoData> = {}): ParticipantInfoData => ({
-  venueType: "PUBLIC_VENUE",
+  venueType: "PLACE",
   location: {
     street: "Chabařovická 4",
     city: "Praha 8",

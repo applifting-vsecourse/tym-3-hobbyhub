@@ -13,7 +13,7 @@ import { EmailNotVerifiedError } from "@/lib/emailNotVerified"
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
 import { VerifyEmailSheet } from "@/features/auth/components/VerifyEmailSheet"
-import type { CreateEventInput } from "@/features/event/api/eventSchemas"
+import type { UpdateEventInput } from "@/features/event/api/eventSchemas"
 import { EventForm } from "@/features/event/components/EventForm"
 import { useCreateEvent } from "@/features/event/hooks/useCreateEvent"
 
@@ -42,10 +42,12 @@ function NewEventPage() {
 
   // A failed save throws on purpose: the form then keeps guarding the typed
   // values, and the message comes from the mutation state below.
-  const handleSubmit = async (values: CreateEventInput) => {
+  // #218: the form also says the kind of venue, for an edit; a new event is
+  // always at a place, and the API refuses the field.
+  const handleSubmit = async ({ venueType: _venueType, ...input }: UpdateEventInput) => {
     let event
     try {
-      event = await createEvent.mutateAsync(values)
+      event = await createEvent.mutateAsync(input)
     } catch (error) {
       // F-03.2: not an error of the form but a missing step, which the sheet explains.
       if (error instanceof EmailNotVerifiedError) setIsVerifySheetOpen(true)

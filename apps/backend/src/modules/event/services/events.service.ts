@@ -175,6 +175,7 @@ export class EventsService {
           externalOccupiedSpots: data.externalOccupiedSpots,
           venueType: data.venueType,
           hasLocation: data.location != null,
+          isAddressPublic: data.isAddressPublic,
         },
         now,
       ).map((violation) => CHANGE_VIOLATION_MESSAGES[violation]),
