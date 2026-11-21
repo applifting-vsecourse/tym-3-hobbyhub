@@ -4,6 +4,8 @@ import { i18n } from "@/i18n"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import {
+  eventClock,
+  eventDate,
   eventDay,
   eventHostAndPrice,
   eventMeta,
@@ -52,6 +54,25 @@ describe("eventDay and eventTime", () => {
 
   it("formats the start time", () => {
     expect(eventTime(new Date(2026, 9, 29, 18, 30), "cs")).toBe("18:30")
+  })
+})
+
+describe("eventDate and eventClock", () => {
+  const now = new Date(2026, 9, 22, 8, 0)
+
+  it("leads with today or tomorrow in words and only the time under it", () => {
+    expect(eventDate(t, new Date(2026, 9, 22, 19, 0), now, "cs")).toBe("Dnes")
+    expect(eventClock(t, new Date(2026, 9, 22, 19, 0), now, "cs")).toBe("19:00")
+    expect(eventDate(t, new Date(2026, 9, 23, 10, 0), now, "cs")).toBe("Zítra")
+  })
+
+  it("gives the date, and the weekday with the time under it, further ahead", () => {
+    expect(eventDate(t, new Date(2026, 9, 29, 18, 30), now, "cs")).toBe("29. 10.")
+    expect(eventClock(t, new Date(2026, 9, 29, 18, 30), now, "cs")).toBe("čt 18:30")
+  })
+
+  it("adds the year only to an event in another year", () => {
+    expect(eventDate(t, new Date(2027, 0, 15, 19, 0), now, "cs")).toBe("15. 1. 2027")
   })
 })
 

@@ -269,7 +269,8 @@ describe("EventForm on a phone", () => {
     const preview = screen.getByRole("region", { name: "Takto uvidí akci ostatní" })
     expect(within(preview).getByText("Čtvrteční florbal")).toBeInTheDocument()
     expect(within(preview).getByText("Praha 8")).toBeInTheDocument()
-    expect(within(preview).getByText("19:00")).toBeInTheDocument()
+    expect(within(preview).getByText("15. 1. 2030")).toBeInTheDocument()
+    expect(within(preview).getByText("út 19:00")).toBeInTheDocument()
     expect(within(preview).getByText("chybí 4")).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Zveřejnit akci" }))

@@ -24,7 +24,7 @@ import { EventDetail } from "@/features/event/components/EventDetail"
 import { OrganizerActions } from "@/features/event/components/OrganizerActions"
 import { ParticipantInfo } from "@/features/event/components/ParticipantInfo"
 import { ShareEventAction } from "@/features/event/components/ShareEventAction"
-import { eventPlaceAndLevel, eventTime } from "@/features/event/lib/eventLabels"
+import { eventClock, eventDate, eventPlaceAndLevel } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
 import { OrganizerPanel } from "@/features/participation-request/components/OrganizerPanel"
@@ -298,7 +298,8 @@ function EventDetailPage() {
             eventId={eventId}
             event={{
               title: eventQuery.data.title,
-              time: eventTime(eventQuery.data.startAt, i18n.language),
+              day: eventDate(t, eventQuery.data.startAt, new Date(), i18n.language),
+              time: eventClock(t, eventQuery.data.startAt, new Date(), i18n.language),
               place: eventPlaceAndLevel(t, eventQuery.data),
               taken: eventQuery.data.takenCount,
               min: eventQuery.data.minParticipants,

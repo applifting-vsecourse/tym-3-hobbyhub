@@ -231,7 +231,8 @@ export function DomainSections() {
         <Example label="Řádek rozpisu">
           <div className="flex w-full max-w-md flex-col">
             <ScheduleRow
-              time="19:00"
+              day="15. 10."
+              time="čt 19:00"
               title="Čtvrteční florbal"
               subtitle="Hala ZŠ Dolní, pokročilí"
               taken={7}
@@ -241,6 +242,7 @@ export function DomainSections() {
               badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
+              day="Zítra"
               time="20:30"
               title="Volejbal pod lampami (bez fotky)"
               subtitle="Stromovka, mírně pokročilí"
@@ -286,8 +288,8 @@ export function DomainSections() {
             <EventDetailCard
               activity="florbal"
               title="Čtvrteční florbal"
-              day="Pátek"
-              time="19:00"
+              day="16. 10."
+              time="pá 19:00"
               endTime="20:30"
               place="Hala ZŠ Dolní"
               level="Pokročilí"
