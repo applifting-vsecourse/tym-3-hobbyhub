@@ -75,6 +75,10 @@ export function authErrorMessage(
  */
 export function googleErrorMessage(t: TFunction, code: string) {
   switch (code) {
+    // BetterAuth's code for a Google account with no account here, when the
+    // sign-in page does not create one: "signup disabled" with spaces turned
+    // into underscores. The other spelling is its older/generic-OAuth one.
+    case "signup_disabled":
     case "new_user_signup_disabled":
       return t("auth.errors.googleNoAccount")
     // The nickname was taken while the user was at Google.

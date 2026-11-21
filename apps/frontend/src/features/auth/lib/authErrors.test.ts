@@ -50,6 +50,11 @@ describe("authErrorMessage", () => {
 
 describe("googleErrorMessage", () => {
   it("sends someone without an account to sign up", () => {
+    // What BetterAuth puts on the return address for a Google account that
+    // has no account here and signs in on the sign-in page.
+    expect(googleErrorMessage(i18n.t, "signup_disabled")).toBe(
+      "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
+    )
     expect(googleErrorMessage(i18n.t, "new_user_signup_disabled")).toBe(
       "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
     )
