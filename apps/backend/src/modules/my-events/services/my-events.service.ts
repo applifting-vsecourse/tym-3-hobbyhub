@@ -1,7 +1,6 @@
 import {
   EventFilter,
   eventListFilterViolations,
-  EventListPage,
   Page,
 } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
@@ -9,8 +8,10 @@ import {
   applicationStatusOf,
   MyApplication,
   MyApplicationPage,
+  MyHostedEventPage,
 } from '@/modules/my-events/domain/my-events';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
@@ -26,6 +27,7 @@ export class MyEventsService {
   constructor(
     private readonly eventsService: EventsService,
     private readonly requestsService: ParticipationRequestsService,
+    private readonly ratingsService: RatingsService,
   ) {}
 
   // One page of the person's applications: waiting and approved ones to
@@ -39,14 +41,19 @@ export class MyEventsService {
     assertValidFilter(filter);
     const { items: facts, total } =
       await this.requestsService.getMyApplicationFacts(user, page, filter, now);
-    const events = await this.eventsService.getListItemsByIds(
-      facts.map((entry) => entry.eventId),
-    );
+    const eventIds = facts.map((entry) => entry.eventId);
+    // #234: the rating rules decide who may still rate, not this overview.
+    const [events, toRate] = await Promise.all([
+      this.eventsService.getListItemsByIds(eventIds),
+      this.ratingsService.getEventsToRateOrganizer(user, eventIds, now),
+    ]);
     const byId = new Map(events.map((event) => [event.id, event]));
     const items = facts.flatMap(({ eventId, ...rest }): MyApplication[] => {
       const event = byId.get(eventId);
       const status = applicationStatusOf(rest);
-      return event && status ? [{ status, event }] : [];
+      return event && status
+        ? [{ status, event, canRateOrganizer: toRate.includes(eventId) }]
+        : [];
     });
     const next = page.offset + facts.length;
     return { items, total, nextOffset: next < total ? next : null };
@@ -59,8 +66,26 @@ export class MyEventsService {
     page: Page,
     filter: EventFilter,
     now: Date = new Date(),
-  ): Promise<EventListPage> {
+  ): Promise<MyHostedEventPage> {
     assertValidFilter(filter);
-    return await this.eventsService.getOrganizedEvents(user, page, filter, now);
+    const { items, total } = await this.eventsService.getOrganizedEvents(
+      user,
+      page,
+      filter,
+      now,
+    );
+    // #235: the rating rules decide whom the organizer may still rate.
+    const toRate = await this.ratingsService.getParticipantsToRate(
+      user,
+      items.map(({ id }) => id),
+      now,
+    );
+    return {
+      items: items.map((event) => ({
+        ...event,
+        participantsToRate: toRate.get(event.id) ?? 0,
+      })),
+      total,
+    };
   }
 }

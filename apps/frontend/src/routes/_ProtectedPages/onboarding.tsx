@@ -54,7 +54,7 @@ function OnboardingPage() {
     <>
       <Seo title={t("onboarding.seoTitle")} />
       {/* On a phone the actions are fixed to the bottom; pb-24 is the room they take. */}
-      <section className="mx-auto w-full max-w-xl px-page py-6 max-md:pb-24 md:py-12">
+      <section className="mx-auto w-full max-w-column-xl px-page py-6 max-md:pb-24 md:py-12">
         <OnboardingWizard
           activities={activities.data ?? []}
           isLoadingActivities={activities.isPending}

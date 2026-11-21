@@ -57,7 +57,7 @@ function ParticipantsPage() {
   return (
     <>
       <Seo title={eventQuery.data?.title ?? t("participationRequests.manage.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-page py-6 md:py-12 lg:max-w-5xl">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-2 px-page py-6 md:py-12 lg:max-w-column-5xl">
         <BackLink
           to="/events/$eventId"
           params={{ eventId }}

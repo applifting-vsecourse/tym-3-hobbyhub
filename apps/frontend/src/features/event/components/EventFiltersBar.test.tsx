@@ -19,6 +19,8 @@ const NONE: EventFilterValues = {
   activityIds: [],
   search: "",
   location: "",
+  place: null,
+  radiusKm: 10,
   dateFrom: "",
   dateTo: "",
   freeSpotsOnly: false,
@@ -52,6 +54,16 @@ const renderBar = (
 }
 
 describe("EventFiltersBar", () => {
+  // #261: the picked place is a chip with its radius, and one tap clears it.
+  it("shows the place with its radius as a chip that clears it", async () => {
+    const place = { label: "Praha 8", latitude: 50.1, longitude: 14.45 }
+    const { onFiltersChange } = renderBar({ place, radiusKm: 25 })
+
+    await userEvent.click(screen.getByRole("button", { name: "Praha 8, do 25 km" }))
+
+    expect(onFiltersChange).toHaveBeenCalledWith({ place: null })
+  })
+
   it("passes what is typed to the page", async () => {
     const { onSearchTextChange } = renderBar()
 

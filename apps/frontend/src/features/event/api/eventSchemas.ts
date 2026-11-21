@@ -151,6 +151,8 @@ export const eventListSchema = z.object({
   items: z.array(eventListItemSchema),
   /** All upcoming public events, not just this page. */
   total: z.number(),
+  /** With a radius filter: events left out because they have no known position (#261). */
+  withoutLocationCount: z.number().optional(),
 })
 
 export type EventListItem = z.infer<typeof eventListItemSchema>

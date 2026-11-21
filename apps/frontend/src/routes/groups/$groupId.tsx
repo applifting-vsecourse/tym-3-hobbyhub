@@ -99,7 +99,7 @@ function GroupDetailPage() {
   return (
     <>
       <Seo title={groupQuery.data?.name ?? t("groups.detail.title")} />
-      <AppShell className="mx-auto w-full max-w-6xl px-page py-6 md:py-12">
+      <AppShell className="mx-auto w-full max-w-column-6xl px-page py-6 md:py-12">
         {user ? (
           <BackLink
             to={ROUTES.groups}

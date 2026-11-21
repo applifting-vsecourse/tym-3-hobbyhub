@@ -66,8 +66,8 @@ export class EventFilterQuery {
   @MaxLength(EVENT_LIST_SEARCH_MAX_LENGTH)
   search?: string;
 
-  // TODO(F-02.1b #91): replace the text with a point and a radius once events
-  // have coordinates (geocoding, F-12.3); keep the text as the fallback.
+  // The public list filters by a place and radius instead (`aroundLat`,
+  // `aroundLng`, `radiusKm`, #261); the text stays for the other listings.
   @ApiPropertyOptional({
     maxLength: EVENT_LIST_LOCATION_MAX_LENGTH,
     description:

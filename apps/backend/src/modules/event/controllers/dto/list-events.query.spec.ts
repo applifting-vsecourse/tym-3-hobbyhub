@@ -161,4 +161,24 @@ describe('ListEventsQuery', () => {
     expect(query.lat).toBeUndefined();
     expect(query.lng).toBeUndefined();
   });
+
+  // #261: the place and radius only make sense together.
+  it('takes a place with a radius', async () => {
+    const query = await validate({
+      aroundLat: '50.08',
+      aroundLng: '14.42',
+      radiusKm: '25',
+    });
+    expect(query.aroundLat).toBe(50.08);
+    expect(query.radiusKm).toBe(25);
+  });
+
+  it('refuses a place without a radius, and a radius that is too large', async () => {
+    await expect(
+      validate({ aroundLat: '50', aroundLng: '14' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      validate({ aroundLat: '50', aroundLng: '14', radiusKm: '500' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

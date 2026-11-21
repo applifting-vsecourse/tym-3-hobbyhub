@@ -14,6 +14,7 @@ import {
   ProfilePicturePicker,
   type ProfilePicture,
 } from "@/components/hobbyhub/ProfilePicturePicker"
+import { ScrollToTopButton } from "@/components/hobbyhub/ScrollToTopButton"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -249,6 +250,9 @@ export function ControlSections() {
           </Button>
           <Button variant="link">Zobrazit všechny</Button>
           <Button disabled>Požádat o účast</Button>
+        </Example>
+        <Example label="Zpět nahoru (ScrollToTopButton): do lišty, která zůstává vidět při posouvání dlouhé stránky; na začátek stránky, nebo s targetId k sekci, které lišta patří">
+          <ScrollToTopButton />
         </Example>
       </ShowcaseSection>
 

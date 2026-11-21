@@ -18,7 +18,7 @@ function SettingsPage() {
   return (
     <>
       <Seo title={t("settings.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-page py-6 md:py-12">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-8 px-page py-6 md:py-12">
         <div className="flex flex-col gap-2">
           <BackLink
             to={ROUTES.profile}
