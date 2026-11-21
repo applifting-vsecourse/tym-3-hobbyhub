@@ -65,12 +65,12 @@ describe("MyUpcomingEvents", () => {
   it("lists the events ahead with a seat or organized, soonest first", async () => {
     respond(
       [
-        { status: "APPROVED", event: event("e2", "Volejbal", 14) },
-        { status: "PENDING", event: event("e3", "Čeká na schválení", 12) },
-        { status: "APPROVED", event: event("e4", "Už proběhlo", 2) },
+        { status: "APPROVED", canRateOrganizer: false, event: event("e2", "Volejbal", 14) },
+        { status: "PENDING", canRateOrganizer: false, event: event("e3", "Čeká na schválení", 12) },
+        { status: "APPROVED", canRateOrganizer: false, event: event("e4", "Už proběhlo", 2) },
       ],
       // The hosted list says whether an administrator hid the event (#239).
-      [{ ...event("e1", "Můj florbal", 11), isHidden: false }],
+      [{ ...event("e1", "Můj florbal", 11), isHidden: false, participantsToRate: 0 }],
     )
     await renderPanel()
 
@@ -87,7 +87,10 @@ describe("MyUpcomingEvents", () => {
   })
 
   it("says there is nothing ahead and where to find something", async () => {
-    respond([{ status: "APPROVED", event: event("e4", "Už proběhlo", 2) }], [])
+    respond(
+      [{ status: "APPROVED", canRateOrganizer: false, event: event("e4", "Už proběhlo", 2) }],
+      [],
+    )
     await renderPanel()
 
     expect(await screen.findByText("Zatím nikam nejdete a nic nepořádáte.")).toBeInTheDocument()

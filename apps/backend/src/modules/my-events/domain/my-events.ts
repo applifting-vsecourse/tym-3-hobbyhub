@@ -51,7 +51,17 @@ export const applicationStatusOf = (
 export type MyApplication = {
   status: ApplicationStatus;
   event: EventListItem;
+  // #234: the event is over and the person may still rate its organizer, so
+  // the overview points to the rating page. Only ever about the person asking.
+  canRateOrganizer: boolean;
 };
+
+// #235: an event the person organizes, with how many participants they may
+// still rate now (0 when nobody, or when the rating period is not on). Only
+// ever about the person asking.
+export type MyHostedEvent = EventListItem & { participantsToRate: number };
+
+export type MyHostedEventPage = { items: MyHostedEvent[]; total: number };
 
 export type MyApplicationPage = {
   items: MyApplication[];

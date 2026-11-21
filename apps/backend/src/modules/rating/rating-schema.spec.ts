@@ -522,6 +522,133 @@ describeDb('rating schema constraints and views', () => {
     });
   });
 
+  // #235: whom the main organizer rates, as the rating page lists them.
+  describe('rateable participants', () => {
+    const deleteAccount = (
+      tx: Prisma.TransactionClient,
+      userId: string,
+    ): Promise<unknown> =>
+      tx.user.update({ where: { id: userId }, data: { status: 'DELETED' } });
+
+    it('lists the seats in the order they were taken, without deleted accounts', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const organizerId = await createUser(tx);
+        const [first, second, third, gone] = [
+          await createUser(tx),
+          await createUser(tx),
+          await createUser(tx),
+          await createUser(tx),
+        ];
+        const eventId = await createEvent(tx, {
+          organizerId,
+          participantIds: [],
+          endedDaysAgo: 1,
+        });
+        const takenAt = (minutes: number): Date =>
+          new Date(Date.now() - 10 * DAY_MS + minutes * 60 * 1000);
+        // Created out of order, so the order cannot come from the inserts.
+        await tx.participation.createMany({
+          data: [
+            {
+              userId: third,
+              status: ParticipationStatus.NO_SHOW,
+              createdAt: takenAt(3),
+            },
+            {
+              userId: first,
+              status: ParticipationStatus.APPROVED,
+              createdAt: takenAt(1),
+            },
+            {
+              userId: gone,
+              status: ParticipationStatus.ATTENDED,
+              createdAt: takenAt(0),
+            },
+            {
+              userId: second,
+              status: ParticipationStatus.ATTENDED,
+              createdAt: takenAt(2),
+            },
+          ].map((seat) => ({ ...seat, eventId })),
+        });
+        await deleteAccount(tx, gone);
+
+        const people = await repositoryOf(tx).getRateableParticipants(
+          eventId,
+          [],
+        );
+        expect(people.map(({ id }) => id)).toEqual([first, second, third]);
+      });
+    });
+
+    it('finds no seat of a deleted account', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const { eventId, participantIds } = await aRevealedEvent(tx, 1);
+        const [kept, gone] = participantIds;
+        await deleteAccount(tx, gone);
+
+        const repository = repositoryOf(tx);
+        await expect(repository.getSeatStatus(eventId, kept)).resolves.toBe(
+          'APPROVED',
+        );
+        await expect(
+          repository.getSeatStatus(eventId, gone),
+        ).resolves.toBeNull();
+      });
+    });
+
+    it('reads the seats and the ratings of several events at once (#235)', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const first = await aRevealedEvent(tx, 1);
+        const second = await aRevealedEvent(tx, 1);
+        const [p1, p2, gone] = first.participantIds;
+        await deleteAccount(tx, gone);
+        await tx.rating.create({
+          data: {
+            eventId: first.eventId,
+            participantId: p1,
+            direction: 'TO_PARTICIPANT',
+            authorId: first.organizerId,
+            ratedUserId: p1,
+            stars: 4,
+          },
+        });
+        await rateOrganizer(tx, first.eventId, p2, first.organizerId, 5);
+
+        const repository = repositoryOf(tx);
+        const seats = await repository.getRateableSeatsAt([
+          first.eventId,
+          second.eventId,
+        ]);
+        expect(seats).toHaveLength(5);
+        expect(seats.map(({ userId }) => userId)).not.toContain(gone);
+        await expect(
+          repository.getParticipantsRatedBy(first.organizerId, [
+            first.eventId,
+            second.eventId,
+          ]),
+        ).resolves.toEqual([{ eventId: first.eventId, participantId: p1 }]);
+      });
+    });
+
+    it('leaves deleted accounts out of the seats the rating prompts read', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const { eventId, participantIds } = await aRevealedEvent(tx, 1);
+        const [kept, gone] = participantIds;
+        await deleteAccount(tx, gone);
+
+        const candidate = (
+          await new RatingPromptRepository(
+            tx as unknown as PrismaService,
+          ).findCandidates(new Date())
+        ).find(({ id }) => id === eventId);
+        const seated = candidate?.seats.map(({ userId }) => userId);
+        expect(seated).toContain(kept);
+        expect(seated).not.toContain(gone);
+      });
+    });
+  });
+
   // #236, ADR-0021: what the rating-prompt cron reads, and its claim.
   describe('rating prompts', () => {
     const promptsOf = (tx: Prisma.TransactionClient): RatingPromptRepository =>

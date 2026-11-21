@@ -2,6 +2,7 @@ import { EventFilter, EventListItem } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import { EventApplicationFacts } from '@/modules/participation-request/domain/participation-request';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { BadRequestException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -29,12 +30,16 @@ const facts = (
 describe('MyEventsService', () => {
   let events: MockProxy<EventsService>;
   let requests: MockProxy<ParticipationRequestsService>;
+  let ratings: MockProxy<RatingsService>;
   let service: MyEventsService;
 
   beforeEach(() => {
     events = mock<EventsService>();
     requests = mock<ParticipationRequestsService>();
-    service = new MyEventsService(events, requests);
+    ratings = mock<RatingsService>();
+    ratings.getEventsToRateOrganizer.mockResolvedValue([]);
+    ratings.getParticipantsToRate.mockResolvedValue(new Map());
+    service = new MyEventsService(events, requests, ratings);
   });
 
   describe('getApplications', () => {
@@ -73,6 +78,39 @@ describe('MyEventsService', () => {
       );
     });
 
+    // #234: the rating rules say which events; the overview only marks them.
+    it('marks the events whose organizer the person may still rate', async () => {
+      requests.getMyApplicationFacts.mockResolvedValue({
+        items: [
+          facts('played', { seat: 'APPROVED', requests: ['APPROVED'] }),
+          facts('rated', { seat: 'APPROVED', requests: ['APPROVED'] }),
+        ],
+        total: 2,
+      });
+      events.getListItemsByIds.mockResolvedValue([
+        anItem('played'),
+        anItem('rated'),
+      ]);
+      ratings.getEventsToRateOrganizer.mockResolvedValue(['played']);
+
+      const result = await service.getApplications(user, page, filter, now);
+
+      expect(
+        result.items.map(({ event, canRateOrganizer }) => [
+          event.id,
+          canRateOrganizer,
+        ]),
+      ).toEqual([
+        ['played', true],
+        ['rated', false],
+      ]);
+      expect(ratings.getEventsToRateOrganizer).toHaveBeenCalledWith(
+        user,
+        ['played', 'rated'],
+        now,
+      );
+    });
+
     it('counts the next offset from the rows passed, not the rows shown', async () => {
       requests.getMyApplicationFacts.mockResolvedValue({
         items: [facts('gone'), facts('last')],
@@ -106,16 +144,44 @@ describe('MyEventsService', () => {
 
   describe('getHosted', () => {
     it('returns the page of events the user organizes', async () => {
-      const hosted = { items: [anItem('mine')], total: 1 };
-      events.getOrganizedEvents.mockResolvedValue(hosted);
+      events.getOrganizedEvents.mockResolvedValue({
+        items: [anItem('mine')],
+        total: 1,
+      });
 
-      await expect(service.getHosted(user, page, filter, now)).resolves.toBe(
-        hosted,
+      await expect(service.getHosted(user, page, filter, now)).resolves.toEqual(
+        { items: [{ ...anItem('mine'), participantsToRate: 0 }], total: 1 },
       );
       expect(events.getOrganizedEvents).toHaveBeenCalledWith(
         user,
         page,
         filter,
+        now,
+      );
+    });
+
+    // #235: the rating rules, not this overview, decide whom they may rate.
+    it('says how many participants the organizer may still rate, page by page', async () => {
+      events.getOrganizedEvents.mockResolvedValue({
+        items: [anItem('over'), anItem('soon')],
+        total: 2,
+      });
+      ratings.getParticipantsToRate.mockResolvedValue(new Map([['over', 3]]));
+
+      const hosted = await service.getHosted(user, page, filter, now);
+
+      expect(
+        hosted.items.map(({ id, participantsToRate }) => [
+          id,
+          participantsToRate,
+        ]),
+      ).toEqual([
+        ['over', 3],
+        ['soon', 0],
+      ]);
+      expect(ratings.getParticipantsToRate).toHaveBeenCalledWith(
+        user,
+        ['over', 'soon'],
         now,
       );
     });

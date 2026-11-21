@@ -52,6 +52,12 @@ describe("PublicProfileView", () => {
     ])
   })
 
+  // #234: the ratings behind the score are the owner's alone.
+  it("does not lead to anyone's ratings", async () => {
+    await renderProfile()
+    expect(screen.queryByRole("link", { name: /hodnocení/i })).toBeNull()
+  })
+
   it("puts the friendship action under the bio", async () => {
     await renderProfile({}, <button type="button">Požádat o přátelství</button>)
     const bio = screen.getByText("Běhám po práci")
