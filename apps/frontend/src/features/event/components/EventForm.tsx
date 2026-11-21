@@ -45,6 +45,32 @@ import { EventPreview } from "@/features/event/components/EventPreview"
 import { contactKind } from "@/features/event/lib/contact"
 import { combineDateTime, splitDateTime } from "@/features/event/lib/eventDateTime"
 
+const CUSTOM_DURATION = "custom"
+// The lengths offered as chips, in minutes; the first one is preselected.
+const DURATION_PRESETS = [60, 120, 180, 240] as const
+const DEFAULT_DURATION_MINUTES = 120
+const MIN_DURATION_MINUTES = 15
+
+/** Hours and minutes typed by hand; `null` when neither is a whole number. */
+const customDurationMinutes = (values: Pick<FormValues, "durationHours" | "durationMinutes">) => {
+  const hours = values.durationHours.trim() === "" ? 0 : Number(values.durationHours)
+  const minutes = values.durationMinutes.trim() === "" ? 0 : Number(values.durationMinutes)
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours < 0 || minutes < 0) {
+    return null
+  }
+  return hours * 60 + minutes
+}
+
+// A length of an existing event: a chip when it matches one, otherwise typed by hand.
+const durationValuesOf = (minutes: number) =>
+  (DURATION_PRESETS as readonly number[]).includes(minutes)
+    ? { durationChoice: String(minutes), durationHours: "", durationMinutes: "" }
+    : {
+        durationChoice: CUSTOM_DURATION,
+        durationHours: String(Math.floor(minutes / 60)),
+        durationMinutes: String(minutes % 60),
+      }
+
 // Characters as the server and database count them: an emoji is one, not the
 // two UTF-16 units of `string.length`.
 const charCount = (value: string) => [...value].length
@@ -81,8 +107,9 @@ const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOn
           ),
         startDate: z.string().min(1, t("events.validation.dateRequired")),
         startTime: z.string().min(1, t("events.validation.timeRequired")),
-        endDate: z.string().min(1, t("events.validation.dateRequired")),
-        endTime: z.string().min(1, t("events.validation.timeRequired")),
+        durationChoice: z.string(),
+        durationHours: z.string(),
+        durationMinutes: z.string(),
         street: address(EVENT_LIMITS.streetMax, t("events.validation.streetRequired")),
         city: address(EVENT_LIMITS.cityMax, t("events.validation.cityRequired")),
         postalCode: address(EVENT_LIMITS.postalCodeMax, t("events.validation.postalCodeRequired")),
@@ -123,7 +150,6 @@ const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOn
       // Rules between fields. Each lands on the field the organizer has to change.
       .superRefine((values, ctx) => {
         const start = combineDateTime(values.startDate, values.startTime)
-        const end = combineDateTime(values.endDate, values.endTime)
         if (start && start.getTime() <= now().getTime()) {
           ctx.addIssue({
             code: "custom",
@@ -131,12 +157,15 @@ const createSchema = (t: TFunction, now: () => Date, approvedCount: number, isOn
             message: t("events.validation.startInPast"),
           })
         }
-        if (start && end && end.getTime() <= start.getTime()) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["endTime"],
-            message: t("events.validation.endBeforeStart"),
-          })
+        if (values.durationChoice === CUSTOM_DURATION) {
+          const total = customDurationMinutes(values)
+          if (total === null || total < MIN_DURATION_MINUTES) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["durationMinutes"],
+              message: t("events.validation.durationTooShort", { count: MIN_DURATION_MINUTES }),
+            })
+          }
         }
         if (values.minParticipants > values.maxParticipants) {
           ctx.addIssue({
@@ -184,8 +213,9 @@ const defaultValues = (t: TFunction): FormValues => ({
   title: "",
   startDate: "",
   startTime: "",
-  endDate: "",
-  endTime: "",
+  durationChoice: String(DEFAULT_DURATION_MINUTES),
+  durationHours: "",
+  durationMinutes: "",
   street: "",
   city: "",
   postalCode: "",
@@ -214,14 +244,13 @@ const addressKey = (values: Pick<FormValues, "street" | "city" | "postalCode">) 
 // The form's values for an event that is being edited.
 const valuesOfEvent = (event: Event): FormValues => {
   const start = splitDateTime(event.startAt)
-  const end = splitDateTime(event.endAt)
+  const minutes = Math.round((event.endAt.getTime() - event.startAt.getTime()) / 60_000)
   return {
     activityId: event.activity.id,
     title: event.title,
     startDate: start.date,
     startTime: start.time,
-    endDate: end.date,
-    endTime: end.time,
+    ...durationValuesOf(minutes),
     street: event.location?.street ?? "",
     city: event.location?.city ?? "",
     postalCode: event.location?.postalCode ?? "",
@@ -263,8 +292,12 @@ const withPosition = async (values: FormValues, language: string): Promise<FormV
 // Optional fields left empty are not sent at all. Dates are validated by then.
 const toInput = (values: FormValues): CreateEventInput => {
   const start = combineDateTime(values.startDate, values.startTime)
-  const end = combineDateTime(values.endDate, values.endTime)
-  if (!start || !end) throw new Error("EventForm: submitted without a valid date")
+  const minutes =
+    values.durationChoice === CUSTOM_DURATION
+      ? customDurationMinutes(values)
+      : Number(values.durationChoice)
+  if (!start || minutes === null) throw new Error("EventForm: submitted without a valid date")
+  const end = new Date(start.getTime() + minutes * 60_000)
 
   return {
     title: values.title.trim(),
@@ -314,8 +347,9 @@ const STEP_FIELDS: Record<Step, (keyof FormValues)[]> = {
     "title",
     "startDate",
     "startTime",
-    "endDate",
-    "endTime",
+    "durationChoice",
+    "durationHours",
+    "durationMinutes",
     "street",
     "city",
     "postalCode",
@@ -614,11 +648,7 @@ function WhatFields({
     form.setValue("maxParticipants", activity.defaultMaxParticipants, { shouldDirty: true })
   }
 
-  // Most events end the day they start: the end date follows until it is set later.
-  const followStartDate = (startDate: string) => {
-    const endDate = form.getValues("endDate")
-    if (!endDate || endDate < startDate) form.setValue("endDate", startDate)
-  }
+  const durationChoice = useWatch({ control: form.control, name: "durationChoice" })
 
   return (
     <>
@@ -678,10 +708,6 @@ function WhatFields({
                 <Input
                   type="date"
                   {...field}
-                  onChange={(event) => {
-                    field.onChange(event)
-                    followStartDate(event.target.value)
-                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -693,17 +719,37 @@ function WhatFields({
           type="time"
           label={t("events.fields.startTime")}
         />
-        <TextField
-          name="endDate"
-          type="date"
-          label={t("events.fields.endDate")}
-        />
-        <TextField
-          name="endTime"
-          type="time"
-          label={t("events.fields.endTime")}
-        />
       </div>
+      <ChipChoiceField
+        name="durationChoice"
+        label={t("events.fields.duration")}
+        options={[...DURATION_PRESETS.map(String), CUSTOM_DURATION]}
+        optionLabel={(option) =>
+          option === CUSTOM_DURATION
+            ? t("events.duration.custom")
+            : t("events.duration.hours", { count: Number(option) / 60 })
+        }
+      />
+      {durationChoice === CUSTOM_DURATION ? (
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            name="durationHours"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step={1}
+            label={t("events.fields.durationHours")}
+          />
+          <TextField
+            name="durationMinutes"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step={1}
+            label={t("events.fields.durationMinutes")}
+          />
+        </div>
+      ) : null}
 
       {venueType === "ONLINE" ? null : (
         <fieldset className="space-y-4">
@@ -1038,7 +1084,7 @@ function TextField({ name, label, description, ...inputProps }: TextFieldProps) 
 }
 
 type ChipChoiceFieldProps<Option extends string> = {
-  readonly name: "venueType" | "approvalMode"
+  readonly name: "venueType" | "approvalMode" | "durationChoice"
   readonly label: string
   readonly options: readonly Option[]
   readonly optionLabel: (option: Option) => string
