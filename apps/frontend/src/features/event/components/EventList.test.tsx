@@ -62,7 +62,8 @@ describe("EventList", () => {
       />,
     )
 
-    expect(screen.getByRole("heading", { name: "Dnes" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Dnes" })).not.toBeInTheDocument()
+    expect(screen.getByText("Dnes")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Čtvrteční florbal" })).toBeInTheDocument()
     expect(screen.getByText("19:00")).toBeInTheDocument()
     expect(screen.getByText("Florbal · ZŠ Kobylisy, Praha 8 · Pokročilí")).toBeInTheDocument()
@@ -115,8 +116,10 @@ describe("EventList", () => {
     expect(
       screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent),
     ).toEqual(["Blízká akce", "Daleká akce"])
-    expect(screen.getByText(/^Dnes · .* · 2,3 km$/)).toBeInTheDocument()
-    expect(screen.getByText(/^Zítra · .* · 186 km$/)).toBeInTheDocument()
+    expect(screen.getByText(/ · 2,3 km$/)).toBeInTheDocument()
+    expect(screen.getByText(/ · 186 km$/)).toBeInTheDocument()
+    expect(screen.getByText("Dnes")).toBeInTheDocument()
+    expect(screen.getByText("Zítra")).toBeInTheDocument()
     expect(screen.getByText("19:00")).toBeInTheDocument()
     expect(screen.getByText("18:00")).toBeInTheDocument()
   })

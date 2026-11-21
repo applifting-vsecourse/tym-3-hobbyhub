@@ -3,7 +3,9 @@ import { ScheduleRow } from "@/components/hobbyhub/ScheduleRow"
 /** The event as a sheet shows it above its form: one schedule row. */
 export type RequestedEvent = {
   title: string
-  /** Start time, e.g. "19:00". */
+  /** Start date, e.g. "15. 10." or "Dnes". */
+  day: string
+  /** Under the date, e.g. "čt 19:00". */
   time: string
   /** Place and level, e.g. "ZŠ Kobylisy, Praha 8, Pokročilí". */
   place: string
@@ -15,6 +17,7 @@ export type RequestedEvent = {
 export function RequestedEventRow({ event }: { event: RequestedEvent }) {
   return (
     <ScheduleRow
+      day={event.day}
       time={event.time}
       title={event.title}
       subtitle={event.place}
