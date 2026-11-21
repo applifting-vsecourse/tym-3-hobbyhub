@@ -58,7 +58,7 @@ export function EventCard({
         <img
           src={photo.src}
           alt={photo.alt}
-          className="h-24 w-full object-cover"
+          className="h-24 w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
         />
       ) : (
         <div
@@ -82,12 +82,16 @@ export function EventCard({
         </div>
         <p className="typo-small text-muted-foreground">{meta}</p>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-accent px-3.5 py-2.5">
+      {/* The roster wraps in its own column and the status stays top right, so a
+          big roster never pushes it onto a line of its own; the band sits at the
+          card's foot, so cards of one row end on the same line. */}
+      <div className="mt-auto grid grid-cols-[1fr_auto] items-start gap-2 bg-accent px-3.5 py-2.5">
         <RosterSeats
           size="sm"
           taken={taken}
           min={min}
           capacity={max}
+          maxVisible={10}
           isAnimated={isAnimated}
         />
         {missing > 0 ? (

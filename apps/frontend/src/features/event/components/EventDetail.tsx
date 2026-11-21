@@ -42,6 +42,11 @@ type EventDetailProps = {
   participantInfo?: ReactNode
   /** "Nahlásit akci" (#240), for a signed-in person who does not organize it. */
   reportAction?: ReactNode
+  /**
+   * The way to rate the organizer (#234), for someone who had a seat while the
+   * rating period is on; then that they have rated. Under the event's state.
+   */
+  ratingPrompt?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -81,6 +86,7 @@ export function EventDetail({
   ownRequest,
   participantInfo,
   reportAction,
+  ratingPrompt,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -176,6 +182,7 @@ export function EventDetail({
                 .join(" · ")}
             </p>
           ) : null}
+          {ratingPrompt}
         </div>
 
         {/* When and where: the time is the main fact, so it is the one big thing. */}

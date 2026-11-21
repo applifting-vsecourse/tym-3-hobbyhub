@@ -27,6 +27,8 @@ export type EventListFilters = {
   capacityTo?: string
   /** Sort nearest first from here; otherwise soonest first. */
   near?: NearPoint
+  /** #261: only events within `radiusKm` of this place; nearest first around it. */
+  around?: NearPoint & { radiusKm: number }
 }
 
 export const eventKeys = {

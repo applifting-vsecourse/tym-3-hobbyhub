@@ -375,6 +375,9 @@
     "errors": {
       "adulthoodNotConfirmed": "You need to confirm you are 18 or older to register.",
       "emailNotVerified": "Your email is not verified yet.",
+      "googleEmailExists": "An account with this e-mail already exists. Sign in with your password.",
+      "googleFailed": "Signing in with Google failed.",
+      "googleNoAccount": "There is no account for this Google account yet. Please sign up.",
       "invalidBirthYear": "Invalid year of birth.",
       "invalidCredentials": "Incorrect email or password.",
       "invalidEmail": "Invalid email.",
@@ -408,6 +411,10 @@
     "gender": {
       "female": "Female",
       "male": "Male"
+    },
+    "google": {
+      "button": "Continue with Google",
+      "divider": "or"
     },
     "password": {
       "hide": "Hide",
@@ -504,6 +511,7 @@
   },
   "common": {
     "close": "Close",
+    "scrollToTop": "Back to top",
     "unsavedChanges": {
       "description": "You have changes that were not submitted. Leaving loses them.",
       "leave": "Leave",
@@ -596,6 +604,14 @@
       "organizedByGroup": "Organized by group",
       "organizer": "Organized by <profile>{{name}}</profile>",
       "rating": {
+        "participantsPrompt_one": "You can rate the participants until {{deadline}}. {{count}} of {{total}} left.",
+        "participantsPrompt_other": "You can rate the participants until {{deadline}}. {{count}} of {{total}} left.",
+        "participantsRated": "You have rated the participants.",
+        "prompt": "You can rate the organizer until {{deadline}}.",
+        "rate": "Rate the organizer",
+        "rateParticipants": "Rate the participants",
+        "rated": "You have already rated the organizer.",
+        "show": "See the rating",
         "title": "Event rating"
       },
       "requestToJoin": "Ask to join",
@@ -725,13 +741,16 @@
         },
         "freeSpots": "Free spots",
         "open": "Filters",
+        "place": "{{place}}, within {{radius}} km",
         "price": {
           "from": "from {{value}}",
           "range": "{{from}}–{{to}}",
           "to": "up to {{value}}"
         },
         "selected": "Selected filters",
-        "unknownActivity": "Unknown activity"
+        "unknownActivity": "Unknown activity",
+        "withoutLocation_one": "{{count}} event without a known location is hidden.",
+        "withoutLocation_other": "{{count}} events without a known location are hidden."
       },
       "free": "Free",
       "inMapArea": "Events in the map area",
@@ -1385,6 +1404,9 @@
       "locationPlaceholder": "Prague 8",
       "panelHide": "Hide filters",
       "panelShow": "Show filters",
+      "place": "Place",
+      "placeClear": "Clear the place",
+      "placePlaceholder": "Address, street or city",
       "preset": {
         "capacity": {
           "from13": "13 and more",
@@ -1406,6 +1428,8 @@
         }
       },
       "price": "Price per spot (CZK)",
+      "radius": "Radius",
+      "radiusOption": "{{km}} km",
       "rangeFrom": "From",
       "rangeInvalid": "Enter a number within the allowed range (capacity a whole number up to {{capacity}}, length up to {{hours}} h).",
       "rangeReversed": "\"From\" must not be greater than \"To\".",
@@ -1556,7 +1580,24 @@
   "landing": {
     "actions": {
       "create": "Create an event",
-      "find": "Find an event"
+      "find": "Find a free seat"
+    },
+    "audience": {
+      "organizer": {
+        "b1": "You approve who comes",
+        "b2": "The event goes ahead once the minimum is met",
+        "b3": "Turn a crew that clicked into a group",
+        "text": "Create an event in a minute and everyone sees how many players you need.",
+        "title": "Short of people for the minimum"
+      },
+      "player": {
+        "b1": "See free seats in the list and on the map",
+        "b2": "Browse everything without signing up",
+        "b3": "Create an account only when you want a seat",
+        "text": "Find an event that is short a player and ask for a seat with one tap.",
+        "title": "Want to play"
+      },
+      "title": "Whether you play or organize"
     },
     "groups": {
       "browse": "Browse groups",
@@ -1565,49 +1606,29 @@
       "title": "Groups: a crew that meets regularly"
     },
     "hero": {
-      "join": "Find a free seat",
       "kicker": "Sports and games near you",
-      "text": "Organizers show how many people they still need to reach the minimum. One of the free seats could be yours. And a crew that clicks can keep meeting as a group.",
-      "title": "Fill the missing players before the event is cancelled"
+      "kickerCount_one": "{{count}} event open right now",
+      "kickerCount_other": "{{count}} events open right now",
+      "text": "HobbyHub connects organizers who are short of people with players looking for a free seat.",
+      "title": "Missing a player? Or looking for a game?"
     },
     "how": {
-      "preview": {
-        "scheduleSubtitle": "Dolní school hall · Prague 8 · advanced",
-        "scheduleTime": "Thu 19:00",
-        "scheduleTitle": "Thursday floorball crew",
-        "take": "Take the seat",
-        "yourSeatText": "Thursday floorball · today 19:00",
-        "yourSeatTitle": "Your seat"
-      },
       "step1": {
-        "p1": "The organizer says how many people they still need to reach the minimum, and everyone sees it right away: in the list, on the map and on the event card. You are not asking “whether”, you are asking “where one more fits”.",
-        "p2": "When there is no suitable event, you create one in a minute: activity, place, time and how many of you it takes to play.",
-        "short": "Find or create an event",
-        "subtitle": "Where players are missing to the minimum.",
-        "title": "Find an event short of players. Or create one."
+        "text": "They say how many people they still need. Everyone sees it right away.",
+        "title": "The organizer creates an event"
       },
       "step2": {
-        "p1": "Free seats look like chairs at a table, in the list and on the map. One tap asks to join, and you can add a few words for the organizer.",
-        "p2": "You can browse everything without an account. You sign up when you want to take a seat.",
-        "short": "Ask for a seat",
-        "subtitle": "One tap, the organizer gets a message.",
-        "title": "Ask for a free seat"
+        "text": "One tap. You can browse without an account.",
+        "title": "A player asks for a seat"
       },
       "step3": {
-        "p1": "The organizer sees who is asking and approves whom they want. Once the minimum is met, the event goes ahead and nobody travels for nothing.",
-        "p2": "Approved participants get the exact address and practical instructions, and see who they are going with.",
-        "short": "Approval, then play",
-        "subtitle": "Minimum met, the event goes ahead.",
-        "title": "The organizer approves and you play"
+        "text": "Once the minimum is met, the event goes ahead.",
+        "title": "The organizer approves"
       },
       "step4": {
-        "p1": "People who clicked stay together as a group. It has its place, its usual time and members who know each other.",
-        "p2": "Nobody creates the next event from scratch, and a newcomer sees what they are joining before asking for membership.",
-        "short": "The crew becomes a group",
-        "subtitle": "Next time nobody starts from scratch.",
+        "text": "Those who clicked stay together, and nobody starts from scratch next time.",
         "title": "The crew becomes a group"
       },
-      "stepLabel": "Step {{number}}",
       "title": "How it works"
     },
     "search": {
@@ -1616,7 +1637,8 @@
     },
     "seoTitle": "Home",
     "upcoming": {
-      "empty": "No upcoming events yet. Create one yourself — it will show up here.",
+      "all": "All events",
+      "empty": "No upcoming events yet. Create one yourself and it will show up here.",
       "title": "Upcoming events"
     }
   },
@@ -1626,11 +1648,13 @@
   },
   "myEvents": {
     "actions": {
+      "hostedLabel": "Options for the event: {{title}}",
       "label": "Application options: {{title}}"
     },
     "applications": {
       "empty": "You have not applied to any event yet."
     },
+    "awaitingRating": "To rate",
     "empty": {
       "description": "Once you sign up for an event or post one, you will find it here.",
       "find": "Find an event",
@@ -1642,6 +1666,8 @@
     },
     "loadMore": "Load more",
     "loading": "Loading your events",
+    "rate": "Rate the organizer",
+    "rateParticipants": "Rate the participants",
     "sortNote": "Events still ahead of you come first, soonest first. Then past, rejected and cancelled ones, latest first.",
     "status": {
       "APPROVED": "Approved",
@@ -2112,6 +2138,7 @@
       "ownBelowMinimum_one": "You have {{count}} rating; others see it from {{min}} on.",
       "ownBelowMinimum_other": "You have {{count}} ratings; others see them from {{min}} on.",
       "ownBelowMinimum_zero": "Others see your rating from {{min}} ratings on.",
+      "showMine": "See my ratings",
       "title": "Ratings"
     },
     "save": "Save",
@@ -2157,16 +2184,56 @@
     }
   },
   "rating": {
+    "form": {
+      "commentHint": "Only the rated person sees the comment, and only once the rating period ends.",
+      "commentLabel": "Comment (optional)",
+      "commentLeft_one": "{{count}} character left",
+      "commentLeft_other": "{{count}} characters left",
+      "commentOver_one": "{{count}} character over the limit",
+      "commentOver_other": "{{count}} characters over the limit",
+      "commentPlaceholder": "E.g. what went well and what could be better next time",
+      "commentTooLong": "The comment can have at most {{max}} characters.",
+      "failed": "The rating could not be sent. Try again.",
+      "finalNote": "Once sent, a rating cannot be changed or deleted.",
+      "starsRequired": "Choose 1 to 5 stars.",
+      "submit": "Send rating",
+      "submitting": "Sending…"
+    },
+    "mine": {
+      "back": "Back to the profile",
+      "deletedAuthor": "Deleted user",
+      "distribution": "How many times each number of stars came up",
+      "empty": {
+        "asOrganizer": "You have no ratings as an organizer here yet.",
+        "asParticipant": "You have no ratings as a participant here yet.",
+        "given": "There are no sent ratings here yet."
+      },
+      "given": {
+        "hidden": "Shows when the rating period ends",
+        "revealed": "Revealed",
+        "toOrganizer": "Rating of the organizer",
+        "toParticipant": "Rating of a participant"
+      },
+      "loadMore": "Load more",
+      "receivedNote": "Ratings from others show here only once the event's rating period ends.",
+      "tabs": {
+        "asOrganizer": "As an organizer",
+        "asParticipant": "As a participant",
+        "given": "Sent",
+        "label": "Parts of the ratings overview"
+      },
+      "title": "My ratings"
+    },
     "notEnough": "Not enough ratings yet",
     "page": {
       "back": "Back to the event",
       "empty": "There is nobody for you to rate at this event.",
       "eyebrow": "Rating after the event",
-      "formsSoon": "The form for rating is coming soon.",
       "loadError": "Ratings could not be loaded",
       "loading": "Loading ratings",
       "notRated": "Not rated yet",
       "organizer": "Organizer",
+      "organizerStarsLabel": "How do you rate the organizer?",
       "participants": "Participants",
       "phase": {
         "closed": "Rating closed {{deadline}}.",
@@ -2175,7 +2242,43 @@
         "unavailable": "This event cannot be rated."
       },
       "retry": "Try again",
-      "revealNote": "Who rated whom shows only when the period ends, for everyone at once."
+      "revealNote": "Who rated whom shows only when the period ends, for everyone at once.",
+      "sent": "Your rating is sent. The organizer will see it once the rating period ends.",
+      "yourComment": "Your comment"
+    },
+    "participants": {
+      "addComment": "Comment",
+      "backToEdit": "Back to editing",
+      "commentWithoutStars": "A comment is not sent without stars. Choose the stars, or delete the comment.",
+      "done": "Done, you have rated every participant. They will see the ratings after {{deadline}}, all at once.",
+      "groupCount": "{{count}}×",
+      "leftForLater_one": "{{count}} participant stays unrated. You can come back to them until {{deadline}}.",
+      "leftForLater_other": "{{count}} participants stay unrated. You can come back to them until {{deadline}}.",
+      "nothingChosen": "Choose the stars for at least one participant.",
+      "prefill": "Prefill the rest with 5★",
+      "prefilled": "Prefilled",
+      "progress": "{{rated}} of {{total}} rated",
+      "review": "Review and send ({{count}})",
+      "reviewFinal": "Once sent, ratings cannot be changed or deleted. Participants will see them after {{deadline}}.",
+      "reviewTitle": "Review the ratings",
+      "send_one": "Send {{count}} rating",
+      "send_other": "Send {{count}} ratings",
+      "starsLabel": "Rating of participant {{name}}",
+      "undoPrefill": "Undo prefill",
+      "until": "you can rate until {{deadline}}",
+      "whyPlaceholder": "Say why, it helps other organizers…"
+    },
+    "refused": {
+      "ALREADY_RATED": "You have already sent this rating.",
+      "EVENT_CANCELLED": "The event was cancelled, it cannot be rated.",
+      "EVENT_HIDDEN": "This event cannot be rated right now.",
+      "EVENT_NOT_HELD": "The event did not take place, it cannot be rated.",
+      "EVENT_NOT_OVER": "The event is not over yet; you can rate once it is.",
+      "IS_ORGANIZER": "You cannot rate your own event.",
+      "NOT_MAIN_ORGANIZER": "Only the main organizer rates the participants.",
+      "NO_SEAT": "Only someone who had an approved seat at the event can rate.",
+      "PARTICIPANT_IS_ORGANIZER": "Organizers of the event are not rated as participants.",
+      "RATING_CLOSED": "The time to rate this event is over."
     },
     "scoreLabel": "Rated {{value}} of {{max}}",
     "scoreWithCountLabel_one": "Rated {{value}} of {{max}}, {{count}} rating",

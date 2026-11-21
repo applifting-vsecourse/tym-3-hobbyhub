@@ -111,4 +111,14 @@ describe("ProfileView", () => {
     expect(screen.getByRole("img", { name: "Hodnocení 4,5 z 5, 4 hodnocení" })).toBeInTheDocument()
     expect(screen.getByText("Máš 2 hodnocení, ostatním se ukáže od 3.")).toBeInTheDocument()
   })
+
+  // #234: who rated them and what they sent is theirs alone, one tap away.
+  it("leads to the person's own ratings", async () => {
+    await renderView(profile())
+
+    expect(screen.getByRole("link", { name: "Zobrazit moje hodnocení" })).toHaveAttribute(
+      "href",
+      "/profile/ratings",
+    )
+  })
 })

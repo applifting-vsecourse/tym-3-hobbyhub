@@ -204,6 +204,186 @@ describe('RatingsService', () => {
     });
   });
 
+  // #234: the overview of one's applications points to the rating page.
+  describe('getEventsToRateOrganizer', () => {
+    const listSetup = ({
+      events,
+      seats = {},
+      rated = [],
+      hidden = [],
+    }: {
+      events: RatingEventFacts[];
+      seats?: Record<string, SeatStatus>;
+      rated?: string[];
+      hidden?: string[];
+    }): {
+      repository: MockProxy<RatingRepository>;
+      service: RatingsService;
+    } => {
+      const repository = mock<RatingRepository>();
+      repository.getEventFactsOf.mockResolvedValue(events);
+      repository.getSeatStatuses.mockResolvedValue(
+        new Map(Object.entries(seats)),
+      );
+      repository.getOrganizerRatedEventIds.mockResolvedValue(rated);
+      const blocks = mock<UserBlockVisibility>();
+      blocks.hiddenFor.mockResolvedValue(hidden);
+      return { repository, service: new RatingsService(repository, blocks) };
+    };
+
+    it('keeps only the events whose organizer may be rated now', async () => {
+      const { service } = listSetup({
+        events: [
+          anEvent({ id: 'open' }),
+          anEvent({ id: 'rated' }),
+          anEvent({ id: 'left' }),
+          anEvent({ id: 'none' }),
+          anEvent({ id: 'late', endAt: new Date('2026-11-01T20:00:00Z') }),
+          anEvent({ id: 'future', endAt: new Date('2026-11-20T20:00:00Z') }),
+          anEvent({ id: 'cancelled', status: 'CANCELLED' }),
+          anEvent({ id: 'hidden', isHidden: true }),
+          anEvent({ id: 'mine', organizerId: 'p1' }),
+          anEvent({ id: 'absent' }),
+        ],
+        seats: {
+          open: 'APPROVED',
+          rated: 'APPROVED',
+          left: 'CANCELLED',
+          late: 'APPROVED',
+          future: 'APPROVED',
+          cancelled: 'APPROVED',
+          hidden: 'APPROVED',
+          mine: 'APPROVED',
+          // Someone who did not come still had the seat.
+          absent: 'NO_SHOW',
+        },
+        rated: ['rated'],
+      });
+
+      await expect(
+        service.getEventsToRateOrganizer(
+          asUser('p1'),
+          [
+            'open',
+            'rated',
+            'left',
+            'none',
+            'late',
+            'future',
+            'cancelled',
+            'hidden',
+            'mine',
+            'absent',
+          ],
+          now,
+        ),
+      ).resolves.toEqual(['open', 'absent']);
+    });
+
+    it('leaves out an event of an organizer blocked from the person', async () => {
+      const { service } = listSetup({
+        events: [anEvent({ id: 'main' }), anEvent({ id: 'co' })],
+        seats: { main: 'APPROVED', co: 'APPROVED' },
+        hidden: ['co'],
+      });
+
+      // `co` co-organizes both events.
+      await expect(
+        service.getEventsToRateOrganizer(asUser('p1'), ['main', 'co'], now),
+      ).resolves.toEqual([]);
+    });
+
+    it('asks nothing for an empty page', async () => {
+      const { repository, service } = listSetup({ events: [] });
+
+      await expect(
+        service.getEventsToRateOrganizer(asUser('p1'), [], now),
+      ).resolves.toEqual([]);
+      expect(repository.getEventFactsOf).not.toHaveBeenCalled();
+    });
+  });
+
+  // #235: the organizer's overview points to the rating of the participants.
+  describe('getParticipantsToRate', () => {
+    const hostedSetup = ({
+      events,
+      seats = [],
+      rated = [],
+      hidden = [],
+    }: {
+      events: RatingEventFacts[];
+      seats?: { eventId: string; userId: string; status: SeatStatus }[];
+      rated?: { eventId: string; participantId: string }[];
+      hidden?: string[];
+    }): {
+      repository: MockProxy<RatingRepository>;
+      service: RatingsService;
+    } => {
+      const repository = mock<RatingRepository>();
+      repository.getEventFactsOf.mockResolvedValue(events);
+      repository.getRateableSeatsAt.mockResolvedValue(seats);
+      repository.getParticipantsRatedBy.mockResolvedValue(rated);
+      const blocks = mock<UserBlockVisibility>();
+      blocks.hiddenFor.mockResolvedValue(hidden);
+      return { repository, service: new RatingsService(repository, blocks) };
+    };
+
+    it('counts, per event, the participants still to rate by the rating rules', async () => {
+      const { repository, service } = hostedSetup({
+        events: [
+          anEvent({ id: 'open' }),
+          anEvent({ id: 'done' }),
+          anEvent({ id: 'late', endAt: new Date('2026-11-01T20:00:00Z') }),
+          anEvent({ id: 'future', endAt: new Date('2026-11-20T20:00:00Z') }),
+          anEvent({ id: 'cancelled', status: 'CANCELLED' }),
+          anEvent({ id: 'notMine', organizerId: 'someone' }),
+        ],
+        seats: [
+          { eventId: 'open', userId: 'p1', status: 'APPROVED' },
+          // Someone who did not come is still rated.
+          { eventId: 'open', userId: 'p2', status: 'NO_SHOW' },
+          { eventId: 'open', userId: 'p3', status: 'ATTENDED' },
+          // A co-organizer with a seat is not rated as a participant.
+          { eventId: 'open', userId: 'co', status: 'APPROVED' },
+          { eventId: 'open', userId: 'blocked', status: 'APPROVED' },
+          { eventId: 'done', userId: 'p1', status: 'APPROVED' },
+        ],
+        rated: [
+          { eventId: 'open', participantId: 'p3' },
+          { eventId: 'done', participantId: 'p1' },
+        ],
+        hidden: ['blocked'],
+      });
+
+      const toRate = await service.getParticipantsToRate(
+        asUser('org'),
+        ['open', 'done', 'late', 'future', 'cancelled', 'notMine'],
+        now,
+      );
+
+      expect([...toRate]).toEqual([['open', 2]]);
+      expect(repository.getRateableSeatsAt).toHaveBeenCalledWith([
+        'open',
+        'done',
+      ]);
+    });
+
+    it('asks nothing more when no event is open to the person', async () => {
+      const { repository, service } = hostedSetup({
+        events: [anEvent({ id: 'notMine', organizerId: 'someone' })],
+      });
+
+      await expect(
+        service.getParticipantsToRate(asUser('org'), ['notMine'], now),
+      ).resolves.toEqual(new Map());
+      await expect(
+        service.getParticipantsToRate(asUser('org'), [], now),
+      ).resolves.toEqual(new Map());
+      expect(repository.getEventFactsOf).toHaveBeenCalledTimes(1);
+      expect(repository.getRateableSeatsAt).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getEventRatingState', () => {
     it('offers a participant the main organizer, with what they gave', async () => {
       const { repository, service } = setup();

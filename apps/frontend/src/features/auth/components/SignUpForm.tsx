@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link } from "@tanstack/react-router"
 import type { TFunction } from "i18next"
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 import { useNicknameAvailability } from "@/hooks/useNicknameAvailability"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
+import { languageOf, toAccountLanguage } from "@/i18n/resources"
 import { BIRTH_YEAR_MESSAGES, birthYearProblem } from "@/lib/birthYear"
 import {
   NICKNAME_LIMITS,
@@ -39,6 +40,7 @@ import {
   nicknameProblem,
 } from "@/lib/nickname"
 
+import { OrDivider, type GoogleRegistration } from "@/features/auth/components/GoogleButton"
 import { PasswordInput } from "@/features/auth/components/PasswordInput"
 
 const GENDERS = ["MALE", "FEMALE"] as const
@@ -111,10 +113,15 @@ type SignUpFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
   readonly onSubmit: (values: SignUpFormValues) => void | Promise<void>
+  /**
+   * Sign-up with Google needs the same personal fields and consents as the
+   * form, but no e-mail or password: this hands over a way to check just those.
+   */
+  readonly renderGoogle?: (getRegistration: () => Promise<GoogleRegistration | null>) => ReactNode
 }
 
-export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProps) {
-  const { t } = useTranslation()
+export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: SignUpFormProps) {
+  const { t, i18n } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -133,6 +140,31 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
       return
     }
     return onSubmit({ ...values, birthYear: Number(values.birthYear.trim()) })
+  }
+
+  const getGoogleRegistration = async (): Promise<GoogleRegistration | null> => {
+    const isValid = await form.trigger([
+      "username",
+      "gender",
+      "birthYear",
+      "adulthoodConfirmed",
+      "termsAccepted",
+    ])
+    if (!isValid) return null
+    // The hint under the field already says so; the server would refuse it.
+    if (availability === "taken") {
+      form.setFocus("username")
+      return null
+    }
+    const { username, gender, birthYear } = form.getValues()
+    return {
+      username: username.trim(),
+      gender,
+      birthYear: Number(birthYear.trim()),
+      preferredLanguage: toAccountLanguage(languageOf(i18n.resolvedLanguage)),
+      adulthoodConfirmed: true,
+      termsAccepted: true,
+    }
   }
 
   return (
@@ -348,6 +380,13 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit }: SignUpFormProp
         {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
         {t("auth.signUp.submit")}
       </Button>
+
+      {renderGoogle ? (
+        <>
+          <OrDivider />
+          {renderGoogle(getGoogleRegistration)}
+        </>
+      ) : null}
     </AppForm>
   )
 }

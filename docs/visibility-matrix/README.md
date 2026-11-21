@@ -81,6 +81,7 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 | Jméno organizátora                                                               | ✅                              | ✅       | ✅               | ✅            | ❌          | [#8][8]                                  |
 | Skupina, která akci pořádá                                                       | ✅                              | ✅       | ✅               | ✅            | ❌          | [#9][9]                                  |
 | Veřejná adresa: čtvrť a město, orientační bod z našeptávače a bod na mapě        | ✅                              | ✅       | ✅               | ✅            | ❌          | [#6][6], [#7][7], [PO][po]               |
+| Počet akcí, které filtr okruhu vynechal, protože nemají určenou polohu           | ✅                              | ✅       | ✅               | ✅            | ❌          | [#261][261]                              |
 | Přesná adresa                                                                    | ❌                              | ✅       | ✅               | ✅            | ❌          | [#43][43], [#67][67], [PO][po]           |
 | Odkaz na online akci                                                             | ❌                              | ✅       | ✅               | ✅            | ❌          | [ADR-0006](../adr/adr-0006.md), [PO][po] |
 | Praktické pokyny                                                                 | ❌                              | ✅       | ✅               | ✅            | ❌          | [#43][43]                                |
@@ -171,6 +172,8 @@ Co ostatní vidí o jednom konkrétním člověku („dotyčném“). Záleží 
 - **Žádost o přátelství** ([#228][228]) přijde příjemci jako upozornění v aplikaci se jménem žadatele (to vidí i na jeho profilu) a e-mailem jen „Máš novou žádost o přátelství“, bez jména, s odkazem na záložku Žádosti. Nejvýš 3 takové za hodinu od téhož člověka, další přijdou tiše. Zrušená žádost upozornění odstraní, odeslaný e-mail ne. Přijetí žádosti dostane žadatel jen jako upozornění v aplikaci, bez e-mailu; zamítnutí nedostane nikdo.
 - **Slovní hodnocení** vidí jeho autor a hodnocený. Autor není role vázaná na profil, proto je to poznámka, ne sloupec. Hodnocený ho vidí až po konci lhůty ([ADR-0027](../adr/adr-0027.md)). Hodnocení mezi dvojicí, která je zablokovaná, se nepočítá nikde: není v seznamu, v počtu, v průměru ani v rozložení hvězdiček, aby z rozdílu nešlo poznat, že blokace existuje ([ADR-0022](../adr/adr-0022.md)); po zrušení blokace se vrátí. Autor se smazaným účtem se ukazuje jako smazaný uživatel.
 - **„Od 3“:** pod třemi odkrytými hodnoceními nevidí ostatní ani průměr, ani počet. Vlastník svá čísla vidí vždy ve vlastním profilu a v přehledu „Moje hodnocení“; svůj veřejný profil vidí stejně jako ostatní.
+- **Že můžu organizátora ještě ohodnotit** ([#234][234]) se dozvím jen já sám: v přehledu svých přihlášek a v detailu akce, na které jsem měl schválené místo, dokud běží lhůta a hodnocení jsem neodeslal. Nikdo jiný, ani organizátor, nevidí, kdo ještě hodnotit může a kdo už hodnotil; organizátor se to dozví až po konci lhůty z odkrytých hodnocení. Přehled „Moje hodnocení“ je dostupný jen z vlastního profilu a ukazuje výhradně řádky „Hodnocení, která obdržel“ a „Hodnocení, která sám dal“ z tabulky výše.
+- **Kolik účastníků můžu ještě ohodnotit** ([#235][235]) vidí jen hlavní organizátor sám: v přehledu akcí, které pořádá, a v detailu akce, dokud běží lhůta. Spoluorganizátoři ani účastníci to nevidí a účastník se nedozví, jestli už ho organizátor ohodnotil. Rozpracované hodnocení (vybrané, ale neodeslané hvězdičky) zůstává jen na otevřené stránce organizátora a nikam se neukládá. V seznamu k hodnocení nejsou spoluorganizátoři, lidé zablokovaní s organizátorem ani smazané účty.
 
 ## Skupina
 
@@ -241,6 +244,8 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [42]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/42
 [43]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/43
 [44]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/44
+[234]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/234
+[235]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/235
 [236]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/236
 [45]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/45
 [47]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/47
@@ -270,6 +275,7 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [226]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/226
 [227]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/227
 [239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
+[261]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/261
 [240]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/240
 [174]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/174
 [233]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/233

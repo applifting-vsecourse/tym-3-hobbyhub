@@ -1,12 +1,22 @@
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import {
+  addOAuthServerContext,
+  APIError,
+  createAuthMiddleware,
+  getOAuthState,
+} from 'better-auth/api';
 import { BetterAuthOptions } from 'better-auth/types';
+import { googleAvatarAsDataUrl } from './google-avatar';
 import {
   consentsAtSignUp,
+  Gender,
+  Language,
   RegistrationErrorCode,
   validateRegistration,
 } from './registration';
 
 const SIGN_UP_PATH = '/sign-up/email';
+const SOCIAL_SIGN_IN_PATH = '/sign-in/social';
+const OAUTH_CALLBACK_PREFIX = '/callback/';
 
 // The nickname is changed only through the profile (PATCH /api/profile),
 // which keeps the three columns together and waits 30 days between changes.
@@ -66,6 +76,53 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
     };
   }
 
+  // The app signs in with Google only through the redirect. With an `idToken`
+  // BetterAuth would create the account right in this request, bypassing the
+  // registration step and its stored nickname, gender, year and consents.
+  if (ctx.path === SOCIAL_SIGN_IN_PATH && ctx.body?.idToken) {
+    throw APIError.from('BAD_REQUEST', {
+      code: 'ID_TOKEN_NOT_SUPPORTED',
+      message: 'Sign in with Google through the redirect',
+    });
+  }
+
+  // Sign-up with Google: the same F-03.1 rules, checked before the user leaves
+  // for Google. Only the checked values travel on, as server-trusted context
+  // (the request's own `additionalData` is client-controlled).
+  if (ctx.path === SOCIAL_SIGN_IN_PATH && ctx.body?.requestSignUp === true) {
+    const result = validateRegistration(
+      ctx.body.additionalData ?? {},
+      new Date(),
+    );
+    if (!result.ok) {
+      throw APIError.from('BAD_REQUEST', {
+        code: result.code,
+        message: MESSAGES[result.code],
+      });
+    }
+    // The username plugin only guards its own sign-up route, so a nickname
+    // that is taken is refused here, before the user leaves for Google.
+    const taken = await ctx.context.adapter.findOne({
+      model: 'user',
+      where: [{ field: 'username', value: result.username.toLowerCase() }],
+    });
+    if (taken) {
+      throw APIError.from('BAD_REQUEST', {
+        code: 'USERNAME_IS_ALREADY_TAKEN',
+        message: 'Username is already taken. Please try another.',
+      });
+    }
+    await addOAuthServerContext({
+      registration: {
+        username: result.username,
+        gender: result.gender,
+        birthYear: result.birthYear,
+        preferredLanguage: result.preferredLanguage,
+      },
+    });
+    return;
+  }
+
   // #212: the nickname is public, so it is no sign-in credential: only the
   // e-mail signs in.
   if (ctx.path === '/sign-in/username') {
@@ -99,8 +156,62 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
   user: {
     create: {
       before: async (user, ctx) => {
-        if (ctx?.path !== SIGN_UP_PATH) return;
-        return { data: { ...user, ...consentsAtSignUp(new Date()) } };
+        if (ctx?.path === SIGN_UP_PATH) {
+          return { data: { ...user, ...consentsAtSignUp(new Date()) } };
+        }
+        if (ctx?.path?.startsWith(OAUTH_CALLBACK_PREFIX)) {
+          // Google is set to create accounts only on an explicit sign-up, which
+          // validated and stored these in the sign-in step; nothing else may
+          // get here.
+          const state = await getOAuthState();
+          const registration = state?.serverContext?.registration as
+            | {
+                username: string;
+                gender: Gender;
+                birthYear: number;
+                preferredLanguage: Language;
+              }
+            | undefined;
+          if (!registration) {
+            throw APIError.from('BAD_REQUEST', {
+              code: 'REGISTRATION_REQUIRED',
+              message: 'Sign up through the registration form first',
+            });
+          }
+          const { username, gender, birthYear, preferredLanguage } =
+            registration;
+          // The nickname was free when the user left for Google; someone may
+          // have taken it since. BetterAuth turns an API error with a code
+          // into `?error=<code>` on the return address.
+          const taken = await ctx.context.adapter.findOne({
+            model: 'user',
+            where: [{ field: 'username', value: username.toLowerCase() }],
+          });
+          if (taken) {
+            throw APIError.from('BAD_REQUEST', {
+              code: 'USERNAME_IS_ALREADY_TAKEN',
+              message: 'Username is already taken. Please try another.',
+            });
+          }
+          return {
+            data: {
+              ...user,
+              // The app keeps only its own pictures in `user.image`: the
+              // Google photo is stored as a WebP data URL, not as a link.
+              image: await googleAvatarAsDataUrl(user.image),
+              // #212: the nickname the user typed, not the Google name, is the
+              // public name (ADR-0025); `username` is its lower-cased form.
+              name: username,
+              username: username.toLowerCase(),
+              displayUsername: username,
+              gender,
+              birthYear,
+              // The language the sign-up form was shown in, as with e-mail.
+              preferredLanguage,
+              ...consentsAtSignUp(new Date()),
+            },
+          };
+        }
       },
     },
   },

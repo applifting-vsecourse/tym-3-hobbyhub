@@ -31,6 +31,29 @@ const ratingSelect = {
   createdAt: true,
 } as const satisfies Prisma.RatingSelect;
 
+const eventFactsSelect = {
+  id: true,
+  title: true,
+  status: true,
+  endAt: true,
+  isHidden: true,
+  organizer: { select: { id: true, name: true } },
+  coOrganizers: { select: { id: true } },
+} as const satisfies Prisma.EventSelect;
+
+const toEventFacts = (
+  event: Prisma.EventGetPayload<{ select: typeof eventFactsSelect }>,
+): RatingEventFacts => ({
+  id: event.id,
+  title: event.title,
+  status: event.status,
+  endAt: event.endAt,
+  isHidden: event.isHidden,
+  organizerId: event.organizer.id,
+  organizerName: event.organizer.name,
+  coOrganizerIds: event.coOrganizers.map(({ id }) => id),
+});
+
 type ScoreRow = {
   direction?: RatingDirection;
   count: number;
@@ -52,36 +75,95 @@ export class RatingRepository {
   async getEventFacts(eventId: string): Promise<RatingEventFacts | null> {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        endAt: true,
-        isHidden: true,
-        organizer: { select: { id: true, name: true } },
-        coOrganizers: { select: { id: true } },
-      },
+      select: eventFactsSelect,
     });
-    if (!event) return null;
-    return {
-      id: event.id,
-      title: event.title,
-      status: event.status,
-      endAt: event.endAt,
-      isHidden: event.isHidden,
-      organizerId: event.organizer.id,
-      organizerName: event.organizer.name,
-      coOrganizerIds: event.coOrganizers.map(({ id }) => id),
-    };
+    return event ? toEventFacts(event) : null;
   }
 
-  /** The person's seat at the event, whatever its state; null when none. */
+  /** The same facts of several events at once; unknown ids are left out. */
+  async getEventFactsOf(
+    eventIds: readonly string[],
+  ): Promise<RatingEventFacts[]> {
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: [...eventIds] } },
+      select: eventFactsSelect,
+    });
+    return events.map(toEventFacts);
+  }
+
+  /** The person's seats at these events, by event; none where they had no seat. */
+  async getSeatStatuses(
+    userId: string,
+    eventIds: readonly string[],
+  ): Promise<Map<string, SeatStatus>> {
+    const participations = await this.prisma.participation.findMany({
+      where: { userId, eventId: { in: [...eventIds] } },
+      select: { eventId: true, status: true },
+    });
+    return new Map(
+      participations.map(({ eventId, status }) => [eventId, status]),
+    );
+  }
+
+  /** Which of these events' organizers the participant has rated already. */
+  async getOrganizerRatedEventIds(
+    participantId: string,
+    eventIds: readonly string[],
+  ): Promise<string[]> {
+    const ratings = await this.prisma.rating.findMany({
+      where: {
+        participantId,
+        direction: 'TO_ORGANIZER',
+        eventId: { in: [...eventIds] },
+      },
+      select: { eventId: true },
+    });
+    return ratings.map(({ eventId }) => eventId);
+  }
+
+  /**
+   * #235: the seats the main organizer rates at these events, of accounts not
+   * deleted, whether the person came or not. Organizers and blocked people are
+   * the caller's to leave out.
+   */
+  async getRateableSeatsAt(
+    eventIds: readonly string[],
+  ): Promise<{ eventId: string; userId: string; status: SeatStatus }[]> {
+    return this.prisma.participation.findMany({
+      where: {
+        eventId: { in: [...eventIds] },
+        status: { in: [...RATEABLE_SEAT_STATUSES] },
+        user: { status: { not: 'DELETED' } },
+      },
+      select: { eventId: true, userId: true, status: true },
+    });
+  }
+
+  /** #235: whom the person rated as a participant at these events. */
+  async getParticipantsRatedBy(
+    authorId: string,
+    eventIds: readonly string[],
+  ): Promise<{ eventId: string; participantId: string }[]> {
+    return this.prisma.rating.findMany({
+      where: {
+        authorId,
+        direction: 'TO_PARTICIPANT',
+        eventId: { in: [...eventIds] },
+      },
+      select: { eventId: true, participantId: true },
+    });
+  }
+
+  /**
+   * The person's seat at the event, whatever its state; null when none, and
+   * for a deleted account (#235): nobody rates or is rated by it any more.
+   */
   async getSeatStatus(
     eventId: string,
     userId: string,
   ): Promise<SeatStatus | null> {
-    const participation = await this.prisma.participation.findUnique({
-      where: { eventId_userId: { eventId, userId } },
+    const participation = await this.prisma.participation.findFirst({
+      where: { eventId, userId, user: { status: { not: 'DELETED' } } },
       select: { status: true },
     });
     return participation?.status ?? null;
@@ -113,8 +195,9 @@ export class RatingRepository {
 
   /**
    * Everyone who had a seat at the end of the event, whether they came or
-   * not, by name. Without the people in `excludedIds` (the organizers, people
-   * blocked from the one asking).
+   * not, in the order they took it, as on the roster (#235). Without the
+   * people in `excludedIds` (the organizers, people blocked from the one
+   * asking) and without deleted accounts.
    */
   async getRateableParticipants(
     eventId: string,
@@ -125,9 +208,10 @@ export class RatingRepository {
         eventId,
         status: { in: [...RATEABLE_SEAT_STATUSES] },
         userId: { notIn: [...excludedIds] },
+        user: { status: { not: 'DELETED' } },
       },
       select: { status: true, user: { select: { id: true, name: true } } },
-      orderBy: { user: { name: 'asc' } },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     return participations.map(({ status, user }) => ({
       id: user.id,

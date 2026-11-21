@@ -6,6 +6,7 @@ import {
   ActivityCombobox,
   type ActivityComboboxOption,
 } from "@/components/hobbyhub/ActivityCombobox"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import { thisWeekendRange, thisWeekRange } from "@/components/hobbyhub/filterDateRanges"
 import { ResponsiveSheet } from "@/components/hobbyhub/ResponsiveSheet"
@@ -13,6 +14,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+
+/** The place picked for the radius filter (#261): the line of its address and its position. */
+export type PlaceFilter = { label: string; latitude: number; longitude: number }
+
+/** The radii offered around a place, in km, and the one preselected with it. The server takes up to the last. */
+export const RADIUS_OPTIONS_KM = [5, 10, 25, 50] as const
+export const DEFAULT_RADIUS_KM = 10
 
 export type EventFilters = {
   /** Activity ids (or the demo keys below) chosen in the combobox. */
@@ -22,6 +30,9 @@ export type EventFilters = {
   /** Last day (YYYY-MM-DD) of the date range; empty means no upper bound. */
   dateTo: string
   location: string
+  /** The place and radius of the public list (#261); no place means no radius filter. */
+  place: PlaceFilter | null
+  radiusKm: number
   /** Only events with a free seat. */
   freeSpotsOnly: boolean
   /** Ranges as typed (number text); empty means no bound. Price in CZK, duration in hours. */
@@ -38,6 +49,8 @@ export const EMPTY_FILTERS: EventFilters = {
   dateFrom: "",
   dateTo: "",
   location: "",
+  place: null,
+  radiusKm: DEFAULT_RADIUS_KM,
   freeSpotsOnly: false,
   priceFrom: "",
   priceTo: "",
@@ -51,7 +64,7 @@ export const EMPTY_FILTERS: EventFilters = {
 export const FILTER_TEXT_MAX_LENGTH = 100
 
 export type FiltersSheetField =
-  "activity" | "when" | "location" | "freeSpots" | "price" | "duration" | "capacity"
+  "activity" | "when" | "location" | "place" | "freeSpots" | "price" | "duration" | "capacity"
 
 /** True when both ends are set and the start is past the end. Empty or missing means open. */
 export const isNumberRangeReversed = (from: string | number = "", to: string | number = "") =>
@@ -268,6 +281,7 @@ export function FiltersFields({
 }: FiltersFieldsProps) {
   const { t } = useTranslation()
   const locationId = useId()
+  const placeId = useId()
   const activityId = useId()
   const dateFromId = useId()
   const dateToId = useId()
@@ -406,8 +420,58 @@ export function FiltersFields({
         </div>
       ) : null}
 
-      {/* TODO(F-02.1b #91): a text for now. Later a place picker with a radius
-          and distance from it, once events have coordinates (geocoding, F-12.3). */}
+      {fields.includes("place") ? (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={placeId}>{t("hobbyhub.filters.place")}</Label>
+          <div className="flex items-center gap-2">
+            <AddressSearch
+              id={placeId}
+              value={draft.place?.label ?? ""}
+              placeholder={t("hobbyhub.filters.placePlaceholder")}
+              className="min-w-0 flex-1"
+              onSelect={({ label, latitude, longitude }) =>
+                setDraft((current) => ({
+                  ...current,
+                  place: { label, latitude, longitude },
+                  // A picked place always comes with a radius.
+                  radiusKm: current.place ? current.radiusKm : DEFAULT_RADIUS_KM,
+                }))
+              }
+              // A street without a house number is a place to measure from too.
+              isStreetAllowed
+            />
+            {draft.place ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-11 shrink-0 md:size-9"
+                aria-label={t("hobbyhub.filters.placeClear")}
+                onClick={() => setDraft((current) => ({ ...current, place: null }))}
+              >
+                <X aria-hidden />
+              </Button>
+            ) : null}
+          </div>
+          {draft.place ? (
+            <div
+              role="group"
+              aria-label={t("hobbyhub.filters.radius")}
+              className="flex flex-wrap gap-2 pt-1.5"
+            >
+              {RADIUS_OPTIONS_KM.map((km) => (
+                <FilterChip
+                  key={km}
+                  pressed={draft.radiusKm === km}
+                  onPressedChange={() => setDraft((current) => ({ ...current, radiusKm: km }))}
+                >
+                  {t("hobbyhub.filters.radiusOption", { km })}
+                </FilterChip>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {fields.includes("location") ? (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={locationId}>{t("hobbyhub.filters.location")}</Label>
