@@ -623,6 +623,9 @@
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
       "signIn": "Přihlásit se",
+      "similar": {
+        "title": "Podobné akce"
+      },
       "state": {
         "cancelled": "Zrušeno",
         "cancelledText": "Akce byla zrušena, o účast už se nedá žádat.",

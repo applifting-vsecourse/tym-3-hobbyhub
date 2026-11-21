@@ -150,6 +150,15 @@ export class EventListResponseDto {
   }
 }
 
+export class SimilarEventsResponseDto {
+  @ApiProperty({ type: [EventListItemResponseDto] })
+  items!: EventListItemResponseDto[];
+
+  static fromDomain(items: EventListItem[]): SimilarEventsResponseDto {
+    return { items: items.map(EventListItemResponseDto.fromDomain) };
+  }
+}
+
 class GenderSplitDto {
   @ApiProperty()
   male!: number;

@@ -316,6 +316,23 @@ export class EventsService {
     });
   }
 
+  // Events like the one in the detail. Whoever may open the detail gets it
+  // (a 404 otherwise, the same as the detail); what is offered is only what the
+  // public list would show them: public, upcoming, with a free seat, and not
+  // of someone blocked from them (#239).
+  async getSimilarEvents(
+    id: string,
+    viewer?: Identity,
+    now: Date = new Date(),
+  ): Promise<EventListItem[]> {
+    await this.loadVisibleEvent(id, viewer);
+    return this.eventRepository.getSimilarEvents(
+      id,
+      now,
+      await this.blocks.hiddenFor(viewer?.id),
+    );
+  }
+
   // F-06.5: the exact address and the contacts, for the organizers and the
   // people holding a seat. Everyone else is told no, never the data.
   async getParticipantInfo(

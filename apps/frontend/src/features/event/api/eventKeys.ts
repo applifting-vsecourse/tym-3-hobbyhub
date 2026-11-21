@@ -44,6 +44,9 @@ export const eventKeys = {
   details: () => [...eventKeys.all(), "detail"] as const,
   detail: (id: string) => [...eventKeys.details(), id] as const,
   detailFor: (id: string, viewerId: string | null) => [...eventKeys.detail(id), viewerId] as const,
+  // The few events like the one in a detail; they follow who asks (blocks).
+  similarFor: (id: string, viewerId: string | null) =>
+    [...eventKeys.all(), "similar", id, viewerId] as const,
   // F-07.2: the events of a group on its page. Members get the group-only and
   // past ones too, so whether the viewer is one is part of the key.
   groupEvents: (
