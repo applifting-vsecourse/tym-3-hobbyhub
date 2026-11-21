@@ -1,8 +1,8 @@
 import { GroupsService } from '@/modules/group/services/groups.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { mock } from 'jest-mock-extended';
-import { GroupsController } from './groups.controller';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { GroupsController } from './groups.controller';
 
 describe('GroupsController', () => {
   // The controller copies the body field by field, so a field it forgets is
