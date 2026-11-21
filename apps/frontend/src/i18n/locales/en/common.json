@@ -665,8 +665,9 @@
       "contributionNote": "Note on the contribution (optional)",
       "country": "Country",
       "description": "Event description",
-      "endDate": "End date",
-      "endTime": "Until",
+      "duration": "Duration",
+      "durationHours": "Hours",
+      "durationMinutes": "Minutes",
       "equipment": "Equipment (optional)",
       "externalChatUrl": "Group chat link (optional)",
       "externalOccupiedSpots": "Already taken outside the app",
@@ -824,7 +825,7 @@
       "countryRequired": "Enter a country",
       "dateRequired": "Enter a date",
       "descriptionRequired": "Write a few words about the event",
-      "endBeforeStart": "The end must come after the start",
+      "durationTooShort": "The event must last at least {{count}} minutes",
       "maxBelowMin": "The maximum must be at least the minimum",
       "maxBelowOccupied": "The maximum cannot be below the taken seats ({{count}})",
       "occupiedAboveMax": "Taken seats cannot exceed the maximum",
@@ -841,6 +842,10 @@
     "venueType": {
       "PRIVATE_VENUE": "Private premises",
       "PUBLIC_VENUE": "Public place"
+    },
+    "duration": {
+      "custom": "Custom",
+      "hours": "{{count}} h"
     }
   },
   "footer": {

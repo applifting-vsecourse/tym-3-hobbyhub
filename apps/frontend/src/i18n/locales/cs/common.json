@@ -671,8 +671,9 @@
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
       "country": "Země",
       "description": "Popis akce",
-      "endDate": "Datum konce",
-      "endTime": "Čas do",
+      "duration": "Délka trvání",
+      "durationHours": "Hodiny",
+      "durationMinutes": "Minuty",
       "equipment": "Vybavení (nepovinné)",
       "externalChatUrl": "Odkaz na skupinový chat (nepovinné)",
       "externalOccupiedSpots": "Už obsazeno mimo aplikaci",
@@ -834,7 +835,7 @@
       "countryRequired": "Zadejte zemi",
       "dateRequired": "Zadejte datum",
       "descriptionRequired": "Napište pár vět o akci",
-      "endBeforeStart": "Konec musí být po začátku",
+      "durationTooShort": "Akce musí trvat alespoň {{count}} minut",
       "maxBelowMin": "Maximum musí být alespoň jako minimum",
       "maxBelowOccupied": "Maximum nemůže být menší než obsazená místa ({{count}})",
       "occupiedAboveMax": "Obsazených míst nemůže být víc než maximum",
@@ -853,6 +854,10 @@
     "venueType": {
       "PRIVATE_VENUE": "Soukromé prostory",
       "PUBLIC_VENUE": "Veřejné místo"
+    },
+    "duration": {
+      "custom": "Upřesnit",
+      "hours": "{{count}} h"
     }
   },
   "footer": {
