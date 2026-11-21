@@ -27,7 +27,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
-import { hasAddressSuggestions } from "@/lib/addressSuggestions"
+import {
+  geocodeAddress,
+  hasAddressSuggestions,
+  type AddressSuggestion,
+} from "@/lib/addressSuggestions"
 import { cn } from "@/lib/utils"
 
 import {
@@ -247,6 +251,15 @@ const valuesOfEvent = (event: Event): FormValues => {
   }
 }
 
+// An address that was typed, or finished by hand after a street was picked, has no
+// position yet: it is looked up when the event is sent, so it gets onto the map too.
+const withPosition = async (values: FormValues, language: string): Promise<FormValues> => {
+  const isLocated = values.latitude !== null && values.positionOf === addressKey(values)
+  if (values.venueType === "ONLINE" || isLocated) return values
+  const position = await geocodeAddress(values, language)
+  return position ? { ...values, ...position, positionOf: addressKey(values) } : values
+}
+
 // Optional fields left empty are not sent at all. Dates are validated by then.
 const toInput = (values: FormValues): CreateEventInput => {
   const start = combineDateTime(values.startDate, values.startTime)
@@ -363,7 +376,7 @@ export function EventForm({
   cancelAction,
   now = realNow,
 }: EventFormProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
   const isEditing = event !== undefined
   const approvedCount = event?.approvedCount ?? 0
@@ -418,7 +431,7 @@ export function EventForm({
   return (
     <AppForm
       form={form}
-      onSubmit={(values) => onSubmit(toInput(values))}
+      onSubmit={async (values) => onSubmit(toInput(await withPosition(values, i18n.language)))}
       onInvalid={showFirstBrokenStep}
       // Enter on a phone step moves on; only the last step publishes.
       onBeforeSubmit={() => {
@@ -741,6 +754,11 @@ function AddressPicker() {
   const { t } = useTranslation()
   const form = useFormContext<FormValues>()
   const [pickedLabel, setPickedLabel] = useState("")
+  // A street was picked and its house number is still to be typed.
+  const [pickedStreet, setPickedStreet] = useState<Pick<
+    AddressSuggestion,
+    "label" | "street" | "city" | "postalCode"
+  > | null>(null)
   const [street, city, postalCode, latitude, positionOf] = useWatch({
     control: form.control,
     name: ["street", "city", "postalCode", "latitude", "positionOf"],
@@ -748,25 +766,51 @@ function AddressPicker() {
   if (!hasAddressSuggestions()) return null
 
   const isLocated = latitude !== null && positionOf === addressKey({ street, city, postalCode })
+  // The picked street stays shown until its house number is typed or another place is.
+  const isStreetShown =
+    !isLocated &&
+    pickedStreet !== null &&
+    street.trim() === pickedStreet.street &&
+    city === pickedStreet.city &&
+    postalCode === pickedStreet.postalCode
   const options = { shouldDirty: true, shouldTouch: true, shouldValidate: true }
+
+  /** Fills the address fields; `position` is where the address is, or null while it has no house number. */
+  const fillAddress = (
+    address: Pick<AddressSuggestion, "street" | "city" | "postalCode" | "country">,
+    position: Pick<AddressSuggestion, "latitude" | "longitude"> | null,
+  ) => {
+    form.setValue("street", address.street, options)
+    form.setValue("city", address.city, options)
+    form.setValue("postalCode", address.postalCode, options)
+    if (address.country) form.setValue("country", address.country, options)
+    form.setValue("latitude", position?.latitude ?? null, options)
+    form.setValue("longitude", position?.longitude ?? null, options)
+    form.setValue("positionOf", position ? addressKey(address) : "", options)
+  }
 
   return (
     <div className="space-y-2">
       <Label htmlFor="event-address-search">{t("events.fields.addressSearch")}</Label>
       <AddressSearch
         id="event-address-search"
-        value={isLocated ? pickedLabel : ""}
+        value={isLocated ? pickedLabel : isStreetShown ? pickedStreet.label : ""}
         placeholder={t("events.placeholders.addressSearch")}
+        // A street alone fills what it knows; the house number is left to type, and
+        // the event is not on the map until the address is whole.
+        onSelectStreet={(address) => {
+          fillAddress({ ...address, street: `${address.street} ` }, null)
+          setPickedStreet(address)
+        }}
+        // The list hands the focus back to its button as it closes; the street is next.
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          form.setFocus("street")
+        }}
         onSelect={(address) => {
-          const key = addressKey(address)
+          fillAddress(address, address)
           setPickedLabel(address.label)
-          form.setValue("street", address.street, options)
-          form.setValue("city", address.city, options)
-          form.setValue("postalCode", address.postalCode, options)
-          if (address.country) form.setValue("country", address.country, options)
-          form.setValue("latitude", address.latitude, options)
-          form.setValue("longitude", address.longitude, options)
-          form.setValue("positionOf", key, options)
+          setPickedStreet(null)
         }}
       />
       <p className="flex items-center gap-1.5 typo-small text-muted-foreground">
@@ -779,7 +823,7 @@ function AddressPicker() {
             {t("events.form.addressLocated")}
           </>
         ) : (
-          t("events.form.addressHint")
+          t(isStreetShown ? "events.form.addressStreetPicked" : "events.form.addressHint")
         )}
       </p>
     </div>

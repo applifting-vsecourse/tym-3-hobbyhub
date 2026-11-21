@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { ArrowRight } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -17,17 +18,20 @@ import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
+import { AccountLanguageLinks } from "@/features/auth/components/AccountLanguageLinks"
 import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
 import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
+import { AudienceClaims } from "@/features/landing/components/AudienceClaims"
 import { HowItWorks } from "@/features/landing/components/HowItWorks"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
 })
 
-// Three cards: one row from `lg`, where the landing page is at its widest.
-const UPCOMING_EVENTS_COUNT = 3
+// The events are the page's main section (#216): two full rows, six on `md` and
+// `lg`, eight in the four columns of a large screen (#224).
+const UPCOMING_EVENTS_COUNT = 8
 
 function LandingPage() {
   const { t } = useTranslation()
@@ -47,6 +51,8 @@ function LandingPage() {
     [activitiesQuery.data, t],
   )
   const upcomingQuery = useQuery(upcomingEventsQueryOptions(UPCOMING_EVENTS_COUNT))
+  // A real figure for the kicker; until it is known the static line stands in.
+  const total = upcomingQuery.data?.total
 
   // Searching or filtering from the landing page opens the event list already filtered.
   const openEvents = (filters: { activities?: string[]; location?: string } = {}) => {
@@ -84,9 +90,9 @@ function LandingPage() {
     <>
       <Seo title={t("landing.seoTitle")} />
       <AppShell
-        className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:gap-12 md:px-6 md:py-10 lg:px-8"
+        className="mx-auto flex w-full max-w-page flex-col gap-12 px-page py-6 md:gap-16 md:py-10"
         search={searchField}
-        footer={<Footer />}
+        footer={<Footer language={<AccountLanguageLinks />} />}
       >
         <FiltersSheet
           isOpen={isFiltersOpen}
@@ -103,17 +109,19 @@ function LandingPage() {
         />
         <div className="lg:hidden">{searchField}</div>
         <Hero
-          className="enter [--seat-delay:400ms]"
+          className="[--seat-delay:400ms]"
           isAnimated
           titleAs="h1"
-          kicker={t("landing.hero.kicker")}
+          kicker={
+            total ? t("landing.hero.kickerCount", { count: total }) : t("landing.hero.kicker")
+          }
           title={t("landing.hero.title")}
           text={t("landing.hero.text")}
           taken={7}
           capacity={10}
           action={
             <Button asChild>
-              <Link to={ROUTES.events}>{t("landing.hero.join")}</Link>
+              <Link to={ROUTES.events}>{t("landing.actions.find")}</Link>
             </Button>
           }
           secondaryAction={
@@ -128,15 +136,30 @@ function LandingPage() {
 
         <section
           aria-labelledby="upcoming-heading"
-          className="flex enter flex-col gap-3"
+          className="flex enter flex-col gap-4"
           style={{ "--enter-index": 1 } as CSSProperties}
         >
-          <h2
-            id="upcoming-heading"
-            className="typo-h3"
-          >
-            {t("landing.upcoming.title")}
-          </h2>
+          <div className="flex items-baseline justify-between gap-4">
+            <h2
+              id="upcoming-heading"
+              className="typo-h2"
+            >
+              {t("landing.upcoming.title")}
+            </h2>
+            <Button
+              asChild
+              variant="link"
+              className="group max-md:hidden"
+            >
+              <Link to={ROUTES.events}>
+                {t("landing.upcoming.all")}
+                <ArrowRight
+                  aria-hidden
+                  className="transition-transform duration-200 motion-safe:group-hover:translate-x-1"
+                />
+              </Link>
+            </Button>
+          </div>
           <UpcomingEvents
             events={upcomingQuery.data?.items ?? []}
             activityLabel={(item) => activityName(t, item)}
@@ -144,12 +167,18 @@ function LandingPage() {
             error={upcomingQuery.error}
             onReload={() => void upcomingQuery.refetch()}
           />
+          <Button
+            asChild
+            variant="outline"
+            className="md:hidden"
+          >
+            <Link to={ROUTES.events}>{t("landing.upcoming.all")}</Link>
+          </Button>
         </section>
 
-        <HowItWorks
-          className="enter"
-          style={{ "--enter-index": 2 } as CSSProperties}
-        />
+        <AudienceClaims />
+
+        <HowItWorks />
 
         {/* Groups (#151): the invitation. The same dashed accent surface as
             "Tvoje místo" on an event, with the crew and one free seat: what a
@@ -158,8 +187,7 @@ function LandingPage() {
             random one. */}
         <section
           aria-labelledby="groups-heading"
-          className="flex enter flex-col gap-3"
-          style={{ "--enter-index": 3 } as CSSProperties}
+          className="flex reveal flex-col gap-3"
         >
           <h2
             id="groups-heading"
@@ -167,13 +195,16 @@ function LandingPage() {
           >
             {t("landing.groups.title")}
           </h2>
-          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:gap-12 md:px-12 md:py-10">
+          {/* Centred as one block: on a wide screen the seats and the text sit in
+              the middle of the invitation, not at its left edge (#224). */}
+          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:justify-center md:gap-12 md:px-12 md:py-10">
             <div
               aria-hidden
               className="shrink-0"
             >
               <RosterSeats
                 size="lg"
+                isInviting
                 taken={4}
                 capacity={5}
               />

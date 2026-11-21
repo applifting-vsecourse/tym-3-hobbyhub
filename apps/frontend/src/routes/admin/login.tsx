@@ -48,6 +48,7 @@ function AdminLoginPage() {
     <>
       <Seo title={t("admin.signIn.title")} />
       <AuthLayout
+        isAdministration
         title={t("admin.signIn.title")}
         description={t("admin.signIn.description")}
         footer={t("admin.signIn.footer")}

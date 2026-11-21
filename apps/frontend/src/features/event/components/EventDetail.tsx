@@ -7,6 +7,7 @@ import MapPinIcon from "@/assets/ui-icons/map-pin.svg?react"
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
 import { missingCount } from "@/components/hobbyhub/capacity"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
+import { RatingScore } from "@/components/hobbyhub/RatingScore"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
@@ -27,8 +28,6 @@ type EventDetailProps = {
   organizerActions?: ReactNode
   /** Names the organizer as a link to their profile: only signed-in people can open it. */
   isOrganizerLinked?: boolean
-  /** Link to the group that organizes the event; absent when none does. */
-  groupLink?: ReactNode
   /** Copy the public link; shown to everyone while the event can still be joined (not once it is full). */
   shareAction?: ReactNode
   /**
@@ -44,6 +43,11 @@ type EventDetailProps = {
   participantInfo?: ReactNode
   /** "Nahlásit akci" (#240), for a signed-in person who does not organize it. */
   reportAction?: ReactNode
+  /**
+   * The way to rate the organizer (#234), for someone who had a seat while the
+   * rating period is on; then that they have rated. Under the event's state.
+   */
+  ratingPrompt?: ReactNode
   /** Injectable so "today" and "over" are stable in tests. */
   now?: Date
 }
@@ -79,11 +83,11 @@ export function EventDetail({
   joinAction,
   organizerActions,
   isOrganizerLinked = false,
-  groupLink,
   shareAction,
   ownRequest,
   participantInfo,
   reportAction,
+  ratingPrompt,
   now = new Date(),
 }: EventDetailProps) {
   const { t, i18n } = useTranslation()
@@ -133,17 +137,11 @@ export function EventDetail({
     : []
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8">
+    // On a large screen (#224) the photo and the roster share the right
+    // column, one under the other and equally wide; the description keeps its
+    // line length on the left. On a phone the photo still opens the page.
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-8 lg:gap-y-8 xl:grid-cols-[minmax(0,1fr)_26rem] xl:gap-x-12">
       <header className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
-        {event.imageUrl ? (
-          // Decorative: the title below says what the event is.
-          <EventPhoto
-            src={event.imageUrl}
-            alt=""
-            rounding="xl"
-            className="h-48 md:h-72"
-          />
-        ) : null}
         <div className="flex flex-col gap-2">
           <p className="flex items-center gap-2 typo-label text-muted-foreground">
             {isActivityKey(event.activity.icon) ? (
@@ -166,6 +164,15 @@ export function EventDetail({
             ) : null}
             {state === "open" && !isHidden ? shareAction : null}
           </div>
+          {/* #226: which of my friends go, or were there once it is over,
+              right under the title, before the time and the place. */}
+          {event.friends ? (
+            <FriendsOnEvent
+              friends={event.friends}
+              period={event.endAt > now ? "upcoming" : "past"}
+              variant="band"
+            />
+          ) : null}
           {/* #239: only the organizers get here; nobody else sees the event. */}
           {isHidden ? (
             <p className="typo-body text-foreground">
@@ -185,6 +192,7 @@ export function EventDetail({
                 .join(" · ")}
             </p>
           ) : null}
+          {ratingPrompt}
         </div>
 
         {/* When and where: the time is the main fact, so it is the one big thing. */}
@@ -221,78 +229,97 @@ export function EventDetail({
             ) : null}
           </ul>
         </div>
-        <p className="typo-small text-muted-foreground">
-          <Trans
-            t={t}
-            i18nKey="events.detail.organizer"
-            values={{ name: event.organizerName }}
-            components={{
-              profile: isOrganizerLinked ? (
-                <Link
-                  to="/profile/$userId"
-                  params={{ userId: event.organizerId }}
-                  className="underline underline-offset-4"
-                />
-              ) : (
-                <span />
-              ),
-            }}
-          />
-        </p>
-        {/* #226: which of my friends go, or were there once it is over. */}
-        {event.friends ? (
-          <FriendsOnEvent
-            friends={event.friends}
-            period={event.endAt > now ? "upcoming" : "past"}
-            variant="band"
-          />
-        ) : null}
-        {groupLink}
-        {organizerActions}
       </header>
 
-      <aside
-        aria-labelledby="roster-heading"
-        className="flex h-fit flex-col gap-4 rounded-xl bg-signal p-4 text-signal-foreground lg:col-start-2 lg:row-span-2 lg:row-start-1"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <h2
-            id="roster-heading"
-            className="typo-h3"
-          >
-            {t("events.detail.roster")}
-          </h2>
-          {missing > 0 && state === "open" ? (
-            <span className="rounded-full bg-signal-foreground px-2.5 py-0.75 typo-small text-signal">
-              {t("events.detail.missingToMin", { count: missing })}
-            </span>
-          ) : null}
-        </div>
-        <RosterSeats
-          size="lg"
-          surface="dark"
-          taken={event.takenCount}
-          min={event.minParticipants}
-          capacity={event.maxParticipants}
-        />
-        <p className="typo-small text-signal-soft">
-          {t("events.detail.seats", { taken: event.takenCount, total: event.maxParticipants })}
-        </p>
-        {ownRequest ??
-          (isHidden ? (
-            <p className="typo-small text-signal-soft">{t("events.detail.hidden.seats")}</p>
-          ) : state === "open" ? (
-            <YourSeat
-              surface="dark"
-              description={t(
-                event.approvalMode === "MANUAL"
-                  ? "events.detail.approvalManual"
-                  : "events.detail.approvalAutomatic",
-              )}
-              action={joinAction}
-            />
-          ) : null)}
-      </aside>
+      {/* One column from `lg`; on a phone its two parts take their own places. */}
+      <div className="contents lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-4">
+        {event.imageUrl ? (
+          // Decorative: the title says what the event is.
+          <EventPhoto
+            src={event.imageUrl}
+            alt=""
+            rounding="xl"
+            className="h-48 max-lg:order-first md:h-72 lg:aspect-video lg:h-auto"
+          />
+        ) : null}
+        <aside
+          aria-labelledby="roster-heading"
+          className="flex h-fit flex-col gap-4 rounded-xl bg-signal p-4 text-signal-foreground"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2
+              id="roster-heading"
+              className="typo-h3"
+            >
+              {t("events.detail.roster")}
+            </h2>
+            {missing > 0 && state === "open" ? (
+              <span className="rounded-full bg-signal-foreground px-2.5 py-0.75 typo-small text-signal">
+                {t("events.detail.missingToMin", { count: missing })}
+              </span>
+            ) : null}
+          </div>
+          <RosterSeats
+            size="lg"
+            surface="dark"
+            taken={event.takenCount}
+            min={event.minParticipants}
+            capacity={event.maxParticipants}
+          />
+          <p className="typo-small text-signal-soft">
+            {t("events.detail.seats", { taken: event.takenCount, total: event.maxParticipants })}
+          </p>
+          {ownRequest ??
+            (isHidden ? (
+              <p className="typo-small text-signal-soft">{t("events.detail.hidden.seats")}</p>
+            ) : state === "open" ? (
+              <YourSeat
+                surface="dark"
+                description={t(
+                  event.approvalMode === "MANUAL"
+                    ? "events.detail.approvalManual"
+                    : "events.detail.approvalAutomatic",
+                )}
+                action={joinAction}
+              />
+            ) : null)}
+          {/* Who runs it, with the organizer's own tools next to the way to the
+            requests above: everything about the people in one place (#224). */}
+          <div className="flex flex-col gap-3 border-t border-signal-soft/30 pt-4">
+            <p className="typo-small text-signal-soft">
+              <Trans
+                t={t}
+                i18nKey="events.detail.organizer"
+                values={{ name: event.organizerName }}
+                components={{
+                  profile: isOrganizerLinked ? (
+                    <Link
+                      to="/profile/$userId"
+                      params={{ userId: event.organizerId }}
+                      className="text-signal-foreground underline underline-offset-4"
+                    />
+                  ) : (
+                    <span className="text-signal-foreground" />
+                  ),
+                }}
+              />
+            </p>
+            {event.group ? (
+              <p className="typo-small text-signal-soft">
+                {t("events.detail.organizedByGroup")}{" "}
+                <Link
+                  to="/groups/$groupId"
+                  params={{ groupId: event.group.id }}
+                  className="font-medium text-signal-foreground underline underline-offset-4"
+                >
+                  {event.group.name}
+                </Link>
+              </p>
+            ) : null}
+            {organizerActions}
+          </div>
+        </aside>
+      </div>
 
       <div className="flex flex-col gap-8 lg:col-start-1 lg:row-start-2">
         <p className="max-w-prose typo-body-lg break-words whitespace-pre-line text-foreground">
@@ -317,6 +344,18 @@ export function EventDetail({
           (!isHidden && (state === "open" || state === "full") ? (
             <p className="typo-small text-muted-foreground">{t("events.detail.hiddenInfo")}</p>
           ) : null)}
+
+        {/* #236: from three revealed ratings on; before that nothing at all,
+          since an upcoming event has none to show. */}
+        {event.rating.average === null ? null : (
+          <section className="flex flex-col gap-3 border-t border-border pt-4">
+            <h2 className="typo-h3 text-foreground">{t("events.detail.rating.title")}</h2>
+            <RatingScore
+              average={event.rating.average}
+              count={event.rating.count}
+            />
+          </section>
+        )}
 
         <section className="flex flex-col gap-3 border-t border-border pt-4">
           <h2 className="typo-h3 text-foreground">{t("events.detail.stats.title")}</h2>

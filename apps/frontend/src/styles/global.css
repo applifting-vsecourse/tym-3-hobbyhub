@@ -353,6 +353,39 @@
 }
 
 /*
+ * The page frame (#224): the header, the footer and the discovery pages share
+ * one width, so the navigation stays put between pages. It reaches almost to
+ * the edges of the window and stops only on an ultrawide monitor; what fills
+ * the width is decided by the content (the map takes it, card grids add
+ * columns, text keeps its line length).
+ */
+@theme {
+  --container-page: 120rem;
+}
+
+/*
+ * Side gutter of the page frame: grows with the window instead of jumping at
+ * breakpoints — 16px on a phone, about 36px on a laptop, 67px on a 1920px screen.
+ */
+:root {
+  --page-gutter: max(1rem, 3.5vw);
+}
+@utility px-page {
+  padding-inline: var(--page-gutter);
+}
+
+/*
+ * Width of a column narrower than the page frame (a form, a reading page, a
+ * detail): `max-w-column-2xl px-page`. The gutter is padding, so a plain
+ * `max-w-2xl` beside `px-page` would lose it from its own width and the column
+ * would get narrower the wider the window is. This one adds the gutter back:
+ * the content is as wide as the name says, down to the window minus the gutter.
+ */
+@utility max-w-column-* {
+  max-width: calc(--value(--container-*) + 2 * var(--page-gutter));
+}
+
+/*
  * Bottom padding of an action bar fixed to the bottom of a phone screen. Under
  * the BottomNav it clears the whole nav, raised "Přidat akci" button included
  * (AppShell measures it into --bottom-nav-height), so the bar's own background
@@ -389,6 +422,47 @@
   animation-delay: calc(var(--enter-index, 0) * 100ms);
   @media (prefers-reduced-motion: no-preference) {
     animation-name: enter-rise;
+  }
+}
+
+/*
+ * The hero's free seats breathe, one after another, once the roster has filled
+ * in: a nudge that the dashed places are for the visitor. Stills under reduced
+ * motion.
+ */
+@keyframes seat-invite {
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+@utility seat-invite {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: seat-invite 2.4s ease-in-out infinite;
+    animation-delay: calc(var(--seat-delay, 0ms) + 1400ms + var(--seat-index, 0) * 240ms);
+  }
+}
+
+/*
+ * Reveal on scroll (#216): a section below the fold rises into place as it
+ * enters the viewport, driven by the scroll itself, no script. Where scroll
+ * timelines are not supported, or under reduced motion, it simply is there.
+ */
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@utility reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      /* --reveal-index staggers the items of one row: each starts a bit later. */
+      animation-range: entry calc(var(--reveal-index, 0) * 12%) entry
+        calc(40% + var(--reveal-index, 0) * 12%);
+    }
   }
 }
 

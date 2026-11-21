@@ -15,6 +15,10 @@ const profile: PublicProfile = {
   image: null,
   cover: null,
   interests: [{ activity: { id: "a1", name: "Běh", icon: "beh" }, level: null }],
+  ratings: {
+    asOrganizer: { count: null, average: null },
+    asParticipant: { count: null, average: null },
+  },
 }
 
 const renderProfile = (overrides: Partial<PublicProfile> = {}, friendAction?: ReactNode) =>
@@ -41,7 +45,16 @@ describe("PublicProfileView", () => {
 
   it("leaves out empty parts instead of showing blanks", async () => {
     await renderProfile({ bio: null, interests: [] })
-    expect(screen.queryByRole("heading", { level: 2 })).toBeNull()
+    // #236: the ratings always say something, "Zatím málo hodnocení" at worst.
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "Hodnocení",
+    ])
+  })
+
+  // #234: the ratings behind the score are the owner's alone.
+  it("does not lead to anyone's ratings", async () => {
+    await renderProfile()
+    expect(screen.queryByRole("link", { name: /hodnocení/i })).toBeNull()
   })
 
   it("puts the friendship action under the bio", async () => {

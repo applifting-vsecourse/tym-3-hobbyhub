@@ -38,6 +38,7 @@ const aFriendRequest = (
   changes: [],
   reminder: null,
   reason: null,
+  ratingPrompt: null,
   ...overrides,
 })
 

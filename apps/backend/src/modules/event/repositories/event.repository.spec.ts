@@ -1,5 +1,5 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
-import { Activity, Event, Level } from '@/generated/prisma/client';
+import { Activity, Event, Level, Prisma } from '@/generated/prisma/client';
 import { EventRepository, mapPrismaEventToListItem } from './event.repository';
 
 const anEvent = (
@@ -33,6 +33,9 @@ const anEvent = (
       defaultMaxParticipants: 12,
     } as Activity,
     level,
+    organizer: { name: 'Jana Nováková' },
+    group: null,
+    contributionAmount: null,
     _count: { participations },
     ...overrides,
   }) as Parameters<typeof mapPrismaEventToListItem>[0];
@@ -67,6 +70,42 @@ describe('mapPrismaEventToListItem', () => {
 
   it('has no level when the organizer did not set one', () => {
     expect(mapPrismaEventToListItem(anEvent({}, 0, null)).level).toBeNull();
+  });
+
+  // #224: a row on a large screen says who runs the event and what a seat costs.
+  it('names the organizer, a public group and the contribution', () => {
+    const item = mapPrismaEventToListItem({
+      ...anEvent({
+        contributionAmount: new Prisma.Decimal(150),
+      } as Partial<Event>),
+      group: {
+        id: 'g1',
+        name: 'Florbal Kobylisy',
+        visibility: 'PUBLIC',
+        status: 'ACTIVE',
+      },
+    });
+
+    expect(item).toMatchObject({
+      organizerName: 'Jana Nováková',
+      group: { id: 'g1', name: 'Florbal Kobylisy' },
+      contributionAmount: 150,
+    });
+  });
+
+  it('does not name a private group', () => {
+    const item = mapPrismaEventToListItem({
+      ...anEvent(),
+      group: {
+        id: 'g1',
+        name: 'Tajný klub',
+        visibility: 'PRIVATE',
+        status: 'ACTIVE',
+      },
+    });
+
+    expect(item.group).toBeNull();
+    expect(item.contributionAmount).toBeNull();
   });
 });
 
@@ -179,7 +218,14 @@ describe('EventRepository.getShowableEventById', () => {
       organizer: { name: 'Jana Nováková' },
       participations: [{ user: { birthYear: 1990, gender: 'MALE' } }],
     });
-    const prisma = { event: { findFirst } } as unknown as PrismaService;
+    // #236: two revealed ratings, below what others may see.
+    const $queryRaw = jest
+      .fn()
+      .mockResolvedValue([{ count: 2, publicAverage: null }]);
+    const prisma = {
+      event: { findFirst },
+      $queryRaw,
+    } as unknown as PrismaService;
 
     const detail = await new EventRepository(prisma).getShowableEventById('e1');
 
@@ -188,6 +234,7 @@ describe('EventRepository.getShowableEventById', () => {
       contributionAmount: 80,
       takenCount: 3,
       stats: null,
+      rating: { count: null, average: null },
     });
     expect(detail).not.toHaveProperty('onlineUrl');
     expect(detail).not.toHaveProperty('locationStreet');

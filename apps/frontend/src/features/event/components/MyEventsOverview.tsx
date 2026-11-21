@@ -27,7 +27,13 @@ import type {
 } from "@/features/event/api/myEventsSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
-import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
+import {
+  eventDay,
+  eventHostAndPrice,
+  eventMeta,
+  eventPrice,
+  eventTime,
+} from "@/features/event/lib/eventLabels"
 
 const BADGES: Record<ApplicationStatus, Status> = {
   PENDING: "pending",
@@ -83,7 +89,9 @@ export type MyEventsList<T> = {
 type MyEventsOverviewProps = {
   applications: MyEventsList<MyApplication>
   /** The organizer's own events; `isHidden` marks one an administrator hid (#239). */
-  hosted: MyEventsList<EventListItem & Partial<Pick<HostedEvent, "isHidden">>>
+  hosted: MyEventsList<
+    EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>
+  >
   /** The list on screen, from the URL. */
   tab: MyEventsTab
   /** Search and filters of both lists, shown under the tabs. */
@@ -107,11 +115,15 @@ type MyEventsOverviewProps = {
 }
 
 /**
- * The row's menu with its one action. The dialog opens only once the menu has
- * closed and handed focus back to its button: opened from `onSelect`, the
- * closing menu and the opening dialog fight over focus and the body's
- * `pointer-events`, which can leave the page unclickable. Non-modal, the menu
- * does not lock the page at all, so nothing is left to restore.
+ * The row's menu with the one thing the row offers: its way out before the
+ * event starts (#171), or the rating of the organizer once it is over (#234).
+ * Never both: the first ends where the second begins.
+ *
+ * The dialog of an action opens only once the menu has closed and handed focus
+ * back to its button: opened from `onSelect`, the closing menu and the opening
+ * dialog fight over focus and the body's `pointer-events`, which can leave the
+ * page unclickable. Non-modal, the menu does not lock the page at all, so
+ * nothing is left to restore. The rating is a page, so its item is a link.
  */
 function ApplicationActionMenu({
   application,
@@ -119,8 +131,8 @@ function ApplicationActionMenu({
   onAction,
 }: {
   application: MyApplication
-  action: ApplicationAction
-  onAction: (action: ApplicationAction, application: MyApplication) => void
+  action: ApplicationAction | null
+  onAction?: (action: ApplicationAction, application: MyApplication) => void
 }) {
   const { t } = useTranslation()
   const isChosenRef = useRef(false)
@@ -142,17 +154,62 @@ function ApplicationActionMenu({
         onCloseAutoFocus={() => {
           // Runs once the menu is gone, as focus goes back to its button, so
           // the dialog returns focus to the button when it closes.
-          if (!isChosenRef.current) return
+          if (!isChosenRef.current || !action) return
           isChosenRef.current = false
-          onAction(action, application)
+          onAction?.(action, application)
         }}
       >
-        <DropdownMenuItem
-          onSelect={() => {
-            isChosenRef.current = true
-          }}
+        {action ? (
+          <DropdownMenuItem
+            onSelect={() => {
+              isChosenRef.current = true
+            }}
+          >
+            {t(ACTION_LABELS[action])}
+          </DropdownMenuItem>
+        ) : null}
+        {application.canRateOrganizer ? (
+          <DropdownMenuItem asChild>
+            <Link
+              to="/events/$eventId/ratings"
+              params={{ eventId: application.event.id }}
+            >
+              {t("myEvents.rate")}
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/**
+ * #235: the menu of an event the person organized, while they may still rate
+ * its participants. The rating is a page, so its item is a link.
+ */
+function RateParticipantsMenu({ event }: { event: EventListItem }) {
+  const { t } = useTranslation()
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={t("myEvents.actions.hostedLabel", { title: event.title })}
         >
-          {t(ACTION_LABELS[action])}
+          <Ellipsis className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link
+            to="/events/$eventId/ratings"
+            params={{ eventId: event.id }}
+          >
+            {t("myEvents.rateParticipants")}
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -282,11 +339,16 @@ export function MyEventsOverview({
     )
   }
 
+  // #235: once one of the organizer's rows has a menu, the others keep its
+  // room, so the seats stay in one column down the list.
+  const hasHostedMenu = hosted.items.some((event) => (event.participantsToRate ?? 0) > 0)
+
   const row = (
-    event: EventListItem & Partial<Pick<HostedEvent, "isHidden">>,
+    event: EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>,
     application?: MyApplication,
   ) => {
     const status = application?.status
+    const isToRate = !application && (event.participantsToRate ?? 0) > 0
     const action = application && onApplicationAction ? applicationActionOf(application, now) : null
     return (
       // The row's top line runs under the menu too; the menu sits centred
@@ -313,27 +375,47 @@ export function MyEventsOverview({
             // The title next to it says what the photo shows.
             photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
             activity={event.activity.icon}
+            // Who runs it says nothing new on the person's own events.
+            details={
+              application
+                ? eventHostAndPrice(t, event, i18n.language)
+                : eventPrice(t, event, i18n.language)
+            }
             className="border-t-0"
             badge={
               status ? (
-                <StatusBadge status={BADGES[status]}>{t(`myEvents.status.${status}`)}</StatusBadge>
+                <span className="flex flex-wrap gap-2">
+                  <StatusBadge status={BADGES[status]}>
+                    {t(`myEvents.status.${status}`)}
+                  </StatusBadge>
+                  {/* #234: says there is something to do; the menu beside
+                      the row does it. */}
+                  {application?.canRateOrganizer ? (
+                    <StatusBadge status="pending">{t("myEvents.awaitingRating")}</StatusBadge>
+                  ) : null}
+                </span>
               ) : event.isHidden ? (
                 // #239: only the organizer still sees it; the detail says why.
                 <StatusBadge status="neutral">{t("myEvents.hidden")}</StatusBadge>
+              ) : isToRate ? (
+                // #235: something to do; the menu beside the row does it.
+                <StatusBadge status="pending">{t("myEvents.awaitingRating")}</StatusBadge>
               ) : undefined
             }
           />
         </Link>
         {/* Next to the link, not inside it: a button in an anchor is not valid
             HTML, and a tap on it must not open the detail. */}
-        {application && action && onApplicationAction ? (
+        {application && (action || application.canRateOrganizer) ? (
           <ApplicationActionMenu
             application={application}
             action={action}
             onAction={onApplicationAction}
           />
-        ) : application && onApplicationAction ? (
-          // A row without an action (decided, or already over) keeps the
+        ) : isToRate ? (
+          <RateParticipantsMenu event={event} />
+        ) : (application && onApplicationAction) || (!application && hasHostedMenu) ? (
+          // A row with nothing to offer (decided, or over and rated) keeps the
           // menu's room, so the seats stay in one column down the list (#177).
           <span
             aria-hidden

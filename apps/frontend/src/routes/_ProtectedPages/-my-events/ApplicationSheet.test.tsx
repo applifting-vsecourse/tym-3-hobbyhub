@@ -53,10 +53,13 @@ const event = (overrides: Partial<EventListItem> = {}): EventListItem => ({
   minParticipants: 8,
   maxParticipants: 10,
   takenCount: 7,
+  organizerName: "Jana Nováková",
+  group: null,
+  contributionAmount: null,
   ...overrides,
 })
 
-const waiting: MyApplication = { status: "PENDING", event: event() }
+const waiting: MyApplication = { status: "PENDING", canRateOrganizer: false, event: event() }
 
 const OPEN: ApplicationSheetState = { eventId: "e1", step: "withdraw" }
 

@@ -233,6 +233,14 @@ describe('notificationEmailOf', () => {
         'HOSTED_EVENT_REMINDER',
         { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
       ],
+      [
+        'RATING_PROMPT',
+        { prompt: 'FIRST', deadline: '2030-01-09T19:00:00.000Z' },
+      ],
+      [
+        'HOSTED_RATING_PROMPT',
+        { prompt: 'LAST_CALL', deadline: '2030-01-09T19:00:00.000Z' },
+      ],
     ])('%s %j', (type, payload) => {
       const text = JSON.stringify(
         notificationEmailOf(aNotification({ ...target, type, payload })),
@@ -241,6 +249,41 @@ describe('notificationEmailOf', () => {
       for (const secret of [APPLICANT, EVENT_TITLE, GROUP_NAME, MESSAGE]) {
         expect(text).not.toContain(secret);
       }
+    });
+  });
+
+  // #236, ADR-0027: the calls to rate lead to the rating page and say no
+  // date: the e-mail may be read after the deadline moved closer.
+  describe('a call to rate an event', () => {
+    it.each<[NotificationType, 'FIRST' | 'LAST_CALL', string]>([
+      ['RATING_PROMPT', 'FIRST', 'Jak se ti akce líbila? Ohodnoť organizátora'],
+      ['RATING_PROMPT', 'LAST_CALL', 'Poslední den na ohodnocení organizátora'],
+      [
+        'HOSTED_RATING_PROMPT',
+        'FIRST',
+        'Jací byli spoluhráči? Ohodnoť účastníky své akce',
+      ],
+      [
+        'HOSTED_RATING_PROMPT',
+        'LAST_CALL',
+        'Poslední den na ohodnocení účastníků tvé akce',
+      ],
+    ])('%s %s leads to the rating page', (type, prompt, subject) => {
+      expect(
+        notificationEmailOf(
+          aNotification({
+            type,
+            actor: null,
+            payload: { prompt, deadline: '2030-01-09T19:00:00.000Z' },
+          }),
+        ),
+      ).toEqual(
+        expect.objectContaining({
+          subject,
+          path: '/events/e1/ratings',
+          critical: false,
+        }),
+      );
     });
   });
 

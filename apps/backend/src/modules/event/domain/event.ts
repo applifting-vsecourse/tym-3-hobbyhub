@@ -1,4 +1,5 @@
 import { Activity } from '@/modules/activity/domain/activity';
+import type { ShownRatingScore } from '@/modules/rating/domain/rating';
 
 // Same limits as the CHECK constraints and column widths of `event`.
 export const EVENT_TITLE_MIN_LENGTH = 3;
@@ -461,9 +462,9 @@ export const eventListFilterViolations = (
     : []),
 ];
 
-// TODO(F-02.1b #91): `location` is plain text for now. A radius filter needs
-// every event to have coordinates (geocoding, F-12.3), and similar spellings
-// ("Brno" ~ "Brnoo") need matching by similarity.
+// TODO(F-02.1b #91): similar spellings ("Brno" ~ "Brnoo") need matching by
+// similarity. The radius around a picked place is `EventListFilter.around`
+// (#261); `location` stays as the text filter of the other listings.
 // What the public list can be narrowed by (F-02.1). Nothing set means all.
 // `search` matches title, place, city, district and activity; `location` the
 // place, city and district. Both ignore case and diacritics, and every word of
@@ -503,8 +504,16 @@ export type EventListRanges = {
   capacityTo?: number;
 };
 
+// #261: the place the visitor picked and how far from it an event may be, in km.
+// Only the public list offers it. Events without a position and online events
+// are left out; the page says how many of the first kind were.
+export type AroundFilter = GeoPoint & { radiusKm: number };
+
+// The largest radius the server takes; the page offers 5, 10, 25 and 50 km.
+export const EVENT_LIST_MAX_RADIUS_KM = 50;
+
 export type EventListFilter = EventFilter &
-  EventListRanges & { near?: GeoPoint };
+  EventListRanges & { near?: GeoPoint; around?: AroundFilter };
 
 export const NO_EVENT_FILTER: EventFilter = { activityIds: [] };
 
@@ -536,11 +545,24 @@ export type EventListItem = {
   maxParticipants: number;
   // Approved and attended people plus those the organizer brought along.
   takenCount: number;
+  // Who runs it and the group behind it, public like on the detail (visibility
+  // matrix), so a row on a large screen can say so (#224). Only a public,
+  // active group is named.
+  organizerName: string;
+  group: { id: string; name: string } | null;
+  // Per seat in CZK; information only, nothing is paid in the app.
+  contributionAmount: number | null;
   // #239: only the organizer's own list ever holds a hidden event.
   isHidden: boolean;
 };
 
-export type EventListPage = { items: EventListItem[]; total: number };
+export type EventListPage = {
+  items: EventListItem[];
+  total: number;
+  // #261: with a radius filter, the events that fit every other filter but have
+  // no position, so the radius could not place them.
+  withoutLocationCount?: number;
+};
 
 // F-07.2: the events of a group, on its page. Not over yet soonest first, or
 // over (or called off before) newest first.
@@ -667,17 +689,12 @@ export type ParticipantEventInfo = {
 export type EventDetail = EventListItem & {
   description: string;
   equipment: string | null;
-  // Information only; nothing is paid in the app.
-  contributionAmount: number | null;
   contributionNote: string | null;
   status: PublicEventStatus;
   approvalMode: ApprovalMode;
   organizerId: string;
-  organizerName: string;
   cancellationReason: string | null;
   cancellationNote: string | null;
-  // The group that organizes the event; only a public, active one is linked.
-  group: { id: string; name: string } | null;
   // F-07.2: a group-only event says so; a private one never gets here.
   visibility: 'PUBLIC' | 'GROUP_ONLY';
   stats: ParticipantStats | null;
@@ -686,6 +703,9 @@ export type EventDetail = EventListItem & {
   // #239: set only when an organizer opens their event an administrator hid;
   // nobody else ever gets a hidden event.
   hiddenReason: string | null;
+  // #236, ADR-0027: what the participants' revealed ratings say of the event,
+  // the same for everyone: both null below three ratings.
+  rating: ShownRatingScore;
 };
 
 export type ContactKind = 'email' | 'phone';

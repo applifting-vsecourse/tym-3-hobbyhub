@@ -446,6 +446,69 @@ describeDb('public event list search', () => {
     });
   });
 
+  // #261: only events within the radius of a picked place; online events and
+  // events without a position are left out, the second kind counted.
+  describe('within a radius', () => {
+    const around = { latitude: 50.0875, longitude: 14.4213, radiusKm: 10 };
+    const inRadius = (
+      repository: EventRepository,
+      radiusKm: number,
+    ): Promise<EventListPage> =>
+      repository.getUpcomingPublicEvents(
+        NOW,
+        { limit: 50, offset: 0 },
+        { activityIds: [], search: MARK, around: { ...around, radiusKm } },
+      );
+
+    it('keeps the events inside the radius, nearest first', async () => {
+      await withEvents(
+        [
+          // Brno, about 185 km away.
+          { locationLatitude: 49.1951, locationLongitude: 16.6068 },
+          // Vinohrady, about 2 km away.
+          { locationLatitude: 50.0755, locationLongitude: 14.4378 },
+        ],
+        async (repository, [brno, vinohrady]) => {
+          const small = await inRadius(repository, 10);
+          expect(small.items.map((item) => item.id)).toEqual([vinohrady]);
+          expect(small.total).toBe(1);
+          const large = await inRadius(repository, 200);
+          expect(large.items.map((item) => item.id)).toEqual([vinohrady, brno]);
+        },
+      );
+    });
+
+    it('leaves out events without a position and says how many', async () => {
+      await withEvents(
+        [
+          {},
+          { locationLatitude: 50.0755, locationLongitude: 14.4378 },
+          {
+            venueType: VenueType.PRIVATE_VENUE,
+            locationLatitude: 50.0875,
+            locationLongitude: 14.4213,
+          },
+        ],
+        async (repository, [, vinohrady]) => {
+          const page = await inRadius(repository, 10);
+          expect(page.items.map((item) => item.id)).toEqual([vinohrady]);
+          expect(page.withoutLocationCount).toBe(2);
+        },
+      );
+    });
+
+    it('has no count without a radius', async () => {
+      await withEvents([{}], async (repository) => {
+        const page = await repository.getUpcomingPublicEvents(
+          NOW,
+          { limit: 50, offset: 0 },
+          { activityIds: [], search: MARK },
+        );
+        expect(page.withoutLocationCount).toBeUndefined();
+      });
+    });
+  });
+
   describe('sorted by distance', () => {
     // Staroměstské náměstí in Prague.
     const near = { latitude: 50.0875, longitude: 14.4213 };

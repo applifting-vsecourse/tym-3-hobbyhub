@@ -2,6 +2,7 @@ import { PrismaModule } from '@/core/prisma/prisma.module';
 import { EventModule } from '@/modules/event/event.module';
 import { FriendshipModule } from '@/modules/friendship/friendship.module';
 import { OnboardingModule } from '@/modules/onboarding/onboarding.module';
+import { RatingModule } from '@/modules/rating/rating.module';
 import { AdminAuthModule } from '@/shared/admin-auth/admin-auth.module';
 import { AuthModule } from '@/shared/auth/auth.module';
 import { UserBlockVisibilityModule } from '@/shared/user-block/user-block.module';
@@ -19,6 +20,8 @@ import { ProfileService } from './services/profile.service';
     PrismaModule,
     OnboardingModule,
     FriendshipModule,
+    // #236: the scores on the profile.
+    RatingModule,
     // #226: a friend's events on their profile.
     EventModule,
   ],

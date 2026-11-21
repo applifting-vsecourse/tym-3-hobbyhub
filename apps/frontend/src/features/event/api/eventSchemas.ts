@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { ratingScoreSchema } from "@/lib/ratingScore"
+
 // Mirrors the server-side DTO, so the form can tell the user before sending.
 export const EVENT_LIMITS = {
   titleMin: 3,
@@ -138,12 +140,19 @@ export const eventListItemSchema = z.object({
   minParticipants: z.number(),
   maxParticipants: z.number(),
   takenCount: z.number(),
+  organizerName: z.string(),
+  /** The public group that organizes the event, if any. */
+  group: z.object({ id: z.string(), name: z.string() }).nullable(),
+  /** Per seat in CZK, information only. */
+  contributionAmount: z.number().nullable(),
 })
 
 export const eventListSchema = z.object({
   items: z.array(eventListItemSchema),
   /** All upcoming public events, not just this page. */
   total: z.number(),
+  /** With a radius filter: events left out because they have no known position (#261). */
+  withoutLocationCount: z.number().optional(),
 })
 
 export type EventListItem = z.infer<typeof eventListItemSchema>
@@ -170,16 +179,11 @@ export type EventFriend = z.infer<typeof eventFriendSchema>
 export const eventDetailSchema = eventListItemSchema.extend({
   description: z.string(),
   equipment: z.string().nullable(),
-  /** In CZK, information only. */
-  contributionAmount: z.number().nullable(),
   contributionNote: z.string().nullable(),
   status: z.enum(["PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   approvalMode: z.enum(APPROVAL_MODES),
   /** Lets the page offer editing to the organizer. */
   organizerId: z.string(),
-  organizerName: z.string(),
-  /** The public group that organizes the event, if any. */
-  group: z.object({ id: z.string(), name: z.string() }).nullable(),
   /** GROUP_ONLY (F-07.2): only its group's members and those holding a seat see it. */
   visibility: z.enum(["PUBLIC", "GROUP_ONLY"]),
   cancellationReason: z.string().nullable(),
@@ -193,6 +197,8 @@ export const eventDetailSchema = eventListItemSchema.extend({
    * hidden event, so anyone else always sees null.
    */
   hiddenReason: z.string().nullable(),
+  /** #236: the participants' revealed ratings; both null below three. */
+  rating: ratingScoreSchema,
   /**
    * #226: my friends who go to the event or organize it (after its end: who
    * were there), by name. Only for a signed-in viewer, and only friends who

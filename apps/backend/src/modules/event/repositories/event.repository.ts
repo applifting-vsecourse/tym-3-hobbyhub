@@ -5,6 +5,7 @@ import {
   Prisma,
   Activity as PrismaActivity,
   Event as PrismaEvent,
+  Group as PrismaGroup,
   Level as PrismaLevel,
   RequestStatus,
 } from '@/generated/prisma/client';
@@ -120,7 +121,11 @@ const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
 
 // The condition of the public event list, with the alias `e` for the event and
 // `a` for its activity: what is public and not over, narrowed by the filter.
-const listCondition = (now: Date, filter: EventListFilter): Prisma.Sql =>
+const listCondition = (
+  now: Date,
+  filter: EventListFilter,
+  withRadius = true,
+): Prisma.Sql =>
   allOf([
     Prisma.sql`e."status" = 'PUBLISHED'`,
     Prisma.sql`e."visibility" = 'PUBLIC'`,
@@ -128,6 +133,12 @@ const listCondition = (now: Date, filter: EventListFilter): Prisma.Sql =>
     Prisma.sql`e."endAt" > ${now}`,
     ...eventFilterConditions(filter),
     ...eventListRangeConditions(filter),
+    // #261: no position gives a NULL distance, which is never within a radius.
+    ...(withRadius && filter.around
+      ? [
+          Prisma.sql`${distanceKmSql(filter.around)} <= ${filter.around.radiusKm}`,
+        ]
+      : []),
   ]);
 
 // F-07.2: what may be shown to someone, depending on who they are: public or
@@ -260,6 +271,8 @@ const mapEventFacts = (event: EventFactsRow): EventFacts => {
 const listInclude = {
   activity: true,
   level: true,
+  organizer: { select: { name: true } },
+  group: { select: { id: true, name: true, visibility: true, status: true } },
   _count: {
     select: {
       participations: { where: { status: { in: LIST_TAKEN_STATUSES } } },
@@ -271,6 +284,8 @@ export const mapPrismaEventToListItem = (
   event: PrismaEvent & {
     activity: PrismaActivity;
     level: PrismaLevel | null;
+    organizer: { name: string };
+    group: Pick<PrismaGroup, 'id' | 'name' | 'visibility' | 'status'> | null;
     _count: { participations: number };
   },
   distanceKm: number | null = null,
@@ -306,6 +321,14 @@ export const mapPrismaEventToListItem = (
   minParticipants: event.minParticipants,
   maxParticipants: event.maxParticipants,
   takenCount: event._count.participations + event.externalOccupiedSpots,
+  organizerName: event.organizer.name,
+  // A private or cancelled group has no public page to link to.
+  group:
+    event.group && isPubliclyVisible(event.group)
+      ? { id: event.group.id, name: event.group.name }
+      : null,
+  contributionAmount:
+    event.contributionAmount === null ? null : Number(event.contributionAmount),
   isHidden: event.isHidden,
 });
 
@@ -649,12 +672,16 @@ export class EventRepository {
     filter: EventListFilter = { activityIds: [] },
   ): Promise<EventListPage> {
     const where = listCondition(now, filter);
-    const distance = filter.near
-      ? distanceKmSql(filter.near)
-      : Prisma.sql`NULL::float8`;
-    const orderBy = filter.near
+    // Sorting by distance and the radius both measure from a point; the radius
+    // wins when both are sent, so the list is nearest first around the place.
+    const origin = filter.around ?? filter.near;
+    const distance = origin ? distanceKmSql(origin) : Prisma.sql`NULL::float8`;
+    const orderBy = origin
       ? Prisma.sql`"distanceKm" ASC NULLS LAST, e."startAt" ASC, e."id" ASC`
       : Prisma.sql`e."startAt" ASC, e."id" ASC`;
+    // With a radius the total and the events it cannot place come from one
+    // query over the filter without the radius (#261).
+    const { around } = filter;
     const [pageRows, totalRows] = await Promise.all([
       this.prisma.$queryRaw<{ id: string; distanceKm: number | null }[]>`
         SELECT e."id", ${distance} AS "distanceKm" FROM "event" e
@@ -662,10 +689,20 @@ export class EventRepository {
         WHERE ${where}
         ORDER BY ${orderBy}
         LIMIT ${limit} OFFSET ${offset}`,
-      this.prisma.$queryRaw<{ total: bigint }[]>`
-        SELECT count(*) AS "total" FROM "event" e
-        JOIN "activity" a ON a."id" = e."activityId"
-        WHERE ${where}`,
+      around
+        ? this.prisma.$queryRaw<{ total: bigint; withoutLocation: bigint }[]>`
+            SELECT
+              count(*) FILTER (WHERE ${distanceKmSql(around)} <= ${around.radiusKm}) AS "total",
+              count(*) FILTER (
+                WHERE e."venueType" <> 'ONLINE' AND ${distanceKmSql(around)} IS NULL
+              ) AS "withoutLocation"
+            FROM "event" e
+            JOIN "activity" a ON a."id" = e."activityId"
+            WHERE ${listCondition(now, filter, false)}`
+        : this.prisma.$queryRaw<{ total: bigint; withoutLocation?: bigint }[]>`
+            SELECT count(*) AS "total" FROM "event" e
+            JOIN "activity" a ON a."id" = e."activityId"
+            WHERE ${where}`,
     ]);
     const distances = new Map(pageRows.map((row) => [row.id, row.distanceKm]));
     return {
@@ -674,6 +711,9 @@ export class EventRepository {
         distances,
       ),
       total: Number(totalRows[0]?.total ?? 0),
+      ...(around
+        ? { withoutLocationCount: Number(totalRows[0]?.withoutLocation ?? 0) }
+        : {}),
     };
   }
 
@@ -792,22 +832,12 @@ export class EventRepository {
       ...listItem,
       description: event.description,
       equipment: event.equipment,
-      contributionAmount:
-        event.contributionAmount === null
-          ? null
-          : Number(event.contributionAmount),
       contributionNote: event.contributionNote,
       status: event.status as EventDetail['status'],
       approvalMode: event.approvalMode,
       organizerId: event.organizer.id,
-      organizerName: event.organizer.name,
       cancellationReason: event.cancellationReason?.name ?? null,
       cancellationNote: event.cancellationNote,
-      // A private or cancelled group has no public page to link to.
-      group:
-        event.group && isPubliclyVisible(event.group)
-          ? { id: event.group.id, name: event.group.name }
-          : null,
       visibility: event.visibility as EventDetail['visibility'],
       stats: computeParticipantStats(
         participants,
@@ -816,7 +846,27 @@ export class EventRepository {
       ),
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
       hiddenReason: event.isHidden ? event.hiddenReason : null,
+      rating: await this.getPublicRatingScore(event.id),
     };
+  }
+
+  // #236, ADR-0027: the event's score from the view `event_rating_score`,
+  // which counts only revealed ratings. Others see it from three ratings on
+  // (`publicAverage`); below that neither number, so none cannot be told from
+  // two.
+  private async getPublicRatingScore(
+    eventId: string,
+  ): Promise<EventDetail['rating']> {
+    const rows = await this.prisma.$queryRaw<
+      { count: number; publicAverage: number | null }[]
+    >`
+      SELECT "count", "publicAverage"
+      FROM "event_rating_score"
+      WHERE "eventId" = ${eventId}`;
+    const row = rows[0];
+    return row?.publicAverage != null
+      ? { count: row.count, average: row.publicAverage }
+      : { count: null, average: null };
   }
 
   // F-06.5: what the organizers and approved participants see on top of the

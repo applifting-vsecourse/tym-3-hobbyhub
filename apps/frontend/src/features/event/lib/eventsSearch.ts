@@ -1,9 +1,12 @@
 import { z } from "zod"
 
 import {
+  DEFAULT_RADIUS_KM,
   FILTER_TEXT_MAX_LENGTH,
   isNumberRangeReversed,
   isRangeValueValid,
+  RADIUS_OPTIONS_KM,
+  type PlaceFilter,
 } from "@/components/hobbyhub/FiltersSheet"
 
 /** The server refuses longer texts, so the address and the fields cut them. */
@@ -41,6 +44,16 @@ const amount = (kind: "price" | "duration" | "capacity") =>
     .optional()
     .catch(undefined)
 
+// A coordinate within its limit; an empty one is no value, not the point 0.
+const coordinate = (limit: number) =>
+  z
+    .number()
+    .min(-limit)
+    .max(limit)
+    .or(z.string().trim().min(1).transform(Number).pipe(z.number().min(-limit).max(limit)))
+    .optional()
+    .catch(undefined)
+
 export const eventsSearchSchema = z.object({
   activity: z
     .union([z.array(z.coerce.string()), z.coerce.string().transform((id) => [id])])
@@ -57,6 +70,16 @@ export const eventsSearchSchema = z.object({
  * ranges only the public list offers (#214).
  */
 export const eventsListSearchSchema = eventsSearchSchema.extend({
+  // #261: the place of the radius filter. Without a position it is no filter,
+  // and a radius that is not on offer falls back to the default.
+  place: text,
+  placeLat: coordinate(90),
+  placeLng: coordinate(180),
+  radius: z.coerce
+    .number()
+    .refine((value) => (RADIUS_OPTIONS_KM as readonly number[]).includes(value))
+    .optional()
+    .catch(undefined),
   free: z
     .union([z.boolean(), z.literal("true")])
     .transform((value) => value === true || value === "true")
@@ -73,7 +96,17 @@ export const eventsListSearchSchema = eventsSearchSchema.extend({
 type ListRangesSearch = Partial<
   Pick<
     z.infer<typeof eventsListSearchSchema>,
-    "free" | "priceFrom" | "priceTo" | "hoursFrom" | "hoursTo" | "capacityFrom" | "capacityTo"
+    | "free"
+    | "priceFrom"
+    | "priceTo"
+    | "hoursFrom"
+    | "hoursTo"
+    | "capacityFrom"
+    | "capacityTo"
+    | "place"
+    | "placeLat"
+    | "placeLng"
+    | "radius"
   >
 >
 
@@ -87,6 +120,9 @@ export type EventFilterValues = {
   activityIds: string[]
   search: string
   location: string
+  /** #261: the place and radius (km) of the radius filter; no place, no filter. */
+  place: PlaceFilter | null
+  radiusKm: number
   dateFrom: string
   dateTo: string
   /** Only events with a free seat (#214). */
@@ -122,6 +158,10 @@ export function filtersFromSearch({
   hoursTo,
   capacityFrom,
   capacityTo,
+  place,
+  placeLat,
+  placeLng,
+  radius,
 }: EventsSearch & ListRangesSearch): {
   filters: EventFilterValues
   isRangeReversed: boolean
@@ -135,6 +175,11 @@ export function filtersFromSearch({
       activityIds: activity ?? [],
       search: q ?? "",
       location: location ?? "",
+      place:
+        placeLat !== undefined && placeLng !== undefined
+          ? { label: place ?? "", latitude: placeLat, longitude: placeLng }
+          : null,
+      radiusKm: radius ?? DEFAULT_RADIUS_KM,
       dateFrom: isDateReversed ? "" : (from ?? ""),
       dateTo: isDateReversed ? "" : (to ?? ""),
       freeSpotsOnly: isFree ?? false,
@@ -166,6 +211,14 @@ export function searchWithFilters<T extends EventsSearch & ListRangesSearch>(
       activity: next.activityIds.length > 0 ? next.activityIds : undefined,
     }),
     ...(next.location !== undefined && { location: nonEmpty(next.location) }),
+    // A place comes with its radius; clearing the place clears both.
+    ...(next.place !== undefined && {
+      place: next.place ? nonEmpty(next.place.label) : undefined,
+      placeLat: next.place?.latitude,
+      placeLng: next.place?.longitude,
+      radius: next.place ? (next.radiusKm ?? previous.radius ?? DEFAULT_RADIUS_KM) : undefined,
+    }),
+    ...(next.place === undefined && next.radiusKm !== undefined && { radius: next.radiusKm }),
     ...(next.dateFrom !== undefined && { from: nonEmpty(next.dateFrom) }),
     ...(next.dateTo !== undefined && { to: nonEmpty(next.dateTo) }),
     ...(next.freeSpotsOnly !== undefined && { free: next.freeSpotsOnly ? true : undefined }),
@@ -178,11 +231,29 @@ export function searchWithFilters<T extends EventsSearch & ListRangesSearch>(
   }
 }
 
+/**
+ * How many filters of the panel are on, counted like their chips: each
+ * activity, the place, the dates, free spots and each range. The search text
+ * has its own field and does not count.
+ */
+export const activeFilterCount = (filters: EventFilterValues): number =>
+  filters.activityIds.length +
+  [
+    filters.location !== "",
+    filters.place !== null,
+    filters.dateFrom !== "" || filters.dateTo !== "",
+    filters.freeSpotsOnly,
+    filters.priceFrom !== "" || filters.priceTo !== "",
+    filters.hoursFrom !== "" || filters.hoursTo !== "",
+    filters.capacityFrom !== "" || filters.capacityTo !== "",
+  ].filter(Boolean).length
+
 /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
 export const hasFilters = (filters: EventFilterValues): boolean =>
   filters.activityIds.length > 0 ||
   filters.search !== "" ||
   filters.location !== "" ||
+  filters.place !== null ||
   filters.dateFrom !== "" ||
   filters.dateTo !== "" ||
   filters.freeSpotsOnly ||

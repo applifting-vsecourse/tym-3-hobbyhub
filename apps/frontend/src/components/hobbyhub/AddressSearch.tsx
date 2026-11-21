@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { MapPinIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -28,8 +28,15 @@ type AddressSearchProps = {
   onSelect: (address: AddressSuggestion) => void
   /** Shown on the trigger while nothing is picked. */
   placeholder: string
-  /** Also suggest streets without a house number. */
+  /** A street without a house number can be picked as it is (a home address). */
   isStreetAllowed?: boolean
+  /**
+   * What happens to a street picked without a house number when it is not
+   * allowed as it is. Without it such streets are not suggested at all.
+   */
+  onSelectStreet?: (street: AddressSuggestion) => void
+  /** Called as the list closes after a street was picked (not after other closes), to take over the focus. */
+  onCloseAutoFocus?: (event: Event) => void
   className?: string
   id?: string
 }
@@ -44,6 +51,8 @@ export function AddressSearch({
   onSelect,
   placeholder,
   isStreetAllowed = false,
+  onSelectStreet,
+  onCloseAutoFocus,
   className,
   id,
 }: AddressSearchProps) {
@@ -52,23 +61,26 @@ export function AddressSearch({
   const [text, setText] = useState("")
   const [asked, setAsked] = useState("")
   const listId = useId()
+  const isStreetPicked = useRef(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setAsked(text.trim()), TYPING_PAUSE_MS)
     return () => clearTimeout(timer)
   }, [text])
 
-  const suggestions = useQuery(
-    addressSuggestionsQueryOptions(asked, i18n.language, isStreetAllowed),
-  )
+  const canPickStreet = isStreetAllowed || onSelectStreet !== undefined
+  const suggestions = useQuery(addressSuggestionsQueryOptions(asked, i18n.language, canPickStreet))
   const isTooShort = text.trim().length < MIN_ADDRESS_QUERY_LENGTH
   // The previous text's suggestions are not offered for the new text.
   const isCurrent = asked === text.trim()
-
   return (
     <Popover
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={(isOpening) => {
+        // A close that is not after a street pick leaves the focus where it goes by itself.
+        if (isOpening) isStreetPicked.current = false
+        setIsOpen(isOpening)
+      }}
     >
       <PopoverTrigger asChild>
         <ComboboxTrigger
@@ -87,6 +99,11 @@ export function AddressSearch({
       </PopoverTrigger>
       <PopoverContent
         align="start"
+        onCloseAutoFocus={(event) => {
+          if (!isStreetPicked.current) return
+          isStreetPicked.current = false
+          onCloseAutoFocus?.(event)
+        }}
         className="w-(--radix-popover-trigger-width) p-0"
       >
         {/* The geocoder ranks the suggestions, so cmdk must not filter or re-sort them. */}
@@ -119,17 +136,22 @@ export function AddressSearch({
               <>
                 <CommandEmpty>{t("geo.address.noMatch")}</CommandEmpty>
                 <CommandGroup>
-                  {(suggestions.data ?? []).map((suggestion) => (
+                  {(suggestions.data ?? []).map(({ address, isStreet }) => (
                     <CommandItem
-                      key={`${suggestion.label}:${suggestion.latitude}:${suggestion.longitude}`}
-                      value={suggestion.label}
+                      key={`${isStreet}:${address.label}:${address.latitude}:${address.longitude}`}
+                      value={address.label}
                       onSelect={() => {
-                        onSelect(suggestion)
+                        if (isStreet && !isStreetAllowed) {
+                          isStreetPicked.current = true
+                          onSelectStreet?.(address)
+                        } else {
+                          onSelect(address)
+                        }
                         setIsOpen(false)
                       }}
                     >
                       <MapPinIcon aria-hidden />
-                      {suggestion.label}
+                      {address.label}
                     </CommandItem>
                   ))}
                 </CommandGroup>

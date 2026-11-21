@@ -8,6 +8,7 @@ import { FilterChip } from "@/components/hobbyhub/FilterChip"
 import {
   EMPTY_FILTERS,
   FiltersSheet,
+  type EventFilters,
   type FilterActivitiesState,
   type FiltersSheetField,
 } from "@/components/hobbyhub/FiltersSheet"
@@ -54,6 +55,44 @@ const rangeLabel = (
   return ""
 }
 
+/** The filters in the address as the panel's draft. */
+export const toPanelFilters = (filters: EventFilterValues): EventFilters => ({
+  ...EMPTY_FILTERS,
+  activities: filters.activityIds,
+  location: filters.location,
+  place: filters.place,
+  radiusKm: filters.radiusKm,
+  dateFrom: filters.dateFrom,
+  dateTo: filters.dateTo,
+  freeSpotsOnly: filters.freeSpotsOnly,
+  priceFrom: filters.priceFrom,
+  priceTo: filters.priceTo,
+  hoursFrom: filters.hoursFrom,
+  hoursTo: filters.hoursTo,
+  capacityFrom: filters.capacityFrom,
+  capacityTo: filters.capacityTo,
+})
+
+/** What the panel applied, as a change of the address; a filter the page does not offer stays as it is. */
+export const fromPanelFilters = (
+  applied: EventFilters,
+  fields: FiltersSheetField[],
+): EventFilterChange => ({
+  activityIds: applied.activities,
+  // The place picker replaces the text of the place where a page offers it (#261).
+  location: fields.includes("place") ? "" : applied.location,
+  ...(fields.includes("place") && { place: applied.place, radiusKm: applied.radiusKm }),
+  dateFrom: applied.dateFrom,
+  dateTo: applied.dateTo,
+  ...(fields.includes("freeSpots") && { freeSpotsOnly: applied.freeSpotsOnly }),
+  ...(fields.includes("price") && { priceFrom: applied.priceFrom, priceTo: applied.priceTo }),
+  ...(fields.includes("duration") && { hoursFrom: applied.hoursFrom, hoursTo: applied.hoursTo }),
+  ...(fields.includes("capacity") && {
+    capacityFrom: applied.capacityFrom,
+    capacityTo: applied.capacityTo,
+  }),
+})
+
 type EventFiltersBarProps = {
   /** The filters in the address. */
   filters: EventFilterValues
@@ -79,6 +118,17 @@ type EventFiltersBarProps = {
   leadingChips?: ReactNode
   /** Messages of the page under the bar. */
   children?: ReactNode
+  /**
+   * What the filters button of the search field does. By default it opens the
+   * dialog; a page with the side panel (#224) opens the panel instead, or
+   * passes `null` while the panel is open and the button has nothing to do.
+   */
+  onOpenFilters?: (() => void) | null
+  /**
+   * The chosen filters as chips under the field. Off while the side panel is
+   * open beside the list (#224): it shows the same filters already.
+   */
+  shouldShowChips?: boolean
 }
 
 /**
@@ -100,6 +150,8 @@ export function EventFiltersBar({
   sortNote,
   leadingChips,
   children,
+  onOpenFilters,
+  shouldShowChips = true,
 }: EventFiltersBarProps) {
   const { t, i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
@@ -130,11 +182,13 @@ export function EventFiltersBar({
     },
   ]
   const hasChips =
-    selectedActivities.length > 0 ||
-    filters.location !== "" ||
-    dateLabel !== "" ||
-    filters.freeSpotsOnly ||
-    rangeChips.some(({ label }) => label !== "")
+    shouldShowChips &&
+    (selectedActivities.length > 0 ||
+      filters.location !== "" ||
+      filters.place !== null ||
+      dateLabel !== "" ||
+      filters.freeSpotsOnly ||
+      rangeChips.some(({ label }) => label !== ""))
 
   return (
     <div className="flex flex-col gap-3">
@@ -144,46 +198,15 @@ export function EventFiltersBar({
         maxLength={EVENT_SEARCH_MAX_LENGTH}
         value={searchText}
         onChange={(event) => onSearchTextChange(event.target.value)}
-        onOpenFilters={() => setIsOpen(true)}
+        onOpenFilters={
+          onOpenFilters === undefined ? () => setIsOpen(true) : (onOpenFilters ?? undefined)
+        }
       />
       <FiltersSheet
         isOpen={isOpen}
         onOpenChange={setIsOpen}
-        value={{
-          ...EMPTY_FILTERS,
-          activities: filters.activityIds,
-          location: filters.location,
-          dateFrom: filters.dateFrom,
-          dateTo: filters.dateTo,
-          freeSpotsOnly: filters.freeSpotsOnly,
-          priceFrom: filters.priceFrom,
-          priceTo: filters.priceTo,
-          hoursFrom: filters.hoursFrom,
-          hoursTo: filters.hoursTo,
-          capacityFrom: filters.capacityFrom,
-          capacityTo: filters.capacityTo,
-        }}
-        onApply={(applied) =>
-          onFiltersChange({
-            activityIds: applied.activities,
-            location: applied.location,
-            dateFrom: applied.dateFrom,
-            dateTo: applied.dateTo,
-            ...(fields.includes("freeSpots") && { freeSpotsOnly: applied.freeSpotsOnly }),
-            ...(fields.includes("price") && {
-              priceFrom: applied.priceFrom,
-              priceTo: applied.priceTo,
-            }),
-            ...(fields.includes("duration") && {
-              hoursFrom: applied.hoursFrom,
-              hoursTo: applied.hoursTo,
-            }),
-            ...(fields.includes("capacity") && {
-              capacityFrom: applied.capacityFrom,
-              capacityTo: applied.capacityTo,
-            }),
-          })
-        }
+        value={toPanelFilters(filters)}
+        onApply={(applied) => onFiltersChange(fromPanelFilters(applied, fields))}
         fields={fields}
         sortNote={sortNote}
         activitiesState={activitiesState}
@@ -225,6 +248,25 @@ export function EventFiltersBar({
                     className="size-4 text-muted-foreground"
                   />
                   {filters.location}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.place ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ place: null })}
+                >
+                  <MapPin
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                  {t("events.list.filters.place", {
+                    place: filters.place.label,
+                    radius: filters.radiusKm,
+                  })}
                   <X
                     aria-hidden
                     className="size-4 text-muted-foreground"

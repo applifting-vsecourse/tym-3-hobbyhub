@@ -41,6 +41,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   stats: { included: 4, total: 5, medianAge: 36, gender: { male: 3, female: 1, unknown: 1 } },
   statsMinParticipants: 3,
   hiddenReason: null,
+  rating: { count: null, average: null },
   ...overrides,
 })
 
@@ -70,6 +71,22 @@ describe("EventDetail", () => {
     )
 
     expect(screen.getByRole("button", { name: "Nahlásit akci" })).toBeInTheDocument()
+  })
+
+  // #234: the page asks the server whether the organizer may be rated; the
+  // detail only places what it hands in, under the event's state.
+  it("shows the way to rate the organizer when the page hands one in", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event()}
+        activityLabel="Florbal"
+        joinAction={null}
+        ratingPrompt={<a href="/events/e1/ratings">Ohodnotit organizátora</a>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByRole("link", { name: "Ohodnotit organizátora" })).toBeInTheDocument()
   })
 
   it("links the organizer to their profile", async () => {
@@ -358,5 +375,17 @@ describe("EventDetail", () => {
     )
 
     expect(screen.getByRole("button", { name: "Upravit akci" })).toBeInTheDocument()
+  })
+
+  // #236: from three revealed ratings on; an event without them says nothing.
+  it("shows the event's rating only once others may see it", async () => {
+    await renderDetail({ rating: { count: 6, average: 4.25 } })
+    expect(screen.getByRole("heading", { name: "Hodnocení akce" })).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: "Hodnocení 4,3 z 5, 6 hodnocení" })).toBeInTheDocument()
+  })
+
+  it("shows no rating section below three ratings", async () => {
+    await renderDetail()
+    expect(screen.queryByRole("heading", { name: "Hodnocení akce" })).not.toBeInTheDocument()
   })
 })

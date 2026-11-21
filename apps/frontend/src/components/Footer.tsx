@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
@@ -14,14 +15,18 @@ const LINKS = [
  * Patička — the wordmark, one line on what the app is for, the public places
  * and the copyright. Tall enough that the last block of a page can scroll up
  * to the middle of the screen.
+ *
+ * `language` is the language switch (#262), a slot because whether a choice
+ * is saved to the account depends on the session, which `components/` does not
+ * know.
  */
-export function Footer() {
+export function Footer({ language }: { language?: ReactNode }) {
   const { t } = useTranslation()
   const year = new Date().getFullYear()
 
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12 md:flex-row md:items-start md:justify-between md:px-6 md:py-16 lg:px-8">
+      <div className="mx-auto flex w-full max-w-page flex-col gap-8 px-page py-12 md:flex-row md:items-start md:justify-between md:py-16">
         <div className="flex max-w-md flex-col gap-3">
           <Link
             to={ROUTES.home}
@@ -34,6 +39,7 @@ export function Footer() {
           </Link>
           <p className="typo-body text-muted-foreground">{t("footer.tagline")}</p>
           <p className="typo-small text-muted-foreground">{t("footer.copyright", { year })}</p>
+          {language}
         </div>
         <nav
           aria-label={t("footer.label")}

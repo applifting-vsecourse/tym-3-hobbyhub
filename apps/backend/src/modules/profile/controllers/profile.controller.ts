@@ -9,6 +9,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Put,
@@ -30,6 +32,7 @@ import {
   ProfileResponseDto,
   PublicProfileResponseDto,
 } from './dto/profile.response.dto';
+import { UpdateLanguageDto } from './dto/update-language.dto';
 import { UpdateProfileLocationDto } from './dto/update-profile-location.dto';
 import {
   UpdatePrivateDetailsDto,
@@ -175,6 +178,21 @@ export class ProfileController {
     return ProfileResponseDto.fromDomain(
       await this.profileService.updateLocation(user, { ...body }),
     );
+  }
+
+  // #262. Not part of the profile response: the app reads the language from
+  // the session, which it loads on every page anyway.
+  @Put('language')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Change the language the app speaks to me' })
+  @ApiResponse({ status: 204, description: 'Saved' })
+  @ApiResponse({ status: 400, description: 'Not CS or EN' })
+  @ApiResponse({ status: 401, description: 'Not signed in' })
+  async updateLanguage(
+    @User() user: Identity,
+    @Body() body: UpdateLanguageDto,
+  ): Promise<void> {
+    await this.profileService.updateLanguage(user, body.language);
   }
 
   @Delete('location')

@@ -34,6 +34,9 @@ import {
   type RequestSheetStep,
 } from "@/features/participation-request/components/ParticipationRequestSheet"
 import { decisionMessageOf, ownSeatView } from "@/features/participation-request/lib/joinPanel"
+import { eventRatingStateQueryOptions } from "@/features/rating/api/ratingQueryOptions"
+import { RateOrganizerPrompt } from "@/features/rating/components/RateOrganizerPrompt"
+import { RateParticipantsPrompt } from "@/features/rating/components/RateParticipantsPrompt"
 import { ReportAction } from "@/features/report/components/ReportAction"
 
 export const Route = createFileRoute("/events/$eventId")({
@@ -83,6 +86,22 @@ function EventDetailPage() {
   const infoQuery = useQuery({
     ...participantInfoQueryOptions(eventId, user?.id ?? ""),
     enabled: hasInfoRight,
+  })
+  // #234: someone who had a seat may rate the organizer once the event is
+  // over, #235: the main organizer the participants. Asked only then, since
+  // the answer is 404 for anyone else; the server says whether the period is
+  // still on and what was sent.
+  const isMainOrganizer = user !== null && user.id === event?.organizerId
+  const canHaveRating =
+    !isHidden &&
+    user !== null &&
+    (ownView === "approved" || isMainOrganizer) &&
+    event !== undefined &&
+    (event.status === "PUBLISHED" || event.status === "FINISHED") &&
+    event.endAt <= new Date()
+  const ratingQuery = useQuery({
+    ...eventRatingStateQueryOptions(eventId, user?.id ?? ""),
+    enabled: canHaveRating,
   })
 
   const queryClient = useQueryClient()
@@ -152,7 +171,7 @@ function EventDetailPage() {
   return (
     <>
       <Seo title={eventQuery.data?.title ?? t("events.detail.title")} />
-      <AppShell className="mx-auto w-full max-w-4xl px-4 py-6 md:py-12">
+      <AppShell className="mx-auto w-full max-w-column-6xl px-page py-6 md:py-12">
         <BackLink
           to={ROUTES.events}
           label={t("events.detail.back")}
@@ -183,21 +202,16 @@ function EventDetailPage() {
             activityLabel={activityName(t, eventQuery.data.activity)}
             joinAction={joinAction}
             isOrganizerLinked={Boolean(user)}
-            groupLink={
-              eventQuery.data.group ? (
-                <p className="typo-small text-muted-foreground">
-                  {t("events.detail.organizedByGroup")}{" "}
-                  <Link
-                    to="/groups/$groupId"
-                    params={{ groupId: eventQuery.data.group.id }}
-                    className="font-medium text-foreground underline underline-offset-4"
-                  >
-                    {eventQuery.data.group.name}
-                  </Link>
-                </p>
-              ) : null
-            }
             shareAction={<ShareEventAction event={eventQuery.data} />}
+            ratingPrompt={
+              // Quiet while loading and when it fails: the notification and
+              // the overview of one's events lead to the rating too.
+              !canHaveRating || !ratingQuery.data ? undefined : isMainOrganizer ? (
+                <RateParticipantsPrompt state={ratingQuery.data} />
+              ) : (
+                <RateOrganizerPrompt state={ratingQuery.data} />
+              )
+            }
             reportAction={
               canReport ? (
                 <ReportAction
@@ -214,6 +228,7 @@ function EventDetailPage() {
                 <OrganizerActions
                   event={eventQuery.data}
                   canEdit={!isHidden}
+                  surface="dark"
                 />
               ) : null
             }

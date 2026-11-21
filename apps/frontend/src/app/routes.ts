@@ -16,6 +16,8 @@ export const ROUTES = {
   notifications: "/notifications",
   profile: "/profile",
   profileEdit: "/profile/edit",
+  profileRatings: "/profile/ratings",
+  settings: "/profile/settings",
   onboarding: "/onboarding",
   // ADR-0010, #238: the administration, its own sign-in and shell.
   admin: "/admin",

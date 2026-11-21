@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { userRatingScoresSchema } from "@/lib/ratingScore"
+
 const activitySchema = z.object({ id: z.string(), name: z.string(), icon: z.string() })
 
 const interestSchema = z.object({
@@ -49,6 +51,8 @@ export const profileSchema = z.object({
   friendsSeeEventHistory: z.boolean(),
   /** #227: friends see the upcoming events and my name in an event's detail. */
   friendsSeeUpcomingEvents: z.boolean(),
+  /** #236: my scores as an organizer and as a participant, always whole. */
+  ratings: userRatingScoresSchema,
 })
 
 export type Profile = z.infer<typeof profileSchema>
@@ -65,6 +69,8 @@ export const publicProfileSchema = z.object({
   image: z.string().nullable(),
   cover: z.string().nullable(),
   interests: z.array(interestSchema),
+  /** #236: both numbers null below three ratings. */
+  ratings: userRatingScoresSchema,
   /**
    * #226: the first page of a friend's upcoming events, only when they let
    * friends see them; absent otherwise. The event feature reads it.

@@ -41,6 +41,9 @@ const anEvent = (id: string, title: string) => ({
   minParticipants: 4,
   maxParticipants: 10,
   takenCount: 3,
+  organizerName: "Hostitel",
+  group: null,
+  contributionAmount: null,
 })
 
 const page = (ids: string[], nextOffset: number | null = null) => ({

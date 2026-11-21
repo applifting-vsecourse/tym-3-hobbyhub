@@ -32,6 +32,7 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
   },
   friendsSeeEventHistory: true,
   friendsSeeUpcomingEvents: false,
+  ratings: { asOrganizer: { count: 0, average: null }, asParticipant: { count: 0, average: null } },
   ...overrides,
 })
 
@@ -92,5 +93,32 @@ describe("ProfileView", () => {
     expect(screen.getByRole("link", { name: "Přidat, co hraju" })).toBeInTheDocument()
     expect(screen.getByText("Adresu jste zatím nezadali")).toBeInTheDocument()
     expect(screen.getByText("Rok narození jste zatím nezadali")).toBeInTheDocument()
+  })
+
+  // #236: the owner sees their numbers even below three ratings, and why
+  // others do not.
+  it("shows both scores, with a word on what others see below three", async () => {
+    await renderView(
+      profile({
+        ratings: {
+          asOrganizer: { count: 4, average: 4.5 },
+          asParticipant: { count: 2, average: 5 },
+        },
+      }),
+    )
+
+    expect(screen.getByRole("heading", { name: "Hodnocení" })).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: "Hodnocení 4,5 z 5, 4 hodnocení" })).toBeInTheDocument()
+    expect(screen.getByText("Máš 2 hodnocení, ostatním se ukáže od 3.")).toBeInTheDocument()
+  })
+
+  // #234: who rated them and what they sent is theirs alone, one tap away.
+  it("leads to the person's own ratings", async () => {
+    await renderView(profile())
+
+    expect(screen.getByRole("link", { name: "Zobrazit moje hodnocení" })).toHaveAttribute(
+      "href",
+      "/profile/ratings",
+    )
   })
 })

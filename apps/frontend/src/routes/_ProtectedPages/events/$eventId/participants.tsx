@@ -57,7 +57,7 @@ function ParticipantsPage() {
   return (
     <>
       <Seo title={eventQuery.data?.title ?? t("participationRequests.manage.title")} />
-      <section className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-4 py-6 md:py-12">
+      <section className="mx-auto flex w-full max-w-column-2xl flex-col gap-2 px-page py-6 md:py-12 lg:max-w-column-5xl">
         <BackLink
           to="/events/$eventId"
           params={{ eventId }}
@@ -89,6 +89,16 @@ function ParticipantsPage() {
               id: eventQuery.data.id,
               title: eventQuery.data.title,
               when: `${eventDay(t, eventQuery.data.startAt, new Date(), i18n.language)} ${eventTime(eventQuery.data.startAt, i18n.language)}`,
+              // The organizers see the exact address (visibility matrix).
+              where:
+                eventQuery.data.venueType === "ONLINE"
+                  ? t("events.online")
+                  : [
+                      eventQuery.data.location?.placeName ?? eventQuery.data.location?.street,
+                      eventQuery.data.location?.city,
+                    ]
+                      .filter(Boolean)
+                      .join(", "),
               status: eventQuery.data.status,
               startAt: eventQuery.data.startAt,
               endAt: eventQuery.data.endAt,

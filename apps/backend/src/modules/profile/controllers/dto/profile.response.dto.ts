@@ -10,6 +10,7 @@ import {
   InterestResponseDto,
 } from '@/modules/onboarding/controllers/dto/onboarding.response.dto';
 import { Profile, PublicProfile } from '@/modules/profile/domain/profile';
+import { UserRatingScoresResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
 import { GENDERS } from '@/shared/auth/registration/registration';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -75,6 +76,13 @@ export class ProfileResponseDto {
   })
   friendsSeeUpcomingEvents!: boolean;
 
+  @ApiProperty({
+    type: UserRatingScoresResponseDto,
+    description:
+      'Revealed ratings as an organizer and as a participant (#236); the owner sees both numbers even below 3 ratings',
+  })
+  ratings!: UserRatingScoresResponseDto;
+
   static fromDomain(profile: Profile): ProfileResponseDto {
     return {
       name: profile.name,
@@ -95,6 +103,7 @@ export class ProfileResponseDto {
       friendsSeeEventHistory: profile.friendVisibility.friendsSeeEventHistory,
       friendsSeeUpcomingEvents:
         profile.friendVisibility.friendsSeeUpcomingEvents,
+      ratings: UserRatingScoresResponseDto.fromDomain(profile.ratings),
     };
   }
 }
@@ -133,6 +142,12 @@ export class PublicProfileResponseDto {
   })
   relation!: FriendRelation;
 
+  @ApiProperty({
+    type: UserRatingScoresResponseDto,
+    description:
+      'Revealed ratings as an organizer and as a participant (#236); both numbers null below 3 ratings',
+  })
+  ratings!: UserRatingScoresResponseDto;
   @ApiPropertyOptional({
     type: PersonEventPageResponseDto,
     description:
@@ -161,6 +176,7 @@ export class PublicProfileResponseDto {
           ? LevelResponseDto.fromDomain(interest.level)
           : null,
       })),
+      ratings: UserRatingScoresResponseDto.fromDomain(profile.ratings),
       ...(profile.upcomingEvents && {
         upcomingEvents: PersonEventPageResponseDto.fromDomain(
           profile.upcomingEvents,

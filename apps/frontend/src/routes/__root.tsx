@@ -7,6 +7,8 @@ import { AppShell } from "@/app/AppShell"
 import { NotFound } from "@/components/Error/NotFound"
 import { Toaster } from "@/components/ui/sonner"
 
+import { useAccountLanguage } from "@/features/auth/hooks/useAccountLanguage"
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
@@ -25,6 +27,9 @@ function RootNotFound() {
 }
 
 function RootComponent() {
+  // #262: a signed-in user gets the account's language on every page.
+  useAccountLanguage()
+
   return (
     <>
       <Outlet />

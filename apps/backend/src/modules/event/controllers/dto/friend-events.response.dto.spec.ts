@@ -23,7 +23,11 @@ const libor = {
 } as unknown as EventFriend;
 
 describe('EventDetailResponseDto with friends (#226)', () => {
-  const detail = { ...anItem, status: 'PUBLISHED' } as unknown as EventDetail;
+  const detail = {
+    ...anItem,
+    status: 'PUBLISHED',
+    rating: { count: null, average: null },
+  } as unknown as EventDetail;
 
   it('carries no friends at all for a visitor', () => {
     expect(

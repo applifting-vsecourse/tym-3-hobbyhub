@@ -8,6 +8,11 @@ import {
   ProfileRepository,
   ProfileRow,
 } from '@/modules/profile/repositories/profile.repository';
+import {
+  NO_USER_RATING_SCORES,
+  UserRatingScores,
+} from '@/modules/rating/domain/rating';
+import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -54,6 +59,7 @@ describe('ProfileService', () => {
   const setup = (
     row: ProfileRow | null = aRow(),
     onboarding: Onboarding = anOnboarding(),
+    scores: UserRatingScores = NO_USER_RATING_SCORES,
   ): {
     repository: MockProxy<ProfileRepository>;
     onboardingService: MockProxy<OnboardingService>;
@@ -69,6 +75,8 @@ describe('ProfileService', () => {
     onboardingService.getOnboardingOf.mockResolvedValue(onboarding);
     const friendshipService = mock<FriendshipService>();
     friendshipService.relationBetween.mockResolvedValue('none');
+    const ratingsService = mock<RatingsService>();
+    ratingsService.getUserScores.mockResolvedValue(scores);
     friendshipService.friendVisibilityFor.mockResolvedValue(null);
     const friendEvents = mock<FriendEventsService>();
     return {
@@ -81,10 +89,52 @@ describe('ProfileService', () => {
         onboardingService,
         friendshipService,
         noBlocks(),
+        ratingsService,
         friendEvents,
       ),
     };
   };
+
+  // #236, ADR-0027: the scores, as an organizer and as a participant.
+  describe('ratings', () => {
+    const twoAndThree: UserRatingScores = {
+      asOrganizer: { count: 3, average: 4 },
+      asParticipant: { count: 2, average: 5 },
+    };
+
+    it('gives the owner both scores whole, even below three ratings', async () => {
+      const { service } = setup(aRow(), anOnboarding(), twoAndThree);
+      await expect(service.getProfile(user)).resolves.toMatchObject({
+        ratings: {
+          asOrganizer: { count: 3, average: 4 },
+          asParticipant: { count: 2, average: 5 },
+        },
+      });
+    });
+
+    it('hides both numbers from others below three ratings', async () => {
+      const { repository, service } = setup(
+        aRow(),
+        anOnboarding(),
+        twoAndThree,
+      );
+      repository.getPublicRow.mockResolvedValue({
+        id: 'u2',
+        name: 'Petr',
+        bio: null,
+        image: null,
+        profileCover: null,
+      });
+      await expect(service.getPublicProfile('u2', user)).resolves.toMatchObject(
+        {
+          ratings: {
+            asOrganizer: { count: 3, average: 4 },
+            asParticipant: { count: null, average: null },
+          },
+        },
+      );
+    });
+  });
 
   it('puts the account and the onboarding answers together', async () => {
     const { service } = setup(aRow({ bio: 'Hraju rok' }));
@@ -402,6 +452,14 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('updateLanguage', () => {
+    it("saves the language to the signed-in user's account", async () => {
+      const { service, repository } = setup();
+      await service.updateLanguage(user, 'EN');
+      expect(repository.updateLanguage).toHaveBeenCalledWith('u1', 'EN');
+    });
+  });
+
   describe('removeLocation', () => {
     it('clears the whole location and answers with the profile without it', async () => {
       const { service, repository, onboardingService } = setup(
@@ -453,6 +511,7 @@ describe('ProfileService', () => {
         'image',
         'interests',
         'name',
+        'ratings',
         'relation',
       ]);
     });

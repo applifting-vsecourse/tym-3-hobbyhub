@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { AppShell } from "@/app/AppShell"
+import { ThemeSwitcher } from "@/components/Header/ThemeSwitcher"
 import { Logo } from "@/components/hobbyhub/Logo"
 import { Seo } from "@/components/Seo"
 
@@ -32,6 +33,7 @@ const CONTENTS = [
   { id: "hrdinska-plocha", label: "Hrdinská plocha" },
   { id: "karty", label: "Karty akce" },
   { id: "radek-soupisky", label: "Soupiska a žádosti" },
+  { id: "hodnoceni", label: "Hodnocení" },
   { id: "mapa", label: "Mapa" },
   { id: "navigace", label: "Navigace" },
   { id: "loadery", label: "Loadery" },
@@ -40,17 +42,21 @@ const CONTENTS = [
 /**
  * Living catalogue of the HobbyHub design system (Figma "HobbyHub – návrh
  * designu", pages Design system and Komponenty). Every token and component
- * that screens are built from is shown here, in both themes via the header
- * theme switcher.
+ * that screens are built from is shown here, in both themes via the theme
+ * switcher next to the title (#262: the app's header no longer has one).
  */
 function DesignSystemPage() {
   return (
     <>
       <Seo title="Design system" />
       <AppShell>
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-4 py-12">
+        <div className="mx-auto flex w-full max-w-column-4xl flex-col gap-12 px-page py-12">
           <header className="flex flex-col gap-4">
-            <Logo className="h-10 self-start" />
+            <div className="flex items-center justify-between gap-4">
+              {/* May shrink: at its full height the logo and the switcher are wider than a phone. */}
+              <Logo className="h-auto max-h-10 min-w-0 shrink" />
+              <ThemeSwitcher />
+            </div>
             <h1 className="typo-h1 text-foreground">Rozpis a soupiska</h1>
             <p className="max-w-2xl typo-body-lg text-muted-foreground">
               Design systém aplikace HobbyHub. Místa u stolu místo procent, čárkování znamená chybí
