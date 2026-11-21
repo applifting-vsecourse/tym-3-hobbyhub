@@ -226,7 +226,7 @@ describe("FriendRequests (#228)", () => {
     ).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Vyhledat uživatele" })).toHaveAttribute(
       "href",
-      "/friends",
+      "/friends?tab=search",
     )
   })
 

@@ -716,6 +716,25 @@
       "title": "New event",
       "updateFailed": "Could not save the changes. Please try again."
     },
+    "friends": {
+      "and": "and",
+      "less": "Show less",
+      "more_one": "and {{count}} more",
+      "more_other": "and {{count}} more",
+      "past_one": "Your friend who attended:",
+      "past_other": "Your friends who attended:",
+      "upcoming_one": "Your friend going:",
+      "upcoming_other": "Your friends going:"
+    },
+    "friendsEvents": {
+      "all": "All friends' events",
+      "empty": "Your friends aren't going anywhere yet. You'll see events of friends who share them here.",
+      "list": "Friends' events",
+      "loadMore": "Load more",
+      "loadMoreError": "More events couldn't be loaded. Try again.",
+      "loading": "Loading friends' events…",
+      "previewTitle": "Where friends are going"
+    },
     "list": {
       "count_one": "{{count}} event",
       "count_other": "{{count}} events",
@@ -788,6 +807,24 @@
       "you": "Your location"
     },
     "online": "Online",
+    "personEvents": {
+      "empty": {
+        "past": "No past events yet.",
+        "upcoming": "No upcoming events."
+      },
+      "loadMore": "Load more",
+      "loadMoreError": "More events couldn't be loaded. Try again.",
+      "only": {
+        "past": "Past events",
+        "upcoming": "Upcoming events"
+      },
+      "periods": {
+        "past": "Past",
+        "upcoming": "Upcoming"
+      },
+      "periodsLabel": "Upcoming and past events",
+      "title": "Events"
+    },
     "placeholders": {
       "addressSearch": "Start typing a street and town",
       "city": "E.g. Prague 8",
@@ -866,10 +903,39 @@
       "friends": "Nobody here yet. Once someone accepts your friend request, you will see them here.",
       "requests": "Nothing here yet. Friend requests people send you will show up here."
     },
+    "list": {
+      "count_one": "{{count}} friend",
+      "count_other": "{{count}} friends",
+      "error": "Friends couldn't be loaded.",
+      "label": "Your friends",
+      "loadMore": "Load more",
+      "loadMoreError": "More friends couldn't be loaded. Try again.",
+      "loading": "Loading friends…",
+      "loadingMore": "Loading…",
+      "retry": "Try again",
+      "since": "Friends since {{date}}",
+      "sort": {
+        "name_asc": "A–Z",
+        "name_desc": "Z–A",
+        "newest": "Newest",
+        "oldest": "Oldest"
+      },
+      "sortLabel": "Sort friends",
+      "title": "Your friends"
+    },
     "relation": {
       "friends": "Friend",
       "request_received": "Wants to be friends",
       "request_sent": "Request sent"
+    },
+    "remove": {
+      "button": "Remove friend",
+      "buttonLabel": "Remove friend: {{name}}",
+      "confirm": "Remove friend",
+      "error": "The friend couldn't be removed. Please try again.",
+      "keep": "Keep",
+      "text": "{{name}} won't be told. You will stop seeing each other's events. You can send a friend request again.",
+      "title": "Remove friend?"
     },
     "requests": {
       "accept": "Accept",
@@ -907,6 +973,7 @@
       "retry": "Try again"
     },
     "tabs": {
+      "events": "Friends' events",
       "friends": "Friends",
       "label": "Parts of the Friends section",
       "requests": "Requests",

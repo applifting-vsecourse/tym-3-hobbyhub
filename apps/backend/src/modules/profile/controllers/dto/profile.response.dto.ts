@@ -1,4 +1,5 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
+import { PersonEventPageResponseDto } from '@/modules/event/controllers/dto/friend-events.response.dto';
 import {
   FRIEND_RELATIONS,
   FriendRelation,
@@ -11,7 +12,7 @@ import {
 import { Profile, PublicProfile } from '@/modules/profile/domain/profile';
 import { UserRatingScoresResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
 import { GENDERS } from '@/shared/auth/registration/registration';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ProfileResponseDto {
   @ApiProperty({ description: 'The public nickname, unique' })
@@ -147,6 +148,19 @@ export class PublicProfileResponseDto {
       'Revealed ratings as an organizer and as a participant (#236); both numbers null below 3 ratings',
   })
   ratings!: UserRatingScoresResponseDto;
+  @ApiPropertyOptional({
+    type: PersonEventPageResponseDto,
+    description:
+      '#226: the first page of upcoming events (approved seat or organized). Only for a friend whose switch allows it; absent otherwise',
+  })
+  upcomingEvents?: PersonEventPageResponseDto;
+
+  @ApiPropertyOptional({
+    type: PersonEventPageResponseDto,
+    description:
+      '#226: the first page of past events (seat or organized). Only for a friend whose switch allows it; absent otherwise',
+  })
+  pastEvents?: PersonEventPageResponseDto;
 
   static fromDomain(profile: PublicProfile): PublicProfileResponseDto {
     return {
@@ -163,6 +177,14 @@ export class PublicProfileResponseDto {
           : null,
       })),
       ratings: UserRatingScoresResponseDto.fromDomain(profile.ratings),
+      ...(profile.upcomingEvents && {
+        upcomingEvents: PersonEventPageResponseDto.fromDomain(
+          profile.upcomingEvents,
+        ),
+      }),
+      ...(profile.pastEvents && {
+        pastEvents: PersonEventPageResponseDto.fromDomain(profile.pastEvents),
+      }),
     };
   }
 }

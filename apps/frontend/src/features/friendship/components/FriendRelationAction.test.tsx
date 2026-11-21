@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HTTPError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -192,11 +192,57 @@ describe("FriendRelationAction", () => {
     })
   })
 
-  it("marks a friend, with no request button", async () => {
+  it("marks a friend, with no request button but a way to remove them (#226)", async () => {
     await renderAction("friends")
 
     expect(await screen.findByText("Přítel")).toBeInTheDocument()
-    expect(screen.queryByRole("button")).toBeNull()
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "Odebrat z přátel",
+    ])
+  })
+
+  describe("removing a friend (#226)", () => {
+    const openSheet = async () => {
+      await userEvent.click(await screen.findByRole("button", { name: "Odebrat z přátel" }))
+      return screen.findByRole("dialog", { name: "Odebrat z přátel?" })
+    }
+
+    it("asks first, says the friend is not told, and keeps them when I change my mind", async () => {
+      await renderAction("friends")
+
+      const dialog = await openSheet()
+      expect(within(dialog).getByText(/Libor se to nedozví/)).toBeInTheDocument()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Ponechat" }))
+
+      expect(del).not.toHaveBeenCalled()
+      expect(screen.getByText("Přítel")).toBeInTheDocument()
+    })
+
+    it("removes the friend and reloads the friends, the profile and the events", async () => {
+      del.mockReturnValueOnce({ json: () => Promise.resolve({ relation: "none" }) })
+      const { invalidate } = await renderAction("friends")
+
+      const dialog = await openSheet()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Odebrat z přátel" }))
+
+      expect(del).toHaveBeenCalledWith("friends/u2")
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["events"] })
+    })
+
+    it("says so when it fails and keeps the sheet open", async () => {
+      failWith(500, del)
+      await renderAction("friends")
+
+      const dialog = await openSheet()
+      await userEvent.click(within(dialog).getByRole("button", { name: "Odebrat z přátel" }))
+
+      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+        "Přítele se nepodařilo odebrat.",
+      )
+    })
   })
 
   describe("withdrawing a sent request (#225)", () => {

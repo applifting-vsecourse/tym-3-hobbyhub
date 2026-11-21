@@ -1,3 +1,5 @@
+import { PersonEventPage } from '@/modules/event/domain/event';
+import { FriendEventsService } from '@/modules/event/services/friend-events.service';
 import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
@@ -62,6 +64,7 @@ describe('ProfileService', () => {
     repository: MockProxy<ProfileRepository>;
     onboardingService: MockProxy<OnboardingService>;
     friendshipService: MockProxy<FriendshipService>;
+    friendEvents: MockProxy<FriendEventsService>;
     service: ProfileService;
   } => {
     const repository = mock<ProfileRepository>();
@@ -74,16 +77,20 @@ describe('ProfileService', () => {
     friendshipService.relationBetween.mockResolvedValue('none');
     const ratingsService = mock<RatingsService>();
     ratingsService.getUserScores.mockResolvedValue(scores);
+    friendshipService.friendVisibilityFor.mockResolvedValue(null);
+    const friendEvents = mock<FriendEventsService>();
     return {
       repository,
       onboardingService,
       friendshipService,
+      friendEvents,
       service: new ProfileService(
         repository,
         onboardingService,
         friendshipService,
         noBlocks(),
         ratingsService,
+        friendEvents,
       ),
     };
   };
@@ -534,6 +541,96 @@ describe('ProfileService', () => {
       await expect(service.getPublicProfile('nobody', user)).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    // #226: a friend's events, each part by its switch; absent otherwise.
+    describe('friend events (#226)', () => {
+      const page: PersonEventPage = { items: [], total: 0, nextOffset: null };
+
+      it.each([
+        [true, true, ['pastEvents', 'upcomingEvents']],
+        [true, false, ['upcomingEvents']],
+        [false, true, ['pastEvents']],
+        [false, false, []],
+      ])(
+        'upcoming %s, history %s: carries %j',
+        async (upcoming, history, fields) => {
+          const {
+            service,
+            repository,
+            onboardingService,
+            friendshipService,
+            friendEvents,
+          } = setup();
+          repository.getPublicRow.mockResolvedValue(publicRow);
+          onboardingService.getInterestsOf.mockResolvedValue([]);
+          friendshipService.relationBetween.mockResolvedValue('friends');
+          friendshipService.friendVisibilityFor.mockResolvedValue({
+            friendsSeeUpcomingEvents: upcoming,
+            friendsSeeEventHistory: history,
+          });
+          friendEvents.getPersonEvents.mockResolvedValue(page);
+
+          const profile = await service.getPublicProfile('u2', user);
+
+          expect(
+            Object.keys(profile)
+              .filter((key) => key.endsWith('Events'))
+              .sort(),
+          ).toEqual(fields);
+          expect(friendEvents.getPersonEvents).toHaveBeenCalledTimes(
+            fields.length,
+          );
+        },
+      );
+
+      it('carries no events for someone who is not a friend', async () => {
+        const { service, repository, onboardingService, friendEvents } =
+          setup();
+        repository.getPublicRow.mockResolvedValue(publicRow);
+        onboardingService.getInterestsOf.mockResolvedValue([]);
+
+        const profile = await service.getPublicProfile('u2', user);
+
+        expect(profile).not.toHaveProperty('upcomingEvents');
+        expect(profile).not.toHaveProperty('pastEvents');
+        expect(friendEvents.getPersonEvents).not.toHaveBeenCalled();
+      });
+
+      it('gives a further page when the switch allows it', async () => {
+        const { service, friendshipService, friendEvents } = setup();
+        friendshipService.friendVisibilityFor.mockResolvedValue({
+          friendsSeeUpcomingEvents: false,
+          friendsSeeEventHistory: true,
+        });
+        friendEvents.getPersonEvents.mockResolvedValue(page);
+
+        await expect(
+          service.getFriendEvents('u2', user, 'past', 10),
+        ).resolves.toBe(page);
+        expect(friendEvents.getPersonEvents).toHaveBeenCalledWith(
+          'u2',
+          user,
+          'past',
+          10,
+        );
+      });
+
+      it.each([
+        ['not a friend', null],
+        [
+          'the switch off',
+          { friendsSeeUpcomingEvents: false, friendsSeeEventHistory: true },
+        ],
+      ])('answers not found with %s', async (_, visibility) => {
+        const { service, friendshipService, friendEvents } = setup();
+        friendshipService.friendVisibilityFor.mockResolvedValue(visibility);
+
+        await expect(
+          service.getFriendEvents('u2', user, 'upcoming', 0),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(friendEvents.getPersonEvents).not.toHaveBeenCalled();
+      });
     });
   });
 

@@ -22,11 +22,15 @@ import {
   EventDetail,
   EventFacts,
   EventFilter,
+  EventFriend,
   EventListFilter,
   EventListItem,
   EventListPage,
   EventLocation,
+  EventPeriod,
   EventSeatFacts,
+  EventViewerScope,
+  FRIEND_SEAT_STATUSES,
   GeoPoint,
   GroupEventListItem,
   GroupEventPage,
@@ -146,6 +150,73 @@ const SHOWABLE_EVENT = {
   visibility: { in: ['PUBLIC', 'GROUP_ONLY'] },
   isHidden: false,
 } as const satisfies Prisma.EventWhereInput;
+
+// #226, ADR-0026: an event the viewer may see through a friend, the same as
+// `canSeeEvent` decides for its detail: public, or group-only for the group's
+// members and those involved. Never a draft, a private event, one hidden by a
+// moderator or one organized by someone whose events do not exist for the
+// viewer (#239). A cancelled event and one that did not take place are not
+// where anyone goes, so they never count either.
+const visibleThroughFriend = (
+  viewer: EventViewerScope,
+  period: EventPeriod,
+  now: Date,
+): Prisma.EventWhereInput => ({
+  status:
+    period === 'upcoming' ? 'PUBLISHED' : { in: ['PUBLISHED', 'FINISHED'] },
+  isHidden: false,
+  endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+  OR: [
+    { visibility: 'PUBLIC' },
+    {
+      visibility: 'GROUP_ONLY',
+      OR: [
+        ...(viewer.groupIds.length > 0
+          ? [{ groupId: { in: viewer.groupIds } }]
+          : []),
+        { organizerId: viewer.userId },
+        { coOrganizers: { some: { id: viewer.userId } } },
+        {
+          participations: {
+            some: {
+              userId: viewer.userId,
+              status: { in: [...INVOLVED_PARTICIPATION_STATUSES] },
+            },
+          },
+        },
+        {
+          participationRequests: {
+            some: { userId: viewer.userId, status: RequestStatus.PENDING },
+          },
+        },
+      ],
+    },
+  ],
+  ...(viewer.hiddenOrganizerIds.length > 0
+    ? {
+        organizerId: { notIn: viewer.hiddenOrganizerIds },
+        coOrganizers: { none: { id: { in: viewer.hiddenOrganizerIds } } },
+      }
+    : {}),
+});
+
+// #226: an event one of these people organizes, co-organizes or holds a seat on.
+const withAnyOf = (peopleIds: string[]): Prisma.EventWhereInput => ({
+  OR: [
+    { organizerId: { in: peopleIds } },
+    { coOrganizers: { some: { id: { in: peopleIds } } } },
+    {
+      participations: {
+        some: {
+          userId: { in: peopleIds },
+          status: { in: [...FRIEND_SEAT_STATUSES] },
+        },
+      },
+    },
+  ],
+});
+
+const friendSelect = { id: true, name: true, image: true } as const;
 
 // What the rules about seats read of an event (`EventFacts`). The approved
 // people come along, so a caller can find one of them without a second query.
@@ -1008,5 +1079,91 @@ export class EventRepository {
         waitlistPosition: participation.waitlistPosition,
       })),
     };
+  }
+
+  /**
+   * #226: a page of the events any of `peopleIds` goes to or organizes, as
+   * the viewer may see them, and how many there are. Upcoming soonest first,
+   * past newest first. Which people may be shown is the caller's to decide.
+   */
+  async getEventsWithPeople(
+    peopleIds: string[],
+    {
+      period,
+      now,
+      viewer,
+    }: { period: EventPeriod; now: Date; viewer: EventViewerScope },
+    { limit, offset }: Page,
+  ): Promise<EventListPage> {
+    if (peopleIds.length === 0) return { items: [], total: 0 };
+    const where: Prisma.EventWhereInput = {
+      AND: [visibleThroughFriend(viewer, period, now), withAnyOf(peopleIds)],
+    };
+    const direction = period === 'upcoming' ? 'asc' : 'desc';
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: listInclude,
+        orderBy: [{ startAt: direction }, { id: direction }],
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return {
+      items: events.map((event) => mapPrismaEventToListItem(event)),
+      total,
+    };
+  }
+
+  /**
+   * #226: which of `peopleIds` go to or organize each of the events, each
+   * person once per event, by name. An event without any of them is absent.
+   */
+  async getPeopleOnEvents(
+    eventIds: string[],
+    peopleIds: string[],
+  ): Promise<Map<string, EventFriend[]>> {
+    const found = new Map<string, EventFriend[]>();
+    if (eventIds.length === 0 || peopleIds.length === 0) return found;
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: eventIds } },
+      select: {
+        id: true,
+        organizerId: true,
+        organizer: { select: friendSelect },
+        coOrganizers: {
+          where: { id: { in: peopleIds } },
+          select: friendSelect,
+        },
+        participations: {
+          where: {
+            userId: { in: peopleIds },
+            status: { in: [...FRIEND_SEAT_STATUSES] },
+          },
+          select: { user: { select: friendSelect } },
+        },
+      },
+    });
+    for (const event of events) {
+      const people = new Map<string, EventFriend>();
+      const add = (person: EventFriend): void => {
+        people.set(person.id, person);
+      };
+      if (peopleIds.includes(event.organizerId)) add(event.organizer);
+      event.coOrganizers.forEach(add);
+      event.participations.forEach((participation) => add(participation.user));
+      if (people.size > 0) {
+        found.set(
+          event.id,
+          [...people.values()].sort(
+            (one, other) =>
+              one.name.localeCompare(other.name, 'cs') ||
+              one.id.localeCompare(other.id),
+          ),
+        );
+      }
+    }
+    return found;
   }
 }
