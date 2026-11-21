@@ -55,6 +55,9 @@ function EditGroupPage() {
     mutationFn: (values: CreateGroupInput) =>
       updateGroup(groupId, {
         ...values,
+        // An activity withdrawn since is no reason to refuse a change of the description:
+        // the server checks the one that is sent.
+        activityId: values.activityId === group?.activity.id ? undefined : values.activityId,
         // A cleared tagline, schedule or day list is a change too, not "leave as it is".
         usualSchedule: values.usualSchedule ?? null,
         tagline: values.tagline ?? null,

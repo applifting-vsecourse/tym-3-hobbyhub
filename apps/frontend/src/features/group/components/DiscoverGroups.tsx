@@ -1,11 +1,11 @@
-import { useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 
 import { NoMatchingResults } from "@/components/hobbyhub/NoMatchingResults"
+import { ViewToggle, type EventsView } from "@/components/hobbyhub/ViewToggle"
 import { Button } from "@/components/ui/button"
-import { toggleVariants } from "@/components/ui/toggle"
-import { useMediaQuery } from "@/hooks/useMediaQuery"
+import { useMediaQuery, WIDE_QUERY } from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
 
 import type { DiscoverGroupsFilters } from "@/features/group/api/groupKeys"
@@ -14,49 +14,46 @@ import type { Group } from "@/features/group/api/groupSchemas"
 import { GroupCard, type ActivityLabel } from "@/features/group/components/GroupCard"
 import { GroupGrid } from "@/features/group/components/GroupGrid"
 
-// Tailwind's `xl` breakpoint, where the map sits beside the list.
-const XL_QUERY = "(min-width: 80rem)"
-
 type DiscoverGroupsProps = {
   /** The signed-in user, or null for a visitor, who sees every public group. */
   viewerId: string | null
   activityLabel: ActivityLabel
   /** The filters in the address. */
   filters: DiscoverGroupsFilters
+  /** The page's title, intro and tabs, above the search; they scroll away with nothing, as on the event list. */
+  header?: ReactNode
   /** The search field and the filter chips; the page builds them (the event list's bar). */
   filtersBar: ReactNode
   /** The filters open beside the list on a large screen (#224); nothing where there is no room. */
   filtersPanel?: ReactNode
-  /** The extra filters of groups under the search (joining, upcoming, radius, order). */
-  extraFilters?: (mapToggle: ReactNode) => ReactNode
-  /** The map of the groups on screen, beside the list from `xl` (ADR-0028). */
+  /** The map of the groups of the filter, beside the list from `lg` and instead of it on a phone (ADR-0028). */
   renderMap?: (groups: Group[]) => ReactNode
-  /** The page's tabs for a signed-in viewer, above the search beside the filters. */
-  tabs?: ReactNode
+  /** Which of the two a phone shows; the page keeps it, because the shell around depends on it. */
+  view: EventsView
+  onViewChange: (view: EventsView) => void
   onClearFilters: () => void
 }
 
 /**
- * "Objevit" tab: public groups the viewer is not in, a page at a time, with the
- * search and filters of the event list (#222): text, activity and place. Groups
- * have no date and no coordinates, so there is no date filter and no map.
+ * "Objevit" tab: public groups the viewer is not in, a page at a time, laid out
+ * like the event list (#222): the search and filters on top, the list beside a
+ * map from `lg`, and on a phone one of the two at a time (ADR-0028).
  */
 export function DiscoverGroups({
   viewerId,
   activityLabel,
   filters,
+  header,
   filtersBar,
   filtersPanel,
-  extraFilters,
   renderMap,
-  tabs,
+  view,
+  onViewChange,
   onClearFilters,
 }: DiscoverGroupsProps) {
   const { t } = useTranslation()
-  // Below `xl` the map and the list take turns; from `xl` they sit side by side.
-  const [isMapShown, setIsMapShown] = useState(false)
-  // The map is built only where it is on screen: a phone never starts Mapbox for the xl one.
-  const isXl = useMediaQuery(XL_QUERY)
+  // The map is built only where it is on screen: a phone never starts Mapbox for the wide layout.
+  const isWide = useMediaQuery(WIDE_QUERY)
   // The previous list stays on screen while the next one loads, so typing does not flash.
   const discover = useInfiniteQuery({
     ...discoverGroupsQueryOptions(viewerId, filters),
@@ -70,49 +67,46 @@ export function DiscoverGroups({
     filters.onlyWithUpcomingEvent === true ||
     filters.near !== undefined
   const groups = discover.data?.pages.flatMap((page) => page.items)
+  const isMapShown = renderMap !== undefined && (isWide || view === "map")
 
   return (
     <section
       aria-labelledby="discover-groups-heading"
       className={cn(
-        "flex flex-col gap-6 xl:grid xl:items-start xl:gap-8",
+        // The same frame as the event list: the list keeps its width, the map takes the rest.
+        "grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-rows-[minmax(0,1fr)] lg:gap-8",
         renderMap
-          ? "xl:grid-cols-[auto_minmax(0,1fr)_minmax(0,26rem)]"
+          ? "lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,28rem)_minmax(0,1fr)]"
           : "xl:grid-cols-[auto_minmax(0,1fr)]",
+        renderMap &&
+          view === "map" &&
+          "max-lg:min-h-0 max-lg:flex-1 max-lg:grid-rows-[auto_minmax(0,1fr)]",
       )}
     >
-      <h2
-        id="discover-groups-heading"
-        className="sr-only"
-      >
-        {t("groups.list.tabs.discover")}
-      </h2>
       {filtersPanel}
-      <div className="flex min-w-0 flex-col gap-6">
-        {tabs}
+      <div className="flex min-w-0 flex-col gap-6 lg:min-h-0 lg:gap-4">
+        <h2
+          id="discover-groups-heading"
+          className="sr-only"
+        >
+          {t("groups.list.tabs.discover")}
+        </h2>
+        {header}
         {filtersBar}
-        {extraFilters?.(
-          renderMap ? (
-            // One chip beside the filters; from `xl` the map is always beside the list.
-            <button
-              type="button"
-              aria-pressed={isMapShown}
-              data-state={isMapShown ? "on" : "off"}
-              className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9 xl:hidden")}
-              onClick={() => setIsMapShown((isShown) => !isShown)}
-            >
-              {t("groups.map.show")}
-            </button>
-          ) : null,
-        )}
-        {renderMap && isMapShown && !isXl ? (
-          <div className="h-[60svh] xl:hidden">{renderMap(groups ?? [])}</div>
+        {renderMap ? (
+          <ViewToggle
+            value={view}
+            onValueChange={onViewChange}
+            className="w-full lg:hidden"
+          />
         ) : null}
         <div
           aria-busy={discover.isPlaceholderData}
           className={cn(
+            // Room for the rows' hover surface, which reaches past the column.
+            "lg:-mx-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-3",
+            renderMap && view === "map" && "max-lg:hidden",
             discover.isPlaceholderData && "opacity-60 transition-opacity",
-            isMapShown && "max-xl:hidden",
           )}
         >
           <GroupGrid
@@ -143,32 +137,32 @@ export function DiscoverGroups({
               )
             }
           />
-        </div>
-        {discover.hasNextPage && !discover.isPlaceholderData ? (
-          <div className="flex flex-col items-center gap-2">
-            {discover.isFetchNextPageError ? (
-              <p
-                role="alert"
-                className="typo-small text-destructive"
+          {discover.hasNextPage && !discover.isPlaceholderData ? (
+            <div className="mt-6 flex flex-col items-center gap-2">
+              {discover.isFetchNextPageError ? (
+                <p
+                  role="alert"
+                  className="typo-small text-destructive"
+                >
+                  {t("groups.list.loadMoreError")}
+                </p>
+              ) : null}
+              <Button
+                variant="outline"
+                disabled={discover.isFetchingNextPage}
+                onClick={() => void discover.fetchNextPage()}
               >
-                {t("groups.list.loadMoreError")}
-              </p>
-            ) : null}
-            <Button
-              variant="outline"
-              disabled={discover.isFetchingNextPage}
-              onClick={() => void discover.fetchNextPage()}
-            >
-              {discover.isFetchingNextPage
-                ? t("groups.list.loadingMore")
-                : t("groups.list.loadMore")}
-            </Button>
-          </div>
-        ) : null}
+                {discover.isFetchingNextPage
+                  ? t("groups.list.loadingMore")
+                  : t("groups.list.loadMore")}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
-      {renderMap && isXl ? (
-        <div className="xl:sticky xl:top-20 xl:h-[calc(100svh-6rem)]">
-          {renderMap(groups ?? [])}
+      {renderMap ? (
+        <div className={view === "map" ? "min-h-0" : "max-lg:hidden lg:min-h-0"}>
+          {isMapShown ? renderMap(groups ?? []) : null}
         </div>
       ) : null}
     </section>

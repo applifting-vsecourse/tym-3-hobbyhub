@@ -135,7 +135,7 @@ export class MembershipRequestsService {
     // #239: no request to the group of an owner blocked from the applicant.
     const group = await this.groupsService.getPublicGroup(groupId, user);
     // ADR-0028: a group that lets anyone in has nothing to decide; the person
-    // joins directly (POST /groups/:id/membership).
+    // joins directly (POST /groups/:groupId/requests/join).
     if (group.approvalMode === 'OPEN') {
       throw new BadRequestException(
         'This group lets anyone in: join it directly, no request is needed',

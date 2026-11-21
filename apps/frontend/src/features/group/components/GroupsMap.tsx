@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link } from "@tanstack/react-router"
-import { UsersIcon } from "lucide-react"
 import mapboxgl from "mapbox-gl"
-import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 
+import { GroupClusterPin, GroupPin } from "@/components/hobbyhub/GroupPin"
+import { DARK_STYLE, isDark, LIGHT_STYLE, MapMarker } from "@/components/hobbyhub/mapShared"
 import { env } from "@/config/env"
 import { cn } from "@/lib/utils"
 
@@ -13,35 +13,25 @@ import { clusterGroups, type LocatedGroup } from "@/features/group/lib/clusterGr
 
 import "mapbox-gl/dist/mapbox-gl.css"
 
-const LIGHT_STYLE = "mapbox://styles/mapbox/light-v11"
-const DARK_STYLE = "mapbox://styles/mapbox/dark-v11"
 // Prague, until there is something to fit.
 const FALLBACK_CENTER: [number, number] = [14.4378, 50.0755]
 const FALLBACK_ZOOM = 10
 const FIT_MAX_ZOOM = 13
 
-const isDark = () => document.documentElement.classList.contains("dark")
-
 const isLocated = (group: Group): group is LocatedGroup =>
   group.latitude !== null && group.longitude !== null
 
-/** A pin: the person and the member count in a pill. The group has no exact spot on the map, only a dashed ring. */
-function GroupPin({ group }: { group: LocatedGroup }) {
+/** A group's pin opens the group. */
+function GroupPinLink({ group }: { group: LocatedGroup }) {
   const { t } = useTranslation()
   return (
     <Link
       to="/groups/$groupId"
       params={{ groupId: group.id }}
       aria-label={t("groups.map.pin", { name: group.name, count: group.memberCount })}
-      className={cn(
-        "relative flex min-h-11 items-center gap-1 rounded-md border-2 border-primary bg-card px-3 py-1 typo-label text-primary shadow-float outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
-      )}
+      className="block rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
     >
-      <UsersIcon
-        aria-hidden
-        className="size-4"
-      />
-      {group.memberCount}
+      <GroupPin count={group.memberCount} />
     </Link>
   )
 }
@@ -55,8 +45,9 @@ type GroupsMapProps = {
 
 /**
  * Mapa skupin (ADR-0028): every group with a place as a pill with its member
- * count and a dashed ring, because a group meets around a place, not at an
- * exact spot. A group without a place is only in the list. Without a token or
+ * count, several in one spot as one count that zooms in. A group meets around a
+ * place, so the pin has no ring or exact point. A group without a place is only
+ * in the list. Without a token or
  * where the map cannot start, the list beside it carries on.
  */
 export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsMapProps) {
@@ -133,66 +124,33 @@ export function GroupsMap({ groups, className, isFallbackShown = true }: GroupsM
       />
       {map
         ? clusters.map((cluster) => (
-            <GroupMarker
+            <MapMarker
               key={cluster.key}
               map={map}
               latitude={cluster.latitude}
               longitude={cluster.longitude}
+              anchor="center"
             >
               {cluster.single ? (
-                <GroupPin group={cluster.single} />
+                <GroupPinLink group={cluster.single} />
               ) : (
-                <ClusterPin
-                  count={cluster.groups.length}
+                <button
+                  type="button"
+                  aria-label={t("groups.map.cluster", { count: cluster.groups.length })}
+                  className="block rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
                   onClick={() =>
                     map.easeTo({
                       center: [cluster.longitude, cluster.latitude],
                       zoom: Math.min(map.getZoom() + 2.5, 15),
                     })
                   }
-                />
+                >
+                  <GroupClusterPin count={cluster.groups.length} />
+                </button>
               )}
-            </GroupMarker>
+            </MapMarker>
           ))
         : null}
     </div>
   )
-}
-
-/** Several groups in one place: how many, and a click zooms in on them. */
-function ClusterPin({ count, onClick }: { count: number; onClick: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <button
-      type="button"
-      aria-label={t("groups.map.cluster", { count })}
-      onClick={onClick}
-      className="flex size-11 items-center justify-center rounded-full border-2 border-primary bg-card typo-label text-primary shadow-float outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
-    >
-      {count}
-    </button>
-  )
-}
-
-function GroupMarker({
-  map,
-  latitude,
-  longitude,
-  children,
-}: {
-  map: mapboxgl.Map
-  latitude: number
-  longitude: number
-  children: ReactNode
-}) {
-  const [element] = useState(() => document.createElement("div"))
-  useEffect(() => {
-    const marker = new mapboxgl.Marker({ element, anchor: "center" })
-      .setLngLat([longitude, latitude])
-      .addTo(map)
-    return () => {
-      marker.remove()
-    }
-  }, [map, element, latitude, longitude])
-  return createPortal(children, element)
 }

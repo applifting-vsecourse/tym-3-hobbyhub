@@ -1039,19 +1039,6 @@
         "description": "No group matches this selection yet. Try another search, place or activity.",
         "title": "Nothing found"
       },
-      "filters": {
-        "approval": "Joining",
-        "approvalAll": "All",
-        "clear": "Clear filters",
-        "radius": "Radius from home",
-        "radiusValue": "{{km}} km",
-        "sort": "Sort",
-        "sortMembers": "Most members",
-        "sortNearest": "Nearest",
-        "sortNewest": "Newest",
-        "title": "More filters",
-        "upcoming": "Have an upcoming event"
-      },
       "intro": "A group is a crew that meets regularly. Find yours, or start a new one.",
       "loadError": "Could not load groups",
       "loadMore": "Load more",
@@ -1069,7 +1056,6 @@
       },
       "searchLabel": "Search groups",
       "searchPlaceholder": "Name, place or activity",
-      "sortNote": "Results are sorted from the newest group.",
       "tabs": {
         "discover": "Discover",
         "mine": "My groups",
@@ -1169,9 +1155,8 @@
     "map": {
       "cluster": "{{count}} groups, zoom in",
       "label": "Map of groups",
-      "list": "List",
+      "loading": "Loading the map…",
       "pin": "{{name}}, {{count}} members",
-      "show": "Map",
       "unavailable": "The map is not available right now."
     },
     "membershipRequest": {
@@ -1465,6 +1450,8 @@
       "activity": "Activity",
       "activityPlaceholder": "All activities",
       "apply": "Apply",
+      "approval": "Joining",
+      "approvalAll": "All",
       "capacity": "How many people fit (spots)",
       "chosenActivities": "Chosen activities",
       "clear": "Clear",
@@ -1510,9 +1497,16 @@
       "results_one": "Show {{count}} event",
       "results_other": "Show {{count}} events",
       "showResults": "Show results",
+      "sort": "Order",
+      "sortBy": {
+        "members": "Most members",
+        "nearest": "Nearest",
+        "newest": "Newest"
+      },
       "sortNote": "Results are sorted by the nearest date.",
       "title": "Filters",
       "unapplied": "Changes take effect when you press Apply.",
+      "upcomingEvent": "Have an upcoming event",
       "week": "This week",
       "weekend": "Weekend",
       "when": "When"

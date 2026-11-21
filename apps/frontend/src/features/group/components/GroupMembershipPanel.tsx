@@ -119,6 +119,14 @@ export function GroupMembershipPanel({
             {t("groups.detail.join.cta")}
           </Button>
         ) : null}
+        {approvalMode === "OPEN" && membership.joinFailed ? (
+          <p
+            role="alert"
+            className="typo-small text-destructive"
+          >
+            {t("groups.detail.join.failed")}
+          </p>
+        ) : null}
         <Button
           variant="outline"
           onClick={onWithdraw}

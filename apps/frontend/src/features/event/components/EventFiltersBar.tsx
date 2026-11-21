@@ -71,6 +71,9 @@ export const toPanelFilters = (filters: EventFilterValues): EventFilters => ({
   hoursTo: filters.hoursTo,
   capacityFrom: filters.capacityFrom,
   capacityTo: filters.capacityTo,
+  approvalMode: filters.approvalMode,
+  hasUpcomingEvent: filters.hasUpcomingEvent,
+  groupSort: filters.groupSort,
 })
 
 /** What the panel applied, as a change of the address; a filter the page does not offer stays as it is. */
@@ -91,6 +94,9 @@ export const fromPanelFilters = (
     capacityFrom: applied.capacityFrom,
     capacityTo: applied.capacityTo,
   }),
+  ...(fields.includes("approval") && { approvalMode: applied.approvalMode }),
+  ...(fields.includes("upcomingEvent") && { hasUpcomingEvent: applied.hasUpcomingEvent }),
+  ...(fields.includes("groupSort") && { groupSort: applied.groupSort }),
 })
 
 type EventFiltersBarProps = {
@@ -188,6 +194,8 @@ export function EventFiltersBar({
       filters.place !== null ||
       dateLabel !== "" ||
       filters.freeSpotsOnly ||
+      filters.approvalMode !== "" ||
+      filters.hasUpcomingEvent ||
       rangeChips.some(({ label }) => label !== ""))
 
   return (
@@ -295,6 +303,30 @@ export function EventFiltersBar({
                   onPressedChange={() => onFiltersChange({ freeSpotsOnly: false })}
                 >
                   {t("events.list.filters.freeSpots")}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.approvalMode !== "" ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ approvalMode: "" })}
+                >
+                  {t(`groups.approval.${filters.approvalMode}`)}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.hasUpcomingEvent ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ hasUpcomingEvent: false })}
+                >
+                  {t("hobbyhub.filters.upcomingEvent")}
                   <X
                     aria-hidden
                     className="size-4 text-muted-foreground"

@@ -16,9 +16,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { toggleVariants } from "@/components/ui/toggle"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
-import { cn } from "@/lib/utils"
 
 import {
   GROUP_LIMITS,
@@ -310,29 +309,25 @@ export function GroupForm({
         render={({ field }) => (
           <FormItem>
             <FormLabel>{t("groups.fields.meetingDays")}</FormLabel>
-            <div className="flex flex-wrap gap-2">
-              {MEETING_DAYS.map((day) => {
-                const isOn = field.value.includes(day)
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    aria-pressed={isOn}
-                    data-state={isOn ? "on" : "off"}
-                    className={cn(toggleVariants({ variant: "chip" }), "h-11 px-3 md:h-9")}
-                    onClick={() =>
-                      field.onChange(
-                        isOn
-                          ? field.value.filter((each) => each !== day)
-                          : [...field.value, day].sort(),
-                      )
-                    }
-                  >
-                    {t(`groups.weekdays.${day}`)}
-                  </button>
-                )
-              })}
-            </div>
+            <ToggleGroup
+              type="multiple"
+              variant="chip"
+              spacing={2}
+              aria-label={t("groups.fields.meetingDays")}
+              className="flex-wrap"
+              value={field.value.map(String)}
+              onValueChange={(days) => field.onChange(days.map(Number).sort())}
+            >
+              {MEETING_DAYS.map((day) => (
+                <ToggleGroupItem
+                  key={day}
+                  value={String(day)}
+                  className="h-11 md:h-9"
+                >
+                  {t(`groups.weekdays.${day}`)}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
             <FormMessage />
           </FormItem>
         )}

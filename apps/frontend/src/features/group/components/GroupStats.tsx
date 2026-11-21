@@ -12,11 +12,17 @@ import { groupStatsQueryOptions } from "@/features/group/api/groupStatsQueryOpti
  * The two that need the events load on their own; the strip never waits for them.
  */
 export function GroupStats({ group }: { group: Group }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  // Czech writes 7,5: the numbers go through `Intl`, not `String`.
+  const format = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 1 })
   const stats = useQuery(groupStatsQueryOptions(group.id))
   const day = group.meetingDays[0]
   const items = [
-    { key: "members", value: String(group.memberCount), label: t("groups.detail.stats.members") },
+    {
+      key: "members",
+      value: format.format(group.memberCount),
+      label: t("groups.detail.stats.members"),
+    },
     // When the group meets is its own to tell: without it the cell is not there.
     ...(day
       ? [
@@ -29,13 +35,13 @@ export function GroupStats({ group }: { group: Group }) {
       : []),
     {
       key: "played",
-      value: stats.data ? String(stats.data.playedEvents) : t("groups.detail.stats.none"),
+      value: stats.data ? format.format(stats.data.playedEvents) : t("groups.detail.stats.none"),
       label: t("groups.detail.stats.played"),
     },
     {
       key: "average",
       value: stats.data?.playedEvents
-        ? String(stats.data.averageParticipants)
+        ? format.format(stats.data.averageParticipants)
         : t("groups.detail.stats.none"),
       label: t("groups.detail.stats.average"),
     },

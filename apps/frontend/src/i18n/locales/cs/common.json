@@ -1058,19 +1058,6 @@
         "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
         "title": "Nic nenalezeno"
       },
-      "filters": {
-        "approval": "Přijímání členů",
-        "approvalAll": "Všechny",
-        "clear": "Zrušit filtry",
-        "radius": "Okruh od domova",
-        "radiusValue": "{{km}} km",
-        "sort": "Řadit",
-        "sortMembers": "Nejvíc členů",
-        "sortNearest": "Nejbližší",
-        "sortNewest": "Nejnovější",
-        "title": "Další filtry",
-        "upcoming": "Mají nadcházející akci"
-      },
       "intro": "Skupina je parta, která se pravidelně schází. Najděte tu svou, nebo založte novou.",
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
@@ -1088,7 +1075,6 @@
       },
       "searchLabel": "Hledat skupiny",
       "searchPlaceholder": "Název, místo nebo aktivita",
-      "sortNote": "Výsledky řadíme od nejnovější skupiny.",
       "tabs": {
         "discover": "Objevit",
         "mine": "Moje skupiny",
@@ -1189,9 +1175,8 @@
     "map": {
       "cluster": "{{count}} skupin, přiblížit",
       "label": "Mapa skupin",
-      "list": "Seznam",
+      "loading": "Načítáme mapu…",
       "pin": "{{name}}, {{count}} členů",
-      "show": "Mapa",
       "unavailable": "Mapa teď není dostupná."
     },
     "membershipRequest": {
@@ -1489,6 +1474,8 @@
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
       "apply": "Použít",
+      "approval": "Přijímání členů",
+      "approvalAll": "Všechny",
       "capacity": "Kolik lidí se vejde (počet míst)",
       "chosenActivities": "Vybrané aktivity",
       "clear": "Vymazat",
@@ -1535,9 +1522,16 @@
       "results_one": "Zobrazit {{count}} akci",
       "results_other": "Zobrazit {{count}} akcí",
       "showResults": "Zobrazit výsledky",
+      "sort": "Řazení",
+      "sortBy": {
+        "members": "Nejvíc členů",
+        "nearest": "Nejbližší",
+        "newest": "Nejnovější"
+      },
       "sortNote": "Výsledky řadíme podle nejbližšího termínu.",
       "title": "Filtry",
       "unapplied": "Změny se projeví po stisku Použít.",
+      "upcomingEvent": "Mají nadcházející akci",
       "week": "Tento týden",
       "weekend": "Víkend",
       "when": "Kdy"

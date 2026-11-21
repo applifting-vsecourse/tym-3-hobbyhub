@@ -140,6 +140,18 @@ export const groupPlaceViolations = (
   return given === 0 || given === 3 ? [] : ['PLACE_INCOMPLETE'];
 };
 
+// `PartialType` lets `null` through where a field is left out, but only the
+// tagline and the schedule can be taken away: the rest is required, and a
+// `null` there would empty the place or crash the database.
+const NULLABLE_UPDATE_FIELDS = ['tagline', 'usualSchedule'];
+export const groupRequiredFieldsSetToNull = (data: UpdateGroupData): string[] =>
+  Object.entries(data)
+    .filter(
+      ([field, value]) =>
+        value === null && !NULLABLE_UPDATE_FIELDS.includes(field),
+    )
+    .map(([field]) => field);
+
 // What a check of access needs of a group; the full group is for pages that show it.
 export type GroupAccess = Pick<
   Group,

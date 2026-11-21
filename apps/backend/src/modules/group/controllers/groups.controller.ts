@@ -64,6 +64,7 @@ export class GroupsController {
       name: body.name,
       activityId: body.activityId,
       description: body.description,
+      tagline: body.tagline,
       locationName: body.locationName,
       usualSchedule: body.usualSchedule,
       approvalMode: body.approvalMode,

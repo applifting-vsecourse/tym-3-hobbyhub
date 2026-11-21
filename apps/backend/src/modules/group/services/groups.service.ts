@@ -12,6 +12,7 @@ import {
   GroupMemberListItem,
   GroupPage,
   groupPlaceViolations,
+  groupRequiredFieldsSetToNull,
   GroupRole,
   GroupStats,
   hasGroupAdminRights,
@@ -79,6 +80,10 @@ export class GroupsService {
     data: UpdateGroupData,
   ): Promise<Group> {
     await this.assertManagedGroup(groupId, user);
+    const nulled = groupRequiredFieldsSetToNull(data);
+    if (nulled.length > 0) {
+      throw new BadRequestException(`${nulled.join(', ')} cannot be removed`);
+    }
     if (groupPlaceViolations(data).length > 0) {
       throw new BadRequestException(
         'The place needs its name and both coordinates together',
@@ -118,7 +123,10 @@ export class GroupsService {
   // group run by someone blocked from the viewer (#239).
   // TODO(F-07.1b #93): a private group is shown to its members.
   async getPublicGroup(id: string, viewer?: Identity): Promise<Group> {
-    const group = await this.groupRepository.getGroupById(id);
+    const group = await this.groupRepository.getGroupById(
+      id,
+      await this.blocks.hiddenFor(viewer?.id),
+    );
     if (!group || !isPubliclyVisible(group)) {
       throw new NotFoundException('Group not found');
     }
@@ -315,7 +323,10 @@ export class GroupsService {
   }
 
   async listMyGroups(user: Identity): Promise<MyGroup[]> {
-    return this.groupRepository.listGroupsOfUser(user.id);
+    return this.groupRepository.listGroupsOfUser(
+      user.id,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   async listNearbyGroups(

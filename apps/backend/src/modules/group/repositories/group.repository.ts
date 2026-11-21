@@ -44,7 +44,9 @@ const TAKEN_STATUSES = [
   ParticipationStatus.ATTENDED,
 ];
 
-const groupInclude = (now = new Date()) =>
+// #239: `hiddenOrganizerIds` are the people blocked from the viewer; their
+// events are not the group's next event for that viewer.
+const groupInclude = (hiddenOrganizerIds: string[] = [], now = new Date()) =>
   ({
     activity: true,
     _count: {
@@ -52,7 +54,8 @@ const groupInclude = (now = new Date()) =>
         memberships: true,
         events: {
           where: {
-            status: 'PUBLISHED',
+            // The same events the numbers on the group's page count.
+            status: { in: ['PUBLISHED', 'FINISHED'] },
             isHidden: false,
             visibility: 'PUBLIC',
             endAt: {
@@ -70,6 +73,12 @@ const groupInclude = (now = new Date()) =>
         isHidden: false,
         visibility: 'PUBLIC',
         endAt: { gt: now },
+        ...(hiddenOrganizerIds.length > 0
+          ? {
+              organizerId: { notIn: hiddenOrganizerIds },
+              coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
+            }
+          : {}),
       },
       orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
       take: 1,
@@ -247,10 +256,13 @@ export class GroupRepository {
     });
   }
 
-  async getGroupById(id: string): Promise<Group | null> {
+  async getGroupById(
+    id: string,
+    hiddenOrganizerIds: string[] = [],
+  ): Promise<Group | null> {
     const group = await this.prisma.group.findUnique({
       where: { id },
-      include: groupInclude(),
+      include: groupInclude(hiddenOrganizerIds),
     });
     return group ? mapPrismaGroupToDomain(group) : null;
   }
@@ -351,10 +363,13 @@ export class GroupRepository {
     }
   }
 
-  async listGroupsOfUser(userId: string): Promise<MyGroup[]> {
+  async listGroupsOfUser(
+    userId: string,
+    hiddenOrganizerIds: string[] = [],
+  ): Promise<MyGroup[]> {
     const memberships = await this.prisma.groupMembership.findMany({
       where: { userId, group: { status: GroupStatus.ACTIVE } },
-      include: { group: { include: groupInclude() } },
+      include: { group: { include: groupInclude(hiddenOrganizerIds) } },
       orderBy: { joinedAt: 'desc' },
     });
     return memberships.map((membership) => ({
@@ -377,7 +392,7 @@ export class GroupRepository {
         ...discoverableBy(userId, hiddenManagerIds),
         locationName: { contains: city, mode: 'insensitive' },
       },
-      include: groupInclude(),
+      include: groupInclude(hiddenManagerIds),
       orderBy,
       take: limit,
     });
@@ -412,7 +427,7 @@ export class GroupRepository {
     );
     const groups = await this.prisma.group.findMany({
       where: { ...discoverableBy(userId, hiddenManagerIds), id: { in: ids } },
-      include: groupInclude(),
+      include: groupInclude(hiddenManagerIds),
     });
     const ordered = ids.flatMap(
       (id) => groups.find((group) => group.id === id) ?? [],
