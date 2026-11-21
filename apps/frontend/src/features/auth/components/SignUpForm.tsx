@@ -51,7 +51,9 @@ const GENDER_LABELS = {
 } as const
 
 // Built per render so validation messages follow the current language.
-const createSchema = (t: TFunction) =>
+// Signing up with Google has no e-mail or password: those fields are not
+// shown, so they are not checked either.
+const createSchema = (t: TFunction, isGoogleOnly: boolean) =>
   z
     .object({
       // #212: whether someone else has it is asked while typing, see below.
@@ -67,13 +69,17 @@ const createSchema = (t: TFunction) =>
             })
           }
         }),
-      email: z
-        .string()
-        .trim()
-        .min(1, t("auth.validation.emailRequired"))
-        .pipe(z.email(t("auth.validation.emailInvalid"))),
-      password: z.string().min(8, t("auth.validation.passwordMin")),
-      confirmPassword: z.string().min(1, t("auth.validation.confirmPasswordRequired")),
+      email: isGoogleOnly
+        ? z.string()
+        : z
+            .string()
+            .trim()
+            .min(1, t("auth.validation.emailRequired"))
+            .pipe(z.email(t("auth.validation.emailInvalid"))),
+      password: isGoogleOnly ? z.string() : z.string().min(8, t("auth.validation.passwordMin")),
+      confirmPassword: isGoogleOnly
+        ? z.string()
+        : z.string().min(1, t("auth.validation.confirmPasswordRequired")),
       gender: z.enum(GENDERS, { message: t("auth.validation.genderRequired") }),
       // #174: only the year, never the full date.
       birthYear: z.string().superRefine((value, context) => {
@@ -112,6 +118,12 @@ const defaultValues: DefaultValues<FormValues> = {
 type SignUpFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
+  /**
+   * The visitor signed in with Google and has no account yet: no e-mail or
+   * password, only the personal fields and consents, and the submit button
+   * finishes the registration.
+   */
+  readonly isGoogleOnly?: boolean
   readonly onSubmit: (values: SignUpFormValues) => void | Promise<void>
   /**
    * Sign-up with Google needs the same personal fields and consents as the
@@ -120,9 +132,15 @@ type SignUpFormProps = {
   readonly renderGoogle?: (getRegistration: () => Promise<GoogleRegistration | null>) => ReactNode
 }
 
-export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: SignUpFormProps) {
+export function SignUpForm({
+  isLoading,
+  errorMessage,
+  isGoogleOnly = false,
+  onSubmit,
+  renderGoogle,
+}: SignUpFormProps) {
   const { t, i18n } = useTranslation()
-  const schema = useMemo(() => createSchema(t), [t])
+  const schema = useMemo(() => createSchema(t, isGoogleOnly), [t, isGoogleOnly])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues,
@@ -203,59 +221,63 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
         )}
       />
 
-      <FormField
-        control={form.control}
-        name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("auth.fields.email")}</FormLabel>
-            <FormControl>
-              <Input
-                type="email"
-                placeholder={t("auth.placeholders.email")}
-                autoComplete="email"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {isGoogleOnly ? null : (
+        <>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.email")}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder={t("auth.placeholders.email")}
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={form.control}
-        name="password"
-        rules={{ deps: "confirmPassword" }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("auth.fields.password")}</FormLabel>
-            <FormControl>
-              <PasswordInput
-                autoComplete="new-password"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          <FormField
+            control={form.control}
+            name="password"
+            rules={{ deps: "confirmPassword" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.password")}</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={form.control}
-        name="confirmPassword"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("auth.fields.confirmPassword")}</FormLabel>
-            <FormControl>
-              <PasswordInput
-                autoComplete="new-password"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("auth.fields.confirmPassword")}</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
 
       <FormField
         control={form.control}
@@ -378,10 +400,10 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
         disabled={isLoading}
       >
         {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-        {t("auth.signUp.submit")}
+        {t(isGoogleOnly ? "auth.signUp.finishGoogle" : "auth.signUp.submit")}
       </Button>
 
-      {renderGoogle ? (
+      {renderGoogle && !isGoogleOnly ? (
         <>
           <OrDivider />
           {renderGoogle(getGoogleRegistration)}

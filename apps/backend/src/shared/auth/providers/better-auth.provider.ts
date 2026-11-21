@@ -13,6 +13,7 @@ import {
 } from '@/core/email/templates/verify-email';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { betterAuthCoreConfig } from '@/shared/auth/config/better-auth.config';
+import { googleSignUp } from '@/shared/auth/registration/google-signup.plugin';
 import {
   registrationBeforeHook,
   registrationDatabaseHooks,
@@ -52,9 +53,12 @@ const createAuth = (
             google: {
               clientId: config.googleClientId,
               clientSecret: config.googleClientSecret,
-              // Signing in never creates an account: that takes the sign-up
-              // form (gender, year of birth, 18+, terms), see the hooks.
-              disableImplicitSignUp: true,
+              // An account is created only through the sign-up form (gender,
+              // year of birth, 18+, terms): the database hook refuses a Google
+              // user that did not come through it, see the hooks.
+              // Always let the user pick the Google account; otherwise Google
+              // silently signs in the one used last in this browser.
+              prompt: 'select_account' as const,
             },
           }
         : {},
@@ -124,7 +128,7 @@ const createAuth = (
         });
       },
     },
-    plugins: [...(betterAuthCoreConfig.plugins ?? [])],
+    plugins: [...(betterAuthCoreConfig.plugins ?? []), googleSignUp()],
   });
 
 export type BetterAuth = ReturnType<typeof createAuth>;

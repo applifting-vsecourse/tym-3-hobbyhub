@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest"
 
 import { i18n } from "@/i18n"
 
-import { AuthError, authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
+import {
+  AuthError,
+  authErrorMessage,
+  googleErrorMessage,
+  isGoogleSignUpRequired,
+} from "@/features/auth/lib/authErrors"
 
 describe("authErrorMessage", () => {
   it("translates known BetterAuth codes", () => {
@@ -32,6 +37,12 @@ describe("authErrorMessage", () => {
     expect(authErrorMessage(i18n.t, new AuthError(code), "signUpFailed")).toBe(message)
   })
 
+  it("tells a Google sign-up that took too long to start again", () => {
+    expect(authErrorMessage(i18n.t, new AuthError("GOOGLE_SIGNUP_EXPIRED"), "signUpFailed")).toBe(
+      "Přihlášení přes Google vypršelo. Zkuste to prosím znovu.",
+    )
+  })
+
   it("explains the rate limit, which has no code", () => {
     expect(
       authErrorMessage(i18n.t, new AuthError(undefined, "Too many requests", 429), "signUpFailed"),
@@ -50,6 +61,11 @@ describe("authErrorMessage", () => {
 
 describe("googleErrorMessage", () => {
   it("sends someone without an account to sign up", () => {
+    // What BetterAuth puts on the return address for a Google account that
+    // has no account here and signs in on the sign-in page.
+    expect(googleErrorMessage(i18n.t, "signup_disabled")).toBe(
+      "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
+    )
     expect(googleErrorMessage(i18n.t, "new_user_signup_disabled")).toBe(
       "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
     )
@@ -63,5 +79,18 @@ describe("googleErrorMessage", () => {
 
   it("falls back to a generic message", () => {
     expect(googleErrorMessage(i18n.t, "access_denied")).toBe("Přihlášení přes Google se nezdařilo.")
+  })
+})
+
+describe("isGoogleSignUpRequired", () => {
+  it("recognises a Google account without an account here", () => {
+    expect(isGoogleSignUpRequired("GOOGLE_SIGNUP_REQUIRED")).toBe(true)
+    expect(isGoogleSignUpRequired("signup_disabled")).toBe(true)
+    expect(isGoogleSignUpRequired("new_user_signup_disabled")).toBe(true)
+  })
+
+  it("leaves other errors to be shown", () => {
+    expect(isGoogleSignUpRequired("account_not_linked")).toBe(false)
+    expect(isGoogleSignUpRequired(undefined)).toBe(false)
   })
 })
