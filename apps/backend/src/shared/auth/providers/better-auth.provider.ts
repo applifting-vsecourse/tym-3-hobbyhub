@@ -13,6 +13,7 @@ import {
 } from '@/core/email/templates/verify-email';
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { betterAuthCoreConfig } from '@/shared/auth/config/better-auth.config';
+import { googleSignUp } from '@/shared/auth/registration/google-signup.plugin';
 import {
   registrationBeforeHook,
   registrationDatabaseHooks,
@@ -127,7 +128,7 @@ const createAuth = (
         });
       },
     },
-    plugins: [...(betterAuthCoreConfig.plugins ?? [])],
+    plugins: [...(betterAuthCoreConfig.plugins ?? []), googleSignUp()],
   });
 
 export type BetterAuth = ReturnType<typeof createAuth>;

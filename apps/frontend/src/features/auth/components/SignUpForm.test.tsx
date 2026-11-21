@@ -298,29 +298,23 @@ describe("SignUpForm", () => {
     expect(password).toHaveAttribute("type", "password")
   })
 
-  describe("signing up with Google", () => {
-    const renderGoogleForm = (getRegistrationSpy = vi.fn()) => {
+  describe("finishing a sign-up that began with Google", () => {
+    const FINISH = "Dokončit registraci"
+
+    const renderGoogleForm = (onSubmit = vi.fn()) => {
       const rootRoute = createRootRoute({
         component: () => (
           <SignUpForm
             isLoading={false}
             isGoogleOnly
-            onSubmit={vi.fn()}
-            renderGoogle={(getRegistration) => (
-              <button
-                type="button"
-                onClick={async () => {
-                  getRegistrationSpy(await getRegistration())
-                }}
-              >
-                Pokračovat přes Google
-              </button>
-            )}
+            onSubmit={onSubmit}
+            // Not offered here: the visitor has been to Google already.
+            renderGoogle={() => <button type="button">Pokračovat přes Google</button>}
           />
         ),
       })
       render(<RouterProvider router={createRouter({ routeTree: rootRoute })} />)
-      return getRegistrationSpy
+      return onSubmit
     }
 
     it("asks only for the personal fields and consents, not for e-mail or password", async () => {
@@ -332,11 +326,14 @@ describe("SignUpForm", () => {
       expect(screen.queryByLabelText("Heslo")).not.toBeInTheDocument()
       expect(screen.queryByLabelText("Zopakujte heslo")).not.toBeInTheDocument()
       expect(screen.queryByRole("button", { name: SUBMIT })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole("button", { name: "Pokračovat přes Google" }),
+      ).not.toBeInTheDocument()
     })
 
-    it("hands over the registration once the fields are valid, without e-mail or password", async () => {
+    it("finishes the registration with the filled-in fields, without e-mail or password", async () => {
       const user = userEvent.setup()
-      const spy = renderGoogleForm()
+      const onSubmit = renderGoogleForm()
 
       await user.type(await screen.findByLabelText(/přezdívka/i), "jana.n")
       await user.click(screen.getByRole("combobox", { name: "Pohlaví" }))
@@ -344,9 +341,9 @@ describe("SignUpForm", () => {
       await typeBirthYear(1995)
       await user.click(screen.getByRole("checkbox", { name: ADULTHOOD }))
       await user.click(screen.getByRole("checkbox", { name: /souhlasím s podmínkami/i }))
-      await user.click(screen.getByRole("button", { name: "Pokračovat přes Google" }))
+      await user.click(screen.getByRole("button", { name: FINISH }))
 
-      expect(spy).toHaveBeenCalledWith(
+      expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           username: "jana.n",
           gender: "FEMALE",
@@ -357,13 +354,13 @@ describe("SignUpForm", () => {
       )
     })
 
-    it("does not go to Google while the fields are incomplete", async () => {
+    it("does not finish while the fields are incomplete", async () => {
       const user = userEvent.setup()
-      const spy = renderGoogleForm()
+      const onSubmit = renderGoogleForm()
 
-      await user.click(await screen.findByRole("button", { name: "Pokračovat přes Google" }))
+      await user.click(await screen.findByRole("button", { name: FINISH }))
 
-      expect(spy).toHaveBeenCalledWith(null)
+      expect(onSubmit).not.toHaveBeenCalled()
     })
   })
 })

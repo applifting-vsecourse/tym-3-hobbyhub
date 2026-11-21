@@ -379,6 +379,7 @@
       "adulthoodNotConfirmed": "Bez potvrzení plnoletosti se nelze zaregistrovat.",
       "emailNotVerified": "E-mail zatím není ověřený.",
       "googleEmailExists": "Účet s tímto e-mailem už existuje. Přihlaste se heslem.",
+      "googleExpired": "Přihlášení přes Google vypršelo. Zkuste to prosím znovu.",
       "googleFailed": "Přihlášení přes Google se nezdařilo.",
       "googleNoAccount": "S tímto Google účtem zatím není registrace. Zaregistrujte se prosím.",
       "invalidBirthYear": "Neplatný rok narození.",

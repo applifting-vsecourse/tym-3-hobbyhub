@@ -376,6 +376,7 @@
       "adulthoodNotConfirmed": "You need to confirm you are 18 or older to register.",
       "emailNotVerified": "Your email is not verified yet.",
       "googleEmailExists": "An account with this e-mail already exists. Sign in with your password.",
+      "googleExpired": "Signing in with Google has expired. Please try again.",
       "googleFailed": "Signing in with Google failed.",
       "googleNoAccount": "There is no account for this Google account yet. Please sign up.",
       "invalidBirthYear": "Invalid year of birth.",

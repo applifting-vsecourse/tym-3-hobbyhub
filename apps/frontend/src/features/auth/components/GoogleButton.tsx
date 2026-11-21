@@ -30,12 +30,6 @@ type GoogleButtonProps = {
    * Without it the button only signs in an account that already exists.
    */
   readonly getRegistration?: () => Promise<GoogleRegistration | null>
-  /** The way to finish the page, not an alternative to a form below it. */
-  readonly isPrimary?: boolean
-  /** The button's text; "Continue with Google" when not given. */
-  readonly label?: string
-  /** The Google account to offer first (the one that has to sign up). */
-  readonly loginHint?: string
 }
 
 function GoogleLogo() {
@@ -70,13 +64,7 @@ const addressOf = (path: string, from: string | undefined) =>
   `${window.location.origin}${path}${from ? `?from=${encodeURIComponent(from)}` : ""}`
 
 /** "Continue with Google": leaves for Google and comes back signed in. */
-export function GoogleButton({
-  from,
-  getRegistration,
-  isPrimary = false,
-  label,
-  loginHint,
-}: GoogleButtonProps) {
+export function GoogleButton({ from, getRegistration }: GoogleButtonProps) {
   const { t } = useTranslation()
   const [isPending, setIsPending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -93,7 +81,6 @@ export function GoogleButton({
     }
     const { error } = await authClient.signIn.social({
       provider: "google",
-      ...(loginHint ? { loginHint } : {}),
       // The sign-in page sends on to where the visitor was going, or to an
       // unfinished onboarding first.
       callbackURL: addressOf(ROUTES.login, from),
@@ -119,14 +106,14 @@ export function GoogleButton({
       ) : null}
       <Button
         type="button"
-        variant={isPrimary ? "default" : "outline"}
+        variant="outline"
         size="lg"
         className="w-full"
         disabled={isPending}
         onClick={handleClick}
       >
         {isPending ? <Loader2 className="size-4 motion-safe:animate-spin" /> : <GoogleLogo />}
-        {label ?? t("auth.google.button")}
+        {t("auth.google.button")}
       </Button>
     </div>
   )

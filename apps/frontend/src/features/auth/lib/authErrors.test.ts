@@ -37,6 +37,12 @@ describe("authErrorMessage", () => {
     expect(authErrorMessage(i18n.t, new AuthError(code), "signUpFailed")).toBe(message)
   })
 
+  it("tells a Google sign-up that took too long to start again", () => {
+    expect(authErrorMessage(i18n.t, new AuthError("GOOGLE_SIGNUP_EXPIRED"), "signUpFailed")).toBe(
+      "Přihlášení přes Google vypršelo. Zkuste to prosím znovu.",
+    )
+  })
+
   it("explains the rate limit, which has no code", () => {
     expect(
       authErrorMessage(i18n.t, new AuthError(undefined, "Too many requests", 429), "signUpFailed"),

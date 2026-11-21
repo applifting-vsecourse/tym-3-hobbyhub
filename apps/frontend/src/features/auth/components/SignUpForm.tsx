@@ -119,8 +119,9 @@ type SignUpFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
   /**
-   * The visitor signs up with Google: no e-mail or password, only the personal
-   * fields and consents, and Google is the way to finish.
+   * The visitor signed in with Google and has no account yet: no e-mail or
+   * password, only the personal fields and consents, and the submit button
+   * finishes the registration.
    */
   readonly isGoogleOnly?: boolean
   readonly onSubmit: (values: SignUpFormValues) => void | Promise<void>
@@ -392,21 +393,19 @@ export function SignUpForm({
         )}
       />
 
-      {isGoogleOnly ? null : (
-        <Button
-          type="submit"
-          size="lg"
-          className="mt-8 w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-          {t("auth.signUp.submit")}
-        </Button>
-      )}
+      <Button
+        type="submit"
+        size="lg"
+        className="mt-8 w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+        {t(isGoogleOnly ? "auth.signUp.finishGoogle" : "auth.signUp.submit")}
+      </Button>
 
-      {renderGoogle ? (
+      {renderGoogle && !isGoogleOnly ? (
         <>
-          {isGoogleOnly ? null : <OrDivider />}
+          <OrDivider />
           {renderGoogle(getGoogleRegistration)}
         </>
       ) : null}

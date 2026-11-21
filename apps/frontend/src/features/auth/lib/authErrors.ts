@@ -30,6 +30,8 @@ export function authErrorMessage(
     case "USER_ALREADY_EXISTS":
     case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
       return t("auth.errors.userExists")
+    case "GOOGLE_SIGNUP_EXPIRED":
+      return t("auth.errors.googleExpired")
     case "EMAIL_NOT_VERIFIED":
       return t("auth.errors.emailNotVerified")
     case "INVALID_EMAIL":

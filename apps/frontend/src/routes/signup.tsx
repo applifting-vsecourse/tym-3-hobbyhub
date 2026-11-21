@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { GoogleButton } from "@/features/auth/components/GoogleButton"
 import { SignUpForm, type SignUpFormValues } from "@/features/auth/components/SignUpForm"
+import { useCompleteGoogleSignUp, useGooglePending } from "@/features/auth/hooks/useGoogleSignUp"
 import { useSignUp } from "@/features/auth/hooks/useSignUp"
 import { authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
 import { redirectTarget } from "@/features/auth/lib/redirect"
@@ -21,9 +22,9 @@ const signUpSearchParamsSchema = z.object({
   from: z.string().optional(),
   // Set by BetterAuth when the round trip to Google fails.
   error: z.string().optional(),
-  // Set (possibly empty) when the visitor came from signing in with a Google
-  // account that has no account here yet: its e-mail.
-  googleEmail: z.string().optional(),
+  // The token the backend issued when a Google account that has no account here
+  // yet signed in: with it the sign-up finishes without another trip to Google.
+  googleToken: z.string().optional(),
 })
 
 export const Route = createFileRoute("/signup")({
@@ -37,8 +38,12 @@ export const Route = createFileRoute("/signup")({
 })
 
 function SignUpPage() {
-  const { from, error: googleError, googleEmail } = Route.useSearch()
-  const isGoogleSignUp = googleEmail !== undefined
+  const { from, error: googleError, googleToken } = Route.useSearch()
+  const googlePending = useGooglePending(googleToken)
+  // A token that no longer opens (too old) leaves the ordinary sign-up.
+  const isGoogleSignUp = googleToken !== undefined && !googlePending.isError
+  const googleEmail = googlePending.data?.email
+  const completeGoogle = useCompleteGoogleSignUp()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signUp = useSignUp()
@@ -47,9 +52,21 @@ function SignUpPage() {
   const handleSubmit = async (values: SignUpFormValues) => {
     setError(null)
     try {
-      // The repeated password is only for the form; the server never sees it.
-      const { confirmPassword: _confirmPassword, ...input } = values
-      await signUp.mutateAsync({ ...input, from })
+      if (isGoogleSignUp) {
+        // E-mail and password are not asked: the account is the Google one.
+        await completeGoogle.mutateAsync({
+          token: googleToken,
+          username: values.username,
+          gender: values.gender,
+          birthYear: values.birthYear,
+          adulthoodConfirmed: values.adulthoodConfirmed,
+          termsAccepted: values.termsAccepted,
+        })
+      } else {
+        // The repeated password is only for the form; the server never sees it.
+        const { confirmPassword: _confirmPassword, ...input } = values
+        await signUp.mutateAsync({ ...input, from })
+      }
       // F-04.8: a new account goes through the onboarding first, which then
       // returns to the page the visitor came from.
       await navigate({ to: ROUTES.onboarding, search: { from } })
@@ -90,22 +107,21 @@ function SignUpPage() {
         }
       >
         <SignUpForm
-          isLoading={signUp.isPending}
+          isLoading={signUp.isPending || completeGoogle.isPending}
           errorMessage={
             error
               ? authErrorMessage(t, error, "signUpFailed")
-              : googleError
-                ? googleErrorMessage(t, googleError)
-                : null
+              : googlePending.isError
+                ? t("auth.errors.googleExpired")
+                : googleError
+                  ? googleErrorMessage(t, googleError)
+                  : null
           }
           isGoogleOnly={isGoogleSignUp}
           renderGoogle={(getRegistration) => (
             <GoogleButton
               from={from}
               getRegistration={getRegistration}
-              isPrimary={isGoogleSignUp}
-              label={isGoogleSignUp ? t("auth.signUp.finishGoogle") : undefined}
-              loginHint={googleEmail === "" ? undefined : googleEmail}
             />
           )}
           onSubmit={handleSubmit}
