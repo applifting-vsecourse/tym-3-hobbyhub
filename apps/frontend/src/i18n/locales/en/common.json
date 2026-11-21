@@ -456,6 +456,7 @@
       "description": "You can complete your profile later.",
       "descriptionReturn": "After signing up you'll return to the event. You can complete your profile later.",
       "genderNote": "Private, nobody else sees it. Used only for combined event statistics.",
+      "googleNotice": "This Google account has no registration yet. Fill in the details below and continue with Google.",
       "privacyNote": "Just the year, we don't want the exact date. Private, nobody else sees it. Used to check you are 18+ and for combined event statistics.",
       "signInLink": "I already have an account · Sign in",
       "submit": "Create account and continue",

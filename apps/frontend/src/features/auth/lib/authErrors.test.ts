@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest"
 
 import { i18n } from "@/i18n"
 
-import { AuthError, authErrorMessage, googleErrorMessage } from "@/features/auth/lib/authErrors"
+import {
+  AuthError,
+  authErrorMessage,
+  googleErrorMessage,
+  isGoogleSignUpRequired,
+} from "@/features/auth/lib/authErrors"
 
 describe("authErrorMessage", () => {
   it("translates known BetterAuth codes", () => {
@@ -68,5 +73,17 @@ describe("googleErrorMessage", () => {
 
   it("falls back to a generic message", () => {
     expect(googleErrorMessage(i18n.t, "access_denied")).toBe("Přihlášení přes Google se nezdařilo.")
+  })
+})
+
+describe("isGoogleSignUpRequired", () => {
+  it("recognises a Google account without an account here", () => {
+    expect(isGoogleSignUpRequired("signup_disabled")).toBe(true)
+    expect(isGoogleSignUpRequired("new_user_signup_disabled")).toBe(true)
+  })
+
+  it("leaves other errors to be shown", () => {
+    expect(isGoogleSignUpRequired("account_not_linked")).toBe(false)
+    expect(isGoogleSignUpRequired(undefined)).toBe(false)
   })
 })

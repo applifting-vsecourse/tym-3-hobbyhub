@@ -69,6 +69,10 @@ export function authErrorMessage(
   }
 }
 
+/** The Google account has no account here: sign-up is the way on. */
+export const isGoogleSignUpRequired = (code: string | undefined) =>
+  code === "signup_disabled" || code === "new_user_signup_disabled"
+
 /**
  * The message for the `error` code BetterAuth puts on the return address when
  * the Google round trip fails.

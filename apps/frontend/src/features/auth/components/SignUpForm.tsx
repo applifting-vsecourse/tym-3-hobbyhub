@@ -112,6 +112,8 @@ const defaultValues: DefaultValues<FormValues> = {
 type SignUpFormProps = {
   readonly isLoading: boolean
   readonly errorMessage?: string | null
+  /** Information above the form, not an error. */
+  readonly noticeMessage?: string | null
   readonly onSubmit: (values: SignUpFormValues) => void | Promise<void>
   /**
    * Sign-up with Google needs the same personal fields and consents as the
@@ -120,7 +122,13 @@ type SignUpFormProps = {
   readonly renderGoogle?: (getRegistration: () => Promise<GoogleRegistration | null>) => ReactNode
 }
 
-export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: SignUpFormProps) {
+export function SignUpForm({
+  isLoading,
+  errorMessage,
+  noticeMessage,
+  onSubmit,
+  renderGoogle,
+}: SignUpFormProps) {
   const { t, i18n } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
@@ -175,6 +183,12 @@ export function SignUpForm({ isLoading, errorMessage, onSubmit, renderGoogle }: 
       isGuarded={false}
       className="flex flex-col gap-4"
     >
+      {noticeMessage ? (
+        <Alert>
+          <AlertDescription>{noticeMessage}</AlertDescription>
+        </Alert>
+      ) : null}
+
       {errorMessage ? (
         <Alert variant="destructive">
           <AlertDescription>{errorMessage}</AlertDescription>

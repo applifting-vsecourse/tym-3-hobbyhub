@@ -21,6 +21,9 @@ const signUpSearchParamsSchema = z.object({
   from: z.string().optional(),
   // Set by BetterAuth when the round trip to Google fails.
   error: z.string().optional(),
+  // "google": the visitor came from signing in with a Google account that has no
+  // account here yet.
+  notice: z.literal("google").optional(),
 })
 
 export const Route = createFileRoute("/signup")({
@@ -34,7 +37,7 @@ export const Route = createFileRoute("/signup")({
 })
 
 function SignUpPage() {
-  const { from, error: googleError } = Route.useSearch()
+  const { from, error: googleError, notice } = Route.useSearch()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const signUp = useSignUp()
@@ -84,6 +87,7 @@ function SignUpPage() {
                 ? googleErrorMessage(t, googleError)
                 : null
           }
+          noticeMessage={notice === "google" ? t("auth.signUp.googleNotice") : null}
           renderGoogle={(getRegistration) => (
             <GoogleButton
               from={from}
