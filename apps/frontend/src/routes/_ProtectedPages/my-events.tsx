@@ -17,9 +17,11 @@ import { useSearchText } from "@/hooks/useSearchText"
 import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
+import { useRemoveFromInterestList } from "@/features/event-interest/hooks/useRemoveFromInterestList"
 import {
   myApplicationsQueryOptions,
   myHostedEventsQueryOptions,
+  myInterestedEventsQueryOptions,
 } from "@/features/event/api/myEventsQueryOptions"
 import { EventFiltersBar } from "@/features/event/components/EventFiltersBar"
 import {
@@ -42,7 +44,7 @@ import { ApplicationSheet, type ApplicationSheetState } from "./-my-events/Appli
 // The filters of the event list, and the tab: "Přihlášky" is the default and
 // has no param; anything unknown falls back to it.
 const myEventsSearchSchema = eventsSearchSchema.extend({
-  tab: z.enum(["hosted"]).optional().catch(undefined),
+  tab: z.enum(["hosted", "interested"]).optional().catch(undefined),
 })
 
 export const Route = createFileRoute("/_ProtectedPages/my-events")({
@@ -76,7 +78,8 @@ function toList<T>(query: UseInfiniteQueryResult<Pages<T>, Error>): MyEventsList
 
 // F-06.3 (#41): applications with their state and the events the person
 // organizes; #177 adds history (what is over goes last), the tab in the URL
-// and the search and filters of the event list, shared by both tabs. The
+// and the search and filters of the event list, shared by every tab; #231 the
+// events saved to "Zajímá mě". The
 // layout around the page sends visitors without a session to the sign-in, so
 // there is one.
 function MyEventsPage() {
@@ -95,6 +98,12 @@ function MyEventsPage() {
     ...myHostedEventsQueryOptions(userId, filters),
     placeholderData: keepPreviousData,
   })
+  const interested = useInfiniteQuery({
+    ...myInterestedEventsQueryOptions(userId, filters),
+    placeholderData: keepPreviousData,
+  })
+  // #231: a removed row leaves at once; the toast offers it back.
+  const interestRemoval = useRemoveFromInterestList()
   const activityOptions = useActivityOptions()
   const filtersPanel = useFiltersPanel()
   const onFiltersChange = (next: EventFilterChange) =>
@@ -113,6 +122,10 @@ function MyEventsPage() {
     void navigate({ search: (previous) => ({ tab: previous.tab }) })
   }
   const applicationList = toList(applications)
+  const interestedList = toList(interested)
+  const remainingInterested = interestedList.items.filter(
+    (event) => !interestRemoval.hiddenIds.has(event.id),
+  )
   // #171: the row's menu opens the same dialog as the event detail. The event
   // stays chosen after the sheet closes, so it animates out with its content.
   const [sheet, setSheet] = useState<ApplicationSheetState>({ eventId: null, step: null })
@@ -136,6 +149,15 @@ function MyEventsPage() {
           <MyEventsOverview
             applications={applicationList}
             hosted={toList(hosted)}
+            interested={{
+              ...interestedList,
+              items: remainingInterested,
+              total: Math.max(
+                0,
+                interestedList.total - (interestedList.items.length - remainingInterested.length),
+              ),
+            }}
+            onRemoveInterest={(event) => interestRemoval.remove(event.id)}
             tab={search.tab ?? "applications"}
             isFiltered={hasFilters(filters)}
             onClearFilters={clearFilters}

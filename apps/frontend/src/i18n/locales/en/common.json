@@ -1649,6 +1649,14 @@
       "title": "Your seat?"
     }
   },
+  "interest": {
+    "removeError": "The event could not be removed from the list. Please try again.",
+    "removed": "Removed from the list",
+    "save": "Interested",
+    "saveError": "The event could not be saved. Please try again.",
+    "saved": "Saved",
+    "undo": "Undo"
+  },
   "landing": {
     "actions": {
       "create": "Create an event",
@@ -1736,6 +1744,24 @@
     "hosted": {
       "empty": "You are not organizing any event yet."
     },
+    "interested": {
+      "actionsLabel": "Options of the saved event: {{title}}",
+      "empty": {
+        "description": "Found an event you cannot decide on yet? Tap “Interested” on its detail and you will find it here, along with whether you can still join. Saving reserves nothing.",
+        "find": "Browse events",
+        "title": "Nothing saved yet"
+      },
+      "freeSpots_one": "{{count}} spot left",
+      "freeSpots_other": "{{count}} spots left",
+      "full": "Full",
+      "pastHeading": "Past and cancelled",
+      "remove": "Remove from the list",
+      "state": {
+        "CANCELLED": "Cancelled",
+        "PAST": "Finished",
+        "STARTED": "In progress"
+      }
+    },
     "loadMore": "Load more",
     "loading": "Loading your events",
     "rate": "Rate the organizer",
@@ -1753,6 +1779,8 @@
       "applicationsWithCount": "Applications ({{count}})",
       "hosted": "Organizing",
       "hostedWithCount": "Organizing ({{count}})",
+      "interested": "Interested",
+      "interestedWithCount": "Interested ({{count}})",
       "label": "My events"
     },
     "title": "My events"
