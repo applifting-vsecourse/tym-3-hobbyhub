@@ -431,6 +431,12 @@ export const EVENT_LIST_MAX_LIMIT = 50;
 
 export type Page = { limit: number; offset: number };
 
+// Similar events under an event detail: how many are offered, and how far from
+// the start of the viewed event another one may start to count as "around the
+// same time".
+export const SIMILAR_EVENTS_LIMIT = 4;
+export const SIMILAR_EVENTS_WINDOW_DAYS = 14;
+
 export const EVENT_LIST_MAX_ACTIVITY_FILTERS = 50;
 
 export const EVENT_LIST_SEARCH_MAX_LENGTH = 100;
@@ -586,7 +592,14 @@ export type GroupEventListItem = EventListItem & {
   visibility: 'PUBLIC' | 'GROUP_ONLY';
 };
 
-export type GroupEventPage = { items: GroupEventListItem[]; total: number };
+export type GroupEventPage = {
+  items: GroupEventListItem[];
+  total: number;
+  // Only for a non-member asking for the past: how many group-only events
+  // there were. A number and nothing else, so the page can show blurred
+  // placeholders without the events leaving the server.
+  hiddenCount?: number;
+};
 
 export const GROUP_EVENTS_PAGE_SIZE = 10;
 

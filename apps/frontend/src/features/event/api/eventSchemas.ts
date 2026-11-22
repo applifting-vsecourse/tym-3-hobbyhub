@@ -222,6 +222,8 @@ export const groupEventPageSchema = z.object({
   items: z.array(groupEventSchema),
   /** All the events of the period, not just this page. */
   total: z.number(),
+  /** A non-member's past: how many group-only events there were, nothing else (#269). */
+  hiddenCount: z.number().optional(),
 })
 
 export type GroupEvent = z.infer<typeof groupEventSchema>

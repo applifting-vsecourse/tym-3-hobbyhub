@@ -317,6 +317,23 @@ export class EventsService {
     });
   }
 
+  // Events like the one in the detail. Whoever may open the detail gets it
+  // (a 404 otherwise, the same as the detail); what is offered is only what the
+  // public list would show them: public, upcoming, with a free seat, and not
+  // of someone blocked from them (#239).
+  async getSimilarEvents(
+    id: string,
+    viewer?: Identity,
+    now: Date = new Date(),
+  ): Promise<EventListItem[]> {
+    await this.loadVisibleEvent(id, viewer);
+    return this.eventRepository.getSimilarEvents(
+      id,
+      now,
+      await this.blocks.hiddenFor(viewer?.id),
+    );
+  }
+
   // F-06.5: the exact address and the contacts, for the organizers and the
   // people holding a seat. Everyone else is told no, never the data.
   async getParticipantInfo(
@@ -426,7 +443,10 @@ export class EventsService {
 
   // F-07.2: the events of a group on its page. Everyone who may see the group
   // gets its upcoming public events (visibility matrix); its members also the
-  // group-only ones and the past ones. To anyone else the past do not exist.
+  // group-only ones and the past ones. Anyone else gets the public events of a
+  // group that lets anyone in, and of the past the public ones and only the
+  // number of the group-only ones. A group that decides on requests shows both
+  // periods as a number.
   async getGroupEvents(
     groupId: string,
     viewer: Identity | undefined,
@@ -437,11 +457,44 @@ export class EventsService {
     const role = viewer
       ? await this.groupsService.getMemberRole(groupId, viewer.id)
       : null;
+    const hiddenOrganizerIds = await this.blocks.hiddenFor(viewer?.id);
     if (!role) {
       // Throws "not found" for a group that has no public page, and for
       // one whose owner is blocked from the viewer (#239).
-      await this.groupsService.getPublicGroup(groupId, viewer);
-      if (period === 'past') throw new NotFoundException('Group not found');
+      const group = await this.groupsService.assertPublicGroup(groupId, viewer);
+      if (group.approvalMode === 'APPROVAL') {
+        // A group that decides on requests shows what is coming, and what has
+        // been, only as a number: the applicant sees there is something to
+        // join, not what (ADR-0028).
+        return {
+          items: [],
+          total: 0,
+          hiddenCount: await this.eventRepository.countGroupEvents(groupId, {
+            period,
+            visibilities: ['PUBLIC', 'GROUP_ONLY'],
+            now,
+            hiddenOrganizerIds,
+          }),
+        };
+      }
+      if (period === 'past') {
+        // The past of a public group: its public events in full, the
+        // group-only ones as a count, so the page can blur them (#269).
+        const [page, hiddenCount] = await Promise.all([
+          this.eventRepository.getGroupEvents(
+            groupId,
+            { period, visibilities: ['PUBLIC'], now, hiddenOrganizerIds },
+            { limit: GROUP_EVENTS_PAGE_SIZE, offset },
+          ),
+          this.eventRepository.countGroupEvents(groupId, {
+            period,
+            visibilities: ['GROUP_ONLY'],
+            now,
+            hiddenOrganizerIds,
+          }),
+        ]);
+        return { ...page, hiddenCount };
+      }
     }
     return this.eventRepository.getGroupEvents(
       groupId,
@@ -449,7 +502,7 @@ export class EventsService {
         period,
         visibilities: role ? ['PUBLIC', 'GROUP_ONLY'] : ['PUBLIC'],
         now,
-        hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
+        hiddenOrganizerIds,
       },
       { limit: GROUP_EVENTS_PAGE_SIZE, offset },
     );

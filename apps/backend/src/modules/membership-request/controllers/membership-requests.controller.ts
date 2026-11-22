@@ -64,6 +64,25 @@ export class MembershipRequestsController {
     return MembershipRequestResponseDto.fromDomain(request);
   }
 
+  @Post('join')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Join a group that lets anyone in, with no request',
+  })
+  @ApiResponse({ status: 204, description: 'Joined' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'The group decides on requests, or already a member, or rejected before; `violations` says why',
+  })
+  @ApiResponse({ status: 404, description: 'Group not found or not public' })
+  async join(
+    @User() user: Identity,
+    @Param('groupId') groupId: string,
+  ): Promise<void> {
+    await this.service.joinOpenGroup(user, groupId);
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Requests waiting for a decision, oldest first (admins only)',

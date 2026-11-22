@@ -51,7 +51,8 @@ function Page({ initialStep }: { initialStep: SeatSheetStep | null }) {
         eventId="e1"
         event={{
           title: "Čtvrteční florbal",
-          time: "19:00",
+          day: "15. 10.",
+          time: "čt 19:00",
           place: "ZŠ Kobylisy, Praha 8, Pokročilí",
           taken: 7,
           min: 8,

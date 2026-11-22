@@ -15,7 +15,13 @@ import { cn } from "@/lib/utils"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
 import { formatContribution } from "@/features/event/lib/eventDateTime"
-import { eventDay, eventEnd, eventPlace, eventTime } from "@/features/event/lib/eventLabels"
+import {
+  eventClock,
+  eventDate,
+  eventDay,
+  eventEnd,
+  eventPlace,
+} from "@/features/event/lib/eventLabels"
 
 type EventDetailProps = {
   event: EventDetailData
@@ -191,13 +197,15 @@ export function EventDetail({
           {ratingPrompt}
         </div>
 
-        {/* When and where: the time is the main fact, so it is the one big thing. */}
+        {/* When and where: the date is the main fact, so it is the one big thing. */}
         <div className="flex flex-wrap items-start gap-x-8 gap-y-3">
           <div className="flex flex-col">
-            <p className={cn("typo-small", isToday ? "text-signal-ink" : "text-muted-foreground")}>
-              {day}
+            <p className={cn("typo-time", isToday ? "text-signal-ink" : "text-foreground")}>
+              {eventDate(t, event.startAt, now, locale)}
             </p>
-            <p className="typo-time text-foreground">{eventTime(event.startAt, locale)}</p>
+            <p className="typo-small text-muted-foreground">
+              {eventClock(t, event.startAt, now, locale)}
+            </p>
             <p className="typo-small text-muted-foreground">
               {t("hobbyhub.eventDetail.until", {
                 time: eventEnd(event.startAt, event.endAt, locale),
