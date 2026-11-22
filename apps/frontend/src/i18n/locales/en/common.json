@@ -627,6 +627,9 @@
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
       "signIn": "Sign in",
+      "similar": {
+        "title": "Similar events"
+      },
       "state": {
         "cancelled": "Cancelled",
         "cancelledText": "This event was cancelled, you can no longer ask to join.",
