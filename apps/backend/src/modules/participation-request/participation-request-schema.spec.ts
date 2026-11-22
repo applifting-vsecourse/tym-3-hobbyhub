@@ -79,7 +79,7 @@ describeDb('participation request schema constraints', () => {
       data: {
         title: 'Test',
         description: 'Test',
-        venueType: VenueType.PUBLIC_VENUE,
+        venueType: VenueType.PLACE,
         startAt: start,
         endAt: new Date(start.getTime() + 2 * 3600 * 1000),
         minParticipants: 4,

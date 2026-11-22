@@ -39,12 +39,22 @@ export class GroupEventListResponseDto {
   })
   total!: number;
 
+  @ApiProperty({
+    required: false,
+    description:
+      'Only for a non-member asking for the past: how many group-only events there were. Just a number, nothing else about them',
+  })
+  hiddenCount?: number;
+
   static fromDomain(page: GroupEventPage): GroupEventListResponseDto {
     return {
       items: page.items.map((event) =>
         GroupEventListItemResponseDto.fromGroupEvent(event),
       ),
       total: page.total,
+      ...(page.hiddenCount === undefined
+        ? {}
+        : { hiddenCount: page.hiddenCount }),
     };
   }
 }

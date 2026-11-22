@@ -7,6 +7,7 @@ import {
   EventFacts,
   EventSeatFacts,
   GROUP_EVENTS_PAGE_SIZE,
+  UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
@@ -41,7 +42,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   equipment: null,
   status: 'PUBLISHED',
   visibility: 'PUBLIC',
-  venueType: 'PUBLIC_VENUE',
+  venueType: 'PLACE',
+  isAddressPublic: false,
   approvalMode: 'MANUAL',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
@@ -83,11 +85,13 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   ...overrides,
 });
 
-const input = (): CreateEventData => ({
+// A new event and an edit of one: the edit also says the kind of venue.
+const input = (): CreateEventData & UpdateEventData => ({
   title: 'Čtvrteční florbal',
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
-  venueType: 'PUBLIC_VENUE',
+  venueType: 'PLACE',
+  isAddressPublic: false,
   approvalMode: 'AUTOMATIC',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
@@ -228,6 +232,34 @@ describe('EventsService', () => {
       { limit: 20, offset: 0 },
       { activityIds: ['a1'], hiddenOrganizerIds: [] },
     );
+  });
+
+  describe('similar events', () => {
+    it('is a 404 when the viewer may not open the detail', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(null);
+
+      await expect(service.getSimilarEvents('nope')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(repository.getSimilarEvents).not.toHaveBeenCalled();
+    });
+
+    it('asks the repository for events like the one in the detail', async () => {
+      const { repository, service } = setup();
+      const now = new Date();
+      repository.getShowableEventById.mockResolvedValue({
+        visibility: 'PUBLIC',
+      } as EventDetail);
+      repository.getEventFacts.mockResolvedValue({
+        organizerIds: ['o1'],
+      } as EventFacts);
+      repository.getSimilarEvents.mockResolvedValue([]);
+
+      await service.getSimilarEvents('e1', { id: 'u1' } as Identity, now);
+
+      expect(repository.getSimilarEvents).toHaveBeenCalledWith('e1', now, []);
+    });
   });
 
   it('refuses a date range that ends before it starts', async () => {
@@ -402,16 +434,34 @@ describe('EventsService', () => {
         },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
       );
-      expect(groups.getPublicGroup).not.toHaveBeenCalled();
+      expect(groups.assertPublicGroup).not.toHaveBeenCalled();
+    });
+
+    it('shows the events of a group that decides on requests only as a number', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'APPROVAL',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
+      repository.countGroupEvents.mockResolvedValue(5);
+
+      for (const period of ['upcoming', 'past'] as const) {
+        await expect(
+          service.getGroupEvents('g1', undefined, period, 0, now),
+        ).resolves.toEqual({ items: [], total: 0, hiddenCount: 5 });
+      }
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
     });
 
     it('gives anyone else the upcoming public events of a public group', async () => {
       const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
       repository.getGroupEvents.mockResolvedValue(page);
 
       await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
 
-      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1', undefined);
+      expect(groups.assertPublicGroup).toHaveBeenCalledWith('g1', undefined);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
         {
@@ -424,8 +474,32 @@ describe('EventsService', () => {
       );
     });
 
-    it('answers not found to a non-member asking for the past', async () => {
-      const { repository, service } = setup();
+    it('gives a non-member the public past events and only the count of the group-only ones', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
+      repository.getGroupEvents.mockResolvedValue(page);
+      repository.countGroupEvents.mockResolvedValue(3);
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
+      ).resolves.toEqual({ ...page, hiddenCount: 3 });
+      expect(groups.assertPublicGroup).toHaveBeenCalled();
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ period: 'past', visibilities: ['PUBLIC'] }),
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
+      );
+      expect(repository.countGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ visibilities: ['GROUP_ONLY'] }),
+      );
+    });
+
+    it('answers not found to a non-member asking for the past of a group without a public page', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
@@ -435,7 +509,7 @@ describe('EventsService', () => {
 
     it('answers not found for a group without a public page', async () => {
       const { repository, groups, service } = setup();
-      groups.getPublicGroup.mockRejectedValue(new NotFoundException());
+      groups.assertPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', undefined, 'upcoming', 0, now),
@@ -824,7 +898,7 @@ describe('EventsService', () => {
       ...overrides,
     });
     const info = {
-      venueType: 'PUBLIC_VENUE' as const,
+      venueType: 'PLACE' as const,
       location: null,
       organizerName: 'Jana',
       externalChatUrl: 'https://chat.whatsapp.com/abc',

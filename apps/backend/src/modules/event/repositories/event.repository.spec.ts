@@ -1,5 +1,6 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { Activity, Event, Level, Prisma } from '@/generated/prisma/client';
+import { EventDetail } from '@/modules/event/domain/event';
 import { EventRepository, mapPrismaEventToListItem } from './event.repository';
 
 const anEvent = (
@@ -18,7 +19,8 @@ const anEvent = (
     imageUrl: null,
     startAt: new Date('2026-10-22T17:00:00Z'),
     endAt: new Date('2026-10-22T19:00:00Z'),
-    venueType: 'PUBLIC_VENUE',
+    venueType: 'PLACE',
+    isAddressPublic: true,
     locationPlaceName: 'ZŠ Kobylisy',
     locationDistrict: 'Praha 8',
     locationCity: 'Praha',
@@ -59,13 +61,23 @@ describe('mapPrismaEventToListItem', () => {
     expect(item).not.toHaveProperty('locationLatitude');
   });
 
-  it('does not name a private venue', () => {
+  // #218: a hidden address may be someone's home.
+  it('neither names nor locates a place whose address is hidden', () => {
     const item = mapPrismaEventToListItem(
-      anEvent({ venueType: 'PRIVATE_VENUE' }),
+      anEvent({
+        isAddressPublic: false,
+        locationLatitude: new Prisma.Decimal(50.13),
+        locationLongitude: new Prisma.Decimal(14.45),
+      } as Partial<Event>),
     );
 
-    expect(item.placeName).toBeNull();
-    expect(item.district).toBe('Praha 8');
+    expect(item).toMatchObject({
+      isAddressPublic: false,
+      placeName: null,
+      latitude: null,
+      longitude: null,
+      district: 'Praha 8',
+    });
   });
 
   it('has no level when the organizer did not set one', () => {
@@ -240,6 +252,62 @@ describe('EventRepository.getShowableEventById', () => {
     expect(detail).not.toHaveProperty('locationStreet');
     expect(detail).not.toHaveProperty('locationLatitude');
     expect(JSON.stringify(detail)).not.toContain('birthYear');
+  });
+
+  // #218, ADR-0029: the exact address goes to everyone only when the
+  // organizer made it public (visibility matrix, "Přesná adresa").
+  describe('the exact address', () => {
+    const detailOf = async (
+      isAddressPublic: boolean,
+    ): Promise<EventDetail | null> => {
+      const findFirst = jest.fn().mockResolvedValue({
+        ...anEvent({ isAddressPublic } as Partial<Event>),
+        description: 'Popis',
+        equipment: null,
+        contributionAmount: null,
+        status: 'PUBLISHED',
+        approvalMode: 'MANUAL',
+        locationStreet: 'Chabařovická 4',
+        locationPostalCode: '18200',
+        locationCountry: 'Česko',
+        locationLatitude: new Prisma.Decimal(50.13),
+        locationLongitude: new Prisma.Decimal(14.45),
+        organizer: { name: 'Jana Nováková' },
+        participations: [],
+      });
+      // #236: the detail also asks for the event's revealed ratings.
+      const $queryRaw = jest
+        .fn()
+        .mockResolvedValue([{ count: 0, publicAverage: null }]);
+      const prisma = {
+        event: { findFirst },
+        $queryRaw,
+      } as unknown as PrismaService;
+      return new EventRepository(prisma).getShowableEventById('e1');
+    };
+
+    it('is in the detail when the organizer made it public', async () => {
+      await expect(detailOf(true)).resolves.toMatchObject({
+        location: {
+          street: 'Chabařovická 4',
+          city: 'Praha',
+          postalCode: '18200',
+          placeName: 'ZŠ Kobylisy',
+          latitude: 50.13,
+        },
+      });
+    });
+
+    it('is not in the detail, nor the street anywhere in it, when hidden', async () => {
+      const detail = await detailOf(false);
+
+      expect(detail).toMatchObject({
+        location: null,
+        placeName: null,
+        latitude: null,
+      });
+      expect(JSON.stringify(detail)).not.toContain('Chabařovická');
+    });
   });
 });
 

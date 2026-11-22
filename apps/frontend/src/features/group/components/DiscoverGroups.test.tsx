@@ -24,6 +24,8 @@ const renderDiscover = (props: Partial<Parameters<typeof DiscoverGroups>[0]> = {
         activityLabel={(activity) => activity.name}
         filters={noFilters}
         filtersBar={<div>filters bar</div>}
+        view="list"
+        onViewChange={() => undefined}
         onClearFilters={() => undefined}
         {...props}
       />

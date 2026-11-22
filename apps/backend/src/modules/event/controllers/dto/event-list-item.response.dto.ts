@@ -4,9 +4,11 @@ import {
   EventListItem,
   EventListPage,
   ParticipantStats,
+  VENUE_TYPES,
 } from '@/modules/event/domain/event';
 import { RatingScoreResponseDto } from '@/modules/rating/controllers/dto/rating.response.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EventLocationResponseDto } from './event.response.dto';
 
 class EventGroupResponseDto {
   @ApiProperty()
@@ -32,13 +34,19 @@ export class EventListItemResponseDto {
   @ApiProperty({ type: String, format: 'date-time' })
   endAt!: Date;
 
-  @ApiProperty({ enum: ['PUBLIC_VENUE', 'PRIVATE_VENUE', 'ONLINE'] })
+  @ApiProperty({ enum: VENUE_TYPES })
   venueType!: EventListItem['venueType'];
+
+  @ApiProperty({
+    description:
+      'Whether the organizer made the exact address public (#218); otherwise the place is not named and has no position',
+  })
+  isAddressPublic!: boolean;
 
   @ApiProperty({
     type: String,
     nullable: true,
-    description: 'Only for public venues; private ones are not named',
+    description: 'Only for a public address; a hidden one is not named',
   })
   placeName!: string | null;
 
@@ -108,6 +116,7 @@ export class EventListItemResponseDto {
       startAt: event.startAt,
       endAt: event.endAt,
       venueType: event.venueType,
+      isAddressPublic: event.isAddressPublic,
       placeName: event.placeName,
       district: event.district,
       city: event.city,
@@ -147,6 +156,15 @@ export class EventListResponseDto {
       total: page.total,
       withoutLocationCount: page.withoutLocationCount,
     };
+  }
+}
+
+export class SimilarEventsResponseDto {
+  @ApiProperty({ type: [EventListItemResponseDto] })
+  items!: EventListItemResponseDto[];
+
+  static fromDomain(items: EventListItem[]): SimilarEventsResponseDto {
+    return { items: items.map(EventListItemResponseDto.fromDomain) };
   }
 }
 
@@ -246,6 +264,14 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
   })
   rating!: RatingScoreResponseDto;
 
+  @ApiProperty({
+    type: EventLocationResponseDto,
+    nullable: true,
+    description:
+      'The exact address, when the organizer made it public (#218); null otherwise, when only the people with a seat get it from /participant-info',
+  })
+  location!: EventLocationResponseDto | null;
+
   static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
@@ -264,6 +290,9 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       statsMinParticipants: event.statsMinParticipants,
       hiddenReason: event.hiddenReason,
       rating: RatingScoreResponseDto.fromDomain(event.rating),
+      location: event.location
+        ? EventLocationResponseDto.fromDomain(event.location)
+        : null,
     };
   }
 }

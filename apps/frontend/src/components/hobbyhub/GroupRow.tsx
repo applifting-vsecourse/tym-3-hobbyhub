@@ -1,4 +1,7 @@
+import type { ReactNode } from "react"
+
 import { ActivityIcon, isActivityKey } from "@/components/hobbyhub/ActivityIcon"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 type GroupRowProps = {
@@ -15,6 +18,12 @@ type GroupRowProps = {
   description?: string | null
   /** What the viewer is to the group, or its visibility; under the subtitle. */
   badge?: string
+  /** Wording of the "active group" mark next to the title; none means no mark (#269). */
+  activeLabel?: string
+  /** How the group takes people in, in the accent colour under the details (ADR-0028). */
+  approval?: string
+  /** The next event of the group: a tinted band under the row, like the roster band of a card. */
+  nextEvent?: ReactNode
   className?: string
 }
 
@@ -30,6 +39,9 @@ export function GroupRow({
   schedule,
   description,
   badge,
+  activeLabel,
+  approval,
+  nextEvent,
   className,
 }: GroupRowProps) {
   return (
@@ -46,7 +58,10 @@ export function GroupRow({
         ) : null}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <h3 className="typo-title text-foreground">{title}</h3>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h3 className="typo-title text-foreground">{title}</h3>
+          {activeLabel ? <Badge variant="success">{activeLabel}</Badge> : null}
+        </div>
         <p className="typo-small text-muted-foreground">{subtitle}</p>
         {schedule ? <p className="hidden typo-small text-foreground lg:block">{schedule}</p> : null}
         {/* Two lines at most and no wider than a line of reading, however wide the list. */}
@@ -55,7 +70,13 @@ export function GroupRow({
             {description}
           </p>
         ) : null}
+        {approval ? <p className="typo-small text-primary">{approval}</p> : null}
         {badge ? <p className="typo-small text-primary">{badge}</p> : null}
+        {nextEvent ? (
+          <p className="mt-2 rounded-md bg-accent px-3 py-2 typo-small text-accent-foreground">
+            {nextEvent}
+          </p>
+        ) : null}
       </div>
     </div>
   )

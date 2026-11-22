@@ -109,6 +109,46 @@ describeDb('group schema constraints', () => {
     ).rejects.toThrow();
   });
 
+  it('rejects a meeting day outside Monday to Sunday', async () => {
+    await expect(
+      inRolledBackTransaction((tx) => createGroup(tx, { meetingDays: [0] })),
+    ).rejects.toThrow();
+    await expect(
+      inRolledBackTransaction((tx) => createGroup(tx, { meetingDays: [8] })),
+    ).rejects.toThrow();
+    await expect(
+      inRolledBackTransaction((tx) =>
+        createGroup(tx, { meetingDays: [1, 4, 7] }),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('wants both coordinates of the place or neither', async () => {
+    await expect(
+      inRolledBackTransaction((tx) =>
+        createGroup(tx, { locationLatitude: 50.1 }),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      inRolledBackTransaction((tx) =>
+        createGroup(tx, { locationLatitude: 50.1, locationLongitude: 14.4 }),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('counts the tagline in characters, not UTF-16 units', async () => {
+    await expect(
+      inRolledBackTransaction((tx) =>
+        createGroup(tx, { tagline: '🏐'.repeat(120) }),
+      ),
+    ).resolves.toBeUndefined();
+    await expect(
+      inRolledBackTransaction((tx) =>
+        createGroup(tx, { tagline: '🏐'.repeat(121) }),
+      ),
+    ).rejects.toThrow();
+  });
+
   it('rejects a blank description', async () => {
     await expect(
       inRolledBackTransaction((tx) => createGroup(tx, { description: '   ' })),

@@ -6,7 +6,7 @@ const validBody = {
   title: 'Čtvrteční florbal',
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
-  venueType: 'PUBLIC_VENUE',
+  isAddressPublic: false,
   approvalMode: 'MANUAL',
   startAt: '2030-01-15T18:00:00.000Z',
   endAt: '2030-01-15T19:30:00.000Z',
@@ -107,11 +107,33 @@ describe('CreateEventDto', () => {
       },
     );
 
-    it('refuses an online event until the PO decides on it', async () => {
-      await expect(
-        validate({ ...validBody, venueType: 'ONLINE' }),
-      ).rejects.toBeInstanceOf(BadRequestException);
+    // #218, ADR-0029: a new event is at a place; the organizer only says who
+    // sees its exact address. ONLINE waits for the PO (ADR-0006).
+    it('refuses a kind of venue, online or not', async () => {
+      for (const venueType of ['ONLINE', 'PLACE', 'PUBLIC_VENUE']) {
+        await expect(
+          validate({ ...validBody, venueType }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      }
     });
+
+    it.each([true, false])(
+      'takes whether the address is public (%s)',
+      async (isAddressPublic) => {
+        await expect(
+          validate({ ...validBody, isAddressPublic }),
+        ).resolves.toMatchObject({ isAddressPublic });
+      },
+    );
+
+    it.each([undefined, 'yes', 1])(
+      'refuses a missing or not boolean choice of the address (%s)',
+      async (isAddressPublic) => {
+        await expect(
+          validate({ ...validBody, isAddressPublic }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      },
+    );
 
     it.each(['AUTOMATIC', 'MANUAL'])(
       'takes the approval mode %s',

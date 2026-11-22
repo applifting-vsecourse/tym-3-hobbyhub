@@ -28,6 +28,7 @@ import { eventFilterOf } from './dto/event-filter.query';
 import {
   EventDetailResponseDto,
   EventListResponseDto,
+  SimilarEventsResponseDto,
 } from './dto/event-list-item.response.dto';
 import {
   EventResponseDto,
@@ -115,7 +116,7 @@ export class EventsController {
       activityId: body.activityId,
       description: body.description,
       equipment: body.equipment,
-      venueType: body.venueType,
+      isAddressPublic: body.isAddressPublic,
       approvalMode: body.approvalMode,
       startAt: body.startAt,
       endAt: body.endAt,
@@ -215,6 +216,7 @@ export class EventsController {
       description: body.description,
       equipment: body.equipment,
       venueType: body.venueType,
+      isAddressPublic: body.isAddressPublic,
       approvalMode: body.approvalMode,
       startAt: body.startAt,
       endAt: body.endAt,
@@ -284,10 +286,32 @@ export class EventsController {
     return ParticipantEventInfoResponseDto.fromDomain(info);
   }
 
-  // Detail (F-02.4): approximate place only; the exact address and the
-  // online link of an event stay with approved participants (F-10.4). Open to
-  // visitors; a group-only event (F-07.2) only to its group's members and
-  // those holding a seat.
+  // Events like this one, shown under the detail. Open to visitors; whoever
+  // may not see the event gets the same 404 as the detail.
+  @Get(':id/similar')
+  @UseGuards(OptionalUserGuard)
+  @ApiOperation({
+    summary:
+      'Up to 4 upcoming public events with a free seat that resemble this one',
+  })
+  @ApiResponse({ status: 200, type: SimilarEventsResponseDto })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not visible to the viewer',
+  })
+  async similar(
+    @OptionalUser() user: Identity | undefined,
+    @Param('id') id: string,
+  ): Promise<SimilarEventsResponseDto> {
+    const items = await this.eventsService.getSimilarEvents(id, user);
+    return SimilarEventsResponseDto.fromDomain(items);
+  }
+
+  // Detail (F-02.4): the district and the city, and the exact address only
+  // when the organizer made it public (#218, ADR-0029); otherwise it stays,
+  // like the online link and the contacts, with the organizers and the people
+  // with a seat (F-10.4, participant-info). Open to visitors; a group-only
+  // event (F-07.2) only to its group's members and those holding a seat.
   @Get(':id')
   @UseGuards(OptionalUserGuard)
   @ApiOperation({ summary: 'Get an event the viewer may see' })

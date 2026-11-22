@@ -77,7 +77,7 @@ describeDb('event schema constraints', () => {
     const data = {
       title: 'Test',
       description: 'Test',
-      venueType: VenueType.PUBLIC_VENUE,
+      venueType: VenueType.PLACE,
       startAt: start,
       endAt: new Date(start.getTime() + 2 * 3600 * 1000),
       minParticipants: 4,
@@ -143,6 +143,19 @@ describeDb('event schema constraints', () => {
     [
       'event_online_url_only_online',
       { onlineUrl: 'https://meet.example.com/x' },
+    ],
+    // #218: an online event has no address to make public.
+    [
+      'event_online_address_not_public',
+      {
+        venueType: VenueType.ONLINE,
+        onlineUrl: 'https://meet.example.com/x',
+        isAddressPublic: true,
+        locationStreet: null,
+        locationCity: null,
+        locationPostalCode: null,
+        locationCountry: null,
+      },
     ],
   ])('rejects %s', async (constraint, override) => {
     await expect(
