@@ -57,13 +57,15 @@ export type InterestedEventState = z.infer<typeof interestedEventStateSchema>
 
 /**
  * An event on the person's "Zajímá mě" list: the card of the event list and
- * where it stands; #232 whether they watch it for a free seat, and whether
- * they may start to now.
+ * where it stands; #232 whether they watch it for a free seat, whether they
+ * may start to now, and where their own application to it stands (the same
+ * status as under "Přihlášky"; null when they never applied).
  */
 export const interestedEventSchema = eventListItemSchema.extend({
   state: interestedEventStateSchema,
   watchesFreeSpot: z.boolean(),
   canWatchFreeSpot: z.boolean(),
+  applicationStatus: applicationStatusSchema.nullable(),
 })
 
 export type InterestedEvent = z.infer<typeof interestedEventSchema>

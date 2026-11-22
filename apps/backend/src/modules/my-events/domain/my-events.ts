@@ -77,10 +77,15 @@ export type MyApplicationPage = {
 // the list can put what is over or called off apart. #232: whether they watch
 // it for a free seat, and whether they may start to now (full, and nothing
 // else keeps them from asking to join).
+// `applicationStatus`: where the person's own application to it stands, the
+// same status as under "Přihlášky"; null when they never applied. Saving and
+// applying are apart (ADR-0030), so a saved event stays on the list once they
+// go, and the row says so.
 export type MyInterestedEvent = EventListItem & {
   state: InterestedEventState;
   watchesFreeSpot: boolean;
   canWatchFreeSpot: boolean;
+  applicationStatus: ApplicationStatus | null;
 };
 
 export type MyInterestedEventPage = {

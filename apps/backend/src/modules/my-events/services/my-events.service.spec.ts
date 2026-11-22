@@ -227,6 +227,7 @@ describe('MyEventsService', () => {
 
     beforeEach(() => {
       interests.getWatchableEventIds.mockResolvedValue(new Set());
+      requests.getMyApplicationFactsOf.mockResolvedValue([]);
     });
 
     it('keeps the order of the page and tells where each event stands', async () => {
@@ -299,6 +300,55 @@ describe('MyEventsService', () => {
         ['watched', 'full'],
         now,
       );
+    });
+
+    // The list keeps an event the person signed up for, so each row carries
+    // their own application, the same status as under "Přihlášky".
+    it('tells where the own application to each saved event stands', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'going', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'waiting', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'refused', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'left', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'never', status: 'PUBLISHED', watchesFreeSpot: false },
+        ],
+        total: 5,
+      });
+      events.getListItemsByIds.mockResolvedValue(
+        ['going', 'waiting', 'refused', 'left', 'never'].map((id) =>
+          anEvent(id, '2030-01-03T10:00:00Z'),
+        ),
+      );
+      requests.getMyApplicationFactsOf.mockResolvedValue([
+        facts('going', { seat: 'APPROVED', requests: ['APPROVED'] }),
+        facts('waiting'),
+        facts('refused', { requests: ['REJECTED'] }),
+        facts('left', { seat: 'CANCELLED', requests: ['APPROVED'] }),
+        facts('never', { requests: [] }),
+      ]);
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(
+        result.items.map(({ id, applicationStatus }) => [
+          id,
+          applicationStatus,
+        ]),
+      ).toEqual([
+        ['going', 'APPROVED'],
+        ['waiting', 'PENDING'],
+        ['refused', 'REJECTED'],
+        ['left', 'WITHDRAWN'],
+        ['never', null],
+      ]);
+      expect(requests.getMyApplicationFactsOf).toHaveBeenCalledWith(user, [
+        'going',
+        'waiting',
+        'refused',
+        'left',
+        'never',
+      ]);
     });
 
     it('drops an event that disappeared between the two queries', async () => {

@@ -124,12 +124,21 @@ export class InterestedEventResponseDto extends EventListItemResponseDto {
   })
   canWatchFreeSpot!: boolean;
 
+  @ApiProperty({
+    enum: APPLICATION_STATUSES,
+    nullable: true,
+    description:
+      "Where the signed-in user's own application to the event stands, as under their applications; null when they never applied",
+  })
+  applicationStatus!: ApplicationStatus | null;
+
   static fromInterested(event: MyInterestedEvent): InterestedEventResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
       state: event.state,
       watchesFreeSpot: event.watchesFreeSpot,
       canWatchFreeSpot: event.canWatchFreeSpot,
+      applicationStatus: event.applicationStatus,
     };
   }
 }

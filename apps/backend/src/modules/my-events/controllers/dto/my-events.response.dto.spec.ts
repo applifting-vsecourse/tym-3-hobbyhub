@@ -3,10 +3,10 @@ import { EventListItem } from '@/modules/event/domain/event';
 import { MyInterestedEventsResponseDto } from './my-events.response.dto';
 
 // Visibility matrix (#231, #232): a saved event comes as the card everyone
-// sees, plus where it stands and the person's own watching; nothing about who
-// else saved or watches it, or how many do.
+// sees, plus where it stands, the person's own watching and their own
+// application; nothing about who else saved or watches it, or how many do.
 describe('MyInterestedEventsResponseDto', () => {
-  it('adds only the state and the own watching to the card of the event list', () => {
+  it('adds only the state, the own watching and the own application to the card of the event list', () => {
     const event = {
       id: 'e1',
       startAt: new Date('2030-01-02T10:00:00Z'),
@@ -22,6 +22,7 @@ describe('MyInterestedEventsResponseDto', () => {
           state: 'UPCOMING',
           watchesFreeSpot: true,
           canWatchFreeSpot: false,
+          applicationStatus: 'PENDING',
         },
       ],
       total: 1,
@@ -33,8 +34,10 @@ describe('MyInterestedEventsResponseDto', () => {
         'state',
         'watchesFreeSpot',
         'canWatchFreeSpot',
+        'applicationStatus',
       ].sort(),
     );
     expect(response.items[0]!.state).toBe('UPCOMING');
+    expect(response.items[0]!.applicationStatus).toBe('PENDING');
   });
 });

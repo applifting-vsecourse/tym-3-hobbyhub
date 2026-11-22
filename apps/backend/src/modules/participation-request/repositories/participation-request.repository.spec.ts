@@ -123,6 +123,54 @@ describeDb('ParticipationRequestRepository', () => {
     return { eventId: event.id, userIds };
   };
 
+  // #232: the "Zajímá mě" list asks about the events it shows.
+  describe('getApplicationFactsOf', () => {
+    it('returns the own seat and requests of the given events, in the order given', async () => {
+      const applied = await eventWith(2, 2);
+      const untouched = await eventWith(1, 2);
+      const [me, other] = applied.userIds as [string, string];
+      await prisma.participationRequest.createMany({
+        data: [
+          { eventId: applied.eventId, userId: me },
+          // Someone else's seat on the other event is not mine.
+          { eventId: untouched.eventId, userId: other },
+        ],
+      });
+      await prisma.participation.create({
+        data: {
+          eventId: untouched.eventId,
+          userId: other,
+          status: ParticipationStatus.APPROVED,
+        },
+      });
+
+      const result = await repository.getApplicationFactsOf(me, [
+        untouched.eventId,
+        applied.eventId,
+        'gone',
+      ]);
+
+      expect(result).toEqual([
+        {
+          eventId: untouched.eventId,
+          eventStatus: 'PUBLISHED',
+          seat: null,
+          requests: [],
+        },
+        {
+          eventId: applied.eventId,
+          eventStatus: 'PUBLISHED',
+          seat: null,
+          requests: ['PENDING'],
+        },
+      ]);
+    });
+
+    it('asks nothing for no events', async () => {
+      expect(await repository.getApplicationFactsOf('anyone', [])).toEqual([]);
+    });
+  });
+
   describe('getApplicationFacts', () => {
     const before = new Date('2029-12-31T10:00:00Z');
     const page = { limit: 10, offset: 0 };

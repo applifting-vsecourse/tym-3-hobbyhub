@@ -128,6 +128,15 @@ export class MyEventsService {
         .map((event) => event.id),
       now,
     );
+    // The person's own application to each saved event, as under "Přihlášky":
+    // the list keeps an event they signed up for, so the row has to say so.
+    const facts = await this.requestsService.getMyApplicationFactsOf(
+      user,
+      events.map((event) => event.id),
+    );
+    const statusById = new Map(
+      facts.map(({ eventId, ...rest }) => [eventId, applicationStatusOf(rest)]),
+    );
     return {
       items: rows.flatMap(
         ({ eventId, status, watchesFreeSpot }): MyInterestedEvent[] => {
@@ -142,6 +151,7 @@ export class MyEventsService {
                   ),
                   watchesFreeSpot,
                   canWatchFreeSpot: watchable.has(eventId),
+                  applicationStatus: statusById.get(eventId) ?? null,
                 },
               ]
             : [];

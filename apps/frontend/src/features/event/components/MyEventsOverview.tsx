@@ -334,9 +334,19 @@ export function watchActionOf(event: InterestedEvent, now: Date): "watch" | "unw
 }
 
 /**
- * #231: where a saved event stands, under its title. Still on: whether it can
- * be joined (full, or how many seats are left), or that it is under way. Over
- * or called off: just that. #232: and that the person watches it for a seat.
+ * The states of one's own application that a saved event's row shows instead
+ * of the seats: the event stays on "Zajímá mě" once the person applies, so the
+ * row has to say they did. Someone who signed off may ask again, so they see
+ * the seats.
+ */
+const SHOWN_APPLICATIONS = ["APPROVED", "PENDING", "REJECTED"] as const
+
+/**
+ * #231: where a saved event stands, under its title. Still on: the person's
+ * own application if they have one (the badge of "Přihlášky"), else whether it
+ * can be joined (full, or how many seats are left), or that it is under way.
+ * Over or called off: just that. #232: and that the person watches it for a
+ * seat.
  */
 function InterestedBadges({ event, now }: { event: InterestedEvent; now: Date }) {
   const { t } = useTranslation()
@@ -365,6 +375,12 @@ function InterestedBadge({ event, now }: { event: InterestedEvent; now: Date }) 
   }
   if (event.state === "PAST") {
     return <StatusBadge status="neutral">{t("myEvents.interested.state.PAST")}</StatusBadge>
+  }
+  const application = SHOWN_APPLICATIONS.find((status) => status === event.applicationStatus)
+  if (application) {
+    return (
+      <StatusBadge status={BADGES[application]}>{t(`myEvents.status.${application}`)}</StatusBadge>
+    )
   }
   if (event.startAt <= now) {
     return <StatusBadge status="neutral">{t("myEvents.interested.state.STARTED")}</StatusBadge>

@@ -469,6 +469,7 @@ describe("MyEventsOverview", () => {
       state: "UPCOMING",
       watchesFreeSpot: false,
       canWatchFreeSpot: false,
+      applicationStatus: null,
       ...overrides,
     })
 
@@ -496,6 +497,50 @@ describe("MyEventsOverview", () => {
       expect(within(rows).getByText("3 volná místa")).toBeInTheDocument()
       expect(within(rows).getByText("Plno")).toBeInTheDocument()
       expect(screen.getByRole("button", { name: "Načíst další" })).toBeInTheDocument()
+    })
+
+    // The list keeps an event the person applied to, so the row says they did.
+    it.each<[InterestedEvent["applicationStatus"], string]>([
+      ["APPROVED", "Schváleno"],
+      ["PENDING", "Čeká na schválení"],
+      ["REJECTED", "Zamítnuto"],
+    ])("shows the own application %s instead of the seats", async (applicationStatus, label) => {
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([
+          saved({
+            id: "i2",
+            title: "Badminton",
+            takenCount: 4,
+            maxParticipants: 4,
+            applicationStatus,
+          }),
+        ]),
+      })
+
+      expect(screen.getByText(label)).toBeInTheDocument()
+      expect(screen.queryByText("Plno")).not.toBeInTheDocument()
+    })
+
+    it.each<[string, Partial<InterestedEvent>, string]>([
+      ["signed off, who may ask again", { applicationStatus: "WITHDRAWN" }, "Plno"],
+      ["of an event that is over", { applicationStatus: "APPROVED", state: "PAST" }, "Proběhla"],
+      [
+        "of an event called off",
+        { applicationStatus: "EVENT_CANCELLED", state: "CANCELLED" },
+        "Zrušena",
+      ],
+    ])("keeps the state of the event for someone %s", async (_, overrides, label) => {
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([
+          saved({ id: "i2", title: "Badminton", takenCount: 4, maxParticipants: 4, ...overrides }),
+        ]),
+      })
+
+      expect(screen.getByText(label)).toBeInTheDocument()
+      expect(screen.queryByText("Schváleno")).not.toBeInTheDocument()
+      expect(screen.queryByText("Odhlášeno")).not.toBeInTheDocument()
     })
 
     it("puts what is over or cancelled apart, under its own heading", async () => {

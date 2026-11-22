@@ -25,6 +25,7 @@ import {
   DecidedRequestPage,
   DecidedStatus,
   DecisionRuleViolation,
+  EventApplicationFacts,
   EventStateViolation,
   eventStateViolation,
   JoinRuleViolation,
@@ -246,9 +247,27 @@ export class ParticipationRequestRepository {
         JOIN "activity" a ON a."id" = e."activityId"
         WHERE ${where}`,
     ]);
-    const ids = pageRows.map((row) => row.id);
+    return {
+      items: await this.getApplicationFactsOf(
+        userId,
+        pageRows.map((row) => row.id),
+      ),
+      total: Number(totalRows[0]?.total ?? 0),
+    };
+  }
+
+  // The person's own seat and requests on each of the given events, in the
+  // order given; an event that is gone is left out. One they never applied to
+  // comes back with no seat and no requests. Which events the person may see
+  // is the caller's to decide: the page above, or the "Zajímá mě" list, which
+  // shows the same status next to a saved event (#232).
+  async getApplicationFactsOf(
+    userId: string,
+    eventIds: readonly string[],
+  ): Promise<EventApplicationFacts[]> {
+    if (eventIds.length === 0) return [];
     const events = await this.prisma.event.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: [...eventIds] } },
       select: {
         id: true,
         status: true,
@@ -260,33 +279,28 @@ export class ParticipationRequestRepository {
       },
     });
     const byId = new Map(events.map((event) => [event.id, event]));
-    return {
-      items: ids.flatMap((id) => {
-        const event = byId.get(id);
-        if (!event) return [];
-        const seat = event.participations[0]?.status;
-        return [
-          {
-            eventId: event.id,
-            // A finished event was on offer like a published one; that it is
-            // over only decides its place in the list.
-            eventStatus:
-              event.status === EventStatus.CANCELLED
-                ? 'CANCELLED'
-                : 'PUBLISHED',
-            seat:
-              seat === ParticipationStatus.APPROVED ||
-              seat === ParticipationStatus.CANCELLED
-                ? seat
-                : null,
-            requests: event.participationRequests.map(
-              (request) => request.status,
-            ),
-          },
-        ];
-      }),
-      total: Number(totalRows[0]?.total ?? 0),
-    };
+    return eventIds.flatMap((id) => {
+      const event = byId.get(id);
+      if (!event) return [];
+      const seat = event.participations[0]?.status;
+      return [
+        {
+          eventId: event.id,
+          // A finished event was on offer like a published one; that it is
+          // over only decides its place in the list.
+          eventStatus:
+            event.status === EventStatus.CANCELLED ? 'CANCELLED' : 'PUBLISHED',
+          seat:
+            seat === ParticipationStatus.APPROVED ||
+            seat === ParticipationStatus.CANCELLED
+              ? seat
+              : null,
+          requests: event.participationRequests.map(
+            (request) => request.status,
+          ),
+        },
+      ];
+    });
   }
 
   async getRequest(

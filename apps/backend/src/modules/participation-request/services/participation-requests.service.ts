@@ -16,6 +16,7 @@ import {
   DecidedStatus,
   DecisionRuleViolation,
   decisionRuleViolations,
+  EventApplicationFacts,
   JoinRuleViolation,
   joinRuleViolations,
   ParticipantPage,
@@ -97,6 +98,16 @@ export class ParticipationRequestsService {
       ...filter,
       hiddenOrganizerIds: await this.blocks.hiddenFor(user.id),
     });
+  }
+
+  // #232: the same facts for the given events, for the "Zajímá mě" list, which
+  // shows the person's own status next to a saved event. The caller has
+  // decided which events the person may see.
+  async getMyApplicationFactsOf(
+    user: Identity,
+    eventIds: readonly string[],
+  ): Promise<EventApplicationFacts[]> {
+    return this.repository.getApplicationFactsOf(user.id, eventIds);
   }
 
   async getMyRequestState(
