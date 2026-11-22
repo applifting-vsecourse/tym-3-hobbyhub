@@ -412,12 +412,10 @@ function InterestedEvents({
         )}
       >
         <ScheduleRow
-          time={eventTime(event.startAt, i18n.language)}
+          day={eventDate(t, event.startAt, now, i18n.language)}
+          time={eventClock(t, event.startAt, now, i18n.language)}
           title={event.title}
-          subtitle={[
-            eventDay(t, event.startAt, now, i18n.language),
-            eventMeta(t, event, activityLabel(event.activity)),
-          ].join(" · ")}
+          subtitle={eventMeta(t, event, activityLabel(event.activity))}
           taken={event.takenCount}
           min={event.minParticipants}
           max={event.maxParticipants}
