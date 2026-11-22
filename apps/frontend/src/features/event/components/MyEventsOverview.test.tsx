@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest"
 import { renderWithRouter } from "@/test/renderWithRouter"
 
 import type { EventListItem } from "@/features/event/api/eventSchemas"
-import type { MyApplication } from "@/features/event/api/myEventsSchemas"
+import type { InterestedEvent, MyApplication } from "@/features/event/api/myEventsSchemas"
 import {
   MyEventsOverview,
   type ApplicationAction,
@@ -55,6 +55,8 @@ const list = <T,>(items: T[], overrides: Partial<MyEventsList<T>> = {}): MyEvent
 
 type Options = {
   tab?: MyEventsTab
+  interested?: MyEventsList<InterestedEvent>
+  onRemoveInterest?: (event: InterestedEvent) => void
   isFiltered?: boolean
   onClearFilters?: () => void
   onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void
@@ -66,12 +68,21 @@ const renderOverview = (
   hosted: MyEventsList<EventListItem & { isHidden?: boolean; participantsToRate?: number }> = list(
     [],
   ),
-  { tab = "applications", isFiltered = false, onClearFilters, onApplicationAction }: Options = {},
+  {
+    tab = "applications",
+    interested = list([]),
+    onRemoveInterest,
+    isFiltered = false,
+    onClearFilters,
+    onApplicationAction,
+  }: Options = {},
 ) =>
   renderWithRouter(
     <MyEventsOverview
       applications={applications}
       hosted={hosted}
+      interested={interested}
+      onRemoveInterest={onRemoveInterest}
       tab={tab}
       isFiltered={isFiltered}
       onClearFilters={onClearFilters}
@@ -412,6 +423,7 @@ describe("MyEventsOverview", () => {
               { status: "APPROVED", canRateOrganizer: false, event: event({ startAt }) },
             ])}
             hosted={list([])}
+            interested={list([])}
             tab="applications"
             activityLabel={(activity) => activity.name}
             onApplicationAction={vi.fn()}
@@ -445,5 +457,102 @@ describe("MyEventsOverview", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /znovu|Zkusit/i }))
     expect(onReload).toHaveBeenCalledOnce()
+  })
+
+  // #231
+  describe("the Zajímá mě tab", () => {
+    const saved = (overrides: Partial<InterestedEvent> = {}): InterestedEvent => ({
+      ...event(),
+      state: "UPCOMING",
+      ...overrides,
+    })
+
+    it("shows the count in the tab and the saved events with whether they can be joined", async () => {
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list(
+          [
+            saved({ id: "i1", title: "Volejbal", takenCount: 7, maxParticipants: 10 }),
+            saved({ id: "i2", title: "Badminton", takenCount: 4, maxParticipants: 4 }),
+          ],
+          { total: 23, hasMore: true },
+        ),
+      })
+
+      expect(screen.getByRole("link", { name: "Zajímá mě (23)" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      )
+      const rows = screen.getByRole("list")
+      expect(within(rows).getByRole("link", { name: /Volejbal/ })).toHaveAttribute(
+        "href",
+        "/events/i1",
+      )
+      expect(within(rows).getByText("3 volná místa")).toBeInTheDocument()
+      expect(within(rows).getByText("Plno")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "Načíst další" })).toBeInTheDocument()
+    })
+
+    it("puts what is over or cancelled apart, under its own heading", async () => {
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([
+          saved({ id: "i1", title: "Volejbal" }),
+          saved({ id: "i2", title: "Tenis", state: "CANCELLED" }),
+          saved({ id: "i3", title: "Squash", state: "PAST" }),
+        ]),
+      })
+
+      const past = screen.getByRole("region", { name: "Proběhlé a zrušené" })
+      expect(within(past).getByRole("link", { name: /Tenis/ })).toBeInTheDocument()
+      expect(within(past).getByText("Zrušena")).toBeInTheDocument()
+      expect(within(past).getByText("Proběhla")).toBeInTheDocument()
+      expect(within(past).queryByRole("link", { name: /Volejbal/ })).not.toBeInTheDocument()
+    })
+
+    it("takes an event off the list from the row's menu", async () => {
+      const onRemoveInterest = vi.fn()
+      const user = userEvent.setup()
+      const tenis = saved({ id: "i2", title: "Tenis", state: "PAST" })
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([tenis]),
+        onRemoveInterest,
+      })
+
+      await user.click(screen.getByRole("button", { name: "Možnosti uložené akce: Tenis" }))
+      await user.click(screen.getByRole("menuitem", { name: "Odebrat ze seznamu" }))
+
+      expect(onRemoveInterest).toHaveBeenCalledWith(tenis)
+    })
+
+    it("explains the list while nothing is saved, even when the other tabs are empty too", async () => {
+      await renderOverview(list([]), list([]), { tab: "interested" })
+
+      expect(
+        screen.getByRole("heading", { name: "Zatím nemáte nic uloženého" }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "Procházet akce" })).toHaveAttribute(
+        "href",
+        "/events",
+      )
+      // The tabs stay, so the person can go back to the other lists.
+      expect(screen.getByRole("link", { name: "Zajímá mě (0)" })).toBeInTheDocument()
+    })
+
+    it("says nothing matches when only the filter empties it", async () => {
+      const onClearFilters = vi.fn()
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([], { total: 0 }),
+        isFiltered: true,
+        onClearFilters,
+      })
+
+      expect(screen.queryByText("Zatím nemáte nic uloženého")).not.toBeInTheDocument()
+      expect(screen.getByText("Nic nenalezeno")).toBeInTheDocument()
+      await userEvent.click(screen.getByRole("button", { name: "Vymazat filtry" }))
+      expect(onClearFilters).toHaveBeenCalled()
+    })
   })
 })

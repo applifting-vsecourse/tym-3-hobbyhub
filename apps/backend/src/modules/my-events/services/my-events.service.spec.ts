@@ -1,3 +1,4 @@
+import { EventInterestsService } from '@/modules/event-interest/services/event-interests.service';
 import { EventFilter, EventListItem } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import { EventApplicationFacts } from '@/modules/participation-request/domain/participation-request';
@@ -31,6 +32,7 @@ describe('MyEventsService', () => {
   let events: MockProxy<EventsService>;
   let requests: MockProxy<ParticipationRequestsService>;
   let ratings: MockProxy<RatingsService>;
+  let interests: MockProxy<EventInterestsService>;
   let service: MyEventsService;
 
   beforeEach(() => {
@@ -39,7 +41,8 @@ describe('MyEventsService', () => {
     ratings = mock<RatingsService>();
     ratings.getEventsToRateOrganizer.mockResolvedValue([]);
     ratings.getParticipantsToRate.mockResolvedValue(new Map());
-    service = new MyEventsService(events, requests, ratings);
+    interests = mock<EventInterestsService>();
+    service = new MyEventsService(events, requests, ratings, interests);
   });
 
   describe('getApplications', () => {
@@ -207,6 +210,55 @@ describe('MyEventsService', () => {
     });
   });
 
+  // #231
+  describe('getInterested', () => {
+    const anEvent = (id: string, endAt: string): EventListItem =>
+      ({ id, endAt: new Date(endAt) }) as EventListItem;
+
+    it('keeps the order of the page and tells where each event stands', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'soon', status: 'PUBLISHED' },
+          { eventId: 'ended', status: 'PUBLISHED' },
+          { eventId: 'cancelled', status: 'CANCELLED' },
+          { eventId: 'finished', status: 'FINISHED' },
+        ],
+        total: 30,
+      });
+      // The repository returns the cards in no particular order.
+      events.getListItemsByIds.mockResolvedValue([
+        anEvent('finished', '2029-12-01T10:00:00Z'),
+        anEvent('cancelled', '2030-01-05T10:00:00Z'),
+        anEvent('soon', '2030-01-02T10:00:00Z'),
+        // Over, though nobody has closed it yet.
+        anEvent('ended', '2030-01-01T11:00:00Z'),
+      ]);
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(result.items.map(({ id, state }) => [id, state])).toEqual([
+        ['soon', 'UPCOMING'],
+        ['ended', 'PAST'],
+        ['cancelled', 'CANCELLED'],
+        ['finished', 'PAST'],
+      ]);
+      expect(result.total).toBe(30);
+      expect(interests.getMyPage).toHaveBeenCalledWith(user, page, filter, now);
+    });
+
+    it('drops an event that disappeared between the two queries', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [{ eventId: 'gone', status: 'PUBLISHED' }],
+        total: 1,
+      });
+      events.getListItemsByIds.mockResolvedValue([]);
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(result.items).toEqual([]);
+    });
+  });
+
   // The same rule between fields as the public list (#177).
   describe('a date range that ends before it starts', () => {
     const reversed: EventFilter = {
@@ -227,6 +279,13 @@ describe('MyEventsService', () => {
         service.getHosted(user, page, reversed, now),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(events.getOrganizedEvents).not.toHaveBeenCalled();
+    });
+
+    it('is refused for the saved events', async () => {
+      await expect(
+        service.getInterested(user, page, reversed, now),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(interests.getMyPage).not.toHaveBeenCalled();
     });
   });
 });

@@ -1683,6 +1683,14 @@
       "title": "Tvoje místo?"
     }
   },
+  "interest": {
+    "removeError": "Akci se nepodařilo odebrat ze seznamu. Zkuste to prosím znovu.",
+    "removed": "Odebráno ze seznamu",
+    "save": "Zajímá mě",
+    "saveError": "Akci se nepodařilo uložit. Zkuste to prosím znovu.",
+    "saved": "Uloženo",
+    "undo": "Vrátit"
+  },
   "landing": {
     "actions": {
       "create": "Vypsat akci",
@@ -1771,6 +1779,25 @@
     "hosted": {
       "empty": "Zatím nepořádáte žádnou akci."
     },
+    "interested": {
+      "actionsLabel": "Možnosti uložené akce: {{title}}",
+      "empty": {
+        "description": "Narazíte na akci, o které se ještě nechcete rozhodnout? Na jejím detailu klepněte na „Zajímá mě“ a najdete ji tady, i s tím, jestli se na ni ještě dá přihlásit. Uložením nic nerezervujete.",
+        "find": "Procházet akce",
+        "title": "Zatím nemáte nic uloženého"
+      },
+      "freeSpots_few": "{{count}} volná místa",
+      "freeSpots_one": "{{count}} volné místo",
+      "freeSpots_other": "{{count}} volných míst",
+      "full": "Plno",
+      "pastHeading": "Proběhlé a zrušené",
+      "remove": "Odebrat ze seznamu",
+      "state": {
+        "CANCELLED": "Zrušena",
+        "PAST": "Proběhla",
+        "STARTED": "Probíhá"
+      }
+    },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
@@ -1788,6 +1815,8 @@
       "applicationsWithCount": "Přihlášky ({{count}})",
       "hosted": "Pořádám",
       "hostedWithCount": "Pořádám ({{count}})",
+      "interested": "Zajímá mě",
+      "interestedWithCount": "Zajímá mě ({{count}})",
       "label": "Moje akce"
     },
     "title": "Moje akce"

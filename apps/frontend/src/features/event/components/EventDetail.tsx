@@ -36,6 +36,11 @@ type EventDetailProps = {
   /** Copy the public link; shown to everyone while the event can still be joined (not once it is full). */
   shareAction?: ReactNode
   /**
+   * "Zajímá mě" (#231): save the event to one's list, or take it off. The page
+   * decides when it is offered; shown beside the title whatever the state.
+   */
+  interestAction?: ReactNode
+  /**
    * The signed-in person's own place (their request, their seat, their event).
    * Shown instead of the free seat, whatever state the event is in, so a
    * pending request can still be withdrawn once the event fills up.
@@ -94,6 +99,7 @@ export function EventDetail({
   organizerActions,
   isOrganizerLinked = false,
   shareAction,
+  interestAction,
   ownRequest,
   participantInfo,
   publicPlace,
@@ -174,6 +180,7 @@ export function EventDetail({
               <StatusBadge status="neutral">{t("events.detail.hidden.badge")}</StatusBadge>
             ) : null}
             {state === "open" && !isHidden ? shareAction : null}
+            {isHidden ? null : interestAction}
           </div>
           {/* #239: only the organizers get here; nobody else sees the event. */}
           {isHidden ? (

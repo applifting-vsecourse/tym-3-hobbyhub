@@ -1,3 +1,4 @@
+import { InterestedEventState } from '@/modules/event-interest/domain/event-interest';
 import { EventListItem } from '@/modules/event/domain/event';
 import { ApplicationFacts } from '@/modules/participation-request/domain/participation-request';
 
@@ -70,4 +71,13 @@ export type MyApplicationPage = {
   // cannot show is left out of `items` but still passed, so the client cannot
   // count the offset itself.
   nextOffset: number | null;
+};
+
+// #231: an event on the person's "Zajímá mě" list, with where it stands, so
+// the list can put what is over or called off apart.
+export type MyInterestedEvent = EventListItem & { state: InterestedEventState };
+
+export type MyInterestedEventPage = {
+  items: MyInterestedEvent[];
+  total: number;
 };

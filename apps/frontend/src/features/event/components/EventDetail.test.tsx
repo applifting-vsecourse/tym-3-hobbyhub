@@ -75,6 +75,39 @@ describe("EventDetail", () => {
     expect(screen.getByRole("button", { name: "Nahlásit akci" })).toBeInTheDocument()
   })
 
+  // #231: the page decides when "Zajímá mě" is offered; the detail places it
+  // beside the title, also on an event that is over (to take it off the list).
+  it.each<Partial<EventDetailData>>([{}, { status: "FINISHED" }])(
+    "shows the Zajímá mě action the page hands in (%j)",
+    async (overrides) => {
+      await renderWithRouter(
+        <EventDetail
+          event={event(overrides)}
+          activityLabel="Florbal"
+          joinAction={null}
+          interestAction={<button type="button">Zajímá mě</button>}
+          now={NOW}
+        />,
+      )
+
+      expect(screen.getByRole("button", { name: "Zajímá mě" })).toBeInTheDocument()
+    },
+  )
+
+  it("offers no Zajímá mě on an event an administrator hid", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ hiddenReason: "Nabízí placené služby." })}
+        activityLabel="Florbal"
+        joinAction={null}
+        interestAction={<button type="button">Zajímá mě</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.queryByRole("button", { name: "Zajímá mě" })).not.toBeInTheDocument()
+  })
+
   // #234: the page asks the server whether the organizer may be rated; the
   // detail only places what it hands in, under the event's state.
   it("shows the way to rate the organizer when the page hands one in", async () => {

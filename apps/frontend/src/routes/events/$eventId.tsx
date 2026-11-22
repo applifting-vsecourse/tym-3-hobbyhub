@@ -17,6 +17,9 @@ import { HTTPError } from "@/lib/api-client"
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
+import { eventInterestQueryOptions } from "@/features/event-interest/api/eventInterestQueryOptions"
+import { InterestAction } from "@/features/event-interest/components/InterestAction"
+import { useToggleEventInterest } from "@/features/event-interest/hooks/useToggleEventInterest"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
@@ -117,6 +120,14 @@ function EventDetailPage() {
     enabled: canHaveRating,
   })
 
+  // #231: "Zajímá mě". The signed-in person's own state comes from its own
+  // query, never from the public detail, which is the same for everyone.
+  const interestQuery = useQuery({
+    ...eventInterestQueryOptions(eventId, user?.id ?? ""),
+    enabled: user !== null && event !== undefined && !isHidden,
+  })
+  const toggleInterest = useToggleEventInterest(eventId, user?.id ?? "")
+
   const queryClient = useQueryClient()
   // A seat taken at once (automatic approval) changes the roster; a request
   // waiting for the organizer does not, but a refusal may mean the event filled
@@ -127,6 +138,21 @@ function EventDetailPage() {
   const [sheetStep, setSheetStep] = useState<RequestSheetStep | null>(null)
 
   const from = encodeRedirectUri(location)
+  // #231: offered while the event may still be saved (published, not started,
+  // not one's own, as the server says), and to take off an event saved
+  // earlier whatever happened to it since. A visitor is sent to sign in for
+  // an event that has not started.
+  const interest = interestQuery.data
+  const interestAction = !event ? undefined : user ? (
+    interest && (interest.isSaved || interest.violations.length === 0) ? (
+      <InterestAction
+        isSaved={interest.isSaved}
+        onToggle={() => toggleInterest.mutate(!interest.isSaved)}
+      />
+    ) : undefined
+  ) : !isSessionPending && event.status === "PUBLISHED" && event.startAt > new Date() ? (
+    <InterestAction signInFrom={from} />
+  ) : undefined
   // Asking is not taking: with manual approval the seat comes only once the
   // organizer says yes; with automatic approval the server takes it at once.
   const joinLabel = t(
@@ -216,6 +242,7 @@ function EventDetailPage() {
             joinAction={joinAction}
             isOrganizerLinked={Boolean(user)}
             shareAction={<ShareEventAction event={eventQuery.data} />}
+            interestAction={interestAction}
             ratingPrompt={
               // Quiet while loading and when it fails: the notification and
               // the overview of one's events lead to the rating too.
