@@ -1683,6 +1683,23 @@
       "title": "Tvoje místo?"
     }
   },
+  "interest": {
+    "removeError": "Akci se nepodařilo odebrat ze seznamu. Zkuste to prosím znovu.",
+    "removed": "Odebráno ze seznamu",
+    "save": "Zajímá mě",
+    "saveError": "Akci se nepodařilo uložit. Zkuste to prosím znovu.",
+    "saved": "Uloženo",
+    "undo": "Vrátit",
+    "watch": {
+      "active": "Hlídám volné místo",
+      "nowFree": "Na akci se mezitím uvolnilo místo. Můžete se rovnou přihlásit.",
+      "offText": "Akce je plná. Zapněte hlídání a dáme vám vědět, jakmile se uvolní místo.",
+      "onText": "Jakmile se uvolní místo, pošleme vám upozornění. Místo vám nedržíme: dostane ho, kdo se přihlásí první.",
+      "start": "Hlídat volné místo",
+      "startError": "Hlídání se nepodařilo zapnout. Zkuste to prosím znovu.",
+      "stopError": "Hlídání se nepodařilo vypnout. Zkuste to prosím znovu."
+    }
+  },
   "landing": {
     "actions": {
       "create": "Vypsat akci",
@@ -1771,6 +1788,28 @@
     "hosted": {
       "empty": "Zatím nepořádáte žádnou akci."
     },
+    "interested": {
+      "actionsLabel": "Možnosti uložené akce: {{title}}",
+      "empty": {
+        "description": "Narazíte na akci, o které se ještě nechcete rozhodnout? Na jejím detailu klepněte na „Zajímá mě“ a najdete ji tady, i s tím, jestli se na ni ještě dá přihlásit. Uložením nic nerezervujete.",
+        "find": "Procházet akce",
+        "title": "Zatím nemáte nic uloženého"
+      },
+      "freeSpots_few": "{{count}} volná místa",
+      "freeSpots_one": "{{count}} volné místo",
+      "freeSpots_other": "{{count}} volných míst",
+      "full": "Plno",
+      "pastHeading": "Proběhlé a zrušené",
+      "remove": "Odebrat ze seznamu",
+      "state": {
+        "CANCELLED": "Zrušena",
+        "PAST": "Proběhla",
+        "STARTED": "Probíhá"
+      },
+      "unwatch": "Přestat hlídat volné místo",
+      "watch": "Hlídat volné místo",
+      "watching": "Hlídám místo"
+    },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
@@ -1788,6 +1827,8 @@
       "applicationsWithCount": "Přihlášky ({{count}})",
       "hosted": "Pořádám",
       "hostedWithCount": "Pořádám ({{count}})",
+      "interested": "Zajímá mě",
+      "interestedWithCount": "Zajímá mě ({{count}})",
       "label": "Moje akce"
     },
     "title": "Moje akce"
@@ -1898,6 +1939,7 @@
           "REJECTED": "Tvoje žádost o členství ve skupině {{title}} byla zamítnuta"
         }
       },
+      "SPOT_AVAILABLE": "Na akci {{title}} se uvolnilo místo",
       "other": "Novinka k {{title}}"
     },
     "title": "Notifikace",

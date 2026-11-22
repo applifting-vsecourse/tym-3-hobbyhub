@@ -1,3 +1,4 @@
+import { EventInterestsService } from '@/modules/event-interest/services/event-interests.service';
 import { EventFilter, EventListItem } from '@/modules/event/domain/event';
 import { EventsService } from '@/modules/event/services/events.service';
 import { EventApplicationFacts } from '@/modules/participation-request/domain/participation-request';
@@ -31,6 +32,7 @@ describe('MyEventsService', () => {
   let events: MockProxy<EventsService>;
   let requests: MockProxy<ParticipationRequestsService>;
   let ratings: MockProxy<RatingsService>;
+  let interests: MockProxy<EventInterestsService>;
   let service: MyEventsService;
 
   beforeEach(() => {
@@ -39,7 +41,8 @@ describe('MyEventsService', () => {
     ratings = mock<RatingsService>();
     ratings.getEventsToRateOrganizer.mockResolvedValue([]);
     ratings.getParticipantsToRate.mockResolvedValue(new Map());
-    service = new MyEventsService(events, requests, ratings);
+    interests = mock<EventInterestsService>();
+    service = new MyEventsService(events, requests, ratings, interests);
   });
 
   describe('getApplications', () => {
@@ -207,6 +210,162 @@ describe('MyEventsService', () => {
     });
   });
 
+  // #231
+  describe('getInterested', () => {
+    const anEvent = (
+      id: string,
+      endAt: string,
+      { takenCount = 4, maxParticipants = 4 } = {},
+    ): EventListItem =>
+      ({
+        id,
+        startAt: new Date(new Date(endAt).getTime() - 2 * 3600 * 1000),
+        endAt: new Date(endAt),
+        takenCount,
+        maxParticipants,
+      }) as EventListItem;
+
+    beforeEach(() => {
+      interests.getWatchableEventIds.mockResolvedValue(new Set());
+      requests.getMyApplicationFactsOf.mockResolvedValue([]);
+    });
+
+    it('keeps the order of the page and tells where each event stands', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'soon', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'ended', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'cancelled', status: 'CANCELLED', watchesFreeSpot: false },
+          { eventId: 'finished', status: 'FINISHED', watchesFreeSpot: false },
+        ],
+        total: 30,
+      });
+      // The repository returns the cards in no particular order.
+      events.getListItemsByIds.mockResolvedValue([
+        anEvent('finished', '2029-12-01T10:00:00Z'),
+        anEvent('cancelled', '2030-01-05T10:00:00Z'),
+        anEvent('soon', '2030-01-02T10:00:00Z'),
+        // Over, though nobody has closed it yet.
+        anEvent('ended', '2030-01-01T11:00:00Z'),
+      ]);
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(result.items.map(({ id, state }) => [id, state])).toEqual([
+        ['soon', 'UPCOMING'],
+        ['ended', 'PAST'],
+        ['cancelled', 'CANCELLED'],
+        ['finished', 'PAST'],
+      ]);
+      expect(result.total).toBe(30);
+      expect(interests.getMyPage).toHaveBeenCalledWith(user, page, filter, now);
+    });
+
+    // #232: whether each is watched, and whether it may be: only a full
+    // event that has not started is even asked about.
+    it('tells which events are watched and which may be', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'watched', status: 'PUBLISHED', watchesFreeSpot: true },
+          { eventId: 'full', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'started', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'open', status: 'PUBLISHED', watchesFreeSpot: false },
+        ],
+        total: 4,
+      });
+      events.getListItemsByIds.mockResolvedValue([
+        anEvent('watched', '2030-01-03T10:00:00Z'),
+        anEvent('full', '2030-01-04T10:00:00Z'),
+        anEvent('started', '2030-01-01T13:00:00Z'),
+        anEvent('open', '2030-01-05T10:00:00Z', { takenCount: 2 }),
+      ]);
+      interests.getWatchableEventIds.mockResolvedValue(new Set(['full']));
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(
+        result.items.map(({ id, watchesFreeSpot, canWatchFreeSpot }) => [
+          id,
+          watchesFreeSpot,
+          canWatchFreeSpot,
+        ]),
+      ).toEqual([
+        ['watched', true, false],
+        ['full', false, true],
+        ['started', false, false],
+        ['open', false, false],
+      ]);
+      expect(interests.getWatchableEventIds).toHaveBeenCalledWith(
+        user,
+        ['watched', 'full'],
+        now,
+      );
+    });
+
+    // The list keeps an event the person signed up for, so each row carries
+    // their own application, the same status as under "Přihlášky".
+    it('tells where the own application to each saved event stands', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'going', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'waiting', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'refused', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'left', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'never', status: 'PUBLISHED', watchesFreeSpot: false },
+        ],
+        total: 5,
+      });
+      events.getListItemsByIds.mockResolvedValue(
+        ['going', 'waiting', 'refused', 'left', 'never'].map((id) =>
+          anEvent(id, '2030-01-03T10:00:00Z'),
+        ),
+      );
+      requests.getMyApplicationFactsOf.mockResolvedValue([
+        facts('going', { seat: 'APPROVED', requests: ['APPROVED'] }),
+        facts('waiting'),
+        facts('refused', { requests: ['REJECTED'] }),
+        facts('left', { seat: 'CANCELLED', requests: ['APPROVED'] }),
+        facts('never', { requests: [] }),
+      ]);
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(
+        result.items.map(({ id, applicationStatus }) => [
+          id,
+          applicationStatus,
+        ]),
+      ).toEqual([
+        ['going', 'APPROVED'],
+        ['waiting', 'PENDING'],
+        ['refused', 'REJECTED'],
+        ['left', 'WITHDRAWN'],
+        ['never', null],
+      ]);
+      expect(requests.getMyApplicationFactsOf).toHaveBeenCalledWith(user, [
+        'going',
+        'waiting',
+        'refused',
+        'left',
+        'never',
+      ]);
+    });
+
+    it('drops an event that disappeared between the two queries', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'gone', status: 'PUBLISHED', watchesFreeSpot: false },
+        ],
+        total: 1,
+      });
+      events.getListItemsByIds.mockResolvedValue([]);
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(result.items).toEqual([]);
+    });
+  });
+
   // The same rule between fields as the public list (#177).
   describe('a date range that ends before it starts', () => {
     const reversed: EventFilter = {
@@ -227,6 +386,13 @@ describe('MyEventsService', () => {
         service.getHosted(user, page, reversed, now),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(events.getOrganizedEvents).not.toHaveBeenCalled();
+    });
+
+    it('is refused for the saved events', async () => {
+      await expect(
+        service.getInterested(user, page, reversed, now),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(interests.getMyPage).not.toHaveBeenCalled();
     });
   });
 });

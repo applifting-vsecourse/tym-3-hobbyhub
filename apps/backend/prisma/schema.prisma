@@ -352,15 +352,15 @@ model Event {
   notes       String? @db.Text
   imageUrl    String? @db.Text
 
-  status       EventStatus     @default(DRAFT)
-  visibility   EventVisibility @default(PUBLIC)
-  approvalMode ApprovalMode    @default(MANUAL)
-  venueType    VenueType
+  status          EventStatus     @default(DRAFT)
+  visibility      EventVisibility @default(PUBLIC)
+  approvalMode    ApprovalMode    @default(MANUAL)
+  venueType       VenueType
   // #218, ADR-0029: true: everyone who sees the event sees its exact address,
   // the place name and the map pin. false: only the organizers and the people
   // with a seat see the address; the others get the district and the city.
   // Never true for an online event (CHECK event_online_address_not_public).
-  isAddressPublic Boolean @default(false)
+  isAddressPublic Boolean         @default(false)
 
   startAt     DateTime
   endAt       DateTime
@@ -444,6 +444,8 @@ model Event {
   reminders             EventReminder[]
   // #236: the calls to rate it that went out.
   ratingPrompts         RatingPrompt[]
+  // #231, ADR-0030: who saved it to their "Zajímá mě" list; private to each.
+  interests             EventInterest[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -484,6 +486,30 @@ model Participation {
   @@index([userId])
   @@index([eventId, status])
   @@map("participation")
+}
+
+// #231, ADR-0030: an event a person saved to their "Zajímá mě" list, to come
+// back to later. Private to that person: nobody else, the organizers and the
+// administration included, ever sees who saved what or how many did. Saving
+// reserves nothing and is not a request to join. At most once per person and
+// event; it goes with either of them. #232 adds whether the person also
+// watches the event for a free seat, as a column of this row.
+model EventInterest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  // #232: the person wants to hear when a seat frees up on the full event.
+  // Only ever on a saved event (the row is the saving); taking a seat clears it.
+  watchesFreeSpot Boolean @default(false)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@map("event_interest")
 }
 
 // #233, ADR-0021: a reminder that went out for an event. The poller inserts
@@ -1006,6 +1032,8 @@ model User {
   coOrganizedEvents      Event[]                @relation("EventCoOrganizers")
   participations         Participation[]
   participationRequests  ParticipationRequest[]
+  // #231, ADR-0030: the events on the user's own "Zajímá mě" list.
+  eventInterests         EventInterest[]
   groupMemberships       GroupMembership[]
   membershipRequests     MembershipRequest[]
   notifications          Notification[]         @relation("NotificationRecipient")

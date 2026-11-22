@@ -17,8 +17,9 @@ import { Injectable } from '@nestjs/common';
  * F-09.5, ADR-0018: turns freshly recorded notifications into e-mails and
  * hands them to the outbox, one per notification. An address its owner has
  * not verified gets none: the row is kept as skipped, without HTML, and the
- * bell still shows the notification. `disabledNotifications` is not looked
- * at yet (F-04.3).
+ * bell still shows the notification. A type the recipient switched off
+ * (`disabledNotifications`, F-04.3) gets no e-mail at all; the bell keeps it.
+ * #232 is the first to need it; the settings page to switch types off is #20.
  */
 @Injectable()
 export class NotificationEmailsService {
@@ -47,6 +48,13 @@ export class NotificationEmailsService {
       notifications.flatMap((notification) => {
         const content = notificationEmailOf(notification);
         if (!content) return [];
+        if (
+          notification.recipient.disabledNotifications.includes(
+            notification.type,
+          )
+        ) {
+          return [];
+        }
         const verified = notification.recipient.emailVerified;
         const html = verified ? htmlOf(content) : Promise.resolve('');
         return html.then((html): OutgoingEmail => ({
