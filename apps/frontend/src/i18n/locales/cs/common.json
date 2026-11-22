@@ -637,6 +637,9 @@
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
       "signIn": "Přihlásit se",
+      "similar": {
+        "title": "Podobné akce"
+      },
       "state": {
         "cancelled": "Zrušeno",
         "cancelledText": "Akce byla zrušena, o účast už se nedá žádat.",
@@ -670,6 +673,10 @@
         "title": "Kde se sejdeme"
       }
     },
+    "duration": {
+      "custom": "Upřesnit",
+      "hours": "{{count}} h"
+    },
     "edit": {
       "back": "Zpět na detail akce",
       "locked": "Akce už začala nebo je zrušená, proto se nedá měnit.",
@@ -686,8 +693,9 @@
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
       "country": "Země",
       "description": "Popis akce",
-      "endDate": "Datum konce",
-      "endTime": "Čas do",
+      "duration": "Délka trvání",
+      "durationHours": "Hodiny",
+      "durationMinutes": "Minuty",
       "equipment": "Vybavení (nepovinné)",
       "externalChatUrl": "Odkaz na skupinový chat (nepovinné)",
       "externalOccupiedSpots": "Už obsazeno mimo aplikaci",
@@ -848,7 +856,7 @@
       "countryRequired": "Zadejte zemi",
       "dateRequired": "Zadejte datum",
       "descriptionRequired": "Napište pár vět o akci",
-      "endBeforeStart": "Konec musí být po začátku",
+      "durationTooShort": "Akce musí trvat alespoň {{count}} minut",
       "maxBelowMin": "Maximum musí být alespoň jako minimum",
       "maxBelowOccupied": "Maximum nemůže být menší než obsazená místa ({{count}})",
       "occupiedAboveMax": "Obsazených míst nemůže být víc než maximum",

@@ -35,6 +35,7 @@ Platí pro všechny tabulky, ať se řádek týká akce, skupiny nebo profilu.
 
 - **Vyhledávání a detail jsou dvě cesty k témuž záznamu.** Ohlídat jen výpis nestačí: záznam, který se nemá zobrazit, se nesmí vydat ani na přímý odkaz.
 - **Nepřihlášený, který přijde na přímý odkaz, vidí přesně to, co by viděl ve výpisu.** Ne víc.
+- **Podobné akce pod detailem ukazují jen to, co by viděl výpis akcí** (#230): veřejné, budoucí, s volným místem, bez akcí lidí, kteří mě zablokovali. Dostane je jen ten, kdo smí otevřít detail; jinak je to stejné 404 jako u detailu. Nic navíc oproti kartě ve výpisu nepřináší.
 - **Agregát nesmí prozradit to, co skrývá jednotlivý údaj.** Údaj, který nikdo nemá vidět, nesmí jít dopočítat z údaje, který vidět smí. Proto komu se zobrazuje jmenný seznam účastníků, tomu se nezobrazuje složení účastníků. Totéž platí pro každé další souhrnné číslo, které v aplikaci vznikne.
 - **Přítel, který to nepovolil, se nikde nezobrazuje ani nezapočítává** ([#227][227], [#226][226]). Do počtu přátel na akci, v seznamu ani v žádném jiném čísle se nepočítá a neexistuje hláška „X skrytých přátel“ ani „uživatel skryl své akce“: počet by prozradil, kdo na akci jde.
 - **Nedostupný obsah se chová, jako by neexistoval**, ne jako by byl zamčený. Hláška „nemáte přístup“ prozrazuje, že tam něco je, a kdo to tam dal.
