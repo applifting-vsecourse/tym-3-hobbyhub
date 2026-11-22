@@ -14,6 +14,7 @@ import { MyEventsPageQuery } from './dto/my-events-page.query';
 import {
   MyApplicationPageResponseDto,
   MyHostedEventsResponseDto,
+  MyInterestedEventsResponseDto,
 } from './dto/my-events.response.dto';
 import { myEventsValidationPipe } from './my-events-validation.pipe';
 
@@ -59,6 +60,25 @@ export class MyEventsController {
   ): Promise<MyHostedEventsResponseDto> {
     return MyHostedEventsResponseDto.fromDomain(
       await this.service.getHosted(
+        user,
+        { limit: query.limit, offset: query.offset },
+        eventFilterOf(query),
+      ),
+    );
+  }
+
+  @Get('interested')
+  @ApiOperation({
+    summary:
+      'Events on the user\'s "Zajímá mě" list (#231): the ones still on first, soonest first; then the ones over or cancelled, latest first. Events the user may no longer see are left out, also from the total',
+  })
+  @ApiResponse({ status: 200, type: MyInterestedEventsResponseDto })
+  async interested(
+    @User() user: Identity,
+    @Query() query: MyEventsPageQuery,
+  ): Promise<MyInterestedEventsResponseDto> {
+    return MyInterestedEventsResponseDto.fromDomain(
+      await this.service.getInterested(
         user,
         { limit: query.limit, offset: query.offset },
         eventFilterOf(query),
