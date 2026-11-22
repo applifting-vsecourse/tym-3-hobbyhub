@@ -6,11 +6,15 @@ import {
   CreateGroupData,
   DISCOVER_PAGE_SIZE,
   Group,
+  GroupAccess,
   GroupDiscoverFilter,
   GroupMember,
   GroupMemberListItem,
   GroupPage,
+  groupPlaceViolations,
+  groupRequiredFieldsSetToNull,
   GroupRole,
+  GroupStats,
   hasGroupAdminRights,
   isPubliclyVisible,
   MemberAction,
@@ -19,6 +23,7 @@ import {
   NEARBY_GROUPS_LIMIT,
   NearbyGroups,
   TrendingGroup,
+  UpdateGroupData,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import {
@@ -68,12 +73,74 @@ export class GroupsService {
     });
   }
 
+  // ADR-0028: what the admins of a group may change. A place comes with its
+  // position or not at all.
+  async updateGroup(
+    groupId: string,
+    user: Identity,
+    data: UpdateGroupData,
+  ): Promise<Group> {
+    await this.assertManagedGroup(groupId, user);
+    const nulled = groupRequiredFieldsSetToNull(data);
+    if (nulled.length > 0) {
+      throw new BadRequestException(`${nulled.join(', ')} cannot be removed`);
+    }
+    if (groupPlaceViolations(data).length > 0) {
+      throw new BadRequestException(
+        'The place needs its name and both coordinates together',
+      );
+    }
+    if (
+      data.activityId !== undefined &&
+      !(await this.activitiesService.isAvailable(data.activityId))
+    ) {
+      throw new BadRequestException(
+        'Activity does not exist or is no longer offered',
+      );
+    }
+    const group = await this.groupRepository.updateGroup(groupId, data);
+    if (!group) throw new NotFoundException('Group not found');
+    return group;
+  }
+
+  // Adds a member to a group that lets anyone in (ADR-0028). The rules of who
+  // may join (a rejection is final, ADR-0014) live in `MembershipRequestsService`,
+  // which asks the group for this.
+  addMember(groupId: string, userId: string): Promise<boolean> {
+    return this.groupRepository.addMember(groupId, userId);
+  }
+
+  async getStats(
+    groupId: string,
+    viewer?: Identity,
+    now = new Date(),
+  ): Promise<GroupStats> {
+    await this.assertPublicGroup(groupId, viewer);
+    return this.groupRepository.getGroupStats(groupId, now);
+  }
+
   // F-02.5: the detail is public, so only a public, active group is shown.
   // Anything else is "not found", so nobody can tell it exists; so is the
   // group run by someone blocked from the viewer (#239).
   // TODO(F-07.1b #93): a private group is shown to its members.
   async getPublicGroup(id: string, viewer?: Identity): Promise<Group> {
-    const group = await this.groupRepository.getGroupById(id);
+    const group = await this.groupRepository.getGroupById(
+      id,
+      await this.blocks.hiddenFor(viewer?.id),
+    );
+    if (!group || !isPubliclyVisible(group)) {
+      throw new NotFoundException('Group not found');
+    }
+    if (viewer && (await this.isRunByHidden(id, viewer.id))) {
+      throw new NotFoundException('Group not found');
+    }
+    return group;
+  }
+
+  // The same rules as `getPublicGroup`, for callers that only need to know the
+  // group may be seen: it reads no counts and no next event.
+  async assertPublicGroup(id: string, viewer?: Identity): Promise<GroupAccess> {
+    const group = await this.groupRepository.getGroupAccess(id);
     if (!group || !isPubliclyVisible(group)) {
       throw new NotFoundException('Group not found');
     }
@@ -101,6 +168,18 @@ export class GroupsService {
 
   getMemberRole(groupId: string, userId: string): Promise<GroupRole | null> {
     return this.groupRepository.getMemberRole(groupId, userId);
+  }
+
+  // `getManagedGroup` without the group: for a change that only needs to know
+  // the user may make it.
+  async assertManagedGroup(groupId: string, user: Identity): Promise<void> {
+    const [group, role] = await Promise.all([
+      this.groupRepository.getGroupAccess(groupId),
+      this.groupRepository.getMemberRole(groupId, user.id),
+    ]);
+    if (!group || !role || !hasGroupAdminRights(role)) {
+      throw new NotFoundException('Group not found');
+    }
   }
 
   // F-07.3: a group the user manages (OWNER or ADMIN, ADR-0007), cancelled
@@ -245,7 +324,10 @@ export class GroupsService {
   }
 
   async listMyGroups(user: Identity): Promise<MyGroup[]> {
-    return this.groupRepository.listGroupsOfUser(user.id);
+    return this.groupRepository.listGroupsOfUser(
+      user.id,
+      await this.blocks.hiddenFor(user.id),
+    );
   }
 
   async listNearbyGroups(

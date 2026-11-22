@@ -315,6 +315,79 @@ describeDb('group lists', () => {
     });
   });
 
+  // ADR-0028: the orders without a stable key page by offset.
+  it('orders by members and pages without gaps or repeats', async () => {
+    await inRolledBackTransaction(
+      async ({ repository, createUser, createGroup }) => {
+        const users = [
+          await createUser(),
+          await createUser(),
+          await createUser(),
+        ];
+        const ids = [
+          await createGroup({}, [{ user: users[0]! }]),
+          await createGroup(
+            {},
+            users.map((user) => ({ user })),
+          ),
+          await createGroup(
+            {},
+            users.slice(0, 2).map((user) => ({ user })),
+          ),
+        ];
+        const expected = [ids[1], ids[2], ids[0]];
+
+        const found: string[] = [];
+        let cursor: string | undefined;
+        do {
+          const page = await repository.listDiscoverableGroups(
+            undefined,
+            1,
+            cursor,
+            { activityIds: [], sort: 'members' },
+          );
+          found.push(...page.items.map((group) => group.id));
+          cursor = page.nextCursor ?? undefined;
+        } while (cursor);
+
+        expect(found.filter((id) => ids.includes(id))).toEqual(expected);
+      },
+    );
+  });
+
+  it('orders by distance and leaves out groups beyond the radius', async () => {
+    await inRolledBackTransaction(async ({ repository, createGroup }) => {
+      const near = await createGroup({
+        locationLatitude: 50.1,
+        locationLongitude: 14.4,
+      });
+      const nearer = await createGroup({
+        locationLatitude: 50.09,
+        locationLongitude: 14.4,
+      });
+      const far = await createGroup({
+        locationLatitude: 49.2,
+        locationLongitude: 16.6,
+      });
+      const page = await repository.listDiscoverableGroups(
+        undefined,
+        20,
+        undefined,
+        {
+          activityIds: [],
+          sort: 'nearest',
+          near: { latitude: 50.08, longitude: 14.4, radiusKm: 30 },
+        },
+      );
+      const found = page.items.map((group) => group.id);
+
+      expect(found.filter((id) => [near, nearer, far].includes(id))).toEqual([
+        nearer,
+        near,
+      ]);
+    });
+  });
+
   it('finds groups in a city by part of their place, ignoring case', async () => {
     await inRolledBackTransaction(
       async ({ repository, createUser, createGroup }) => {

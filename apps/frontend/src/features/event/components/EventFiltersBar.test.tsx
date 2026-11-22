@@ -31,6 +31,9 @@ const NONE: EventFilterValues = {
   hoursTo: "",
   capacityFrom: "",
   capacityTo: "",
+  approvalMode: "",
+  hasUpcomingEvent: false,
+  groupSort: "newest",
 }
 
 const renderBar = (
@@ -247,5 +250,43 @@ describe("EventFiltersBar", () => {
     renderBar({}, { leadingChips: <button type="button">Nejblíž mně</button> })
 
     expect(screen.getByRole("button", { name: "Nejblíž mně" })).toBeInTheDocument()
+  })
+
+  it("offers the group filters and applies them (ADR-0028)", async () => {
+    const { onFiltersChange } = renderBar(
+      {},
+      { fields: ["approval", "upcomingEvent", "groupSort"] },
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /filtr/i }))
+    await userEvent.click(screen.getByRole("button", { name: "Otevřená, bez schvalování" }))
+    await userEvent.click(screen.getByRole("button", { name: "Mají nadcházející akci" }))
+    await userEvent.click(screen.getByRole("button", { name: "Nejvíc členů" }))
+    await userEvent.click(screen.getByRole("button", { name: "Zobrazit výsledky" }))
+
+    expect(onFiltersChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        approvalMode: "OPEN",
+        hasUpcomingEvent: true,
+        groupSort: "members",
+      }),
+    )
+  })
+
+  it("offers the nearest order only with a place to measure from", async () => {
+    renderBar({}, { fields: ["groupSort"] })
+    await userEvent.click(screen.getByRole("button", { name: /filtr/i }))
+
+    expect(screen.queryByRole("button", { name: "Nejbližší" })).not.toBeInTheDocument()
+  })
+
+  it("shows the group filters as chips that remove themselves", async () => {
+    const { onFiltersChange } = renderBar({ approvalMode: "APPROVAL", hasUpcomingEvent: true })
+
+    await userEvent.click(screen.getByRole("button", { name: "Na schválení" }))
+    await userEvent.click(screen.getByRole("button", { name: "Mají nadcházející akci" }))
+
+    expect(onFiltersChange).toHaveBeenCalledWith({ approvalMode: "" })
+    expect(onFiltersChange).toHaveBeenCalledWith({ hasUpcomingEvent: false })
   })
 })

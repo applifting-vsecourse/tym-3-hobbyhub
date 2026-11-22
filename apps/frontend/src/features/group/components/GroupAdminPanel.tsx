@@ -29,6 +29,17 @@ export function GroupAdminPanel({ groupId, pendingCount }: GroupAdminPanelProps)
         variant="outline"
       >
         <Link
+          to="/groups/$groupId/edit"
+          params={{ groupId }}
+        >
+          {t("groups.manage.editLink")}
+        </Link>
+      </Button>
+      <Button
+        asChild
+        variant="outline"
+      >
+        <Link
           to="/groups/$groupId/members"
           params={{ groupId }}
           search={{ tab: "requests" }}

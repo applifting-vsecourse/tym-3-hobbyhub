@@ -28,6 +28,7 @@ import { eventFilterOf } from './dto/event-filter.query';
 import {
   EventDetailResponseDto,
   EventListResponseDto,
+  SimilarEventsResponseDto,
 } from './dto/event-list-item.response.dto';
 import {
   EventResponseDto,
@@ -284,6 +285,27 @@ export class EventsController {
   ): Promise<ParticipantEventInfoResponseDto> {
     const info = await this.eventsService.getParticipantInfo(user, id);
     return ParticipantEventInfoResponseDto.fromDomain(info);
+  }
+
+  // Events like this one, shown under the detail. Open to visitors; whoever
+  // may not see the event gets the same 404 as the detail.
+  @Get(':id/similar')
+  @UseGuards(OptionalUserGuard)
+  @ApiOperation({
+    summary:
+      'Up to 4 upcoming public events with a free seat that resemble this one',
+  })
+  @ApiResponse({ status: 200, type: SimilarEventsResponseDto })
+  @ApiResponse({
+    status: 404,
+    description: 'Event not found, or not visible to the viewer',
+  })
+  async similar(
+    @OptionalUser() user: Identity | undefined,
+    @Param('id') id: string,
+  ): Promise<SimilarEventsResponseDto> {
+    const items = await this.eventsService.getSimilarEvents(id, user);
+    return SimilarEventsResponseDto.fromDomain(items);
   }
 
   // Detail (F-02.4): the district and the city, and the exact address only

@@ -84,8 +84,13 @@ describe("notificationText", () => {
       "Tvoje nahlášení jsme vyřídili. Děkujeme, že pomáháš udržet HobbyHub bezpečný.",
     ],
     [
+      "a free seat on a watched event, naming nobody (#232)",
+      aNotification({ type: "SPOT_AVAILABLE", actor: null }),
+      "Na akci Čtvrteční florbal se uvolnilo místo",
+    ],
+    [
       "a type without words of its own",
-      aNotification({ type: "SPOT_AVAILABLE" }),
+      aNotification({ type: "CONFIRMATION_PROMPT" }),
       "Novinka k Čtvrteční florbal",
     ],
   ])("says %s in Czech", (_, notification, expected) => {
@@ -241,6 +246,8 @@ describe("notificationTarget", () => {
     "EVENT_CHANGED",
     "EVENT_CANCELLED",
     "PARTICIPANT_CANCELLED",
+    // #232: where the free seat can be taken.
+    "SPOT_AVAILABLE",
   ] as const)("sends the participant to the event for %s", (type) => {
     expect(notificationTarget(aNotification({ type }))).toEqual({ kind: "event", eventId: "e1" })
   })

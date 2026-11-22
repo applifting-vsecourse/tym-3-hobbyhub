@@ -627,6 +627,9 @@
       "roster": "Roster",
       "seats": "{{taken}} of {{total}} seats",
       "signIn": "Sign in",
+      "similar": {
+        "title": "Similar events"
+      },
       "state": {
         "cancelled": "Cancelled",
         "cancelledText": "This event was cancelled, you can no longer ask to join.",
@@ -659,6 +662,10 @@
         "title": "Where we meet"
       }
     },
+    "duration": {
+      "custom": "Custom",
+      "hours": "{{count}} h"
+    },
     "edit": {
       "back": "Back to the event",
       "locked": "The event has started or was cancelled, so it cannot be changed.",
@@ -675,8 +682,9 @@
       "contributionNote": "Note on the contribution (optional)",
       "country": "Country",
       "description": "Event description",
-      "endDate": "End date",
-      "endTime": "Until",
+      "duration": "Duration",
+      "durationHours": "Hours",
+      "durationMinutes": "Minutes",
       "equipment": "Equipment (optional)",
       "externalChatUrl": "Group chat link (optional)",
       "externalOccupiedSpots": "Already taken outside the app",
@@ -834,7 +842,7 @@
       "countryRequired": "Enter a country",
       "dateRequired": "Enter a date",
       "descriptionRequired": "Write a few words about the event",
-      "endBeforeStart": "The end must come after the start",
+      "durationTooShort": "The event must last at least {{count}} minutes",
       "maxBelowMin": "The maximum must be at least the minimum",
       "maxBelowOccupied": "The maximum cannot be below the taken seats ({{count}})",
       "occupiedAboveMax": "Taken seats cannot exceed the maximum",
@@ -923,8 +931,14 @@
     }
   },
   "groups": {
+    "active": "Active",
+    "approval": {
+      "APPROVAL": "Approval needed",
+      "OPEN": "Open, no approval"
+    },
     "back": "Back",
     "detail": {
+      "about": "About the group",
       "backToEvents": "Back to events",
       "events": {
         "cancelled": "Cancelled",
@@ -939,6 +953,10 @@
           "upcoming": "The group has no upcoming events right now."
         },
         "groupOnly": "Group only",
+        "hiddenUpcoming_one": "Once you are approved, 1 upcoming event awaits",
+        "hiddenUpcoming_other": "Once you are approved, {{count}} upcoming events await",
+        "hidden_one": "One more event is for group members only",
+        "hidden_other": "{{count}} more events are for group members only",
         "loadMore": "Load more",
         "loadMoreFailed": "More events could not be loaded. Please try again.",
         "loading": "Loading the group’s events…",
@@ -948,6 +966,20 @@
         },
         "periodsLabel": "Upcoming and past events",
         "title": "Group events"
+      },
+      "facts": {
+        "everyWeek": "Every week: {{days}}",
+        "title": "Where and when we meet",
+        "when": "When",
+        "whenNone": "The group has not said when.",
+        "where": "Where we meet",
+        "whereNone": "The group has not said where."
+      },
+      "join": {
+        "cta": "Join the group",
+        "failed": "Could not join the group. Please try again.",
+        "note": "The group is open. Join now and see all its events.",
+        "title": "Play with us"
       },
       "loadError": "Could not load the group",
       "loading": "Loading the group…",
@@ -975,14 +1007,24 @@
         "title": "Membership",
         "withdraw": "Withdraw request"
       },
+      "stats": {
+        "average": "players on average",
+        "meets": "meets",
+        "members": "members",
+        "none": "—",
+        "played": "events"
+      },
       "title": "Group detail",
       "visibilityPublic": "Public group"
     },
     "fields": {
       "activity": "Activity",
+      "approvalMode": "Joining",
       "description": "Description",
-      "location": "Location (optional)",
+      "location": "Where you meet",
+      "meetingDays": "Days you meet on (optional)",
       "name": "Group name",
+      "tagline": "Short tagline (optional)",
       "usualSchedule": "Usual time (optional)"
     },
     "form": {
@@ -990,10 +1032,20 @@
       "activityError": "Could not load activities.",
       "activityLoading": "Loading activities…",
       "activityPlaceholder": "Choose an activity",
+      "approvalApproval": "An admin approves the members.",
+      "approvalOpen": "Anyone joins at once.",
       "createFailed": "Could not create the group. Please try again.",
       "created": "The group has been created.",
+      "editTitle": "Edit the group",
+      "place": "Pick the address where you meet",
+      "placeClear": "Remove the place",
+      "placeHint": "The map shows only the approximate position.",
       "retry": "Try again",
+      "save": "Save changes",
+      "saveFailed": "Could not save the changes. Please try again.",
+      "saved": "Changes saved",
       "submit": "Create group",
+      "taglineHint": "One line under the name, emoji welcome.",
       "title": "New group"
     },
     "list": {
@@ -1005,6 +1057,7 @@
         "description": "No group matches this selection yet. Try another search, place or activity.",
         "title": "Nothing found"
       },
+      "intro": "A group is a crew that meets regularly. Find yours, or start a new one.",
       "loadError": "Could not load groups",
       "loadMore": "Load more",
       "loadMoreError": "Could not load more groups. Please try again.",
@@ -1021,7 +1074,6 @@
       },
       "searchLabel": "Search groups",
       "searchPlaceholder": "Name, place or activity",
-      "sortNote": "Results are sorted from the newest group.",
       "tabs": {
         "discover": "Discover",
         "mine": "My groups",
@@ -1084,6 +1136,7 @@
         "messageLabel": "Message for the applicant (optional)",
         "messageTooLong": "The message can have at most {{count}} characters."
       },
+      "editLink": "Edit the group",
       "loadError": "Could not load",
       "loading": "Loading…",
       "membersEmpty": "The group has no members yet.",
@@ -1116,6 +1169,13 @@
       },
       "tabsLabel": "Members and requests",
       "title": "Member management"
+    },
+    "map": {
+      "cluster": "{{count}} groups, zoom in",
+      "label": "Map of groups",
+      "loading": "Loading the map…",
+      "pin": "{{name}}, {{count}} members",
+      "unavailable": "The map is not available right now."
     },
     "membershipRequest": {
       "form": {
@@ -1174,20 +1234,46 @@
         "WITHDRAWN": "Withdrawn"
       }
     },
+    "nextEvent": {
+      "freeSeats": "Free seats",
+      "full": "Full",
+      "label": "Next event {{when}}",
+      "none": "No event planned yet"
+    },
     "placeholders": {
       "description": "E.g. We play every Thursday in the school gym, newcomers welcome.",
       "location": "E.g. Prague 8",
       "name": "E.g. Thursday floorball crew",
+      "tagline": "🏐 Regular volleyball for everyone",
       "usualSchedule": "E.g. Thursdays 7 pm"
     },
     "validation": {
       "activityRequired": "Choose an activity",
       "descriptionRequired": "Write a few words about the group",
+      "locationRequired": "Pick where you meet",
       "nameRequired": "Enter a group name",
       "nameTooShort_one": "At least {{count}} character",
       "nameTooShort_other": "At least {{count}} characters",
       "tooLong_one": "Keep it under {{count}} character",
       "tooLong_other": "Keep it under {{count}} characters"
+    },
+    "weekdays": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
+    "weekdaysEvery": {
+      "1": "Every Monday",
+      "2": "Every Tuesday",
+      "3": "Every Wednesday",
+      "4": "Every Thursday",
+      "5": "Every Friday",
+      "6": "Every Saturday",
+      "7": "Every Sunday"
     }
   },
   "header": {
@@ -1394,6 +1480,8 @@
       "activity": "Activity",
       "activityPlaceholder": "All activities",
       "apply": "Apply",
+      "approval": "Joining",
+      "approvalAll": "All",
       "capacity": "How many people fit (spots)",
       "chosenActivities": "Chosen activities",
       "clear": "Clear",
@@ -1440,9 +1528,16 @@
       "results_one": "Show {{count}} event",
       "results_other": "Show {{count}} events",
       "showResults": "Show results",
+      "sort": "Order",
+      "sortBy": {
+        "members": "Most members",
+        "nearest": "Nearest",
+        "newest": "Newest"
+      },
       "sortNote": "Results are sorted by the nearest date.",
       "title": "Filters",
       "unapplied": "Changes take effect when you press Apply.",
+      "upcomingEvent": "Have an upcoming event",
       "week": "This week",
       "weekend": "Weekend",
       "when": "When"
@@ -1591,6 +1686,23 @@
       "title": "Your seat?"
     }
   },
+  "interest": {
+    "removeError": "The event could not be removed from the list. Please try again.",
+    "removed": "Removed from the list",
+    "save": "Interested",
+    "saveError": "The event could not be saved. Please try again.",
+    "saved": "Saved",
+    "undo": "Undo",
+    "watch": {
+      "active": "Watching for a free spot",
+      "nowFree": "A spot has freed up in the meantime. You can join right away.",
+      "offText": "The event is full. Turn on watching and we will let you know as soon as a spot frees up.",
+      "onText": "As soon as a spot frees up, we will let you know. The spot is not held for you: whoever joins first gets it.",
+      "start": "Watch for a free spot",
+      "startError": "Watching could not be turned on. Please try again.",
+      "stopError": "Watching could not be turned off. Please try again."
+    }
+  },
   "landing": {
     "actions": {
       "create": "Add an event",
@@ -1685,7 +1797,10 @@
       "placeholder": "Name, place or activity"
     },
     "seoDescription": "Find an event with a free spot near you: football, board games, trips and more. Join, play and find your crew.",
-    "seoTitle": "Find an event, the crew comes with it"
+    "seoTitle": "Find an event, the crew comes with it",
+    "upcoming": {
+      "empty": "No upcoming events yet. Create one yourself and it will show up here."
+    }
   },
   "language": {
     "label": "Language",
@@ -1709,6 +1824,27 @@
     "hosted": {
       "empty": "You are not organizing any event yet."
     },
+    "interested": {
+      "actionsLabel": "Options of the saved event: {{title}}",
+      "empty": {
+        "description": "Found an event you cannot decide on yet? Tap “Interested” on its detail and you will find it here, along with whether you can still join. Saving reserves nothing.",
+        "find": "Browse events",
+        "title": "Nothing saved yet"
+      },
+      "freeSpots_one": "{{count}} spot left",
+      "freeSpots_other": "{{count}} spots left",
+      "full": "Full",
+      "pastHeading": "Past and cancelled",
+      "remove": "Remove from the list",
+      "state": {
+        "CANCELLED": "Cancelled",
+        "PAST": "Finished",
+        "STARTED": "In progress"
+      },
+      "unwatch": "Stop watching for a free spot",
+      "watch": "Watch for a free spot",
+      "watching": "Watching"
+    },
     "loadMore": "Load more",
     "loading": "Loading your events",
     "rate": "Rate the organizer",
@@ -1726,6 +1862,8 @@
       "applicationsWithCount": "Applications ({{count}})",
       "hosted": "Organizing",
       "hostedWithCount": "Organizing ({{count}})",
+      "interested": "Interested",
+      "interestedWithCount": "Interested ({{count}})",
       "label": "My events"
     },
     "title": "My events"
@@ -1832,6 +1970,7 @@
           "REJECTED": "Your request to join the group {{title}} was rejected"
         }
       },
+      "SPOT_AVAILABLE": "A spot freed up at {{title}}",
       "other": "News about {{title}}"
     },
     "title": "Notifications",

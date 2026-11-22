@@ -10,4 +10,8 @@ export const myEventsKeys = {
     [...myEventsKeys.all(), "applications", userId, filters] as const,
   hosted: (userId: string, filters: object) =>
     [...myEventsKeys.all(), "hosted", userId, filters] as const,
+  // #231: the "Zajímá mě" list, every filter of it at once and one of them.
+  interestedAll: () => [...myEventsKeys.all(), "interested"] as const,
+  interested: (userId: string, filters: object) =>
+    [...myEventsKeys.interestedAll(), userId, filters] as const,
 }

@@ -632,6 +632,9 @@
       "roster": "Soupiska",
       "seats": "{{taken}} z {{total}} míst",
       "signIn": "Přihlásit se",
+      "similar": {
+        "title": "Podobné akce"
+      },
       "state": {
         "cancelled": "Zrušeno",
         "cancelledText": "Akce byla zrušena, o účast už se nedá žádat.",
@@ -665,6 +668,10 @@
         "title": "Kde se sejdeme"
       }
     },
+    "duration": {
+      "custom": "Upřesnit",
+      "hours": "{{count}} h"
+    },
     "edit": {
       "back": "Zpět na detail akce",
       "locked": "Akce už začala nebo je zrušená, proto se nedá měnit.",
@@ -681,8 +688,9 @@
       "contributionNote": "Poznámka k příspěvku (nepovinné)",
       "country": "Země",
       "description": "Popis akce",
-      "endDate": "Datum konce",
-      "endTime": "Čas do",
+      "duration": "Délka trvání",
+      "durationHours": "Hodiny",
+      "durationMinutes": "Minuty",
       "equipment": "Vybavení (nepovinné)",
       "externalChatUrl": "Odkaz na skupinový chat (nepovinné)",
       "externalOccupiedSpots": "Už obsazeno mimo aplikaci",
@@ -844,7 +852,7 @@
       "countryRequired": "Zadejte zemi",
       "dateRequired": "Zadejte datum",
       "descriptionRequired": "Napište pár vět o akci",
-      "endBeforeStart": "Konec musí být po začátku",
+      "durationTooShort": "Akce musí trvat alespoň {{count}} minut",
       "maxBelowMin": "Maximum musí být alespoň jako minimum",
       "maxBelowOccupied": "Maximum nemůže být menší než obsazená místa ({{count}})",
       "occupiedAboveMax": "Obsazených míst nemůže být víc než maximum",
@@ -937,8 +945,14 @@
     }
   },
   "groups": {
+    "active": "Aktivní",
+    "approval": {
+      "APPROVAL": "Na schválení",
+      "OPEN": "Otevřená, bez schvalování"
+    },
     "back": "Zpět",
     "detail": {
+      "about": "O skupině",
       "backToEvents": "Zpět na akce",
       "events": {
         "cancelled": "Zrušeno",
@@ -955,6 +969,12 @@
           "upcoming": "Skupina teď nemá žádné nadcházející akce."
         },
         "groupOnly": "Jen pro skupinu",
+        "hiddenUpcoming_few": "Po schválení členství vás čekají {{count}} nadcházející akce",
+        "hiddenUpcoming_one": "Po schválení členství vás čeká 1 nadcházející akce",
+        "hiddenUpcoming_other": "Po schválení členství vás čeká {{count}} nadcházejících akcí",
+        "hidden_few": "Další {{count}} akce jsou jen pro členy skupiny",
+        "hidden_one": "Další akce je jen pro členy skupiny",
+        "hidden_other": "Dalších {{count}} akcí je jen pro členy skupiny",
         "loadMore": "Načíst další",
         "loadMoreFailed": "Další akce se nepodařilo načíst. Zkuste to prosím znovu.",
         "loading": "Načítáme akce skupiny…",
@@ -964,6 +984,20 @@
         },
         "periodsLabel": "Nadcházející a minulé akce",
         "title": "Akce skupiny"
+      },
+      "facts": {
+        "everyWeek": "Každý týden: {{days}}",
+        "title": "Kde a kdy se schází",
+        "when": "Kdy",
+        "whenNone": "Termín skupina neuvedla.",
+        "where": "Kde se schází",
+        "whereNone": "Místo skupina neuvedla."
+      },
+      "join": {
+        "cta": "Připojit se ke skupině",
+        "failed": "Do skupiny se nepodařilo vstoupit. Zkuste to prosím znovu.",
+        "note": "Skupina je otevřená. Připojte se hned a uvidíte všechny akce.",
+        "title": "Hrajte s námi"
       },
       "loadError": "Skupinu se nepodařilo načíst",
       "loading": "Načítáme skupinu…",
@@ -992,14 +1026,24 @@
         "title": "Členství",
         "withdraw": "Zrušit žádost"
       },
+      "stats": {
+        "average": "hráčů v průměru",
+        "meets": "schází se",
+        "members": "členů",
+        "none": "—",
+        "played": "akcí"
+      },
       "title": "Detail skupiny",
       "visibilityPublic": "Veřejná skupina"
     },
     "fields": {
       "activity": "Aktivita",
+      "approvalMode": "Přijímání členů",
       "description": "Popis",
-      "location": "Lokalita (nepovinné)",
+      "location": "Místo setkání",
+      "meetingDays": "Dny, kdy se scházíte (nepovinné)",
       "name": "Název skupiny",
+      "tagline": "Krátký popisek (nepovinné)",
       "usualSchedule": "Obvyklý termín (nepovinné)"
     },
     "form": {
@@ -1007,10 +1051,20 @@
       "activityError": "Aktivity se nepodařilo načíst.",
       "activityLoading": "Načítáme aktivity…",
       "activityPlaceholder": "Vyberte aktivitu",
+      "approvalApproval": "Členy schvaluje správce.",
+      "approvalOpen": "Kdokoli se připojí hned.",
       "createFailed": "Skupinu se nepodařilo založit. Zkuste to prosím znovu.",
       "created": "Skupina je založená.",
+      "editTitle": "Upravit skupinu",
+      "place": "Vyberte adresu místa setkání",
+      "placeClear": "Odebrat místo",
+      "placeHint": "Na mapě se ukáže jen přibližná poloha místa.",
       "retry": "Zkusit znovu",
+      "save": "Uložit změny",
+      "saveFailed": "Změny se nepodařilo uložit. Zkuste to prosím znovu.",
+      "saved": "Změny jsou uložené",
       "submit": "Vytvořit skupinu",
+      "taglineHint": "Jedna věta pod názvem, emoji vítány.",
       "title": "Nová skupina"
     },
     "list": {
@@ -1022,6 +1076,7 @@
         "description": "Pro tenhle výběr zatím žádná skupina není. Zkuste jiné hledání, lokalitu nebo aktivitu.",
         "title": "Nic nenalezeno"
       },
+      "intro": "Skupina je parta, která se pravidelně schází. Najděte tu svou, nebo založte novou.",
       "loadError": "Skupiny se nepodařilo načíst",
       "loadMore": "Načíst další",
       "loadMoreError": "Další skupiny se nepodařilo načíst. Zkuste to prosím znovu.",
@@ -1038,7 +1093,6 @@
       },
       "searchLabel": "Hledat skupiny",
       "searchPlaceholder": "Název, místo nebo aktivita",
-      "sortNote": "Výsledky řadíme od nejnovější skupiny.",
       "tabs": {
         "discover": "Objevit",
         "mine": "Moje skupiny",
@@ -1101,6 +1155,7 @@
         "messageLabel": "Zpráva pro žadatele (nepovinné)",
         "messageTooLong": "Zpráva může mít nejvýš {{count}} znaků."
       },
+      "editLink": "Upravit skupinu",
       "loadError": "Nepodařilo se načíst",
       "loading": "Načítáme…",
       "membersEmpty": "Skupina zatím nemá žádné členy.",
@@ -1134,6 +1189,13 @@
       },
       "tabsLabel": "Členové a žádosti",
       "title": "Správa členů"
+    },
+    "map": {
+      "cluster": "{{count}} skupin, přiblížit",
+      "label": "Mapa skupin",
+      "loading": "Načítáme mapu…",
+      "pin": "{{name}}, {{count}} členů",
+      "unavailable": "Mapa teď není dostupná."
     },
     "membershipRequest": {
       "form": {
@@ -1192,15 +1254,23 @@
         "WITHDRAWN": "Staženo"
       }
     },
+    "nextEvent": {
+      "freeSeats": "Volná místa",
+      "full": "Obsazeno",
+      "label": "Příští akce {{when}}",
+      "none": "Zatím bez naplánované akce"
+    },
     "placeholders": {
       "description": "Např. Hrajeme každý čtvrtek v hale ZŠ Kobylisy, nováčci vítáni.",
       "location": "Např. Praha 8",
       "name": "Např. Čtvrteční florbalisté",
+      "tagline": "🏐 Pravidelný volejbal pro každého",
       "usualSchedule": "Např. čtvrtky 19:00"
     },
     "validation": {
       "activityRequired": "Vyberte aktivitu",
       "descriptionRequired": "Napište pár vět o skupině",
+      "locationRequired": "Vyberte místo setkání",
       "nameRequired": "Zadejte název skupiny",
       "nameTooShort_few": "Alespoň {{count}} znaky",
       "nameTooShort_one": "Alespoň {{count}} znak",
@@ -1208,6 +1278,24 @@
       "tooLong_few": "Maximálně {{count}} znaky",
       "tooLong_one": "Maximálně {{count}} znak",
       "tooLong_other": "Maximálně {{count}} znaků"
+    },
+    "weekdays": {
+      "1": "Po",
+      "2": "Út",
+      "3": "St",
+      "4": "Čt",
+      "5": "Pá",
+      "6": "So",
+      "7": "Ne"
+    },
+    "weekdaysEvery": {
+      "1": "Každé pondělí",
+      "2": "Každé úterý",
+      "3": "Každou středu",
+      "4": "Každý čtvrtek",
+      "5": "Každý pátek",
+      "6": "Každou sobotu",
+      "7": "Každou neděli"
     }
   },
   "header": {
@@ -1417,6 +1505,8 @@
       "activity": "Aktivita",
       "activityPlaceholder": "Všechny aktivity",
       "apply": "Použít",
+      "approval": "Přijímání členů",
+      "approvalAll": "Všechny",
       "capacity": "Kolik lidí se vejde (počet míst)",
       "chosenActivities": "Vybrané aktivity",
       "clear": "Vymazat",
@@ -1464,9 +1554,16 @@
       "results_one": "Zobrazit {{count}} akci",
       "results_other": "Zobrazit {{count}} akcí",
       "showResults": "Zobrazit výsledky",
+      "sort": "Řazení",
+      "sortBy": {
+        "members": "Nejvíc členů",
+        "nearest": "Nejbližší",
+        "newest": "Nejnovější"
+      },
       "sortNote": "Výsledky řadíme podle nejbližšího termínu.",
       "title": "Filtry",
       "unapplied": "Změny se projeví po stisku Použít.",
+      "upcomingEvent": "Mají nadcházející akci",
       "week": "Tento týden",
       "weekend": "Víkend",
       "when": "Kdy"
@@ -1617,6 +1714,23 @@
       "title": "Tvoje místo?"
     }
   },
+  "interest": {
+    "removeError": "Akci se nepodařilo odebrat ze seznamu. Zkuste to prosím znovu.",
+    "removed": "Odebráno ze seznamu",
+    "save": "Zajímá mě",
+    "saveError": "Akci se nepodařilo uložit. Zkuste to prosím znovu.",
+    "saved": "Uloženo",
+    "undo": "Vrátit",
+    "watch": {
+      "active": "Hlídám volné místo",
+      "nowFree": "Na akci se mezitím uvolnilo místo. Můžete se rovnou přihlásit.",
+      "offText": "Akce je plná. Zapněte hlídání a dáme vám vědět, jakmile se uvolní místo.",
+      "onText": "Jakmile se uvolní místo, pošleme vám upozornění. Místo vám nedržíme: dostane ho, kdo se přihlásí první.",
+      "start": "Hlídat volné místo",
+      "startError": "Hlídání se nepodařilo zapnout. Zkuste to prosím znovu.",
+      "stopError": "Hlídání se nepodařilo vypnout. Zkuste to prosím znovu."
+    }
+  },
   "landing": {
     "actions": {
       "create": "Přidat akci",
@@ -1714,7 +1828,10 @@
       "placeholder": "Název, místo nebo aktivita"
     },
     "seoDescription": "Najdi akci s volným místem kousek od tebe: fotbal, deskovky, výlety a další. Přidej se, zahraj si a najdi partu.",
-    "seoTitle": "Najdi akci, parta přijde sama"
+    "seoTitle": "Najdi akci, parta přijde sama",
+    "upcoming": {
+      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami, až se objeví, najdete ji tady."
+    }
   },
   "language": {
     "label": "Jazyk",
@@ -1738,6 +1855,28 @@
     "hosted": {
       "empty": "Zatím nepořádáte žádnou akci."
     },
+    "interested": {
+      "actionsLabel": "Možnosti uložené akce: {{title}}",
+      "empty": {
+        "description": "Narazíte na akci, o které se ještě nechcete rozhodnout? Na jejím detailu klepněte na „Zajímá mě“ a najdete ji tady, i s tím, jestli se na ni ještě dá přihlásit. Uložením nic nerezervujete.",
+        "find": "Procházet akce",
+        "title": "Zatím nemáte nic uloženého"
+      },
+      "freeSpots_few": "{{count}} volná místa",
+      "freeSpots_one": "{{count}} volné místo",
+      "freeSpots_other": "{{count}} volných míst",
+      "full": "Plno",
+      "pastHeading": "Proběhlé a zrušené",
+      "remove": "Odebrat ze seznamu",
+      "state": {
+        "CANCELLED": "Zrušena",
+        "PAST": "Proběhla",
+        "STARTED": "Probíhá"
+      },
+      "unwatch": "Přestat hlídat volné místo",
+      "watch": "Hlídat volné místo",
+      "watching": "Hlídám místo"
+    },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
@@ -1755,6 +1894,8 @@
       "applicationsWithCount": "Přihlášky ({{count}})",
       "hosted": "Pořádám",
       "hostedWithCount": "Pořádám ({{count}})",
+      "interested": "Zajímá mě",
+      "interestedWithCount": "Zajímá mě ({{count}})",
       "label": "Moje akce"
     },
     "title": "Moje akce"
@@ -1865,6 +2006,7 @@
           "REJECTED": "Tvoje žádost o členství ve skupině {{title}} byla zamítnuta"
         }
       },
+      "SPOT_AVAILABLE": "Na akci {{title}} se uvolnilo místo",
       "other": "Novinka k {{title}}"
     },
     "title": "Notifikace",

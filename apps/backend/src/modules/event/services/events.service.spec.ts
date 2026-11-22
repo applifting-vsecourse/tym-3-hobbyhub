@@ -17,6 +17,7 @@ import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
   ForbiddenException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -234,6 +235,34 @@ describe('EventsService', () => {
     );
   });
 
+  describe('similar events', () => {
+    it('is a 404 when the viewer may not open the detail', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(null);
+
+      await expect(service.getSimilarEvents('nope')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(repository.getSimilarEvents).not.toHaveBeenCalled();
+    });
+
+    it('asks the repository for events like the one in the detail', async () => {
+      const { repository, service } = setup();
+      const now = new Date();
+      repository.getShowableEventById.mockResolvedValue({
+        visibility: 'PUBLIC',
+      } as EventDetail);
+      repository.getEventFacts.mockResolvedValue({
+        organizerIds: ['o1'],
+      } as EventFacts);
+      repository.getSimilarEvents.mockResolvedValue([]);
+
+      await service.getSimilarEvents('e1', { id: 'u1' } as Identity, now);
+
+      expect(repository.getSimilarEvents).toHaveBeenCalledWith('e1', now, []);
+    });
+  });
+
   it('refuses a date range that ends before it starts', async () => {
     const { repository, service } = setup();
 
@@ -406,16 +435,34 @@ describe('EventsService', () => {
         },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
       );
-      expect(groups.getPublicGroup).not.toHaveBeenCalled();
+      expect(groups.assertPublicGroup).not.toHaveBeenCalled();
+    });
+
+    it('shows the events of a group that decides on requests only as a number', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'APPROVAL',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
+      repository.countGroupEvents.mockResolvedValue(5);
+
+      for (const period of ['upcoming', 'past'] as const) {
+        await expect(
+          service.getGroupEvents('g1', undefined, period, 0, now),
+        ).resolves.toEqual({ items: [], total: 0, hiddenCount: 5 });
+      }
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
     });
 
     it('gives anyone else the upcoming public events of a public group', async () => {
       const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
       repository.getGroupEvents.mockResolvedValue(page);
 
       await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
 
-      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1', undefined);
+      expect(groups.assertPublicGroup).toHaveBeenCalledWith('g1', undefined);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
         {
@@ -428,8 +475,32 @@ describe('EventsService', () => {
       );
     });
 
-    it('answers not found to a non-member asking for the past', async () => {
-      const { repository, service } = setup();
+    it('gives a non-member the public past events and only the count of the group-only ones', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
+      repository.getGroupEvents.mockResolvedValue(page);
+      repository.countGroupEvents.mockResolvedValue(3);
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
+      ).resolves.toEqual({ ...page, hiddenCount: 3 });
+      expect(groups.assertPublicGroup).toHaveBeenCalled();
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ period: 'past', visibilities: ['PUBLIC'] }),
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
+      );
+      expect(repository.countGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ visibilities: ['GROUP_ONLY'] }),
+      );
+    });
+
+    it('answers not found to a non-member asking for the past of a group without a public page', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
@@ -439,12 +510,169 @@ describe('EventsService', () => {
 
     it('answers not found for a group without a public page', async () => {
       const { repository, groups, service } = setup();
-      groups.getPublicGroup.mockRejectedValue(new NotFoundException());
+      groups.assertPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', undefined, 'upcoming', 0, now),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(repository.getGroupEvents).not.toHaveBeenCalled();
+    });
+  });
+
+  // #232: the people watching a full event hear when a seat frees up.
+  describe('notifyIfSpotFreed', () => {
+    const full: EventFacts = {
+      id: 'e1',
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+      groupId: null,
+      startAt: inAnHour(),
+      endAt: new Date(inAnHour().getTime() + 3600 * 1000),
+      approvalMode: 'MANUAL',
+      organizerIds: ['organizer', 'co-organizer'],
+      freeSpots: 1,
+      isHidden: false,
+    };
+    const freed = { freeSpotsBefore: 0, freeSpotsAfter: 1 };
+
+    const watching = (
+      watcherIds: string[],
+      facts: EventFacts = full,
+    ): ReturnType<typeof setup> => {
+      const context = setup();
+      context.repository.getEventFacts.mockResolvedValue(facts);
+      context.repository.getFreeSpotWatcherIds.mockResolvedValue(watcherIds);
+      return context;
+    };
+
+    it('tells everyone watching when the full event gets a free seat', async () => {
+      const { notifications, service } = watching(['w1', 'w2']);
+
+      await service.notifyIfSpotFreed('e1', freed, { id: 'leaver' });
+
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledTimes(1);
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith({
+        event: full,
+        watcherIds: ['w1', 'w2'],
+        freedBy: { id: 'leaver' },
+      });
+    });
+
+    it.each([
+      ['more seats free up on an event that has one', 1, 3],
+      ['the event stays full', 0, 0],
+      ['a seat is taken', 1, 0],
+    ])('tells nobody when %s', async (_, freeSpotsBefore, freeSpotsAfter) => {
+      const { repository, notifications, service } = watching(['w1']);
+
+      await service.notifyIfSpotFreed(
+        'e1',
+        { freeSpotsBefore, freeSpotsAfter },
+        null,
+      );
+
+      expect(repository.getFreeSpotWatcherIds).not.toHaveBeenCalled();
+      expect(notifications.notifySpotAvailable).not.toHaveBeenCalled();
+    });
+
+    it.each<[string, Partial<EventFacts>]>([
+      ['cancelled', { status: 'CANCELLED' }],
+      ['hidden by an administrator', { isHidden: true }],
+      ['started', { startAt: new Date(NOW - 1000) }],
+    ])('tells nobody about an event that is %s', async (_, change) => {
+      const { notifications, service } = watching(['w1'], {
+        ...full,
+        ...change,
+      });
+
+      await service.notifyIfSpotFreed('e1', freed, null, new Date(NOW));
+
+      expect(notifications.notifySpotAvailable).not.toHaveBeenCalled();
+    });
+
+    // The repository already leaves out people with a seat or a waiting or
+    // rejected request; the service asks it for this event and adds nobody.
+    it('tells only the watchers the repository finds for the event', async () => {
+      const { repository, notifications, service } = watching(['w1']);
+
+      await service.notifyIfSpotFreed('e1', freed, null);
+
+      expect(repository.getFreeSpotWatcherIds).toHaveBeenCalledWith('e1');
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith(
+        expect.objectContaining({ watcherIds: ['w1'] }),
+      );
+    });
+
+    it('leaves out whoever freed the seat and the organizers', async () => {
+      const { notifications, service } = watching([
+        'leaver',
+        'co-organizer',
+        'w1',
+      ]);
+
+      await service.notifyIfSpotFreed('e1', freed, { id: 'leaver' });
+
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith(
+        expect.objectContaining({ watcherIds: ['w1'] }),
+      );
+    });
+
+    it('leaves out a watcher blocked from an organizer (#239)', async () => {
+      const repository = mock<EventRepository>();
+      repository.getEventFacts.mockResolvedValue(full);
+      repository.getFreeSpotWatcherIds.mockResolvedValue(['w1', 'blocked']);
+      const notifications = mock<NotificationsService>();
+      const blocks = mock<UserBlockVisibility>();
+      blocks.hiddenFor.mockImplementation((userId) =>
+        Promise.resolve(userId === 'blocked' ? ['co-organizer'] : []),
+      );
+      const service = new EventsService(
+        repository,
+        mock<ActivitiesService>(),
+        mock<CancellationReasonsService>(),
+        notifications,
+        mock<GroupsService>(),
+        blocks,
+      );
+
+      await service.notifyIfSpotFreed('e1', freed, null);
+
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith(
+        expect.objectContaining({ watcherIds: ['w1'] }),
+      );
+    });
+
+    it('leaves out a watcher who left the group of a group-only event', async () => {
+      const { repository, groups, notifications, service } = watching(
+        ['member', 'gone'],
+        { ...full, visibility: 'GROUP_ONLY', groupId: 'g1' },
+      );
+      groups.getMemberRole.mockImplementation((_groupId, userId) =>
+        Promise.resolve(userId === 'member' ? 'MEMBER' : null),
+      );
+      repository.isInvolvedIn.mockResolvedValue(false);
+
+      await service.notifyIfSpotFreed('e1', freed, null);
+
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith(
+        expect.objectContaining({ watcherIds: ['member'] }),
+      );
+    });
+
+    // ADR-0015: the change is saved; a missing notification is the worst case.
+    it('never fails the change that freed the seat', async () => {
+      const { repository, notifications, service } = watching([]);
+      repository.getFreeSpotWatcherIds.mockRejectedValue(new Error('down'));
+      const logged = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.notifyIfSpotFreed('e1', freed, null),
+      ).resolves.toBeUndefined();
+      expect(notifications.notifySpotAvailable).not.toHaveBeenCalled();
+      expect(logged).toHaveBeenCalled();
+      logged.mockRestore();
     });
   });
 
@@ -455,7 +683,11 @@ describe('EventsService', () => {
       const { repository, service } = setup();
       const event = anEvent();
       repository.getEventById.mockResolvedValue(event);
-      repository.updateEvent.mockResolvedValue({ ok: true, event });
+      repository.updateEvent.mockResolvedValue({
+        ok: true,
+        event,
+        freeSpotsBefore: event.freeSpots,
+      });
       const data = input();
 
       await expect(service.updateEvent(organizer, 'e1', data)).resolves.toEqual(
@@ -487,7 +719,11 @@ describe('EventsService', () => {
         startAt: new Date(event.startAt.getTime() + 3600 * 1000),
       });
       repository.getEventById.mockResolvedValue(event);
-      repository.updateEvent.mockResolvedValue({ ok: true, event: moved });
+      repository.updateEvent.mockResolvedValue({
+        ok: true,
+        event: moved,
+        freeSpotsBefore: moved.freeSpots,
+      });
       repository.getEventAudience.mockResolvedValue({
         participantIds: ['p1', 'p2'],
         applicantIds: ['a1'],
@@ -503,6 +739,41 @@ describe('EventsService', () => {
       });
     });
 
+    // #232: a larger maximum, or fewer seats taken outside the app.
+    it('tells the watchers when the edit frees a seat on a full event', async () => {
+      const { repository, notifications, service } = setup();
+      const event = anEvent({ freeSpots: 0 });
+      const larger = anEvent({ maxParticipants: 14, freeSpots: 2 });
+      repository.getEventById.mockResolvedValue(event);
+      repository.updateEvent.mockResolvedValue({
+        ok: true,
+        event: larger,
+        freeSpotsBefore: 0,
+      });
+      repository.getEventFacts.mockResolvedValue({
+        id: 'e1',
+        status: 'PUBLISHED',
+        visibility: 'PUBLIC',
+        groupId: null,
+        startAt: larger.startAt,
+        endAt: larger.endAt,
+        approvalMode: 'MANUAL',
+        organizerIds: ['u1'],
+        freeSpots: 2,
+        isHidden: false,
+      });
+      repository.getFreeSpotWatcherIds.mockResolvedValue(['w1']);
+
+      await service.updateEvent(organizer, 'e1', {
+        ...input(),
+        maxParticipants: 14,
+      });
+
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith(
+        expect.objectContaining({ watcherIds: ['w1'], freedBy: organizer }),
+      );
+    });
+
     it('tells nobody about an edit that kept the time and the place', async () => {
       const { repository, notifications, service } = setup();
       const event = anEvent();
@@ -510,6 +781,7 @@ describe('EventsService', () => {
       repository.updateEvent.mockResolvedValue({
         ok: true,
         event: { ...event, title: 'Páteční florbal' },
+        freeSpotsBefore: event.freeSpots,
       });
 
       await service.updateEvent(organizer, 'e1', input());
@@ -582,7 +854,11 @@ describe('EventsService', () => {
       const { repository, service } = setup();
       const event = anEvent({ venueType: 'ONLINE', location: null });
       repository.getEventById.mockResolvedValue(event);
-      repository.updateEvent.mockResolvedValue({ ok: true, event });
+      repository.updateEvent.mockResolvedValue({
+        ok: true,
+        event,
+        freeSpotsBefore: event.freeSpots,
+      });
 
       await expect(
         service.updateEvent(organizer, 'e1', {
@@ -967,6 +1243,7 @@ describe('EventsService', () => {
       repository.updateExternalOccupiedSpots.mockResolvedValue({
         ok: true,
         event: saved,
+        freeSpotsBefore: saved.freeSpots,
       });
 
       await expect(
@@ -978,6 +1255,33 @@ describe('EventsService', () => {
         expect.any(Date),
       );
       expect(notifications.notifyEventChanged).not.toHaveBeenCalled();
+    });
+
+    // #232: fewer seats taken outside the app free one on a full event.
+    it('tells the watchers when fewer outside seats free one up', async () => {
+      const { repository, notifications, service } = setup();
+      repository.getEventFacts.mockResolvedValue(facts);
+      repository.getEventById.mockResolvedValue(
+        anEvent({ approvedCount: 6, externalOccupiedSpots: 6, freeSpots: 0 }),
+      );
+      repository.updateExternalOccupiedSpots.mockResolvedValue({
+        ok: true,
+        event: anEvent({
+          approvedCount: 6,
+          externalOccupiedSpots: 4,
+          freeSpots: 2,
+        }),
+        freeSpotsBefore: 0,
+      });
+      repository.getFreeSpotWatcherIds.mockResolvedValue(['w1']);
+
+      await service.updateExternalOccupiedSpots(organizer, 'e1', 4);
+
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith({
+        event: facts,
+        watcherIds: ['w1'],
+        freedBy: organizer,
+      });
     });
 
     it('refuses more than the maximum leaves and saves nothing', async () => {

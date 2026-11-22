@@ -6,6 +6,7 @@ export const GROUP_NAME_MAX_LENGTH = 80;
 export const GROUP_DESCRIPTION_MAX_LENGTH = 2000;
 export const GROUP_LOCATION_MAX_LENGTH = 100;
 export const GROUP_SCHEDULE_MAX_LENGTH = 100;
+export const GROUP_TAGLINE_MAX_LENGTH = 120;
 
 export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
@@ -57,6 +58,23 @@ export const memberActionViolations = (
   return isAllowed(actor.role, target.role, action) ? [] : ['NOT_ALLOWED'];
 };
 
+// ADR-0028: OPEN lets anyone in at once, APPROVAL keeps the request the admins
+// decide on (ADR-0008).
+export type GroupApprovalMode = 'OPEN' | 'APPROVAL';
+export const GROUP_APPROVAL_MODES = ['OPEN', 'APPROVAL'] as const;
+
+// ISO weekdays, 1 = Monday .. 7 = Sunday.
+export const GROUP_MEETING_DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+// What the list says about a group's next event: when, and whether a seat is
+// free. Public facts of a public event.
+export type GroupNextEvent = {
+  id: string;
+  title: string;
+  startAt: Date;
+  hasFreeSeats: boolean;
+};
+
 export type GroupVisibility = 'PUBLIC' | 'PRIVATE';
 export type GroupStatus = 'ACTIVE' | 'CANCELLED';
 
@@ -66,11 +84,21 @@ export type Group = {
   description: string;
   locationName: string | null;
   usualSchedule: string | null;
+  // The group's own short line under its name; emoji welcome.
+  tagline: string | null;
   visibility: GroupVisibility;
   status: GroupStatus;
   createdAt: Date;
   activity: Activity;
   memberCount: number;
+  // #269: a public event upcoming or ended in the last 60 days.
+  isActive: boolean;
+  approvalMode: GroupApprovalMode;
+  meetingDays: number[];
+  // Where the group meets, for the map; both or none (CHECK in the migration).
+  latitude: number | null;
+  longitude: number | null;
+  nextEvent: GroupNextEvent | null;
 };
 
 // F-02.5: who may see a group's public page. Anything else is shown as "not
@@ -83,9 +111,57 @@ export type CreateGroupData = {
   name: string;
   activityId: string;
   description: string;
-  locationName?: string;
+  // ADR-0028: every group has a place, with its position.
+  locationName: string;
+  latitude: number;
+  longitude: number;
   usualSchedule?: string;
+  tagline?: string;
+  approvalMode?: GroupApprovalMode;
+  meetingDays?: number[];
 };
+
+// What a group's admins may change (ADR-0028); anything left out stays.
+// `null` takes the tagline or the schedule away; a place cannot be taken away.
+export type UpdateGroupData = Partial<
+  Omit<CreateGroupData, 'tagline' | 'usualSchedule'>
+> & { tagline?: string | null; usualSchedule?: string | null };
+
+// Rules between the place fields of a change (ADR-0028): the name and both
+// coordinates come together or not at all, so the pin never disagrees with the
+// name.
+export type GroupPlaceViolation = 'PLACE_INCOMPLETE';
+export const groupPlaceViolations = (
+  data: Pick<UpdateGroupData, 'locationName' | 'latitude' | 'longitude'>,
+): GroupPlaceViolation[] => {
+  const given = [data.locationName, data.latitude, data.longitude].filter(
+    (value) => value !== undefined,
+  ).length;
+  return given === 0 || given === 3 ? [] : ['PLACE_INCOMPLETE'];
+};
+
+// `PartialType` lets `null` through where a field is left out, but only the
+// tagline and the schedule can be taken away: the rest is required, and a
+// `null` there would empty the place or crash the database.
+const NULLABLE_UPDATE_FIELDS = ['tagline', 'usualSchedule'];
+export const groupRequiredFieldsSetToNull = (data: UpdateGroupData): string[] =>
+  Object.entries(data)
+    .filter(
+      ([field, value]) =>
+        value === null && !NULLABLE_UPDATE_FIELDS.includes(field),
+    )
+    .map(([field]) => field);
+
+// What a check of access needs of a group; the full group is for pages that show it.
+export type GroupAccess = Pick<
+  Group,
+  'id' | 'visibility' | 'status' | 'approvalMode'
+>;
+
+// A group's numbers on its page, from its public events that have happened.
+export type GroupStats = { playedEvents: number; averageParticipants: number };
+
+export type GroupSort = 'newest' | 'nearest' | 'members';
 
 // F-07.3: a member as the group's admins see them in member management.
 export type GroupMember = {
@@ -128,6 +204,12 @@ export type GroupDiscoverFilter = {
   search?: string;
   /** Part of the place. */
   location?: string;
+  approvalMode?: GroupApprovalMode;
+  /** Has a public event that has not ended yet. */
+  onlyWithUpcomingEvent?: boolean;
+  /** Within `radiusKm` of a point; groups without a position are left out. */
+  near?: { latitude: number; longitude: number; radiusKm: number };
+  sort?: GroupSort;
 };
 
 export type NearbyGroups = {

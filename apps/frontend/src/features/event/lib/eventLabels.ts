@@ -24,6 +24,28 @@ export function eventTime(startAt: Date, locale: string): string {
   return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(startAt)
 }
 
+/**
+ * The date a row leads with: "Dnes", "Zítra", then "15. 10.", with the year
+ * ("15. 1. 2027") only when the event is not in the current year.
+ */
+export function eventDate(t: TFunction, startAt: Date, now: Date, locale: string): string {
+  const near = nearDay(t, startAt, now)
+  if (near) return near
+  const isThisYear = startAt.getFullYear() === now.getFullYear()
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "numeric",
+    ...(isThisYear ? {} : { year: "numeric" }),
+  }).format(startAt)
+}
+
+/** What sits under the date: "čt 19:00", or just "19:00" when the date is "Dnes" or "Zítra". */
+export function eventClock(t: TFunction, startAt: Date, now: Date, locale: string): string {
+  const time = eventTime(startAt, locale)
+  if (nearDay(t, startAt, now)) return time
+  return `${new Intl.DateTimeFormat(locale, { weekday: "short" }).format(startAt)} ${time}`
+}
+
 /** Day heading of a group of events: "Dnes", "Zítra", then "čtvrtek 29. října". */
 export function eventDay(t: TFunction, startAt: Date, now: Date, locale: string): string {
   return (

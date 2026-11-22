@@ -9,7 +9,27 @@ import {
   isOrganizerOf,
   moderationConcernsPeople,
   occupancyOf,
+  spotBecameFree,
 } from '@/modules/event/domain/event';
+
+// #232: the one moment the people watching a full event hear about.
+describe('spotBecameFree', () => {
+  it.each([
+    [0, 1, true],
+    [0, 3, true],
+    [1, 2, false],
+    [0, 0, false],
+    [1, 0, false],
+    [2, 1, false],
+  ])(
+    'from %i free seats to %i is %s',
+    (freeSpotsBefore, freeSpotsAfter, expected) => {
+      expect(spotBecameFree({ freeSpotsBefore, freeSpotsAfter })).toBe(
+        expected,
+      );
+    },
+  );
+});
 
 describe('occupancyOf', () => {
   it('adds seats taken outside the app to the approved participants', () => {

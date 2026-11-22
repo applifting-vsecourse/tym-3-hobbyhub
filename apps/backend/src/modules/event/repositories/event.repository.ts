@@ -28,6 +28,7 @@ import {
   EventLocation,
   EventAttendee,
   EventSeatFacts,
+  EventSeatsChangeResult,
   GeoPoint,
   GroupEventListItem,
   GroupEventPage,
@@ -41,6 +42,8 @@ import {
   occupancyOf,
   Page,
   ParticipantEventInfo,
+  SIMILAR_EVENTS_LIMIT,
+  SIMILAR_EVENTS_WINDOW_DAYS,
   UpdateEventData,
   ViewerEventState,
 } from '@/modules/event/domain/event';
@@ -393,6 +396,23 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   }),
 });
 
+// #232: the free seats of the event locked by the caller, before it writes.
+const freeSpotsOfLocked = async (
+  tx: Prisma.TransactionClient,
+  id: string,
+  approvedCount: number,
+): Promise<number> => {
+  const event = await tx.event.findUniqueOrThrow({
+    where: { id },
+    select: {
+      minParticipants: true,
+      maxParticipants: true,
+      externalOccupiedSpots: true,
+    },
+  });
+  return occupancyOf({ ...event, approvedCount }).freeSpots;
+};
+
 @Injectable()
 export class EventRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -444,7 +464,7 @@ export class EventRepository {
     id: string,
     data: UpdateEventData,
     now: Date,
-  ): Promise<EventChangeResult> {
+  ): Promise<EventSeatsChangeResult> {
     return this.prisma.$transaction(async (tx) => {
       // Lock first, as createApproved does, so a request cannot be approved
       // between counting the seats and writing the new maximum.
@@ -452,6 +472,7 @@ export class EventRepository {
       const approved = await tx.participation.count({
         where: { eventId: id, status: ParticipationStatus.APPROVED },
       });
+      const freeSpotsBefore = await freeSpotsOfLocked(tx, id, approved);
       if (data.maxParticipants < data.externalOccupiedSpots + approved) {
         return { ok: false, violation: 'MAX_BELOW_OCCUPIED' } as const;
       }
@@ -494,7 +515,11 @@ export class EventRepository {
         where: { id },
         include,
       });
-      return { ok: true, event: mapPrismaEventToDomain(event) } as const;
+      return {
+        ok: true,
+        event: mapPrismaEventToDomain(event),
+        freeSpotsBefore,
+      } as const;
     });
   }
 
@@ -504,12 +529,13 @@ export class EventRepository {
     id: string,
     externalOccupiedSpots: number,
     now: Date,
-  ): Promise<EventChangeResult> {
+  ): Promise<EventSeatsChangeResult> {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
       const approved = await tx.participation.count({
         where: { eventId: id, status: ParticipationStatus.APPROVED },
       });
+      const freeSpotsBefore = await freeSpotsOfLocked(tx, id, approved);
       const event = await tx.event.findUniqueOrThrow({
         where: { id },
         select: { maxParticipants: true },
@@ -532,7 +558,11 @@ export class EventRepository {
         where: { id },
         include,
       });
-      return { ok: true, event: mapPrismaEventToDomain(updated) } as const;
+      return {
+        ok: true,
+        event: mapPrismaEventToDomain(updated),
+        freeSpotsBefore,
+      } as const;
     });
   }
 
@@ -608,6 +638,34 @@ export class EventRepository {
         ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
       ],
     };
+  }
+
+  // #232: who watches the event for a free seat and could still ask for it:
+  // no seat, and no request waiting or rejected (ADR-0013: a rejection is
+  // final). Asking switches the watching off already; this is the safety net.
+  // The rows are the "Zajímá mě" list's (ADR-0030); reading their ids here
+  // spares the event module a dependency on that module, which depends on this
+  // one. Who of them may still see the event is the service's to decide.
+  async getFreeSpotWatcherIds(eventId: string): Promise<string[]> {
+    const rows = await this.prisma.eventInterest.findMany({
+      where: {
+        eventId,
+        watchesFreeSpot: true,
+        user: {
+          participations: {
+            none: { eventId, status: ParticipationStatus.APPROVED },
+          },
+          participationRequests: {
+            none: {
+              eventId,
+              status: { in: [RequestStatus.PENDING, RequestStatus.REJECTED] },
+            },
+          },
+        },
+      },
+      select: { userId: true },
+    });
+    return rows.map((row) => row.userId);
   }
 
   // #239, ADR-0022: an administrator hides an event, or brings it back, and
@@ -720,6 +778,44 @@ export class EventRepository {
         ? { withoutLocationCount: Number(totalRows[0]?.withoutLocation ?? 0) }
         : {}),
     };
+  }
+
+  // Events like the given one, for the detail page: upcoming, public, with a
+  // free seat, never the event itself. Those with the same activity, in the
+  // same city (any place for an online source) and starting within the window
+  // come first, nearest in time first; the rest of the same activity fills up
+  // to the limit, also nearest in time first.
+  async getSimilarEvents(
+    eventId: string,
+    now: Date,
+    hiddenOrganizerIds: string[] = [],
+  ): Promise<EventListItem[]> {
+    const where = allOf([
+      Prisma.sql`e."id" <> s."id"`,
+      Prisma.sql`e."activityId" = s."activityId"`,
+      Prisma.sql`e."status" = 'PUBLISHED'`,
+      Prisma.sql`e."visibility" = 'PUBLIC'`,
+      Prisma.sql`NOT e."isHidden"`,
+      Prisma.sql`e."endAt" > ${now}`,
+      ...eventListRangeConditions({ onlyWithFreeSpots: true }),
+      ...(hiddenOrganizerIds.length > 0
+        ? [notOrganizedBy(hiddenOrganizerIds)]
+        : []),
+    ]);
+    const sameCity = Prisma.sql`(s."venueType" = 'ONLINE' OR (
+      s."locationCity" IS NOT NULL
+      AND lower(e."locationCity") = lower(s."locationCity")))`;
+    const closeInTime = Prisma.sql`abs(extract(epoch FROM (e."startAt" - s."startAt"))) <= ${SIMILAR_EVENTS_WINDOW_DAYS * 86400}`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT e."id" FROM "event" e
+      JOIN "event" s ON s."id" = ${eventId}
+      WHERE ${where}
+      ORDER BY
+        CASE WHEN ${sameCity} AND ${closeInTime} THEN 0 ELSE 1 END ASC,
+        abs(extract(epoch FROM (e."startAt" - s."startAt"))) ASC,
+        e."id" ASC
+      LIMIT ${SIMILAR_EVENTS_LIMIT}`;
+    return this.listItemsInOrder(rows.map((row) => row.id));
   }
 
   // The list cards of the ids in the order given; an id that is gone by now
@@ -933,6 +1029,20 @@ export class EventRepository {
   // first. Past: over, newest first. Cancelled ones stay, drafts, private and
   // hidden ones never show; which visibilities the viewer gets is the
   // service's to decide.
+  async countGroupEvents(
+    groupId: string,
+    filter: {
+      period: GroupEventsPeriod;
+      visibilities: GroupEventListItem['visibility'][];
+      now: Date;
+      hiddenOrganizerIds?: string[];
+    },
+  ): Promise<number> {
+    return this.prisma.event.count({
+      where: groupEventsWhere(groupId, filter),
+    });
+  }
+
   async getGroupEvents(
     groupId: string,
     {
@@ -949,19 +1059,12 @@ export class EventRepository {
     },
     { limit, offset }: Page,
   ): Promise<GroupEventPage> {
-    const where: Prisma.EventWhereInput = {
-      groupId,
-      status: { not: EventStatus.DRAFT },
-      isHidden: false,
-      visibility: { in: visibilities },
-      endAt: period === 'upcoming' ? { gt: now } : { lte: now },
-      ...(hiddenOrganizerIds.length > 0
-        ? {
-            organizerId: { notIn: hiddenOrganizerIds },
-            coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
-          }
-        : {}),
-    };
+    const where = groupEventsWhere(groupId, {
+      period,
+      visibilities,
+      now,
+      hiddenOrganizerIds,
+    });
     const direction = period === 'upcoming' ? 'asc' : 'desc';
     const [events, total] = await Promise.all([
       this.prisma.event.findMany({
@@ -1248,4 +1351,33 @@ export class EventRepository {
     });
     return new Map(events.map((event) => [event.id, event.organizerId]));
   }
+}
+
+function groupEventsWhere(
+  groupId: string,
+  {
+    period,
+    visibilities,
+    now,
+    hiddenOrganizerIds = [],
+  }: {
+    period: GroupEventsPeriod;
+    visibilities: GroupEventListItem['visibility'][];
+    now: Date;
+    hiddenOrganizerIds?: string[];
+  },
+): Prisma.EventWhereInput {
+  return {
+    groupId,
+    status: { not: EventStatus.DRAFT },
+    isHidden: false,
+    visibility: { in: visibilities },
+    endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+    ...(hiddenOrganizerIds.length > 0
+      ? {
+          organizerId: { notIn: hiddenOrganizerIds },
+          coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
+        }
+      : {}),
+  };
 }
