@@ -398,6 +398,8 @@ type Example = {
   external?: number;
   contribution?: number;
   venueType?: VenueType;
+  // #218: a place's address is public unless the example says otherwise.
+  isAddressPublic?: boolean;
   place?: Place;
   onlineUrl?: string;
   // F-06.5: shown to approved participants only.
@@ -622,7 +624,7 @@ export async function seedEvents(
       startAt: at(4, 17),
       min: 2,
       max: 4,
-      venueType: VenueType.PRIVATE_VENUE,
+      isAddressPublic: false,
       place: {
         city: 'Brno',
         district: 'Brno-Žabovřesky',
@@ -927,7 +929,9 @@ export async function seedEvents(
 
     const { place } = example;
     const status = example.status ?? EventStatus.PUBLISHED;
-    const venueType = example.venueType ?? VenueType.PUBLIC_VENUE;
+    const venueType = example.venueType ?? VenueType.PLACE;
+    const isAddressPublic =
+      venueType === VenueType.PLACE && (example.isAddressPublic ?? true);
 
     const event = await prisma.event.create({
       data: {
@@ -949,6 +953,7 @@ export async function seedEvents(
           : {}),
         approvalMode: ApprovalMode.MANUAL,
         venueType,
+        isAddressPublic,
         onlineUrl: example.onlineUrl,
         contact: example.contact,
         externalChatUrl: example.externalChatUrl,

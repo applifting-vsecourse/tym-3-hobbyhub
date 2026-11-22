@@ -7,6 +7,7 @@ import {
   EventFacts,
   EventSeatFacts,
   GROUP_EVENTS_PAGE_SIZE,
+  UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
@@ -41,7 +42,8 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   equipment: null,
   status: 'PUBLISHED',
   visibility: 'PUBLIC',
-  venueType: 'PUBLIC_VENUE',
+  venueType: 'PLACE',
+  isAddressPublic: false,
   approvalMode: 'MANUAL',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
@@ -83,11 +85,13 @@ const anEvent = (overrides: Partial<Event> = {}): Event => ({
   ...overrides,
 });
 
-const input = (): CreateEventData => ({
+// A new event and an edit of one: the edit also says the kind of venue.
+const input = (): CreateEventData & UpdateEventData => ({
   title: 'Čtvrteční florbal',
   activityId: 'a1',
   description: 'Rekreační hra pro mírně pokročilé.',
-  venueType: 'PUBLIC_VENUE',
+  venueType: 'PLACE',
+  isAddressPublic: false,
   approvalMode: 'AUTOMATIC',
   startAt: inAnHour(),
   endAt: new Date(inAnHour().getTime() + 3600 * 1000),
@@ -866,7 +870,7 @@ describe('EventsService', () => {
       ...overrides,
     });
     const info = {
-      venueType: 'PUBLIC_VENUE' as const,
+      venueType: 'PLACE' as const,
       location: null,
       organizerName: 'Jana',
       externalChatUrl: 'https://chat.whatsapp.com/abc',
