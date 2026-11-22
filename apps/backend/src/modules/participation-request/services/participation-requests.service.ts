@@ -193,18 +193,20 @@ export class ParticipationRequestsService {
     if (violations.length > 0) throw violationsError(violations);
 
     // Who cancels comes from the session, never from the request body.
-    const refusal = await this.repository.cancelSeat({
+    const result = await this.repository.cancelSeat({
       eventId,
       userId: user.id,
       message,
       at: now,
     });
-    if (refusal) throw violationsError([refusal]);
+    if (typeof result === 'string') throw violationsError([result]);
     await this.notificationsService.notifyParticipantCancelled({
       event,
       participant: user,
       message,
     });
+    // #232: the people watching a full event hear about the seat.
+    await this.eventsService.notifyIfSpotFreed(eventId, result, user, now);
   }
 
   // F-05.7: the requests waiting on the event, for its organizers.
@@ -346,12 +348,34 @@ export class ParticipationRequestsService {
   }
 
   // #239, ADR-0022: called by the administration once two people are blocked
-  // from each other. Nobody is told: the block must not show.
-  detachBlockedPair(
+  // from each other. Nobody involved is told: the block must not show. Those
+  // watching a full event where a seat went hear only that a seat is free
+  // (#232), which does not say why, and nobody is named.
+  async detachBlockedPair(
     a: string,
     b: string,
     now: Date = new Date(),
   ): Promise<void> {
-    return this.repository.detachBlockedPair(a, b, now);
+    const changes = await this.repository.detachBlockedPair(a, b, now);
+    for (const { eventId, ...change } of changes) {
+      await this.eventsService.notifyIfSpotFreed(eventId, change, null, now);
+    }
+  }
+
+  // #232: why the person may not ask to join the event now, as on the detail;
+  // the "Zajímá mě" list lets them watch a full event only when that is the
+  // one reason. Null for an event they may not see.
+  async getJoinViolations(
+    user: Identity,
+    eventId: string,
+    now: Date = new Date(),
+  ): Promise<JoinRuleViolation[] | null> {
+    const event = await this.eventsService.getVisibleEventSeatFacts(
+      eventId,
+      user.id,
+    );
+    if (!event) return null;
+    const requests = await this.repository.getRequestsOf(eventId, user.id);
+    return joinRuleViolations(event, user.id, requests, now);
   }
 }

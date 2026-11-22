@@ -213,15 +213,23 @@ describe('MyEventsService', () => {
   // #231
   describe('getInterested', () => {
     const anEvent = (id: string, endAt: string): EventListItem =>
-      ({ id, endAt: new Date(endAt) }) as EventListItem;
+      ({
+        id,
+        startAt: new Date(new Date(endAt).getTime() - 2 * 3600 * 1000),
+        endAt: new Date(endAt),
+      }) as EventListItem;
+
+    beforeEach(() => {
+      interests.getWatchableEventIds.mockResolvedValue(new Set());
+    });
 
     it('keeps the order of the page and tells where each event stands', async () => {
       interests.getMyPage.mockResolvedValue({
         items: [
-          { eventId: 'soon', status: 'PUBLISHED' },
-          { eventId: 'ended', status: 'PUBLISHED' },
-          { eventId: 'cancelled', status: 'CANCELLED' },
-          { eventId: 'finished', status: 'FINISHED' },
+          { eventId: 'soon', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'ended', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'cancelled', status: 'CANCELLED', watchesFreeSpot: false },
+          { eventId: 'finished', status: 'FINISHED', watchesFreeSpot: false },
         ],
         total: 30,
       });
@@ -246,9 +254,49 @@ describe('MyEventsService', () => {
       expect(interests.getMyPage).toHaveBeenCalledWith(user, page, filter, now);
     });
 
+    // #232: whether each is watched, and whether it may be: only what has
+    // not started is even asked about.
+    it('tells which events are watched and which may be', async () => {
+      interests.getMyPage.mockResolvedValue({
+        items: [
+          { eventId: 'watched', status: 'PUBLISHED', watchesFreeSpot: true },
+          { eventId: 'full', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'started', status: 'PUBLISHED', watchesFreeSpot: false },
+        ],
+        total: 3,
+      });
+      events.getListItemsByIds.mockResolvedValue([
+        anEvent('watched', '2030-01-03T10:00:00Z'),
+        anEvent('full', '2030-01-04T10:00:00Z'),
+        anEvent('started', '2030-01-01T13:00:00Z'),
+      ]);
+      interests.getWatchableEventIds.mockResolvedValue(new Set(['full']));
+
+      const result = await service.getInterested(user, page, filter, now);
+
+      expect(
+        result.items.map(({ id, watchesFreeSpot, canWatchFreeSpot }) => [
+          id,
+          watchesFreeSpot,
+          canWatchFreeSpot,
+        ]),
+      ).toEqual([
+        ['watched', true, false],
+        ['full', false, true],
+        ['started', false, false],
+      ]);
+      expect(interests.getWatchableEventIds).toHaveBeenCalledWith(
+        user,
+        ['watched', 'full'],
+        now,
+      );
+    });
+
     it('drops an event that disappeared between the two queries', async () => {
       interests.getMyPage.mockResolvedValue({
-        items: [{ eventId: 'gone', status: 'PUBLISHED' }],
+        items: [
+          { eventId: 'gone', status: 'PUBLISHED', watchesFreeSpot: false },
+        ],
         total: 1,
       });
       events.getListItemsByIds.mockResolvedValue([]);

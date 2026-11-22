@@ -114,21 +114,33 @@ export class MyEventsService {
       rows.map((row) => row.eventId),
     );
     const byId = new Map(events.map((event) => [event.id, event]));
+    // #232: only an event still ahead can be watched; the rules decide the rest.
+    const watchable = await this.interestsService.getWatchableEventIds(
+      user,
+      events
+        .filter((event) => event.startAt.getTime() > now.getTime())
+        .map((event) => event.id),
+      now,
+    );
     return {
-      items: rows.flatMap(({ eventId, status }): MyInterestedEvent[] => {
-        const event = byId.get(eventId);
-        return event
-          ? [
-              {
-                ...event,
-                state: interestedEventStateOf(
-                  { status, endAt: event.endAt },
-                  now,
-                ),
-              },
-            ]
-          : [];
-      }),
+      items: rows.flatMap(
+        ({ eventId, status, watchesFreeSpot }): MyInterestedEvent[] => {
+          const event = byId.get(eventId);
+          return event
+            ? [
+                {
+                  ...event,
+                  state: interestedEventStateOf(
+                    { status, endAt: event.endAt },
+                    now,
+                  ),
+                  watchesFreeSpot,
+                  canWatchFreeSpot: watchable.has(eventId),
+                },
+              ]
+            : [];
+        },
+      ),
       total,
     };
   }

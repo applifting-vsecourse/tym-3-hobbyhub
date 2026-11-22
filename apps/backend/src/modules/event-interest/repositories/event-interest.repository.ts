@@ -1,6 +1,9 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { Prisma } from '@/generated/prisma/client';
-import { EventInterestPage } from '@/modules/event-interest/domain/event-interest';
+import {
+  EventInterestPage,
+  EventInterestRow,
+} from '@/modules/event-interest/domain/event-interest';
 import {
   EventFilter,
   EventStatus,
@@ -30,16 +33,36 @@ export class EventInterestRepository {
     });
   }
 
-  // Idempotent as well: removing what is not there removes nothing.
+  // Idempotent as well: removing what is not there removes nothing. The
+  // watching goes with the row (#232).
   async remove(userId: string, eventId: string): Promise<void> {
     await this.prisma.eventInterest.deleteMany({ where: { userId, eventId } });
   }
 
-  async isSaved(userId: string, eventId: string): Promise<boolean> {
-    const count = await this.prisma.eventInterest.count({
-      where: { userId, eventId },
+  // #232: watching saves the event too, in one write; watching it again
+  // changes nothing (a double tap, two windows).
+  async watch(userId: string, eventId: string): Promise<void> {
+    await this.prisma.eventInterest.upsert({
+      where: { userId_eventId: { userId, eventId } },
+      create: { userId, eventId, watchesFreeSpot: true },
+      update: { watchesFreeSpot: true },
     });
-    return count > 0;
+  }
+
+  // #232: the event stays on the list. Nothing to stop is no error.
+  async unwatch(userId: string, eventId: string): Promise<void> {
+    await this.prisma.eventInterest.updateMany({
+      where: { userId, eventId, watchesFreeSpot: true },
+      data: { watchesFreeSpot: false },
+    });
+  }
+
+  async getRow(userId: string, eventId: string): Promise<EventInterestRow> {
+    const row = await this.prisma.eventInterest.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+      select: { watchesFreeSpot: true },
+    });
+    return { isSaved: row !== null, isWatching: row?.watchesFreeSpot ?? false };
   }
 
   // A page of the person's list, narrowed by the filter of the event list.
@@ -64,8 +87,13 @@ export class EventInterestRepository {
     ]);
     const isAhead = Prisma.sql`(e."status" = 'PUBLISHED' AND e."endAt" >= ${now})`;
     const [pageRows, totalRows] = await Promise.all([
-      this.prisma.$queryRaw<{ id: string; status: EventStatus }[]>`
-        SELECT e."id", e."status"::text AS "status" FROM "event" e
+      this.prisma.$queryRaw<
+        { id: string; status: EventStatus; watchesFreeSpot: boolean }[]
+      >`
+        SELECT e."id", e."status"::text AS "status",
+          (SELECT i."watchesFreeSpot" FROM "event_interest" i
+            WHERE i."eventId" = e."id" AND i."userId" = ${userId}) AS "watchesFreeSpot"
+        FROM "event" e
         JOIN "activity" a ON a."id" = e."activityId"
         WHERE ${where}
         ORDER BY ${aheadFirstOrder(isAhead)}
@@ -76,7 +104,11 @@ export class EventInterestRepository {
         WHERE ${where}`,
     ]);
     return {
-      items: pageRows.map((row) => ({ eventId: row.id, status: row.status })),
+      items: pageRows.map((row) => ({
+        eventId: row.id,
+        status: row.status,
+        watchesFreeSpot: row.watchesFreeSpot,
+      })),
       total: Number(totalRows[0]?.total ?? 0),
     };
   }

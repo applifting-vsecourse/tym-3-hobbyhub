@@ -74,8 +74,14 @@ export type MyApplicationPage = {
 };
 
 // #231: an event on the person's "Zajímá mě" list, with where it stands, so
-// the list can put what is over or called off apart.
-export type MyInterestedEvent = EventListItem & { state: InterestedEventState };
+// the list can put what is over or called off apart. #232: whether they watch
+// it for a free seat, and whether they may start to now (full, and nothing
+// else keeps them from asking to join).
+export type MyInterestedEvent = EventListItem & {
+  state: InterestedEventState;
+  watchesFreeSpot: boolean;
+  canWatchFreeSpot: boolean;
+};
 
 export type MyInterestedEventPage = {
   items: MyInterestedEvent[];

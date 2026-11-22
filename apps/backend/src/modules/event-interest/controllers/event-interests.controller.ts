@@ -21,8 +21,9 @@ import {
 import { EventInterestStateResponseDto } from './dto/event-interest.response.dto';
 
 // #231, ADR-0030: the signed-in user saves an event to their "Zajímá mě" list
-// and removes it again. Who saves is the session, never the request. The list
-// itself is `GET /api/my-events/interested`.
+// and removes it again; #232 watches a full one for a free seat. Who saves or
+// watches is the session, never the request. The list itself is
+// `GET /api/my-events/interested`.
 @ApiTags('event-interest')
 @Controller('events/:eventId/interest')
 @UseGuards(AuthenticatedUserGuard)
@@ -80,5 +81,40 @@ export class EventInterestsController {
     @Param('eventId') eventId: string,
   ): Promise<void> {
     await this.service.remove(user, eventId);
+  }
+
+  @Put('watch')
+  @ApiOperation({
+    summary:
+      'Watch the full event for a free seat (#232), saving it to the list too; watching it again changes nothing (idempotent)',
+  })
+  @ApiResponse({ status: 200, type: EventInterestStateResponseDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'The event has a free seat, or the user could not ask to join it anyway (started, cancelled, organizer, seat, request); `violations` says why',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async watch(
+    @User() user: Identity,
+    @Param('eventId') eventId: string,
+  ): Promise<EventInterestStateResponseDto> {
+    return EventInterestStateResponseDto.fromDomain(
+      await this.service.watch(user, eventId),
+    );
+  }
+
+  @Delete('watch')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary:
+      'Stop watching the event for a free seat; it stays on the list. Stopping what is not on changes nothing',
+  })
+  @ApiResponse({ status: 204, description: 'Not watched (any more)' })
+  async unwatch(
+    @User() user: Identity,
+    @Param('eventId') eventId: string,
+  ): Promise<void> {
+    await this.service.unwatch(user, eventId);
   }
 }

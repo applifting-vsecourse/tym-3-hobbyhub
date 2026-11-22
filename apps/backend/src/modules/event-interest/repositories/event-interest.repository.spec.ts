@@ -10,6 +10,7 @@ import {
   Prisma,
   VenueType,
 } from '@/generated/prisma/client';
+import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { EventInterestRepository } from './event-interest.repository';
 
 const describeDb = process.env.DB_TESTS ? describe : describe.skip;
@@ -130,11 +131,82 @@ describeDb('EventInterestRepository', () => {
     await repository.save(me, eventId);
 
     expect(await prisma.eventInterest.count({ where: { eventId } })).toBe(1);
-    expect(await repository.isSaved(me, eventId)).toBe(true);
+    expect(await repository.getRow(me, eventId)).toEqual({
+      isSaved: true,
+      isWatching: false,
+    });
 
     await repository.remove(me, eventId);
     await repository.remove(me, eventId);
-    expect(await repository.isSaved(me, eventId)).toBe(false);
+    expect(await repository.getRow(me, eventId)).toEqual({
+      isSaved: false,
+      isWatching: false,
+    });
+  });
+
+  // #232: watching is a column of the saved row.
+  it('saves the event when watching starts, keeps it when it stops', async () => {
+    const [organizer, me, activity] = await Promise.all([
+      aUser(),
+      aUser(),
+      anActivity(),
+    ]);
+    const eventId = await anEvent(organizer, activity, { day: 20 });
+
+    await Promise.all([
+      repository.watch(me, eventId),
+      repository.watch(me, eventId),
+    ]);
+    expect(await prisma.eventInterest.count({ where: { eventId } })).toBe(1);
+    expect(await repository.getRow(me, eventId)).toEqual({
+      isSaved: true,
+      isWatching: true,
+    });
+    expect((await repository.getPage(me, now, page)).items).toEqual([
+      { eventId, status: 'PUBLISHED', watchesFreeSpot: true },
+    ]);
+
+    await repository.unwatch(me, eventId);
+    await repository.unwatch(me, eventId);
+    expect(await repository.getRow(me, eventId)).toEqual({
+      isSaved: true,
+      isWatching: false,
+    });
+
+    // Saving again leaves the watching as it is; removing takes it along.
+    await repository.watch(me, eventId);
+    await repository.save(me, eventId);
+    expect(await repository.getRow(me, eventId)).toEqual({
+      isSaved: true,
+      isWatching: true,
+    });
+    await repository.remove(me, eventId);
+    expect(await repository.getRow(me, eventId)).toEqual({
+      isSaved: false,
+      isWatching: false,
+    });
+  });
+
+  // #232: whom the event module tells about a free seat.
+  it('finds the people watching who have no seat', async () => {
+    const [organizer, watcher, seated, saver, activity] = await Promise.all([
+      aUser(),
+      aUser(),
+      aUser(),
+      aUser(),
+      anActivity(),
+    ]);
+    const eventId = await anEvent(organizer, activity, { day: 20 });
+    await repository.watch(watcher, eventId);
+    await repository.watch(seated, eventId);
+    await repository.save(saver, eventId);
+    await prisma.participation.create({
+      data: { eventId, userId: seated, status: 'APPROVED' },
+    });
+
+    await expect(
+      new EventRepository(prisma).getFreeSpotWatcherIds(eventId),
+    ).resolves.toEqual([watcher]);
   });
 
   it('lists what is still on soonest first, then the rest latest first', async () => {
@@ -169,11 +241,11 @@ describeDb('EventInterestRepository', () => {
     const result = await repository.getPage(me, now, page);
 
     expect(result.items).toEqual([
-      { eventId: sooner, status: 'PUBLISHED' },
-      { eventId: later, status: 'PUBLISHED' },
-      { eventId: cancelled, status: 'CANCELLED' },
-      { eventId: lastWeek, status: 'PUBLISHED' },
-      { eventId: longAgo, status: 'FINISHED' },
+      { eventId: sooner, status: 'PUBLISHED', watchesFreeSpot: false },
+      { eventId: later, status: 'PUBLISHED', watchesFreeSpot: false },
+      { eventId: cancelled, status: 'CANCELLED', watchesFreeSpot: false },
+      { eventId: lastWeek, status: 'PUBLISHED', watchesFreeSpot: false },
+      { eventId: longAgo, status: 'FINISHED', watchesFreeSpot: false },
     ]);
     expect(result.total).toBe(5);
   });
@@ -210,7 +282,9 @@ describeDb('EventInterestRepository', () => {
       hiddenOrganizerIds: [blocked],
     });
     expect(outside).toEqual({
-      items: [{ eventId: visible, status: 'PUBLISHED' }],
+      items: [
+        { eventId: visible, status: 'PUBLISHED', watchesFreeSpot: false },
+      ],
       total: 1,
     });
 
@@ -253,9 +327,17 @@ describeDb('EventInterestRepository', () => {
         activityIds: [],
         search: 'kobylisich',
       }),
-    ).toEqual({ items: [{ eventId: florbal, status: 'PUBLISHED' }], total: 1 });
+    ).toEqual({
+      items: [
+        { eventId: florbal, status: 'PUBLISHED', watchesFreeSpot: false },
+      ],
+      total: 1,
+    });
     expect(
       await repository.getPage(me, now, page, { activityIds: [other] }),
-    ).toEqual({ items: [{ eventId: chess, status: 'PUBLISHED' }], total: 1 });
+    ).toEqual({
+      items: [{ eventId: chess, status: 'PUBLISHED', watchesFreeSpot: false }],
+      total: 1,
+    });
   });
 });

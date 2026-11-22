@@ -31,6 +31,8 @@ import {
   moderationConcernsPeople,
   Page,
   ParticipantEventInfo,
+  spotBecameFree,
+  SpotChange,
   UpdateEventData,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
@@ -48,6 +50,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -105,6 +108,8 @@ const changeViolationsError = (
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
+
   constructor(
     private readonly eventRepository: EventRepository,
     private readonly activitiesService: ActivitiesService,
@@ -212,6 +217,15 @@ export class EventsService {
         changedBy: user,
       });
     }
+    // #232: a larger maximum, or fewer seats taken outside the app.
+    await this.notifyIfSpotFreed(
+      id,
+      {
+        freeSpotsBefore: result.freeSpotsBefore,
+        freeSpotsAfter: result.event.freeSpots,
+      },
+      user,
+    );
     return result.event;
   }
 
@@ -252,8 +266,8 @@ export class EventsService {
   }
 
   // F-05.6: the seats taken outside the app, changed on the participants page
-  // by any of the organizers. No notification: who goes is unchanged for the
-  // people who go.
+  // by any of the organizers. The people who go hear nothing: who goes is
+  // unchanged for them. Those watching a full event do (#232).
   async updateExternalOccupiedSpots(
     user: Identity,
     id: string,
@@ -274,7 +288,83 @@ export class EventsService {
       now,
     );
     if (!result.ok) throw changeViolationsError([result.violation]);
+    await this.notifyIfSpotFreed(
+      id,
+      {
+        freeSpotsBefore: result.freeSpotsBefore,
+        freeSpotsAfter: result.event.freeSpots,
+      },
+      user,
+      now,
+    );
     return result.event;
+  }
+
+  // #232: called after a change of the seats is saved, wherever it happened
+  // (a seat given back, a larger maximum, fewer seats taken outside the app,
+  // a seat cancelled by a block). When the event went from full to having a
+  // free seat, everyone watching it hears so, all at once: only while it is
+  // published, not hidden and has not started, and only those who may still
+  // see it and have no seat. Whoever freed the seat is not told, and nobody is
+  // named: the notification has no actor. Never throws: the change is saved,
+  // the worst case is a missing notification (ADR-0015).
+  async notifyIfSpotFreed(
+    eventId: string,
+    change: SpotChange,
+    freedBy: { id: string } | null,
+    now: Date = new Date(),
+  ): Promise<void> {
+    if (!spotBecameFree(change)) return;
+    try {
+      const facts = await this.eventRepository.getEventFacts(eventId);
+      if (
+        !facts ||
+        facts.status !== 'PUBLISHED' ||
+        facts.isHidden ||
+        facts.startAt.getTime() <= now.getTime()
+      ) {
+        return;
+      }
+      const candidateIds = (
+        await this.eventRepository.getFreeSpotWatcherIds(eventId)
+      ).filter(
+        (watcherId) =>
+          watcherId !== freedBy?.id && !isOrganizerOf(facts, watcherId),
+      );
+      const watcherIds = (
+        await Promise.all(
+          candidateIds.map(async (watcherId) =>
+            (await this.mayStillSee(facts, watcherId)) ? [watcherId] : [],
+          ),
+        )
+      ).flat();
+      await this.notificationsService.notifySpotAvailable({
+        event: facts,
+        watcherIds,
+        freedBy,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Could not tell the watchers of event ${eventId} about a free seat`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  // #232: the checks of `getVisibleEventSeatFacts` for facts already loaded:
+  // nobody blocked from an organizer (#239), and a group-only event only for
+  // those `canSeeEvent` lets in.
+  private async mayStillSee(
+    facts: EventFacts,
+    userId: string,
+  ): Promise<boolean> {
+    const hidden = await this.blocks.hiddenFor(userId);
+    if (
+      facts.organizerIds.some((organizerId) => hidden.includes(organizerId))
+    ) {
+      return false;
+    }
+    return this.canSee(facts, userId);
   }
 
   // The whole event for any of its organizers (F-05.6 participants page, the

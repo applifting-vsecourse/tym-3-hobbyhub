@@ -2,6 +2,7 @@ import { EventFacts } from '@/modules/event/domain/event';
 import {
   interestedEventStateOf,
   interestRuleViolations,
+  watchRuleViolations,
 } from './event-interest';
 
 const now = new Date('2030-01-01T12:00:00Z');
@@ -112,4 +113,34 @@ describe('interestedEventStateOf', () => {
       ),
     ).toBe(state);
   });
+});
+
+// #232: watching is for an event one would join now if it were not full.
+describe('watchRuleViolations', () => {
+  it('allows watching when being full is the one reason joining is refused', () => {
+    expect(watchRuleViolations(['EVENT_FULL'])).toEqual([]);
+  });
+
+  it('refuses an event with a free seat: there is nothing to watch for', () => {
+    expect(watchRuleViolations([])).toEqual(['EVENT_NOT_FULL']);
+  });
+
+  it.each([
+    ['HAS_SEAT'],
+    ['ALREADY_REQUESTED'],
+    ['REJECTED_BEFORE'],
+    ['IS_ORGANIZER'],
+    ['EVENT_STARTED'],
+    ['EVENT_CANCELLED'],
+    ['EVENT_NOT_HELD'],
+    ['EVENT_FINISHED'],
+  ] as const)(
+    'refuses a full event the person could not join anyway: %s',
+    (violation) => {
+      expect(watchRuleViolations([violation, 'EVENT_FULL'])).toEqual([
+        violation,
+      ]);
+      expect(watchRuleViolations([violation])).toEqual([violation]);
+    },
+  );
 });

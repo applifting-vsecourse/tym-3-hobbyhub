@@ -112,10 +112,24 @@ export class InterestedEventResponseDto extends EventListItemResponseDto {
   })
   state!: InterestedEventState;
 
+  @ApiProperty({
+    description:
+      'The signed-in user watches the event for a free seat (#232); only they ever see it',
+  })
+  watchesFreeSpot!: boolean;
+
+  @ApiProperty({
+    description:
+      'The user may start watching the event now: it is full, has not started, and nothing else keeps them from asking to join',
+  })
+  canWatchFreeSpot!: boolean;
+
   static fromInterested(event: MyInterestedEvent): InterestedEventResponseDto {
     return {
       ...EventListItemResponseDto.fromDomain(event),
       state: event.state,
+      watchesFreeSpot: event.watchesFreeSpot,
+      canWatchFreeSpot: event.canWatchFreeSpot,
     };
   }
 }
