@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
+import { landingKeys } from "@/lib/landing-keys"
+
 import { approveRequest, rejectRequest } from "@/features/participation-request/api/decideRequest"
 import { participationRequestKeys } from "@/features/participation-request/api/participationRequestKeys"
 
@@ -18,6 +20,8 @@ function useRefreshAfterDecision(eventId: string, onChange?: () => Promise<unkno
       queryClient.invalidateQueries({
         queryKey: participationRequestKeys.participantsAll(eventId),
       }),
+      // #215: an approval takes a seat the landing rows count.
+      queryClient.invalidateQueries({ queryKey: landingKeys.all() }),
       onChange?.(),
     ])
 }

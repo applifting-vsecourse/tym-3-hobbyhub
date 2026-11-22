@@ -23,6 +23,7 @@ import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type {
   ApplicationStatus,
   HostedEvent,
+  InterestedEvent,
   MyApplication,
 } from "@/features/event/api/myEventsSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
@@ -43,8 +44,8 @@ const BADGES: Record<ApplicationStatus, Status> = {
   EVENT_CANCELLED: "rejected",
 }
 
-/** The two lists of the overview; the first one has no param in the URL. */
-export type MyEventsTab = "applications" | "hosted"
+/** The lists of the overview; the first one has no param in the URL. */
+export type MyEventsTab = "applications" | "hosted" | "interested"
 
 /**
  * The one way out of an application, offered in the row's menu (#171):
@@ -92,6 +93,16 @@ type MyEventsOverviewProps = {
   hosted: MyEventsList<
     EventListItem & Partial<Pick<HostedEvent, "isHidden" | "participantsToRate">>
   >
+  /**
+   * #231: the events on the person's "Zajímá mě" list, what is still on first.
+   * Rows on their way out (removed, the toast still offering "Vrátit") are
+   * already left out, and `total` no longer counts them.
+   */
+  interested: MyEventsList<InterestedEvent>
+  /** Takes an event off the "Zajímá mě" list; the page offers the way back. */
+  onRemoveInterest?: (event: InterestedEvent) => void
+  /** #232: starts (`true`) or stops watching a saved full event for a free seat. */
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
   /** The list on screen, from the URL. */
   tab: MyEventsTab
   /** Search and filters of both lists, shown under the tabs. */
@@ -250,8 +261,9 @@ function LoadMore({ isLoading, onLoadMore }: { isLoading: boolean; onLoadMore: (
 }
 
 /**
- * "Přihlášky" / "Pořádám": links, because the tab lives in the URL
- * (`/my-events`, `/my-events?tab=hosted`). Switching keeps the filters.
+ * "Přihlášky" / "Pořádám" / "Zajímá mě": links, because the tab lives in the
+ * URL (`/my-events`, `?tab=hosted`, `?tab=interested`). Switching keeps the
+ * filters.
  */
 function MyEventsTabs({
   active,
@@ -278,7 +290,246 @@ function MyEventsTabs({
       >
         {labels.hosted}
       </PageTab>
+      <PageTab
+        to="/my-events"
+        search={(previous) => ({ ...previous, tab: "interested" as const })}
+        isActive={active === "interested"}
+      >
+        {labels.interested}
+      </PageTab>
     </PageTabs>
+  )
+}
+
+/** #231: what the "Zajímá mě" list is for, while nothing is on it. */
+function InterestedEmpty() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <h2 className="typo-h3 text-foreground">{t("myEvents.interested.empty.title")}</h2>
+      <p className="max-w-prose typo-body text-muted-foreground">
+        {t("myEvents.interested.empty.description")}
+      </p>
+      <Button
+        asChild
+        variant="outline"
+        className="w-full sm:w-auto"
+      >
+        <Link to={ROUTES.events}>{t("myEvents.interested.empty.find")}</Link>
+      </Button>
+    </div>
+  )
+}
+
+/**
+ * #232: the row of an event still ahead may switch the watching for a free
+ * seat: off while it is on, on while the server says it may be (full, and
+ * nothing else keeps the person from asking to join).
+ */
+export function watchActionOf(event: InterestedEvent, now: Date): "watch" | "unwatch" | null {
+  if (event.state !== "UPCOMING" || event.startAt <= now) return null
+  if (event.watchesFreeSpot) return "unwatch"
+  return event.canWatchFreeSpot ? "watch" : null
+}
+
+/**
+ * The states of one's own application that a saved event's row shows instead
+ * of the seats: the event stays on "Zajímá mě" once the person applies, so the
+ * row has to say they did. Someone who signed off may ask again, so they see
+ * the seats.
+ */
+const SHOWN_APPLICATIONS = ["APPROVED", "PENDING", "REJECTED"] as const
+
+/**
+ * #231: where a saved event stands, under its title. Still on: the person's
+ * own application if they have one (the badge of "Přihlášky"), else whether it
+ * can be joined (full, or how many seats are left), or that it is under way.
+ * Over or called off: just that. #232: and that the person watches it for a
+ * seat.
+ */
+function InterestedBadges({ event, now }: { event: InterestedEvent; now: Date }) {
+  const { t } = useTranslation()
+
+  return event.state === "UPCOMING" && event.startAt > now && event.watchesFreeSpot ? (
+    <div className="flex flex-wrap gap-2">
+      <InterestedBadge
+        event={event}
+        now={now}
+      />
+      <StatusBadge status="neutral">{t("myEvents.interested.watching")}</StatusBadge>
+    </div>
+  ) : (
+    <InterestedBadge
+      event={event}
+      now={now}
+    />
+  )
+}
+
+function InterestedBadge({ event, now }: { event: InterestedEvent; now: Date }) {
+  const { t } = useTranslation()
+
+  if (event.state === "CANCELLED") {
+    return <StatusBadge status="rejected">{t("myEvents.interested.state.CANCELLED")}</StatusBadge>
+  }
+  if (event.state === "PAST") {
+    return <StatusBadge status="neutral">{t("myEvents.interested.state.PAST")}</StatusBadge>
+  }
+  const application = SHOWN_APPLICATIONS.find((status) => status === event.applicationStatus)
+  if (application) {
+    return (
+      <StatusBadge status={BADGES[application]}>{t(`myEvents.status.${application}`)}</StatusBadge>
+    )
+  }
+  if (event.startAt <= now) {
+    return <StatusBadge status="neutral">{t("myEvents.interested.state.STARTED")}</StatusBadge>
+  }
+  // Neutral either way, "Plno" too: elsewhere a full event is the goal met
+  // (green on its card), but to someone who would like to go it is no good
+  // news, and green in this row is kept for their own approved application.
+  const free = event.maxParticipants - event.takenCount
+  return (
+    <StatusBadge status="neutral">
+      {free > 0
+        ? t("myEvents.interested.freeSpots", { count: free })
+        : t("myEvents.interested.full")}
+    </StatusBadge>
+  )
+}
+
+/**
+ * #231: what a saved event's row offers: taking it off the list, and #232
+ * switching the watching for a free seat while the event is ahead.
+ */
+function InterestedRowMenu({
+  event,
+  now,
+  onRemove,
+  onToggleWatch,
+}: {
+  event: InterestedEvent
+  now: Date
+  onRemove: (event: InterestedEvent) => void
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
+}) {
+  const { t } = useTranslation()
+  const watchAction = onToggleWatch ? watchActionOf(event, now) : null
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={t("myEvents.interested.actionsLabel", { title: event.title })}
+        >
+          <Ellipsis className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {watchAction ? (
+          <DropdownMenuItem onSelect={() => onToggleWatch?.(event, watchAction === "watch")}>
+            {t(
+              watchAction === "watch" ? "myEvents.interested.watch" : "myEvents.interested.unwatch",
+            )}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem onSelect={() => onRemove(event)}>
+          {t("myEvents.interested.remove")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/**
+ * #231: the saved events, the ones still on first; what is over or was called
+ * off sits apart under its own heading, quieter, and can still be opened and
+ * taken off the list.
+ */
+function InterestedEvents({
+  events,
+  now,
+  activityLabel,
+  onRemove,
+  onToggleWatch,
+}: {
+  events: InterestedEvent[]
+  now: Date
+  activityLabel: (activity: EventListItem["activity"]) => string
+  onRemove?: (event: InterestedEvent) => void
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const upcoming = events.filter((event) => event.state === "UPCOMING")
+  const past = events.filter((event) => event.state !== "UPCOMING")
+
+  const row = (event: InterestedEvent) => (
+    <li
+      key={event.id}
+      className="flex items-center gap-1 border-t border-border"
+    >
+      <Link
+        to="/events/$eventId"
+        params={{ eventId: event.id }}
+        className={cn(
+          "-ml-3 block min-w-0 flex-1 rounded-lg pr-1 pl-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50",
+          event.state !== "UPCOMING" && "opacity-60",
+        )}
+      >
+        <ScheduleRow
+          day={eventDate(t, event.startAt, now, i18n.language)}
+          time={eventClock(t, event.startAt, now, i18n.language)}
+          title={event.title}
+          subtitle={eventMeta(t, event, activityLabel(event.activity))}
+          taken={event.takenCount}
+          min={event.minParticipants}
+          max={event.maxParticipants}
+          // The title next to it says what the photo shows.
+          photo={event.imageUrl ? { src: event.imageUrl, alt: "" } : undefined}
+          activity={event.activity.icon}
+          details={eventHostAndPrice(t, event, i18n.language)}
+          className="border-t-0"
+          badge={
+            <InterestedBadges
+              event={event}
+              now={now}
+            />
+          }
+        />
+      </Link>
+      {/* Next to the link, not inside it: a button in an anchor is not valid HTML. */}
+      {onRemove ? (
+        <InterestedRowMenu
+          event={event}
+          now={now}
+          onRemove={onRemove}
+          onToggleWatch={onToggleWatch}
+        />
+      ) : null}
+    </li>
+  )
+
+  return (
+    <div className="flex flex-col gap-8">
+      {upcoming.length > 0 ? <ul>{upcoming.map(row)}</ul> : null}
+      {past.length > 0 ? (
+        <section
+          aria-labelledby="interested-past-heading"
+          className="flex flex-col gap-3"
+        >
+          <h2
+            id="interested-past-heading"
+            className="typo-h3 text-foreground"
+          >
+            {t("myEvents.interested.pastHeading")}
+          </h2>
+          <ul>{past.map(row)}</ul>
+        </section>
+      ) : null}
+    </div>
   )
 }
 
@@ -290,6 +541,9 @@ function MyEventsTabs({
 export function MyEventsOverview({
   applications,
   hosted,
+  interested,
+  onRemoveInterest,
+  onToggleWatch,
   tab,
   filters,
   isFiltered = false,
@@ -302,7 +556,7 @@ export function MyEventsOverview({
   const tickingNow = useNow()
   const now = fixedNow ?? tickingNow
 
-  if (applications.isLoading && hosted.isLoading) {
+  if (applications.isLoading && hosted.isLoading && interested.isLoading) {
     return (
       <div className="flex justify-center py-16">
         <Loader
@@ -313,14 +567,14 @@ export function MyEventsOverview({
     )
   }
 
+  // The "Zajímá mě" tab explains itself when it is empty (#231), so a link to
+  // it never lands on the overview's general "nothing here".
   const isNothingYet =
+    tab !== "interested" &&
     !isFiltered &&
-    !applications.error &&
-    !hosted.error &&
-    !applications.isLoading &&
-    !hosted.isLoading &&
-    applications.total === 0 &&
-    hosted.total === 0
+    [applications, hosted, interested].every(
+      (list) => !list.error && !list.isLoading && list.total === 0,
+    )
   if (isNothingYet) {
     return (
       <div
@@ -350,12 +604,28 @@ export function MyEventsOverview({
     const status = application?.status
     const isToRate = !application && (event.participantsToRate ?? 0) > 0
     const action = application && onApplicationAction ? applicationActionOf(application, now) : null
+    const menu =
+      application && (action || application.canRateOrganizer) ? (
+        <ApplicationActionMenu
+          application={application}
+          action={action}
+          onAction={onApplicationAction}
+        />
+      ) : isToRate ? (
+        <RateParticipantsMenu event={event} />
+      ) : null
+    // Wide: a row with nothing to offer (decided, or over and rated) keeps the
+    // menu's room, so the seats stay in one column down the list (#177).
+    // Narrow: the seats sit under the title, so there is no column to keep.
+    const shouldKeepMenuRoom =
+      !menu && (application ? onApplicationAction !== undefined : hasHostedMenu)
+
     return (
-      // The row's top line runs under the menu too; the menu sits centred
-      // beside the row whatever its height.
+      // The row's top line runs under the menu too. The item measures itself
+      // (a container) to know where the menu goes.
       <li
         key={event.id}
-        className="flex items-center gap-1 border-t border-border"
+        className="@container relative flex items-center gap-1 border-t border-border"
       >
         <Link
           to="/events/$eventId"
@@ -380,6 +650,7 @@ export function MyEventsOverview({
                 : eventPrice(t, event, i18n.language)
             }
             className="border-t-0"
+            hasCornerMenu={menu !== null}
             badge={
               status ? (
                 <span className="flex flex-wrap gap-2">
@@ -403,21 +674,16 @@ export function MyEventsOverview({
           />
         </Link>
         {/* Next to the link, not inside it: a button in an anchor is not valid
-            HTML, and a tap on it must not open the detail. */}
-        {application && (action || application.canRateOrganizer) ? (
-          <ApplicationActionMenu
-            application={application}
-            action={action}
-            onAction={onApplicationAction}
-          />
-        ) : isToRate ? (
-          <RateParticipantsMenu event={event} />
-        ) : (application && onApplicationAction) || (!application && hasHostedMenu) ? (
-          // A row with nothing to offer (decided, or over and rated) keeps the
-          // menu's room, so the seats stay in one column down the list (#177).
+            HTML, and a tap on it must not open the detail. Narrow: over the
+            row's top right corner, where the title leaves it room (#294);
+            wide: beside the row. The item switches at the same 48rem as the
+            row, so the menu never lies over a wide row's seats. */}
+        {menu ? (
+          <div className="absolute top-1 right-0 @3xl:static">{menu}</div>
+        ) : shouldKeepMenuRoom ? (
           <span
             aria-hidden
-            className="size-11 shrink-0"
+            className="hidden size-11 shrink-0 @3xl:block"
           />
         ) : null}
       </li>
@@ -425,11 +691,7 @@ export function MyEventsOverview({
   }
 
   // One tab's body: loading, a failed first load, the rows with "load more", or "nothing here".
-  const body = <T,>(
-    list: MyEventsList<T>,
-    emptyKey: "myEvents.applications.empty" | "myEvents.hosted.empty",
-    render: (item: T) => React.ReactNode,
-  ) => {
+  const body = <T,>(list: MyEventsList<T>, empty: ReactNode, render: (items: T[]) => ReactNode) => {
     if (list.isLoading) {
       return (
         <div className="flex justify-center py-12">
@@ -449,15 +711,11 @@ export function MyEventsOverview({
       )
     }
     if (list.items.length === 0) {
-      return isFiltered ? (
-        <NoMatchingEvents onClearFilters={onClearFilters} />
-      ) : (
-        <p className="typo-body text-muted-foreground">{t(emptyKey)}</p>
-      )
+      return isFiltered ? <NoMatchingEvents onClearFilters={onClearFilters} /> : empty
     }
     return (
       <div className="flex flex-col">
-        <ul>{list.items.map(render)}</ul>
+        {render(list.items)}
         {list.error ? (
           // A later page or a reload failed: keep what is loaded and retry just that.
           <EventsLoadError
@@ -474,12 +732,16 @@ export function MyEventsOverview({
     )
   }
 
-  const label = (list: MyEventsList<unknown>, key: "applications" | "hosted") =>
+  const label = (list: MyEventsList<unknown>, key: MyEventsTab) =>
     list.isLoading
       ? t(`myEvents.tabs.${key}`)
       : t(`myEvents.tabs.${key}WithCount`, { count: list.total })
 
-  const active = tab === "hosted" ? hosted : applications
+  const active = tab === "hosted" ? hosted : tab === "interested" ? interested : applications
+
+  const emptyText = (key: "myEvents.applications.empty" | "myEvents.hosted.empty") => (
+    <p className="typo-body text-muted-foreground">{t(key)}</p>
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -488,6 +750,7 @@ export function MyEventsOverview({
         labels={{
           applications: label(applications, "applications"),
           hosted: label(hosted, "hosted"),
+          interested: label(interested, "interested"),
         }}
       />
       {filters}
@@ -497,10 +760,22 @@ export function MyEventsOverview({
         className={cn(active.isStale && "opacity-60 transition-opacity")}
       >
         {tab === "hosted"
-          ? body(hosted, "myEvents.hosted.empty", (event) => row(event))
-          : body(applications, "myEvents.applications.empty", (application) =>
-              row(application.event, application),
-            )}
+          ? body(hosted, emptyText("myEvents.hosted.empty"), (events) => (
+              <ul>{events.map((event) => row(event))}</ul>
+            ))
+          : tab === "interested"
+            ? body(interested, <InterestedEmpty />, (events) => (
+                <InterestedEvents
+                  events={events}
+                  now={now}
+                  activityLabel={activityLabel}
+                  onRemove={onRemoveInterest}
+                  onToggleWatch={onToggleWatch}
+                />
+              ))
+            : body(applications, emptyText("myEvents.applications.empty"), (items) => (
+                <ul>{items.map((application) => row(application.event, application))}</ul>
+              ))}
       </div>
     </div>
   )

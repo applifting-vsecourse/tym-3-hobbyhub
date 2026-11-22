@@ -16,6 +16,7 @@ import {
   DecidedStatus,
   DecisionRuleViolation,
   decisionRuleViolations,
+  EventApplicationFacts,
   JoinRuleViolation,
   joinRuleViolations,
   ParticipantPage,
@@ -46,6 +47,7 @@ const VIOLATION_MESSAGES: Record<Violation, string> = {
   HAS_SEAT: 'You already have a seat at this event',
   ALREADY_REQUESTED: 'You have already asked to join this event',
   REJECTED_BEFORE: 'Your request to join this event was rejected',
+  BLOCKED_ORGANIZER: 'You blocked an organizer of this event',
   NOT_PENDING: 'The request no longer waits for a decision',
   APPLICANT_HAS_SEAT: 'The applicant already has a seat at this event',
   NO_SEAT: 'You have no seat at this event to cancel',
@@ -99,20 +101,31 @@ export class ParticipationRequestsService {
     });
   }
 
+  // #232: the same facts for the given events, for the "Zajímá mě" list, which
+  // shows the person's own status next to a saved event. The caller has
+  // decided which events the person may see.
+  async getMyApplicationFactsOf(
+    user: Identity,
+    eventIds: readonly string[],
+  ): Promise<EventApplicationFacts[]> {
+    return this.repository.getApplicationFactsOf(user.id, eventIds);
+  }
+
   async getMyRequestState(
     user: Identity,
     eventId: string,
     now: Date = new Date(),
   ): Promise<MyRequestState> {
     const event = await this.getEvent(eventId, user);
-    const [requests, seat, applicant] = await Promise.all([
+    const [requests, seat, applicant, blockedIds] = await Promise.all([
       this.repository.getRequestsOf(eventId, user.id),
       this.repository.getSeatStatus(eventId, user.id),
       this.repository.getApplicantProfile(user.id),
+      this.blocks.blockedBy(user.id),
     ]);
     return {
       request: currentRequestOf(requests),
-      violations: joinRuleViolations(event, user.id, requests, now),
+      violations: joinRuleViolations(event, user.id, requests, now, blockedIds),
       seat,
       cancelViolations: cancelRuleViolations(event, now),
       applicant,
@@ -131,8 +144,17 @@ export class ParticipationRequestsService {
     const event = await this.getEvent(eventId, user);
     // F-03.2 (#13): asking to join deliberately needs no verified e-mail, to
     // keep the friction for participants low; the organizer sees the status.
-    const requests = await this.repository.getRequestsOf(eventId, user.id);
-    const violations = joinRuleViolations(event, user.id, requests, now);
+    const [requests, blockedIds] = await Promise.all([
+      this.repository.getRequestsOf(eventId, user.id),
+      this.blocks.blockedBy(user.id),
+    ]);
+    const violations = joinRuleViolations(
+      event,
+      user.id,
+      requests,
+      now,
+      blockedIds,
+    );
     if (violations.length > 0) throw violationsError(violations);
 
     // The applicant comes from the session, never from the request body.
@@ -193,18 +215,20 @@ export class ParticipationRequestsService {
     if (violations.length > 0) throw violationsError(violations);
 
     // Who cancels comes from the session, never from the request body.
-    const refusal = await this.repository.cancelSeat({
+    const result = await this.repository.cancelSeat({
       eventId,
       userId: user.id,
       message,
       at: now,
     });
-    if (refusal) throw violationsError([refusal]);
+    if (typeof result === 'string') throw violationsError([result]);
     await this.notificationsService.notifyParticipantCancelled({
       event,
       participant: user,
       message,
     });
+    // #232: the people watching a full event hear about the seat.
+    await this.eventsService.notifyIfSpotFreed(eventId, result, user, now);
   }
 
   // F-05.7: the requests waiting on the event, for its organizers.
@@ -346,12 +370,34 @@ export class ParticipationRequestsService {
   }
 
   // #239, ADR-0022: called by the administration once two people are blocked
-  // from each other. Nobody is told: the block must not show.
-  detachBlockedPair(
+  // from each other. Nobody involved is told: the block must not show. Those
+  // watching a full event where a seat went hear only that a seat is free
+  // (#232), which does not say why, and nobody is named.
+  async detachBlockedPair(
     a: string,
     b: string,
     now: Date = new Date(),
   ): Promise<void> {
-    return this.repository.detachBlockedPair(a, b, now);
+    const changes = await this.repository.detachBlockedPair(a, b, now);
+    for (const { eventId, ...change } of changes) {
+      await this.eventsService.notifyIfSpotFreed(eventId, change, null, now);
+    }
+  }
+
+  // #232: why the person may not ask to join the event now, as on the detail;
+  // the "Zajímá mě" list lets them watch a full event only when that is the
+  // one reason. Null for an event they may not see.
+  async getJoinViolations(
+    user: Identity,
+    eventId: string,
+    now: Date = new Date(),
+  ): Promise<JoinRuleViolation[] | null> {
+    const event = await this.eventsService.getVisibleEventSeatFacts(
+      eventId,
+      user.id,
+    );
+    if (!event) return null;
+    const requests = await this.repository.getRequestsOf(eventId, user.id);
+    return joinRuleViolations(event, user.id, requests, now);
   }
 }

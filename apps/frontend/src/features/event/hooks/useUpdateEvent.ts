@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
+import { landingKeys } from "@/lib/landing-keys"
 import { myEventsKeys } from "@/lib/my-events-keys"
 
 import { eventKeys } from "@/features/event/api/eventKeys"
@@ -15,6 +16,8 @@ export function useUpdateEvent(id: string) {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: eventKeys.all() }),
         queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
+        // #215: the landing rows show seats, the viewer's state and the event.
+        queryClient.invalidateQueries({ queryKey: landingKeys.all() }),
       ]),
   })
 }
@@ -27,6 +30,8 @@ export function useCancelEvent(id: string) {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: eventKeys.all() }),
         queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
+        // #215: the landing rows show seats, the viewer's state and the event.
+        queryClient.invalidateQueries({ queryKey: landingKeys.all() }),
       ]),
   })
 }

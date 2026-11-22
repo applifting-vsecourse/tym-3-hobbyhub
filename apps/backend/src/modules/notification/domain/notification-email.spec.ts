@@ -18,6 +18,7 @@ const aNotification = (
   actor: { id: 'u2', name: APPLICANT },
   event: { id: 'e1', title: EVENT_TITLE },
   group: null,
+  friendRequest: null,
   ...overrides,
 });
 
@@ -224,6 +225,7 @@ describe('notificationEmailOf', () => {
       ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }],
       ['EVENT_CANCELLED', {}],
       ['PARTICIPANT_CANCELLED', { message: MESSAGE }],
+      ['SPOT_AVAILABLE', {}],
       [
         'EVENT_REMINDER',
         { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
@@ -357,10 +359,65 @@ describe('notificationEmailOf', () => {
     });
   });
 
+  // #232: neither the title nor how many seats; a free seat is first come,
+  // first served, so it goes first.
+  it('tells a watcher a seat freed up, critical and without the title', () => {
+    const content = notificationEmailOf(
+      aNotification({ type: 'SPOT_AVAILABLE', actor: null, payload: {} }),
+    );
+
+    expect(content).toEqual({
+      subject: 'Na akci, kterou hlídáš, se uvolnilo místo',
+      heading: 'Na akci, kterou hlídáš, se uvolnilo místo',
+      body: 'Místo ti nedržíme: dostane ho, kdo se přihlásí první. Přihlásit se můžeš v detailu akce.',
+      buttonLabel: 'Zobrazit akci',
+      path: '/events/e1',
+      critical: true,
+    });
+    expect(JSON.stringify(content)).not.toContain(EVENT_TITLE);
+  });
+
   it('has no e-mail for a type nothing creates yet', () => {
     expect(
-      notificationEmailOf(aNotification({ type: 'SPOT_AVAILABLE' })),
+      notificationEmailOf(aNotification({ type: 'CONFIRMATION_PROMPT' })),
     ).toBeNull();
+  });
+
+  describe('a friend request (#228)', () => {
+    const friendRequest = { id: 'fr1', status: 'PENDING' as const };
+
+    it('tells the recipient there is a request, without the name, and leads to the tab', () => {
+      const content = notificationEmailOf(
+        aNotification({
+          type: 'FRIEND_REQUEST',
+          event: null,
+          friendRequest,
+        }),
+      );
+
+      expect(content).toEqual(
+        expect.objectContaining({
+          subject: 'Máš novou žádost o přátelství',
+          buttonLabel: 'Zobrazit žádosti',
+          path: '/friends?tab=requests',
+          critical: false,
+        }),
+      );
+      const text = JSON.stringify(content);
+      expect(text).not.toContain(APPLICANT);
+    });
+
+    it('has no e-mail for an accepted request, only the bell', () => {
+      expect(
+        notificationEmailOf(
+          aNotification({
+            type: 'FRIEND_REQUEST_ACCEPTED',
+            event: null,
+            friendRequest: { id: 'fr1', status: 'ACCEPTED' },
+          }),
+        ),
+      ).toBeNull();
+    });
   });
 
   it('has no e-mail when the event or group is gone', () => {

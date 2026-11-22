@@ -27,6 +27,7 @@ type Who = Pick<Identity, 'id'>;
 type AnEvent = { id: string };
 type AGroup = { id: string };
 type ARequest = { userId: string; decisionMessage: string | null };
+type AFriendRequest = { id: string };
 
 @Injectable()
 export class NotificationsService {
@@ -42,7 +43,8 @@ export class NotificationsService {
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  // #239: without what people blocked from the user caused.
+  // #239: without what people blocked from the user caused. #65: nor what
+  // the people the user blocked caused.
   async listMine(
     user: Identity,
     page: Page,
@@ -52,14 +54,14 @@ export class NotificationsService {
       user.id,
       page,
       filter,
-      await this.blocks.hiddenFor(user.id),
+      await this.blocks.mutedFor(user.id),
     );
   }
 
   async countUnread(user: Identity): Promise<number> {
     return this.repository.countUnread(
       user.id,
-      await this.blocks.hiddenFor(user.id),
+      await this.blocks.mutedFor(user.id),
     );
   }
 
@@ -248,6 +250,26 @@ export class NotificationsService {
     });
   }
 
+  // #232: a seat freed up on a full event; everyone watching it, all at once.
+  // The caller knows who watches, who may still see the event and who has no
+  // seat; whoever freed the seat is left out here too. Nobody is the actor:
+  // the watchers must not learn who left, nor the others who watches.
+  notifySpotAvailable(input: {
+    event: AnEvent;
+    watcherIds: readonly string[];
+    freedBy: Who | null;
+  }): Promise<void> {
+    return this.record({
+      type: 'SPOT_AVAILABLE',
+      recipientIds: recipientsExcept(
+        input.watcherIds,
+        input.freedBy?.id ?? null,
+      ),
+      actorId: null,
+      eventId: input.event.id,
+    });
+  }
+
   // #240, ADR-0023: a report the user filed was dealt with. It names neither
   // the target nor the outcome, so it gives away no block between two people
   // and nothing of what the administrator did. Nobody is the actor.
@@ -366,13 +388,79 @@ export class NotificationsService {
     });
   }
 
+  // #228: the recipient of a friend request, unless the sender is over the
+  // limit of notified requests (the friendship module decides, ADR-0026).
+  notifyFriendRequest(input: {
+    request: AFriendRequest;
+    sender: Who;
+    recipientId: string;
+  }): Promise<void> {
+    return this.record({
+      type: 'FRIEND_REQUEST',
+      recipientIds: recipientsExcept([input.recipientId], input.sender.id),
+      actorId: input.sender.id,
+      friendRequestId: input.request.id,
+    });
+  }
+
+  // #228: the sender, once the recipient accepts. A rejection tells nobody.
+  notifyFriendRequestAccepted(input: {
+    request: AFriendRequest;
+    senderId: string;
+    acceptedBy: Who;
+  }): Promise<void> {
+    return this.record({
+      type: 'FRIEND_REQUEST_ACCEPTED',
+      recipientIds: recipientsExcept([input.senderId], input.acceptedBy.id),
+      actorId: input.acceptedBy.id,
+      friendRequestId: input.request.id,
+    });
+  }
+
+  // #228: a withdrawn request takes its notification away (ADR-0026). An
+  // e-mail already queued stays: it names nobody and leads to the tab.
+  async removeFriendRequestNotifications(
+    request: AFriendRequest,
+  ): Promise<void> {
+    try {
+      await this.repository.deleteOfFriendRequest(request.id);
+    } catch (error) {
+      this.logger.error(
+        `Could not remove the notifications of friend request ${request.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  // #228: the recipient decided the request, wherever: its notification is
+  // seen. Like the rest, it never fails the decision.
+  async markFriendRequestNotificationRead(
+    recipient: Who,
+    request: AFriendRequest,
+    now: Date = new Date(),
+  ): Promise<void> {
+    try {
+      await this.repository.markReadOfFriendRequest(
+        recipient.id,
+        request.id,
+        now,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Could not mark the notification of friend request ${request.id} read`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
   private async record(data: NewNotification): Promise<void> {
     if (data.recipientIds.length === 0) return;
     let ids: string[];
     try {
-      // #239: nobody hears from someone blocked from them.
+      // #239: nobody hears from someone blocked from them. #65: nor from
+      // someone they blocked.
       const hidden = data.actorId
-        ? await this.blocks.hiddenFrom(data.actorId)
+        ? await this.blocks.notHearingFrom(data.actorId)
         : [];
       const recipientIds = data.recipientIds.filter(
         (id) => !hidden.includes(id),

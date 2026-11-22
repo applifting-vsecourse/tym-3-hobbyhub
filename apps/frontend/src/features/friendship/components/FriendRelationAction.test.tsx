@@ -9,11 +9,26 @@ import { renderWithRouter } from "@/test/renderWithRouter"
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRelationAction } from "@/features/friendship/components/FriendRelationAction"
 
-const { post, del } = vi.hoisted(() => ({ post: vi.fn(), del: vi.fn() }))
+const { post, del, toast } = vi.hoisted(() => ({
+  post: vi.fn(),
+  del: vi.fn(),
+  toast: Object.assign(vi.fn(), { error: vi.fn() }),
+}))
 vi.mock("@/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   api: { post, delete: del },
 }))
+vi.mock("sonner", () => ({ toast }))
+
+// #228: deciding a request reads the answer of `post` itself (lib/friend-requests).
+const decisionFails = (status: number) =>
+  post.mockRejectedValueOnce(
+    new HTTPError(
+      new Response("{}", { status }),
+      new Request("http://x/api/friends/requests/u2/accept"),
+      {} as never,
+    ),
+  )
 
 const failWith = (status: number, method = post) =>
   method.mockReturnValueOnce({
@@ -29,17 +44,19 @@ const failWith = (status: number, method = post) =>
 
 const renderAction = async (relation: FriendRelation) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const invalidate = vi.spyOn(client, "invalidateQueries")
   const reload = vi.fn(() => Promise.resolve())
   await renderWithRouter(
     <QueryClientProvider client={client}>
       <FriendRelationAction
         userId="u2"
+        userName="Libor"
         relation={relation}
         reload={reload}
       />
     </QueryClientProvider>,
   )
-  return { reload }
+  return { reload, invalidate }
 }
 
 describe("FriendRelationAction", () => {
@@ -99,11 +116,80 @@ describe("FriendRelationAction", () => {
     expect(screen.queryByRole("button", { name: "Požádat o přátelství" })).toBeNull()
   })
 
-  it("says the person asks me, with no way to ask back", async () => {
-    await renderAction("request_received")
+  describe("a request the person sent me (#228)", () => {
+    it("says the person asks me and offers to accept or reject, not to ask back", async () => {
+      await renderAction("request_received")
 
-    expect(await screen.findByText("Tento uživatel vás žádá o přátelství.")).toBeInTheDocument()
-    expect(screen.queryByRole("button")).toBeNull()
+      expect(await screen.findByText("Tento uživatel vás žádá o přátelství.")).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Zamítnout žádost o přátelství od Libor" }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Požádat o přátelství" })).toBeNull()
+    })
+
+    it.each([
+      ["Přijmout", "accept"],
+      ["Zamítnout", "reject"],
+    ])("%s decides the request and loads the profile again", async (label, decision) => {
+      post.mockResolvedValueOnce(new Response("{}"))
+      const { invalidate } = await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: `${label} žádost o přátelství od Libor` }),
+      )
+
+      expect(post).toHaveBeenCalledWith(`friends/requests/u2/${decision}`)
+      // Only what a decision changes: the sender's profile, not every one (review #257).
+      await vi.waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] }),
+      )
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["friendship"] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["notifications"] })
+      expect(invalidate).not.toHaveBeenCalledWith()
+      expect(screen.queryByRole("alert")).toBeNull()
+    })
+
+    it("says the request is no longer current when it was decided elsewhere (409)", async () => {
+      decisionFails(409)
+      const { invalidate } = await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+      )
+
+      await vi.waitFor(() => expect(toast).toHaveBeenCalledWith("Žádost už není aktuální."))
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profile", "user", "u2"] })
+      expect(screen.queryByRole("alert")).toBeNull()
+    })
+
+    it("says the account is gone when it was blocked or deleted (404)", async () => {
+      decisionFails(404)
+      await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Přijmout žádost o přátelství od Libor" }),
+      )
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Tento účet už není dostupný, žádost nejde vyřídit.",
+      )
+    })
+
+    it("says so when the decision failed", async () => {
+      decisionFails(500)
+      await renderAction("request_received")
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Zamítnout žádost o přátelství od Libor" }),
+      )
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      )
+    })
   })
 
   it("marks a friend, with no request button", async () => {

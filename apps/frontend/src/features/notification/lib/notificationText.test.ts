@@ -13,6 +13,7 @@ const aNotification = (overrides: Partial<Notification> = {}): Notification => (
   actor: { id: "u2", name: "Honza_K" },
   event: { id: "e1", title: "Čtvrteční florbal" },
   group: null,
+  friendRequest: null,
   decision: null,
   message: null,
   changes: [],
@@ -84,8 +85,13 @@ describe("notificationText", () => {
       "Tvoje nahlášení jsme vyřídili. Děkujeme, že pomáháš udržet HobbyHub bezpečný.",
     ],
     [
+      "a free seat on a watched event, naming nobody (#232)",
+      aNotification({ type: "SPOT_AVAILABLE", actor: null }),
+      "Na akci Čtvrteční florbal se uvolnilo místo",
+    ],
+    [
       "a type without words of its own",
-      aNotification({ type: "SPOT_AVAILABLE" }),
+      aNotification({ type: "CONFIRMATION_PROMPT" }),
       "Novinka k Čtvrteční florbal",
     ],
   ])("says %s in Czech", (_, notification, expected) => {
@@ -241,6 +247,8 @@ describe("notificationTarget", () => {
     "EVENT_CHANGED",
     "EVENT_CANCELLED",
     "PARTICIPANT_CANCELLED",
+    // #232: where the free seat can be taken.
+    "SPOT_AVAILABLE",
   ] as const)("sends the participant to the event for %s", (type) => {
     expect(notificationTarget(aNotification({ type }))).toEqual({ kind: "event", eventId: "e1" })
   })
@@ -290,4 +298,28 @@ describe("notificationTarget", () => {
   it("leads nowhere once the event is gone", () => {
     expect(notificationTarget(aNotification({ event: null }))).toBeNull()
   })
+})
+
+// #228: a friend request and its acceptance are about a person, not an event.
+describe("friend requests", () => {
+  const aboutFriendship = (type: "FRIEND_REQUEST" | "FRIEND_REQUEST_ACCEPTED"): Notification =>
+    aNotification({
+      type,
+      event: null,
+      friendRequest: { id: "fr1", status: "PENDING" },
+    })
+
+  it.each([
+    ["FRIEND_REQUEST", "Honza_K vás žádá o přátelství"],
+    ["FRIEND_REQUEST_ACCEPTED", "Honza_K přijal(a) vaši žádost o přátelství"],
+  ] as const)("says %s in a sentence", (type, text) => {
+    expect(notificationText(i18n.t, aboutFriendship(type))).toBe(text)
+  })
+
+  it.each(["FRIEND_REQUEST", "FRIEND_REQUEST_ACCEPTED"] as const)(
+    "sends %s to the profile of the other person",
+    (type) => {
+      expect(notificationTarget(aboutFriendship(type))).toEqual({ kind: "profile", userId: "u2" })
+    },
+  )
 })

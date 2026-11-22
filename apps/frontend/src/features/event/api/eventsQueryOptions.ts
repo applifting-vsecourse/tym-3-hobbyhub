@@ -4,6 +4,7 @@ import { api } from "@/lib/api-client"
 
 import { eventKeys, type EventListFilters } from "@/features/event/api/eventKeys"
 import { eventListSchema } from "@/features/event/api/eventSchemas"
+import { LAST_MINUTE_HOURS } from "@/features/event/lib/eventsSearch"
 
 const EVENTS_PAGE_SIZE = 20
 // The most the server returns at once, and how many requests the map makes at
@@ -21,6 +22,7 @@ export const filterSearchParams = (filters: EventListFilters, limit: number, off
   if (filters.dateFrom) searchParams.set("dateFrom", filters.dateFrom)
   if (filters.dateTo) searchParams.set("dateTo", filters.dateTo)
   if (filters.freeSpotsOnly) searchParams.set("onlyWithFreeSpots", "true")
+  if (filters.lastMinute) searchParams.set("startsWithinHours", String(LAST_MINUTE_HOURS))
   if (filters.priceFrom) searchParams.set("priceFrom", filters.priceFrom)
   if (filters.priceTo) searchParams.set("priceTo", filters.priceTo)
   if (filters.hoursFrom) searchParams.set("durationHoursFrom", filters.hoursFrom)
@@ -77,14 +79,4 @@ export const eventsMapQueryOptions = (filters: EventListFilters = NO_FILTERS) =>
       )
       return [first, ...rest].flatMap((page) => page.items)
     },
-  })
-
-// The first `limit` events of the unfiltered list: what the landing page shows.
-export const upcomingEventsQueryOptions = (limit: number) =>
-  queryOptions({
-    queryKey: eventKeys.upcoming(limit),
-    queryFn: async () =>
-      eventListSchema.parse(
-        await api.get("events", { searchParams: { limit: String(limit), offset: "0" } }).json(),
-      ),
   })

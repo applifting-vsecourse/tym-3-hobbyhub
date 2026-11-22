@@ -398,4 +398,28 @@ export class RatingRepository {
       ),
     };
   }
+  /**
+   * #215: the organizer score of each of the people that others may see:
+   * only from `RATING_MIN_COUNT_TO_SHOW` revealed ratings (`publicAverage`).
+   * Nobody else is in the map.
+   */
+  async getPublicOrganizerScores(
+    userIds: string[],
+  ): Promise<Map<string, RatingScore>> {
+    if (userIds.length === 0) return new Map();
+    const rows = await this.prisma.$queryRaw<
+      { userId: string; count: number; publicAverage: number }[]
+    >`
+      SELECT "userId", "count", "publicAverage"
+      FROM "user_rating_score"
+      WHERE "direction" = 'TO_ORGANIZER'
+        AND "publicAverage" IS NOT NULL
+        AND "userId" IN (${Prisma.join(userIds)})`;
+    return new Map(
+      rows.map((row) => [
+        row.userId,
+        { count: row.count, average: row.publicAverage },
+      ]),
+    );
+  }
 }

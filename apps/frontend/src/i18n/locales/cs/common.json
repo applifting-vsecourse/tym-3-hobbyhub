@@ -38,6 +38,9 @@
       "blockSubmit": "Zablokovat",
       "blockTitle": "Zablokovat uživatele {{name}} vůči…",
       "blocked": "Uživatelé jsou proti sobě zablokovaní",
+      "byAdministrator": "Správce, oběma směry",
+      "byOtherUser": "{{name}}, jedním směrem",
+      "byThisUser": "{{name}} sám(a)",
       "cancel": "Zrušit",
       "createdAt": "Zablokováno",
       "createdBy": "Zablokoval(a)",
@@ -54,6 +57,7 @@
       "reasonLabel": "Důvod blokace",
       "reasonTooLong": "Důvod může mít nejvýš 500 znaků",
       "reasonTooShort": "Napište důvod, aspoň 10 znaků",
+      "source": "Kdo blokoval",
       "title": "Blokace",
       "unblock": "Zrušit blokaci",
       "unblockFailed": "Blokaci se nepodařilo zrušit. Zkuste to prosím znovu.",
@@ -770,6 +774,7 @@
           "to": "do {{value}} h"
         },
         "freeSpots": "Volná místa",
+        "lastMinute": "Last minute",
         "open": "Filtry",
         "place": "{{place}}, do {{radius}} km",
         "price": {
@@ -874,10 +879,14 @@
     }
   },
   "footer": {
+    "about": "O HobbyHubu",
     "copyright": "© {{year}} HobbyHub",
+    "discover": "Objevit",
     "label": "Patička",
     "language": "Jazyk",
-    "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
+    "madeIn": "Vyrobeno v Česku",
+    "settings": "Nastavení",
+    "tagline": "Najdi sport nebo aktivitu, která tě baví. Přidej se k akci, kde hledají někoho do party."
   },
   "friends": {
     "action": {
@@ -900,6 +909,27 @@
       "friends": "Přítel",
       "request_received": "Chce se spřátelit",
       "request_sent": "Žádost odeslána"
+    },
+    "requests": {
+      "accept": "Přijmout",
+      "acceptLabel": "Přijmout žádost o přátelství od {{name}}",
+      "accepting": "Přijímáme…",
+      "decideError": "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      "error": "Žádosti se nepodařilo načíst.",
+      "list": "Žádosti o přátelství",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další žádosti se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Načítáme žádosti…",
+      "loadingMore": "Načítáme…",
+      "reject": "Zamítnout",
+      "rejectLabel": "Zamítnout žádost o přátelství od {{name}}",
+      "rejecting": "Zamítáme…",
+      "retry": "Zkusit znovu",
+      "stale": "Žádost už není aktuální.",
+      "unavailable": "Tento účet už není dostupný, žádost nejde vyřídit.",
+      "waiting_few": "{{count}} nevyřízené žádosti",
+      "waiting_one": "{{count}} nevyřízená žádost",
+      "waiting_other": "{{count}} nevyřízených žádostí"
     },
     "search": {
       "capped": "Takových lidí je víc, než můžeme ukázat. Upřesněte přezdívku.",
@@ -1211,6 +1241,7 @@
       },
       "refused": {
         "ALREADY_REQUESTED": "O členství v této skupině už jste požádali.",
+        "BLOCKED_ADMIN": "Vlastníka nebo správce této skupiny máte zablokovaného, o členství proto žádat nemůžete.",
         "IS_MEMBER": "Už jste členem této skupiny.",
         "REJECTED_BEFORE": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde."
       },
@@ -1460,8 +1491,15 @@
       "volejbalistka": "Volejbalistka"
     },
     "capacity": {
+      "freeLast": "Chybíš už jenom ty",
+      "freeNone": "Plno",
+      "freePlenty": "Volno",
+      "free_few": "{{count}} volná místa",
+      "free_one": "{{count}} volné místo",
+      "free_other": "{{count}} volných míst",
       "full": "minimum splněno",
       "missing": "chybí {{count}}",
+      "moreSeats": "…",
       "summaryFull": "Obsazeno {{taken}} z {{total}}, minimum splněno",
       "summaryMissing": "Obsazeno {{taken}} z {{total}}, chybí {{count}}"
     },
@@ -1471,6 +1509,12 @@
       "copyFailed": "Zprávu se nepodařilo zkopírovat",
       "link": "odkaz na akci",
       "share": "Sdílet"
+    },
+    "countdown": {
+      "hours": "{{hours}} h {{minutes}} min {{seconds}} s",
+      "label": "Začíná za",
+      "minutes": "{{minutes}} min {{seconds}} s",
+      "now": "Právě začíná"
     },
     "counter": {
       "less": "{{label}}: méně",
@@ -1502,6 +1546,7 @@
       "dateTo": "Do data",
       "duration": "Jak dlouho akce trvá (hodiny)",
       "freeSpots": "Jen s volnými místy",
+      "lastMinute": "Last minute (do 4 hodin)",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
       "panelHide": "Skrýt filtry",
@@ -1553,6 +1598,13 @@
       "week": "Tento týden",
       "weekend": "Víkend",
       "when": "Kdy"
+    },
+    "friendsGoing": {
+      "many_few": "{{first}} a {{count}} další jdou",
+      "many_one": "{{first}} a {{count}} další jdou",
+      "many_other": "{{first}} a {{count}} dalších jde",
+      "one": "{{name}} jde",
+      "two": "{{first}} a {{second}} jdou"
     },
     "joinRequest": {
       "approve": "Schválit",
@@ -1684,74 +1736,132 @@
       "list": "Seznam",
       "map": "Mapa"
     },
+    "viewerState": {
+      "joined": "✓ Jdeš",
+      "pending": "Žádost odeslána",
+      "waiting": "Čeká na schválení"
+    },
     "yourSeat": {
       "title": "Tvoje místo?"
     }
   },
+  "interest": {
+    "removeError": "Akci se nepodařilo odebrat ze seznamu. Zkuste to prosím znovu.",
+    "removed": "Odebráno ze seznamu",
+    "save": "Zajímá mě",
+    "saveError": "Akci se nepodařilo uložit. Zkuste to prosím znovu.",
+    "saved": "Uloženo",
+    "undo": "Vrátit",
+    "watch": {
+      "active": "Hlídám volné místo",
+      "nowFree": "Na akci se mezitím uvolnilo místo. Můžete se rovnou přihlásit.",
+      "offText": "Akce je plná. Zapněte hlídání a dáme vám vědět, jakmile se uvolní místo.",
+      "onText": "Jakmile se uvolní místo, pošleme vám upozornění. Místo vám nedržíme: dostane ho, kdo se přihlásí první.",
+      "start": "Hlídat volné místo",
+      "startError": "Hlídání se nepodařilo zapnout. Zkuste to prosím znovu.",
+      "stopError": "Hlídání se nepodařilo vypnout. Zkuste to prosím znovu."
+    }
+  },
   "landing": {
     "actions": {
-      "create": "Vypsat akci",
-      "find": "Najít volné místo"
-    },
-    "audience": {
-      "organizer": {
-        "b1": "Sami schválíte, kdo přijde",
-        "b2": "Akce se uskuteční, jakmile je minimum splněné",
-        "b3": "Z osvědčené party uděláte skupinu",
-        "text": "Vypište akci za minutu a všichni uvidí, kolik hráčů vám chybí.",
-        "title": "Chybí vám lidi do minima"
-      },
-      "player": {
-        "b1": "Volná místa vidíte v seznamu i na mapě",
-        "b2": "Bez registrace si vše prohlédnete",
-        "b3": "Účet založíte, až budete chtít sednout",
-        "text": "Najděte akci, kde chybí hráč, a požádejte o místo jedním klepnutím.",
-        "title": "Chcete si zahrát"
-      },
-      "title": "Ať hrajete, nebo organizujete"
+      "create": "Přidat akci",
+      "find": "Najít akci"
     },
     "groups": {
       "browse": "Prohlédnout skupiny",
-      "seatTitle": "Vaše místo v partě",
-      "text": "Skupina je parta lidí kolem jedné aktivity. Má své místo, obvyklý termín a členy, kteří se znají. Nováček vidí, do čeho jde, ještě než požádá o členství, a akce skupiny se nevypisují od nuly.",
-      "title": "Skupiny: parta, která se schází pravidelně"
+      "seatTitle": "Tvoje místo v partě",
+      "text": "Skupina je parta kolem jedné aktivity: má svoje místo, obvyklý termín a lidi, kteří se znají. Přidej se a o akcích skupiny se dozvíš mezi prvními.",
+      "title": "Hraješ pravidelně? Najdi si skupinu"
     },
     "hero": {
-      "kicker": "Sport a hry ve vašem okolí",
-      "kickerCount_few": "Právě jsou vypsané {{count}} akce",
-      "kickerCount_one": "Právě je vypsaná {{count}} akce",
-      "kickerCount_other": "Právě je vypsaných {{count}} akcí",
-      "text": "HobbyHub spojuje organizátory, kterým chybí lidé do minima, s hráči, kteří hledají volné místo.",
-      "title": "Chybí vám hráč? Nebo hledáte, kde si zahrát?"
+      "textCount_few": "Fotbal, deskovky, výlety: právě jsou vypsané <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textCount_one": "Fotbal, deskovky, výlety: právě je vypsaná <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textCount_other": "Fotbal, deskovky, výlety: právě je vypsaných <count>{{count}}</count> akcí s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textPlain": "Fotbal, deskovky, výlety: najdi akci s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "titleFirst": "Chybí ti hráč?",
+      "titleSecond": "Nebo hledáš, kde si zahrát?"
     },
     "how": {
-      "step1": {
-        "text": "Řekne, kolik lidí mu chybí do minima. Všichni to vidí hned.",
-        "title": "Organizátor vypíše akci"
+      "crew": {
+        "badge": "Skupina",
+        "text": "S lidmi, se kterými si vzájemně sednete, se můžete setkat i příště. Z akce často vznikne skupina.",
+        "title": "Zahraj si a najdi partu"
       },
-      "step2": {
-        "text": "Jedním klepnutím. Bez účtu si vše prohlédnete.",
-        "title": "Hráč požádá o místo"
+      "find": {
+        "text": "Fotbal dnes večer, deskovky o víkendu. Volná místa vidíš hned.",
+        "title": "Najdi akci"
       },
-      "step3": {
-        "text": "Jakmile je minimum splněné, akce se uskuteční.",
-        "title": "Organizátor schválí"
-      },
-      "step4": {
-        "text": "Kdo si sedl, zůstane spolu a příště nikdo nezačíná od nuly.",
-        "title": "Z party je skupina"
+      "intro": "Najdeš akci, kde je volné místo, přidáš se a zahraješ si. Parta pak přijde sama.",
+      "join": {
+        "text": "Jedno klepnutí. Organizátor potvrdí a místo je tvoje.",
+        "title": "Přidej se"
       },
       "title": "Jak to funguje"
+    },
+    "rows": {
+      "empty": "Zatím tu žádné akce s volným místem nejsou. Přidej vlastní akci: jakmile se objeví, najdeš ji tady.",
+      "friends": {
+        "text": "Kam míří lidé, se kterými se znáš",
+        "title": "Kam se chystají tvoji přátelé"
+      },
+      "groupsForYou": {
+        "all": "Všechny skupiny",
+        "text": "Parta kolem tvých aktivit, kde ještě nejsi",
+        "title": "Skupiny pro tebe"
+      },
+      "lastMinute": {
+        "all": "Všechny last minute",
+        "text": "Začíná do 4 hodin",
+        "title": "Last minute"
+      },
+      "liked": {
+        "all": "Akce mých aktivit",
+        "text": "Podle tvých aktivit, skupin a akcí, které máš za sebou",
+        "title": "Tvoje oblíbené aktivity"
+      },
+      "loadError": "Akce se nepodařilo načíst",
+      "loading": "Načítáme akce…",
+      "near": {
+        "all": "Akce v okolí",
+        "city": "Ve městě {{city}}",
+        "cityLabel": "Akce ve městě",
+        "cityOption_few": "{{city}} · {{count}} akce",
+        "cityOption_one": "{{city}} · {{count}} akce",
+        "cityOption_other": "{{city}} · {{count}} akcí",
+        "radius": "Do {{radiusKm}} km od domova",
+        "title": "Ve tvém okolí"
+      },
+      "rowError": "Tuhle řadu se nepodařilo načíst.",
+      "today": {
+        "all": "Všechny dnešní akce",
+        "text": "Ještě dnes",
+        "title": "Dnes"
+      },
+      "top": {
+        "text": "Plno lidí a skvěle hodnocený organizátor",
+        "title": "Top akce"
+      },
+      "trendingGroups": {
+        "all": "Všechny skupiny",
+        "recent_few": "+{{count}} noví členové za měsíc",
+        "recent_one": "+{{count}} nový člen za měsíc",
+        "recent_other": "+{{count}} nových členů za měsíc",
+        "text": "Nejvíc nových členů za 30 dní",
+        "title": "Trendy skupiny"
+      },
+      "weekend": {
+        "all": "Celý víkend",
+        "title": "Tento víkend"
+      }
     },
     "search": {
       "label": "Hledat akce",
       "placeholder": "Název, místo nebo aktivita"
     },
-    "seoTitle": "Úvodní stránka",
+    "seoDescription": "Najdi akci s volným místem kousek od tebe: fotbal, deskovky, výlety a další. Přidej se, zahraj si a najdi partu.",
+    "seoTitle": "Najdi akci, parta přijde sama",
     "upcoming": {
-      "all": "Všechny akce",
-      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami, až se objeví, najdete ji tady.",
-      "title": "Nejbližší akce"
+      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami, až se objeví, najdete ji tady."
     }
   },
   "language": {
@@ -1776,6 +1886,28 @@
     "hosted": {
       "empty": "Zatím nepořádáte žádnou akci."
     },
+    "interested": {
+      "actionsLabel": "Možnosti uložené akce: {{title}}",
+      "empty": {
+        "description": "Narazíte na akci, o které se ještě nechcete rozhodnout? Na jejím detailu klepněte na „Zajímá mě“ a najdete ji tady, i s tím, jestli se na ni ještě dá přihlásit. Uložením nic nerezervujete.",
+        "find": "Procházet akce",
+        "title": "Zatím nemáte nic uloženého"
+      },
+      "freeSpots_few": "{{count}} volná místa",
+      "freeSpots_one": "{{count}} volné místo",
+      "freeSpots_other": "{{count}} volných míst",
+      "full": "Plno",
+      "pastHeading": "Proběhlé a zrušené",
+      "remove": "Odebrat ze seznamu",
+      "state": {
+        "CANCELLED": "Zrušena",
+        "PAST": "Proběhla",
+        "STARTED": "Probíhá"
+      },
+      "unwatch": "Přestat hlídat volné místo",
+      "watch": "Hlídat volné místo",
+      "watching": "Hlídám místo"
+    },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
     "rate": "Ohodnotit organizátora",
@@ -1793,6 +1925,8 @@
       "applicationsWithCount": "Přihlášky ({{count}})",
       "hosted": "Pořádám",
       "hostedWithCount": "Pořádám ({{count}})",
+      "interested": "Zajímá mě",
+      "interestedWithCount": "Zajímá mě ({{count}})",
       "label": "Moje akce"
     },
     "title": "Moje akce"
@@ -1818,6 +1952,10 @@
     "bellUnread_one": "Notifikace, {{count}} nepřečtená",
     "bellUnread_other": "Notifikace, {{count}} nepřečtených",
     "deletedTarget": "smazaná akce",
+    "friendRequest": {
+      "ACCEPTED": "Přijato",
+      "REJECTED": "Zamítnuto"
+    },
     "justNow": "právě teď",
     "kinds": {
       "all": "Vše",
@@ -1872,6 +2010,8 @@
         "upcoming": "Akce {{title}} začíná {{when}}"
       },
       "EVENT_RESTORED": "Akce {{title}} je zpět",
+      "FRIEND_REQUEST": "{{name}} vás žádá o přátelství",
+      "FRIEND_REQUEST_ACCEPTED": "{{name}} přijal(a) vaši žádost o přátelství",
       "HOSTED_EVENT_REMINDER": {
         "belowMinimum_few": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastníci",
         "belowMinimum_one": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastník",
@@ -1903,6 +2043,7 @@
           "REJECTED": "Tvoje žádost o členství ve skupině {{title}} byla zamítnuta"
         }
       },
+      "SPOT_AVAILABLE": "Na akci {{title}} se uvolnilo místo",
       "other": "Novinka k {{title}}"
     },
     "title": "Notifikace",
@@ -2156,6 +2297,7 @@
     },
     "refused": {
       "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
+      "BLOCKED_ORGANIZER": "Jednoho z organizátorů máš zablokovaného, o účast proto žádat nemůžeš.",
       "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
       "EVENT_FINISHED": "Akce už proběhla, o účast se nedá žádat.",
       "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",
@@ -2472,5 +2614,35 @@
   "terms": {
     "placeholder": "Znění podmínek připravujeme. Provozovatel HobbyHubu ho doplní před spuštěním.",
     "title": "Podmínky používání"
+  },
+  "userBlocks": {
+    "block": "Zablokovat",
+    "blockFailed": "Uživatele se nepodařilo zablokovat. Zkuste to prosím znovu.",
+    "blocked": "{{name}} je zablokovaný(á)",
+    "confirm": {
+      "back": "Zpět",
+      "hidden": "Přestane vidět váš profil, akce, které pořádáte, a skupiny, které vedete. Nebude vás moct žádat o účast, o členství ani o přátelství a nebudou vám od něj chodit upozornění.",
+      "secret": "Nikdo mu neřekne, že jste ho zablokovali.",
+      "submit": "Zablokovat",
+      "ties": "Čekající žádosti mezi vámi se uzavřou a jeho místa na vašich akcích a členství ve vašich skupinách skončí, stejně jako vaše místa a členství u něj. Po odblokování se nic z toho neobnoví.",
+      "title": "Zablokovat uživatele {{name}}?"
+    },
+    "manageLink": "Správa zablokovaných uživatelů je v Nastavení.",
+    "profile": {
+      "blocked": "Uživatele {{name}} máte zablokovaného. Nevidí váš profil ani to, co pořádáte, a nemůže vás o nic žádat."
+    },
+    "settings": {
+      "blockedAt": "Zablokováno {{date}}",
+      "description": "Nevidí vás ani to, co pořádáte, a nemohou vás o nic žádat. Vidíte je jen vy.",
+      "empty": "Nikoho nemáte zablokovaného.",
+      "loadError": "Zablokované uživatele se nepodařilo načíst.",
+      "loading": "Načítáme zablokované uživatele",
+      "retry": "Zkusit znovu",
+      "title": "Zablokovaní uživatelé",
+      "unblockLabel": "Odblokovat uživatele {{name}}"
+    },
+    "unblock": "Odblokovat",
+    "unblockFailed": "Blokaci se nepodařilo zrušit. Zkuste to prosím znovu.",
+    "unblocked": "{{name}} už není zablokovaný(á)"
   }
 }

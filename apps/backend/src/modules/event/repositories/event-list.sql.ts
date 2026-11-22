@@ -3,6 +3,7 @@ import {
   EVENT_LIST_TIME_ZONE,
   EventFilter,
   EventListRanges,
+  INVOLVED_PARTICIPATION_STATUSES,
 } from '@/modules/event/domain/event';
 import { searchWords } from '@/shared/search/fold-for-search';
 import { containsInAny } from '@/shared/search/folded-search';
@@ -33,6 +34,26 @@ export const notOrganizedBy = (userIds: string[]): Prisma.Sql =>
   Prisma.sql`(e."organizerId" NOT IN (${Prisma.join(userIds)}) AND NOT EXISTS (
     SELECT 1 FROM "_EventCoOrganizers" c
     WHERE c."A" = e."id" AND c."B" IN (${Prisma.join(userIds)})))`;
+
+// F-07.2: `canSeeEvent` as SQL, for a list of one person's own that may hold
+// a group-only event (#231): a public event, or a group-only one of a group
+// they are in, that they organize, or that they hold or await a seat on
+// (`INVOLVED_PARTICIPATION_STATUSES`, a pending request). Kept in step with
+// `canSeeEvent` and `EventsService.canSee` by hand. Drafts, private and
+// hidden events are the caller's to leave out.
+export const visibleTo = (userId: string): Prisma.Sql =>
+  Prisma.sql`(e."visibility" = 'PUBLIC' OR (e."visibility" = 'GROUP_ONLY' AND (
+    EXISTS (SELECT 1 FROM "group_membership" gm
+      WHERE gm."groupId" = e."groupId" AND gm."userId" = ${userId})
+    OR e."organizerId" = ${userId}
+    OR EXISTS (SELECT 1 FROM "_EventCoOrganizers" c
+      WHERE c."A" = e."id" AND c."B" = ${userId})
+    OR EXISTS (SELECT 1 FROM "participation" p
+      WHERE p."eventId" = e."id" AND p."userId" = ${userId}
+      AND p."status"::text IN (${Prisma.join([...INVOLVED_PARTICIPATION_STATUSES])}))
+    OR EXISTS (SELECT 1 FROM "participation_request" r
+      WHERE r."eventId" = e."id" AND r."userId" = ${userId}
+      AND r."status" = 'PENDING'))))`;
 
 // Every word of a text has to match somewhere, so "volejbal praha" finds the
 // activity in one column and the city in another. Nothing set is no condition.

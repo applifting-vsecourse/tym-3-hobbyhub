@@ -49,6 +49,7 @@ describe("PublicProfilePage", () => {
         asOrganizer: { count: null, average: null },
         asParticipant: { count: null, average: null },
       },
+      isBlockedByMe: false,
     })
     await renderPage("u2")
 
@@ -72,6 +73,7 @@ describe("PublicProfilePage", () => {
         asOrganizer: { count: null, average: null },
         asParticipant: { count: null, average: null },
       },
+      isBlockedByMe: false,
     })
     await renderPage("u2", (profile) => (
       <button type="button">{`Nahlásit ${profile.name} (${profile.id})`}</button>

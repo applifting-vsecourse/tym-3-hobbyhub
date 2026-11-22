@@ -96,4 +96,10 @@ describe("refusalOf", () => {
     expect(refusalOf(["HAS_SEAT", "EVENT_NOT_HELD"])).toBe("EVENT_NOT_HELD")
     expect(refusalOf(["IS_ORGANIZER", "EVENT_FINISHED"])).toBe("EVENT_FINISHED")
   })
+
+  // #65: the person's own block, the last reason to name.
+  it("explains a blocked organizer", () => {
+    expect(refusalOf(["BLOCKED_ORGANIZER"])).toBe("BLOCKED_ORGANIZER")
+    expect(refusalOf(["BLOCKED_ORGANIZER", "EVENT_FULL"])).toBe("EVENT_FULL")
+  })
 })

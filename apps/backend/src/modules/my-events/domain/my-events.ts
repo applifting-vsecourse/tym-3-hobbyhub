@@ -1,3 +1,4 @@
+import { InterestedEventState } from '@/modules/event-interest/domain/event-interest';
 import { EventListItem } from '@/modules/event/domain/event';
 import { ApplicationFacts } from '@/modules/participation-request/domain/participation-request';
 
@@ -70,4 +71,24 @@ export type MyApplicationPage = {
   // cannot show is left out of `items` but still passed, so the client cannot
   // count the offset itself.
   nextOffset: number | null;
+};
+
+// #231: an event on the person's "Zajímá mě" list, with where it stands, so
+// the list can put what is over or called off apart. #232: whether they watch
+// it for a free seat, and whether they may start to now (full, and nothing
+// else keeps them from asking to join).
+// `applicationStatus`: where the person's own application to it stands, the
+// same status as under "Přihlášky"; null when they never applied. Saving and
+// applying are apart (ADR-0030), so a saved event stays on the list once they
+// go, and the row says so.
+export type MyInterestedEvent = EventListItem & {
+  state: InterestedEventState;
+  watchesFreeSpot: boolean;
+  canWatchFreeSpot: boolean;
+  applicationStatus: ApplicationStatus | null;
+};
+
+export type MyInterestedEventPage = {
+  items: MyInterestedEvent[];
+  total: number;
 };

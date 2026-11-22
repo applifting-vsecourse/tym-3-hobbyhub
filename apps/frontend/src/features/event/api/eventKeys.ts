@@ -16,6 +16,8 @@ export type EventListFilters = {
   dateTo?: string
   /** Only events that still have a free seat (#214). */
   freeSpotsOnly?: boolean
+  /** #215: only events that start within a few hours ("Last minute"). */
+  lastMinute?: boolean
   /** Contribution per seat in CZK, inclusive; empty means no bound (#214). */
   priceFrom?: string
   priceTo?: string
@@ -37,8 +39,6 @@ export const eventKeys = {
   list: (filters: EventListFilters) => [...eventKeys.lists(), filters] as const,
   // Every event with a place, for the map: all pages of one filter.
   map: (filters: EventListFilters) => [...eventKeys.lists(), "map", filters] as const,
-  // The few soonest events on the landing page.
-  upcoming: (limit: number) => [...eventKeys.lists(), "upcoming", limit] as const,
   // Detail (F-02.4). Keyed by viewer too: a group-only event (F-07.2) shows to
   // its group's members only, so signing out must not leave it in the cache.
   details: () => [...eventKeys.all(), "detail"] as const,

@@ -187,6 +187,9 @@ export type TransferOwnershipResult =
 export type MyGroup = Group & { myRole: GroupRole };
 
 export const NEARBY_GROUPS_LIMIT = 6;
+
+// #215 "Trendy skupiny": a group with the members who joined lately.
+export type TrendingGroup = Group & { recentMemberCount: number };
 export const DISCOVER_PAGE_SIZE = 20;
 
 export const GROUP_LIST_SEARCH_MAX_LENGTH = 100;

@@ -15,11 +15,16 @@ export type NotificationTarget =
   | { kind: "event"; eventId: string }
   | { kind: "groupRequests"; groupId: string }
   | { kind: "group"; groupId: string }
+  | { kind: "profile"; userId: string }
   | { kind: "myEvents" }
   | null
 
 export function notificationTarget(notification: Notification): NotificationTarget {
-  const { type, event, group } = notification
+  const { type, event, group, actor } = notification
+  // #228: a friend request and its acceptance lead to the other person.
+  if (type === "FRIEND_REQUEST" || type === "FRIEND_REQUEST_ACCEPTED") {
+    return actor ? { kind: "profile", userId: actor.id } : null
+  }
   // #239: a hidden event exists only for its organizers, whose copy carries
   // the reason; everyone else goes to their own events.
   if (type === "EVENT_HIDDEN" && notification.reason === null) return { kind: "myEvents" }
@@ -106,6 +111,9 @@ export function notificationText(
       return t("notifications.text.EVENT_RESTORED", { title })
     case "PARTICIPANT_CANCELLED":
       return t("notifications.text.PARTICIPANT_CANCELLED", { name, title })
+    // #232: nobody named; who left is none of the watcher's business.
+    case "SPOT_AVAILABLE":
+      return t("notifications.text.SPOT_AVAILABLE", { title })
     // #240: neither what was reported nor what the administrator did.
     case "REPORT_RESOLVED":
       return t("notifications.text.REPORT_RESOLVED")
@@ -147,6 +155,10 @@ export function notificationText(
       const until = startsWhen(t, ratingPrompt.deadline, now, locale)
       return t(`notifications.text.${type}.${ratingPrompt.kind}`, { title, until })
     }
+    case "FRIEND_REQUEST":
+      return t("notifications.text.FRIEND_REQUEST", { name })
+    case "FRIEND_REQUEST_ACCEPTED":
+      return t("notifications.text.FRIEND_REQUEST_ACCEPTED", { name })
     default:
       // Types without a trigger yet (F-05.8, F-05.9, F-07.4…): a plain line
       // rather than nothing, should a row of theirs ever appear.

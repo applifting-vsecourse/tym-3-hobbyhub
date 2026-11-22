@@ -24,6 +24,7 @@ const NONE: EventFilterValues = {
   dateFrom: "",
   dateTo: "",
   freeSpotsOnly: false,
+  lastMinute: false,
   priceFrom: "",
   priceTo: "",
   hoursFrom: "",

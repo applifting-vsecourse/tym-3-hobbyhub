@@ -95,6 +95,21 @@ export const occupancyOf = (event: {
   };
 };
 
+// #232: the free seats of one event just before a change and right after it,
+// both counted under the event's lock, so no other change slips in between.
+export type SpotChange = {
+  freeSpotsBefore: number;
+  freeSpotsAfter: number;
+};
+
+// #232: whether a change turned a full event into one with a free seat, the
+// one moment the people watching it hear about. More seats freeing up on an
+// event that has one already, or a full event staying full, is not it.
+export const spotBecameFree = ({
+  freeSpotsBefore,
+  freeSpotsAfter,
+}: SpotChange): boolean => freeSpotsBefore <= 0 && freeSpotsAfter > 0;
+
 export type Event = Occupancy & {
   id: string;
   title: string;
@@ -422,6 +437,12 @@ export const moderationConcernsPeople = (
 export type EventChangeResult =
   { ok: true; event: Event } | { ok: false; violation: EventChangeViolation };
 
+// #232: an edit that may change the seats also says how many were free just
+// before it, so the service can tell a full event that got a free seat.
+export type EventSeatsChangeResult =
+  | { ok: true; event: Event; freeSpotsBefore: number }
+  | { ok: false; violation: EventChangeViolation };
+
 // ---------------------------------------------------------------------------
 // Public event list (F-02.3)
 // ---------------------------------------------------------------------------
@@ -510,6 +531,11 @@ export type EventFilter = {
 // holds in all, and `onlyWithFreeSpots` keeps the events that still have a seat.
 export type EventListRanges = {
   onlyWithFreeSpots?: boolean;
+  /**
+   * #215 "Last minute": only events that have not started and start within
+   * this many hours.
+   */
+  startsWithinHours?: number;
   priceFrom?: number;
   priceTo?: number;
   durationHoursFrom?: number;
@@ -729,3 +755,42 @@ export type AdminUserEvents = {
 };
 
 export const ADMIN_USER_EVENTS_LIMIT = 50;
+
+// #215: the most hours ahead "Last minute" may look in the event list.
+export const EVENT_LIST_MAX_STARTS_WITHIN_HOURS = 48;
+
+// #215: how one row of the landing page picks its events. Every row holds
+// only what the event list shows (public, published, not hidden) and on top
+// of it: not started yet, a free seat left, not organized by the viewer.
+// `order` decides which come first; the rest narrows the row.
+export type LandingEventOrder = 'soonest' | 'top' | 'nearest';
+
+export type LandingEventSelection = {
+  order: LandingEventOrder;
+  limit: number;
+  /** Starts no later than this instant ("Last minute"). */
+  startsBefore?: Date;
+  /** First and last day (YYYY-MM-DD, `EVENT_LIST_TIME_ZONE`) of the start. */
+  dateFrom?: string;
+  dateTo?: string;
+  /**
+   * "Tvoje oblíbené aktivity": an activity of this person's profile, an
+   * activity or an organizer of an event they played, or one of their groups.
+   */
+  likedBy?: string;
+  /** Organized by one of these people, or one of them holds an approved seat. */
+  attendedByAnyOf?: string[];
+  /** Within the radius of a point; an event without a position is left out. */
+  around?: AroundFilter;
+  /** In this city, ignoring case. */
+  city?: string;
+};
+
+// #215: what the viewer already is on an event a landing row shows.
+export type ViewerEventState = 'JOINED' | 'PENDING';
+
+// #215: a city with upcoming events, for the visitor's choice of "near".
+export type LandingCity = { city: string; eventCount: number };
+
+// #215: someone organizes the event or holds an approved seat on it.
+export type EventAttendee = { eventId: string; userId: string };

@@ -16,7 +16,9 @@ type SeatMeterProps = Capacity & {
 export function SeatMeter({ size = "md", className, ...capacity }: SeatMeterProps) {
   const { t } = useTranslation()
   const states = seatStates(capacity)
-  const singleRowLimit = size === "md" ? 10 : 6
+  // Up to ten seats in one line, in both sizes: a row under an event's title
+  // (#294) has the width, and one line is easier to count than two.
+  const singleRowLimit = 10
   const columns = states.length <= singleRowLimit ? states.length : Math.ceil(states.length / 2)
 
   return (

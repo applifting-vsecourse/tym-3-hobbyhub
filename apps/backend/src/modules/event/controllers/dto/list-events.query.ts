@@ -4,6 +4,7 @@ import {
   EVENT_LIST_MAX_DURATION_HOURS,
   EVENT_LIST_MAX_LIMIT,
   EVENT_LIST_MAX_RADIUS_KM,
+  EVENT_LIST_MAX_STARTS_WITHIN_HOURS,
   EVENT_PARTICIPANTS_LIMIT,
 } from '@/modules/event/domain/event';
 import { applyDecorators } from '@nestjs/common';
@@ -53,6 +54,20 @@ export class ListEventsRangesQuery extends EventFilterQuery {
   @IsOptional()
   @IsBoolean()
   onlyWithFreeSpots?: boolean;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: EVENT_LIST_MAX_STARTS_WITHIN_HOURS,
+    description:
+      '"Last minute" (#215): only events that have not started and start within this many hours',
+  })
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(EVENT_LIST_MAX_STARTS_WITHIN_HOURS)
+  startsWithinHours?: number;
 
   @optionalNumber(
     'Lowest contribution per seat in CZK (an event without one costs 0)',

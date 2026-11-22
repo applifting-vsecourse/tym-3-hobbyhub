@@ -42,6 +42,7 @@ const REFUSAL_ORDER: JoinRuleViolation[] = [
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+  "BLOCKED_ORGANIZER",
 ]
 
 /** The one reason to show for a refused request, or null when asking is allowed. */

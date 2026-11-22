@@ -38,6 +38,9 @@
       "blockSubmit": "Block",
       "blockTitle": "Block {{name}} from…",
       "blocked": "The two are blocked from each other",
+      "byAdministrator": "An administrator, both ways",
+      "byOtherUser": "{{name}}, one way",
+      "byThisUser": "{{name}} themselves",
       "cancel": "Cancel",
       "createdAt": "Blocked",
       "createdBy": "Blocked by",
@@ -54,6 +57,7 @@
       "reasonLabel": "Reason for the block",
       "reasonTooLong": "The reason can be at most 500 characters",
       "reasonTooShort": "Write a reason of at least 10 characters",
+      "source": "Blocked by",
       "title": "Blocks",
       "unblock": "End block",
       "unblockFailed": "The block could not be ended. Please try again.",
@@ -762,6 +766,7 @@
           "to": "up to {{value}} h"
         },
         "freeSpots": "Free spots",
+        "lastMinute": "Last minute",
         "open": "Filters",
         "place": "{{place}}, within {{radius}} km",
         "price": {
@@ -862,10 +867,14 @@
     }
   },
   "footer": {
+    "about": "About HobbyHub",
     "copyright": "© {{year}} HobbyHub",
+    "discover": "Discover",
     "label": "Footer",
     "language": "Language",
-    "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
+    "madeIn": "Made in Czechia",
+    "settings": "Settings",
+    "tagline": "Find a sport or an activity you enjoy. Join an event where they're looking for someone to complete the crew."
   },
   "friends": {
     "action": {
@@ -888,6 +897,26 @@
       "friends": "Friend",
       "request_received": "Wants to be friends",
       "request_sent": "Request sent"
+    },
+    "requests": {
+      "accept": "Accept",
+      "acceptLabel": "Accept the friend request from {{name}}",
+      "accepting": "Accepting…",
+      "decideError": "The request could not be handled. Please try again.",
+      "error": "The requests could not be loaded.",
+      "list": "Friend requests",
+      "loadMore": "Load more",
+      "loadMoreError": "More requests could not be loaded. Try again.",
+      "loading": "Loading the requests…",
+      "loadingMore": "Loading…",
+      "reject": "Decline",
+      "rejectLabel": "Decline the friend request from {{name}}",
+      "rejecting": "Declining…",
+      "retry": "Try again",
+      "stale": "This request is no longer current.",
+      "unavailable": "This account is no longer available, so the request cannot be handled.",
+      "waiting_one": "{{count}} request waiting",
+      "waiting_other": "{{count}} requests waiting"
     },
     "search": {
       "capped": "More people match than we can show. Narrow the nickname.",
@@ -1191,6 +1220,7 @@
       },
       "refused": {
         "ALREADY_REQUESTED": "You have already asked to join this group.",
+        "BLOCKED_ADMIN": "You blocked the owner or an admin of this group, so you cannot ask to join.",
         "IS_MEMBER": "You are already a member of this group.",
         "REJECTED_BEFORE": "The organizer rejected your request. You cannot send a new one to this group."
       },
@@ -1437,8 +1467,14 @@
       "volejbalistka": "Volleyball player"
     },
     "capacity": {
+      "freeLast": "Only you are missing",
+      "freeNone": "Full",
+      "freePlenty": "Spots free",
+      "free_one": "{{count}} free spot",
+      "free_other": "{{count}} free spots",
       "full": "minimum reached",
       "missing": "{{count}} missing",
+      "moreSeats": "…",
       "summaryFull": "{{taken}} of {{total}} taken, minimum reached",
       "summaryMissing": "{{taken}} of {{total}} taken, {{count}} missing"
     },
@@ -1448,6 +1484,12 @@
       "copyFailed": "Couldn't copy the message",
       "link": "event link",
       "share": "Share"
+    },
+    "countdown": {
+      "hours": "{{hours}} h {{minutes}} min {{seconds}} s",
+      "label": "Starts in",
+      "minutes": "{{minutes}} min {{seconds}} s",
+      "now": "Starting now"
     },
     "counter": {
       "less": "{{label}}: less",
@@ -1478,6 +1520,7 @@
       "dateTo": "To date",
       "duration": "How long it lasts (hours)",
       "freeSpots": "Only with free spots",
+      "lastMinute": "Last minute (within 4 hours)",
       "location": "Location",
       "locationPlaceholder": "Prague 8",
       "panelHide": "Hide filters",
@@ -1528,6 +1571,12 @@
       "week": "This week",
       "weekend": "Weekend",
       "when": "When"
+    },
+    "friendsGoing": {
+      "many_one": "{{first}} and {{count}} other are going",
+      "many_other": "{{first}} and {{count}} others are going",
+      "one": "{{name}} is going",
+      "two": "{{first}} and {{second}} are going"
     },
     "joinRequest": {
       "approve": "Approve",
@@ -1658,73 +1707,129 @@
       "list": "List",
       "map": "Map"
     },
+    "viewerState": {
+      "joined": "✓ You're going",
+      "pending": "Request sent",
+      "waiting": "Awaiting approval"
+    },
     "yourSeat": {
       "title": "Your seat?"
     }
   },
+  "interest": {
+    "removeError": "The event could not be removed from the list. Please try again.",
+    "removed": "Removed from the list",
+    "save": "Interested",
+    "saveError": "The event could not be saved. Please try again.",
+    "saved": "Saved",
+    "undo": "Undo",
+    "watch": {
+      "active": "Watching for a free spot",
+      "nowFree": "A spot has freed up in the meantime. You can join right away.",
+      "offText": "The event is full. Turn on watching and we will let you know as soon as a spot frees up.",
+      "onText": "As soon as a spot frees up, we will let you know. The spot is not held for you: whoever joins first gets it.",
+      "start": "Watch for a free spot",
+      "startError": "Watching could not be turned on. Please try again.",
+      "stopError": "Watching could not be turned off. Please try again."
+    }
+  },
   "landing": {
     "actions": {
-      "create": "Create an event",
-      "find": "Find a free seat"
-    },
-    "audience": {
-      "organizer": {
-        "b1": "You approve who comes",
-        "b2": "The event goes ahead once the minimum is met",
-        "b3": "Turn a crew that clicked into a group",
-        "text": "Create an event in a minute and everyone sees how many players you need.",
-        "title": "Short of people for the minimum"
-      },
-      "player": {
-        "b1": "See free seats in the list and on the map",
-        "b2": "Browse everything without signing up",
-        "b3": "Create an account only when you want a seat",
-        "text": "Find an event that is short a player and ask for a seat with one tap.",
-        "title": "Want to play"
-      },
-      "title": "Whether you play or organize"
+      "create": "Add an event",
+      "find": "Find an event"
     },
     "groups": {
       "browse": "Browse groups",
-      "seatTitle": "Your seat in the crew",
-      "text": "A group is a crew of people around one activity. It has its place, its usual time and members who know each other. A newcomer sees what they are joining before asking for membership, and the group's events are never created from scratch.",
-      "title": "Groups: a crew that meets regularly"
+      "seatTitle": "Your place in the crew",
+      "text": "A group is a crew around one activity: its own place, a usual time and people who know each other. Join and you hear about the group's events first.",
+      "title": "Play regularly? Find a group"
     },
     "hero": {
-      "kicker": "Sports and games near you",
-      "kickerCount_one": "{{count}} event open right now",
-      "kickerCount_other": "{{count}} events open right now",
-      "text": "HobbyHub connects organizers who are short of people with players looking for a free seat.",
-      "title": "Missing a player? Or looking for a game?"
+      "textCount_one": "Football, board games, trips: <count>{{count}}</count> event with a free spot right now. Join, play! – and keep playing with the people you clicked with.",
+      "textCount_other": "Football, board games, trips: <count>{{count}}</count> events with a free spot right now. Join, play! – and keep playing with the people you clicked with.",
+      "textPlain": "Football, board games, trips: find an event with a free spot. Join, play! – and keep playing with the people you clicked with.",
+      "titleFirst": "Short of a player?",
+      "titleSecond": "Or looking for a game?"
     },
     "how": {
-      "step1": {
-        "text": "They say how many people they still need. Everyone sees it right away.",
-        "title": "The organizer creates an event"
+      "crew": {
+        "badge": "Group",
+        "text": "You can meet the people you click with again next time. An event often turns into a group.",
+        "title": "Play and find your crew"
       },
-      "step2": {
-        "text": "One tap. You can browse without an account.",
-        "title": "A player asks for a seat"
+      "find": {
+        "text": "Football tonight, board games at the weekend. Free spots show right away.",
+        "title": "Find an event"
       },
-      "step3": {
-        "text": "Once the minimum is met, the event goes ahead.",
-        "title": "The organizer approves"
-      },
-      "step4": {
-        "text": "Those who clicked stay together, and nobody starts from scratch next time.",
-        "title": "The crew becomes a group"
+      "intro": "Find an event with a free spot, join and play. The crew comes with it.",
+      "join": {
+        "text": "One tap. The organizer confirms and the spot is yours.",
+        "title": "Join in"
       },
       "title": "How it works"
     },
+    "rows": {
+      "empty": "There are no events with a free spot yet. Add your own: once one appears, you'll find it here.",
+      "friends": {
+        "text": "Where the people you know are heading",
+        "title": "Where your friends are heading"
+      },
+      "groupsForYou": {
+        "all": "All groups",
+        "text": "Crews around your activities that you're not in yet",
+        "title": "Groups for you"
+      },
+      "lastMinute": {
+        "all": "All last minute",
+        "text": "Starts within 4 hours",
+        "title": "Last minute"
+      },
+      "liked": {
+        "all": "Events of my activities",
+        "text": "From your activities, your groups and where you've played",
+        "title": "Your favourite activities"
+      },
+      "loadError": "Could not load the events",
+      "loading": "Loading events…",
+      "near": {
+        "all": "Events near you",
+        "city": "In {{city}}",
+        "cityLabel": "Events in",
+        "cityOption_one": "{{city}} · {{count}} event",
+        "cityOption_other": "{{city}} · {{count}} events",
+        "radius": "Within {{radiusKm}} km of home",
+        "title": "Near you"
+      },
+      "rowError": "This row could not be loaded.",
+      "today": {
+        "all": "All of today's events",
+        "text": "Still today",
+        "title": "Today"
+      },
+      "top": {
+        "text": "Lots of people and a highly rated organizer",
+        "title": "Top events"
+      },
+      "trendingGroups": {
+        "all": "All groups",
+        "recent_one": "+{{count}} new member this month",
+        "recent_other": "+{{count}} new members this month",
+        "text": "Most new members in 30 days",
+        "title": "Trending groups"
+      },
+      "weekend": {
+        "all": "The whole weekend",
+        "title": "This weekend"
+      }
+    },
     "search": {
       "label": "Search events",
-      "placeholder": "Title, place or activity"
+      "placeholder": "Name, place or activity"
     },
-    "seoTitle": "Home",
+    "seoDescription": "Find an event with a free spot near you: football, board games, trips and more. Join, play and find your crew.",
+    "seoTitle": "Find an event, the crew comes with it",
     "upcoming": {
-      "all": "All events",
-      "empty": "No upcoming events yet. Create one yourself and it will show up here.",
-      "title": "Upcoming events"
+      "empty": "No upcoming events yet. Create one yourself and it will show up here."
     }
   },
   "language": {
@@ -1749,6 +1854,27 @@
     "hosted": {
       "empty": "You are not organizing any event yet."
     },
+    "interested": {
+      "actionsLabel": "Options of the saved event: {{title}}",
+      "empty": {
+        "description": "Found an event you cannot decide on yet? Tap “Interested” on its detail and you will find it here, along with whether you can still join. Saving reserves nothing.",
+        "find": "Browse events",
+        "title": "Nothing saved yet"
+      },
+      "freeSpots_one": "{{count}} spot left",
+      "freeSpots_other": "{{count}} spots left",
+      "full": "Full",
+      "pastHeading": "Past and cancelled",
+      "remove": "Remove from the list",
+      "state": {
+        "CANCELLED": "Cancelled",
+        "PAST": "Finished",
+        "STARTED": "In progress"
+      },
+      "unwatch": "Stop watching for a free spot",
+      "watch": "Watch for a free spot",
+      "watching": "Watching"
+    },
     "loadMore": "Load more",
     "loading": "Loading your events",
     "rate": "Rate the organizer",
@@ -1766,6 +1892,8 @@
       "applicationsWithCount": "Applications ({{count}})",
       "hosted": "Organizing",
       "hostedWithCount": "Organizing ({{count}})",
+      "interested": "Interested",
+      "interestedWithCount": "Interested ({{count}})",
       "label": "My events"
     },
     "title": "My events"
@@ -1790,6 +1918,10 @@
     "bellUnread_one": "Notifications, {{count}} unread",
     "bellUnread_other": "Notifications, {{count}} unread",
     "deletedTarget": "a deleted event",
+    "friendRequest": {
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Declined"
+    },
     "justNow": "just now",
     "kinds": {
       "all": "All",
@@ -1842,6 +1974,8 @@
         "upcoming": "{{title}} starts {{when}}"
       },
       "EVENT_RESTORED": "The event {{title}} is back",
+      "FRIEND_REQUEST": "{{name}} is asking you to be friends",
+      "FRIEND_REQUEST_ACCEPTED": "{{name}} accepted your friend request",
       "HOSTED_EVENT_REMINDER": {
         "belowMinimum_one": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participant short of the minimum",
         "belowMinimum_other": "Your event {{title}} starts {{when}}, {{occupied}} of {{capacity}} spots taken, {{count}} participants short of the minimum",
@@ -1872,6 +2006,7 @@
           "REJECTED": "Your request to join the group {{title}} was rejected"
         }
       },
+      "SPOT_AVAILABLE": "A spot freed up at {{title}}",
       "other": "News about {{title}}"
     },
     "title": "Notifications",
@@ -2117,6 +2252,7 @@
     },
     "refused": {
       "ALREADY_REQUESTED": "You have already asked to join this event.",
+      "BLOCKED_ORGANIZER": "You blocked one of the organizers, so you cannot ask to join.",
       "EVENT_CANCELLED": "This event was cancelled, you can no longer ask to join.",
       "EVENT_FINISHED": "This event is over, you cannot ask to join.",
       "EVENT_FULL": "This event is full, you cannot ask to join.",
@@ -2424,5 +2560,35 @@
   "terms": {
     "placeholder": "The terms are being prepared. The HobbyHub operator will add them before launch.",
     "title": "Terms of use"
+  },
+  "userBlocks": {
+    "block": "Block",
+    "blockFailed": "Could not block the user. Please try again.",
+    "blocked": "{{name}} is blocked",
+    "confirm": {
+      "back": "Back",
+      "hidden": "They will no longer see your profile, the events you organize or the groups you run. They cannot ask you to join, for membership or for friendship, and you will get no notifications from them.",
+      "secret": "Nobody tells them you blocked them.",
+      "submit": "Block",
+      "ties": "Waiting requests between you close, their seats at your events and memberships in your groups end, and so do yours with them. Unblocking brings none of it back.",
+      "title": "Block {{name}}?"
+    },
+    "manageLink": "Blocked users are managed in Settings.",
+    "profile": {
+      "blocked": "You blocked {{name}}. They see neither your profile nor what you run, and cannot ask you for anything."
+    },
+    "settings": {
+      "blockedAt": "Blocked on {{date}}",
+      "description": "They see neither you nor what you run, and cannot ask you for anything. Only you see this list.",
+      "empty": "You have not blocked anyone.",
+      "loadError": "Could not load the blocked users.",
+      "loading": "Loading blocked users",
+      "retry": "Try again",
+      "title": "Blocked users",
+      "unblockLabel": "Unblock {{name}}"
+    },
+    "unblock": "Unblock",
+    "unblockFailed": "Could not unblock the user. Please try again.",
+    "unblocked": "{{name}} is no longer blocked"
   }
 }
