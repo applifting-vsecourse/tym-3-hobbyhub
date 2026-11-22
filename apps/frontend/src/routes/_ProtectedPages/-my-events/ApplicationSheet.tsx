@@ -6,7 +6,7 @@ import { eventKeys } from "@/features/event/api/eventKeys"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import type { MyApplication } from "@/features/event/api/myEventsSchemas"
 import type { ApplicationAction } from "@/features/event/components/MyEventsOverview"
-import { eventPlaceAndLevel, eventTime } from "@/features/event/lib/eventLabels"
+import { eventClock, eventDate, eventPlaceAndLevel } from "@/features/event/lib/eventLabels"
 import { CancelParticipationSheet } from "@/features/participation-request/components/CancelParticipationSheet"
 
 /** Which application's sheet is open, and on which step; `step` is null while it is closed. */
@@ -54,7 +54,8 @@ export function ApplicationSheet({ applications, state, onStepChange }: Applicat
       eventId={event?.id ?? ""}
       event={{
         title: event?.title ?? "",
-        time: event ? eventTime(event.startAt, i18n.language) : "",
+        day: event ? eventDate(t, event.startAt, new Date(), i18n.language) : "",
+        time: event ? eventClock(t, event.startAt, new Date(), i18n.language) : "",
         place: event ? eventPlaceAndLevel(t, event) : "",
         taken: event?.takenCount ?? 0,
         min: event?.minParticipants ?? 0,

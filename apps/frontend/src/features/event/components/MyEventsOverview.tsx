@@ -29,11 +29,11 @@ import type {
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { NoMatchingEvents } from "@/features/event/components/NoMatchingEvents"
 import {
-  eventDay,
+  eventClock,
+  eventDate,
   eventHostAndPrice,
   eventMeta,
   eventPrice,
-  eventTime,
 } from "@/features/event/lib/eventLabels"
 
 const BADGES: Record<ApplicationStatus, Status> = {
@@ -548,12 +548,10 @@ export function MyEventsOverview({
           className="-ml-3 block min-w-0 flex-1 rounded-lg pr-1 pl-3 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <ScheduleRow
-            time={eventTime(event.startAt, i18n.language)}
+            day={eventDate(t, event.startAt, now, i18n.language)}
+            time={eventClock(t, event.startAt, now, i18n.language)}
             title={event.title}
-            subtitle={[
-              eventDay(t, event.startAt, now, i18n.language),
-              eventMeta(t, event, activityLabel(event.activity)),
-            ].join(" · ")}
+            subtitle={eventMeta(t, event, activityLabel(event.activity))}
             taken={event.takenCount}
             min={event.minParticipants}
             max={event.maxParticipants}

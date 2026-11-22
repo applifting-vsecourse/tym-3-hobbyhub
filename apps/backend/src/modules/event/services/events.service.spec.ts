@@ -234,6 +234,34 @@ describe('EventsService', () => {
     );
   });
 
+  describe('similar events', () => {
+    it('is a 404 when the viewer may not open the detail', async () => {
+      const { repository, service } = setup();
+      repository.getShowableEventById.mockResolvedValue(null);
+
+      await expect(service.getSimilarEvents('nope')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(repository.getSimilarEvents).not.toHaveBeenCalled();
+    });
+
+    it('asks the repository for events like the one in the detail', async () => {
+      const { repository, service } = setup();
+      const now = new Date();
+      repository.getShowableEventById.mockResolvedValue({
+        visibility: 'PUBLIC',
+      } as EventDetail);
+      repository.getEventFacts.mockResolvedValue({
+        organizerIds: ['o1'],
+      } as EventFacts);
+      repository.getSimilarEvents.mockResolvedValue([]);
+
+      await service.getSimilarEvents('e1', { id: 'u1' } as Identity, now);
+
+      expect(repository.getSimilarEvents).toHaveBeenCalledWith('e1', now, []);
+    });
+  });
+
   it('refuses a date range that ends before it starts', async () => {
     const { repository, service } = setup();
 
