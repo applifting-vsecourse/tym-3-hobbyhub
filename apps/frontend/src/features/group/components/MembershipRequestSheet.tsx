@@ -174,7 +174,8 @@ export function MembershipRequestSheet({
           (violation) =>
             violation === "IS_MEMBER" ||
             violation === "ALREADY_REQUESTED" ||
-            violation === "REJECTED_BEFORE",
+            violation === "REJECTED_BEFORE" ||
+            violation === "BLOCKED_ADMIN",
         )
       : undefined
   const errorMessage = error

@@ -18,6 +18,7 @@ const noBlocks = (): MockProxy<UserBlockVisibility> => {
   const blocks = mock<UserBlockVisibility>();
   blocks.hiddenFor.mockResolvedValue([]);
   blocks.hiddenFrom.mockResolvedValue([]);
+  blocks.blockedBy.mockResolvedValue([]);
   return blocks;
 };
 

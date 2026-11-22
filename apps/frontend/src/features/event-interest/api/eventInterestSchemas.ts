@@ -24,6 +24,7 @@ export const watchRuleViolationSchema = z.enum([
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+  "BLOCKED_ORGANIZER",
 ])
 
 export type WatchRuleViolation = z.infer<typeof watchRuleViolationSchema>

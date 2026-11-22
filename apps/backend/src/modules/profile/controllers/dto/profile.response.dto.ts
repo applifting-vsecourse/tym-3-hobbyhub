@@ -148,6 +148,12 @@ export class PublicProfileResponseDto {
   })
   ratings!: UserRatingScoresResponseDto;
 
+  @ApiProperty({
+    description:
+      'Whether the viewer blocked this person (#65); never says whether the person blocked the viewer',
+  })
+  isBlockedByMe!: boolean;
+
   static fromDomain(profile: PublicProfile): PublicProfileResponseDto {
     return {
       id: profile.id,
@@ -163,6 +169,7 @@ export class PublicProfileResponseDto {
           : null,
       })),
       ratings: UserRatingScoresResponseDto.fromDomain(profile.ratings),
+      isBlockedByMe: profile.isBlockedByMe,
     };
   }
 }

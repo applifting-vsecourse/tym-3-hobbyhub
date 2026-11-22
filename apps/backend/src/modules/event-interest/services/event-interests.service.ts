@@ -40,6 +40,7 @@ const WATCH_VIOLATION_MESSAGES: Record<WatchRuleViolation, string> = {
   HAS_SEAT: 'You already have a seat at this event',
   ALREADY_REQUESTED: 'You have already asked to join this event',
   REJECTED_BEFORE: 'Your request to join this event was rejected',
+  BLOCKED_ORGANIZER: 'You blocked an organizer of this event',
 };
 
 // Messages plus the codes, so the client can say why in its language.
