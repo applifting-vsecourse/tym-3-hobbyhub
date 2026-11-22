@@ -604,12 +604,28 @@ export function MyEventsOverview({
     const status = application?.status
     const isToRate = !application && (event.participantsToRate ?? 0) > 0
     const action = application && onApplicationAction ? applicationActionOf(application, now) : null
+    const menu =
+      application && (action || application.canRateOrganizer) ? (
+        <ApplicationActionMenu
+          application={application}
+          action={action}
+          onAction={onApplicationAction}
+        />
+      ) : isToRate ? (
+        <RateParticipantsMenu event={event} />
+      ) : null
+    // Wide: a row with nothing to offer (decided, or over and rated) keeps the
+    // menu's room, so the seats stay in one column down the list (#177).
+    // Narrow: the seats sit under the title, so there is no column to keep.
+    const shouldKeepMenuRoom =
+      !menu && (application ? onApplicationAction !== undefined : hasHostedMenu)
+
     return (
-      // The row's top line runs under the menu too; the menu sits centred
-      // beside the row whatever its height.
+      // The row's top line runs under the menu too. The item measures itself
+      // (a container) to know where the menu goes.
       <li
         key={event.id}
-        className="flex items-center gap-1 border-t border-border"
+        className="@container relative flex items-center gap-1 border-t border-border"
       >
         <Link
           to="/events/$eventId"
@@ -634,6 +650,7 @@ export function MyEventsOverview({
                 : eventPrice(t, event, i18n.language)
             }
             className="border-t-0"
+            hasCornerMenu={menu !== null}
             badge={
               status ? (
                 <span className="flex flex-wrap gap-2">
@@ -657,21 +674,16 @@ export function MyEventsOverview({
           />
         </Link>
         {/* Next to the link, not inside it: a button in an anchor is not valid
-            HTML, and a tap on it must not open the detail. */}
-        {application && (action || application.canRateOrganizer) ? (
-          <ApplicationActionMenu
-            application={application}
-            action={action}
-            onAction={onApplicationAction}
-          />
-        ) : isToRate ? (
-          <RateParticipantsMenu event={event} />
-        ) : (application && onApplicationAction) || (!application && hasHostedMenu) ? (
-          // A row with nothing to offer (decided, or over and rated) keeps the
-          // menu's room, so the seats stay in one column down the list (#177).
+            HTML, and a tap on it must not open the detail. Narrow: over the
+            row's top right corner, where the title leaves it room (#294);
+            wide: beside the row. The item switches at the same 48rem as the
+            row, so the menu never lies over a wide row's seats. */}
+        {menu ? (
+          <div className="absolute top-1 right-0 @3xl:static">{menu}</div>
+        ) : shouldKeepMenuRoom ? (
           <span
             aria-hidden
-            className="size-11 shrink-0"
+            className="hidden size-11 shrink-0 @3xl:block"
           />
         ) : null}
       </li>
