@@ -5,6 +5,8 @@ import {
   EVENT_REMINDERS,
   EventChange,
   EventReminderKind,
+  FRIEND_REQUEST_STATUSES,
+  FriendRequestStatus,
   Notification,
   NOTIFICATION_TYPES,
   NotificationPage,
@@ -92,6 +94,17 @@ class NotificationGroupDto {
   name!: string;
 }
 
+class NotificationFriendRequestDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({
+    enum: FRIEND_REQUEST_STATUSES,
+    description: 'Where the request stands now; the buttons only while PENDING',
+  })
+  status!: FriendRequestStatus;
+}
+
 // The type and the data; the client writes the sentence (ADR-0015). The
 // payload comes flattened, with every field present, so the client reads one
 // shape for every type.
@@ -125,6 +138,13 @@ export class NotificationResponseDto {
 
   @ApiProperty({ type: NotificationGroupDto, nullable: true })
   group!: NotificationGroupDto | null;
+
+  @ApiProperty({
+    type: NotificationFriendRequestDto,
+    nullable: true,
+    description: 'FRIEND_REQUEST: the request it is about',
+  })
+  friendRequest!: NotificationFriendRequestDto | null;
 
   @ApiProperty({
     enum: DECISIONS,
@@ -182,6 +202,7 @@ export class NotificationResponseDto {
       actor: notification.actor,
       event: notification.event,
       group: notification.group,
+      friendRequest: notification.friendRequest,
       decision: notification.payload.decision ?? null,
       message: notification.payload.message ?? null,
       changes: notification.payload.changes ?? [],

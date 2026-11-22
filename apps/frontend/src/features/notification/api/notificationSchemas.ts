@@ -23,6 +23,8 @@ export const notificationTypeSchema = z.enum([
   // #236: the rating period of an event one went to, or organized, is on.
   "RATING_PROMPT",
   "HOSTED_RATING_PROMPT",
+  "FRIEND_REQUEST",
+  "FRIEND_REQUEST_ACCEPTED",
 ])
 
 // #175: the kinds the notification page filters by, as the server names them
@@ -55,6 +57,9 @@ export const ratingPromptSchema = z.object({
   deadline: z.coerce.date(),
 })
 
+// #228: the friend request a notification is about, and where it stands now.
+export const friendRequestStatusSchema = z.enum(["PENDING", "ACCEPTED", "REJECTED", "WITHDRAWN"])
+
 export const notificationSchema = z.object({
   id: z.string(),
   type: notificationTypeSchema,
@@ -63,6 +68,7 @@ export const notificationSchema = z.object({
   actor: z.object({ id: z.string(), name: z.string() }).nullable(),
   event: z.object({ id: z.string(), title: z.string() }).nullable(),
   group: z.object({ id: z.string(), name: z.string() }).nullable(),
+  friendRequest: z.object({ id: z.string(), status: friendRequestStatusSchema }).nullable(),
   decision: decisionSchema.nullable(),
   message: z.string().nullable(),
   changes: z.array(eventChangeSchema),

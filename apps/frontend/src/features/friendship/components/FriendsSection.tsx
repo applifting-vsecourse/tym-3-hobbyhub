@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ROUTES } from "@/app/routes"
 import { Button } from "@/components/ui/button"
 
+import { FriendRequests } from "@/features/friendship/components/FriendRequests"
 import { FriendSearch } from "@/features/friendship/components/FriendSearch"
 import { FriendsTabs } from "@/features/friendship/components/FriendsTabs"
 import type { FriendsTab } from "@/features/friendship/lib/friendsSearch"
@@ -20,7 +21,7 @@ type FriendsSectionProps = {
 
 /**
  * Přátelé (#227): one place for finding people, the friends and the friend
- * requests. #225 fills the search; the friends (#226) and the requests (#228)
+ * requests. #225 fills the search and #228 the requests; the friends (#226)
  * still say in one sentence what will be there.
  */
 export function FriendsSection({ tab, search }: FriendsSectionProps) {
@@ -38,6 +39,8 @@ export function FriendsSection({ tab, search }: FriendsSectionProps) {
           search ? (
             <FriendSearch {...search} />
           ) : null
+        ) : tab === "requests" ? (
+          <FriendRequests />
         ) : (
           <>
             <p className="typo-body text-muted-foreground">{t(`friends.empty.${tab}`)}</p>

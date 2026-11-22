@@ -6,6 +6,8 @@ import {
   friendRequestViolations,
   FriendSearchPage,
   isFriendRequestNotified,
+  RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+  ReceivedFriendRequestPage,
   relationOf,
 } from '@/modules/friendship/domain/friendship';
 import {
@@ -13,6 +15,7 @@ import {
   FriendshipRepository,
   PendingRequestExistsError,
 } from '@/modules/friendship/repositories/friendship.repository';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
@@ -30,13 +33,14 @@ export type SentFriendRequest = {
   notifyRecipient: boolean;
 };
 
-// #227, #225, ADR-0026: what other modules ask about friendships, searching
-// people, sending a request and withdrawing it. #228 adds deciding requests, #226 the list of
-// friends.
+// #227, #225, #228, ADR-0026: what other modules ask about friendships,
+// searching people, sending a request, withdrawing it and deciding it. #226
+// adds the list of friends.
 @Injectable()
 export class FriendshipService {
   constructor(
     private readonly friendshipRepository: FriendshipRepository,
+    private readonly notifications: NotificationsService,
     private readonly blocks: UserBlockVisibility,
   ) {}
 
@@ -165,8 +169,12 @@ export class FriendshipService {
       recipientId,
       friendRequestNotifyWindowStart(new Date()),
     );
+    let requestId: string;
     try {
-      await this.friendshipRepository.createRequest(sender.id, recipientId);
+      requestId = await this.friendshipRepository.createRequest(
+        sender.id,
+        recipientId,
+      );
     } catch (error) {
       // Both sent at the same moment: the database let only one through.
       if (error instanceof PendingRequestExistsError) {
@@ -174,19 +182,25 @@ export class FriendshipService {
       }
       throw error;
     }
-    // #228 notifies the recipient when `notifyRecipient`; any more requests
-    // within the hour wait silently in the section Přátelé.
-    return {
-      relation: 'request_sent',
-      notifyRecipient: isFriendRequestNotified(earlierInWindow),
-    };
+    // #228: the recipient is told, in the bell and by e-mail, unless the
+    // sender is over the limit; then the request waits silently in the tab
+    // „Žádosti“ of the section Přátelé.
+    const notifyRecipient = isFriendRequestNotified(earlierInWindow);
+    if (notifyRecipient) {
+      await this.notifications.notifyFriendRequest({
+        request: { id: requestId },
+        sender,
+        recipientId,
+      });
+    }
+    return { relation: 'request_sent', notifyRecipient };
   }
 
   /**
    * #225: the signed-in person takes back their pending request to the
    * recipient. Refused to oneself (400); 409 when there is no pending request
    * from them (never sent, or decided meanwhile), so the client reloads the
-   * real state. #228 removes the recipient's notification of it.
+   * real state. The recipient's notification of it goes too (#228).
    */
   async withdrawRequest(
     sender: Identity,
@@ -194,13 +208,121 @@ export class FriendshipService {
   ): Promise<FriendRelation> {
     const violations = friendRequestViolations(sender.id, recipientId);
     if (violations.length > 0) throw new BadRequestException(violations);
-    const withdrawn = await this.friendshipRepository.withdrawPendingRequest(
+    const withdrawnId = await this.friendshipRepository.withdrawPendingRequest(
       sender.id,
       recipientId,
       new Date(),
     );
-    if (!withdrawn) throw new ConflictException(['NO_PENDING_REQUEST']);
+    if (!withdrawnId) throw new ConflictException(['NO_PENDING_REQUEST']);
+    await this.notifications.removeFriendRequestNotifications({
+      id: withdrawnId,
+    });
     return 'none';
+  }
+
+  /**
+   * #228: the requests waiting for the signed-in person, newest first, a page
+   * at a time, with how many there are. Not from people blocked with them
+   * either way (review #257): deciding those ends in 404, as `checkDecidable`.
+   */
+  async listReceivedRequests(
+    recipient: Identity,
+    offset: number,
+  ): Promise<ReceivedFriendRequestPage> {
+    const { items, total } =
+      await this.friendshipRepository.listReceivedRequests(
+        recipient.id,
+        offset,
+        RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        await this.blockedWith(recipient.id),
+      );
+    return {
+      items,
+      total,
+      nextOffset:
+        items.length > 0 && offset + items.length < total
+          ? offset + items.length
+          : null,
+    };
+  }
+
+  /** #228: how many requests wait for the signed-in person (the tab's number), the same ones. */
+  async countReceivedRequests(recipient: Identity): Promise<number> {
+    return this.friendshipRepository.countReceivedRequests(
+      recipient.id,
+      await this.blockedWith(recipient.id),
+    );
+  }
+
+  /**
+   * #228: the signed-in person accepts the pending request from the sender:
+   * they become friends and the sender is told. Only the recipient decides,
+   * and only a pending request: refused to oneself (400), from an account
+   * that is blocked or deleted (404), and 409 when nothing waits (decided
+   * elsewhere, withdrawn), so the client reloads the real state.
+   */
+  async acceptRequest(
+    recipient: Identity,
+    senderId: string,
+  ): Promise<FriendRelation> {
+    await this.checkDecidable(recipient, senderId);
+    const requestId = await this.friendshipRepository.acceptPendingRequest(
+      senderId,
+      recipient.id,
+      new Date(),
+    );
+    if (!requestId) throw new ConflictException(['NO_PENDING_REQUEST']);
+    // Independent, so at once; neither throws (NotificationsService).
+    await Promise.all([
+      this.notifications.markFriendRequestNotificationRead(recipient, {
+        id: requestId,
+      }),
+      this.notifications.notifyFriendRequestAccepted({
+        request: { id: requestId },
+        senderId,
+        acceptedBy: recipient,
+      }),
+    ]);
+    return 'friends';
+  }
+
+  /**
+   * #228: the signed-in person rejects the pending request from the sender.
+   * Silent: the sender is told nothing and may ask again. Refused like
+   * accepting.
+   */
+  async rejectRequest(
+    recipient: Identity,
+    senderId: string,
+  ): Promise<FriendRelation> {
+    await this.checkDecidable(recipient, senderId);
+    const requestId = await this.friendshipRepository.rejectPendingRequest(
+      senderId,
+      recipient.id,
+      new Date(),
+    );
+    if (!requestId) throw new ConflictException(['NO_PENDING_REQUEST']);
+    await this.notifications.markFriendRequestNotificationRead(recipient, {
+      id: requestId,
+    });
+    return 'none';
+  }
+
+  private async checkDecidable(
+    recipient: Identity,
+    senderId: string,
+  ): Promise<void> {
+    const violations = friendRequestViolations(senderId, recipient.id);
+    if (violations.length > 0) throw new BadRequestException(violations);
+    // #239: like sending, nothing passes between a blocked pair, and the
+    // answer is the one of an unknown account.
+    const [isReachable, blocked] = await Promise.all([
+      this.friendshipRepository.isReachable(senderId),
+      this.blockedWith(recipient.id),
+    ]);
+    if (!isReachable || blocked.includes(senderId)) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   /**
@@ -214,6 +336,8 @@ export class FriendshipService {
     now: Date = new Date(),
   ): Promise<void> {
     if (oneId === otherId) return;
+    // #228: the notifications of the closed requests go with them, in the
+    // repository's one transaction (review #257).
     await this.friendshipRepository.removeBlockedPair(oneId, otherId, now);
   }
 

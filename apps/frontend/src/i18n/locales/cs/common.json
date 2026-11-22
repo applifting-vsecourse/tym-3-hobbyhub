@@ -905,6 +905,27 @@
       "request_received": "Chce se spřátelit",
       "request_sent": "Žádost odeslána"
     },
+    "requests": {
+      "accept": "Přijmout",
+      "acceptLabel": "Přijmout žádost o přátelství od {{name}}",
+      "accepting": "Přijímáme…",
+      "decideError": "Žádost se nepodařilo vyřídit. Zkuste to prosím znovu.",
+      "error": "Žádosti se nepodařilo načíst.",
+      "list": "Žádosti o přátelství",
+      "loadMore": "Načíst další",
+      "loadMoreError": "Další žádosti se nepodařilo načíst. Zkuste to znovu.",
+      "loading": "Načítáme žádosti…",
+      "loadingMore": "Načítáme…",
+      "reject": "Zamítnout",
+      "rejectLabel": "Zamítnout žádost o přátelství od {{name}}",
+      "rejecting": "Zamítáme…",
+      "retry": "Zkusit znovu",
+      "stale": "Žádost už není aktuální.",
+      "unavailable": "Tento účet už není dostupný, žádost nejde vyřídit.",
+      "waiting_few": "{{count}} nevyřízené žádosti",
+      "waiting_one": "{{count}} nevyřízená žádost",
+      "waiting_other": "{{count}} nevyřízených žádostí"
+    },
     "search": {
       "capped": "Takových lidí je víc, než můžeme ukázat. Upřesněte přezdívku.",
       "error": "Vyhledávání se nepovedlo.",
@@ -1926,6 +1947,10 @@
     "bellUnread_one": "Notifikace, {{count}} nepřečtená",
     "bellUnread_other": "Notifikace, {{count}} nepřečtených",
     "deletedTarget": "smazaná akce",
+    "friendRequest": {
+      "ACCEPTED": "Přijato",
+      "REJECTED": "Zamítnuto"
+    },
     "justNow": "právě teď",
     "kinds": {
       "all": "Vše",
@@ -1980,6 +2005,8 @@
         "upcoming": "Akce {{title}} začíná {{when}}"
       },
       "EVENT_RESTORED": "Akce {{title}} je zpět",
+      "FRIEND_REQUEST": "{{name}} vás žádá o přátelství",
+      "FRIEND_REQUEST_ACCEPTED": "{{name}} přijal(a) vaši žádost o přátelství",
       "HOSTED_EVENT_REMINDER": {
         "belowMinimum_few": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastníci",
         "belowMinimum_one": "Tvoje akce {{title}} začíná {{when}}, obsazeno {{occupied}} z {{capacity}}, do minima chybí {{count}} účastník",

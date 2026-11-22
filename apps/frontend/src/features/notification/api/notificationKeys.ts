@@ -1,3 +1,5 @@
+import { notificationsRootKey } from "@/lib/friend-requests"
+
 import type { NotificationKind } from "@/features/notification/api/notificationSchemas"
 
 /** Which notifications a list holds (#175); without a field, all of them. */
@@ -7,7 +9,8 @@ export type NotificationListFilter = {
 }
 
 export const notificationKeys = {
-  all: () => ["notifications"] as const,
+  // The root a friend request decision refreshes too (lib/friend-requests).
+  all: () => notificationsRootKey,
   // Every variant of the list sits under this prefix, so marking something
   // read refreshes the bell and both sections of the page at once.
   lists: () => [...notificationKeys.all(), "list"] as const,

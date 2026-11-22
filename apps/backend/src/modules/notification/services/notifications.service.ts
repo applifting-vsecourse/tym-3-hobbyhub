@@ -27,6 +27,7 @@ type Who = Pick<Identity, 'id'>;
 type AnEvent = { id: string };
 type AGroup = { id: string };
 type ARequest = { userId: string; decisionMessage: string | null };
+type AFriendRequest = { id: string };
 
 @Injectable()
 export class NotificationsService {
@@ -385,6 +386,71 @@ export class NotificationsService {
           : {}),
       },
     });
+  }
+
+  // #228: the recipient of a friend request, unless the sender is over the
+  // limit of notified requests (the friendship module decides, ADR-0026).
+  notifyFriendRequest(input: {
+    request: AFriendRequest;
+    sender: Who;
+    recipientId: string;
+  }): Promise<void> {
+    return this.record({
+      type: 'FRIEND_REQUEST',
+      recipientIds: recipientsExcept([input.recipientId], input.sender.id),
+      actorId: input.sender.id,
+      friendRequestId: input.request.id,
+    });
+  }
+
+  // #228: the sender, once the recipient accepts. A rejection tells nobody.
+  notifyFriendRequestAccepted(input: {
+    request: AFriendRequest;
+    senderId: string;
+    acceptedBy: Who;
+  }): Promise<void> {
+    return this.record({
+      type: 'FRIEND_REQUEST_ACCEPTED',
+      recipientIds: recipientsExcept([input.senderId], input.acceptedBy.id),
+      actorId: input.acceptedBy.id,
+      friendRequestId: input.request.id,
+    });
+  }
+
+  // #228: a withdrawn request takes its notification away (ADR-0026). An
+  // e-mail already queued stays: it names nobody and leads to the tab.
+  async removeFriendRequestNotifications(
+    request: AFriendRequest,
+  ): Promise<void> {
+    try {
+      await this.repository.deleteOfFriendRequest(request.id);
+    } catch (error) {
+      this.logger.error(
+        `Could not remove the notifications of friend request ${request.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  // #228: the recipient decided the request, wherever: its notification is
+  // seen. Like the rest, it never fails the decision.
+  async markFriendRequestNotificationRead(
+    recipient: Who,
+    request: AFriendRequest,
+    now: Date = new Date(),
+  ): Promise<void> {
+    try {
+      await this.repository.markReadOfFriendRequest(
+        recipient.id,
+        request.id,
+        now,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Could not mark the notification of friend request ${request.id} read`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 
   private async record(data: NewNotification): Promise<void> {
