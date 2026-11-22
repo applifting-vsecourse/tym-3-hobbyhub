@@ -60,6 +60,8 @@ export const WATCH_RULE_VIOLATIONS = [
   'HAS_SEAT',
   'ALREADY_REQUESTED',
   'REJECTED_BEFORE',
+  // #65: the person blocked an organizer, who would never see the request.
+  'BLOCKED_ORGANIZER',
 ] as const satisfies readonly (
   Exclude<JoinRuleViolation, 'EVENT_FULL'> | 'EVENT_NOT_FULL'
 )[];

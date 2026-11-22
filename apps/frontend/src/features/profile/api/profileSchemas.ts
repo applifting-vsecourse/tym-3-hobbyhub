@@ -71,6 +71,8 @@ export const publicProfileSchema = z.object({
   interests: z.array(interestSchema),
   /** #236: both numbers null below three ratings. */
   ratings: userRatingScoresSchema,
+  /** #65: whether I blocked this person; never whether they blocked me. */
+  isBlockedByMe: z.boolean(),
 })
 
 export type PublicProfile = z.infer<typeof publicProfileSchema>
