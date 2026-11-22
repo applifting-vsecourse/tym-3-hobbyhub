@@ -495,7 +495,8 @@ describe("MyEventsOverview", () => {
         "/events/i1",
       )
       expect(within(rows).getByText("3 volná místa")).toBeInTheDocument()
-      expect(within(rows).getByText("Plno")).toBeInTheDocument()
+      // Not green: to someone who would like to go, a full event is no success.
+      expect(within(rows).getByText("Plno")).toHaveAttribute("data-variant", "secondary")
       expect(screen.getByRole("button", { name: "Načíst další" })).toBeInTheDocument()
     })
 

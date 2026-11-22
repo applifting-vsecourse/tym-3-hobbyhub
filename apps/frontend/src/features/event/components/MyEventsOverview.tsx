@@ -385,13 +385,16 @@ function InterestedBadge({ event, now }: { event: InterestedEvent; now: Date }) 
   if (event.startAt <= now) {
     return <StatusBadge status="neutral">{t("myEvents.interested.state.STARTED")}</StatusBadge>
   }
+  // Neutral either way, "Plno" too: elsewhere a full event is the goal met
+  // (green on its card), but to someone who would like to go it is no good
+  // news, and green in this row is kept for their own approved application.
   const free = event.maxParticipants - event.takenCount
-  return free > 0 ? (
+  return (
     <StatusBadge status="neutral">
-      {t("myEvents.interested.freeSpots", { count: free })}
+      {free > 0
+        ? t("myEvents.interested.freeSpots", { count: free })
+        : t("myEvents.interested.full")}
     </StatusBadge>
-  ) : (
-    <StatusBadge status="approved">{t("myEvents.interested.full")}</StatusBadge>
   )
 }
 
