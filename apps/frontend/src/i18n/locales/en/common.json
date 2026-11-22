@@ -1603,11 +1603,11 @@
       "title": "Play regularly? Find a group"
     },
     "hero": {
-      "textCount_one": "Football, board games, trips: <count>{{count}}</count> event with a free spot right now. Join, play, and keep playing with the people you clicked with.",
-      "textCount_other": "Football, board games, trips: <count>{{count}}</count> events with a free spot right now. Join, play, and keep playing with the people you clicked with.",
-      "textPlain": "Football, board games, trips: find an event with a free spot. Join, play, and keep playing with the people you clicked with.",
-      "titleCrew": "The crew comes with it.",
-      "titleFind": "Find an event."
+      "textCount_one": "Football, board games, trips: <count>{{count}}</count> event with a free spot right now. Join, play! – and keep playing with the people you clicked with.",
+      "textCount_other": "Football, board games, trips: <count>{{count}}</count> events with a free spot right now. Join, play! – and keep playing with the people you clicked with.",
+      "textPlain": "Football, board games, trips: find an event with a free spot. Join, play! – and keep playing with the people you clicked with.",
+      "titleFirst": "Short of a player?",
+      "titleSecond": "Or looking for a game?"
     },
     "how": {
       "crew": {

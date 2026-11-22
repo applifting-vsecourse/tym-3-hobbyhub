@@ -26,9 +26,9 @@ const rise = (index: number) => ({
 
 /**
  * The landing hero (#215) for everyone, signed in or not, without a greeting:
- * a crew with one free place, and the line that puts the event first and the
- * crew second ("Najdi akci. Parta přijde sama."). The page's one `h1` and
- * its one coloured surface.
+ * a crew with one free place, and a title in two parts that speaks to both
+ * sides at once: the one who is short of players and the one looking for a
+ * game. The page's one `h1` and its one coloured surface.
  */
 export function LandingHero({ freeEventCount }: { freeEventCount?: number }) {
   const { t } = useTranslation()
@@ -74,8 +74,8 @@ export function LandingHero({ freeEventCount }: { freeEventCount?: number }) {
         )}
         style={rise(0).style}
       >
-        {t("landing.hero.titleFind")}{" "}
-        <span className="text-signal-soft">{t("landing.hero.titleCrew")}</span>
+        {t("landing.hero.titleFirst")}{" "}
+        <span className="text-signal-soft">{t("landing.hero.titleSecond")}</span>
       </h1>
       <p
         className={cn("max-w-xl typo-body text-signal-soft md:typo-body-lg", rise(1).className)}

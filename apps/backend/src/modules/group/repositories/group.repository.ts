@@ -17,8 +17,8 @@ import {
   GroupMember,
   GroupPage,
   MyGroup,
-  TrendingGroup,
   TransferOwnershipResult,
+  TrendingGroup,
 } from '@/modules/group/domain/group';
 import {
   ADMIN_PAGE_SIZE,
@@ -479,6 +479,19 @@ export class GroupRepository {
     limit: number,
     hiddenManagerIds: string[] = [],
   ): Promise<TrendingGroup[]> {
+    const notMemberOf = userId
+      ? Prisma.sql`AND NOT EXISTS (
+          SELECT 1 FROM "group_membership" mine
+          WHERE mine."groupId" = g."id" AND mine."userId" = ${userId})`
+      : Prisma.empty;
+    const notRunBy =
+      hiddenManagerIds.length > 0
+        ? Prisma.sql`AND NOT EXISTS (
+            SELECT 1 FROM "group_membership" runs
+            WHERE runs."groupId" = g."id"
+              AND runs."role" IN ('OWNER', 'ADMIN')
+              AND runs."userId" IN (${Prisma.join(hiddenManagerIds)}))`
+        : Prisma.empty;
     const rows = await this.prisma.$queryRaw<
       { id: string; recentMemberCount: number }[]
     >`
@@ -487,11 +500,14 @@ export class GroupRepository {
       FROM "group" g
       JOIN "group_membership" m ON m."groupId" = g."id"
       WHERE g."visibility" = 'PUBLIC' AND g."status" = 'ACTIVE'
+        ${notMemberOf}
+        ${notRunBy}
       GROUP BY g."id"
       ORDER BY "recentMemberCount" DESC, count(*) DESC, g."id" ASC
-      LIMIT ${limit + 50}`;
-    // Prisma applies the visibility rules again (membership, blocked
-    // managers), so SQL only ranks.
+      LIMIT ${limit}`;
+    // The same rules as `discoverableBy`, in SQL before the limit, so the row
+    // is still full for someone in many of the top groups (review of PR #293).
+    // Prisma applies them once more on loading.
     const groups = await this.prisma.group.findMany({
       where: {
         ...discoverableBy(userId, hiddenManagerIds),
@@ -500,18 +516,16 @@ export class GroupRepository {
       include,
     });
     const byId = new Map(groups.map((group) => [group.id, group]));
-    return rows
-      .flatMap((row) => {
-        const group = byId.get(row.id);
-        return group
-          ? [
-              {
-                ...mapPrismaGroupToDomain(group),
-                recentMemberCount: row.recentMemberCount,
-              },
-            ]
-          : [];
-      })
-      .slice(0, limit);
+    return rows.flatMap((row) => {
+      const group = byId.get(row.id);
+      return group
+        ? [
+            {
+              ...mapPrismaGroupToDomain(group),
+              recentMemberCount: row.recentMemberCount,
+            },
+          ]
+        : [];
+    });
   }
 }

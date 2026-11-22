@@ -1629,12 +1629,12 @@
       "title": "Hraješ pravidelně? Najdi si skupinu"
     },
     "hero": {
-      "textCount_few": "Fotbal, deskovky, výlety: právě jsou vypsané <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si a s lidmi, se kterými ti to sedlo, hraj i příště.",
-      "textCount_one": "Fotbal, deskovky, výlety: právě je vypsaná <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si a s lidmi, se kterými ti to sedlo, hraj i příště.",
-      "textCount_other": "Fotbal, deskovky, výlety: právě je vypsaných <count>{{count}}</count> akcí s volným místem. Přidej se, zahraj si a s lidmi, se kterými ti to sedlo, hraj i příště.",
-      "textPlain": "Fotbal, deskovky, výlety: najdi akci s volným místem. Přidej se, zahraj si a s lidmi, se kterými ti to sedlo, hraj i příště.",
-      "titleCrew": "Parta přijde sama.",
-      "titleFind": "Najdi akci."
+      "textCount_few": "Fotbal, deskovky, výlety: právě jsou vypsané <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textCount_one": "Fotbal, deskovky, výlety: právě je vypsaná <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textCount_other": "Fotbal, deskovky, výlety: právě je vypsaných <count>{{count}}</count> akcí s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textPlain": "Fotbal, deskovky, výlety: najdi akci s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "titleFirst": "Chybí ti hráč?",
+      "titleSecond": "Nebo hledáš, kde si zahrát?"
     },
     "how": {
       "crew": {

@@ -308,4 +308,70 @@ describe('LandingService', () => {
       ['trendingGroups', 'error', 0],
     ]);
   });
+  describe('when a part fails, the page still answers (review of PR #293)', () => {
+    it('goes without the list of cities', async () => {
+      events.getLandingCities.mockRejectedValue(new Error('down'));
+
+      const landing = await service.getLanding(
+        undefined,
+        { city: 'Brno' },
+        now,
+      );
+
+      expect(landing.cities).toEqual([]);
+      expect(landing.near).toEqual({ mode: 'city', city: 'Brno' });
+    });
+
+    it('keeps a signed-in person without a readable profile, with no home and no activities', async () => {
+      onboarding.getOnboardingOf.mockRejectedValue(new Error('Not found'));
+
+      await service.getLanding(user, {}, now);
+
+      expect(asked).toContainEqual(expect.objectContaining({ likedBy: 'me' }));
+      expect(groups.listGroupsForActivities).not.toHaveBeenCalled();
+    });
+
+    it('names no friend when the friends list cannot be read', async () => {
+      friendships.listFriendsSharingUpcomingEvents.mockRejectedValue(
+        new Error('down'),
+      );
+
+      await service.getLanding(user, {}, now);
+
+      expect(asked.some((selection) => selection.attendedByAnyOf)).toBe(false);
+    });
+
+    it('turns the event rows into errors when the cards cannot be loaded, and keeps the groups', async () => {
+      answer((selection) => (selection.order === 'top' ? ['t1'] : []));
+      groups.listTrendingGroups.mockResolvedValue([
+        { ...aGroup('g1'), recentMemberCount: 3 } as TrendingGroup,
+      ]);
+      events.getListItemsByIds.mockRejectedValue(new Error('down'));
+
+      const landing = await service.getLanding(undefined, {}, now);
+
+      expect(landing.rows.map((row) => [row.kind, row.status])).toEqual([
+        ['top', 'error'],
+        ['trendingGroups', 'ok'],
+      ]);
+    });
+
+    it('leaves off the cards what it could not add to them', async () => {
+      answer((selection) => (selection.order === 'top' ? ['t1'] : []));
+      events.getViewerStates.mockRejectedValue(new Error('down'));
+      events.getAttendees.mockRejectedValue(new Error('down'));
+      events.getOrganizerIds.mockResolvedValue(new Map([['t1', 'org']]));
+      ratings.getPublicOrganizerScores.mockRejectedValue(new Error('down'));
+
+      const landing = await service.getLanding(user, {}, now);
+
+      expect(landing.rows[0]).toMatchObject({ kind: 'top', status: 'ok' });
+      expect(landing.rows[0].events[0]).toMatchObject({
+        id: 't1',
+        viewerState: null,
+        friends: [],
+        organizerScore: null,
+      });
+    });
+  });
 });

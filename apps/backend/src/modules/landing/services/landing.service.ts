@@ -29,12 +29,20 @@ import { Onboarding } from '@/modules/onboarding/domain/onboarding';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
 import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 type Viewer = {
   identity: Identity;
-  profile: Onboarding;
+  profile: Pick<Onboarding, 'address' | 'travelRadiusKm' | 'interests'>;
   friends: LandingFriend[];
+};
+
+// A signed-in person whose profile cannot be read: no home, no radius, no
+// activities. Their rows that need none of it still show.
+const EMPTY_PROFILE: Viewer['profile'] = {
+  address: null,
+  travelRadiusKm: null,
+  interests: [],
 };
 
 // #215: the landing page puts its rows together from what the other modules
@@ -43,6 +51,8 @@ type Viewer = {
 // gives only friends who allowed it.
 @Injectable()
 export class LandingService {
+  private readonly logger = new Logger(LandingService.name);
+
   constructor(
     private readonly events: EventsService,
     private readonly groups: GroupsService,
@@ -69,9 +79,13 @@ export class LandingService {
       home && radiusKm
         ? { latitude: home.latitude, longitude: home.longitude, radiusKm }
         : undefined;
+    // Without the list of cities the page still works: "near" falls back to
+    // the picked or the home city, or is left out.
     const cities = around
       ? []
-      : await this.events.getLandingCities(LANDING_CITIES_LIMIT, identity, now);
+      : await this.events
+          .getLandingCities(LANDING_CITIES_LIMIT, identity, now)
+          .catch((error: unknown) => this.degrade('cities', error, []));
     const city = around
       ? undefined
       : query.city?.trim() || home?.city || cities[0]?.city || undefined;
@@ -166,14 +180,16 @@ export class LandingService {
 
     return {
       rows: picked.map((row) =>
-        row.status === 'error'
+        // Without the cards, every event row fails on its own; the group
+        // rows and the rest of the page still show.
+        row.status === 'error' || (!isGroupRow(row.kind) && eventsById === null)
           ? { kind: row.kind, status: 'error', events: [], groups: [] }
           : {
               kind: row.kind,
               status: 'ok',
               events: isGroupRow(row.kind)
                 ? []
-                : row.ids.flatMap((id) => eventsById.get(id) ?? []),
+                : row.ids.flatMap((id) => eventsById?.get(id) ?? []),
               groups: isGroupRow(row.kind)
                 ? row.ids.flatMap((id) => groupsById.get(id) ?? [])
                 : [],
@@ -186,12 +202,32 @@ export class LandingService {
     };
   }
 
+  // What the rows need to know about a signed-in person. Neither part may
+  // take the page down: without a profile they get the rows that need none,
+  // and without the friends list nobody is named (the safe side, ADR-0026).
   private async viewerOf(identity: Identity): Promise<Viewer> {
     const [profile, friends] = await Promise.all([
-      this.onboarding.getOnboardingOf(identity.id),
-      this.friendships.listFriendsSharingUpcomingEvents(identity.id),
+      this.onboarding
+        .getOnboardingOf(identity.id)
+        .catch((error: unknown) =>
+          this.degrade('profile', error, EMPTY_PROFILE),
+        ),
+      this.friendships
+        .listFriendsSharingUpcomingEvents(identity.id)
+        .catch((error: unknown) =>
+          this.degrade('friends', error, [] as LandingFriend[]),
+        ),
     ]);
     return { identity, profile, friends };
+  }
+
+  // A part of the page that failed: logged, and replaced by what the page can
+  // do without it.
+  private degrade<T>(part: string, error: unknown, fallback: T): T {
+    this.logger.warn(
+      `Landing page without ${part}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return fallback;
   }
 
   // A group row's candidates; undefined when the row does not apply to the
@@ -223,33 +259,49 @@ export class LandingService {
         limit,
       );
       return groups.map(withoutRecent);
-    } catch {
-      return null;
+    } catch (error) {
+      return this.degrade(kind, error, null);
     }
   }
 
   // The cards of the picked events, with what the viewer adds to them: their
   // own state, the friends going who allowed it, and on "Top akce" the
-  // organizer's public score.
+  // organizer's public score. Null when the cards cannot be loaded; each
+  // addition that fails is just left off the cards.
   private async landingEvents(
     ids: string[],
     topIds: string[],
     viewer: Viewer | undefined,
-  ): Promise<Map<string, LandingEvent>> {
+  ): Promise<Map<string, LandingEvent> | null> {
     const friendIds = viewer?.friends.map((friend) => friend.id) ?? [];
     const [items, states, attendees, organizers] = await Promise.all([
-      this.events.getListItemsByIds(ids),
+      this.events
+        .getListItemsByIds(ids)
+        .catch((error: unknown) => this.degrade('event cards', error, null)),
       viewer
-        ? this.events.getViewerStates(ids, viewer.identity.id)
+        ? this.events
+            .getViewerStates(ids, viewer.identity.id)
+            .catch((error: unknown) =>
+              this.degrade('viewer states', error, new Map<string, never>()),
+            )
         : Promise.resolve(new Map<string, never>()),
-      this.events.getAttendees(ids, friendIds),
+      this.events
+        .getAttendees(ids, friendIds)
+        .catch((error: unknown) => this.degrade('friends going', error, [])),
       viewer && topIds.length > 0
-        ? this.events.getOrganizerIds(topIds)
+        ? this.events
+            .getOrganizerIds(topIds)
+            .catch((error: unknown) =>
+              this.degrade('organizers', error, new Map<string, string>()),
+            )
         : Promise.resolve(new Map<string, string>()),
     ]);
-    const scores = await this.ratings.getPublicOrganizerScores([
-      ...new Set(organizers.values()),
-    ]);
+    if (!items) return null;
+    const scores = await this.ratings
+      .getPublicOrganizerScores([...new Set(organizers.values())])
+      .catch((error: unknown) =>
+        this.degrade('organizer scores', error, new Map()),
+      );
     const friendById = new Map(
       (viewer?.friends ?? []).map((friend) => [friend.id, friend]),
     );
