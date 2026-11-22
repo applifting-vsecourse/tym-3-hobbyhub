@@ -444,6 +444,8 @@ model Event {
   reminders             EventReminder[]
   // #236: the calls to rate it that went out.
   ratingPrompts         RatingPrompt[]
+  // #231, ADR-0030: who saved it to their "Zajímá mě" list; private to each.
+  interests             EventInterest[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -489,6 +491,26 @@ model Participation {
 // #233, ADR-0021: a reminder that went out for an event. The poller inserts
 // the row before it sends: whoever fails to insert it sends nothing, so a
 // reminder goes once per start, and again when the start moves.
+// #231, ADR-0030: an event a person saved to their "Zajímá mě" list, to come
+// back to later. Private to that person: nobody else, the organizers and the
+// administration included, ever sees who saved what or how many did. Saving
+// reserves nothing and is not a request to join. At most once per person and
+// event; it goes with either of them. #232 adds whether the person also
+// watches the event for a free seat, as a column of this row.
+model EventInterest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@map("event_interest")
+}
+
 model EventReminder {
   id String @id @default(cuid())
 
@@ -1006,6 +1028,8 @@ model User {
   coOrganizedEvents      Event[]                @relation("EventCoOrganizers")
   participations         Participation[]
   participationRequests  ParticipationRequest[]
+  // #231, ADR-0030: the events on the user's own "Zajímá mě" list.
+  eventInterests         EventInterest[]
   groupMemberships       GroupMembership[]
   membershipRequests     MembershipRequest[]
   notifications          Notification[]         @relation("NotificationRecipient")
