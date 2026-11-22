@@ -17,6 +17,7 @@ import { HTTPError } from "@/lib/api-client"
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
+import { eventInterestKeys } from "@/features/event-interest/api/eventInterestKeys"
 import { eventInterestQueryOptions } from "@/features/event-interest/api/eventInterestQueryOptions"
 import { FreeSpotWatch } from "@/features/event-interest/components/FreeSpotWatch"
 import { InterestAction } from "@/features/event-interest/components/InterestAction"
@@ -136,6 +137,15 @@ function EventDetailPage() {
   // waiting for the organizer does not, but a refusal may mean the event filled
   // up or started meanwhile. Either way the page shows the latest state.
   const refreshEvent = () => queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+  // #232: asking to join, or taking the seat, stops the watching for a free
+  // seat on the server; the panel shows it at once.
+  const refreshAfterRequest = () =>
+    Promise.all([
+      refreshEvent(),
+      queryClient.invalidateQueries({
+        queryKey: eventInterestKeys.state(eventId, user?.id ?? ""),
+      }),
+    ])
   // #232: a refused watch may mean a seat freed up meanwhile; the page then
   // shows the seats as they are, and the way to join.
   const toggleWatch = useToggleFreeSpotWatch(user?.id ?? "", {
@@ -399,7 +409,7 @@ function EventDetailPage() {
             approvalMode={eventQuery.data.approvalMode}
             step={sheetStep}
             onStepChange={setSheetStep}
-            onChange={refreshEvent}
+            onChange={refreshAfterRequest}
           />
         ) : null}
       </AppShell>
