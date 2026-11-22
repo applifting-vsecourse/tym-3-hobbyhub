@@ -28,7 +28,14 @@ export function useToggleEventInterest(eventId: string, userId: string) {
     onMutate: async (shouldSave) => {
       await queryClient.cancelQueries({ queryKey })
       const previous = queryClient.getQueryData<EventInterestState>(queryKey)
-      if (previous) queryClient.setQueryData(queryKey, { ...previous, isSaved: shouldSave })
+      // #232: the watching goes with the row.
+      if (previous) {
+        queryClient.setQueryData(queryKey, {
+          ...previous,
+          isSaved: shouldSave,
+          isWatching: shouldSave && previous.isWatching,
+        })
+      }
       return { previous }
     },
     onError: (_error, shouldSave, context) => {

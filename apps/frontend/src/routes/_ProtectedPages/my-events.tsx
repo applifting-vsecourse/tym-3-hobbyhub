@@ -18,6 +18,7 @@ import { activityName } from "@/features/activity/activityName"
 import { useActivityOptions } from "@/features/activity/hooks/useActivityOptions"
 import { authSessionQueryOptions } from "@/features/auth/api/authSessionQueryOptions"
 import { useRemoveFromInterestList } from "@/features/event-interest/hooks/useRemoveFromInterestList"
+import { useToggleFreeSpotWatch } from "@/features/event-interest/hooks/useToggleFreeSpotWatch"
 import {
   myApplicationsQueryOptions,
   myHostedEventsQueryOptions,
@@ -104,6 +105,8 @@ function MyEventsPage() {
   })
   // #231: a removed row leaves at once; the toast offers it back.
   const interestRemoval = useRemoveFromInterestList()
+  // #232: the row switches the watching at once; a failure reloads the list.
+  const toggleWatch = useToggleFreeSpotWatch(userId)
   const activityOptions = useActivityOptions()
   const filtersPanel = useFiltersPanel()
   const onFiltersChange = (next: EventFilterChange) =>
@@ -158,6 +161,9 @@ function MyEventsPage() {
               ),
             }}
             onRemoveInterest={(event) => interestRemoval.remove(event.id)}
+            onToggleWatch={(event, shouldWatch) =>
+              toggleWatch.mutate({ eventId: event.id, shouldWatch })
+            }
             tab={search.tab ?? "applications"}
             isFiltered={hasFilters(filters)}
             onClearFilters={clearFilters}

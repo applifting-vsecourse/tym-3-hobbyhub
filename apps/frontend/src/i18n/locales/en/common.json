@@ -1663,7 +1663,16 @@
     "save": "Interested",
     "saveError": "The event could not be saved. Please try again.",
     "saved": "Saved",
-    "undo": "Undo"
+    "undo": "Undo",
+    "watch": {
+      "active": "Watching for a free spot",
+      "nowFree": "A spot has freed up in the meantime. You can join right away.",
+      "offText": "The event is full. Turn on watching and we will let you know as soon as a spot frees up.",
+      "onText": "As soon as a spot frees up, we will let you know. The spot is not held for you: whoever joins first gets it.",
+      "start": "Watch for a free spot",
+      "startError": "Watching could not be turned on. Please try again.",
+      "stopError": "Watching could not be turned off. Please try again."
+    }
   },
   "landing": {
     "actions": {
@@ -1768,7 +1777,10 @@
         "CANCELLED": "Cancelled",
         "PAST": "Finished",
         "STARTED": "In progress"
-      }
+      },
+      "unwatch": "Stop watching for a free spot",
+      "watch": "Watch for a free spot",
+      "watching": "Watching"
     },
     "loadMore": "Load more",
     "loading": "Loading your events",
@@ -1895,6 +1907,7 @@
           "REJECTED": "Your request to join the group {{title}} was rejected"
         }
       },
+      "SPOT_AVAILABLE": "A spot freed up at {{title}}",
       "other": "News about {{title}}"
     },
     "title": "Notifications",

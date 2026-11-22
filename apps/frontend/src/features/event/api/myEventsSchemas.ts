@@ -55,9 +55,15 @@ export const interestedEventStateSchema = z.enum(["UPCOMING", "PAST", "CANCELLED
 
 export type InterestedEventState = z.infer<typeof interestedEventStateSchema>
 
-/** An event on the person's "Zajímá mě" list: the card of the event list and where it stands. */
+/**
+ * An event on the person's "Zajímá mě" list: the card of the event list and
+ * where it stands; #232 whether they watch it for a free seat, and whether
+ * they may start to now.
+ */
 export const interestedEventSchema = eventListItemSchema.extend({
   state: interestedEventStateSchema,
+  watchesFreeSpot: z.boolean(),
+  canWatchFreeSpot: z.boolean(),
 })
 
 export type InterestedEvent = z.infer<typeof interestedEventSchema>

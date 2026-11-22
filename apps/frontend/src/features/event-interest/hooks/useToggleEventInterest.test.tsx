@@ -39,7 +39,12 @@ describe("useToggleEventInterest", () => {
         answer = resolve
       }),
     )
-    const { queryClient, result } = setup({ isSaved: false, violations: [] })
+    const { queryClient, result } = setup({
+      isSaved: false,
+      violations: [],
+      isWatching: false,
+      watchViolations: [],
+    })
 
     act(() => result.current.mutate(true))
 
@@ -47,13 +52,18 @@ describe("useToggleEventInterest", () => {
       expect(queryClient.getQueryData<EventInterestState>(key)?.isSaved).toBe(true),
     )
     expect(saveEventInterest).toHaveBeenCalledWith("e1")
-    answer({ isSaved: true, violations: [] })
+    answer({ isSaved: true, violations: [], isWatching: false, watchViolations: [] })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
   })
 
   it("flips it back and says so when saving fails", async () => {
     saveEventInterest.mockRejectedValue(new Error("offline"))
-    const { queryClient, result } = setup({ isSaved: false, violations: [] })
+    const { queryClient, result } = setup({
+      isSaved: false,
+      violations: [],
+      isWatching: false,
+      watchViolations: [],
+    })
 
     act(() => result.current.mutate(true))
 
@@ -64,12 +74,41 @@ describe("useToggleEventInterest", () => {
 
   it("removes when tapped in the saved state", async () => {
     removeEventInterest.mockResolvedValue(undefined)
-    const { queryClient, result } = setup({ isSaved: true, violations: [] })
+    const { queryClient, result } = setup({
+      isSaved: true,
+      violations: [],
+      isWatching: false,
+      watchViolations: [],
+    })
 
     act(() => result.current.mutate(false))
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(removeEventInterest).toHaveBeenCalledWith("e1")
     expect(queryClient.getQueryData<EventInterestState>(key)?.isSaved).toBe(false)
+  })
+
+  // #232: the watching is a part of the saved row.
+  it("stops the watching too when the event comes off the list", async () => {
+    let answer: () => void = () => undefined
+    removeEventInterest.mockReturnValue(
+      new Promise<void>((resolve) => {
+        answer = resolve
+      }),
+    )
+    const { queryClient, result } = setup({
+      isSaved: true,
+      violations: [],
+      isWatching: true,
+      watchViolations: [],
+    })
+
+    act(() => result.current.mutate(false))
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData<EventInterestState>(key)?.isWatching).toBe(false),
+    )
+    answer()
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
   })
 })

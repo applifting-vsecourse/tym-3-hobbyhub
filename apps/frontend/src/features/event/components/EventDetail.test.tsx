@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
@@ -106,6 +106,40 @@ describe("EventDetail", () => {
     )
 
     expect(screen.queryByRole("button", { name: "Zajímá mě" })).not.toBeInTheDocument()
+  })
+
+  // #232: the page decides when watching is offered; the detail puts it in
+  // the seat panel of a full event, and never on one an administrator hid.
+  it("puts the watching for a free seat into the seat panel", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ takenCount: 10, maxParticipants: 10 })}
+        activityLabel="Florbal"
+        joinAction={null}
+        freeSpotWatch={<button type="button">Hlídat volné místo</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(
+      within(screen.getByRole("complementary", { name: "Soupiska" })).getByRole("button", {
+        name: "Hlídat volné místo",
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("offers no watching on an event an administrator hid", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ takenCount: 10, maxParticipants: 10, hiddenReason: "Spam." })}
+        activityLabel="Florbal"
+        joinAction={null}
+        freeSpotWatch={<button type="button">Hlídat volné místo</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.queryByRole("button", { name: "Hlídat volné místo" })).not.toBeInTheDocument()
   })
 
   // #234: the page asks the server whether the organizer may be rated; the

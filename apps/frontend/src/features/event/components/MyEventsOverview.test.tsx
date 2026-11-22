@@ -57,6 +57,7 @@ type Options = {
   tab?: MyEventsTab
   interested?: MyEventsList<InterestedEvent>
   onRemoveInterest?: (event: InterestedEvent) => void
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
   isFiltered?: boolean
   onClearFilters?: () => void
   onApplicationAction?: (action: ApplicationAction, application: MyApplication) => void
@@ -72,6 +73,7 @@ const renderOverview = (
     tab = "applications",
     interested = list([]),
     onRemoveInterest,
+    onToggleWatch,
     isFiltered = false,
     onClearFilters,
     onApplicationAction,
@@ -83,6 +85,7 @@ const renderOverview = (
       hosted={hosted}
       interested={interested}
       onRemoveInterest={onRemoveInterest}
+      onToggleWatch={onToggleWatch}
       tab={tab}
       isFiltered={isFiltered}
       onClearFilters={onClearFilters}
@@ -464,6 +467,8 @@ describe("MyEventsOverview", () => {
     const saved = (overrides: Partial<InterestedEvent> = {}): InterestedEvent => ({
       ...event(),
       state: "UPCOMING",
+      watchesFreeSpot: false,
+      canWatchFreeSpot: false,
       ...overrides,
     })
 
@@ -524,6 +529,73 @@ describe("MyEventsOverview", () => {
       await user.click(screen.getByRole("menuitem", { name: "Odebrat ze seznamu" }))
 
       expect(onRemoveInterest).toHaveBeenCalledWith(tenis)
+    })
+
+    // #232
+    it("marks a watched event and lets its row stop the watching", async () => {
+      const onToggleWatch = vi.fn()
+      const user = userEvent.setup()
+      const badminton = saved({
+        id: "i2",
+        title: "Badminton",
+        takenCount: 10,
+        watchesFreeSpot: true,
+      })
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([badminton]),
+        onRemoveInterest: vi.fn(),
+        onToggleWatch,
+      })
+
+      expect(screen.getByText("Plno")).toBeInTheDocument()
+      expect(screen.getByText("Hlídám místo")).toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: "Možnosti uložené akce: Badminton" }))
+      await user.click(screen.getByRole("menuitem", { name: "Přestat hlídat volné místo" }))
+
+      expect(onToggleWatch).toHaveBeenCalledWith(badminton, false)
+    })
+
+    it("lets the row of a full event start the watching when the server allows it", async () => {
+      const onToggleWatch = vi.fn()
+      const user = userEvent.setup()
+      const badminton = saved({
+        id: "i2",
+        title: "Badminton",
+        takenCount: 10,
+        canWatchFreeSpot: true,
+      })
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([badminton]),
+        onRemoveInterest: vi.fn(),
+        onToggleWatch,
+      })
+
+      expect(screen.queryByText("Hlídám místo")).not.toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: "Možnosti uložené akce: Badminton" }))
+      await user.click(screen.getByRole("menuitem", { name: "Hlídat volné místo" }))
+
+      expect(onToggleWatch).toHaveBeenCalledWith(badminton, true)
+    })
+
+    it.each<[string, Partial<InterestedEvent>]>([
+      ["with a free seat", { canWatchFreeSpot: false }],
+      ["over, even if still watched", { state: "PAST", watchesFreeSpot: true }],
+      ["under way", { startAt: new Date(2026, 9, 22, 7, 0), watchesFreeSpot: true }],
+    ])("offers no watching for an event %s", async (_, overrides) => {
+      const user = userEvent.setup()
+      await renderOverview(list([]), list([]), {
+        tab: "interested",
+        interested: list([saved({ id: "i2", title: "Badminton", ...overrides })]),
+        onRemoveInterest: vi.fn(),
+        onToggleWatch: vi.fn(),
+      })
+
+      expect(screen.queryByText("Hlídám místo")).not.toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: "Možnosti uložené akce: Badminton" }))
+      expect(screen.queryByRole("menuitem", { name: /hlídat/i })).not.toBeInTheDocument()
+      expect(screen.getByRole("menuitem", { name: "Odebrat ze seznamu" })).toBeInTheDocument()
     })
 
     it("explains the list while nothing is saved, even when the other tabs are empty too", async () => {

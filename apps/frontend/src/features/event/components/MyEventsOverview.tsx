@@ -101,6 +101,8 @@ type MyEventsOverviewProps = {
   interested: MyEventsList<InterestedEvent>
   /** Takes an event off the "Zajímá mě" list; the page offers the way back. */
   onRemoveInterest?: (event: InterestedEvent) => void
+  /** #232: starts (`true`) or stops watching a saved full event for a free seat. */
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
   /** The list on screen, from the URL. */
   tab: MyEventsTab
   /** Search and filters of both lists, shown under the tabs. */
@@ -321,10 +323,40 @@ function InterestedEmpty() {
 }
 
 /**
+ * #232: the row of an event still ahead may switch the watching for a free
+ * seat: off while it is on, on while the server says it may be (full, and
+ * nothing else keeps the person from asking to join).
+ */
+export function watchActionOf(event: InterestedEvent, now: Date): "watch" | "unwatch" | null {
+  if (event.state !== "UPCOMING" || event.startAt <= now) return null
+  if (event.watchesFreeSpot) return "unwatch"
+  return event.canWatchFreeSpot ? "watch" : null
+}
+
+/**
  * #231: where a saved event stands, under its title. Still on: whether it can
  * be joined (full, or how many seats are left), or that it is under way. Over
- * or called off: just that.
+ * or called off: just that. #232: and that the person watches it for a seat.
  */
+function InterestedBadges({ event, now }: { event: InterestedEvent; now: Date }) {
+  const { t } = useTranslation()
+
+  return event.state === "UPCOMING" && event.startAt > now && event.watchesFreeSpot ? (
+    <div className="flex flex-wrap gap-2">
+      <InterestedBadge
+        event={event}
+        now={now}
+      />
+      <StatusBadge status="neutral">{t("myEvents.interested.watching")}</StatusBadge>
+    </div>
+  ) : (
+    <InterestedBadge
+      event={event}
+      now={now}
+    />
+  )
+}
+
 function InterestedBadge({ event, now }: { event: InterestedEvent; now: Date }) {
   const { t } = useTranslation()
 
@@ -347,15 +379,23 @@ function InterestedBadge({ event, now }: { event: InterestedEvent; now: Date }) 
   )
 }
 
-/** #231: the one thing a saved event's row offers, taking it off the list. */
+/**
+ * #231: what a saved event's row offers: taking it off the list, and #232
+ * switching the watching for a free seat while the event is ahead.
+ */
 function InterestedRowMenu({
   event,
+  now,
   onRemove,
+  onToggleWatch,
 }: {
   event: InterestedEvent
+  now: Date
   onRemove: (event: InterestedEvent) => void
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
 }) {
   const { t } = useTranslation()
+  const watchAction = onToggleWatch ? watchActionOf(event, now) : null
 
   return (
     <DropdownMenu modal={false}>
@@ -370,6 +410,13 @@ function InterestedRowMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {watchAction ? (
+          <DropdownMenuItem onSelect={() => onToggleWatch?.(event, watchAction === "watch")}>
+            {t(
+              watchAction === "watch" ? "myEvents.interested.watch" : "myEvents.interested.unwatch",
+            )}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onSelect={() => onRemove(event)}>
           {t("myEvents.interested.remove")}
         </DropdownMenuItem>
@@ -388,11 +435,13 @@ function InterestedEvents({
   now,
   activityLabel,
   onRemove,
+  onToggleWatch,
 }: {
   events: InterestedEvent[]
   now: Date
   activityLabel: (activity: EventListItem["activity"]) => string
   onRemove?: (event: InterestedEvent) => void
+  onToggleWatch?: (event: InterestedEvent, shouldWatch: boolean) => void
 }) {
   const { t, i18n } = useTranslation()
   const upcoming = events.filter((event) => event.state === "UPCOMING")
@@ -425,7 +474,7 @@ function InterestedEvents({
           details={eventHostAndPrice(t, event, i18n.language)}
           className="border-t-0"
           badge={
-            <InterestedBadge
+            <InterestedBadges
               event={event}
               now={now}
             />
@@ -436,7 +485,9 @@ function InterestedEvents({
       {onRemove ? (
         <InterestedRowMenu
           event={event}
+          now={now}
           onRemove={onRemove}
+          onToggleWatch={onToggleWatch}
         />
       ) : null}
     </li>
@@ -473,6 +524,7 @@ export function MyEventsOverview({
   hosted,
   interested,
   onRemoveInterest,
+  onToggleWatch,
   tab,
   filters,
   isFiltered = false,
@@ -687,6 +739,7 @@ export function MyEventsOverview({
                   now={now}
                   activityLabel={activityLabel}
                   onRemove={onRemoveInterest}
+                  onToggleWatch={onToggleWatch}
                 />
               ))
             : body(applications, emptyText("myEvents.applications.empty"), (items) => (
