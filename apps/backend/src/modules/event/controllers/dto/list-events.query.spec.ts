@@ -83,6 +83,20 @@ describe('ListEventsQuery', () => {
     );
   });
 
+  it('takes "Last minute" as whole hours ahead, within the limit (#215)', async () => {
+    expect((await validate({ startsWithinHours: '4' })).startsWithinHours).toBe(
+      4,
+    );
+    expect(
+      (await validate({ startsWithinHours: '' })).startsWithinHours,
+    ).toBeUndefined();
+    for (const value of ['0', '1.5', '49', 'soon']) {
+      await expect(
+        validate({ startsWithinHours: value }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+  });
+
   it('takes a range of days', async () => {
     const query = await validate({
       dateFrom: '2026-11-15',

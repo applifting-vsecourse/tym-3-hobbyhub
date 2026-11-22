@@ -34,6 +34,9 @@ describeDb('group lists', () => {
   type Fixture = {
     tx: Prisma.TransactionClient;
     repository: GroupRepository;
+    // The case's own activity: filtering by it leaves out the groups other
+    // suites commit meanwhile, which would shift an offset cursor.
+    activityId: string;
     createUser: (data?: Partial<Prisma.UserCreateInput>) => Promise<User>;
     createGroup: (
       data?: Partial<Prisma.GroupUncheckedCreateInput>,
@@ -98,6 +101,7 @@ describeDb('group lists', () => {
         await work({
           tx,
           repository: new GroupRepository(tx as unknown as PrismaService),
+          activityId: activity.id,
           createUser,
           createGroup,
         });
@@ -318,7 +322,7 @@ describeDb('group lists', () => {
   // ADR-0028: the orders without a stable key page by offset.
   it('orders by members and pages without gaps or repeats', async () => {
     await inRolledBackTransaction(
-      async ({ repository, createUser, createGroup }) => {
+      async ({ repository, activityId, createUser, createGroup }) => {
         const users = [
           await createUser(),
           await createUser(),
@@ -344,7 +348,7 @@ describeDb('group lists', () => {
             undefined,
             1,
             cursor,
-            { activityIds: [], sort: 'members' },
+            { activityIds: [activityId], sort: 'members' },
           );
           found.push(...page.items.map((group) => group.id));
           cursor = page.nextCursor ?? undefined;

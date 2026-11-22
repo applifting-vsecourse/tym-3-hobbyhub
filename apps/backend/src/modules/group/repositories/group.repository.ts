@@ -21,6 +21,7 @@ import {
   GroupStats,
   MyGroup,
   TransferOwnershipResult,
+  TrendingGroup,
   UpdateGroupData,
 } from '@/modules/group/domain/group';
 import {
@@ -659,5 +660,84 @@ export class GroupRepository {
         }),
       ),
     );
+  }
+  // #215 "Skupiny pro tebe": discoverable groups of these activities, the
+  // biggest first.
+  async listGroupsOfActivities(
+    userId: string,
+    activityIds: string[],
+    limit: number,
+    hiddenManagerIds: string[] = [],
+  ): Promise<Group[]> {
+    if (activityIds.length === 0) return [];
+    const groups = await this.prisma.group.findMany({
+      where: {
+        ...discoverableBy(userId, hiddenManagerIds),
+        activityId: { in: activityIds },
+      },
+      include: groupInclude(hiddenManagerIds),
+      orderBy: [{ memberships: { _count: 'desc' } }, { id: 'asc' }],
+      take: limit,
+    });
+    return groups.map(mapPrismaGroupToDomain);
+  }
+
+  // #215 "Trendy skupiny": discoverable groups with the most members who
+  // joined since `since`, then the biggest; when few groups grew lately, the
+  // biggest fill the row.
+  async listTrendingGroups(
+    userId: string | undefined,
+    since: Date,
+    limit: number,
+    hiddenManagerIds: string[] = [],
+  ): Promise<TrendingGroup[]> {
+    const notMemberOf = userId
+      ? Prisma.sql`AND NOT EXISTS (
+          SELECT 1 FROM "group_membership" mine
+          WHERE mine."groupId" = g."id" AND mine."userId" = ${userId})`
+      : Prisma.empty;
+    const notRunBy =
+      hiddenManagerIds.length > 0
+        ? Prisma.sql`AND NOT EXISTS (
+            SELECT 1 FROM "group_membership" runs
+            WHERE runs."groupId" = g."id"
+              AND runs."role" IN ('OWNER', 'ADMIN')
+              AND runs."userId" IN (${Prisma.join(hiddenManagerIds)}))`
+        : Prisma.empty;
+    const rows = await this.prisma.$queryRaw<
+      { id: string; recentMemberCount: number }[]
+    >`
+      SELECT g."id",
+        count(*) FILTER (WHERE m."joinedAt" >= ${since})::int AS "recentMemberCount"
+      FROM "group" g
+      JOIN "group_membership" m ON m."groupId" = g."id"
+      WHERE g."visibility" = 'PUBLIC' AND g."status" = 'ACTIVE'
+        ${notMemberOf}
+        ${notRunBy}
+      GROUP BY g."id"
+      ORDER BY "recentMemberCount" DESC, count(*) DESC, g."id" ASC
+      LIMIT ${limit}`;
+    // The same rules as `discoverableBy`, in SQL before the limit, so the row
+    // is still full for someone in many of the top groups (review of PR #293).
+    // Prisma applies them once more on loading.
+    const groups = await this.prisma.group.findMany({
+      where: {
+        ...discoverableBy(userId, hiddenManagerIds),
+        id: { in: rows.map((row) => row.id) },
+      },
+      include: groupInclude(hiddenManagerIds),
+    });
+    const byId = new Map(groups.map((group) => [group.id, group]));
+    return rows.flatMap((row) => {
+      const group = byId.get(row.id);
+      return group
+        ? [
+            {
+              ...mapPrismaGroupToDomain(group),
+              recentMemberCount: row.recentMemberCount,
+            },
+          ]
+        : [];
+    });
   }
 }

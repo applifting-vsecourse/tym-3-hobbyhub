@@ -67,6 +67,7 @@ export class EventsController {
       {
         ...eventFilterOf(query),
         onlyWithFreeSpots: query.onlyWithFreeSpots,
+        startsWithinHours: query.startsWithinHours,
         priceFrom: query.priceFrom,
         priceTo: query.priceTo,
         durationHoursFrom: query.durationHoursFrom,

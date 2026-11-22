@@ -761,6 +761,7 @@
           "to": "up to {{value}} h"
         },
         "freeSpots": "Free spots",
+        "lastMinute": "Last minute",
         "open": "Filters",
         "place": "{{place}}, within {{radius}} km",
         "price": {
@@ -861,10 +862,14 @@
     }
   },
   "footer": {
+    "about": "About HobbyHub",
     "copyright": "© {{year}} HobbyHub",
+    "discover": "Discover",
     "label": "Footer",
     "language": "Language",
-    "tagline": "Sports and games near you. Fill the missing players before the event is cancelled."
+    "madeIn": "Made in Czechia",
+    "settings": "Settings",
+    "tagline": "Find a sport or an activity you enjoy. Join an event where they're looking for someone to complete the crew."
   },
   "friends": {
     "action": {
@@ -1437,8 +1442,14 @@
       "volejbalistka": "Volleyball player"
     },
     "capacity": {
+      "freeLast": "Only you are missing",
+      "freeNone": "Full",
+      "freePlenty": "Spots free",
+      "free_one": "{{count}} free spot",
+      "free_other": "{{count}} free spots",
       "full": "minimum reached",
       "missing": "{{count}} missing",
+      "moreSeats": "…",
       "summaryFull": "{{taken}} of {{total}} taken, minimum reached",
       "summaryMissing": "{{taken}} of {{total}} taken, {{count}} missing"
     },
@@ -1448,6 +1459,12 @@
       "copyFailed": "Couldn't copy the message",
       "link": "event link",
       "share": "Share"
+    },
+    "countdown": {
+      "hours": "{{hours}} h {{minutes}} min {{seconds}} s",
+      "label": "Starts in",
+      "minutes": "{{minutes}} min {{seconds}} s",
+      "now": "Starting now"
     },
     "counter": {
       "less": "{{label}}: less",
@@ -1478,6 +1495,7 @@
       "dateTo": "To date",
       "duration": "How long it lasts (hours)",
       "freeSpots": "Only with free spots",
+      "lastMinute": "Last minute (within 4 hours)",
       "location": "Location",
       "locationPlaceholder": "Prague 8",
       "panelHide": "Hide filters",
@@ -1528,6 +1546,12 @@
       "week": "This week",
       "weekend": "Weekend",
       "when": "When"
+    },
+    "friendsGoing": {
+      "many_one": "{{first}} and {{count}} other are going",
+      "many_other": "{{first}} and {{count}} others are going",
+      "one": "{{name}} is going",
+      "two": "{{first}} and {{second}} are going"
     },
     "joinRequest": {
       "approve": "Approve",
@@ -1658,6 +1682,11 @@
       "list": "List",
       "map": "Map"
     },
+    "viewerState": {
+      "joined": "✓ You're going",
+      "pending": "Request sent",
+      "waiting": "Awaiting approval"
+    },
     "yourSeat": {
       "title": "Your seat?"
     }
@@ -1681,67 +1710,101 @@
   },
   "landing": {
     "actions": {
-      "create": "Create an event",
-      "find": "Find a free seat"
-    },
-    "audience": {
-      "organizer": {
-        "b1": "You approve who comes",
-        "b2": "The event goes ahead once the minimum is met",
-        "b3": "Turn a crew that clicked into a group",
-        "text": "Create an event in a minute and everyone sees how many players you need.",
-        "title": "Short of people for the minimum"
-      },
-      "player": {
-        "b1": "See free seats in the list and on the map",
-        "b2": "Browse everything without signing up",
-        "b3": "Create an account only when you want a seat",
-        "text": "Find an event that is short a player and ask for a seat with one tap.",
-        "title": "Want to play"
-      },
-      "title": "Whether you play or organize"
+      "create": "Add an event",
+      "find": "Find an event"
     },
     "groups": {
       "browse": "Browse groups",
-      "seatTitle": "Your seat in the crew",
-      "text": "A group is a crew of people around one activity. It has its place, its usual time and members who know each other. A newcomer sees what they are joining before asking for membership, and the group's events are never created from scratch.",
-      "title": "Groups: a crew that meets regularly"
+      "seatTitle": "Your place in the crew",
+      "text": "A group is a crew around one activity: its own place, a usual time and people who know each other. Join and you hear about the group's events first.",
+      "title": "Play regularly? Find a group"
     },
     "hero": {
-      "kicker": "Sports and games near you",
-      "kickerCount_one": "{{count}} event open right now",
-      "kickerCount_other": "{{count}} events open right now",
-      "text": "HobbyHub connects organizers who are short of people with players looking for a free seat.",
-      "title": "Missing a player? Or looking for a game?"
+      "textCount_one": "Football, board games, trips: <count>{{count}}</count> event with a free spot right now. Join, play! – and keep playing with the people you clicked with.",
+      "textCount_other": "Football, board games, trips: <count>{{count}}</count> events with a free spot right now. Join, play! – and keep playing with the people you clicked with.",
+      "textPlain": "Football, board games, trips: find an event with a free spot. Join, play! – and keep playing with the people you clicked with.",
+      "titleFirst": "Short of a player?",
+      "titleSecond": "Or looking for a game?"
     },
     "how": {
-      "step1": {
-        "text": "They say how many people they still need. Everyone sees it right away.",
-        "title": "The organizer creates an event"
+      "crew": {
+        "badge": "Group",
+        "text": "You can meet the people you click with again next time. An event often turns into a group.",
+        "title": "Play and find your crew"
       },
-      "step2": {
-        "text": "One tap. You can browse without an account.",
-        "title": "A player asks for a seat"
+      "find": {
+        "text": "Football tonight, board games at the weekend. Free spots show right away.",
+        "title": "Find an event"
       },
-      "step3": {
-        "text": "Once the minimum is met, the event goes ahead.",
-        "title": "The organizer approves"
-      },
-      "step4": {
-        "text": "Those who clicked stay together, and nobody starts from scratch next time.",
-        "title": "The crew becomes a group"
+      "intro": "Find an event with a free spot, join and play. The crew comes with it.",
+      "join": {
+        "text": "One tap. The organizer confirms and the spot is yours.",
+        "title": "Join in"
       },
       "title": "How it works"
     },
+    "rows": {
+      "empty": "There are no events with a free spot yet. Add your own: once one appears, you'll find it here.",
+      "friends": {
+        "text": "Where the people you know are heading",
+        "title": "Where your friends are heading"
+      },
+      "groupsForYou": {
+        "all": "All groups",
+        "text": "Crews around your activities that you're not in yet",
+        "title": "Groups for you"
+      },
+      "lastMinute": {
+        "all": "All last minute",
+        "text": "Starts within 4 hours",
+        "title": "Last minute"
+      },
+      "liked": {
+        "all": "Events of my activities",
+        "text": "From your activities, your groups and where you've played",
+        "title": "Your favourite activities"
+      },
+      "loadError": "Could not load the events",
+      "loading": "Loading events…",
+      "near": {
+        "all": "Events near you",
+        "city": "In {{city}}",
+        "cityLabel": "Events in",
+        "cityOption_one": "{{city}} · {{count}} event",
+        "cityOption_other": "{{city}} · {{count}} events",
+        "radius": "Within {{radiusKm}} km of home",
+        "title": "Near you"
+      },
+      "rowError": "This row could not be loaded.",
+      "today": {
+        "all": "All of today's events",
+        "text": "Still today",
+        "title": "Today"
+      },
+      "top": {
+        "text": "Lots of people and a highly rated organizer",
+        "title": "Top events"
+      },
+      "trendingGroups": {
+        "all": "All groups",
+        "recent_one": "+{{count}} new member this month",
+        "recent_other": "+{{count}} new members this month",
+        "text": "Most new members in 30 days",
+        "title": "Trending groups"
+      },
+      "weekend": {
+        "all": "The whole weekend",
+        "title": "This weekend"
+      }
+    },
     "search": {
       "label": "Search events",
-      "placeholder": "Title, place or activity"
+      "placeholder": "Name, place or activity"
     },
-    "seoTitle": "Home",
+    "seoDescription": "Find an event with a free spot near you: football, board games, trips and more. Join, play and find your crew.",
+    "seoTitle": "Find an event, the crew comes with it",
     "upcoming": {
-      "all": "All events",
-      "empty": "No upcoming events yet. Create one yourself and it will show up here.",
-      "title": "Upcoming events"
+      "empty": "No upcoming events yet. Create one yourself and it will show up here."
     }
   },
   "language": {

@@ -70,6 +70,7 @@ describe("filtersFromSearch", () => {
         dateFrom: "2026-11-01",
         dateTo: "",
         freeSpotsOnly: false,
+        lastMinute: false,
         priceFrom: "",
         priceTo: "",
         hoursFrom: "",
@@ -91,6 +92,7 @@ describe("filtersFromSearch", () => {
       dateFrom: "",
       dateTo: "",
       freeSpotsOnly: false,
+      lastMinute: false,
       priceFrom: "",
       priceTo: "",
       hoursFrom: "",
@@ -140,6 +142,14 @@ describe("filtersFromSearch", () => {
       capacityFrom: "",
       capacityTo: "12",
     })
+  })
+
+  it('reads "Last minute" from the landing page\'s link, and writes it back (#215)', () => {
+    expect(filtersFromSearch({ soon: true }).filters.lastMinute).toBe(true)
+    expect(eventsListSearchSchema.parse({ soon: "true" }).soon).toBe(true)
+    expect(eventsListSearchSchema.parse({ soon: "maybe" }).soon).toBeUndefined()
+    expect(searchWithFilters({ soon: true }, { lastMinute: false }).soon).toBeUndefined()
+    expect(searchWithFilters({ soon: undefined }, { lastMinute: true }).soon).toBe(true)
   })
 
   it("does not ask for a number range that is reversed, and says so", () => {

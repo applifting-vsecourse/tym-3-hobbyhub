@@ -769,6 +769,7 @@
           "to": "do {{value}} h"
         },
         "freeSpots": "Volná místa",
+        "lastMinute": "Last minute",
         "open": "Filtry",
         "place": "{{place}}, do {{radius}} km",
         "price": {
@@ -873,10 +874,14 @@
     }
   },
   "footer": {
+    "about": "O HobbyHubu",
     "copyright": "© {{year}} HobbyHub",
+    "discover": "Objevit",
     "label": "Patička",
     "language": "Jazyk",
-    "tagline": "Sport a hry ve vašem okolí. Doplňte chybějící hráče dřív, než se akce zruší."
+    "madeIn": "Vyrobeno v Česku",
+    "settings": "Nastavení",
+    "tagline": "Najdi sport nebo aktivitu, která tě baví. Přidej se k akci, kde hledají někoho do party."
   },
   "friends": {
     "action": {
@@ -1460,8 +1465,15 @@
       "volejbalistka": "Volejbalistka"
     },
     "capacity": {
+      "freeLast": "Chybíš už jenom ty",
+      "freeNone": "Plno",
+      "freePlenty": "Volno",
+      "free_few": "{{count}} volná místa",
+      "free_one": "{{count}} volné místo",
+      "free_other": "{{count}} volných míst",
       "full": "minimum splněno",
       "missing": "chybí {{count}}",
+      "moreSeats": "…",
       "summaryFull": "Obsazeno {{taken}} z {{total}}, minimum splněno",
       "summaryMissing": "Obsazeno {{taken}} z {{total}}, chybí {{count}}"
     },
@@ -1471,6 +1483,12 @@
       "copyFailed": "Zprávu se nepodařilo zkopírovat",
       "link": "odkaz na akci",
       "share": "Sdílet"
+    },
+    "countdown": {
+      "hours": "{{hours}} h {{minutes}} min {{seconds}} s",
+      "label": "Začíná za",
+      "minutes": "{{minutes}} min {{seconds}} s",
+      "now": "Právě začíná"
     },
     "counter": {
       "less": "{{label}}: méně",
@@ -1502,6 +1520,7 @@
       "dateTo": "Do data",
       "duration": "Jak dlouho akce trvá (hodiny)",
       "freeSpots": "Jen s volnými místy",
+      "lastMinute": "Last minute (do 4 hodin)",
       "location": "Lokalita",
       "locationPlaceholder": "Praha 8",
       "panelHide": "Skrýt filtry",
@@ -1553,6 +1572,13 @@
       "week": "Tento týden",
       "weekend": "Víkend",
       "when": "Kdy"
+    },
+    "friendsGoing": {
+      "many_few": "{{first}} a {{count}} další jdou",
+      "many_one": "{{first}} a {{count}} další jdou",
+      "many_other": "{{first}} a {{count}} dalších jde",
+      "one": "{{name}} jde",
+      "two": "{{first}} a {{second}} jdou"
     },
     "joinRequest": {
       "approve": "Schválit",
@@ -1684,6 +1710,11 @@
       "list": "Seznam",
       "map": "Mapa"
     },
+    "viewerState": {
+      "joined": "✓ Jdeš",
+      "pending": "Žádost odeslána",
+      "waiting": "Čeká na schválení"
+    },
     "yourSeat": {
       "title": "Tvoje místo?"
     }
@@ -1707,68 +1738,104 @@
   },
   "landing": {
     "actions": {
-      "create": "Vypsat akci",
-      "find": "Najít volné místo"
-    },
-    "audience": {
-      "organizer": {
-        "b1": "Sami schválíte, kdo přijde",
-        "b2": "Akce se uskuteční, jakmile je minimum splněné",
-        "b3": "Z osvědčené party uděláte skupinu",
-        "text": "Vypište akci za minutu a všichni uvidí, kolik hráčů vám chybí.",
-        "title": "Chybí vám lidi do minima"
-      },
-      "player": {
-        "b1": "Volná místa vidíte v seznamu i na mapě",
-        "b2": "Bez registrace si vše prohlédnete",
-        "b3": "Účet založíte, až budete chtít sednout",
-        "text": "Najděte akci, kde chybí hráč, a požádejte o místo jedním klepnutím.",
-        "title": "Chcete si zahrát"
-      },
-      "title": "Ať hrajete, nebo organizujete"
+      "create": "Přidat akci",
+      "find": "Najít akci"
     },
     "groups": {
       "browse": "Prohlédnout skupiny",
-      "seatTitle": "Vaše místo v partě",
-      "text": "Skupina je parta lidí kolem jedné aktivity. Má své místo, obvyklý termín a členy, kteří se znají. Nováček vidí, do čeho jde, ještě než požádá o členství, a akce skupiny se nevypisují od nuly.",
-      "title": "Skupiny: parta, která se schází pravidelně"
+      "seatTitle": "Tvoje místo v partě",
+      "text": "Skupina je parta kolem jedné aktivity: má svoje místo, obvyklý termín a lidi, kteří se znají. Přidej se a o akcích skupiny se dozvíš mezi prvními.",
+      "title": "Hraješ pravidelně? Najdi si skupinu"
     },
     "hero": {
-      "kicker": "Sport a hry ve vašem okolí",
-      "kickerCount_few": "Právě jsou vypsané {{count}} akce",
-      "kickerCount_one": "Právě je vypsaná {{count}} akce",
-      "kickerCount_other": "Právě je vypsaných {{count}} akcí",
-      "text": "HobbyHub spojuje organizátory, kterým chybí lidé do minima, s hráči, kteří hledají volné místo.",
-      "title": "Chybí vám hráč? Nebo hledáte, kde si zahrát?"
+      "textCount_few": "Fotbal, deskovky, výlety: právě jsou vypsané <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textCount_one": "Fotbal, deskovky, výlety: právě je vypsaná <count>{{count}}</count> akce s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textCount_other": "Fotbal, deskovky, výlety: právě je vypsaných <count>{{count}}</count> akcí s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "textPlain": "Fotbal, deskovky, výlety: najdi akci s volným místem. Přidej se, zahraj si! – a s lidmi, se kterými ti to sedlo, hraj i příště.",
+      "titleFirst": "Chybí ti hráč?",
+      "titleSecond": "Nebo hledáš, kde si zahrát?"
     },
     "how": {
-      "step1": {
-        "text": "Řekne, kolik lidí mu chybí do minima. Všichni to vidí hned.",
-        "title": "Organizátor vypíše akci"
+      "crew": {
+        "badge": "Skupina",
+        "text": "S lidmi, se kterými si vzájemně sednete, se můžete setkat i příště. Z akce často vznikne skupina.",
+        "title": "Zahraj si a najdi partu"
       },
-      "step2": {
-        "text": "Jedním klepnutím. Bez účtu si vše prohlédnete.",
-        "title": "Hráč požádá o místo"
+      "find": {
+        "text": "Fotbal dnes večer, deskovky o víkendu. Volná místa vidíš hned.",
+        "title": "Najdi akci"
       },
-      "step3": {
-        "text": "Jakmile je minimum splněné, akce se uskuteční.",
-        "title": "Organizátor schválí"
-      },
-      "step4": {
-        "text": "Kdo si sedl, zůstane spolu a příště nikdo nezačíná od nuly.",
-        "title": "Z party je skupina"
+      "intro": "Najdeš akci, kde je volné místo, přidáš se a zahraješ si. Parta pak přijde sama.",
+      "join": {
+        "text": "Jedno klepnutí. Organizátor potvrdí a místo je tvoje.",
+        "title": "Přidej se"
       },
       "title": "Jak to funguje"
+    },
+    "rows": {
+      "empty": "Zatím tu žádné akce s volným místem nejsou. Přidej vlastní akci: jakmile se objeví, najdeš ji tady.",
+      "friends": {
+        "text": "Kam míří lidé, se kterými se znáš",
+        "title": "Kam se chystají tvoji přátelé"
+      },
+      "groupsForYou": {
+        "all": "Všechny skupiny",
+        "text": "Parta kolem tvých aktivit, kde ještě nejsi",
+        "title": "Skupiny pro tebe"
+      },
+      "lastMinute": {
+        "all": "Všechny last minute",
+        "text": "Začíná do 4 hodin",
+        "title": "Last minute"
+      },
+      "liked": {
+        "all": "Akce mých aktivit",
+        "text": "Podle tvých aktivit, skupin a akcí, které máš za sebou",
+        "title": "Tvoje oblíbené aktivity"
+      },
+      "loadError": "Akce se nepodařilo načíst",
+      "loading": "Načítáme akce…",
+      "near": {
+        "all": "Akce v okolí",
+        "city": "Ve městě {{city}}",
+        "cityLabel": "Akce ve městě",
+        "cityOption_few": "{{city}} · {{count}} akce",
+        "cityOption_one": "{{city}} · {{count}} akce",
+        "cityOption_other": "{{city}} · {{count}} akcí",
+        "radius": "Do {{radiusKm}} km od domova",
+        "title": "Ve tvém okolí"
+      },
+      "rowError": "Tuhle řadu se nepodařilo načíst.",
+      "today": {
+        "all": "Všechny dnešní akce",
+        "text": "Ještě dnes",
+        "title": "Dnes"
+      },
+      "top": {
+        "text": "Plno lidí a skvěle hodnocený organizátor",
+        "title": "Top akce"
+      },
+      "trendingGroups": {
+        "all": "Všechny skupiny",
+        "recent_few": "+{{count}} noví členové za měsíc",
+        "recent_one": "+{{count}} nový člen za měsíc",
+        "recent_other": "+{{count}} nových členů za měsíc",
+        "text": "Nejvíc nových členů za 30 dní",
+        "title": "Trendy skupiny"
+      },
+      "weekend": {
+        "all": "Celý víkend",
+        "title": "Tento víkend"
+      }
     },
     "search": {
       "label": "Hledat akce",
       "placeholder": "Název, místo nebo aktivita"
     },
-    "seoTitle": "Úvodní stránka",
+    "seoDescription": "Najdi akci s volným místem kousek od tebe: fotbal, deskovky, výlety a další. Přidej se, zahraj si a najdi partu.",
+    "seoTitle": "Najdi akci, parta přijde sama",
     "upcoming": {
-      "all": "Všechny akce",
-      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami, až se objeví, najdete ji tady.",
-      "title": "Nejbližší akce"
+      "empty": "Zatím tu žádné nadcházející akce nejsou. Vypište akci sami, až se objeví, najdete ji tady."
     }
   },
   "language": {

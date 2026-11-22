@@ -65,6 +65,7 @@ export const toPanelFilters = (filters: EventFilterValues): EventFilters => ({
   dateFrom: filters.dateFrom,
   dateTo: filters.dateTo,
   freeSpotsOnly: filters.freeSpotsOnly,
+  lastMinute: filters.lastMinute,
   priceFrom: filters.priceFrom,
   priceTo: filters.priceTo,
   hoursFrom: filters.hoursFrom,
@@ -87,7 +88,10 @@ export const fromPanelFilters = (
   ...(fields.includes("place") && { place: applied.place, radiusKm: applied.radiusKm }),
   dateFrom: applied.dateFrom,
   dateTo: applied.dateTo,
-  ...(fields.includes("freeSpots") && { freeSpotsOnly: applied.freeSpotsOnly }),
+  ...(fields.includes("freeSpots") && {
+    freeSpotsOnly: applied.freeSpotsOnly,
+    lastMinute: applied.lastMinute,
+  }),
   ...(fields.includes("price") && { priceFrom: applied.priceFrom, priceTo: applied.priceTo }),
   ...(fields.includes("duration") && { hoursFrom: applied.hoursFrom, hoursTo: applied.hoursTo }),
   ...(fields.includes("capacity") && {
@@ -194,6 +198,7 @@ export function EventFiltersBar({
       filters.place !== null ||
       dateLabel !== "" ||
       filters.freeSpotsOnly ||
+      filters.lastMinute ||
       filters.approvalMode !== "" ||
       filters.hasUpcomingEvent ||
       rangeChips.some(({ label }) => label !== ""))
@@ -303,6 +308,18 @@ export function EventFiltersBar({
                   onPressedChange={() => onFiltersChange({ freeSpotsOnly: false })}
                 >
                   {t("events.list.filters.freeSpots")}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.lastMinute ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ lastMinute: false })}
+                >
+                  {t("events.list.filters.lastMinute")}
                   <X
                     aria-hidden
                     className="size-4 text-muted-foreground"
