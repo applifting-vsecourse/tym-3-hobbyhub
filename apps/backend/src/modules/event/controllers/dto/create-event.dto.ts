@@ -3,8 +3,6 @@ import {
   APPROVAL_MODES,
   ApprovalMode,
   contactKindOf,
-  CREATABLE_VENUE_TYPES,
-  CreatableVenueType,
   EVENT_CHAT_URL_MAX_LENGTH,
   EVENT_CITY_MAX_LENGTH,
   EVENT_CONTACT_MAX_LENGTH,
@@ -23,6 +21,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDate,
   IsDefined,
   IsIn,
@@ -176,12 +175,14 @@ export class CreateEventDto {
   @CharLength(0, EVENT_EQUIPMENT_MAX_LENGTH)
   equipment?: string;
 
+  // #218, ADR-0029: a new event is always at a place (ONLINE is not offered
+  // yet, ADR-0006); the organizer only says who sees its exact address.
   @ApiProperty({
-    enum: CREATABLE_VENUE_TYPES,
-    description: 'ONLINE is not offered yet (ADR-0006)',
+    description:
+      'true: everyone who sees the event sees its exact address, place name and map pin; false: only the organizers and the people with a seat',
   })
-  @IsIn(CREATABLE_VENUE_TYPES)
-  venueType!: CreatableVenueType;
+  @IsBoolean()
+  isAddressPublic!: boolean;
 
   @ApiProperty({
     enum: APPROVAL_MODES,

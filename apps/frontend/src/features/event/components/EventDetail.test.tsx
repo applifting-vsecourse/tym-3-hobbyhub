@@ -14,7 +14,8 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   imageUrl: null,
   startAt: new Date(2026, 9, 22, 19, 0),
   endAt: new Date(2026, 9, 22, 20, 30),
-  venueType: "PUBLIC_VENUE",
+  venueType: "PLACE",
+  isAddressPublic: true,
   placeName: "ZŠ Kobylisy",
   district: "Praha 8",
   city: "Praha",
@@ -42,6 +43,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   statsMinParticipants: 3,
   hiddenReason: null,
   rating: { count: null, average: null },
+  location: null,
   ...overrides,
 })
 
@@ -157,17 +159,39 @@ describe("EventDetail", () => {
   })
 
   it("tells a visitor when the exact address and the contacts appear", async () => {
-    await renderDetail()
+    await renderDetail({ isAddressPublic: false, placeName: null })
 
     expect(
       screen.getByText("Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti."),
     ).toBeInTheDocument()
+    expect(screen.getByText("Přesná adresa po schválení")).toBeInTheDocument()
+  })
+
+  // #218: an address the organizer made public is for everyone.
+  it("shows a public address to a visitor and promises only the contacts", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ isAddressPublic: true })}
+        activityLabel="Florbal"
+        joinAction={null}
+        publicPlace={<p>Chabařovická 4</p>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("Chabařovická 4")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Kontakt na organizátora a odkaz na chat, pokud je vyplnil, uvidíš po potvrzení účasti.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
   })
 
   it("shows the place and contacts of a participant instead of the hint", async () => {
     await renderWithRouter(
       <EventDetail
-        event={event({ venueType: "PRIVATE_VENUE" })}
+        event={event({ isAddressPublic: false })}
         activityLabel="Florbal"
         joinAction={null}
         participantInfo={<p>Kde se sejdeme</p>}

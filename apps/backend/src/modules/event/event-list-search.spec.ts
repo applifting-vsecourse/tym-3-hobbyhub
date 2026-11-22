@@ -87,7 +87,8 @@ describeDb('public event list search', () => {
               title: `${MARK} akce ${index}`,
               description: 'Test',
               status: EventStatus.PUBLISHED,
-              venueType: VenueType.PUBLIC_VENUE,
+              venueType: VenueType.PLACE,
+              isAddressPublic: true,
               startAt: start,
               endAt: new Date(start.getTime() + 2 * 3600 * 1000),
               minParticipants: 4,
@@ -269,11 +270,11 @@ describeDb('public event list search', () => {
     );
   });
 
-  it('never finds a private venue by its name', async () => {
+  it('never finds a place by its name when its address is hidden', async () => {
     await withEvents(
       [
         {
-          venueType: VenueType.PRIVATE_VENUE,
+          isAddressPublic: false,
           locationPlaceName: `${MARK} U Nováků doma`,
         },
         { locationPlaceName: `${MARK} Sokolovna` },
@@ -380,7 +381,7 @@ describeDb('public event list search', () => {
         title: `${MARK} nová akce`,
         activityId: seed.activityId,
         description: 'Test',
-        venueType: 'PUBLIC_VENUE',
+        isAddressPublic: true,
         startAt: new Date('2030-02-01T18:00:00Z'),
         endAt: new Date('2030-02-01T20:00:00Z'),
         location: {
@@ -484,7 +485,8 @@ describeDb('public event list search', () => {
           {},
           { locationLatitude: 50.0755, locationLongitude: 14.4378 },
           {
-            venueType: VenueType.PRIVATE_VENUE,
+            // #218: a hidden address is never located.
+            isAddressPublic: false,
             locationLatitude: 50.0875,
             locationLongitude: 14.4213,
           },
@@ -549,12 +551,12 @@ describeDb('public event list search', () => {
       );
     });
 
-    it('puts events without coordinates and private venues last, with no distance', async () => {
+    it('puts events without coordinates and hidden addresses last, with no distance', async () => {
       await withEvents(
         [
           {},
           {
-            venueType: VenueType.PRIVATE_VENUE,
+            isAddressPublic: false,
             locationLatitude: 50.0875,
             locationLongitude: 14.4213,
           },

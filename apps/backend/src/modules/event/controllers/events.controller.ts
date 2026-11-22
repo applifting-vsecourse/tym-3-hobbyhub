@@ -116,7 +116,7 @@ export class EventsController {
       activityId: body.activityId,
       description: body.description,
       equipment: body.equipment,
-      venueType: body.venueType,
+      isAddressPublic: body.isAddressPublic,
       approvalMode: body.approvalMode,
       startAt: body.startAt,
       endAt: body.endAt,
@@ -216,6 +216,7 @@ export class EventsController {
       description: body.description,
       equipment: body.equipment,
       venueType: body.venueType,
+      isAddressPublic: body.isAddressPublic,
       approvalMode: body.approvalMode,
       startAt: body.startAt,
       endAt: body.endAt,
@@ -306,10 +307,11 @@ export class EventsController {
     return SimilarEventsResponseDto.fromDomain(items);
   }
 
-  // Detail (F-02.4): approximate place only; the exact address and the
-  // online link of an event stay with approved participants (F-10.4). Open to
-  // visitors; a group-only event (F-07.2) only to its group's members and
-  // those holding a seat.
+  // Detail (F-02.4): the district and the city, and the exact address only
+  // when the organizer made it public (#218, ADR-0029); otherwise it stays,
+  // like the online link and the contacts, with the organizers and the people
+  // with a seat (F-10.4, participant-info). Open to visitors; a group-only
+  // event (F-07.2) only to its group's members and those holding a seat.
   @Get(':id')
   @UseGuards(OptionalUserGuard)
   @ApiOperation({ summary: 'Get an event the viewer may see' })
