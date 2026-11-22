@@ -11,15 +11,19 @@ import { FriendshipService } from '@/modules/friendship/services/friendship.serv
 import { Group } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
+import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
+import { MembershipRequestsService } from '@/modules/membership-request/services/membership-requests.service';
 import { NotificationRepository } from '@/modules/notification/repositories/notification.repository';
 import { NotificationEmailsService } from '@/modules/notification/services/notification-emails.service';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { OnboardingService } from '@/modules/onboarding/services/onboarding.service';
+import { ParticipationRequestRepository } from '@/modules/participation-request/repositories/participation-request.repository';
+import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import { ProfileRepository } from '@/modules/profile/repositories/profile.repository';
 import { ProfileService } from '@/modules/profile/services/profile.service';
 import { RatingsService } from '@/modules/rating/services/ratings.service';
 import { Identity } from '@/shared/auth/domain/identity';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { UserBlockVisibility } from './user-block-visibility';
 
@@ -38,6 +42,13 @@ const blockedFromViewer = (): MockProxy<UserBlockVisibility> => {
   blocks.hiddenFrom.mockImplementation((id) =>
     Promise.resolve(id === 'blocked' ? ['viewer'] : []),
   );
+  blocks.mutedFor.mockImplementation((id) =>
+    Promise.resolve(id === 'viewer' ? ['blocked'] : []),
+  );
+  blocks.notHearingFrom.mockImplementation((id) =>
+    Promise.resolve(id === 'blocked' ? ['viewer'] : []),
+  );
+  blocks.blockedBy.mockResolvedValue([]);
   return blocks;
 };
 
@@ -224,5 +235,111 @@ describe('blocks between two people (#239)', () => {
         'blocked',
       ]);
     });
+  });
+});
+
+// #65, ADR-0031: "viewer" blocked "blocked" themselves. The blocked one
+// still exists for the viewer, but the viewer sends them no requests.
+describe('a block by a user (#65)', () => {
+  const viewerBlocked = (): MockProxy<UserBlockVisibility> => {
+    const blocks = mock<UserBlockVisibility>();
+    blocks.hiddenFor.mockResolvedValue([]);
+    blocks.hiddenFrom.mockResolvedValue([]);
+    blocks.blockedBy.mockImplementation((id) =>
+      Promise.resolve(id === 'viewer' ? ['blocked'] : []),
+    );
+    return blocks;
+  };
+
+  const violationsOf = async (promise: Promise<unknown>): Promise<unknown> => {
+    const error = await promise.then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(BadRequestException);
+    return (
+      (error as BadRequestException).getResponse() as { violations: unknown }
+    ).violations;
+  };
+
+  it('lets the blocker ask to join no event the blocked one organizes', async () => {
+    const repository = mock<ParticipationRequestRepository>();
+    const events = mock<EventsService>();
+    events.getVisibleEventSeatFacts.mockResolvedValue({
+      id: 'e1',
+      status: 'PUBLISHED',
+      startAt: new Date('2030-01-02T10:00:00Z'),
+      endAt: new Date('2030-01-02T12:00:00Z'),
+      organizerIds: ['someone', 'blocked'],
+      freeSpots: 3,
+      isHidden: false,
+      hasSeat: false,
+    } as EventSeatFacts);
+    repository.getRequestsOf.mockResolvedValue([]);
+    const notifications = mock<NotificationsService>();
+    const service = new ParticipationRequestsService(
+      repository,
+      events,
+      notifications,
+      viewerBlocked(),
+    );
+
+    await expect(
+      violationsOf(
+        service.requestToJoin(
+          viewer,
+          'e1',
+          undefined,
+          new Date('2030-01-01T10:00:00Z'),
+        ),
+      ),
+    ).resolves.toEqual(['BLOCKED_ORGANIZER']);
+    expect(repository.createPending).not.toHaveBeenCalled();
+    expect(notifications.notifyNewParticipationRequest).not.toHaveBeenCalled();
+  });
+
+  it('lets the blocker ask to join no group the blocked one runs', async () => {
+    const repository = mock<MembershipRequestRepository>();
+    const groups = mock<GroupsService>();
+    groups.getPublicGroup.mockResolvedValue({ id: 'g1' } as Group);
+    groups.getMemberRole.mockResolvedValue(null);
+    groups.getAdminIds.mockResolvedValue(['owner', 'blocked']);
+    repository.getRequestsOf.mockResolvedValue([]);
+    const service = new MembershipRequestsService(
+      repository,
+      groups,
+      mock<NotificationsService>(),
+      viewerBlocked(),
+    );
+
+    await expect(
+      violationsOf(service.requestMembership(viewer, 'g1')),
+    ).resolves.toEqual(['BLOCKED_ADMIN']);
+    expect(repository.createPending).not.toHaveBeenCalled();
+  });
+
+  // ADR-0028: an open group is joined without a request; the block still
+  // keeps the blocker out of a group the blocked one runs.
+  it('lets the blocker join no open group the blocked one runs', async () => {
+    const repository = mock<MembershipRequestRepository>();
+    const groups = mock<GroupsService>();
+    groups.assertPublicGroup.mockResolvedValue({
+      id: 'g1',
+      approvalMode: 'OPEN',
+    } as Group);
+    groups.getMemberRole.mockResolvedValue(null);
+    groups.getAdminIds.mockResolvedValue(['owner', 'blocked']);
+    repository.getRequestsOf.mockResolvedValue([]);
+    const service = new MembershipRequestsService(
+      repository,
+      groups,
+      mock<NotificationsService>(),
+      viewerBlocked(),
+    );
+
+    await expect(
+      violationsOf(service.joinOpenGroup(viewer, 'g1')),
+    ).resolves.toEqual(['BLOCKED_ADMIN']);
+    expect(groups.addMember).not.toHaveBeenCalled();
   });
 });

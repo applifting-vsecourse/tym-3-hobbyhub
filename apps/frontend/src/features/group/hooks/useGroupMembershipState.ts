@@ -9,7 +9,7 @@ import { myMembershipRequestQueryOptions } from "@/features/group/api/membership
 
 /** What the membership panel of a group shows. */
 export type MembershipView =
-  "visitor" | "loading" | "canRequest" | "pending" | "rejected" | "member"
+  "visitor" | "loading" | "canRequest" | "pending" | "rejected" | "blocked" | "member"
 
 /**
  * Combines who is looking (signed in or not), whether they are a member, and
@@ -53,6 +53,8 @@ export function useGroupMembershipState(
     else if (myRequestState?.request?.status === "PENDING") view = "pending"
     // A rejection is final for the group (ADR-0014).
     else if (myRequestState?.violations.includes("REJECTED_BEFORE")) view = "rejected"
+    // #65: the user blocked someone who runs the group.
+    else if (myRequestState?.violations.includes("BLOCKED_ADMIN")) view = "blocked"
     else view = "canRequest"
   } else view = session.isPending ? "loading" : "visitor"
 

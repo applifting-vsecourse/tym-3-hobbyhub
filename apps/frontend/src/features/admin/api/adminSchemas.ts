@@ -225,9 +225,13 @@ export const eventModerationRefusalSchema = z.object({
 export const USER_BLOCK_REASON_MIN_LENGTH = 10
 export const USER_BLOCK_REASON_MAX_LENGTH = 500
 
+// #65: a user's own block is listed too: one way, no reason, no administrator.
 export const adminUserBlockSchema = z.object({
+  source: z.enum(["ADMINISTRATOR", "USER"]),
   otherUser: refSchema,
-  reason: z.string(),
+  /** A user's block: true when this person made it, false when the other one did. */
+  isBlocker: z.boolean(),
+  reason: z.string().nullable(),
   createdAt: z.coerce.date(),
   createdBy: refSchema.nullable(),
 })

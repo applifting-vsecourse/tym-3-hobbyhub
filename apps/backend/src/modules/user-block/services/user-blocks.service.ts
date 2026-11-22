@@ -4,11 +4,13 @@ import { MembershipRequestsService } from '@/modules/membership-request/services
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import {
   AdminUserBlock,
+  BlockedUser,
   UserBlockViolation,
   userBlockViolations,
 } from '@/modules/user-block/domain/user-block';
 import { UserBlockRepository } from '@/modules/user-block/repositories/user-block.repository';
 import { AdminIdentity } from '@/shared/admin-auth/domain/administrator';
+import { Identity } from '@/shared/auth/domain/identity';
 import {
   BadRequestException,
   Injectable,
@@ -31,9 +33,10 @@ const violationsError = (
     violations,
   });
 
-// #239, ADR-0022: an administrator blocks two people from each other. The
-// other modules then keep them apart (UserBlockVisibility); this service
-// writes the block and tidies up what already ties the two together.
+// #239, ADR-0022: an administrator blocks two people from each other. #65,
+// ADR-0031: a user blocks another user, one way. The other modules then keep
+// them apart (UserBlockVisibility); this service writes the block and tidies
+// up what already ties the two together, the same for both kinds.
 @Injectable()
 export class UserBlocksService {
   constructor(
@@ -44,9 +47,40 @@ export class UserBlocksService {
     private readonly friendships: FriendshipService,
   ) {}
 
+  // #65: the people the user blocked, for their settings.
+  listMine(user: Identity): Promise<BlockedUser[]> {
+    return this.repository.listBlockedBy(user.id);
+  }
+
+  // #65, ADR-0031: the blocker comes from the session. Anyone who exists can
+  // be blocked, also someone who blocked the user first or a pair an
+  // administrator blocked: each block stands on its own and protects its
+  // blocker once the other ends (review of PR #267). The ties go as with an
+  // administrator's block, quietly, and blocking again finishes a clean-up
+  // that failed halfway.
+  async blockAsUser(
+    user: Identity,
+    otherUserId: string,
+    now: Date = new Date(),
+  ): Promise<void> {
+    const violations = userBlockViolations(user.id, otherUserId);
+    if (violations.length > 0) throw violationsError(violations);
+    await this.assertUsersExist([otherUserId]);
+
+    const created = await this.repository.createUserBlock(user.id, otherUserId);
+    await this.undoTies(user.id, otherUserId, now);
+    if (!created) throw violationsError(['ALREADY_BLOCKED']);
+  }
+
+  // #65: ends the user's own block; what it undid stays undone.
+  async unblockAsUser(user: Identity, otherUserId: string): Promise<void> {
+    const removed = await this.repository.deleteUserBlock(user.id, otherUserId);
+    if (!removed) throw violationsError(['NOT_BLOCKED']);
+  }
+
   async listBlocksOf(userId: string): Promise<AdminUserBlock[]> {
     await this.assertUsersExist([userId]);
-    return this.repository.listAdminBlocksOf(userId);
+    return this.repository.listBlocksOf(userId);
   }
 
   // The block first, so nothing new ties the two together while the old ties
@@ -73,7 +107,7 @@ export class UserBlocksService {
     });
     await this.undoTies(userId, otherUserId, now);
     if (!created) throw violationsError(['ALREADY_BLOCKED']);
-    return this.repository.listAdminBlocksOf(userId);
+    return this.repository.listBlocksOf(userId);
   }
 
   // Ends the block; what it undid stays undone (ADR-0022).

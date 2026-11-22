@@ -114,12 +114,8 @@ export function EventList({
                 day={eventDate(t, event.startAt, now, i18n.language)}
                 time={eventClock(t, event.startAt, now, i18n.language)}
                 title={event.title}
-                subtitle={[
-                  eventMeta(t, event, activityLabel(event.activity)),
-                  event.distanceKm !== null ? distance.format(event.distanceKm) : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
+                subtitle={eventMeta(t, event, activityLabel(event.activity))}
+                distance={event.distanceKm !== null ? distance.format(event.distanceKm) : undefined}
                 taken={event.takenCount}
                 min={event.minParticipants}
                 max={event.maxParticipants}
