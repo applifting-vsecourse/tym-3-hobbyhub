@@ -26,6 +26,8 @@ export const joinRuleViolationSchema = z.enum([
   "HAS_SEAT",
   "ALREADY_REQUESTED",
   "REJECTED_BEFORE",
+  // #65: I blocked one of the organizers, who would never see my request.
+  "BLOCKED_ORGANIZER",
 ])
 
 // The person's own seat (F-06.4): CANCELLED once they gave it back.

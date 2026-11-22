@@ -7,8 +7,9 @@ import { Injectable } from '@nestjs/common';
 // this read side lives apart and nothing runs in a circle.
 //
 // A block an administrator made applies both ways. A block a user makes (#65,
-// not built yet) applies one way: the blocker's content does not exist for
-// the blocked.
+// ADR-0031) applies one way: the blocker's content does not exist for the
+// blocked. The blocker still sees the blocked, but sends them no requests and
+// hears nothing from them.
 @Injectable()
 export class UserBlockVisibility {
   constructor(private readonly prisma: PrismaService) {}
@@ -20,7 +21,7 @@ export class UserBlockVisibility {
       where: {
         OR: [
           { blockedId: viewerId },
-          { blockerId: viewerId, createdById: { not: null } },
+          { blockerId: viewerId, source: 'ADMINISTRATOR' },
         ],
       },
       select: { blockerId: true, blockedId: true },
@@ -28,18 +29,54 @@ export class UserBlockVisibility {
     return otherSides(rows, viewerId);
   }
 
-  /** The people who must not see `ownerId`'s content, nor hear from them. */
+  /** The people who must not see `ownerId`'s content. */
   async hiddenFrom(ownerId: string): Promise<string[]> {
     const rows = await this.prisma.userBlock.findMany({
       where: {
         OR: [
           { blockerId: ownerId },
-          { blockedId: ownerId, createdById: { not: null } },
+          { blockedId: ownerId, source: 'ADMINISTRATOR' },
         ],
       },
       select: { blockerId: true, blockedId: true },
     });
     return otherSides(rows, ownerId);
+  }
+
+  /** #65: the people `userId` blocked themselves. */
+  async blockedBy(userId: string): Promise<string[]> {
+    const rows = await this.prisma.userBlock.findMany({
+      where: { blockerId: userId, source: 'USER' },
+      select: { blockedId: true },
+    });
+    return rows.map((row) => row.blockedId);
+  }
+
+  /**
+   * #65: whose doings `userId` never hears of: the people hidden from them
+   * and the people they blocked themselves.
+   */
+  async mutedFor(userId: string): Promise<string[]> {
+    const [hidden, blocked] = await Promise.all([
+      this.hiddenFor(userId),
+      this.blockedBy(userId),
+    ]);
+    return [...new Set([...hidden, ...blocked])];
+  }
+
+  /**
+   * #65: who must not hear of what `actorId` did: the people who must not see
+   * them and the people who blocked them.
+   */
+  async notHearingFrom(actorId: string): Promise<string[]> {
+    const [hidden, blockers] = await Promise.all([
+      this.hiddenFrom(actorId),
+      this.prisma.userBlock.findMany({
+        where: { blockedId: actorId, source: 'USER' },
+        select: { blockerId: true },
+      }),
+    ]);
+    return [...new Set([...hidden, ...blockers.map((row) => row.blockerId)])];
   }
 }
 
