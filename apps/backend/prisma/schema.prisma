@@ -633,6 +633,13 @@ model Rating {
 
 // #227, ADR-0026: where a friend request stands. A rejected request is kept
 // (decidedAt) but does not stop a new one between the same two people.
+// #65, ADR-0031: who blocked: an administrator (both ways) or the blocker
+// themselves (one way).
+enum UserBlockSource {
+  ADMINISTRATOR
+  USER
+}
+
 enum FriendRequestStatus {
   PENDING
   ACCEPTED
@@ -1069,9 +1076,9 @@ model User {
 // #239, ADR-0022: two users who must not see each other. A row an
 // administrator made (`createdBy` set, with a reason) applies both ways and is
 // stored once, with the smaller id as the blocker (CHECK
-// user_block_admin_ordered in the migration). A row a user makes (#65, not
-// built yet) applies one way: the blocker's content does not exist for the
-// blocked.
+// user_block_admin_ordered in the migration). A row a user makes (#65,
+// ADR-0031) applies one way: the blocker's content does not exist for the
+// blocked, and the blocker sends the blocked no requests.
 model UserBlock {
   id String @id @default(cuid())
 
@@ -1084,9 +1091,13 @@ model UserBlock {
   // Seen by the administration only; 10–500 characters, set exactly when an
   // administrator made the block (CHECK in the migration).
   reason      String?        @db.VarChar(500)
+  // #65, ADR-0031: who made the block. ADMINISTRATOR exactly when
+  // `createdBy` is set (CHECK user_block_source in the migration), so a user
+  // and an administrator may each block the same pair.
+  source      UserBlockSource
   createdAt   DateTime       @default(now())
 
-  @@unique([blockerId, blockedId])
+  @@unique([blockerId, blockedId, source])
   @@index([blockedId])
   @@map("user_block")
 }

@@ -24,6 +24,8 @@ type AdminUserBlocksProps = {
 /**
  * #239, ADR-0022: who the person is blocked from. Only the administration
  * sees it (visibility matrix); neither person of a pair learns of the block.
+ * #65: the blocks the people made themselves are listed too, with their
+ * direction; only the blocker can end those, so they have no action here.
  */
 export function AdminUserBlocks({ user }: AdminUserBlocksProps) {
   const { t } = useTranslation()
@@ -43,7 +45,7 @@ export function AdminUserBlocks({ user }: AdminUserBlocksProps) {
           <AdminTable<AdminUserBlock>
             label={t("admin.blocks.title")}
             rows={query.data}
-            rowKey={(row) => row.otherUser.id}
+            rowKey={(row) => `${row.source}-${row.otherUser.id}-${String(row.isBlocker)}`}
             primary={{
               key: "otherUser",
               header: t("admin.blocks.otherUser"),
@@ -55,10 +57,22 @@ export function AdminUserBlocks({ user }: AdminUserBlocksProps) {
             }}
             columns={[
               {
+                key: "source",
+                header: t("admin.blocks.source"),
+                cell: (row) => {
+                  if (row.source === "ADMINISTRATOR") return t("admin.blocks.byAdministrator")
+                  return row.isBlocker
+                    ? t("admin.blocks.byThisUser", { name: user.name })
+                    : t("admin.blocks.byOtherUser", { name: row.otherUser.name })
+                },
+              },
+              {
                 key: "reason",
                 header: t("admin.blocks.reason"),
                 cell: (row) => (
-                  <span className="break-words whitespace-pre-line">{row.reason}</span>
+                  <span className="break-words whitespace-pre-line">
+                    {row.reason ?? t("admin.none")}
+                  </span>
                 ),
               },
               {
@@ -74,18 +88,19 @@ export function AdminUserBlocks({ user }: AdminUserBlocksProps) {
               {
                 key: "actions",
                 header: t("admin.blocks.actions"),
-                cell: (row) => (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      unblock.reset()
-                      setEnding(row)
-                    }}
-                  >
-                    {t("admin.blocks.unblock")}
-                  </Button>
-                ),
+                cell: (row) =>
+                  row.source === "ADMINISTRATOR" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        unblock.reset()
+                        setEnding(row)
+                      }}
+                    >
+                      {t("admin.blocks.unblock")}
+                    </Button>
+                  ) : null,
               },
             ]}
           />

@@ -134,6 +134,8 @@ describe('watchRuleViolations', () => {
     ['EVENT_CANCELLED'],
     ['EVENT_NOT_HELD'],
     ['EVENT_FINISHED'],
+    // #65: they blocked an organizer, who would never see the request.
+    ['BLOCKED_ORGANIZER'],
   ] as const)(
     'refuses a full event the person could not join anyway: %s',
     (violation) => {

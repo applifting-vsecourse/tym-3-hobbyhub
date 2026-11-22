@@ -10,8 +10,8 @@ import { NotificationsService } from './notifications.service';
 // #239: nobody is blocked here; blocks have tests of their own.
 const noBlocks = (): MockProxy<UserBlockVisibility> => {
   const blocks = mock<UserBlockVisibility>();
-  blocks.hiddenFor.mockResolvedValue([]);
-  blocks.hiddenFrom.mockResolvedValue([]);
+  blocks.mutedFor.mockResolvedValue([]);
+  blocks.notHearingFrom.mockResolvedValue([]);
   return blocks;
 };
 

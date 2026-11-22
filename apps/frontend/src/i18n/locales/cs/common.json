@@ -38,6 +38,9 @@
       "blockSubmit": "Zablokovat",
       "blockTitle": "Zablokovat uživatele {{name}} vůči…",
       "blocked": "Uživatelé jsou proti sobě zablokovaní",
+      "byAdministrator": "Správce, oběma směry",
+      "byOtherUser": "{{name}}, jedním směrem",
+      "byThisUser": "{{name}} sám(a)",
       "cancel": "Zrušit",
       "createdAt": "Zablokováno",
       "createdBy": "Zablokoval(a)",
@@ -54,6 +57,7 @@
       "reasonLabel": "Důvod blokace",
       "reasonTooLong": "Důvod může mít nejvýš 500 znaků",
       "reasonTooShort": "Napište důvod, aspoň 10 znaků",
+      "source": "Kdo blokoval",
       "title": "Blokace",
       "unblock": "Zrušit blokaci",
       "unblockFailed": "Blokaci se nepodařilo zrušit. Zkuste to prosím znovu.",
@@ -1227,6 +1231,7 @@
       },
       "refused": {
         "ALREADY_REQUESTED": "O členství v této skupině už jste požádali.",
+        "BLOCKED_ADMIN": "Vlastníka nebo správce této skupiny máte zablokovaného, o členství proto žádat nemůžete.",
         "IS_MEMBER": "Už jste členem této skupiny.",
         "REJECTED_BEFORE": "Organizátor vaši žádost zamítl. Do této skupiny už novou žádost poslat nejde."
       },
@@ -2220,6 +2225,7 @@
     },
     "refused": {
       "ALREADY_REQUESTED": "O účast na této akci už žádáš.",
+      "BLOCKED_ORGANIZER": "Jednoho z organizátorů máš zablokovaného, o účast proto žádat nemůžeš.",
       "EVENT_CANCELLED": "Akce byla zrušena, o účast už se nedá žádat.",
       "EVENT_FINISHED": "Akce už proběhla, o účast se nedá žádat.",
       "EVENT_FULL": "Akce je plná, o účast se nedá žádat.",
@@ -2536,5 +2542,35 @@
   "terms": {
     "placeholder": "Znění podmínek připravujeme. Provozovatel HobbyHubu ho doplní před spuštěním.",
     "title": "Podmínky používání"
+  },
+  "userBlocks": {
+    "block": "Zablokovat",
+    "blockFailed": "Uživatele se nepodařilo zablokovat. Zkuste to prosím znovu.",
+    "blocked": "{{name}} je zablokovaný(á)",
+    "confirm": {
+      "back": "Zpět",
+      "hidden": "Přestane vidět váš profil, akce, které pořádáte, a skupiny, které vedete. Nebude vás moct žádat o účast, o členství ani o přátelství a nebudou vám od něj chodit upozornění.",
+      "secret": "Nikdo mu neřekne, že jste ho zablokovali.",
+      "submit": "Zablokovat",
+      "ties": "Čekající žádosti mezi vámi se uzavřou a jeho místa na vašich akcích a členství ve vašich skupinách skončí, stejně jako vaše místa a členství u něj. Po odblokování se nic z toho neobnoví.",
+      "title": "Zablokovat uživatele {{name}}?"
+    },
+    "manageLink": "Správa zablokovaných uživatelů je v Nastavení.",
+    "profile": {
+      "blocked": "Uživatele {{name}} máte zablokovaného. Nevidí váš profil ani to, co pořádáte, a nemůže vás o nic žádat."
+    },
+    "settings": {
+      "blockedAt": "Zablokováno {{date}}",
+      "description": "Nevidí vás ani to, co pořádáte, a nemohou vás o nic žádat. Vidíte je jen vy.",
+      "empty": "Nikoho nemáte zablokovaného.",
+      "loadError": "Zablokované uživatele se nepodařilo načíst.",
+      "loading": "Načítáme zablokované uživatele",
+      "retry": "Zkusit znovu",
+      "title": "Zablokovaní uživatelé",
+      "unblockLabel": "Odblokovat uživatele {{name}}"
+    },
+    "unblock": "Odblokovat",
+    "unblockFailed": "Blokaci se nepodařilo zrušit. Zkuste to prosím znovu.",
+    "unblocked": "{{name}} už není zablokovaný(á)"
   }
 }

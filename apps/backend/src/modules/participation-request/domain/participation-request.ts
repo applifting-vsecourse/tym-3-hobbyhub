@@ -3,6 +3,7 @@ import {
   EventSeatFacts,
   isOrganizerOf,
 } from '@/modules/event/domain/event';
+import { runByBlocked } from '@/modules/user-block/domain/user-block';
 
 // Same limits as the columns `participation_request.message` and
 // `participation_request.decisionMessage`.
@@ -117,7 +118,10 @@ export type JoinRuleViolation =
   | 'IS_ORGANIZER'
   | 'HAS_SEAT'
   | 'ALREADY_REQUESTED'
-  | 'REJECTED_BEFORE';
+  | 'REJECTED_BEFORE'
+  // #65, ADR-0031: the applicant blocked one of the organizers, who would
+  // never see the request.
+  | 'BLOCKED_ORGANIZER';
 
 export type EventStateViolation =
   'EVENT_CANCELLED' | 'EVENT_NOT_HELD' | 'EVENT_FINISHED' | 'EVENT_STARTED';
@@ -178,6 +182,8 @@ export const joinRuleViolations = (
   applicantId: string,
   requests: Pick<ParticipationRequest, 'status'>[],
   now: Date,
+  // #65: the people the applicant blocked.
+  blockedIds: string[] = [],
 ): JoinRuleViolation[] => {
   const violations: JoinRuleViolation[] = [];
   const state = eventStateViolation(event, now);
@@ -198,6 +204,9 @@ export const joinRuleViolations = (
   }
   if (event.freeSpots <= 0) {
     violations.push('EVENT_FULL');
+  }
+  if (runByBlocked(event.organizerIds, blockedIds)) {
+    violations.push('BLOCKED_ORGANIZER');
   }
   return violations;
 };
