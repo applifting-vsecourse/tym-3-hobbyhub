@@ -65,12 +65,16 @@ export const toPanelFilters = (filters: EventFilterValues): EventFilters => ({
   dateFrom: filters.dateFrom,
   dateTo: filters.dateTo,
   freeSpotsOnly: filters.freeSpotsOnly,
+  lastMinute: filters.lastMinute,
   priceFrom: filters.priceFrom,
   priceTo: filters.priceTo,
   hoursFrom: filters.hoursFrom,
   hoursTo: filters.hoursTo,
   capacityFrom: filters.capacityFrom,
   capacityTo: filters.capacityTo,
+  approvalMode: filters.approvalMode,
+  hasUpcomingEvent: filters.hasUpcomingEvent,
+  groupSort: filters.groupSort,
 })
 
 /** What the panel applied, as a change of the address; a filter the page does not offer stays as it is. */
@@ -84,13 +88,19 @@ export const fromPanelFilters = (
   ...(fields.includes("place") && { place: applied.place, radiusKm: applied.radiusKm }),
   dateFrom: applied.dateFrom,
   dateTo: applied.dateTo,
-  ...(fields.includes("freeSpots") && { freeSpotsOnly: applied.freeSpotsOnly }),
+  ...(fields.includes("freeSpots") && {
+    freeSpotsOnly: applied.freeSpotsOnly,
+    lastMinute: applied.lastMinute,
+  }),
   ...(fields.includes("price") && { priceFrom: applied.priceFrom, priceTo: applied.priceTo }),
   ...(fields.includes("duration") && { hoursFrom: applied.hoursFrom, hoursTo: applied.hoursTo }),
   ...(fields.includes("capacity") && {
     capacityFrom: applied.capacityFrom,
     capacityTo: applied.capacityTo,
   }),
+  ...(fields.includes("approval") && { approvalMode: applied.approvalMode }),
+  ...(fields.includes("upcomingEvent") && { hasUpcomingEvent: applied.hasUpcomingEvent }),
+  ...(fields.includes("groupSort") && { groupSort: applied.groupSort }),
 })
 
 type EventFiltersBarProps = {
@@ -188,6 +198,9 @@ export function EventFiltersBar({
       filters.place !== null ||
       dateLabel !== "" ||
       filters.freeSpotsOnly ||
+      filters.lastMinute ||
+      filters.approvalMode !== "" ||
+      filters.hasUpcomingEvent ||
       rangeChips.some(({ label }) => label !== ""))
 
   return (
@@ -295,6 +308,42 @@ export function EventFiltersBar({
                   onPressedChange={() => onFiltersChange({ freeSpotsOnly: false })}
                 >
                   {t("events.list.filters.freeSpots")}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.lastMinute ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ lastMinute: false })}
+                >
+                  {t("events.list.filters.lastMinute")}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.approvalMode !== "" ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ approvalMode: "" })}
+                >
+                  {t(`groups.approval.${filters.approvalMode}`)}
+                  <X
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                </FilterChip>
+              ) : null}
+              {filters.hasUpcomingEvent ? (
+                <FilterChip
+                  pressed
+                  onPressedChange={() => onFiltersChange({ hasUpcomingEvent: false })}
+                >
+                  {t("hobbyhub.filters.upcomingEvent")}
                   <X
                     aria-hidden
                     className="size-4 text-muted-foreground"

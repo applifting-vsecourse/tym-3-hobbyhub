@@ -18,6 +18,7 @@ import {
   relationOf,
 } from '@/modules/friendship/domain/friendship';
 import {
+  FoundUserRow,
   FriendshipRepository,
   PendingRequestExistsError,
 } from '@/modules/friendship/repositories/friendship.repository';
@@ -50,6 +51,15 @@ export class FriendshipService {
     private readonly notifications: NotificationsService,
     private readonly blocks: UserBlockVisibility,
   ) {}
+
+  /**
+   * #215, ADR-0026: the friends whose upcoming events the person may see:
+   * only those who allowed it. Blocking ends a friendship, so a blocked
+   * person is never among them.
+   */
+  listFriendsSharingUpcomingEvents(userId: string): Promise<FoundUserRow[]> {
+    return this.friendshipRepository.listFriendsSharingUpcomingEvents(userId);
+  }
 
   /** #225: where the viewer stands with the other person, for their profile. */
   async relationBetween(

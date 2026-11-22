@@ -70,12 +70,16 @@ describe("filtersFromSearch", () => {
         dateFrom: "2026-11-01",
         dateTo: "",
         freeSpotsOnly: false,
+        lastMinute: false,
         priceFrom: "",
         priceTo: "",
         hoursFrom: "",
         hoursTo: "",
         capacityFrom: "",
         capacityTo: "",
+        approvalMode: "",
+        hasUpcomingEvent: false,
+        groupSort: "newest",
       },
       isRangeReversed: false,
     })
@@ -88,13 +92,37 @@ describe("filtersFromSearch", () => {
       dateFrom: "",
       dateTo: "",
       freeSpotsOnly: false,
+      lastMinute: false,
       priceFrom: "",
       priceTo: "",
       hoursFrom: "",
       hoursTo: "",
       capacityFrom: "",
       capacityTo: "",
+      approvalMode: "",
+      hasUpcomingEvent: false,
+      groupSort: "newest",
     })
+  })
+
+  it("reads the filters only groups have (ADR-0028)", () => {
+    const { filters } = filtersFromSearch({
+      approval: "OPEN",
+      upcoming: true,
+      sort: "members",
+    })
+    expect(filters).toMatchObject({
+      approvalMode: "OPEN",
+      hasUpcomingEvent: true,
+      groupSort: "members",
+    })
+  })
+
+  it("falls back to the newest where the nearest has no place to measure from", () => {
+    expect(filtersFromSearch({ sort: "nearest" }).filters.groupSort).toBe("newest")
+    expect(
+      filtersFromSearch({ sort: "nearest", placeLat: 50.1, placeLng: 14.4 }).filters.groupSort,
+    ).toBe("nearest")
   })
 
   it("reads the number ranges and the free-spot switch (#214)", () => {
@@ -114,6 +142,14 @@ describe("filtersFromSearch", () => {
       capacityFrom: "",
       capacityTo: "12",
     })
+  })
+
+  it('reads "Last minute" from the landing page\'s link, and writes it back (#215)', () => {
+    expect(filtersFromSearch({ soon: true }).filters.lastMinute).toBe(true)
+    expect(eventsListSearchSchema.parse({ soon: "true" }).soon).toBe(true)
+    expect(eventsListSearchSchema.parse({ soon: "maybe" }).soon).toBeUndefined()
+    expect(searchWithFilters({ soon: true }, { lastMinute: false }).soon).toBeUndefined()
+    expect(searchWithFilters({ soon: undefined }, { lastMinute: true }).soon).toBe(true)
   })
 
   it("does not ask for a number range that is reversed, and says so", () => {
@@ -272,5 +308,27 @@ describe("a blank position in the address", () => {
 
   it("drops a position outside the globe", () => {
     expect(eventsListSearchSchema.parse({ placeLat: 91, placeLng: 14 }).placeLat).toBeUndefined()
+  })
+})
+
+describe("the filters only groups have (ADR-0028)", () => {
+  it("writes them into the address and drops them when reset", () => {
+    expect(
+      searchWithFilters(
+        {},
+        { approvalMode: "APPROVAL", hasUpcomingEvent: true, groupSort: "members" },
+      ),
+    ).toMatchObject({ approval: "APPROVAL", upcoming: true, sort: "members" })
+    expect(
+      searchWithFilters(
+        { approval: "OPEN" as const, upcoming: true, sort: "members" as const },
+        { approvalMode: "", hasUpcomingEvent: false, groupSort: "newest" },
+      ),
+    ).toMatchObject({ approval: undefined, upcoming: undefined, sort: undefined })
+  })
+
+  it("count as filters, so an empty list says nothing matches", () => {
+    expect(hasFilters({ ...filtersFromSearch({}).filters, approvalMode: "OPEN" })).toBe(true)
+    expect(hasFilters({ ...filtersFromSearch({}).filters, hasUpcomingEvent: true })).toBe(true)
   })
 })

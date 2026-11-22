@@ -14,7 +14,7 @@ import { HTTPError } from "@/lib/api-client"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
-import type { CreateEventInput, Event } from "@/features/event/api/eventSchemas"
+import type { Event, UpdateEventInput } from "@/features/event/api/eventSchemas"
 import { manageEventQueryOptions } from "@/features/event/api/manageEventQueryOptions"
 import { ChangeWarningDialog } from "@/features/event/components/ChangeWarningDialog"
 import { EventForm } from "@/features/event/components/EventForm"
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_ProtectedPages/events/$eventId/edit")({
 const minuteOf = (date: Date | string) => Math.floor(new Date(date).getTime() / 60_000)
 
 // The form works to the minute, so seconds stored in the event are not a change.
-const changesWhenOrWhere = (event: Event, input: CreateEventInput) =>
+const changesWhenOrWhere = (event: Event, input: UpdateEventInput) =>
   minuteOf(input.startAt) !== minuteOf(event.startAt) ||
   minuteOf(input.endAt) !== minuteOf(event.endAt) ||
   input.location?.street !== event.location?.street ||
@@ -40,7 +40,7 @@ const changesWhenOrWhere = (event: Event, input: CreateEventInput) =>
   (input.location?.longitude ?? null) !== (event.location?.longitude ?? null)
 
 type Pending = {
-  readonly values: CreateEventInput
+  readonly values: UpdateEventInput
   readonly resolve: () => void
   readonly reject: (reason: unknown) => void
 }
@@ -70,7 +70,7 @@ function EditEventPage() {
 
   const goToDetail = () => navigate({ to: "/events/$eventId", params: { eventId } })
 
-  const save = async (values: CreateEventInput) => {
+  const save = async (values: UpdateEventInput) => {
     await updateEvent.mutateAsync(values)
     toast.success(t("events.form.saved"))
     await goToDetail()
@@ -78,7 +78,7 @@ function EditEventPage() {
 
   // A failed save throws on purpose: the form then keeps guarding the typed
   // values, and the message comes from the mutation state below.
-  const handleSubmit = (values: CreateEventInput) => {
+  const handleSubmit = (values: UpdateEventInput) => {
     const event = eventQuery.data
     if (!event || event.approvedCount === 0 || !changesWhenOrWhere(event, values)) {
       return save(values)

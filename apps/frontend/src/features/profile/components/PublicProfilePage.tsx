@@ -26,6 +26,7 @@ export function PublicProfilePage({
   renderFriendAction,
   renderEvents,
   reportAction,
+  blockAction,
 }: {
   userId: string
   /** The signed-in person; their own id leads to Můj profil. */
@@ -54,6 +55,8 @@ export function PublicProfilePage({
   }) => ReactNode
   /** "Nahlásit uživatele" (#240) for the loaded profile; the report feature owns it. */
   reportAction?: (profile: { id: string; name: string }) => ReactNode
+  /** "Zablokovat" or "Odblokovat" (#65) for the loaded profile; the user-block feature owns it. */
+  blockAction?: (profile: { id: string; name: string; isBlockedByMe: boolean }) => ReactNode
 }) {
   const { t } = useTranslation()
   const isOwn = ownUserId === userId
@@ -119,8 +122,11 @@ export function PublicProfilePage({
                 loadedAt: profile.dataUpdatedAt,
               })}
             />
-            {reportAction ? (
-              <div className="border-t border-border pt-4">{reportAction(profile.data)}</div>
+            {reportAction || blockAction ? (
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
+                {blockAction?.(profile.data)}
+                {reportAction?.(profile.data)}
+              </div>
             ) : null}
           </>
         )}

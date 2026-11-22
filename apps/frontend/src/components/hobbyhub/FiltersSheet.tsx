@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+export type GroupApprovalFilter = "" | "OPEN" | "APPROVAL"
+export type GroupSortFilter = "newest" | "members" | "nearest"
+
 /** The place picked for the radius filter (#261): the line of its address and its position. */
 export type PlaceFilter = { label: string; latitude: number; longitude: number }
 
@@ -35,6 +38,8 @@ export type EventFilters = {
   radiusKm: number
   /** Only events with a free seat. */
   freeSpotsOnly: boolean
+  /** #215: only events that start within a few hours ("Last minute"). */
+  lastMinute: boolean
   /** Ranges as typed (number text); empty means no bound. Price in CZK, duration in hours. */
   priceFrom: string
   priceTo: string
@@ -42,6 +47,12 @@ export type EventFilters = {
   hoursTo: string
   capacityFrom: string
   capacityTo: string
+  /** Groups (ADR-0028): how a group takes people in; empty means either way. */
+  approvalMode: GroupApprovalFilter
+  /** Groups: only the ones with an event ahead. */
+  hasUpcomingEvent: boolean
+  /** Groups: the order of the list. */
+  groupSort: GroupSortFilter
 }
 
 export const EMPTY_FILTERS: EventFilters = {
@@ -52,19 +63,34 @@ export const EMPTY_FILTERS: EventFilters = {
   place: null,
   radiusKm: DEFAULT_RADIUS_KM,
   freeSpotsOnly: false,
+  lastMinute: false,
   priceFrom: "",
   priceTo: "",
   hoursFrom: "",
   hoursTo: "",
   capacityFrom: "",
   capacityTo: "",
+  approvalMode: "",
+  hasUpcomingEvent: false,
+  groupSort: "newest",
 }
 
 /** The longest text the location field takes; the server refuses more. */
 export const FILTER_TEXT_MAX_LENGTH = 100
 
 export type FiltersSheetField =
-  "activity" | "when" | "location" | "place" | "freeSpots" | "price" | "duration" | "capacity"
+  | "activity"
+  | "when"
+  | "location"
+  | "place"
+  | "freeSpots"
+  | "price"
+  | "duration"
+  | "capacity"
+  // Only for groups (ADR-0028).
+  | "approval"
+  | "upcomingEvent"
+  | "groupSort"
 
 /** True when both ends are set and the start is past the end. Empty or missing means open. */
 export const isNumberRangeReversed = (from: string | number = "", to: string | number = "") =>
@@ -496,6 +522,14 @@ export function FiltersFields({
           >
             {t("hobbyhub.filters.freeSpots")}
           </FilterChip>
+          <FilterChip
+            pressed={draft.lastMinute}
+            onPressedChange={(isPressed) =>
+              setDraft((current) => ({ ...current, lastMinute: isPressed }))
+            }
+          >
+            {t("hobbyhub.filters.lastMinute")}
+          </FilterChip>
         </div>
       ) : null}
 
@@ -537,6 +571,58 @@ export function FiltersFields({
           }
         />
       ) : null}
+      {fields.includes("approval") ? (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 typo-small text-foreground">
+            {t("hobbyhub.filters.approval")}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {(["", "OPEN", "APPROVAL"] as const).map((mode) => (
+              <FilterChip
+                key={mode || "all"}
+                pressed={draft.approvalMode === mode}
+                onPressedChange={() => setDraft((current) => ({ ...current, approvalMode: mode }))}
+              >
+                {mode ? t(`groups.approval.${mode}`) : t("hobbyhub.filters.approvalAll")}
+              </FilterChip>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
+
+      {fields.includes("upcomingEvent") ? (
+        <div className="flex flex-wrap gap-2">
+          <FilterChip
+            pressed={draft.hasUpcomingEvent}
+            onPressedChange={(isPressed) =>
+              setDraft((current) => ({ ...current, hasUpcomingEvent: isPressed }))
+            }
+          >
+            {t("hobbyhub.filters.upcomingEvent")}
+          </FilterChip>
+        </div>
+      ) : null}
+
+      {fields.includes("groupSort") ? (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 typo-small text-foreground">{t("hobbyhub.filters.sort")}</legend>
+          <div className="flex flex-wrap gap-2">
+            {/* Nearest needs a place to measure from. */}
+            {(draft.place
+              ? (["newest", "members", "nearest"] as const)
+              : (["newest", "members"] as const)
+            ).map((sort) => (
+              <FilterChip
+                key={sort}
+                pressed={draft.groupSort === sort}
+                onPressedChange={() => setDraft((current) => ({ ...current, groupSort: sort }))}
+              >
+                {t(`hobbyhub.filters.sortBy.${sort}`)}
+              </FilterChip>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
       {isNumberReversed || isNumberInvalid ? (
         <p
           role="alert"
@@ -550,9 +636,12 @@ export function FiltersFields({
             : t("hobbyhub.filters.rangeReversed")}
         </p>
       ) : null}
-      <p className="typo-small text-muted-foreground">
-        {sortNote ?? t("hobbyhub.filters.sortNote")}
-      </p>
+      {/* A page whose order is a field of its own passes "" and says nothing here. */}
+      {sortNote === "" ? null : (
+        <p className="typo-small text-muted-foreground">
+          {sortNote ?? t("hobbyhub.filters.sortNote")}
+        </p>
+      )}
     </div>
   )
 }

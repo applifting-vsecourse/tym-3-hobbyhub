@@ -398,6 +398,8 @@ type Example = {
   external?: number;
   contribution?: number;
   venueType?: VenueType;
+  // #218: a place's address is public unless the example says otherwise.
+  isAddressPublic?: boolean;
   place?: Place;
   onlineUrl?: string;
   // F-06.5: shown to approved participants only.
@@ -553,6 +555,36 @@ export async function seedEvents(
       seats: approved(1),
     },
     {
+      // #232: full, with nobody blocked from it; the second user watches it
+      // for a free seat (seed-event-interests.ts) and the third can give a
+      // seat back, so the notification can be clicked through.
+      title: 'Sobotní tenisová čtyřhra',
+      description:
+        'Čtyřhra na antuce na dvě hodiny, míče máme. Hrajeme ve stálé čtveřici, místo se uvolní jen občas.',
+      equipment: 'Vlastní raketa, antukové boty.',
+      activity: 'Tenis',
+      level: 'Mírně pokročilí',
+      startAt: at(4, 9),
+      min: 4,
+      max: 4,
+      external: 1,
+      contribution: 150,
+      place: {
+        city: 'Praha',
+        district: 'Praha 7',
+        street: 'Za Elektrárnou 419',
+        postalCode: '17000',
+        placeName: 'Tenisové kurty Stromovka',
+        latitude: 50.1055,
+        longitude: 14.4282,
+      },
+      // The organizer, the third and the fourth user, and one seat taken
+      // outside the app: four of four.
+      seats: others
+        .slice(1, 3)
+        .map((user) => ({ user, status: ParticipationStatus.APPROVED })),
+    },
+    {
       title: 'Ranní běh podél Vltavy',
       description:
         'Klidné tempo kolem šesti minut na kilometr, osm kilometrů, pak snídaně.',
@@ -622,7 +654,7 @@ export async function seedEvents(
       startAt: at(4, 17),
       min: 2,
       max: 4,
-      venueType: VenueType.PRIVATE_VENUE,
+      isAddressPublic: false,
       place: {
         city: 'Brno',
         district: 'Brno-Žabovřesky',
@@ -927,7 +959,9 @@ export async function seedEvents(
 
     const { place } = example;
     const status = example.status ?? EventStatus.PUBLISHED;
-    const venueType = example.venueType ?? VenueType.PUBLIC_VENUE;
+    const venueType = example.venueType ?? VenueType.PLACE;
+    const isAddressPublic =
+      venueType === VenueType.PLACE && (example.isAddressPublic ?? true);
 
     const event = await prisma.event.create({
       data: {
@@ -949,6 +983,7 @@ export async function seedEvents(
           : {}),
         approvalMode: ApprovalMode.MANUAL,
         venueType,
+        isAddressPublic,
         onlineUrl: example.onlineUrl,
         contact: example.contact,
         externalChatUrl: example.externalChatUrl,
@@ -1038,6 +1073,8 @@ async function seedExampleGroup(
         name,
         description: 'Rekreační florbal každý čtvrtek. Nováčci vítáni.',
         locationName: 'Praha 8',
+        locationLatitude: 50.1297,
+        locationLongitude: 14.4421,
         usualSchedule: 'Čtvrtky 19:00',
         activityId,
         memberships: {

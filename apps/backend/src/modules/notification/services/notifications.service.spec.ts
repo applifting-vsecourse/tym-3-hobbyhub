@@ -10,8 +10,8 @@ import { NotificationsService } from './notifications.service';
 // #239: nobody is blocked here; blocks have tests of their own.
 const noBlocks = (): MockProxy<UserBlockVisibility> => {
   const blocks = mock<UserBlockVisibility>();
-  blocks.hiddenFor.mockResolvedValue([]);
-  blocks.hiddenFrom.mockResolvedValue([]);
+  blocks.mutedFor.mockResolvedValue([]);
+  blocks.notHearingFrom.mockResolvedValue([]);
   return blocks;
 };
 
@@ -443,6 +443,53 @@ describe('NotificationsService', () => {
       expect(repository.createForRecipients).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'RATING_PROMPT' }),
       );
+    });
+  });
+
+  // #232: a seat freed up on a full event.
+  describe('notifySpotAvailable', () => {
+    it('tells every watcher once, without naming who freed the seat', async () => {
+      const { repository, emails, service } = setup();
+
+      await service.notifySpotAvailable({
+        event: { id: 'e1' },
+        watcherIds: ['w1', 'w2', 'w1'],
+        freedBy: { id: 'leaver' },
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith({
+        type: 'SPOT_AVAILABLE',
+        recipientIds: ['w1', 'w2'],
+        actorId: null,
+        eventId: 'e1',
+      });
+      expect(emails.queueFor).toHaveBeenCalledWith(['n1']);
+    });
+
+    it('leaves out whoever freed the seat', async () => {
+      const { repository, service } = setup();
+
+      await service.notifySpotAvailable({
+        event: { id: 'e1' },
+        watcherIds: ['leaver', 'w1'],
+        freedBy: { id: 'leaver' },
+      });
+
+      expect(repository.createForRecipients).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientIds: ['w1'] }),
+      );
+    });
+
+    it('writes nothing when nobody watches', async () => {
+      const { repository, service } = setup();
+
+      await service.notifySpotAvailable({
+        event: { id: 'e1' },
+        watcherIds: [],
+        freedBy: null,
+      });
+
+      expect(repository.createForRecipients).not.toHaveBeenCalled();
     });
   });
 

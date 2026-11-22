@@ -113,7 +113,7 @@ describeDb('event moderation in the database (#239)', () => {
         description: 'Test',
         status: EventStatus.PUBLISHED,
         approvalMode: ApprovalMode.MANUAL,
-        venueType: VenueType.PUBLIC_VENUE,
+        venueType: VenueType.PLACE,
         startAt: start,
         endAt: new Date(start.getTime() + 2 * 3600 * 1000),
         minParticipants: 2,
@@ -276,6 +276,7 @@ describeDb('event moderation in the database (#239)', () => {
         blockedId: b,
         createdById: adminId,
         reason: REASON,
+        source: 'ADMINISTRATOR',
       });
 
       await expect(
@@ -284,6 +285,7 @@ describeDb('event moderation in the database (#239)', () => {
           blockedId: a,
           createdById: adminId,
           reason: REASON,
+          source: 'ADMINISTRATOR',
         }),
       ).rejects.toThrow();
     });
@@ -296,9 +298,19 @@ describeDb('event moderation in the database (#239)', () => {
       const adminId = await anAdministrator();
       const [a, b] = [await aUser(), await aUser()].sort();
       const data = {
-        self: { blockerId: a, blockedId: a },
-        noReason: { blockerId: a, blockedId: b, createdById: adminId },
-        userReason: { blockerId: a, blockedId: b, reason: REASON },
+        self: { blockerId: a, blockedId: a, source: 'USER' },
+        noReason: {
+          blockerId: a,
+          blockedId: b,
+          createdById: adminId,
+          source: 'ADMINISTRATOR',
+        },
+        userReason: {
+          blockerId: a,
+          blockedId: b,
+          reason: REASON,
+          source: 'USER',
+        },
       }[kind];
 
       await expect(aBlock(data)).rejects.toThrow();

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
+import { landingKeys } from "@/lib/landing-keys"
 import { myEventsKeys } from "@/lib/my-events-keys"
 
 import { participationRequestKeys } from "@/features/participation-request/api/participationRequestKeys"
@@ -19,6 +20,8 @@ export function useRequestToJoin(onChange?: () => Promise<unknown>) {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: participationRequestKeys.all() }),
         queryClient.invalidateQueries({ queryKey: myEventsKeys.all() }),
+        // #215: the landing rows show seats, the viewer's state and the event.
+        queryClient.invalidateQueries({ queryKey: landingKeys.all() }),
         onChange?.(),
       ]),
   })

@@ -103,7 +103,7 @@ describeDb('rating schema constraints and views', () => {
         title: 'Badminton',
         description: 'Test',
         status: 'PUBLISHED',
-        venueType: VenueType.PUBLIC_VENUE,
+        venueType: VenueType.PLACE,
         startAt: new Date(endAt.getTime() - 2 * 3600 * 1000),
         endAt,
         minParticipants: 2,
@@ -411,25 +411,64 @@ describeDb('rating schema constraints and views', () => {
       });
     });
 
-    // ADR-0022, review of PR #264: a rating between two people blocked from
-    // each other counts nowhere, so no number differs from the list and
-    // nothing gives the block away. It comes back once the block is lifted.
+    // ADR-0022, ADR-0031 (reviews of PR #264 and #267): a rating counts
+    // nowhere when its author does not exist for the rated person, so no number
+    // differs from the list they see and nothing gives the block away. It
+    // comes back once the block is lifted.
+    const blockBetween = async (
+      tx: Prisma.TransactionClient,
+      blocker: 'author' | 'rated' | 'administrator',
+      author: string,
+      rated: string,
+    ): Promise<string> => {
+      if (blocker !== 'administrator') {
+        const block = await tx.userBlock.create({
+          data:
+            blocker === 'author'
+              ? { blockerId: author, blockedId: rated, source: 'USER' }
+              : { blockerId: rated, blockedId: author, source: 'USER' },
+        });
+        return block.id;
+      }
+      const admin = await tx.administrator.create({
+        data: {
+          id: `test-admin-${random()}`,
+          name: 'Správce',
+          email: `admin-${random()}@example.com`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+      // An administrator's block is stored once, the smaller id first.
+      const [a, b] = [author, rated].sort();
+      const block = await tx.userBlock.create({
+        data: {
+          blockerId: a,
+          blockedId: b,
+          source: 'ADMINISTRATOR',
+          createdById: admin.id,
+          reason: 'Obtěžování',
+        },
+      });
+      return block.id;
+    };
+
     it.each([
       ['the author blocked the rated one', 'author'],
-      ['the rated one blocked the author', 'rated'],
+      ['an administrator blocked the pair', 'administrator'],
     ] as const)(
-      'counts no rating between a blocked pair (%s)',
+      'counts no rating whose author is hidden from the rated one (%s)',
       async (_case, blocker) => {
         await inRolledBackTransaction(async (tx) => {
           const event = await aRevealedEvent(tx);
           await rateAll(tx, event, [5, 5, 1]);
           const author = event.participantIds[2];
-          const block = await tx.userBlock.create({
-            data:
-              blocker === 'author'
-                ? { blockerId: author, blockedId: event.organizerId }
-                : { blockerId: event.organizerId, blockedId: author },
-          });
+          const blockId = await blockBetween(
+            tx,
+            blocker,
+            author,
+            event.organizerId,
+          );
           const repository = repositoryOf(tx);
 
           const page = await repository.getReceived(
@@ -445,13 +484,42 @@ describeDb('rating schema constraints and views', () => {
             repository.getEventScore(event.eventId),
           ).resolves.toEqual({ count: 2, average: 5 });
 
-          await tx.userBlock.delete({ where: { id: block.id } });
+          await tx.userBlock.delete({ where: { id: blockId } });
           await expect(
             repository.getUserScores(event.organizerId),
           ).resolves.toMatchObject({ asOrganizer: { count: 3 } });
         });
       },
     );
+
+    // ADR-0031: blocking the author of a bad rating does not take it off
+    // one's score. The blocker still sees the blocked, so the rating stays in
+    // their list too.
+    it('keeps counting a rating from someone the rated one blocked', async () => {
+      await inRolledBackTransaction(async (tx) => {
+        const event = await aRevealedEvent(tx);
+        await rateAll(tx, event, [5, 5, 1]);
+        await blockBetween(
+          tx,
+          'rated',
+          event.participantIds[2],
+          event.organizerId,
+        );
+        const repository = repositoryOf(tx);
+
+        const page = await repository.getReceived(
+          event.organizerId,
+          'TO_ORGANIZER',
+          { limit: 10, offset: 0 },
+        );
+        expect(page.score).toEqual({ count: 3, average: 11 / 3 });
+        expect(page.items).toHaveLength(3);
+        await expect(repository.getEventScore(event.eventId)).resolves.toEqual({
+          count: 3,
+          average: 11 / 3,
+        });
+      });
+    });
   });
 
   // #235: whom the main organizer rates, as the rating page lists them.

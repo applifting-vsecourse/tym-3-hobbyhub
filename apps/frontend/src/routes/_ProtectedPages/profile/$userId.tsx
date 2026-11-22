@@ -9,6 +9,7 @@ import { PersonEvents } from "@/features/event/components/PersonEvents"
 import { FriendRelationAction } from "@/features/friendship/components/FriendRelationAction"
 import { PublicProfilePage } from "@/features/profile/components/PublicProfilePage"
 import { ReportAction } from "@/features/report/components/ReportAction"
+import { BlockUserAction } from "@/features/user-block/components/BlockUserAction"
 
 // #226: which part of a friend's events, the upcoming ones without a param.
 const profileSearchSchema = z.object({
@@ -38,6 +39,8 @@ function ProfileRoute() {
       activityLabel={activityLabel}
       // #225: ask for friendship, or see where the request stands.
       renderFriendAction={(friendship) => <FriendRelationAction {...friendship} />}
+      // #65: the person's own block, one way, without the administration.
+      blockAction={(profile) => <BlockUserAction user={profile} />}
       // #226: a friend's events, the parts they let friends see.
       renderEvents={(profile) => (
         <PersonEvents

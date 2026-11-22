@@ -93,6 +93,22 @@ describe('joinRuleViolations', () => {
       ).toEqual([]);
     },
   );
+
+  // #65, ADR-0031: the blocked organizer would never see the request.
+  it.each(['organizer', 'co-organizer'])(
+    'refuses someone who blocked the %s',
+    (blockedId) => {
+      expect(joinRuleViolations(anEvent(), 'u1', [], now, [blockedId])).toEqual(
+        ['BLOCKED_ORGANIZER'],
+      );
+    },
+  );
+
+  it('lets someone ask who blocked only people outside the event', () => {
+    expect(joinRuleViolations(anEvent(), 'u1', [], now, ['stranger'])).toEqual(
+      [],
+    );
+  });
 });
 
 describe('currentRequestOf', () => {

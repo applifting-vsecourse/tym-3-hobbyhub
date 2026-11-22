@@ -17,6 +17,7 @@ import {
   CancelEventData,
   CreateEventData,
   Event,
+  EventAttendee,
   EventAudience,
   EventChangeResult,
   EventDetail,
@@ -29,6 +30,7 @@ import {
   EventLocation,
   EventPeriod,
   EventSeatFacts,
+  EventSeatsChangeResult,
   EventViewerScope,
   FRIEND_SEAT_STATUSES,
   GeoPoint,
@@ -37,12 +39,17 @@ import {
   GroupEventsPeriod,
   HiddenEventAudience,
   INVOLVED_PARTICIPATION_STATUSES,
+  LandingCity,
+  LandingEventSelection,
   MIN_STATS_PARTICIPANTS,
   NO_EVENT_FILTER,
   occupancyOf,
   Page,
   ParticipantEventInfo,
+  SIMILAR_EVENTS_LIMIT,
+  SIMILAR_EVENTS_WINDOW_DAYS,
   UpdateEventData,
+  ViewerEventState,
 } from '@/modules/event/domain/event';
 import { computeParticipantStats } from '@/modules/event/domain/participant-stats';
 import { isPubliclyVisible } from '@/modules/group/domain/group';
@@ -59,6 +66,7 @@ import {
   eventFilterConditions,
   eventListRangeConditions,
   LIST_TAKEN_STATUSES,
+  notOrganizedBy,
 } from './event-list.sql';
 
 // Approved participations are the only ones that take a seat (ADR-0009).
@@ -108,10 +116,10 @@ const mapAdminListItem = (
 });
 
 // Great-circle distance in km (haversine) from `near` to the event, with the
-// alias `e`. Null for a private venue, which is never located, and for an event
-// without coordinates; those sort last.
+// alias `e`. Null for a hidden address, which is never located (#218), and
+// for an event without coordinates; those sort last.
 const distanceKmSql = ({ latitude, longitude }: GeoPoint): Prisma.Sql =>
-  Prisma.sql`CASE WHEN e."venueType" = 'PUBLIC_VENUE'
+  Prisma.sql`CASE WHEN e."isAddressPublic"
       AND e."locationLatitude" IS NOT NULL AND e."locationLongitude" IS NOT NULL
     THEN 2 * 6371 * asin(sqrt(least(1, 
       power(sin(radians(e."locationLatitude"::float8 - ${latitude}::float8) / 2), 2)
@@ -133,6 +141,13 @@ const listCondition = (
     Prisma.sql`e."endAt" > ${now}`,
     ...eventFilterConditions(filter),
     ...eventListRangeConditions(filter),
+    // #215 "Last minute": not started yet, and starting soon.
+    ...(filter.startsWithinHours !== undefined
+      ? [
+          Prisma.sql`e."startAt" > ${now}`,
+          Prisma.sql`e."startAt" <= ${new Date(now.getTime() + filter.startsWithinHours * 3600 * 1000)}`,
+        ]
+      : []),
     // #261: no position gives a NULL distance, which is never within a radius.
     ...(withRadius && filter.around
       ? [
@@ -140,6 +155,68 @@ const listCondition = (
         ]
       : []),
   ]);
+
+// #215: what every landing row starts from: the public list, not started yet,
+// a free seat left, and never what the viewer organizes.
+const landingBaseCondition = (
+  now: Date,
+  selection: LandingEventSelection,
+  hiddenOrganizerIds: string[],
+  viewerId: string | undefined,
+): Prisma.Sql[] => [
+  listCondition(now, {
+    activityIds: [],
+    hiddenOrganizerIds,
+    onlyWithFreeSpots: true,
+    dateFrom: selection.dateFrom,
+    dateTo: selection.dateTo,
+    around: selection.around,
+  }),
+  Prisma.sql`e."startAt" > ${now}`,
+  ...(viewerId ? [notOrganizedBy([viewerId])] : []),
+];
+
+// #215 "Tvoje oblíbené aktivity": an activity of the person's profile, one of
+// their groups, or the activity or the organizer of an event they played.
+const likedByCondition = (userId: string, now: Date): Prisma.Sql =>
+  Prisma.sql`(
+    e."activityId" IN (SELECT ua."activityId" FROM "user_activity" ua WHERE ua."userId" = ${userId})
+    OR e."groupId" IN (SELECT m."groupId" FROM "group_membership" m WHERE m."userId" = ${userId})
+    OR EXISTS (
+      SELECT 1 FROM "participation" p
+      JOIN "event" played ON played."id" = p."eventId"
+      WHERE p."userId" = ${userId}
+        AND p."status" IN (${Prisma.join(LIST_TAKEN_STATUSES)})
+        AND played."endAt" <= ${now}
+        AND (played."activityId" = e."activityId" OR played."organizerId" = e."organizerId")
+    )
+  )`;
+
+// #215 "Jdou tvoji přátelé": one of the people organizes the event or holds
+// an approved seat on it. Who may be counted is the caller's business.
+const attendedByCondition = (userIds: string[]): Prisma.Sql =>
+  Prisma.sql`(
+    e."organizerId" IN (${Prisma.join(userIds)})
+    OR EXISTS (SELECT 1 FROM "_EventCoOrganizers" c WHERE c."A" = e."id" AND c."B" IN (${Prisma.join(userIds)}))
+    OR EXISTS (
+      SELECT 1 FROM "participation" p
+      WHERE p."eventId" = e."id" AND p."status" = 'APPROVED' AND p."userId" IN (${Prisma.join(userIds)})
+    )
+  )`;
+
+// #215 "Top akce": how full the event is and how the organizer is rated, with
+// the same weight. A rating counts from the public average only (three
+// revealed ratings, ADR-0027); below that it adds nothing.
+const topScoreSql = Prisma.sql`(
+  (e."externalOccupiedSpots" + (
+    SELECT count(*) FROM "participation" p
+    WHERE p."eventId" = e."id" AND p."status" IN (${Prisma.join(LIST_TAKEN_STATUSES)})
+  ))::float8 / greatest(e."maxParticipants", 1)
+  + coalesce((
+    SELECT s."publicAverage" FROM "user_rating_score" s
+    WHERE s."userId" = e."organizerId" AND s."direction" = 'TO_ORGANIZER'
+  ), 0) / 5
+)`;
 
 // F-07.2: what may be shown to someone, depending on who they are: public or
 // group-only, never a draft, a private event or one hidden by a moderator.
@@ -296,20 +373,19 @@ export const mapPrismaEventToListItem = (
   startAt: event.startAt,
   endAt: event.endAt,
   venueType: event.venueType,
-  placeName:
-    event.venueType === 'PUBLIC_VENUE' ? event.locationPlaceName : null,
+  isAddressPublic: event.isAddressPublic,
+  // #218: a hidden address may be someone's home: neither the name of the
+  // place nor its position leaves the server.
+  placeName: event.isAddressPublic ? event.locationPlaceName : null,
   district: event.locationDistrict,
   city: event.locationCity,
   level: event.level?.name ?? null,
-  // A private venue is someone's home: it is never put on a map.
-  latitude:
-    event.venueType === 'PUBLIC_VENUE'
-      ? (event.locationLatitude?.toNumber() ?? null)
-      : null,
-  longitude:
-    event.venueType === 'PUBLIC_VENUE'
-      ? (event.locationLongitude?.toNumber() ?? null)
-      : null,
+  latitude: event.isAddressPublic
+    ? (event.locationLatitude?.toNumber() ?? null)
+    : null,
+  longitude: event.isAddressPublic
+    ? (event.locationLongitude?.toNumber() ?? null)
+    : null,
   distanceKm,
   activity: {
     id: event.activity.id,
@@ -358,6 +434,7 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   status: event.status,
   visibility: event.visibility,
   venueType: event.venueType,
+  isAddressPublic: event.isAddressPublic,
   startAt: event.startAt,
   endAt: event.endAt,
   publishedAt: event.publishedAt,
@@ -390,6 +467,23 @@ const mapPrismaEventToDomain = (event: PrismaEventWithRelations): Event => ({
   }),
 });
 
+// #232: the free seats of the event locked by the caller, before it writes.
+const freeSpotsOfLocked = async (
+  tx: Prisma.TransactionClient,
+  id: string,
+  approvedCount: number,
+): Promise<number> => {
+  const event = await tx.event.findUniqueOrThrow({
+    where: { id },
+    select: {
+      minParticipants: true,
+      maxParticipants: true,
+      externalOccupiedSpots: true,
+    },
+  });
+  return occupancyOf({ ...event, approvedCount }).freeSpots;
+};
+
 @Injectable()
 export class EventRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -405,7 +499,8 @@ export class EventRepository {
         equipment: data.equipment ?? null,
         status: EventStatus.PUBLISHED,
         publishedAt: data.publishedAt,
-        venueType: data.venueType,
+        venueType: 'PLACE',
+        isAddressPublic: data.isAddressPublic,
         approvalMode: data.approvalMode,
         startAt: data.startAt,
         endAt: data.endAt,
@@ -440,7 +535,7 @@ export class EventRepository {
     id: string,
     data: UpdateEventData,
     now: Date,
-  ): Promise<EventChangeResult> {
+  ): Promise<EventSeatsChangeResult> {
     return this.prisma.$transaction(async (tx) => {
       // Lock first, as createApproved does, so a request cannot be approved
       // between counting the seats and writing the new maximum.
@@ -448,6 +543,7 @@ export class EventRepository {
       const approved = await tx.participation.count({
         where: { eventId: id, status: ParticipationStatus.APPROVED },
       });
+      const freeSpotsBefore = await freeSpotsOfLocked(tx, id, approved);
       if (data.maxParticipants < data.externalOccupiedSpots + approved) {
         return { ok: false, violation: 'MAX_BELOW_OCCUPIED' } as const;
       }
@@ -462,6 +558,7 @@ export class EventRepository {
           description: data.description,
           equipment: data.equipment ?? null,
           venueType: data.venueType,
+          isAddressPublic: data.isAddressPublic,
           approvalMode: data.approvalMode,
           startAt: data.startAt,
           endAt: data.endAt,
@@ -489,7 +586,11 @@ export class EventRepository {
         where: { id },
         include,
       });
-      return { ok: true, event: mapPrismaEventToDomain(event) } as const;
+      return {
+        ok: true,
+        event: mapPrismaEventToDomain(event),
+        freeSpotsBefore,
+      } as const;
     });
   }
 
@@ -499,12 +600,13 @@ export class EventRepository {
     id: string,
     externalOccupiedSpots: number,
     now: Date,
-  ): Promise<EventChangeResult> {
+  ): Promise<EventSeatsChangeResult> {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "event" WHERE "id" = ${id} FOR UPDATE`;
       const approved = await tx.participation.count({
         where: { eventId: id, status: ParticipationStatus.APPROVED },
       });
+      const freeSpotsBefore = await freeSpotsOfLocked(tx, id, approved);
       const event = await tx.event.findUniqueOrThrow({
         where: { id },
         select: { maxParticipants: true },
@@ -527,7 +629,11 @@ export class EventRepository {
         where: { id },
         include,
       });
-      return { ok: true, event: mapPrismaEventToDomain(updated) } as const;
+      return {
+        ok: true,
+        event: mapPrismaEventToDomain(updated),
+        freeSpotsBefore,
+      } as const;
     });
   }
 
@@ -603,6 +709,34 @@ export class EventRepository {
         ...event.coOrganizers.map((coOrganizer) => coOrganizer.id),
       ],
     };
+  }
+
+  // #232: who watches the event for a free seat and could still ask for it:
+  // no seat, and no request waiting or rejected (ADR-0013: a rejection is
+  // final). Asking switches the watching off already; this is the safety net.
+  // The rows are the "Zajímá mě" list's (ADR-0030); reading their ids here
+  // spares the event module a dependency on that module, which depends on this
+  // one. Who of them may still see the event is the service's to decide.
+  async getFreeSpotWatcherIds(eventId: string): Promise<string[]> {
+    const rows = await this.prisma.eventInterest.findMany({
+      where: {
+        eventId,
+        watchesFreeSpot: true,
+        user: {
+          participations: {
+            none: { eventId, status: ParticipationStatus.APPROVED },
+          },
+          participationRequests: {
+            none: {
+              eventId,
+              status: { in: [RequestStatus.PENDING, RequestStatus.REJECTED] },
+            },
+          },
+        },
+      },
+      select: { userId: true },
+    });
+    return rows.map((row) => row.userId);
   }
 
   // #239, ADR-0022: an administrator hides an event, or brings it back, and
@@ -715,6 +849,44 @@ export class EventRepository {
         ? { withoutLocationCount: Number(totalRows[0]?.withoutLocation ?? 0) }
         : {}),
     };
+  }
+
+  // Events like the given one, for the detail page: upcoming, public, with a
+  // free seat, never the event itself. Those with the same activity, in the
+  // same city (any place for an online source) and starting within the window
+  // come first, nearest in time first; the rest of the same activity fills up
+  // to the limit, also nearest in time first.
+  async getSimilarEvents(
+    eventId: string,
+    now: Date,
+    hiddenOrganizerIds: string[] = [],
+  ): Promise<EventListItem[]> {
+    const where = allOf([
+      Prisma.sql`e."id" <> s."id"`,
+      Prisma.sql`e."activityId" = s."activityId"`,
+      Prisma.sql`e."status" = 'PUBLISHED'`,
+      Prisma.sql`e."visibility" = 'PUBLIC'`,
+      Prisma.sql`NOT e."isHidden"`,
+      Prisma.sql`e."endAt" > ${now}`,
+      ...eventListRangeConditions({ onlyWithFreeSpots: true }),
+      ...(hiddenOrganizerIds.length > 0
+        ? [notOrganizedBy(hiddenOrganizerIds)]
+        : []),
+    ]);
+    const sameCity = Prisma.sql`(s."venueType" = 'ONLINE' OR (
+      s."locationCity" IS NOT NULL
+      AND lower(e."locationCity") = lower(s."locationCity")))`;
+    const closeInTime = Prisma.sql`abs(extract(epoch FROM (e."startAt" - s."startAt"))) <= ${SIMILAR_EVENTS_WINDOW_DAYS * 86400}`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT e."id" FROM "event" e
+      JOIN "event" s ON s."id" = ${eventId}
+      WHERE ${where}
+      ORDER BY
+        CASE WHEN ${sameCity} AND ${closeInTime} THEN 0 ELSE 1 END ASC,
+        abs(extract(epoch FROM (e."startAt" - s."startAt"))) ASC,
+        e."id" ASC
+      LIMIT ${SIMILAR_EVENTS_LIMIT}`;
+    return this.listItemsInOrder(rows.map((row) => row.id));
   }
 
   // The list cards of the ids in the order given; an id that is gone by now
@@ -847,6 +1019,8 @@ export class EventRepository {
       statsMinParticipants: MIN_STATS_PARTICIPANTS,
       hiddenReason: event.isHidden ? event.hiddenReason : null,
       rating: await this.getPublicRatingScore(event.id),
+      // #218: the exact address only when the organizer made it public.
+      location: event.isAddressPublic ? mapLocation(event) : null,
     };
   }
 
@@ -926,6 +1100,20 @@ export class EventRepository {
   // first. Past: over, newest first. Cancelled ones stay, drafts, private and
   // hidden ones never show; which visibilities the viewer gets is the
   // service's to decide.
+  async countGroupEvents(
+    groupId: string,
+    filter: {
+      period: GroupEventsPeriod;
+      visibilities: GroupEventListItem['visibility'][];
+      now: Date;
+      hiddenOrganizerIds?: string[];
+    },
+  ): Promise<number> {
+    return this.prisma.event.count({
+      where: groupEventsWhere(groupId, filter),
+    });
+  }
+
   async getGroupEvents(
     groupId: string,
     {
@@ -942,19 +1130,12 @@ export class EventRepository {
     },
     { limit, offset }: Page,
   ): Promise<GroupEventPage> {
-    const where: Prisma.EventWhereInput = {
-      groupId,
-      status: { not: EventStatus.DRAFT },
-      isHidden: false,
-      visibility: { in: visibilities },
-      endAt: period === 'upcoming' ? { gt: now } : { lte: now },
-      ...(hiddenOrganizerIds.length > 0
-        ? {
-            organizerId: { notIn: hiddenOrganizerIds },
-            coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
-          }
-        : {}),
-    };
+    const where = groupEventsWhere(groupId, {
+      period,
+      visibilities,
+      now,
+      hiddenOrganizerIds,
+    });
     const direction = period === 'upcoming' ? 'asc' : 'desc';
     const [events, total] = await Promise.all([
       this.prisma.event.findMany({
@@ -1080,6 +1261,167 @@ export class EventRepository {
       })),
     };
   }
+  // #215: the ids of one row of the landing page, in the row's order.
+  async getLandingEventIds(
+    now: Date,
+    selection: LandingEventSelection,
+    hiddenOrganizerIds: string[],
+    viewerId?: string,
+  ): Promise<string[]> {
+    if (selection.attendedByAnyOf?.length === 0) return [];
+    const where = allOf([
+      ...landingBaseCondition(now, selection, hiddenOrganizerIds, viewerId),
+      ...(selection.startsBefore
+        ? [Prisma.sql`e."startAt" <= ${selection.startsBefore}`]
+        : []),
+      ...(selection.city
+        ? [
+            Prisma.sql`lower(trim(e."locationCity")) = lower(trim(${selection.city}))`,
+          ]
+        : []),
+      ...(selection.likedBy ? [likedByCondition(selection.likedBy, now)] : []),
+      ...(selection.attendedByAnyOf
+        ? [attendedByCondition(selection.attendedByAnyOf)]
+        : []),
+    ]);
+    const orderBy =
+      selection.order === 'top'
+        ? Prisma.sql`${topScoreSql} DESC, e."startAt" ASC, e."id" ASC`
+        : selection.order === 'nearest' && selection.around
+          ? Prisma.sql`${distanceKmSql(selection.around)} ASC NULLS LAST, e."startAt" ASC, e."id" ASC`
+          : Prisma.sql`e."startAt" ASC, e."id" ASC`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT e."id" FROM "event" e
+      JOIN "activity" a ON a."id" = e."activityId"
+      WHERE ${where}
+      ORDER BY ${orderBy}
+      LIMIT ${selection.limit}`;
+    return rows.map((row) => row.id);
+  }
+
+  // #215: the cities with upcoming events a landing row could show, most
+  // events first. Spelled as most of their events spell them.
+  async getLandingCities(
+    now: Date,
+    hiddenOrganizerIds: string[],
+    limit: number,
+  ): Promise<LandingCity[]> {
+    const where = allOf([
+      ...landingBaseCondition(
+        now,
+        { order: 'soonest', limit },
+        hiddenOrganizerIds,
+        undefined,
+      ),
+      Prisma.sql`trim(coalesce(e."locationCity", '')) <> ''`,
+    ]);
+    const rows = await this.prisma.$queryRaw<
+      { city: string; eventCount: number }[]
+    >`
+      SELECT mode() WITHIN GROUP (ORDER BY trim(e."locationCity")) AS "city",
+        count(*)::int AS "eventCount"
+      FROM "event" e
+      JOIN "activity" a ON a."id" = e."activityId"
+      WHERE ${where}
+      GROUP BY lower(trim(e."locationCity"))
+      ORDER BY "eventCount" DESC, "city" ASC
+      LIMIT ${limit}`;
+    return rows;
+  }
+
+  // #215: what the person already is on these events: an approved seat, or a
+  // request waiting for the organizer. The seat wins.
+  async getViewerStates(
+    eventIds: string[],
+    userId: string,
+  ): Promise<Map<string, ViewerEventState>> {
+    if (eventIds.length === 0) return new Map();
+    const [participations, requests] = await Promise.all([
+      this.prisma.participation.findMany({
+        where: {
+          eventId: { in: eventIds },
+          userId,
+          status: ParticipationStatus.APPROVED,
+        },
+        select: { eventId: true },
+      }),
+      this.prisma.participationRequest.findMany({
+        where: {
+          eventId: { in: eventIds },
+          userId,
+          status: RequestStatus.PENDING,
+        },
+        select: { eventId: true },
+      }),
+    ]);
+    return new Map<string, ViewerEventState>([
+      ...requests.map(
+        ({ eventId }) => [eventId, 'PENDING'] as [string, ViewerEventState],
+      ),
+      ...participations.map(
+        ({ eventId }) => [eventId, 'JOINED'] as [string, ViewerEventState],
+      ),
+    ]);
+  }
+
+  // #215: which of the people organize these events or hold an approved seat.
+  async getAttendees(
+    eventIds: string[],
+    userIds: string[],
+  ): Promise<EventAttendee[]> {
+    if (eventIds.length === 0 || userIds.length === 0) return [];
+    const [events, participations] = await Promise.all([
+      this.prisma.event.findMany({
+        where: { id: { in: eventIds } },
+        select: {
+          id: true,
+          organizerId: true,
+          coOrganizers: {
+            where: { id: { in: userIds } },
+            select: { id: true },
+          },
+        },
+      }),
+      this.prisma.participation.findMany({
+        where: {
+          eventId: { in: eventIds },
+          userId: { in: userIds },
+          status: ParticipationStatus.APPROVED,
+        },
+        select: { eventId: true, userId: true },
+      }),
+    ]);
+    const attendees = [
+      ...events.flatMap((event) => [
+        ...(userIds.includes(event.organizerId)
+          ? [{ eventId: event.id, userId: event.organizerId }]
+          : []),
+        ...event.coOrganizers.map((coOrganizer) => ({
+          eventId: event.id,
+          userId: coOrganizer.id,
+        })),
+      ]),
+      ...participations,
+    ];
+    // Someone both organizing and holding a seat counts once.
+    const seen = new Set<string>();
+    return attendees.filter(({ eventId, userId }) => {
+      const key = `${eventId}:${userId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // #215: the main organizer of each of the events.
+  async getOrganizerIds(eventIds: string[]): Promise<Map<string, string>> {
+    if (eventIds.length === 0) return new Map();
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: eventIds } },
+      select: { id: true, organizerId: true },
+    });
+    return new Map(events.map((event) => [event.id, event.organizerId]));
+  }
 
   /**
    * #226: a page of the events any of `peopleIds` goes to or organizes, as
@@ -1166,4 +1508,33 @@ export class EventRepository {
     }
     return found;
   }
+}
+
+function groupEventsWhere(
+  groupId: string,
+  {
+    period,
+    visibilities,
+    now,
+    hiddenOrganizerIds = [],
+  }: {
+    period: GroupEventsPeriod;
+    visibilities: GroupEventListItem['visibility'][];
+    now: Date;
+    hiddenOrganizerIds?: string[];
+  },
+): Prisma.EventWhereInput {
+  return {
+    groupId,
+    status: { not: EventStatus.DRAFT },
+    isHidden: false,
+    visibility: { in: visibilities },
+    endAt: period === 'upcoming' ? { gt: now } : { lte: now },
+    ...(hiddenOrganizerIds.length > 0
+      ? {
+          organizerId: { notIn: hiddenOrganizerIds },
+          coOrganizers: { none: { id: { in: hiddenOrganizerIds } } },
+        }
+      : {}),
+  };
 }

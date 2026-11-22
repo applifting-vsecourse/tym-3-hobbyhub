@@ -225,6 +225,7 @@ describe('notificationEmailOf', () => {
       ['EVENT_CHANGED', { changes: ['TIME', 'PLACE'] }],
       ['EVENT_CANCELLED', {}],
       ['PARTICIPANT_CANCELLED', { message: MESSAGE }],
+      ['SPOT_AVAILABLE', {}],
       [
         'EVENT_REMINDER',
         { reminder: 'DAY', startsAt: '2030-01-02T17:00:00.000Z' },
@@ -358,9 +359,27 @@ describe('notificationEmailOf', () => {
     });
   });
 
+  // #232: neither the title nor how many seats; a free seat is first come,
+  // first served, so it goes first.
+  it('tells a watcher a seat freed up, critical and without the title', () => {
+    const content = notificationEmailOf(
+      aNotification({ type: 'SPOT_AVAILABLE', actor: null, payload: {} }),
+    );
+
+    expect(content).toEqual({
+      subject: 'Na akci, kterou hlídáš, se uvolnilo místo',
+      heading: 'Na akci, kterou hlídáš, se uvolnilo místo',
+      body: 'Místo ti nedržíme: dostane ho, kdo se přihlásí první. Přihlásit se můžeš v detailu akce.',
+      buttonLabel: 'Zobrazit akci',
+      path: '/events/e1',
+      critical: true,
+    });
+    expect(JSON.stringify(content)).not.toContain(EVENT_TITLE);
+  });
+
   it('has no e-mail for a type nothing creates yet', () => {
     expect(
-      notificationEmailOf(aNotification({ type: 'SPOT_AVAILABLE' })),
+      notificationEmailOf(aNotification({ type: 'CONFIRMATION_PROMPT' })),
     ).toBeNull();
   });
 

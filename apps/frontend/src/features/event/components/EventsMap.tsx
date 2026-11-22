@@ -4,12 +4,12 @@ import { useTranslation } from "react-i18next"
 
 import { missingCount } from "@/components/hobbyhub/capacity"
 import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
+import { DARK_STYLE, isDark, LIGHT_STYLE, MapMarker } from "@/components/hobbyhub/mapShared"
 import { env } from "@/config/env"
 
 import type { NearPoint } from "@/features/event/api/eventKeys"
 import type { EventListItem } from "@/features/event/api/eventSchemas"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
-import { DARK_STYLE, isDark, LIGHT_STYLE, MapMarker } from "@/features/event/components/mapShared"
 import { SelectedEventCard } from "@/features/event/components/SelectedEventCard"
 import {
   clusterEvents,

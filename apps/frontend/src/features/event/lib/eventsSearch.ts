@@ -6,8 +6,13 @@ import {
   isNumberRangeReversed,
   isRangeValueValid,
   RADIUS_OPTIONS_KM,
+  type GroupApprovalFilter,
+  type GroupSortFilter,
   type PlaceFilter,
 } from "@/components/hobbyhub/FiltersSheet"
+
+/** #215: "Last minute" in the event list is an event that starts within this many hours. */
+export const LAST_MINUTE_HOURS = 4
 
 /** The server refuses longer texts, so the address and the fields cut them. */
 export const EVENT_SEARCH_MAX_LENGTH = FILTER_TEXT_MAX_LENGTH
@@ -85,6 +90,12 @@ export const eventsListSearchSchema = eventsSearchSchema.extend({
     .transform((value) => value === true || value === "true")
     .optional()
     .catch(undefined),
+  // #215: "Last minute", as the landing page's row links to it.
+  soon: z
+    .union([z.boolean(), z.literal("true")])
+    .transform((value) => value === true || value === "true")
+    .optional()
+    .catch(undefined),
   priceFrom: amount("price"),
   priceTo: amount("price"),
   hoursFrom: amount("duration"),
@@ -97,6 +108,7 @@ type ListRangesSearch = Partial<
   Pick<
     z.infer<typeof eventsListSearchSchema>,
     | "free"
+    | "soon"
     | "priceFrom"
     | "priceTo"
     | "hoursFrom"
@@ -108,7 +120,13 @@ type ListRangesSearch = Partial<
     | "placeLng"
     | "radius"
   >
->
+> &
+  // Only the group list has these (ADR-0028).
+  Partial<{
+    approval: "OPEN" | "APPROVAL"
+    upcoming: boolean
+    sort: "newest" | "nearest" | "members"
+  }>
 
 /** An empty text is no filter, and keeps the address clean. */
 export const nonEmpty = (value = "") => (value.trim() === "" ? undefined : value.trim())
@@ -127,6 +145,8 @@ export type EventFilterValues = {
   dateTo: string
   /** Only events with a free seat (#214). */
   freeSpotsOnly: boolean
+  /** #215: only events that start within `LAST_MINUTE_HOURS`. */
+  lastMinute: boolean
   /** Ranges as typed; empty means no bound. Price in CZK, duration in hours. */
   priceFrom: string
   priceTo: string
@@ -134,6 +154,10 @@ export type EventFilterValues = {
   hoursTo: string
   capacityFrom: string
   capacityTo: string
+  /** Groups only (ADR-0028): how a group takes people in, and whether it has an event ahead. */
+  approvalMode: GroupApprovalFilter
+  hasUpcomingEvent: boolean
+  groupSort: GroupSortFilter
 }
 
 /** A change of the filters behind the panel and the chips; the search text goes its own way. */
@@ -152,6 +176,7 @@ export function filtersFromSearch({
   from,
   to,
   free: isFree,
+  soon: isSoon,
   priceFrom,
   priceTo,
   hoursFrom,
@@ -162,6 +187,9 @@ export function filtersFromSearch({
   placeLat,
   placeLng,
   radius,
+  approval,
+  upcoming: isUpcoming,
+  sort,
 }: EventsSearch & ListRangesSearch): {
   filters: EventFilterValues
   isRangeReversed: boolean
@@ -183,12 +211,17 @@ export function filtersFromSearch({
       dateFrom: isDateReversed ? "" : (from ?? ""),
       dateTo: isDateReversed ? "" : (to ?? ""),
       freeSpotsOnly: isFree ?? false,
+      lastMinute: isSoon ?? false,
       priceFrom: isPriceReversed ? "" : rangeText(priceFrom),
       priceTo: isPriceReversed ? "" : rangeText(priceTo),
       hoursFrom: isHoursReversed ? "" : rangeText(hoursFrom),
       hoursTo: isHoursReversed ? "" : rangeText(hoursTo),
       capacityFrom: isCapacityReversed ? "" : rangeText(capacityFrom),
       capacityTo: isCapacityReversed ? "" : rangeText(capacityTo),
+      approvalMode: approval ?? "",
+      hasUpcomingEvent: isUpcoming ?? false,
+      // The nearest first needs a place; without one it is the newest.
+      groupSort: sort === "nearest" && placeLat === undefined ? "newest" : (sort ?? "newest"),
     },
     isRangeReversed: isDateReversed || isPriceReversed || isHoursReversed || isCapacityReversed,
   }
@@ -222,12 +255,18 @@ export function searchWithFilters<T extends EventsSearch & ListRangesSearch>(
     ...(next.dateFrom !== undefined && { from: nonEmpty(next.dateFrom) }),
     ...(next.dateTo !== undefined && { to: nonEmpty(next.dateTo) }),
     ...(next.freeSpotsOnly !== undefined && { free: next.freeSpotsOnly ? true : undefined }),
+    ...(next.lastMinute !== undefined && { soon: next.lastMinute ? true : undefined }),
     ...(next.priceFrom !== undefined && { priceFrom: rangeNumber(next.priceFrom) }),
     ...(next.priceTo !== undefined && { priceTo: rangeNumber(next.priceTo) }),
     ...(next.hoursFrom !== undefined && { hoursFrom: rangeNumber(next.hoursFrom) }),
     ...(next.hoursTo !== undefined && { hoursTo: rangeNumber(next.hoursTo) }),
     ...(next.capacityFrom !== undefined && { capacityFrom: rangeNumber(next.capacityFrom) }),
     ...(next.capacityTo !== undefined && { capacityTo: rangeNumber(next.capacityTo) }),
+    ...(next.approvalMode !== undefined && { approval: next.approvalMode || undefined }),
+    ...(next.hasUpcomingEvent !== undefined && { upcoming: next.hasUpcomingEvent || undefined }),
+    ...(next.groupSort !== undefined && {
+      sort: next.groupSort === "newest" ? undefined : next.groupSort,
+    }),
   }
 }
 
@@ -243,9 +282,12 @@ export const activeFilterCount = (filters: EventFilterValues): number =>
     filters.place !== null,
     filters.dateFrom !== "" || filters.dateTo !== "",
     filters.freeSpotsOnly,
+    filters.lastMinute,
     filters.priceFrom !== "" || filters.priceTo !== "",
     filters.hoursFrom !== "" || filters.hoursTo !== "",
     filters.capacityFrom !== "" || filters.capacityTo !== "",
+    filters.approvalMode !== "",
+    filters.hasUpcomingEvent,
   ].filter(Boolean).length
 
 /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
@@ -257,9 +299,12 @@ export const hasFilters = (filters: EventFilterValues): boolean =>
   filters.dateFrom !== "" ||
   filters.dateTo !== "" ||
   filters.freeSpotsOnly ||
+  filters.lastMinute ||
   filters.priceFrom !== "" ||
   filters.priceTo !== "" ||
   filters.hoursFrom !== "" ||
   filters.hoursTo !== "" ||
   filters.capacityFrom !== "" ||
-  filters.capacityTo !== ""
+  filters.capacityTo !== "" ||
+  filters.approvalMode !== "" ||
+  filters.hasUpcomingEvent

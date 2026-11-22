@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils"
 type EventDetailCardProps = Capacity & {
   activity: Activity
   title: string
-  /** "Dnes", "Pátek"… Today is drawn in signal ink. */
+  /** The date, big: "Dnes", "15. 10.". Today is drawn in signal ink. */
   day: string
   isToday?: boolean
+  /** Under the date: "čt 19:00". */
   time: string
   endTime: string
   place: string
@@ -26,7 +27,7 @@ type EventDetailCardProps = Capacity & {
 
 /**
  * Karta akce (detail) — one event for the detail page and the map preview.
- * Only the time is big. Listings use ScheduleRow instead.
+ * Only the date is big. Listings use ScheduleRow instead.
  */
 export function EventDetailCard({
   activity,
@@ -59,10 +60,8 @@ export function EventDetailCard({
 
       <div className="flex items-start gap-4">
         <div className="flex flex-col">
-          <p className={cn("typo-small", isToday ? "text-signal-ink" : "text-muted-foreground")}>
-            {day}
-          </p>
-          <p className="typo-time text-foreground">{time}</p>
+          <p className={cn("typo-time", isToday ? "text-signal-ink" : "text-foreground")}>{day}</p>
+          <p className="typo-small text-muted-foreground">{time}</p>
           <p className="typo-small text-muted-foreground">
             {t("hobbyhub.eventDetail.until", { time: endTime })}
           </p>

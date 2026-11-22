@@ -43,7 +43,8 @@ export class NotificationsService {
   // The recipient's side: the bell and the page (#152).
   // -------------------------------------------------------------------------
 
-  // #239: without what people blocked from the user caused.
+  // #239: without what people blocked from the user caused. #65: nor what
+  // the people the user blocked caused.
   async listMine(
     user: Identity,
     page: Page,
@@ -53,14 +54,14 @@ export class NotificationsService {
       user.id,
       page,
       filter,
-      await this.blocks.hiddenFor(user.id),
+      await this.blocks.mutedFor(user.id),
     );
   }
 
   async countUnread(user: Identity): Promise<number> {
     return this.repository.countUnread(
       user.id,
-      await this.blocks.hiddenFor(user.id),
+      await this.blocks.mutedFor(user.id),
     );
   }
 
@@ -244,6 +245,26 @@ export class NotificationsService {
         ],
         null,
       ).filter((id) => !organizerIds.includes(id)),
+      actorId: null,
+      eventId: input.event.id,
+    });
+  }
+
+  // #232: a seat freed up on a full event; everyone watching it, all at once.
+  // The caller knows who watches, who may still see the event and who has no
+  // seat; whoever freed the seat is left out here too. Nobody is the actor:
+  // the watchers must not learn who left, nor the others who watches.
+  notifySpotAvailable(input: {
+    event: AnEvent;
+    watcherIds: readonly string[];
+    freedBy: Who | null;
+  }): Promise<void> {
+    return this.record({
+      type: 'SPOT_AVAILABLE',
+      recipientIds: recipientsExcept(
+        input.watcherIds,
+        input.freedBy?.id ?? null,
+      ),
       actorId: null,
       eventId: input.event.id,
     });
@@ -436,9 +457,10 @@ export class NotificationsService {
     if (data.recipientIds.length === 0) return;
     let ids: string[];
     try {
-      // #239: nobody hears from someone blocked from them.
+      // #239: nobody hears from someone blocked from them. #65: nor from
+      // someone they blocked.
       const hidden = data.actorId
-        ? await this.blocks.hiddenFrom(data.actorId)
+        ? await this.blocks.notHearingFrom(data.actorId)
         : [];
       const recipientIds = data.recipientIds.filter(
         (id) => !hidden.includes(id),

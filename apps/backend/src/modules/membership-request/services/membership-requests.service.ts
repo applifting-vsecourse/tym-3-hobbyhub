@@ -16,6 +16,7 @@ import {
 import { MembershipRequestRepository } from '@/modules/membership-request/repositories/membership-request.repository';
 import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
+import { emailNotVerifiedException } from '@/shared/auth/errors/email-not-verified.exception';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
   BadRequestException,
@@ -30,6 +31,7 @@ const VIOLATION_MESSAGES: Record<
   IS_MEMBER: 'You are already a member of this group',
   ALREADY_REQUESTED: 'You have already asked to join this group',
   REJECTED_BEFORE: 'Your request to join this group was rejected',
+  BLOCKED_ADMIN: 'You blocked the owner or an admin of this group',
   GROUP_CANCELLED: 'The group was cancelled',
   NOT_PENDING: 'The request no longer waits for a decision',
   APPLICANT_IS_MEMBER: 'The applicant is already a member of this group',
@@ -68,15 +70,16 @@ export class MembershipRequestsService {
     user: Identity,
     groupId: string,
   ): Promise<MyMembershipRequestState> {
-    await this.groupsService.getPublicGroup(groupId, user);
-    const [role, requests, applicant] = await Promise.all([
+    await this.groupsService.assertPublicGroup(groupId, user);
+    const [role, requests, applicant, blocks] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
       this.repository.getApplicantProfile(user.id),
+      this.blocksOf(groupId, user),
     ]);
     return {
       request: currentMembershipRequestOf(requests),
-      violations: membershipRuleViolations(role, requests),
+      violations: membershipRuleViolations(role, requests, blocks),
       applicant,
     };
   }
@@ -95,6 +98,37 @@ export class MembershipRequestsService {
     );
   }
 
+  // ADR-0028: joining a group that lets anyone in. The person is a member at
+  // once, but the rules are the request's: a member cannot join again and a
+  // rejection is final for the group (ADR-0014). A request that still waits is
+  // withdrawn, so nothing is left in the admins' queue.
+  async joinOpenGroup(user: Identity, groupId: string): Promise<void> {
+    if (!user.emailVerified) {
+      throw emailNotVerifiedException('joining a group');
+    }
+    const group = await this.groupsService.assertPublicGroup(groupId, user);
+    if (group.approvalMode !== 'OPEN') {
+      throw new BadRequestException(
+        'This group decides on requests to join: ask to join instead',
+      );
+    }
+    const [role, requests, blocks] = await Promise.all([
+      this.groupsService.getMemberRole(groupId, user.id),
+      this.repository.getRequestsOf(groupId, user.id),
+      // #65: nor into a group run by someone the person blocked.
+      this.blocksOf(groupId, user),
+    ]);
+    // A waiting request is no obstacle here: it is closed below.
+    const violations = membershipRuleViolations(role, requests, blocks).filter(
+      (violation) => violation !== 'ALREADY_REQUESTED',
+    );
+    if (violations.length > 0) throw violationsError(violations);
+    if (!(await this.groupsService.addMember(groupId, user.id))) {
+      throw violationsError(['IS_MEMBER']);
+    }
+    await this.repository.withdrawPending(groupId, user.id, new Date());
+  }
+
   // F-07.3: a request waits for the group's admins; automatic approval is
   // F-05.5. Only a public, active group can be asked to join (else 404).
   async requestMembership(
@@ -104,11 +138,19 @@ export class MembershipRequestsService {
   ): Promise<MembershipRequest> {
     // #239: no request to the group of an owner blocked from the applicant.
     const group = await this.groupsService.getPublicGroup(groupId, user);
-    const [role, requests] = await Promise.all([
+    // ADR-0028: a group that lets anyone in has nothing to decide; the person
+    // joins directly (POST /groups/:groupId/requests/join).
+    if (group.approvalMode === 'OPEN') {
+      throw new BadRequestException(
+        'This group lets anyone in: join it directly, no request is needed',
+      );
+    }
+    const [role, requests, blocks] = await Promise.all([
       this.groupsService.getMemberRole(groupId, user.id),
       this.repository.getRequestsOf(groupId, user.id),
+      this.blocksOf(groupId, user),
     ]);
-    const violations = membershipRuleViolations(role, requests);
+    const violations = membershipRuleViolations(role, requests, blocks);
     if (violations.length > 0) throw violationsError(violations);
 
     // The applicant comes from the session, never from the request body.
@@ -250,5 +292,17 @@ export class MembershipRequestsService {
     now: Date = new Date(),
   ): Promise<void> {
     return this.repository.closeBlockedPair(a, b, now);
+  }
+
+  // #65, ADR-0031: whether the person blocked someone who runs the group.
+  private async blocksOf(
+    groupId: string,
+    user: Identity,
+  ): Promise<{ adminIds: string[]; blockedIds: string[] }> {
+    const [adminIds, blockedIds] = await Promise.all([
+      this.groupsService.getAdminIds(groupId),
+      this.blocks.blockedBy(user.id),
+    ]);
+    return { adminIds, blockedIds };
   }
 }

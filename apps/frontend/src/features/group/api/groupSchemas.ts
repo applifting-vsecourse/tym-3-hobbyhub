@@ -7,6 +7,7 @@ export const GROUP_LIMITS = {
   descriptionMax: 2000,
   locationMax: 100,
   scheduleMax: 100,
+  taglineMax: 120,
 } as const
 
 export const groupSchema = z.object({
@@ -15,14 +16,41 @@ export const groupSchema = z.object({
   description: z.string(),
   locationName: z.string().nullable(),
   usualSchedule: z.string().nullable(),
+  // The group's own short line under its name; emoji welcome.
+  tagline: z.string().nullable(),
   visibility: z.enum(["PUBLIC", "PRIVATE"]),
   status: z.enum(["ACTIVE", "CANCELLED"]),
   createdAt: z.coerce.date(),
   activity: z.object({ id: z.string(), name: z.string(), icon: z.string() }),
   memberCount: z.number(),
+  // A public event upcoming or ended in the last 60 days (#269).
+  isActive: z.boolean(),
+  // ADR-0028: OPEN lets anyone in at once, APPROVAL keeps the request.
+  approvalMode: z.enum(["OPEN", "APPROVAL"]),
+  // ISO weekdays the group meets on, 1 = Monday .. 7 = Sunday.
+  meetingDays: z.array(z.number().int().min(1).max(7)),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  nextEvent: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      startAt: z.coerce.date(),
+      hasFreeSeats: z.boolean(),
+    })
+    .nullable(),
 })
 
 export type Group = z.infer<typeof groupSchema>
+
+export type GroupApprovalMode = Group["approvalMode"]
+
+export const MEETING_DAYS = [1, 2, 3, 4, 5, 6, 7] as const
+
+export const groupStatsSchema = z.object({
+  playedEvents: z.number(),
+  averageParticipants: z.number(),
+})
 
 export const groupRoleSchema = z.enum(["OWNER", "ADMIN", "MEMBER"])
 
@@ -58,6 +86,18 @@ export type CreateGroupInput = {
   name: string
   activityId: string
   description: string
-  locationName?: string
+  // ADR-0028: every group has a place, with its position.
+  locationName: string
+  latitude: number
+  longitude: number
   usualSchedule?: string
+  tagline?: string
+  approvalMode?: GroupApprovalMode
+  meetingDays?: number[]
+}
+
+// `null` takes the tagline or the usual schedule away; a place cannot be taken away.
+export type UpdateGroupInput = Partial<Omit<CreateGroupInput, "tagline" | "usualSchedule">> & {
+  tagline?: string | null
+  usualSchedule?: string | null
 }

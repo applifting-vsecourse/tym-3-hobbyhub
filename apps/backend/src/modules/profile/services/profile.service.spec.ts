@@ -24,6 +24,7 @@ const noBlocks = (): MockProxy<UserBlockVisibility> => {
   const blocks = mock<UserBlockVisibility>();
   blocks.hiddenFor.mockResolvedValue([]);
   blocks.hiddenFrom.mockResolvedValue([]);
+  blocks.blockedBy.mockResolvedValue([]);
   return blocks;
 };
 
@@ -64,6 +65,7 @@ describe('ProfileService', () => {
     repository: MockProxy<ProfileRepository>;
     onboardingService: MockProxy<OnboardingService>;
     friendshipService: MockProxy<FriendshipService>;
+    blocks: MockProxy<UserBlockVisibility>;
     friendEvents: MockProxy<FriendEventsService>;
     service: ProfileService;
   } => {
@@ -77,18 +79,20 @@ describe('ProfileService', () => {
     friendshipService.relationBetween.mockResolvedValue('none');
     const ratingsService = mock<RatingsService>();
     ratingsService.getUserScores.mockResolvedValue(scores);
+    const blocks = noBlocks();
     friendshipService.friendVisibilityFor.mockResolvedValue(null);
     const friendEvents = mock<FriendEventsService>();
     return {
       repository,
       onboardingService,
       friendshipService,
+      blocks,
       friendEvents,
       service: new ProfileService(
         repository,
         onboardingService,
         friendshipService,
-        noBlocks(),
+        blocks,
         ratingsService,
         friendEvents,
       ),
@@ -510,6 +514,7 @@ describe('ProfileService', () => {
         'id',
         'image',
         'interests',
+        'isBlockedByMe',
         'name',
         'ratings',
         'relation',
@@ -534,6 +539,18 @@ describe('ProfileService', () => {
         );
       },
     );
+    // #65: the viewer sees their own block, to offer undoing it.
+    it('says whether the viewer blocked the person', async () => {
+      const { service, repository, onboardingService, blocks } = setup();
+      blocks.blockedBy.mockResolvedValue(['u2']);
+      repository.getPublicRow.mockResolvedValue(publicRow);
+      onboardingService.getInterestsOf.mockResolvedValue([]);
+
+      await expect(service.getPublicProfile('u2', user)).resolves.toMatchObject(
+        { isBlockedByMe: true },
+      );
+      expect(blocks.blockedBy).toHaveBeenCalledWith('u1');
+    });
 
     it('answers not found for a user that does not exist', async () => {
       const { service, repository } = setup();

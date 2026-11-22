@@ -71,6 +71,8 @@ export const publicProfileSchema = z.object({
   interests: z.array(interestSchema),
   /** #236: both numbers null below three ratings. */
   ratings: userRatingScoresSchema,
+  /** #65: whether I blocked this person; never whether they blocked me. */
+  isBlockedByMe: z.boolean(),
   /**
    * #226: the first page of a friend's upcoming events, only when they let
    * friends see them; absent otherwise. The event feature reads it.

@@ -3,12 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { groupKeys } from "@/features/group/api/groupKeys"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
 import { hasGroupAdminRights } from "@/features/group/api/groupSchemas"
+import { joinOpenGroup } from "@/features/group/api/joinOpenGroup"
 import { leaveGroup } from "@/features/group/api/leaveGroup"
 import { myMembershipRequestQueryOptions } from "@/features/group/api/membershipRequestQueryOptions"
 
 /** What the membership panel of a group shows. */
 export type MembershipView =
-  "visitor" | "loading" | "canRequest" | "pending" | "rejected" | "member"
+  "visitor" | "loading" | "canRequest" | "pending" | "rejected" | "blocked" | "member"
 
 /**
  * Combines who is looking (signed in or not), whether they are a member, and
@@ -35,6 +36,11 @@ export function useGroupMembershipState(
     mutationFn: () => leaveGroup(groupId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) }),
   })
+  // A group that lets anyone in: no request, the person is a member at once.
+  const joinMutation = useMutation({
+    mutationFn: () => joinOpenGroup(groupId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.all() }),
+  })
   // The membership query is off while signed out, but its cached answer stays
   // (signing out does not clear the cache), so it only counts while signed in.
   const myMembership = isSignedIn ? membership.data : undefined
@@ -47,6 +53,8 @@ export function useGroupMembershipState(
     else if (myRequestState?.request?.status === "PENDING") view = "pending"
     // A rejection is final for the group (ADR-0014).
     else if (myRequestState?.violations.includes("REJECTED_BEFORE")) view = "rejected"
+    // #65: the user blocked someone who runs the group.
+    else if (myRequestState?.violations.includes("BLOCKED_ADMIN")) view = "blocked"
     else view = "canRequest"
   } else view = session.isPending ? "loading" : "visitor"
 
@@ -75,6 +83,9 @@ export function useGroupMembershipState(
     isLeaving: leaveMutation.isPending,
     leaveFailed: leaveMutation.isError,
     resetLeave: leaveMutation.reset,
+    join: () => joinMutation.mutateAsync(),
+    isJoining: joinMutation.isPending,
+    joinFailed: joinMutation.isError,
   }
 }
 

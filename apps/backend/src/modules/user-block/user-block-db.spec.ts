@@ -131,7 +131,7 @@ describeDb('blocks between two people in the database (#239)', () => {
         description: 'Test',
         status: EventStatus.PUBLISHED,
         approvalMode: ApprovalMode.MANUAL,
-        venueType: VenueType.PUBLIC_VENUE,
+        venueType: VenueType.PLACE,
         startAt: start,
         endAt: new Date(start.getTime() + 2 * 3600 * 1000),
         minParticipants: 2,
@@ -187,13 +187,148 @@ describeDb('blocks between two people in the database (#239)', () => {
 
     it('hides a blocker by a user (#65) from the blocked only', async () => {
       const [blocker, blocked] = [await aUser(), await aUser()];
-      await prisma.userBlock.create({
-        data: { blockerId: blocker, blockedId: blocked },
-      });
+      await blocks.createUserBlock(blocker, blocked);
 
       await expect(visibility.hiddenFor(blocked)).resolves.toEqual([blocker]);
       await expect(visibility.hiddenFor(blocker)).resolves.toEqual([]);
       await expect(visibility.hiddenFrom(blocker)).resolves.toEqual([blocked]);
+      await expect(visibility.hiddenFrom(blocked)).resolves.toEqual([]);
+    });
+
+    // #65, ADR-0031: the blocker still sees the blocked, but hears nothing
+    // from them, and the blocked hears nothing from the blocker.
+    it('keeps both of a block by a user from hearing of each other', async () => {
+      const [blocker, blocked, other] = [
+        await aUser(),
+        await aUser(),
+        await aUser(),
+      ];
+      await blocks.createUserBlock(blocker, blocked);
+
+      await expect(visibility.blockedBy(blocker)).resolves.toEqual([blocked]);
+      await expect(visibility.blockedBy(blocked)).resolves.toEqual([]);
+      await expect(visibility.mutedFor(blocker)).resolves.toEqual([blocked]);
+      await expect(visibility.mutedFor(blocked)).resolves.toEqual([blocker]);
+      await expect(visibility.notHearingFrom(blocked)).resolves.toEqual([
+        blocker,
+      ]);
+      await expect(visibility.notHearingFrom(blocker)).resolves.toEqual([
+        blocked,
+      ]);
+      await expect(visibility.mutedFor(other)).resolves.toEqual([]);
+    });
+
+    it('counts a block by an administrator as no block by a user', async () => {
+      const [a, b] = [await aUser(), await aUser()];
+      await blockPair(a, b);
+
+      await expect(visibility.blockedBy(a)).resolves.toEqual([]);
+      await expect(visibility.blockedBy(b)).resolves.toEqual([]);
+    });
+  });
+
+  // #65, ADR-0031: a user's own block.
+  describe('a block by a user', () => {
+    it('is stored once and lists the blocked for the blocker only', async () => {
+      const [blocker, blocked] = [await aUser(), await aUser()];
+
+      await expect(blocks.createUserBlock(blocker, blocked)).resolves.toBe(
+        true,
+      );
+      await expect(blocks.createUserBlock(blocker, blocked)).resolves.toBe(
+        false,
+      );
+
+      await expect(blocks.listBlockedBy(blocker)).resolves.toEqual([
+        expect.objectContaining({ id: blocked, image: null }),
+      ]);
+      await expect(blocks.listBlockedBy(blocked)).resolves.toEqual([]);
+    });
+
+    // Whichever id is smaller: the administrator's row is stored ordered.
+    it('lives beside a block by an administrator of the same pair', async () => {
+      const [a, b] = [await aUser(), await aUser()];
+      const [smaller, larger] = a < b ? [a, b] : [b, a];
+      await blockPair(a, b);
+
+      await expect(blocks.createUserBlock(smaller, larger)).resolves.toBe(true);
+      await expect(blocks.deleteUserBlock(smaller, larger)).resolves.toBe(true);
+      // The administrator's block stays.
+      await expect(visibility.hiddenFor(larger)).resolves.toEqual([smaller]);
+      await expect(visibility.hiddenFor(smaller)).resolves.toEqual([larger]);
+    });
+
+    // Review of PR #267: the blocked may block back, and stays protected once
+    // the first block ends.
+    it('lives beside a block the other one made', async () => {
+      const [a, b] = [await aUser(), await aUser()];
+      await blocks.createUserBlock(a, b);
+
+      await expect(blocks.createUserBlock(b, a)).resolves.toBe(true);
+      await expect(blocks.deleteUserBlock(a, b)).resolves.toBe(true);
+      await expect(visibility.hiddenFor(a)).resolves.toEqual([b]);
+      await expect(visibility.hiddenFor(b)).resolves.toEqual([]);
+    });
+
+    it('ends only once, and only the blocker can end it', async () => {
+      const [blocker, blocked] = [await aUser(), await aUser()];
+      await blocks.createUserBlock(blocker, blocked);
+
+      await expect(blocks.deleteUserBlock(blocked, blocker)).resolves.toBe(
+        false,
+      );
+      await expect(blocks.deleteUserBlock(blocker, blocked)).resolves.toBe(
+        true,
+      );
+      await expect(blocks.deleteUserBlock(blocker, blocked)).resolves.toBe(
+        false,
+      );
+      await expect(visibility.hiddenFor(blocked)).resolves.toEqual([]);
+    });
+
+    it('is listed for the administration with its direction and no reason', async () => {
+      const [blocker, blocked] = [await aUser(), await aUser()];
+      await blocks.createUserBlock(blocker, blocked);
+
+      await expect(blocks.listBlocksOf(blocker)).resolves.toEqual([
+        expect.objectContaining({
+          source: 'USER',
+          otherUser: expect.objectContaining({ id: blocked }),
+          isBlocker: true,
+          reason: null,
+          createdBy: null,
+        }),
+      ]);
+      await expect(blocks.listBlocksOf(blocked)).resolves.toEqual([
+        expect.objectContaining({ source: 'USER', isBlocker: false }),
+      ]);
+    });
+
+    it('cannot name an administrator, nor be named by one without a source', async () => {
+      const [a, b] = [await aUser(), await aUser()];
+      const [smaller, larger] = a < b ? [a, b] : [b, a];
+      const adminId = await anAdministrator();
+
+      await expect(
+        prisma.userBlock.create({
+          data: {
+            blockerId: smaller,
+            blockedId: larger,
+            source: 'USER',
+            createdById: adminId,
+            reason: REASON,
+          },
+        }),
+      ).rejects.toThrow(/user_block_source/);
+      await expect(
+        prisma.userBlock.create({
+          data: {
+            blockerId: smaller,
+            blockedId: larger,
+            source: 'ADMINISTRATOR',
+          },
+        }),
+      ).rejects.toThrow(/user_block_source|user_block_admin_reason/);
     });
   });
 
@@ -231,14 +366,16 @@ describeDb('blocks between two people in the database (#239)', () => {
       const [a, b] = [await aUser(), await aUser()];
       await blockPair(a, b);
 
-      await expect(blocks.listAdminBlocksOf(a)).resolves.toEqual([
+      await expect(blocks.listBlocksOf(a)).resolves.toEqual([
         expect.objectContaining({
+          source: 'ADMINISTRATOR',
           otherUser: expect.objectContaining({ id: b }),
+          isBlocker: false,
           reason: REASON,
           createdBy: expect.objectContaining({ name: 'Správce' }),
         }),
       ]);
-      await expect(blocks.listAdminBlocksOf(b)).resolves.toEqual([
+      await expect(blocks.listBlocksOf(b)).resolves.toEqual([
         expect.objectContaining({
           otherUser: expect.objectContaining({ id: a }),
         }),

@@ -9,15 +9,20 @@ import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { AdminTable } from "@/components/hobbyhub/AdminTable"
 import { BottomNav } from "@/components/hobbyhub/BottomNav"
 import { ChatShare } from "@/components/hobbyhub/ChatShare"
+import { CountdownCard } from "@/components/hobbyhub/CountdownCard"
 import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
 import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
+import { FreeSeatsLabel, RosterSummary } from "@/components/hobbyhub/FreeSeats"
+import { FriendsGoing } from "@/components/hobbyhub/FriendsGoing"
+import { GroupClusterPin, GroupPin } from "@/components/hobbyhub/GroupPin"
 import { GroupRow } from "@/components/hobbyhub/GroupRow"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
 import { Loader, type LoaderVariant } from "@/components/hobbyhub/Loader"
 import { MapPin } from "@/components/hobbyhub/MapPin"
+import { OrganizerCard } from "@/components/hobbyhub/OrganizerCard"
 import { RatingScore } from "@/components/hobbyhub/RatingScore"
 import { RosterRow } from "@/components/hobbyhub/RosterRow"
 import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
@@ -26,6 +31,7 @@ import { Seat } from "@/components/hobbyhub/Seat"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
 import { StarRatingInput } from "@/components/hobbyhub/StarRatingInput"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
+import { TicketCard } from "@/components/hobbyhub/TicketCard"
 import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -106,6 +112,9 @@ function RatingInputDemo() {
     </Example>
   )
 }
+
+// Two hours from when the page was opened, so the countdown runs.
+const COUNTDOWN_DEMO_START = new Date(Date.now() + 2 * 60 * 60 * 1000)
 
 export function DomainSections() {
   return (
@@ -228,10 +237,77 @@ export function DomainSections() {
             />
           </div>
         </Example>
+        <Example label="Karty úvodní stránky (#215): Vstupenka, Odpočet, Organizátor">
+          <div className="grid w-full gap-4 md:grid-cols-3">
+            <TicketCard
+              title="Středeční florbal Letná"
+              day="st 25. 11."
+              time="19:00"
+              place="Hala Letná, Praha 7"
+              activity="florbal"
+              taken={10}
+              min={10}
+              max={14}
+              friends={[{ name: "tomas.b", photo: null }]}
+              viewerState="PENDING"
+            />
+            <CountdownCard
+              title="Malá kopaná na umělce"
+              startAt={COUNTDOWN_DEMO_START}
+              activity="fotbal"
+              activityLabel="Fotbal"
+              place="Kobylisy, Praha 8"
+              taken={3}
+              min={4}
+              max={4}
+            />
+            <OrganizerCard
+              title="Okruh kolem Slap, 70 km"
+              when="so 28. 11. · 9:00"
+              organizerName="pedal_petra"
+              organizerScore={{ average: 4.9, count: 44 }}
+              activity="cyklistika"
+              taken={7}
+              min={6}
+              max={10}
+              viewerState="JOINED"
+            />
+          </div>
+        </Example>
+        <Example label="Volná místa, souhrn velké soupisky a přátelé">
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-6">
+              <FreeSeatsLabel
+                taken={2}
+                max={8}
+              />
+              <FreeSeatsLabel
+                taken={5}
+                max={8}
+              />
+              <FreeSeatsLabel
+                taken={7}
+                max={8}
+              />
+            </div>
+            <RosterSummary
+              taken={9}
+              min={12}
+              max={20}
+            />
+            <FriendsGoing
+              friends={[
+                { name: "anna_k", photo: null },
+                { name: "tomas.b", photo: null },
+              ]}
+            />
+          </div>
+        </Example>
         <Example label="Řádek rozpisu">
           <div className="flex w-full max-w-md flex-col">
             <ScheduleRow
-              time="19:00"
+              day="15. 10."
+              time="čt 19:00"
               title="Čtvrteční florbal"
               subtitle="Hala ZŠ Dolní, pokročilí"
               taken={7}
@@ -241,6 +317,7 @@ export function DomainSections() {
               badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
+              day="Zítra"
               time="20:30"
               title="Volejbal pod lampami (bez fotky)"
               subtitle="Stromovka, mírně pokročilí"
@@ -286,8 +363,8 @@ export function DomainSections() {
             <EventDetailCard
               activity="florbal"
               title="Čtvrteční florbal"
-              day="Pátek"
-              time="19:00"
+              day="16. 10."
+              time="pá 19:00"
               endTime="20:30"
               place="Hala ZŠ Dolní"
               level="Pokročilí"
@@ -466,6 +543,13 @@ export function DomainSections() {
             state="selected"
           />
           <EventClusterPin label="9 akcí" />
+        </Example>
+        <Example
+          label="Špendlík skupiny: počet členů, shluk skupin"
+          className="items-end gap-6"
+        >
+          <GroupPin count={24} />
+          <GroupClusterPin count={5} />
         </Example>
         <Example label="Hledání adresy: našeptávač s polohou (potřebuje VITE_MAPBOX_TOKEN)">
           <AddressSearchExample />

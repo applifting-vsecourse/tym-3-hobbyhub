@@ -4,9 +4,11 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ActivityModule } from './modules/activity/activity.module';
 import { AdministratorModule } from './modules/administrator/administrator.module';
 import { CancellationReasonModule } from './modules/cancellation-reason/cancellation-reason.module';
+import { EventInterestModule } from './modules/event-interest/event-interest.module';
 import { EventModule } from './modules/event/event.module';
 import { FriendshipModule } from './modules/friendship/friendship.module';
 import { GroupModule } from './modules/group/group.module';
+import { LandingModule } from './modules/landing/landing.module';
 import { LevelModule } from './modules/level/level.module';
 import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
 import { MyEventsModule } from './modules/my-events/my-events.module';
@@ -42,6 +44,8 @@ const imports = [
   UserBlockModule,
   EventModule,
   ParticipationRequestModule,
+  // #231, ADR-0030: the "Zajímá mě" list.
+  EventInterestModule,
   MyEventsModule,
   MembershipRequestModule,
   NotificationModule,
@@ -50,6 +54,8 @@ const imports = [
   ReportModule,
   // #236, ADR-0027: ratings after an event.
   RatingModule,
+  // #215: the pre-filtered rows of the landing page.
+  LandingModule,
 ];
 
 @Module({

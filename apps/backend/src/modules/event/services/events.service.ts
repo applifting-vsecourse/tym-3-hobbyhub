@@ -8,6 +8,7 @@ import {
   canSeeEvent,
   CreateEventData,
   Event,
+  EventAttendee,
   EventChangeViolation,
   eventChangeViolations,
   EventDetail,
@@ -28,10 +29,15 @@ import {
   GroupEventPage,
   GroupEventsPeriod,
   isOrganizerOf,
+  LandingCity,
+  LandingEventSelection,
   moderationConcernsPeople,
   Page,
   ParticipantEventInfo,
+  spotBecameFree,
+  SpotChange,
   UpdateEventData,
+  ViewerEventState,
 } from '@/modules/event/domain/event';
 import { EventRepository } from '@/modules/event/repositories/event.repository';
 import { GroupsService } from '@/modules/group/services/groups.service';
@@ -48,6 +54,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -105,6 +112,8 @@ const changeViolationsError = (
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
+
   constructor(
     private readonly eventRepository: EventRepository,
     private readonly activitiesService: ActivitiesService,
@@ -175,6 +184,7 @@ export class EventsService {
           externalOccupiedSpots: data.externalOccupiedSpots,
           venueType: data.venueType,
           hasLocation: data.location != null,
+          isAddressPublic: data.isAddressPublic,
         },
         now,
       ).map((violation) => CHANGE_VIOLATION_MESSAGES[violation]),
@@ -211,6 +221,15 @@ export class EventsService {
         changedBy: user,
       });
     }
+    // #232: a larger maximum, or fewer seats taken outside the app.
+    await this.notifyIfSpotFreed(
+      id,
+      {
+        freeSpotsBefore: result.freeSpotsBefore,
+        freeSpotsAfter: result.event.freeSpots,
+      },
+      user,
+    );
     return result.event;
   }
 
@@ -251,8 +270,8 @@ export class EventsService {
   }
 
   // F-05.6: the seats taken outside the app, changed on the participants page
-  // by any of the organizers. No notification: who goes is unchanged for the
-  // people who go.
+  // by any of the organizers. The people who go hear nothing: who goes is
+  // unchanged for them. Those watching a full event do (#232).
   async updateExternalOccupiedSpots(
     user: Identity,
     id: string,
@@ -273,7 +292,83 @@ export class EventsService {
       now,
     );
     if (!result.ok) throw changeViolationsError([result.violation]);
+    await this.notifyIfSpotFreed(
+      id,
+      {
+        freeSpotsBefore: result.freeSpotsBefore,
+        freeSpotsAfter: result.event.freeSpots,
+      },
+      user,
+      now,
+    );
     return result.event;
+  }
+
+  // #232: called after a change of the seats is saved, wherever it happened
+  // (a seat given back, a larger maximum, fewer seats taken outside the app,
+  // a seat cancelled by a block). When the event went from full to having a
+  // free seat, everyone watching it hears so, all at once: only while it is
+  // published, not hidden and has not started, and only those who may still
+  // see it and have no seat. Whoever freed the seat is not told, and nobody is
+  // named: the notification has no actor. Never throws: the change is saved,
+  // the worst case is a missing notification (ADR-0015).
+  async notifyIfSpotFreed(
+    eventId: string,
+    change: SpotChange,
+    freedBy: { id: string } | null,
+    now: Date = new Date(),
+  ): Promise<void> {
+    if (!spotBecameFree(change)) return;
+    try {
+      const facts = await this.eventRepository.getEventFacts(eventId);
+      if (
+        !facts ||
+        facts.status !== 'PUBLISHED' ||
+        facts.isHidden ||
+        facts.startAt.getTime() <= now.getTime()
+      ) {
+        return;
+      }
+      const candidateIds = (
+        await this.eventRepository.getFreeSpotWatcherIds(eventId)
+      ).filter(
+        (watcherId) =>
+          watcherId !== freedBy?.id && !isOrganizerOf(facts, watcherId),
+      );
+      const watcherIds = (
+        await Promise.all(
+          candidateIds.map(async (watcherId) =>
+            (await this.mayStillSee(facts, watcherId)) ? [watcherId] : [],
+          ),
+        )
+      ).flat();
+      await this.notificationsService.notifySpotAvailable({
+        event: facts,
+        watcherIds,
+        freedBy,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Could not tell the watchers of event ${eventId} about a free seat`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  // #232: the checks of `getVisibleEventSeatFacts` for facts already loaded:
+  // nobody blocked from an organizer (#239), and a group-only event only for
+  // those `canSeeEvent` lets in.
+  private async mayStillSee(
+    facts: EventFacts,
+    userId: string,
+  ): Promise<boolean> {
+    const hidden = await this.blocks.hiddenFor(userId);
+    if (
+      facts.organizerIds.some((organizerId) => hidden.includes(organizerId))
+    ) {
+      return false;
+    }
+    return this.canSee(facts, userId);
   }
 
   // The whole event for any of its organizers (F-05.6 participants page, the
@@ -298,6 +393,59 @@ export class EventsService {
     return event;
   }
 
+  // #215: the ids of the landing rows, one list per selection and in its
+  // order, without the events of people blocked from the viewer (#239). A row
+  // whose query fails is null, so the others still show.
+  async getLandingEventIds(
+    selections: LandingEventSelection[],
+    viewer?: Identity,
+    now: Date = new Date(),
+  ): Promise<(string[] | null)[]> {
+    const hidden = await this.blocks.hiddenFor(viewer?.id);
+    return Promise.all(
+      selections.map((selection) =>
+        this.eventRepository
+          .getLandingEventIds(now, selection, hidden, viewer?.id)
+          .catch((): null => null),
+      ),
+    );
+  }
+
+  // #215: the cities a visitor may pick for "near", most events first.
+  async getLandingCities(
+    limit: number,
+    viewer?: Identity,
+    now: Date = new Date(),
+  ): Promise<LandingCity[]> {
+    return this.eventRepository.getLandingCities(
+      now,
+      await this.blocks.hiddenFor(viewer?.id),
+      limit,
+    );
+  }
+
+  // #215: what the person already is on these events.
+  getViewerStates(
+    eventIds: string[],
+    userId: string,
+  ): Promise<Map<string, ViewerEventState>> {
+    return this.eventRepository.getViewerStates(eventIds, userId);
+  }
+
+  // #215: which of the people organize these events or hold a seat on them.
+  // Whose name may be shown is the caller's business.
+  getAttendees(
+    eventIds: string[],
+    userIds: string[],
+  ): Promise<EventAttendee[]> {
+    return this.eventRepository.getAttendees(eventIds, userIds);
+  }
+
+  // #215: the main organizer of each event, for their score.
+  getOrganizerIds(eventIds: string[]): Promise<Map<string, string>> {
+    return this.eventRepository.getOrganizerIds(eventIds);
+  }
+
   // #239: without the events of people blocked from the one asking.
   async getUpcomingPublicEvents(
     page: Page,
@@ -314,6 +462,23 @@ export class EventsService {
       ...filter,
       hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
     });
+  }
+
+  // Events like the one in the detail. Whoever may open the detail gets it
+  // (a 404 otherwise, the same as the detail); what is offered is only what the
+  // public list would show them: public, upcoming, with a free seat, and not
+  // of someone blocked from them (#239).
+  async getSimilarEvents(
+    id: string,
+    viewer?: Identity,
+    now: Date = new Date(),
+  ): Promise<EventListItem[]> {
+    await this.loadVisibleEvent(id, viewer);
+    return this.eventRepository.getSimilarEvents(
+      id,
+      now,
+      await this.blocks.hiddenFor(viewer?.id),
+    );
   }
 
   // F-06.5: the exact address and the contacts, for the organizers and the
@@ -425,7 +590,10 @@ export class EventsService {
 
   // F-07.2: the events of a group on its page. Everyone who may see the group
   // gets its upcoming public events (visibility matrix); its members also the
-  // group-only ones and the past ones. To anyone else the past do not exist.
+  // group-only ones and the past ones. Anyone else gets the public events of a
+  // group that lets anyone in, and of the past the public ones and only the
+  // number of the group-only ones. A group that decides on requests shows both
+  // periods as a number.
   async getGroupEvents(
     groupId: string,
     viewer: Identity | undefined,
@@ -436,11 +604,44 @@ export class EventsService {
     const role = viewer
       ? await this.groupsService.getMemberRole(groupId, viewer.id)
       : null;
+    const hiddenOrganizerIds = await this.blocks.hiddenFor(viewer?.id);
     if (!role) {
       // Throws "not found" for a group that has no public page, and for
       // one whose owner is blocked from the viewer (#239).
-      await this.groupsService.getPublicGroup(groupId, viewer);
-      if (period === 'past') throw new NotFoundException('Group not found');
+      const group = await this.groupsService.assertPublicGroup(groupId, viewer);
+      if (group.approvalMode === 'APPROVAL') {
+        // A group that decides on requests shows what is coming, and what has
+        // been, only as a number: the applicant sees there is something to
+        // join, not what (ADR-0028).
+        return {
+          items: [],
+          total: 0,
+          hiddenCount: await this.eventRepository.countGroupEvents(groupId, {
+            period,
+            visibilities: ['PUBLIC', 'GROUP_ONLY'],
+            now,
+            hiddenOrganizerIds,
+          }),
+        };
+      }
+      if (period === 'past') {
+        // The past of a public group: its public events in full, the
+        // group-only ones as a count, so the page can blur them (#269).
+        const [page, hiddenCount] = await Promise.all([
+          this.eventRepository.getGroupEvents(
+            groupId,
+            { period, visibilities: ['PUBLIC'], now, hiddenOrganizerIds },
+            { limit: GROUP_EVENTS_PAGE_SIZE, offset },
+          ),
+          this.eventRepository.countGroupEvents(groupId, {
+            period,
+            visibilities: ['GROUP_ONLY'],
+            now,
+            hiddenOrganizerIds,
+          }),
+        ]);
+        return { ...page, hiddenCount };
+      }
     }
     return this.eventRepository.getGroupEvents(
       groupId,
@@ -448,7 +649,7 @@ export class EventsService {
         period,
         visibilities: role ? ['PUBLIC', 'GROUP_ONLY'] : ['PUBLIC'],
         now,
-        hiddenOrganizerIds: await this.blocks.hiddenFor(viewer?.id),
+        hiddenOrganizerIds,
       },
       { limit: GROUP_EVENTS_PAGE_SIZE, offset },
     );

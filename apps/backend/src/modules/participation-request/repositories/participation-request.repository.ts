@@ -11,6 +11,7 @@ import {
   NO_EVENT_FILTER,
   occupancyOf,
   Page,
+  SpotChange,
 } from '@/modules/event/domain/event';
 import {
   aheadFirstOrder,
@@ -24,6 +25,7 @@ import {
   DecidedRequestPage,
   DecidedStatus,
   DecisionRuleViolation,
+  EventApplicationFacts,
   EventStateViolation,
   eventStateViolation,
   JoinRuleViolation,
@@ -92,12 +94,11 @@ const eventClosed = async (
   return eventStateViolation(event, at);
 };
 
-// Why the person cannot take a seat on the locked event, or null when they can.
-const seatRefusal = async (
+// The free seats of the event as they are now in the transaction.
+const freeSpotsOf = async (
   tx: Prisma.TransactionClient,
   eventId: string,
-  userId: string,
-): Promise<Extract<JoinRuleViolation, 'EVENT_FULL' | 'HAS_SEAT'> | null> => {
+): Promise<number> => {
   const event = await tx.event.findUniqueOrThrow({
     where: { id: eventId },
     select: {
@@ -113,29 +114,54 @@ const seatRefusal = async (
       },
     },
   });
+  return occupancyOf({
+    minParticipants: event.minParticipants,
+    maxParticipants: event.maxParticipants,
+    externalOccupiedSpots: event.externalOccupiedSpots,
+    approvedCount: event._count.participations,
+  }).freeSpots;
+};
+
+// Why the person cannot take a seat on the locked event, or null when they can.
+const seatRefusal = async (
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  userId: string,
+): Promise<Extract<JoinRuleViolation, 'EVENT_FULL' | 'HAS_SEAT'> | null> => {
   const seat = await tx.participation.findUnique({
     where: { eventId_userId: { eventId, userId } },
     select: { status: true },
   });
   if (seat?.status === ParticipationStatus.APPROVED) return 'HAS_SEAT';
-  const { freeSpots } = occupancyOf({
-    minParticipants: event.minParticipants,
-    maxParticipants: event.maxParticipants,
-    externalOccupiedSpots: event.externalOccupiedSpots,
-    approvedCount: event._count.participations,
+  return (await freeSpotsOf(tx, eventId)) <= 0 ? 'EVENT_FULL' : null;
+};
+
+// #232: whoever asks to join or gets a seat stops watching the event for a
+// free seat, in the same transaction: the notification is for someone who
+// could still ask. The flag is a column of the "Zajímá mě" row (ADR-0030);
+// clearing it here spares this module a dependency on that one, which depends
+// on this one. The event stays on the list.
+const stopWatching = async (
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  userId: string,
+): Promise<void> => {
+  await tx.eventInterest.updateMany({
+    where: { eventId, userId, watchesFreeSpot: true },
+    data: { watchesFreeSpot: false },
   });
-  return freeSpots <= 0 ? 'EVENT_FULL' : null;
 };
 
 // The roster holds a person once: an earlier row of theirs (waitlisted,
 // invited, cancelled) becomes the seat. What a cancellation left goes with it:
-// a new seat starts without the old message (ADR-0017).
-const takeSeat = (
+// a new seat starts without the old message (ADR-0017). #232: and the
+// watching for a free seat stops.
+const takeSeat = async (
   tx: Prisma.TransactionClient,
   eventId: string,
   userId: string,
-): Promise<unknown> =>
-  tx.participation.upsert({
+): Promise<void> => {
+  await tx.participation.upsert({
     where: { eventId_userId: { eventId, userId } },
     create: { eventId, userId, status: ParticipationStatus.APPROVED },
     update: {
@@ -146,6 +172,8 @@ const takeSeat = (
       cancellationMessage: null,
     },
   });
+  await stopWatching(tx, eventId, userId);
+};
 
 // #239, ADR-0022: the organizer who asks does not see people blocked from
 // them on the event's lists.
@@ -219,9 +247,27 @@ export class ParticipationRequestRepository {
         JOIN "activity" a ON a."id" = e."activityId"
         WHERE ${where}`,
     ]);
-    const ids = pageRows.map((row) => row.id);
+    return {
+      items: await this.getApplicationFactsOf(
+        userId,
+        pageRows.map((row) => row.id),
+      ),
+      total: Number(totalRows[0]?.total ?? 0),
+    };
+  }
+
+  // The person's own seat and requests on each of the given events, in the
+  // order given; an event that is gone is left out. One they never applied to
+  // comes back with no seat and no requests. Which events the person may see
+  // is the caller's to decide: the page above, or the "Zajímá mě" list, which
+  // shows the same status next to a saved event (#232).
+  async getApplicationFactsOf(
+    userId: string,
+    eventIds: readonly string[],
+  ): Promise<EventApplicationFacts[]> {
+    if (eventIds.length === 0) return [];
     const events = await this.prisma.event.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: [...eventIds] } },
       select: {
         id: true,
         status: true,
@@ -233,33 +279,28 @@ export class ParticipationRequestRepository {
       },
     });
     const byId = new Map(events.map((event) => [event.id, event]));
-    return {
-      items: ids.flatMap((id) => {
-        const event = byId.get(id);
-        if (!event) return [];
-        const seat = event.participations[0]?.status;
-        return [
-          {
-            eventId: event.id,
-            // A finished event was on offer like a published one; that it is
-            // over only decides its place in the list.
-            eventStatus:
-              event.status === EventStatus.CANCELLED
-                ? 'CANCELLED'
-                : 'PUBLISHED',
-            seat:
-              seat === ParticipationStatus.APPROVED ||
-              seat === ParticipationStatus.CANCELLED
-                ? seat
-                : null,
-            requests: event.participationRequests.map(
-              (request) => request.status,
-            ),
-          },
-        ];
-      }),
-      total: Number(totalRows[0]?.total ?? 0),
-    };
+    return eventIds.flatMap((id) => {
+      const event = byId.get(id);
+      if (!event) return [];
+      const seat = event.participations[0]?.status;
+      return [
+        {
+          eventId: event.id,
+          // A finished event was on offer like a published one; that it is
+          // over only decides its place in the list.
+          eventStatus:
+            event.status === EventStatus.CANCELLED ? 'CANCELLED' : 'PUBLISHED',
+          seat:
+            seat === ParticipationStatus.APPROVED ||
+            seat === ParticipationStatus.CANCELLED
+              ? seat
+              : null,
+          requests: event.participationRequests.map(
+            (request) => request.status,
+          ),
+        },
+      ];
+    });
   }
 
   async getRequest(
@@ -578,6 +619,8 @@ export class ParticipationRequestRepository {
             status: RequestStatus.PENDING,
           },
         });
+        // #232: asking is what the watching was for.
+        await stopWatching(tx, data.eventId, data.userId);
         return mapToDomain(request);
       });
     } catch (error) {
@@ -722,17 +765,19 @@ export class ParticipationRequestRepository {
   // F-06.4: the participant gives the seat back, with their message to the
   // organizers. Under the event lock like taking a seat, so it cannot slip in
   // after the event started or was cancelled; returns the reason then, or
-  // NO_SEAT when there was no seat to give back. Null once it is cancelled.
+  // NO_SEAT when there was no seat to give back. Once it is cancelled, the
+  // free seats just before and right after (#232), counted under the lock.
   async cancelSeat(data: {
     eventId: string;
     userId: string;
     message: string;
     at: Date;
-  }): Promise<CancelRuleViolation | null> {
+  }): Promise<CancelRuleViolation | SpotChange> {
     return this.prisma.$transaction(async (tx) => {
       await lockEvent(tx, data.eventId);
       const closed = await eventClosed(tx, data.eventId, data.at);
       if (closed) return closed;
+      const freeSpotsBefore = await freeSpotsOf(tx, data.eventId);
       const { count } = await tx.participation.updateMany({
         where: {
           eventId: data.eventId,
@@ -745,7 +790,11 @@ export class ParticipationRequestRepository {
           cancellationMessage: data.message,
         },
       });
-      return count === 0 ? 'NO_SEAT' : null;
+      if (count === 0) return 'NO_SEAT';
+      return {
+        freeSpotsBefore,
+        freeSpotsAfter: await freeSpotsOf(tx, data.eventId),
+      };
     });
   }
 
@@ -753,19 +802,41 @@ export class ParticipationRequestRepository {
   // Wherever one of them organizes an event still to come, the other's
   // waiting request is closed and their seat (or place on the waitlist, or
   // invitation) is cancelled, quietly: no message, nothing counted as late.
-  async detachBlockedPair(a: string, b: string, at: Date): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      for (const [organizerId, userId] of [
-        [a, b],
-        [b, a],
-      ]) {
-        const event = {
-          endAt: { gt: at },
-          OR: [
-            { organizerId },
-            { coOrganizers: { some: { id: organizerId } } },
-          ],
-        } satisfies Prisma.EventWhereInput;
+  // #232: returns, for each event where a seat went, the free seats just
+  // before and right after, counted under the locks of those events.
+  async detachBlockedPair(
+    a: string,
+    b: string,
+    at: Date,
+  ): Promise<(SpotChange & { eventId: string })[]> {
+    const pairs = [
+      [a, b],
+      [b, a],
+    ];
+    const eventsOf = (organizerId: string): Prisma.EventWhereInput => ({
+      endAt: { gt: at },
+      OR: [{ organizerId }, { coOrganizers: { some: { id: organizerId } } }],
+    });
+    return this.prisma.$transaction(async (tx) => {
+      const seats = await tx.participation.findMany({
+        where: {
+          OR: pairs.map(([organizerId, userId]) => ({
+            userId,
+            status: ParticipationStatus.APPROVED,
+            event: eventsOf(organizerId),
+          })),
+        },
+        select: { eventId: true },
+      });
+      // In one order, so two blocks at once cannot lock in a circle.
+      const eventIds = [...new Set(seats.map((seat) => seat.eventId))].sort();
+      const freeSpotsBefore = new Map<string, number>();
+      for (const eventId of eventIds) {
+        await lockEvent(tx, eventId);
+        freeSpotsBefore.set(eventId, await freeSpotsOf(tx, eventId));
+      }
+      for (const [organizerId, userId] of pairs) {
+        const event = eventsOf(organizerId);
         await tx.participationRequest.updateMany({
           where: { userId, status: RequestStatus.PENDING, event },
           data: { status: RequestStatus.CLOSED, decidedAt: at },
@@ -790,6 +861,15 @@ export class ParticipationRequestRepository {
           },
         });
       }
+      const changes: (SpotChange & { eventId: string })[] = [];
+      for (const eventId of eventIds) {
+        changes.push({
+          eventId,
+          freeSpotsBefore: freeSpotsBefore.get(eventId) ?? 0,
+          freeSpotsAfter: await freeSpotsOf(tx, eventId),
+        });
+      }
+      return changes;
     });
   }
 }

@@ -32,16 +32,21 @@ describe('PublicProfileResponseDto', () => {
         asOrganizer: { count: null, average: null },
         asParticipant: { count: 4, average: 4.5 },
       },
+      // #262: the language is the owner's own business.
+      preferredLanguage: 'EN',
+      isBlockedByMe: false,
     } as unknown as PublicProfile;
     const response = PublicProfileResponseDto.fromDomain(profile);
     expect(response).not.toHaveProperty('email');
     expect(response).not.toHaveProperty('nicknameChangeableFrom');
+    expect(response).not.toHaveProperty('preferredLanguage');
     expect(Object.keys(response).sort()).toEqual([
       'bio',
       'cover',
       'id',
       'image',
       'interests',
+      'isBlockedByMe',
       'name',
       'ratings',
       'relation',

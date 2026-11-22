@@ -37,3 +37,14 @@ export function capacityLabel(t: TFunction, capacity: Capacity) {
     ? t("hobbyhub.capacity.summaryMissing", { ...values, count: missing })
     : t("hobbyhub.capacity.summaryFull", values)
 }
+
+/** #215: from this many free seats a card just says "Volno". */
+export const PLENTY_OF_FREE_SEATS = 4
+
+/** #215: a roster with more seats than this is summed up, not drawn seat by seat. */
+export const ROSTER_SUMMARY_ABOVE = 6
+
+/** Seats still free up to the cap, the number an attendee cares about (#215). */
+export function freeCount({ taken, max }: { taken: number; max: number }) {
+  return Math.max(max - taken, 0)
+}

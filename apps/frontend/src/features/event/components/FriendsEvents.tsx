@@ -12,7 +12,7 @@ import type { EventListItem, FriendsEvent } from "@/features/event/api/eventSche
 import { friendsEventsQueryOptions } from "@/features/event/api/friendsEventsQueryOptions"
 import { EventsLoadError } from "@/features/event/components/EventsLoadError"
 import { FriendsOnEvent } from "@/features/event/components/FriendsOnEvent"
-import { eventDay, eventMeta, eventTime } from "@/features/event/lib/eventLabels"
+import { eventClock, eventDate, eventMeta } from "@/features/event/lib/eventLabels"
 
 /** #226: how many of the nearest events stand above the friends list. */
 export const FRIENDS_EVENTS_PREVIEW = 3
@@ -169,12 +169,10 @@ function FriendsEventRows({
             className="absolute inset-0 rounded-lg outline-none"
           />
           <ScheduleRow
-            time={eventTime(event.startAt, i18n.language)}
+            day={eventDate(t, event.startAt, now, i18n.language)}
+            time={eventClock(t, event.startAt, now, i18n.language)}
             title={event.title}
-            subtitle={[
-              eventDay(t, event.startAt, now, i18n.language),
-              eventMeta(t, event, activityLabel(event.activity)),
-            ].join(" · ")}
+            subtitle={eventMeta(t, event, activityLabel(event.activity))}
             taken={event.takenCount}
             min={event.minParticipants}
             max={event.maxParticipants}

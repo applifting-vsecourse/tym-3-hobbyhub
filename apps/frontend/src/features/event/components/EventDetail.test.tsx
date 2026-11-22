@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { renderWithRouter } from "@/test/renderWithRouter"
@@ -14,7 +14,8 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   imageUrl: null,
   startAt: new Date(2026, 9, 22, 19, 0),
   endAt: new Date(2026, 9, 22, 20, 30),
-  venueType: "PUBLIC_VENUE",
+  venueType: "PLACE",
+  isAddressPublic: true,
   placeName: "ZŠ Kobylisy",
   district: "Praha 8",
   city: "Praha",
@@ -42,6 +43,7 @@ const event = (overrides: Partial<EventDetailData> = {}): EventDetailData => ({
   statsMinParticipants: 3,
   hiddenReason: null,
   rating: { count: null, average: null },
+  location: null,
   ...overrides,
 })
 
@@ -71,6 +73,73 @@ describe("EventDetail", () => {
     )
 
     expect(screen.getByRole("button", { name: "Nahlásit akci" })).toBeInTheDocument()
+  })
+
+  // #231: the page decides when "Zajímá mě" is offered; the detail places it
+  // beside the title, also on an event that is over (to take it off the list).
+  it.each<Partial<EventDetailData>>([{}, { status: "FINISHED" }])(
+    "shows the Zajímá mě action the page hands in (%j)",
+    async (overrides) => {
+      await renderWithRouter(
+        <EventDetail
+          event={event(overrides)}
+          activityLabel="Florbal"
+          joinAction={null}
+          interestAction={<button type="button">Zajímá mě</button>}
+          now={NOW}
+        />,
+      )
+
+      expect(screen.getByRole("button", { name: "Zajímá mě" })).toBeInTheDocument()
+    },
+  )
+
+  it("offers no Zajímá mě on an event an administrator hid", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ hiddenReason: "Nabízí placené služby." })}
+        activityLabel="Florbal"
+        joinAction={null}
+        interestAction={<button type="button">Zajímá mě</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.queryByRole("button", { name: "Zajímá mě" })).not.toBeInTheDocument()
+  })
+
+  // #232: the page decides when watching is offered; the detail puts it in
+  // the seat panel of a full event, and never on one an administrator hid.
+  it("puts the watching for a free seat into the seat panel", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ takenCount: 10, maxParticipants: 10 })}
+        activityLabel="Florbal"
+        joinAction={null}
+        freeSpotWatch={<button type="button">Hlídat volné místo</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(
+      within(screen.getByRole("complementary", { name: "Soupiska" })).getByRole("button", {
+        name: "Hlídat volné místo",
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("offers no watching on an event an administrator hid", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ takenCount: 10, maxParticipants: 10, hiddenReason: "Spam." })}
+        activityLabel="Florbal"
+        joinAction={null}
+        freeSpotWatch={<button type="button">Hlídat volné místo</button>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.queryByRole("button", { name: "Hlídat volné místo" })).not.toBeInTheDocument()
   })
 
   // #234: the page asks the server whether the organizer may be rated; the
@@ -188,17 +257,39 @@ describe("EventDetail", () => {
   })
 
   it("tells a visitor when the exact address and the contacts appear", async () => {
-    await renderDetail()
+    await renderDetail({ isAddressPublic: false, placeName: null })
 
     expect(
       screen.getByText("Přesnou adresu a kontakt na organizátora uvidíš po potvrzení účasti."),
     ).toBeInTheDocument()
+    expect(screen.getByText("Přesná adresa po schválení")).toBeInTheDocument()
+  })
+
+  // #218: an address the organizer made public is for everyone.
+  it("shows a public address to a visitor and promises only the contacts", async () => {
+    await renderWithRouter(
+      <EventDetail
+        event={event({ isAddressPublic: true })}
+        activityLabel="Florbal"
+        joinAction={null}
+        publicPlace={<p>Chabařovická 4</p>}
+        now={NOW}
+      />,
+    )
+
+    expect(screen.getByText("Chabařovická 4")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Kontakt na organizátora a odkaz na chat, pokud je vyplnil, uvidíš po potvrzení účasti.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Přesná adresa po schválení")).not.toBeInTheDocument()
   })
 
   it("shows the place and contacts of a participant instead of the hint", async () => {
     await renderWithRouter(
       <EventDetail
-        event={event({ venueType: "PRIVATE_VENUE" })}
+        event={event({ isAddressPublic: false })}
         activityLabel="Florbal"
         joinAction={null}
         participantInfo={<p>Kde se sejdeme</p>}

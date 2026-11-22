@@ -410,6 +410,31 @@ export class FriendshipRepository {
       where: receivedWhere(recipientId, excludedIds),
     });
   }
+  /**
+   * #215, ADR-0026: the person's friends who switched on "Přátelé vidí moje
+   * budoucí akce". Nobody else, so nobody else can be counted.
+   */
+  async listFriendsSharingUpcomingEvents(
+    userId: string,
+  ): Promise<FoundUserRow[]> {
+    const shares = {
+      friendsSeeUpcomingEvents: true,
+      status: 'ACTIVE',
+    } as const satisfies Prisma.UserWhereInput;
+    const person = { select: { id: true, name: true, image: true } } as const;
+    const friendships = await this.prisma.friendship.findMany({
+      where: {
+        OR: [
+          { userAId: userId, userB: shares },
+          { userBId: userId, userA: shares },
+        ],
+      },
+      select: { userAId: true, userA: person, userB: person },
+    });
+    return friendships.map((friendship) =>
+      friendship.userAId === userId ? friendship.userB : friendship.userA,
+    );
+  }
 
   /**
    * #226: a page of the user's friends in the order asked, and how many there
