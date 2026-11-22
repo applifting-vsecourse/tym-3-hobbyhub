@@ -17,9 +17,12 @@ import { HTTPError } from "@/lib/api-client"
 import { activityName } from "@/features/activity/activityName"
 import { useSession } from "@/features/auth/hooks/useSession"
 import { encodeRedirectUri } from "@/features/auth/lib/redirect"
+import { eventInterestKeys } from "@/features/event-interest/api/eventInterestKeys"
 import { eventInterestQueryOptions } from "@/features/event-interest/api/eventInterestQueryOptions"
+import { FreeSpotWatch } from "@/features/event-interest/components/FreeSpotWatch"
 import { InterestAction } from "@/features/event-interest/components/InterestAction"
 import { useToggleEventInterest } from "@/features/event-interest/hooks/useToggleEventInterest"
+import { useToggleFreeSpotWatch } from "@/features/event-interest/hooks/useToggleFreeSpotWatch"
 import { eventDetailQueryOptions } from "@/features/event/api/eventDetailQueryOptions"
 import { eventKeys } from "@/features/event/api/eventKeys"
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
@@ -32,6 +35,7 @@ import { ShareEventAction } from "@/features/event/components/ShareEventAction"
 import { SimilarEvents } from "@/features/event/components/SimilarEvents"
 import { eventClock, eventDate, eventPlaceAndLevel } from "@/features/event/lib/eventLabels"
 import { myRequestQueryOptions } from "@/features/participation-request/api/myRequestQueryOptions"
+import { participationRequestKeys } from "@/features/participation-request/api/participationRequestKeys"
 import { JoinRequestAction } from "@/features/participation-request/components/JoinRequestAction"
 import { OrganizerPanel } from "@/features/participation-request/components/OrganizerPanel"
 import { OwnRequestPanel } from "@/features/participation-request/components/OwnRequestPanel"
@@ -133,6 +137,25 @@ function EventDetailPage() {
   // waiting for the organizer does not, but a refusal may mean the event filled
   // up or started meanwhile. Either way the page shows the latest state.
   const refreshEvent = () => queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+  // #232: asking to join, or taking the seat, stops the watching for a free
+  // seat on the server; the panel shows it at once.
+  const refreshAfterRequest = () =>
+    Promise.all([
+      refreshEvent(),
+      queryClient.invalidateQueries({
+        queryKey: eventInterestKeys.state(eventId, user?.id ?? ""),
+      }),
+    ])
+  // #232: a refused watch may mean a seat freed up meanwhile; the page then
+  // shows the seats as they are, and the way to join.
+  const toggleWatch = useToggleFreeSpotWatch(user?.id ?? "", {
+    onFailure: () => {
+      void refreshEvent()
+      void queryClient.invalidateQueries({
+        queryKey: participationRequestKeys.mine(eventId, user?.id ?? ""),
+      })
+    },
+  })
   // The sheet lives here, not in the seat panel: sending a request swaps the
   // free seat for the pending request, and the sheet has to survive that.
   const [sheetStep, setSheetStep] = useState<RequestSheetStep | null>(null)
@@ -152,6 +175,26 @@ function EventDetailPage() {
     ) : undefined
   ) : !isSessionPending && event.status === "PUBLISHED" && event.startAt > new Date() ? (
     <InterestAction signInFrom={from} />
+  ) : undefined
+  // #232: offered on a full event while being full is the one thing keeping
+  // the person from asking to join (as the server says), and to switch off
+  // while they watch, even once a seat freed up. A visitor is sent to sign in
+  // for a full event that has not started.
+  const freeSpotWatch = !event ? undefined : user ? (
+    interest &&
+    (interest.watchViolations.length === 0 ||
+      (interest.isWatching &&
+        interest.watchViolations.every((violation) => violation === "EVENT_NOT_FULL"))) ? (
+      <FreeSpotWatch
+        isWatching={interest.isWatching}
+        onToggle={() => toggleWatch.mutate({ eventId, shouldWatch: !interest.isWatching })}
+      />
+    ) : undefined
+  ) : !isSessionPending &&
+    event.status === "PUBLISHED" &&
+    event.startAt > new Date() &&
+    event.takenCount >= event.maxParticipants ? (
+    <FreeSpotWatch signInFrom={from} />
   ) : undefined
   // Asking is not taking: with manual approval the seat comes only once the
   // organizer says yes; with automatic approval the server takes it at once.
@@ -243,6 +286,7 @@ function EventDetailPage() {
             isOrganizerLinked={Boolean(user)}
             shareAction={<ShareEventAction event={eventQuery.data} />}
             interestAction={interestAction}
+            freeSpotWatch={freeSpotWatch}
             ratingPrompt={
               // Quiet while loading and when it fails: the notification and
               // the overview of one's events lead to the rating too.
@@ -365,7 +409,7 @@ function EventDetailPage() {
             approvalMode={eventQuery.data.approvalMode}
             step={sheetStep}
             onStepChange={setSheetStep}
-            onChange={refreshEvent}
+            onChange={refreshAfterRequest}
           />
         ) : null}
       </AppShell>

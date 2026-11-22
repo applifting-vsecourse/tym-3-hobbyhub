@@ -452,7 +452,19 @@ describe('EventRepository: guarded writes', () => {
           calls.push('write');
           return Promise.resolve({ count });
         }),
-        findUniqueOrThrow: jest.fn(() => Promise.reject(new Error(STOP))),
+        // #232: the seats before the edit are read under the lock; reading
+        // the saved event afterwards ends the test.
+        findUniqueOrThrow: jest.fn((args: { select?: object }) => {
+          if (args.select && 'minParticipants' in args.select) {
+            calls.push('seats');
+            return Promise.resolve({
+              minParticipants: 2,
+              maxParticipants: 8,
+              externalOccupiedSpots: 0,
+            });
+          }
+          return Promise.reject(new Error(STOP));
+        }),
       },
     };
     const prisma = {
@@ -466,7 +478,7 @@ describe('EventRepository: guarded writes', () => {
 
     await expect(repository.updateEvent('e1', edit, now)).rejects.toThrow(STOP);
 
-    expect(calls).toEqual(['lock', 'count', 'write']);
+    expect(calls).toEqual(['lock', 'count', 'seats', 'write']);
   });
 
   it('locks the event before writing a cancellation', async () => {
@@ -495,6 +507,12 @@ describe('EventRepository: guarded writes', () => {
       const calls: string[] = [];
       const findUniqueOrThrow = jest
         .fn()
+        // #232: the free seats before the write, then the maximum.
+        .mockResolvedValueOnce({
+          minParticipants: 2,
+          maxParticipants: 8,
+          externalOccupiedSpots: 4,
+        })
         .mockResolvedValueOnce({ maxParticipants: 8 })
         .mockRejectedValue(new Error(STOP));
       const tx = {

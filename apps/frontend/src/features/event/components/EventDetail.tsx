@@ -47,6 +47,11 @@ type EventDetailProps = {
    */
   ownRequest?: ReactNode
   /**
+   * #232: "Hlídat volné místo" on a full event, under the person's own place
+   * or where the free seat would be. The page decides when it is offered.
+   */
+  freeSpotWatch?: ReactNode
+  /**
    * The exact place and the contacts, for the organizer and people with a seat.
    * Absent for everyone else, who is told when they appear instead.
    */
@@ -101,6 +106,7 @@ export function EventDetail({
   shareAction,
   interestAction,
   ownRequest,
+  freeSpotWatch,
   participantInfo,
   publicPlace,
   reportAction,
@@ -294,6 +300,7 @@ export function EventDetail({
                 action={joinAction}
               />
             ) : null)}
+          {isHidden ? null : freeSpotWatch}
           {/* Who runs it, with the organizer's own tools next to the way to the
             requests above: everything about the people in one place (#224). */}
           <div className="flex flex-col gap-3 border-t border-signal-soft/30 pt-4">

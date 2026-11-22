@@ -503,6 +503,10 @@ model EventInterest {
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String
 
+  // #232: the person wants to hear when a seat frees up on the full event.
+  // Only ever on a saved event (the row is the saving); taking a seat clears it.
+  watchesFreeSpot Boolean @default(false)
+
   @@unique([userId, eventId])
   @@index([eventId])
   @@map("event_interest")

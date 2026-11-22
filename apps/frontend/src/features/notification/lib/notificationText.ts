@@ -106,6 +106,9 @@ export function notificationText(
       return t("notifications.text.EVENT_RESTORED", { title })
     case "PARTICIPANT_CANCELLED":
       return t("notifications.text.PARTICIPANT_CANCELLED", { name, title })
+    // #232: nobody named; who left is none of the watcher's business.
+    case "SPOT_AVAILABLE":
+      return t("notifications.text.SPOT_AVAILABLE", { title })
     // #240: neither what was reported nor what the administrator did.
     case "REPORT_RESOLVED":
       return t("notifications.text.REPORT_RESOLVED")

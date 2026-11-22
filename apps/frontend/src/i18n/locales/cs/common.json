@@ -1689,7 +1689,16 @@
     "save": "Zajímá mě",
     "saveError": "Akci se nepodařilo uložit. Zkuste to prosím znovu.",
     "saved": "Uloženo",
-    "undo": "Vrátit"
+    "undo": "Vrátit",
+    "watch": {
+      "active": "Hlídám volné místo",
+      "nowFree": "Na akci se mezitím uvolnilo místo. Můžete se rovnou přihlásit.",
+      "offText": "Akce je plná. Zapněte hlídání a dáme vám vědět, jakmile se uvolní místo.",
+      "onText": "Jakmile se uvolní místo, pošleme vám upozornění. Místo vám nedržíme: dostane ho, kdo se přihlásí první.",
+      "start": "Hlídat volné místo",
+      "startError": "Hlídání se nepodařilo zapnout. Zkuste to prosím znovu.",
+      "stopError": "Hlídání se nepodařilo vypnout. Zkuste to prosím znovu."
+    }
   },
   "landing": {
     "actions": {
@@ -1796,7 +1805,10 @@
         "CANCELLED": "Zrušena",
         "PAST": "Proběhla",
         "STARTED": "Probíhá"
-      }
+      },
+      "unwatch": "Přestat hlídat volné místo",
+      "watch": "Hlídat volné místo",
+      "watching": "Hlídám místo"
     },
     "loadMore": "Načíst další",
     "loading": "Načítáme vaše akce",
@@ -1927,6 +1939,7 @@
           "REJECTED": "Tvoje žádost o členství ve skupině {{title}} byla zamítnuta"
         }
       },
+      "SPOT_AVAILABLE": "Na akci {{title}} se uvolnilo místo",
       "other": "Novinka k {{title}}"
     },
     "title": "Notifikace",

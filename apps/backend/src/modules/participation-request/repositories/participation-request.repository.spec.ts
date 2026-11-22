@@ -123,6 +123,54 @@ describeDb('ParticipationRequestRepository', () => {
     return { eventId: event.id, userIds };
   };
 
+  // #232: the "Zajímá mě" list asks about the events it shows.
+  describe('getApplicationFactsOf', () => {
+    it('returns the own seat and requests of the given events, in the order given', async () => {
+      const applied = await eventWith(2, 2);
+      const untouched = await eventWith(1, 2);
+      const [me, other] = applied.userIds as [string, string];
+      await prisma.participationRequest.createMany({
+        data: [
+          { eventId: applied.eventId, userId: me },
+          // Someone else's seat on the other event is not mine.
+          { eventId: untouched.eventId, userId: other },
+        ],
+      });
+      await prisma.participation.create({
+        data: {
+          eventId: untouched.eventId,
+          userId: other,
+          status: ParticipationStatus.APPROVED,
+        },
+      });
+
+      const result = await repository.getApplicationFactsOf(me, [
+        untouched.eventId,
+        applied.eventId,
+        'gone',
+      ]);
+
+      expect(result).toEqual([
+        {
+          eventId: untouched.eventId,
+          eventStatus: 'PUBLISHED',
+          seat: null,
+          requests: [],
+        },
+        {
+          eventId: applied.eventId,
+          eventStatus: 'PUBLISHED',
+          seat: null,
+          requests: ['PENDING'],
+        },
+      ]);
+    });
+
+    it('asks nothing for no events', async () => {
+      expect(await repository.getApplicationFactsOf('anyone', [])).toEqual([]);
+    });
+  });
+
   describe('getApplicationFacts', () => {
     const before = new Date('2029-12-31T10:00:00Z');
     const page = { limit: 10, offset: 0 };
@@ -375,7 +423,69 @@ describeDb('ParticipationRequestRepository', () => {
     );
   });
 
+  // #232: asking to join is what the watching was for; it stops with the
+  // request, in the same transaction, and the event stays saved.
+  describe('createPending', () => {
+    it('stops the applicant watching the event for a free seat', async () => {
+      const {
+        eventId,
+        userIds: [userId, other],
+      } = await eventWith(1, 2);
+      await prisma.eventInterest.createMany({
+        data: [
+          { userId: userId!, eventId, watchesFreeSpot: true },
+          { userId: other!, eventId, watchesFreeSpot: true },
+        ],
+      });
+
+      await expect(
+        repository.createPending({ eventId, userId: userId!, at }),
+      ).resolves.toMatchObject({ status: 'PENDING' });
+
+      await expect(
+        prisma.eventInterest.findMany({
+          where: { eventId },
+          select: { userId: true, watchesFreeSpot: true },
+        }),
+      ).resolves.toEqual(
+        expect.arrayContaining([
+          { userId: userId!, watchesFreeSpot: false },
+          { userId: other!, watchesFreeSpot: true },
+        ]),
+      );
+    });
+  });
+
   describe('createApproved', () => {
+    // #232: whoever gets a seat stops watching for one; the event stays saved.
+    it('stops the new participant watching the event for a free seat', async () => {
+      const {
+        eventId,
+        userIds: [userId, other],
+      } = await eventWith(1, 2);
+      await prisma.eventInterest.createMany({
+        data: [
+          { userId: userId!, eventId, watchesFreeSpot: true },
+          { userId: other!, eventId, watchesFreeSpot: true },
+        ],
+      });
+
+      await repository.createApproved({ eventId, userId: userId!, at });
+
+      await expect(
+        prisma.eventInterest.findMany({
+          where: { eventId },
+          select: { userId: true, watchesFreeSpot: true },
+          orderBy: { userId: 'asc' },
+        }),
+      ).resolves.toEqual(
+        [
+          { userId: userId!, watchesFreeSpot: false },
+          { userId: other!, watchesFreeSpot: true },
+        ].sort((a, b) => a.userId.localeCompare(b.userId)),
+      );
+    });
+
     it('creates the approved request and the seat it takes', async () => {
       const {
         eventId,
@@ -599,6 +709,43 @@ describeDb('ParticipationRequestRepository', () => {
     });
   });
 
+  // #239, #232: the seats a block cancels, and what that frees.
+  describe('detachBlockedPair', () => {
+    it("cancels the seat on the other one's event and says it freed one", async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      await repository.createApproved({ eventId, userId: userId!, at });
+      const { organizerId } = await prisma.event.findUniqueOrThrow({
+        where: { id: eventId },
+        select: { organizerId: true },
+      });
+
+      await expect(
+        repository.detachBlockedPair(organizerId, userId!, at),
+      ).resolves.toEqual([{ eventId, freeSpotsBefore: 0, freeSpotsAfter: 1 }]);
+      await expect(repository.getSeatStatus(eventId, userId!)).resolves.toBe(
+        'CANCELLED',
+      );
+    });
+
+    it('frees nothing where neither had a seat', async () => {
+      const {
+        eventId,
+        userIds: [userId],
+      } = await eventWith(1, 1);
+      const { organizerId } = await prisma.event.findUniqueOrThrow({
+        where: { id: eventId },
+        select: { organizerId: true },
+      });
+
+      await expect(
+        repository.detachBlockedPair(organizerId, userId!, at),
+      ).resolves.toEqual([]);
+    });
+  });
+
   // F-06.4, ADR-0017.
   describe('cancelSeat', () => {
     const message = 'Onemocněl jsem, promiňte.';
@@ -610,9 +757,10 @@ describeDb('ParticipationRequestRepository', () => {
       } = await eventWith(1, 1);
       await repository.createApproved({ eventId, userId: userId!, at });
 
+      // #232: the full event has a free seat again, counted under the lock.
       await expect(
         repository.cancelSeat({ eventId, userId: userId!, message, at }),
-      ).resolves.toBeNull();
+      ).resolves.toEqual({ freeSpotsBefore: 0, freeSpotsAfter: 1 });
       await expect(
         prisma.participation.findUniqueOrThrow({
           where: { eventId_userId: { eventId, userId: userId! } },
