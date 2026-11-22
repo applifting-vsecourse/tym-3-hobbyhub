@@ -86,7 +86,7 @@ describeDb('similar events', () => {
               title: `${MARK} akce ${index}`,
               description: 'Test',
               status: EventStatus.PUBLISHED,
-              venueType: VenueType.PUBLIC_VENUE,
+              venueType: VenueType.PLACE,
               startAt: start,
               endAt: new Date(start.getTime() + 2 * 3600 * 1000),
               minParticipants: 4,
