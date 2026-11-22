@@ -398,6 +398,8 @@ type Example = {
   external?: number;
   contribution?: number;
   venueType?: VenueType;
+  // #218: a place's address is public unless the example says otherwise.
+  isAddressPublic?: boolean;
   place?: Place;
   onlineUrl?: string;
   // F-06.5: shown to approved participants only.
@@ -622,7 +624,7 @@ export async function seedEvents(
       startAt: at(4, 17),
       min: 2,
       max: 4,
-      venueType: VenueType.PRIVATE_VENUE,
+      isAddressPublic: false,
       place: {
         city: 'Brno',
         district: 'Brno-Žabovřesky',
@@ -927,7 +929,9 @@ export async function seedEvents(
 
     const { place } = example;
     const status = example.status ?? EventStatus.PUBLISHED;
-    const venueType = example.venueType ?? VenueType.PUBLIC_VENUE;
+    const venueType = example.venueType ?? VenueType.PLACE;
+    const isAddressPublic =
+      venueType === VenueType.PLACE && (example.isAddressPublic ?? true);
 
     const event = await prisma.event.create({
       data: {
@@ -949,6 +953,7 @@ export async function seedEvents(
           : {}),
         approvalMode: ApprovalMode.MANUAL,
         venueType,
+        isAddressPublic,
         onlineUrl: example.onlineUrl,
         contact: example.contact,
         externalChatUrl: example.externalChatUrl,
@@ -1038,6 +1043,8 @@ async function seedExampleGroup(
         name,
         description: 'Rekreační florbal každý čtvrtek. Nováčci vítáni.',
         locationName: 'Praha 8',
+        locationLatitude: 50.1297,
+        locationLongitude: 14.4421,
         usualSchedule: 'Čtvrtky 19:00',
         activityId,
         memberships: {
