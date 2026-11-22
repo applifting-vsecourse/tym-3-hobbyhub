@@ -1,3 +1,7 @@
+import {
+  INTERESTED_EVENT_STATES,
+  InterestedEventState,
+} from '@/modules/event-interest/domain/event-interest';
 import { EventListItemResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
 import {
   APPLICATION_STATUSES,
@@ -6,6 +10,8 @@ import {
   MyApplicationPage,
   MyHostedEvent,
   MyHostedEventPage,
+  MyInterestedEvent,
+  MyInterestedEventPage,
 } from '@/modules/my-events/domain/my-events';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -91,6 +97,45 @@ export class MyHostedEventsResponseDto {
     return {
       items: page.items.map((event) =>
         HostedEventResponseDto.fromHosted(event),
+      ),
+      total: page.total,
+    };
+  }
+}
+
+// #231: an event on the "Zajímá mě" list. Nothing about who else saved it.
+export class InterestedEventResponseDto extends EventListItemResponseDto {
+  @ApiProperty({
+    enum: INTERESTED_EVENT_STATES,
+    description:
+      'UPCOMING while the event is on; PAST once it is over; CANCELLED when called off',
+  })
+  state!: InterestedEventState;
+
+  static fromInterested(event: MyInterestedEvent): InterestedEventResponseDto {
+    return {
+      ...EventListItemResponseDto.fromDomain(event),
+      state: event.state,
+    };
+  }
+}
+
+export class MyInterestedEventsResponseDto {
+  @ApiProperty({ type: [InterestedEventResponseDto] })
+  items!: InterestedEventResponseDto[];
+
+  @ApiProperty({
+    description:
+      'All saved events the user may still see that match the filter, not just this page',
+  })
+  total!: number;
+
+  static fromDomain(
+    page: MyInterestedEventPage,
+  ): MyInterestedEventsResponseDto {
+    return {
+      items: page.items.map((event) =>
+        InterestedEventResponseDto.fromInterested(event),
       ),
       total: page.total,
     };
