@@ -100,6 +100,7 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 | Koncept akce                                                                     | ❌                              | ❌       | ✅               | ✅            | ❌          | [#8][8], [PO][po]                           |
 | Že na nadcházející akci jde nebo ji pořádá můj přítel: jeho jméno a profil       | jen přítel, když povolil        | ✅       | ✅               | ✅            | ❌          | [#226][226], [#227][227]                    |
 | Že si akci uložil na seznam „Zajímá mě“, a kolik lidí si ji uložilo              | jen své                         | jen své  | ❌               | ❌            | ❌          | [#231][231], [ADR-0030](../adr/adr-0030.md) |
+| Že hlídá plnou akci kvůli volnému místu, a kolik lidí ji hlídá                   | jen své                         | jen své  | ❌               | ❌            | ❌          | [#232][232], [ADR-0030](../adr/adr-0030.md) |
 
 - **Kdo uvidí přesnou adresu, rozhoduje organizátor** ([#218][218], [ADR-0029](../adr/adr-0029.md)): „Všichni hned“, nebo „Až schválení účastníci“ (výchozí). „Když (ji) zveřejnil“ v tabulce znamená první volbu: zveřejněnou adresu, název místa i bod na mapě pak vidí každý, kdo akci vidí; ulice je jen v detailu, ne ve výpisu. Skrytou vidí jen organizátoři a lidé s místem, ostatní jen čtvrť a město. Kontakt na organizátora a odkaz na chat zůstávají jen pro organizátory a lidi s místem v obou případech.
 - **Veřejná a přesná adresa jsou dvě uložené hodnoty, ne jedna hodnota zobrazená dvakrát.** Veřejná adresa je povinná, organizátor ji vybírá z našeptávače (nejbližší křižovatka, zastávka, park nebo jiný orientační bod) a podle ní se vykresluje bod na mapě. Přesná adresa je nepovinná a zadává se zvlášť. Komu nepřísluší, tomu se nesmí poslat: ani v odpovědi API, ani v náhledu, ani v notifikaci.
@@ -110,6 +111,7 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 - **Upozornění na skrytí a odkrytí akce** dostanou organizátoři, schválení účastníci, žadatelé a náhradníci. Důvod nese jen upozornění organizátorů. Ostatní vidí v aplikaci jen název akce, kterou znali, a že ji správce odstranil, bez odkazu na ni; e-mail podle pravidla výše nenese ani název.
 - **Přítel účastníka** ([#226][226], [#227][227]) vidí u akce jméno přítele, **jen když to přítel povolil** přepínačem „Přátelé vidí moje budoucí akce“. Jinak se přítel nezobrazí ani nezapočítá. Návštěvník přátele nemá. Účastník a organizátor vidí přátele mezi ostatními v jmenném seznamu, přepínač před nimi nic neskrývá. Platí jen pro akce, které člověk sám vidět smí.
 - **Seznam „Zajímá mě“** ([#231][231], [ADR-0030](../adr/adr-0030.md)) vidí jen jeho vlastník: v detailu akce, že ji má uloženou, a v Moje akce celý seznam. Organizátor (ten si vlastní akci uložit nemůže), účastníci ani správce nevidí, kdo si akci uložil, ani kolik lidí; žádné počítadlo zájmu neexistuje. Akce, kterou vlastník mezitím vidět nesmí (skrytá správcem, jen pro skupinu, ze které odešel, blokace s organizátorem), se mu v seznamu nezobrazí ani nezapočítá.
+- **Hlídání volného místa** ([#232][232], [ADR-0030](../adr/adr-0030.md)) je příznak téže položky seznamu „Zajímá mě“ a vidí ho jen vlastník: v detailu akce a u řádku v Moje akce. Organizátor, účastníci ani správce se z žádné odpovědi API nedozví, kdo akci hlídá, ani kolik lidí. Upozornění „uvolnilo se místo“ dostanou všichni hlídající najednou, jen pokud akci pořád smějí vidět a nemají na ní místo; nejmenuje toho, kdo místo uvolnil (nemá původce), a ten ho sám nedostane. E-mail nese podle pravidla výše jen důvod a odkaz na detail akce, ne její název.
 
 ## Žádosti o účast a o členství
 
@@ -282,6 +284,7 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [227]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/227
 [239]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/239
 [231]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/231
+[232]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/232
 [223]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/223
 [269]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/269
 [261]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/261
