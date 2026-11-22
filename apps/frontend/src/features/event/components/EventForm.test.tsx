@@ -243,6 +243,10 @@ describe("EventForm on a phone", () => {
   it("previews the event and publishes it with trimmed values", async () => {
     const { onSubmit, user } = await renderForm()
     await fillFirstStep(user)
+    // #218: who sees the exact address, hidden until approval unless chosen.
+    expect(screen.getByRole("radio", { name: "Až schválení účastníci" })).toBeChecked()
+    await user.click(screen.getByRole("radio", { name: "Všichni hned" }))
+    expect(screen.getByText(/Ulici, název místa i bod na mapě uvidí každý/)).toBeInTheDocument()
     await continueToNextStep(user)
     await screen.findByText("Krok 2 ze 3 · Kdo a kolik")
 
@@ -264,7 +268,6 @@ describe("EventForm on a phone", () => {
     expect(await screen.findByText("Krok 3 ze 3 · Detaily a zveřejnění")).toBeInTheDocument()
     await user.type(screen.getByLabelText("Popis akce"), "Rekreační hra.")
     await user.type(screen.getByLabelText("Vybavení (nepovinné)"), "   ")
-    await user.click(screen.getByRole("radio", { name: "Soukromé prostory" }))
 
     const preview = screen.getByRole("region", { name: "Takto uvidí akci ostatní" })
     expect(within(preview).getByText("Čtvrteční florbal")).toBeInTheDocument()
@@ -280,7 +283,8 @@ describe("EventForm on a phone", () => {
       activityId: "a-florbal",
       description: "Rekreační hra.",
       equipment: undefined,
-      venueType: "PRIVATE_VENUE",
+      venueType: "PLACE",
+      isAddressPublic: true,
       approvalMode: "AUTOMATIC",
       startAt: new Date("2030-01-15T19:00:00").toISOString(),
       endAt: new Date("2030-01-15T20:30:00").toISOString(),
@@ -454,7 +458,8 @@ const EXISTING: Event = {
   equipment: null,
   status: "PUBLISHED",
   visibility: "PUBLIC",
-  venueType: "PUBLIC_VENUE",
+  venueType: "PLACE",
+  isAddressPublic: true,
   approvalMode: "MANUAL",
   startAt: new Date(2030, 0, 15, 19, 0),
   endAt: new Date(2030, 0, 15, 20, 30),
@@ -569,11 +574,25 @@ describe("EventForm editing an event", () => {
 
     await continueToNextStep(user)
     await continueToNextStep(user)
-    expect(screen.queryByText("Typ místa")).not.toBeInTheDocument()
+    expect(screen.queryByText("Kdo uvidí přesnou adresu")).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Uložit změny" }))
 
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ venueType: "ONLINE", location: undefined }),
+      expect.objectContaining({
+        venueType: "ONLINE",
+        location: undefined,
+        isAddressPublic: false,
+      }),
     )
+  })
+
+  // #218: an edit starts from the organizer's earlier choice.
+  it.each([
+    [true, "Všichni hned"],
+    [false, "Až schválení účastníci"],
+  ])("starts an edit with the address public: %s", async (isAddressPublic, label) => {
+    await renderForm({ event: { ...EXISTING, isAddressPublic } })
+
+    expect(screen.getByRole("radio", { name: label })).toBeChecked()
   })
 })

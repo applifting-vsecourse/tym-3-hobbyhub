@@ -1,18 +1,34 @@
 import {
+  GROUP_APPROVAL_MODES,
   GROUP_LIST_LOCATION_MAX_LENGTH,
   GROUP_LIST_MAX_ACTIVITY_FILTERS,
   GROUP_LIST_SEARCH_MAX_LENGTH,
 } from '@/modules/group/domain/group';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
+  IsIn,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
+  ValidateIf,
 } from 'class-validator';
+
+const toBoolean = ({ value }: { value: unknown }): unknown => {
+  const text = String(value).toLowerCase();
+  if (text === 'true' || text === '1') return true;
+  if (text === 'false' || text === '0') return false;
+  return value;
+};
 
 export class DiscoverGroupsQueryDto {
   @ApiPropertyOptional({ description: '`nextCursor` from the previous page' })
@@ -54,4 +70,40 @@ export class DiscoverGroupsQueryDto {
   @IsString()
   @MaxLength(GROUP_LIST_LOCATION_MAX_LENGTH)
   location?: string;
+
+  @ApiPropertyOptional({ enum: GROUP_APPROVAL_MODES })
+  @IsOptional()
+  @IsIn(GROUP_APPROVAL_MODES)
+  approvalMode?: (typeof GROUP_APPROVAL_MODES)[number];
+
+  @ApiPropertyOptional({ description: 'Only groups with a public event ahead' })
+  @Transform(toBoolean)
+  @IsOptional()
+  @IsBoolean()
+  onlyWithUpcomingEvent?: boolean;
+
+  @ApiPropertyOptional({ description: 'With lng and radiusKm' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  lat?: number;
+
+  @ApiPropertyOptional({ description: 'With lat and radiusKm' })
+  @ValidateIf((dto: DiscoverGroupsQueryDto) => dto.lat !== undefined)
+  @Type(() => Number)
+  @IsLongitude()
+  lng?: number;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 200, default: 15 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(200)
+  radiusKm?: number;
+
+  @ApiPropertyOptional({ enum: ['newest', 'nearest', 'members'] })
+  @IsOptional()
+  @IsIn(['newest', 'nearest', 'members'])
+  sort?: 'newest' | 'nearest' | 'members';
 }

@@ -34,14 +34,13 @@ export class GroupEventsController {
   @UseGuards(OptionalUserGuard)
   @ApiOperation({
     summary:
-      "A page of a group's events: upcoming public ones for everyone; group-only and past ones for its members",
+      "A page of a group's events: upcoming public ones for everyone; group-only ones for its members; the past for everyone, but group-only events only as a count for non-members",
   })
   @ApiResponse({ status: 200, type: GroupEventListResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid period or offset' })
   @ApiResponse({
     status: 404,
-    description:
-      'Group not found or not public, or past events asked by a non-member',
+    description: 'Group not found or not public',
   })
   async list(
     @OptionalUser() user: Identity | undefined,

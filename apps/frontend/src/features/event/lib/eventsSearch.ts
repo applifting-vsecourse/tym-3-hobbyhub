@@ -6,6 +6,8 @@ import {
   isNumberRangeReversed,
   isRangeValueValid,
   RADIUS_OPTIONS_KM,
+  type GroupApprovalFilter,
+  type GroupSortFilter,
   type PlaceFilter,
 } from "@/components/hobbyhub/FiltersSheet"
 
@@ -108,7 +110,13 @@ type ListRangesSearch = Partial<
     | "placeLng"
     | "radius"
   >
->
+> &
+  // Only the group list has these (ADR-0028).
+  Partial<{
+    approval: "OPEN" | "APPROVAL"
+    upcoming: boolean
+    sort: "newest" | "nearest" | "members"
+  }>
 
 /** An empty text is no filter, and keeps the address clean. */
 export const nonEmpty = (value = "") => (value.trim() === "" ? undefined : value.trim())
@@ -134,6 +142,10 @@ export type EventFilterValues = {
   hoursTo: string
   capacityFrom: string
   capacityTo: string
+  /** Groups only (ADR-0028): how a group takes people in, and whether it has an event ahead. */
+  approvalMode: GroupApprovalFilter
+  hasUpcomingEvent: boolean
+  groupSort: GroupSortFilter
 }
 
 /** A change of the filters behind the panel and the chips; the search text goes its own way. */
@@ -162,6 +174,9 @@ export function filtersFromSearch({
   placeLat,
   placeLng,
   radius,
+  approval,
+  upcoming: isUpcoming,
+  sort,
 }: EventsSearch & ListRangesSearch): {
   filters: EventFilterValues
   isRangeReversed: boolean
@@ -189,6 +204,10 @@ export function filtersFromSearch({
       hoursTo: isHoursReversed ? "" : rangeText(hoursTo),
       capacityFrom: isCapacityReversed ? "" : rangeText(capacityFrom),
       capacityTo: isCapacityReversed ? "" : rangeText(capacityTo),
+      approvalMode: approval ?? "",
+      hasUpcomingEvent: isUpcoming ?? false,
+      // The nearest first needs a place; without one it is the newest.
+      groupSort: sort === "nearest" && placeLat === undefined ? "newest" : (sort ?? "newest"),
     },
     isRangeReversed: isDateReversed || isPriceReversed || isHoursReversed || isCapacityReversed,
   }
@@ -228,6 +247,11 @@ export function searchWithFilters<T extends EventsSearch & ListRangesSearch>(
     ...(next.hoursTo !== undefined && { hoursTo: rangeNumber(next.hoursTo) }),
     ...(next.capacityFrom !== undefined && { capacityFrom: rangeNumber(next.capacityFrom) }),
     ...(next.capacityTo !== undefined && { capacityTo: rangeNumber(next.capacityTo) }),
+    ...(next.approvalMode !== undefined && { approval: next.approvalMode || undefined }),
+    ...(next.hasUpcomingEvent !== undefined && { upcoming: next.hasUpcomingEvent || undefined }),
+    ...(next.groupSort !== undefined && {
+      sort: next.groupSort === "newest" ? undefined : next.groupSort,
+    }),
   }
 }
 
@@ -246,6 +270,8 @@ export const activeFilterCount = (filters: EventFilterValues): number =>
     filters.priceFrom !== "" || filters.priceTo !== "",
     filters.hoursFrom !== "" || filters.hoursTo !== "",
     filters.capacityFrom !== "" || filters.capacityTo !== "",
+    filters.approvalMode !== "",
+    filters.hasUpcomingEvent,
   ].filter(Boolean).length
 
 /** Some filter is on, so an empty list means "nothing matches", not "nothing yet". */
@@ -262,4 +288,6 @@ export const hasFilters = (filters: EventFilterValues): boolean =>
   filters.hoursFrom !== "" ||
   filters.hoursTo !== "" ||
   filters.capacityFrom !== "" ||
-  filters.capacityTo !== ""
+  filters.capacityTo !== "" ||
+  filters.approvalMode !== "" ||
+  filters.hasUpcomingEvent

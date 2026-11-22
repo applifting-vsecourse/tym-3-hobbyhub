@@ -58,11 +58,11 @@ function GroupDetailPage() {
     isPending: isSessionPending,
   })
   const groupQuery = useQuery(groupQueryOptions(groupId))
-  // F-07.2: members also see the past; anyone else only what is coming, so a
-  // link to the past from a non-member shows the upcoming events.
+  // F-07.2, #269: everyone may see the past; a non-member gets the public
+  // events and the group-only ones only as blurred places.
   const search = Route.useSearch()
   const isMember = membership.view === "member"
-  const period = isMember ? (search.events ?? "upcoming") : "upcoming"
+  const period = search.events ?? "upcoming"
   const eventsQuery = useInfiniteQuery({
     ...groupEventsQueryOptions(groupId, period, { userId: user?.id ?? null, isMember }),
     // Who is looking decides what comes back: wait until that is known.
@@ -140,6 +140,7 @@ function GroupDetailPage() {
                 groupId={groupId}
                 membership={membership}
                 groupName={groupQuery.data.name}
+                approvalMode={groupQuery.data.approvalMode}
                 from={encodeRedirectUri(location)}
                 onRequest={() => setSheetStep("form")}
                 onWithdraw={() => setSheetStep("withdraw")}
@@ -157,7 +158,7 @@ function GroupDetailPage() {
               <GroupEvents
                 groupId={groupId}
                 period={period}
-                isMember={isMember}
+                hiddenCount={eventsQuery.data?.pages[0]?.hiddenCount ?? 0}
                 events={groupEvents}
                 total={eventsQuery.data?.pages[0]?.total ?? 0}
                 activityLabel={(activity) => activityName(t, activity)}
