@@ -7,6 +7,7 @@ import { type EventListFilters } from "@/features/event/api/eventKeys"
 import { filterSearchParams, NO_FILTERS } from "@/features/event/api/eventsQueryOptions"
 import {
   hostedEventsPageSchema,
+  interestedEventsPageSchema,
   myApplicationsPageSchema,
 } from "@/features/event/api/myEventsSchemas"
 
@@ -48,6 +49,30 @@ export const myHostedEventsQueryOptions = (userId: string, filters: MyEventsFilt
       hostedEventsPageSchema.parse(
         await api
           .get("my-events/hosted", {
+            searchParams: filterSearchParams(filters, MY_EVENTS_PAGE_SIZE, pageParam),
+          })
+          .json(),
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _pages, lastPageParam) => {
+      const next = lastPageParam + lastPage.items.length
+      return next < lastPage.total && lastPage.items.length > 0 ? next : undefined
+    },
+  })
+
+// #231: the "Zajímá mě" list pages like the hosted one: it drops nothing, so
+// its next page starts after the rows it has.
+export const myInterestedEventsQueryOptions = (
+  userId: string,
+  filters: MyEventsFilters = NO_FILTERS,
+) =>
+  infiniteQueryOptions({
+    queryKey: myEventsKeys.interested(userId, filters),
+    staleTime: MY_EVENTS_STALE_TIME,
+    queryFn: async ({ pageParam }) =>
+      interestedEventsPageSchema.parse(
+        await api
+          .get("my-events/interested", {
             searchParams: filterSearchParams(filters, MY_EVENTS_PAGE_SIZE, pageParam),
           })
           .json(),

@@ -1,3 +1,5 @@
+import { interestedEventStateOf } from '@/modules/event-interest/domain/event-interest';
+import { EventInterestsService } from '@/modules/event-interest/services/event-interests.service';
 import {
   EventFilter,
   eventListFilterViolations,
@@ -9,6 +11,8 @@ import {
   MyApplication,
   MyApplicationPage,
   MyHostedEventPage,
+  MyInterestedEvent,
+  MyInterestedEventPage,
 } from '@/modules/my-events/domain/my-events';
 import { ParticipationRequestsService } from '@/modules/participation-request/services/participation-requests.service';
 import { RatingsService } from '@/modules/rating/services/ratings.service';
@@ -28,6 +32,7 @@ export class MyEventsService {
     private readonly eventsService: EventsService,
     private readonly requestsService: ParticipationRequestsService,
     private readonly ratingsService: RatingsService,
+    private readonly interestsService: EventInterestsService,
   ) {}
 
   // One page of the person's applications: waiting and approved ones to
@@ -85,6 +90,73 @@ export class MyEventsService {
         ...event,
         participantsToRate: toRate.get(event.id) ?? 0,
       })),
+      total,
+    };
+  }
+
+  // #231: one page of the person's "Zajímá mě" list: what is still on first,
+  // soonest first; then what is over or was called off, latest first. Only
+  // events they may still see, which `total` counts too.
+  async getInterested(
+    user: Identity,
+    page: Page,
+    filter: EventFilter,
+    now: Date = new Date(),
+  ): Promise<MyInterestedEventPage> {
+    assertValidFilter(filter);
+    const { items: rows, total } = await this.interestsService.getMyPage(
+      user,
+      page,
+      filter,
+      now,
+    );
+    const events = await this.eventsService.getListItemsByIds(
+      rows.map((row) => row.eventId),
+    );
+    const byId = new Map(events.map((event) => [event.id, event]));
+    // #232: only a full event still ahead can be watched, so only those are
+    // asked about (each look reads visibility, blocks and requests); the rules
+    // decide the rest.
+    const watchable = await this.interestsService.getWatchableEventIds(
+      user,
+      events
+        .filter(
+          (event) =>
+            event.startAt.getTime() > now.getTime() &&
+            event.takenCount >= event.maxParticipants,
+        )
+        .map((event) => event.id),
+      now,
+    );
+    // The person's own application to each saved event, as under "Přihlášky":
+    // the list keeps an event they signed up for, so the row has to say so.
+    const facts = await this.requestsService.getMyApplicationFactsOf(
+      user,
+      events.map((event) => event.id),
+    );
+    const statusById = new Map(
+      facts.map(({ eventId, ...rest }) => [eventId, applicationStatusOf(rest)]),
+    );
+    return {
+      items: rows.flatMap(
+        ({ eventId, status, watchesFreeSpot }): MyInterestedEvent[] => {
+          const event = byId.get(eventId);
+          return event
+            ? [
+                {
+                  ...event,
+                  state: interestedEventStateOf(
+                    { status, endAt: event.endAt },
+                    now,
+                  ),
+                  watchesFreeSpot,
+                  canWatchFreeSpot: watchable.has(eventId),
+                  applicationStatus: statusById.get(eventId) ?? null,
+                },
+              ]
+            : [];
+        },
+      ),
       total,
     };
   }

@@ -4,6 +4,7 @@ import { AdminAuth } from '@/shared/admin-auth/providers/admin-auth.provider';
 import { BetterAuth } from '@/shared/auth/providers/better-auth.provider';
 import { Config } from '@/shared/config/config.service';
 import { createUser } from './create-user';
+import { seedEventInterests } from './seed-event-interests';
 import { seedEvents, seedLookups } from './seed-events';
 import { seedGroups } from './seed-groups';
 import { seedMembershipRequests } from './seed-membership-requests';
@@ -41,6 +42,7 @@ export const seedDatabase = async (
     await seedMembershipRequests(prisma, users);
     await seedReports(prisma, users);
     await seedRatings(prisma, users);
+    await seedEventInterests(prisma, users);
     return;
   }
 
@@ -122,6 +124,7 @@ export const seedDatabase = async (
   ]);
   await seedReports(prisma, exampleUsers);
   await seedRatings(prisma, exampleUsers);
+  await seedEventInterests(prisma, exampleUsers);
 };
 
 // ADR-0010, #238: the administrator is its own account, not a `User`.

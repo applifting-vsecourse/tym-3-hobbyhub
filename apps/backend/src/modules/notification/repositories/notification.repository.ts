@@ -90,7 +90,13 @@ export class NotificationRepository {
       where: { id: { in: [...ids] } },
       include: {
         ...include,
-        recipient: { select: { email: true, emailVerified: true } },
+        recipient: {
+          select: {
+            email: true,
+            emailVerified: true,
+            disabledNotifications: true,
+          },
+        },
       },
     });
     return rows.map((row) => ({

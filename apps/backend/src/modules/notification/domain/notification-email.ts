@@ -13,7 +13,13 @@ import {
 // matrix applies. Czech only for now.
 
 export type NotificationForEmail = Notification & {
-  recipient: { email: string; emailVerified: boolean };
+  recipient: {
+    email: string;
+    emailVerified: boolean;
+    // F-04.3: the types the recipient switched off for e-mail. The bell
+    // shows them all the same (ADR-0015).
+    disabledNotifications: readonly NotificationType[];
+  };
 };
 
 export type NotificationEmailContent = {
@@ -28,13 +34,16 @@ export type NotificationEmailContent = {
 
 // Someone who goes would come for nothing without these, so they go first
 // and may use the reserve of the daily budget. A reminder (#233) is worth
-// nothing once it is late, so it goes first too (ADR-0021).
+// nothing once it is late, so it goes first too (ADR-0021). So does a free
+// seat (#232): it goes to whoever signs up first, so a late e-mail is a seat
+// already taken (ADR-0030, dodatek).
 export const CRITICAL_NOTIFICATION_TYPES: readonly NotificationType[] = [
   'EVENT_CHANGED',
   'EVENT_CANCELLED',
   'EVENT_HIDDEN',
   'EVENT_REMINDER',
   'HOSTED_EVENT_REMINDER',
+  'SPOT_AVAILABLE',
 ];
 
 const changedHeading = (changes: EventChange[]): string => {
@@ -181,6 +190,15 @@ const eventDraft = (
       return {
         heading: 'Účastník se odhlásil z tvé akce',
         body: 'Uvolnilo se místo. Kdo to byl a proč, najdeš v přehledu účastníků akce.',
+        buttonLabel: 'Zobrazit akci',
+        path: eventPath,
+      };
+    // #232: to the people watching the full event. No title and no count of
+    // seats; whether one is still free is behind the button.
+    case 'SPOT_AVAILABLE':
+      return {
+        heading: 'Na akci, kterou hlídáš, se uvolnilo místo',
+        body: 'Místo ti nedržíme: dostane ho, kdo se přihlásí první. Přihlásit se můžeš v detailu akce.',
         buttonLabel: 'Zobrazit akci',
         path: eventPath,
       };

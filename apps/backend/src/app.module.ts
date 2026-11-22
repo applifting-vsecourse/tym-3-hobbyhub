@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ActivityModule } from './modules/activity/activity.module';
 import { AdministratorModule } from './modules/administrator/administrator.module';
 import { CancellationReasonModule } from './modules/cancellation-reason/cancellation-reason.module';
+import { EventInterestModule } from './modules/event-interest/event-interest.module';
 import { EventModule } from './modules/event/event.module';
 import { FriendshipModule } from './modules/friendship/friendship.module';
 import { GroupModule } from './modules/group/group.module';
@@ -42,6 +43,8 @@ const imports = [
   UserBlockModule,
   EventModule,
   ParticipationRequestModule,
+  // #231, ADR-0030: the "Zajímá mě" list.
+  EventInterestModule,
   MyEventsModule,
   MembershipRequestModule,
   NotificationModule,

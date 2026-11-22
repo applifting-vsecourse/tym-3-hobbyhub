@@ -30,7 +30,11 @@ const aNotification = (
   event: { id: 'e1', title: 'Čtvrteční florbal' },
   group: null,
   friendRequest: null,
-  recipient: { email: 'jana@example.com', emailVerified: true },
+  recipient: {
+    email: 'jana@example.com',
+    emailVerified: true,
+    disabledNotifications: [],
+  },
   ...overrides,
 });
 
@@ -93,7 +97,11 @@ describe('NotificationEmailsService', () => {
   it('records, but never sends, an e-mail to an unverified address', async () => {
     const { service, queued } = setup([
       aNotification({
-        recipient: { email: 'jana@example.com', emailVerified: false },
+        recipient: {
+          email: 'jana@example.com',
+          emailVerified: false,
+          disabledNotifications: [],
+        },
       }),
     ]);
 
@@ -121,8 +129,40 @@ describe('NotificationEmailsService', () => {
 
   it('leaves out a notification that has no e-mail', async () => {
     const { service, queued } = setup([
-      aNotification({ id: 'n1', type: 'SPOT_AVAILABLE' }),
+      aNotification({ id: 'n1', type: 'CONFIRMATION_PROMPT' }),
       aNotification({ id: 'n2', type: 'EVENT_CANCELLED', payload: {} }),
+    ]);
+
+    await service.queueFor(['n1', 'n2']);
+
+    expect(queued().map((email) => email.notificationId)).toEqual(['n2']);
+    expect(queued()[0].critical).toBe(true);
+  });
+
+  // F-04.3, #232: the bell keeps it; only the e-mail stays home.
+  it('leaves out a type the recipient switched off for e-mail', async () => {
+    const { service, queued } = setup([
+      aNotification({
+        id: 'n1',
+        type: 'SPOT_AVAILABLE',
+        payload: {},
+        recipient: {
+          email: 'jana@example.com',
+          emailVerified: true,
+          disabledNotifications: ['SPOT_AVAILABLE'],
+        },
+      }),
+      aNotification({
+        id: 'n2',
+        type: 'SPOT_AVAILABLE',
+        payload: {},
+        recipientId: 'u3',
+        recipient: {
+          email: 'petr@example.com',
+          emailVerified: true,
+          disabledNotifications: ['MONTHLY_RECOMMENDATION'],
+        },
+      }),
     ]);
 
     await service.queueFor(['n1', 'n2']);
