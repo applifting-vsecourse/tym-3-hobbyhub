@@ -64,6 +64,8 @@ export function useRemoveFromInterestList() {
       pendingRef.current.set(eventId, commit)
       toast(t("interest.removed"), {
         id: `interest-removed-${eventId}`,
+        // Twice sonner's default, so there is time to read it and reach "Vrátit".
+        duration: 8000,
         action: { label: t("interest.undo"), onClick: undo },
         onAutoClose: () => commit(),
         onDismiss: () => commit(),
