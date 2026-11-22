@@ -3,10 +3,9 @@ import mapboxgl from "mapbox-gl"
 import { useTranslation } from "react-i18next"
 
 import { EventPin, type EventPinState } from "@/components/hobbyhub/EventPin"
+import { DARK_STYLE, isDark, LIGHT_STYLE, MapMarker } from "@/components/hobbyhub/mapShared"
 import { env } from "@/config/env"
 import { cn } from "@/lib/utils"
-
-import { DARK_STYLE, isDark, LIGHT_STYLE, MapMarker } from "@/features/event/components/mapShared"
 
 import "mapbox-gl/dist/mapbox-gl.css"
 

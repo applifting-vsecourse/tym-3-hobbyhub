@@ -2,7 +2,7 @@ import {
   CreateEventDto,
   CreateEventLocationDto,
 } from '@/modules/event/controllers/dto/create-event.dto';
-import { VenueType } from '@/modules/event/domain/event';
+import { VENUE_TYPES, VenueType } from '@/modules/event/domain/event';
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -12,12 +12,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-const VENUE_TYPES = ['PUBLIC_VENUE', 'PRIVATE_VENUE', 'ONLINE'] as const;
-
 // An edit sends the whole form again, so it is checked like a new event. An
 // online event (which cannot be created yet) can be edited, and has no address.
 export class UpdateEventDto extends OmitType(CreateEventDto, [
-  'venueType',
   'location',
 ] as const) {
   @ApiProperty({

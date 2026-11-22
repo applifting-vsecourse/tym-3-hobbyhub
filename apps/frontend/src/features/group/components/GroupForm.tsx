@@ -8,14 +8,22 @@ import { z } from "zod"
 
 import { AppForm } from "@/components/form/AppForm"
 import { ActivityCombobox } from "@/components/hobbyhub/ActivityCombobox"
+import { AddressSearch } from "@/components/hobbyhub/AddressSearch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useRevalidateOnLanguageChange } from "@/hooks/useRevalidateOnLanguageChange"
 
-import { GROUP_LIMITS, type CreateGroupInput } from "@/features/group/api/groupSchemas"
+import {
+  GROUP_LIMITS,
+  MEETING_DAYS,
+  type CreateGroupInput,
+} from "@/features/group/api/groupSchemas"
 
 // Characters as the server and database count them: an emoji is one, not the
 // two UTF-16 units of `string.length`.
@@ -37,8 +45,18 @@ const createSchema = (t: TFunction) => {
         t("groups.validation.nameTooShort", { count: GROUP_LIMITS.nameMin }),
       ),
     activityId: z.string().min(1, t("groups.validation.activityRequired")),
-    locationName: text(GROUP_LIMITS.locationMax),
+    // The place is picked from the address search, so it comes with its position.
+    locationName: text(GROUP_LIMITS.locationMax).refine(
+      (value) => value.length > 0,
+      t("groups.validation.locationRequired"),
+    ),
     usualSchedule: text(GROUP_LIMITS.scheduleMax),
+    tagline: text(GROUP_LIMITS.taglineMax),
+    approvalMode: z.enum(["OPEN", "APPROVAL"]),
+    meetingDays: z.array(z.number().int().min(1).max(7)),
+    // The position of the place picked in the address search; both or none.
+    latitude: z.number({ error: t("groups.validation.locationRequired") }),
+    longitude: z.number({ error: t("groups.validation.locationRequired") }),
     description: text(GROUP_LIMITS.descriptionMax).min(
       1,
       t("groups.validation.descriptionRequired"),
@@ -46,21 +64,25 @@ const createSchema = (t: TFunction) => {
   })
 }
 
-type FormValues = z.infer<ReturnType<typeof createSchema>>
+export type FormValues = z.infer<ReturnType<typeof createSchema>>
 
-const defaultValues: FormValues = {
+const defaultValues: Partial<FormValues> = {
   name: "",
   activityId: "",
   locationName: "",
   usualSchedule: "",
+  tagline: "",
+  approvalMode: "APPROVAL",
+  meetingDays: [],
   description: "",
 }
 
 // Optional fields left empty are not sent at all.
-const toInput = ({ locationName, usualSchedule, ...values }: FormValues): CreateGroupInput => ({
+const toInput = ({ usualSchedule, tagline, ...values }: FormValues): CreateGroupInput => ({
   ...values,
-  locationName: locationName || undefined,
   usualSchedule: usualSchedule || undefined,
+  tagline: tagline || undefined,
+  meetingDays: values.meetingDays.length > 0 ? values.meetingDays : undefined,
 })
 
 export type ActivityOption = {
@@ -78,6 +100,10 @@ type GroupFormProps = {
   readonly isSubmitting: boolean
   readonly errorMessage?: string | null
   readonly onSubmit: (values: CreateGroupInput) => void | Promise<void>
+  /** The values of a group being changed; a new group starts empty. */
+  readonly initialValues?: Partial<FormValues>
+  /** Wording of the submit button; "Vytvořit skupinu" by default. */
+  readonly submitLabel?: string
 }
 
 export function GroupForm({
@@ -88,12 +114,14 @@ export function GroupForm({
   isSubmitting,
   errorMessage,
   onSubmit,
+  initialValues,
+  submitLabel,
 }: GroupFormProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createSchema(t), [t])
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues,
+    defaultValues: { ...defaultValues, ...initialValues },
   })
   useRevalidateOnLanguageChange(form)
 
@@ -178,12 +206,18 @@ export function GroupForm({
           <FormItem>
             <FormLabel>{t("groups.fields.location")}</FormLabel>
             <FormControl>
-              <Input
-                placeholder={t("groups.placeholders.location")}
-                autoComplete="address-level2"
-                {...field}
+              <AddressSearch
+                value={field.value}
+                placeholder={t("groups.form.place")}
+                onSelect={(address) => {
+                  // The group shows the city, not the street: where it meets, not an address.
+                  field.onChange(address.city || address.label)
+                  form.setValue("latitude", address.latitude, { shouldValidate: true })
+                  form.setValue("longitude", address.longitude, { shouldValidate: true })
+                }}
               />
             </FormControl>
+            <p className="typo-small text-muted-foreground">{t("groups.form.placeHint")}</p>
             <FormMessage />
           </FormItem>
         )}
@@ -191,15 +225,42 @@ export function GroupForm({
 
       <FormField
         control={form.control}
-        name="usualSchedule"
+        name="approvalMode"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("groups.fields.usualSchedule")}</FormLabel>
+            <FormLabel>{t("groups.fields.approvalMode")}</FormLabel>
             <FormControl>
-              <Input
-                placeholder={t("groups.placeholders.usualSchedule")}
-                {...field}
-              />
+              <RadioGroup
+                value={field.value}
+                onValueChange={field.onChange}
+                className="gap-3"
+              >
+                {(["OPEN", "APPROVAL"] as const).map((mode) => (
+                  <div
+                    key={mode}
+                    className="flex items-start gap-3"
+                  >
+                    <RadioGroupItem
+                      id={`approval-${mode}`}
+                      value={mode}
+                      className="mt-1"
+                    />
+                    <Label
+                      htmlFor={`approval-${mode}`}
+                      className="flex flex-col items-start gap-0.5"
+                    >
+                      {t(`groups.approval.${mode}`)}
+                      <span className="typo-small font-normal text-muted-foreground">
+                        {t(
+                          mode === "OPEN"
+                            ? "groups.form.approvalOpen"
+                            : "groups.form.approvalApproval",
+                        )}
+                      </span>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -224,6 +285,71 @@ export function GroupForm({
         )}
       />
 
+      <FormField
+        control={form.control}
+        name="tagline"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.tagline")}</FormLabel>
+            <FormControl>
+              <Input
+                placeholder={t("groups.placeholders.tagline")}
+                {...field}
+              />
+            </FormControl>
+            <p className="typo-small text-muted-foreground">{t("groups.form.taglineHint")}</p>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="meetingDays"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.meetingDays")}</FormLabel>
+            <ToggleGroup
+              type="multiple"
+              variant="chip"
+              spacing={2}
+              aria-label={t("groups.fields.meetingDays")}
+              className="flex-wrap"
+              value={field.value.map(String)}
+              onValueChange={(days) => field.onChange(days.map(Number).sort())}
+            >
+              {MEETING_DAYS.map((day) => (
+                <ToggleGroupItem
+                  key={day}
+                  value={String(day)}
+                  className="h-11 md:h-9"
+                >
+                  {t(`groups.weekdays.${day}`)}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="usualSchedule"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("groups.fields.usualSchedule")}</FormLabel>
+            <FormControl>
+              <Input
+                placeholder={t("groups.placeholders.usualSchedule")}
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/*
         On phones the action sits at the bottom of the screen, as in the
         wireframe, above the BottomNav and under it (z-40) so its raised
@@ -237,7 +363,7 @@ export function GroupForm({
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-          {t("groups.form.submit")}
+          {submitLabel ?? t("groups.form.submit")}
         </Button>
       </div>
     </AppForm>

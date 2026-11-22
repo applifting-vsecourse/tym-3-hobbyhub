@@ -184,7 +184,7 @@ describe('eventChangeViolations', () => {
   const later = new Date('2026-10-24T12:00:00Z');
   const event = {
     status: 'PUBLISHED' as const,
-    venueType: 'PUBLIC_VENUE' as const,
+    venueType: 'PLACE' as const,
     startAt: later,
     externalOccupiedSpots: 4,
     approvedCount: 3,
@@ -199,8 +199,9 @@ describe('eventChangeViolations', () => {
           kind: 'update',
           maxParticipants: 7,
           externalOccupiedSpots: 4,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -215,8 +216,9 @@ describe('eventChangeViolations', () => {
           kind: 'update',
           maxParticipants: 12,
           externalOccupiedSpots: 4,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -231,8 +233,9 @@ describe('eventChangeViolations', () => {
           kind: 'update',
           maxParticipants: 6,
           externalOccupiedSpots: 4,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -247,8 +250,9 @@ describe('eventChangeViolations', () => {
           kind: 'update',
           maxParticipants: 6,
           externalOccupiedSpots: 3,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -267,8 +271,9 @@ describe('eventChangeViolations', () => {
           kind: 'update',
           maxParticipants: 12,
           externalOccupiedSpots: 4,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -285,6 +290,7 @@ describe('eventChangeViolations', () => {
           externalOccupiedSpots: 4,
           venueType: 'ONLINE',
           hasLocation: false,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -292,8 +298,8 @@ describe('eventChangeViolations', () => {
   });
 
   it.each([
-    ['an online event to a place', 'ONLINE' as const, 'PUBLIC_VENUE' as const],
-    ['a place to online', 'PUBLIC_VENUE' as const, 'ONLINE' as const],
+    ['an online event to a place', 'ONLINE' as const, 'PLACE' as const],
+    ['a place to online', 'PLACE' as const, 'ONLINE' as const],
   ])('refuses turning %s', (_, from, to) => {
     expect(
       eventChangeViolations(
@@ -304,6 +310,7 @@ describe('eventChangeViolations', () => {
           externalOccupiedSpots: 4,
           venueType: to,
           hasLocation: to !== 'ONLINE',
+          isAddressPublic: false,
         },
         now,
       ),
@@ -318,8 +325,9 @@ describe('eventChangeViolations', () => {
           kind: 'update',
           maxParticipants: 12,
           externalOccupiedSpots: 4,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: false,
+          isAddressPublic: false,
         },
         now,
       ),
@@ -336,11 +344,51 @@ describe('eventChangeViolations', () => {
           externalOccupiedSpots: 4,
           venueType: 'ONLINE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),
     ).toEqual(['LOCATION_NOT_ALLOWED']);
   });
+
+  // #218: an online event has no address to make public.
+  it('refuses a public address for an online event', () => {
+    expect(
+      eventChangeViolations(
+        { ...event, venueType: 'ONLINE' },
+        {
+          kind: 'update',
+          maxParticipants: 12,
+          externalOccupiedSpots: 4,
+          venueType: 'ONLINE',
+          hasLocation: false,
+          isAddressPublic: true,
+        },
+        now,
+      ),
+    ).toEqual(['LOCATION_NOT_ALLOWED']);
+  });
+
+  // #218: the organizer may make the address public or hide it again.
+  it.each([true, false])(
+    'lets a place make its address public or not (%s)',
+    (isAddressPublic) => {
+      expect(
+        eventChangeViolations(
+          event,
+          {
+            kind: 'update',
+            maxParticipants: 12,
+            externalOccupiedSpots: 4,
+            venueType: 'PLACE',
+            hasLocation: true,
+            isAddressPublic,
+          },
+          now,
+        ),
+      ).toEqual([]);
+    },
+  );
 
   it('lets a published future event be cancelled', () => {
     expect(eventChangeViolations(event, { kind: 'cancel' }, now)).toEqual([]);
@@ -491,7 +539,7 @@ describe('a hidden event (#239)', () => {
   const now = new Date('2030-01-01T12:00:00Z');
   const hidden = {
     status: 'PUBLISHED' as const,
-    venueType: 'PUBLIC_VENUE' as const,
+    venueType: 'PLACE' as const,
     startAt: later,
     maxParticipants: 10,
     approvedCount: 2,
@@ -506,8 +554,9 @@ describe('a hidden event (#239)', () => {
           kind: 'update',
           maxParticipants: 10,
           externalOccupiedSpots: 0,
-          venueType: 'PUBLIC_VENUE',
+          venueType: 'PLACE',
           hasLocation: true,
+          isAddressPublic: false,
         },
         now,
       ),

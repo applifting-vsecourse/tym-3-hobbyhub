@@ -13,6 +13,7 @@ import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
 import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
+import { GroupClusterPin, GroupPin } from "@/components/hobbyhub/GroupPin"
 import { GroupRow } from "@/components/hobbyhub/GroupRow"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
@@ -468,6 +469,13 @@ export function DomainSections() {
             state="selected"
           />
           <EventClusterPin label="9 akcí" />
+        </Example>
+        <Example
+          label="Špendlík skupiny: počet členů, shluk skupin"
+          className="items-end gap-6"
+        >
+          <GroupPin count={24} />
+          <GroupClusterPin count={5} />
         </Example>
         <Example label="Hledání adresy: našeptávač s polohou (potřebuje VITE_MAPBOX_TOKEN)">
           <AddressSearchExample />

@@ -25,9 +25,10 @@ export const EVENT_LIMITS = {
 export const APPROVAL_MODES = ["MANUAL", "AUTOMATIC"] as const
 export type ApprovalMode = (typeof APPROVAL_MODES)[number]
 
-// F-05.1 creates events at a place; ONLINE waits for a PO decision (ADR-0006).
-export const CREATABLE_VENUE_TYPES = ["PUBLIC_VENUE", "PRIVATE_VENUE"] as const
-export type CreatableVenueType = (typeof CREATABLE_VENUE_TYPES)[number]
+// #218, ADR-0029: a place or online. Whether the exact address of a place is
+// public is `isAddressPublic`. A new event is always at a place: ONLINE waits
+// for a PO decision (ADR-0006).
+export const VENUE_TYPES = ["PLACE", "ONLINE"] as const
 
 export const eventLocationSchema = z.object({
   street: z.string(),
@@ -46,7 +47,9 @@ export const eventSchema = z.object({
   equipment: z.string().nullable(),
   status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "FINISHED", "NOT_HELD"]),
   visibility: z.enum(["PUBLIC", "GROUP_ONLY", "PRIVATE"]),
-  venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
+  venueType: z.enum(VENUE_TYPES),
+  /** #218: everyone who sees the event sees its exact address. */
+  isAddressPublic: z.boolean(),
   approvalMode: z.enum(APPROVAL_MODES),
   startAt: z.coerce.date(),
   endAt: z.coerce.date(),
@@ -90,8 +93,8 @@ export type CreateEventInput = {
   activityId: string
   description: string
   equipment?: string
-  /** An online event cannot be created yet, but one that exists can be edited. */
-  venueType: Event["venueType"]
+  /** #218: everyone sees the exact address, or only the people with a seat. */
+  isAddressPublic: boolean
   approvalMode: ApprovalMode
   /** ISO date-time strings. */
   startAt: string
@@ -117,19 +120,29 @@ export type CreateEventInput = {
   contact?: string
 }
 
+/**
+ * #218: an edit also says the kind of venue: an online event cannot be
+ * created yet, but one that exists can be edited, and keeps its kind. A new
+ * event is always at a place, so the API refuses the field there.
+ */
+export type UpdateEventInput = CreateEventInput & { venueType: Event["venueType"] }
+
 export const eventListItemSchema = z.object({
   id: z.string(),
   title: z.string(),
   imageUrl: z.string().nullable(),
   startAt: z.coerce.date(),
   endAt: z.coerce.date(),
-  venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
-  // Only approximate: the API sends no street, and no name for private venues.
+  venueType: z.enum(VENUE_TYPES),
+  /** #218: whether the organizer made the exact address public. */
+  isAddressPublic: z.boolean(),
+  // Only approximate: the API sends no street here, and no name unless the
+  // address is public.
   placeName: z.string().nullable(),
   district: z.string().nullable(),
   city: z.string().nullable(),
   level: z.string().nullable(),
-  // Public venues with a known position only; private venues are never located.
+  // A public address with a known position only; a hidden one is never located.
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
   /** Straight-line km from the visitor; only when the list was asked for by position. */
@@ -190,6 +203,11 @@ export const eventDetailSchema = eventListItemSchema.extend({
   hiddenReason: z.string().nullable(),
   /** #236: the participants' revealed ratings; both null below three. */
   rating: ratingScoreSchema,
+  /**
+   * #218: the exact address, when the organizer made it public; null when
+   * only the people with a seat get it, from the participant info.
+   */
+  location: eventLocationSchema.nullable(),
 })
 
 export type EventDetail = z.infer<typeof eventDetailSchema>
@@ -204,6 +222,8 @@ export const groupEventPageSchema = z.object({
   items: z.array(groupEventSchema),
   /** All the events of the period, not just this page. */
   total: z.number(),
+  /** A non-member's past: how many group-only events there were, nothing else (#269). */
+  hiddenCount: z.number().optional(),
 })
 
 export type GroupEvent = z.infer<typeof groupEventSchema>
@@ -217,7 +237,7 @@ export type GroupEventPeriod = (typeof GROUP_EVENT_PERIODS)[number]
  * address and the ways to reach the organizer. Not part of the public detail.
  */
 export const participantInfoSchema = z.object({
-  venueType: z.enum(["PUBLIC_VENUE", "PRIVATE_VENUE", "ONLINE"]),
+  venueType: z.enum(VENUE_TYPES),
   location: eventLocationSchema.nullable(),
   organizerName: z.string(),
   // Rendered as a link: only web addresses, whatever an old row may hold.
