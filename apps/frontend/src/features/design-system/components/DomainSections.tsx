@@ -13,6 +13,7 @@ import { EventCard } from "@/components/hobbyhub/EventCard"
 import { EventDetailCard } from "@/components/hobbyhub/EventDetailCard"
 import { EventPhoto } from "@/components/hobbyhub/EventPhoto"
 import { EventClusterPin, EventPin } from "@/components/hobbyhub/EventPin"
+import { GroupClusterPin, GroupPin } from "@/components/hobbyhub/GroupPin"
 import { GroupRow } from "@/components/hobbyhub/GroupRow"
 import { Hero } from "@/components/hobbyhub/Hero"
 import { JoinRequestCard } from "@/components/hobbyhub/JoinRequestCard"
@@ -231,7 +232,8 @@ export function DomainSections() {
         <Example label="Řádek rozpisu">
           <div className="flex w-full max-w-md flex-col">
             <ScheduleRow
-              time="19:00"
+              day="15. 10."
+              time="čt 19:00"
               title="Čtvrteční florbal"
               subtitle="Hala ZŠ Dolní, pokročilí"
               taken={7}
@@ -241,6 +243,7 @@ export function DomainSections() {
               badge={<StatusBadge status="approved" />}
             />
             <ScheduleRow
+              day="Zítra"
               time="20:30"
               title="Volejbal pod lampami (bez fotky)"
               subtitle="Stromovka, mírně pokročilí"
@@ -286,8 +289,8 @@ export function DomainSections() {
             <EventDetailCard
               activity="florbal"
               title="Čtvrteční florbal"
-              day="Pátek"
-              time="19:00"
+              day="16. 10."
+              time="pá 19:00"
               endTime="20:30"
               place="Hala ZŠ Dolní"
               level="Pokročilí"
@@ -466,6 +469,13 @@ export function DomainSections() {
             state="selected"
           />
           <EventClusterPin label="9 akcí" />
+        </Example>
+        <Example
+          label="Špendlík skupiny: počet členů, shluk skupin"
+          className="items-end gap-6"
+        >
+          <GroupPin count={24} />
+          <GroupClusterPin count={5} />
         </Example>
         <Example label="Hledání adresy: našeptávač s polohou (potřebuje VITE_MAPBOX_TOKEN)">
           <AddressSearchExample />

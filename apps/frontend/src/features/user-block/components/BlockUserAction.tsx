@@ -13,7 +13,7 @@ type BlockUserActionProps = {
 }
 
 /**
- * #65, ADR-0028: "Zablokovat" on another person's profile, or, once blocked,
+ * #65, ADR-0031: "Zablokovat" on another person's profile, or, once blocked,
  * what the block means and "Odblokovat". Blocking undoes seats, memberships
  * and requests for good, so it asks first; unblocking undoes nothing and does
  * not.

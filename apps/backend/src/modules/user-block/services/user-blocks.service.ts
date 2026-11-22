@@ -34,7 +34,7 @@ const violationsError = (
   });
 
 // #239, ADR-0022: an administrator blocks two people from each other. #65,
-// ADR-0028: a user blocks another user, one way. The other modules then keep
+// ADR-0031: a user blocks another user, one way. The other modules then keep
 // them apart (UserBlockVisibility); this service writes the block and tidies
 // up what already ties the two together, the same for both kinds.
 @Injectable()
@@ -52,7 +52,7 @@ export class UserBlocksService {
     return this.repository.listBlockedBy(user.id);
   }
 
-  // #65, ADR-0028: the blocker comes from the session. Anyone who exists can
+  // #65, ADR-0031: the blocker comes from the session. Anyone who exists can
   // be blocked, also someone who blocked the user first or a pair an
   // administrator blocked: each block stands on its own and protects its
   // blocker once the other ends (review of PR #267). The ties go as with an

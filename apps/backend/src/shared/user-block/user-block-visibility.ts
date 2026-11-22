@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common';
 // this read side lives apart and nothing runs in a circle.
 //
 // A block an administrator made applies both ways. A block a user makes (#65,
-// ADR-0028) applies one way: the blocker's content does not exist for the
+// ADR-0031) applies one way: the blocker's content does not exist for the
 // blocked. The blocker still sees the blocked, but sends them no requests and
 // hears nothing from them.
 @Injectable()

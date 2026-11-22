@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { groupKeys } from "@/features/group/api/groupKeys"
 import { groupMembershipQueryOptions } from "@/features/group/api/groupMembershipQueryOptions"
 import { hasGroupAdminRights } from "@/features/group/api/groupSchemas"
+import { joinOpenGroup } from "@/features/group/api/joinOpenGroup"
 import { leaveGroup } from "@/features/group/api/leaveGroup"
 import { myMembershipRequestQueryOptions } from "@/features/group/api/membershipRequestQueryOptions"
 
@@ -34,6 +35,11 @@ export function useGroupMembershipState(
   const leaveMutation = useMutation({
     mutationFn: () => leaveGroup(groupId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.detail(groupId) }),
+  })
+  // A group that lets anyone in: no request, the person is a member at once.
+  const joinMutation = useMutation({
+    mutationFn: () => joinOpenGroup(groupId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.all() }),
   })
   // The membership query is off while signed out, but its cached answer stays
   // (signing out does not clear the cache), so it only counts while signed in.
@@ -77,6 +83,9 @@ export function useGroupMembershipState(
     isLeaving: leaveMutation.isPending,
     leaveFailed: leaveMutation.isError,
     resetLeave: leaveMutation.reset,
+    join: () => joinMutation.mutateAsync(),
+    isJoining: joinMutation.isPending,
+    joinFailed: joinMutation.isError,
   }
 }
 

@@ -411,7 +411,7 @@ describeDb('rating schema constraints and views', () => {
       });
     });
 
-    // ADR-0022, ADR-0028 (reviews of PR #264 and #267): a rating counts
+    // ADR-0022, ADR-0031 (reviews of PR #264 and #267): a rating counts
     // nowhere when its author does not exist for the rated person, so no number
     // differs from the list they see and nothing gives the block away. It
     // comes back once the block is lifted.
@@ -492,7 +492,7 @@ describeDb('rating schema constraints and views', () => {
       },
     );
 
-    // ADR-0028: blocking the author of a bad rating does not take it off
+    // ADR-0031: blocking the author of a bad rating does not take it off
     // one's score. The blocker still sees the blocked, so the rating stays in
     // their list too.
     it('keeps counting a rating from someone the rated one blocked', async () => {

@@ -8,6 +8,9 @@ import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
 import { cn } from "@/lib/utils"
 
 type ScheduleRowProps = Capacity & {
+  /** The date, the first thing a row says: "Dnes", "15. 10.". */
+  day: string
+  /** Under the date, small: "čt 19:00". */
   time: string
   title: string
   /** Place and level, e.g. "Hala ZŠ Dolní, pokročilí". */
@@ -27,9 +30,10 @@ type ScheduleRowProps = Capacity & {
 }
 
 /**
- * Řádek rozpisu — the main item of an event listing: time, a small photo,
- * title with place and level, small seats and a status word. No card, no
- * shadow; rows are separated by a hairline.
+ * Řádek rozpisu — the main item of an event listing: date with the time under
+ * it, title with place and level, small seats and a status word. No card, no
+ * shadow; rows are separated by a hairline. The photo only appears where the
+ * row is wide (below that it would just make every row taller).
  *
  * The row reads its own width (a container query), not the screen's: in the
  * narrow list beside the map everything stacks, while a row as wide as a page
@@ -37,6 +41,7 @@ type ScheduleRowProps = Capacity & {
  * it uses the width instead of growing tall (#224).
  */
 export function ScheduleRow({
+  day,
   time,
   title,
   subtitle,
@@ -53,20 +58,23 @@ export function ScheduleRow({
   return (
     <div className={cn("@container border-t border-border", className)}>
       <div className="flex items-start gap-3 py-4 @3xl:gap-6">
-        {/* The photo sits under the time, so the title keeps the row's width
-          next to the seats even in the narrow list beside the map. */}
-        <div className="flex w-22 shrink-0 flex-col gap-2 @3xl:w-auto @3xl:flex-row @3xl:items-center @3xl:gap-4">
-          <p className="typo-time text-foreground @3xl:w-22">{time}</p>
+        {/* Narrow: the date column, then the texts, then the seats — one compact
+          line of facts per event. Wide: the photo joins the date column. */}
+        <div className="flex shrink-0 @3xl:items-center @3xl:gap-4">
+          <div className="flex w-20 flex-col @3xl:w-24">
+            <p className="typo-h3 text-foreground">{day}</p>
+            <p className="typo-small text-muted-foreground">{time}</p>
+          </div>
           {photo ? (
             <EventPhoto
               src={photo.src}
               alt={photo.alt}
-              className="h-14 @3xl:w-22"
+              className="hidden h-14 @3xl:block @3xl:w-22"
             />
           ) : (
             <div
               aria-hidden
-              className="flex h-14 w-full items-center justify-center rounded-md bg-muted text-muted-foreground @3xl:w-22"
+              className="hidden h-14 items-center justify-center rounded-md bg-muted text-muted-foreground @3xl:flex @3xl:w-22"
             >
               {activity && isActivityKey(activity) ? (
                 <ActivityIcon

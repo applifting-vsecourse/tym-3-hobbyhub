@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { blockUser, unblockUser } from "@/features/user-block/api/userBlockRequests"
 
 /**
- * #65, ADR-0028: a block quietly ends requests, seats, memberships and the
+ * #65, ADR-0031: a block quietly ends requests, seats, memberships and the
  * friendship between the two, and changes what either may ask for and whose
  * ratings and notifications count: most of what is cached (profiles, events,
  * groups, requests, friendships, notifications, ratings). So everything is

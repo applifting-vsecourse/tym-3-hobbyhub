@@ -1,3 +1,7 @@
+import {
+  INTERESTED_EVENT_STATES,
+  InterestedEventState,
+} from '@/modules/event-interest/domain/event-interest';
 import { EventListItemResponseDto } from '@/modules/event/controllers/dto/event-list-item.response.dto';
 import {
   APPLICATION_STATUSES,
@@ -6,6 +10,8 @@ import {
   MyApplicationPage,
   MyHostedEvent,
   MyHostedEventPage,
+  MyInterestedEvent,
+  MyInterestedEventPage,
 } from '@/modules/my-events/domain/my-events';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -91,6 +97,68 @@ export class MyHostedEventsResponseDto {
     return {
       items: page.items.map((event) =>
         HostedEventResponseDto.fromHosted(event),
+      ),
+      total: page.total,
+    };
+  }
+}
+
+// #231: an event on the "Zajímá mě" list. Nothing about who else saved it.
+export class InterestedEventResponseDto extends EventListItemResponseDto {
+  @ApiProperty({
+    enum: INTERESTED_EVENT_STATES,
+    description:
+      'UPCOMING while the event is on; PAST once it is over; CANCELLED when called off',
+  })
+  state!: InterestedEventState;
+
+  @ApiProperty({
+    description:
+      'The signed-in user watches the event for a free seat (#232); only they ever see it',
+  })
+  watchesFreeSpot!: boolean;
+
+  @ApiProperty({
+    description:
+      'The user may start watching the event now: it is full, has not started, and nothing else keeps them from asking to join',
+  })
+  canWatchFreeSpot!: boolean;
+
+  @ApiProperty({
+    enum: APPLICATION_STATUSES,
+    nullable: true,
+    description:
+      "Where the signed-in user's own application to the event stands, as under their applications; null when they never applied",
+  })
+  applicationStatus!: ApplicationStatus | null;
+
+  static fromInterested(event: MyInterestedEvent): InterestedEventResponseDto {
+    return {
+      ...EventListItemResponseDto.fromDomain(event),
+      state: event.state,
+      watchesFreeSpot: event.watchesFreeSpot,
+      canWatchFreeSpot: event.canWatchFreeSpot,
+      applicationStatus: event.applicationStatus,
+    };
+  }
+}
+
+export class MyInterestedEventsResponseDto {
+  @ApiProperty({ type: [InterestedEventResponseDto] })
+  items!: InterestedEventResponseDto[];
+
+  @ApiProperty({
+    description:
+      'All saved events the user may still see that match the filter, not just this page',
+  })
+  total!: number;
+
+  static fromDomain(
+    page: MyInterestedEventPage,
+  ): MyInterestedEventsResponseDto {
+    return {
+      items: page.items.map((event) =>
+        InterestedEventResponseDto.fromInterested(event),
       ),
       total: page.total,
     };

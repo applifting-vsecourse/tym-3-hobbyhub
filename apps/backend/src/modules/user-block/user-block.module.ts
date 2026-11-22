@@ -12,7 +12,7 @@ import { UserBlockRepository } from './repositories/user-block.repository';
 import { UserBlocksService } from './services/user-blocks.service';
 
 // #239, ADR-0022: an administrator blocks two people from each other; #65,
-// ADR-0028: a user blocks another user. The read side every module asks
+// ADR-0031: a user blocks another user. The read side every module asks
 // lives in shared/user-block; this module writes the blocks and undoes what
 // already ties the two together, through the other modules' services.
 @Module({

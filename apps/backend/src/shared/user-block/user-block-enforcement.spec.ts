@@ -238,7 +238,7 @@ describe('blocks between two people (#239)', () => {
   });
 });
 
-// #65, ADR-0028: "viewer" blocked "blocked" themselves. The blocked one
+// #65, ADR-0031: "viewer" blocked "blocked" themselves. The blocked one
 // still exists for the viewer, but the viewer sends them no requests.
 describe('a block by a user (#65)', () => {
   const viewerBlocked = (): MockProxy<UserBlockVisibility> => {
@@ -316,5 +316,30 @@ describe('a block by a user (#65)', () => {
       violationsOf(service.requestMembership(viewer, 'g1')),
     ).resolves.toEqual(['BLOCKED_ADMIN']);
     expect(repository.createPending).not.toHaveBeenCalled();
+  });
+
+  // ADR-0028: an open group is joined without a request; the block still
+  // keeps the blocker out of a group the blocked one runs.
+  it('lets the blocker join no open group the blocked one runs', async () => {
+    const repository = mock<MembershipRequestRepository>();
+    const groups = mock<GroupsService>();
+    groups.assertPublicGroup.mockResolvedValue({
+      id: 'g1',
+      approvalMode: 'OPEN',
+    } as Group);
+    groups.getMemberRole.mockResolvedValue(null);
+    groups.getAdminIds.mockResolvedValue(['owner', 'blocked']);
+    repository.getRequestsOf.mockResolvedValue([]);
+    const service = new MembershipRequestsService(
+      repository,
+      groups,
+      mock<NotificationsService>(),
+      viewerBlocked(),
+    );
+
+    await expect(
+      violationsOf(service.joinOpenGroup(viewer, 'g1')),
+    ).resolves.toEqual(['BLOCKED_ADMIN']);
+    expect(groups.addMember).not.toHaveBeenCalled();
   });
 });

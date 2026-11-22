@@ -249,6 +249,26 @@ export class NotificationsService {
     });
   }
 
+  // #232: a seat freed up on a full event; everyone watching it, all at once.
+  // The caller knows who watches, who may still see the event and who has no
+  // seat; whoever freed the seat is left out here too. Nobody is the actor:
+  // the watchers must not learn who left, nor the others who watches.
+  notifySpotAvailable(input: {
+    event: AnEvent;
+    watcherIds: readonly string[];
+    freedBy: Who | null;
+  }): Promise<void> {
+    return this.record({
+      type: 'SPOT_AVAILABLE',
+      recipientIds: recipientsExcept(
+        input.watcherIds,
+        input.freedBy?.id ?? null,
+      ),
+      actorId: null,
+      eventId: input.event.id,
+    });
+  }
+
   // #240, ADR-0023: a report the user filed was dealt with. It names neither
   // the target nor the outcome, so it gives away no block between two people
   // and nothing of what the administrator did. Nobody is the actor.

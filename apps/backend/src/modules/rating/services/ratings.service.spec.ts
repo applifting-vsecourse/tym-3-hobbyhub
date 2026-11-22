@@ -125,7 +125,7 @@ describe('RatingsService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    // #65, ADR-0028: whoever blocked someone says nothing to them.
+    // #65, ADR-0031: whoever blocked someone says nothing to them.
     it('does not let someone rate an organizer they blocked', async () => {
       const { repository, service } = setup({ blocked: ['org'] });
       await expect(
@@ -203,7 +203,7 @@ describe('RatingsService', () => {
     it.each([
       ['without any seat', { seats: {} }],
       ['blocked from the organizer', { hidden: ['p1'] }],
-      // #65, ADR-0028: the organizer blocked them themselves.
+      // #65, ADR-0031: the organizer blocked them themselves.
       ['the organizer blocked', { blocked: ['p1'] }],
     ])('does not find a participant %s', async (_case, options) => {
       const { service } = setup(options);
@@ -313,7 +313,7 @@ describe('RatingsService', () => {
       ).resolves.toEqual([]);
     });
 
-    // #65, ADR-0028: rateOrganizer refuses them, so the list must not offer it.
+    // #65, ADR-0031: rateOrganizer refuses them, so the list must not offer it.
     it('leaves out an event whose main organizer the person blocked', async () => {
       const { service } = listSetup({
         events: [
@@ -426,7 +426,7 @@ describe('RatingsService', () => {
       ]);
     });
 
-    // #65, ADR-0028: the same people as the list to rate, so it reaches zero.
+    // #65, ADR-0031: the same people as the list to rate, so it reaches zero.
     it('does not count a participant the organizer blocked', async () => {
       const { service } = hostedSetup({
         events: [anEvent({ id: 'open' }), anEvent({ id: 'onlyBlocked' })],

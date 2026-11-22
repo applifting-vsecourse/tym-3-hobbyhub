@@ -195,7 +195,7 @@ describeDb('blocks between two people in the database (#239)', () => {
       await expect(visibility.hiddenFrom(blocked)).resolves.toEqual([]);
     });
 
-    // #65, ADR-0028: the blocker still sees the blocked, but hears nothing
+    // #65, ADR-0031: the blocker still sees the blocked, but hears nothing
     // from them, and the blocked hears nothing from the blocker.
     it('keeps both of a block by a user from hearing of each other', async () => {
       const [blocker, blocked, other] = [
@@ -227,7 +227,7 @@ describeDb('blocks between two people in the database (#239)', () => {
     });
   });
 
-  // #65, ADR-0028: a user's own block.
+  // #65, ADR-0031: a user's own block.
   describe('a block by a user', () => {
     it('is stored once and lists the blocked for the blocker only', async () => {
       const [blocker, blocked] = [await aUser(), await aUser()];

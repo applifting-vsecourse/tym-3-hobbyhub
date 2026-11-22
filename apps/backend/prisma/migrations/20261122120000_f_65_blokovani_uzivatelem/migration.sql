@@ -1,4 +1,4 @@
--- #65, ADR-0028: a user blocks another user, one way. A block now says who
+-- #65, ADR-0031: a user blocks another user, one way. A block now says who
 -- made it, so a user and an administrator may each block the same pair.
 
 -- CreateEnum
@@ -20,7 +20,7 @@ CREATE UNIQUE INDEX "user_block_blockerId_blockedId_source_key" ON "user_block"(
 ALTER TABLE "user_block" ADD CONSTRAINT "user_block_source"
   CHECK (("source" = 'ADMINISTRATOR') = ("createdById" IS NOT NULL));
 
--- ADR-0028 (review PR #267): a rating is left out where its author does not
+-- ADR-0031 (review PR #267): a rating is left out where its author does not
 -- exist for the rated person, so no number differs from the list they see.
 -- An administrator's block keeps the two apart both ways, as before. A user's
 -- block hides only the blocker's rating of the one they blocked: a rating the

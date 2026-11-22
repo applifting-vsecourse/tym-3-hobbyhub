@@ -323,7 +323,10 @@ describe('ParticipationRequestsService', () => {
     it('gives the seat back and tells the organizers why', async () => {
       const event = anEvent({ hasSeat: true });
       const { repository, notifications, service } = setup(event);
-      repository.cancelSeat.mockResolvedValue(null);
+      repository.cancelSeat.mockResolvedValue({
+        freeSpotsBefore: 2,
+        freeSpotsAfter: 3,
+      });
 
       await service.cancelMySeat(user, 'e1', message, now);
 
@@ -338,6 +341,25 @@ describe('ParticipationRequestsService', () => {
         participant: user,
         message,
       });
+    });
+
+    // #232: the event module decides whether it went from full to free, and
+    // leaves out whoever gave the seat back.
+    it('hands the free seats before and after to the watchers', async () => {
+      const { repository, events, service } = setup(
+        anEvent({ hasSeat: true, freeSpots: 0 }),
+      );
+      const change = { freeSpotsBefore: 0, freeSpotsAfter: 1 };
+      repository.cancelSeat.mockResolvedValue(change);
+
+      await service.cancelMySeat(user, 'e1', message, now);
+
+      expect(events.notifyIfSpotFreed).toHaveBeenCalledWith(
+        'e1',
+        change,
+        user,
+        now,
+      );
     });
 
     it.each([
@@ -374,12 +396,71 @@ describe('ParticipationRequestsService', () => {
       expect(notifications.notifyParticipantCancelled).not.toHaveBeenCalled();
     });
 
+    it('frees no seat for the watchers when it was refused', async () => {
+      const { repository, events, service } = setup(anEvent({ hasSeat: true }));
+      repository.cancelSeat.mockResolvedValue('NO_SEAT');
+
+      await expect(
+        service.cancelMySeat(user, 'e1', message, now),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(events.notifyIfSpotFreed).not.toHaveBeenCalled();
+    });
+
     it('answers 404 for an event that is not public', async () => {
       const { service } = setup(null);
 
       await expect(
         service.cancelMySeat(user, 'e1', message, now),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  // #239, #232: the seats a block cancelled may free one on a full event.
+  describe('detachBlockedPair', () => {
+    it('hands every event where a seat went to the watchers, naming nobody', async () => {
+      const { repository, events, service } = setup();
+      repository.detachBlockedPair.mockResolvedValue([
+        { eventId: 'e1', freeSpotsBefore: 0, freeSpotsAfter: 1 },
+        { eventId: 'e2', freeSpotsBefore: 3, freeSpotsAfter: 4 },
+      ]);
+
+      await service.detachBlockedPair('a', 'b', now);
+
+      expect(repository.detachBlockedPair).toHaveBeenCalledWith('a', 'b', now);
+      expect(events.notifyIfSpotFreed).toHaveBeenCalledWith(
+        'e1',
+        { freeSpotsBefore: 0, freeSpotsAfter: 1 },
+        null,
+        now,
+      );
+      expect(events.notifyIfSpotFreed).toHaveBeenCalledWith(
+        'e2',
+        { freeSpotsBefore: 3, freeSpotsAfter: 4 },
+        null,
+        now,
+      );
+    });
+  });
+
+  // #232: what the "Zajímá mě" list asks before letting someone watch.
+  describe('getJoinViolations', () => {
+    it('says why the person may not ask to join, as on the detail', async () => {
+      const { service } = setup(anEvent({ freeSpots: 0 }), [
+        aRequest({ status: 'PENDING' }),
+      ]);
+
+      await expect(service.getJoinViolations(user, 'e1', now)).resolves.toEqual(
+        ['ALREADY_REQUESTED', 'EVENT_FULL'],
+      );
+    });
+
+    it('is null for an event the person may not see', async () => {
+      const { repository, service } = setup(null);
+
+      await expect(
+        service.getJoinViolations(user, 'e1', now),
+      ).resolves.toBeNull();
+      expect(repository.getRequestsOf).not.toHaveBeenCalled();
     });
   });
 

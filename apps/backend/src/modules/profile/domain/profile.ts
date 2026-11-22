@@ -76,7 +76,7 @@ export type PublicProfile = {
   // #236, ADR-0027: as an organizer and as a participant; others see neither
   // number below three revealed ratings.
   ratings: ShownUserRatingScores;
-  // #65, ADR-0028: whether the viewer blocked this person. Only ever about
+  // #65, ADR-0031: whether the viewer blocked this person. Only ever about
   // the viewer's own choice; the blocked never learn of it.
   isBlockedByMe: boolean;
 };

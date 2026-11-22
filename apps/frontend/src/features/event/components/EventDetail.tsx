@@ -15,7 +15,13 @@ import { cn } from "@/lib/utils"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
 import { formatContribution } from "@/features/event/lib/eventDateTime"
-import { eventDay, eventEnd, eventPlace, eventTime } from "@/features/event/lib/eventLabels"
+import {
+  eventClock,
+  eventDate,
+  eventDay,
+  eventEnd,
+  eventPlace,
+} from "@/features/event/lib/eventLabels"
 
 type EventDetailProps = {
   event: EventDetailData
@@ -30,11 +36,21 @@ type EventDetailProps = {
   /** Copy the public link; shown to everyone while the event can still be joined (not once it is full). */
   shareAction?: ReactNode
   /**
+   * "Zajímá mě" (#231): save the event to one's list, or take it off. The page
+   * decides when it is offered; shown beside the title whatever the state.
+   */
+  interestAction?: ReactNode
+  /**
    * The signed-in person's own place (their request, their seat, their event).
    * Shown instead of the free seat, whatever state the event is in, so a
    * pending request can still be withdrawn once the event fills up.
    */
   ownRequest?: ReactNode
+  /**
+   * #232: "Hlídat volné místo" on a full event, under the person's own place
+   * or where the free seat would be. The page decides when it is offered.
+   */
+  freeSpotWatch?: ReactNode
   /**
    * The exact place and the contacts, for the organizer and people with a seat.
    * Absent for everyone else, who is told when they appear instead.
@@ -88,7 +104,9 @@ export function EventDetail({
   organizerActions,
   isOrganizerLinked = false,
   shareAction,
+  interestAction,
   ownRequest,
+  freeSpotWatch,
   participantInfo,
   publicPlace,
   reportAction,
@@ -168,6 +186,7 @@ export function EventDetail({
               <StatusBadge status="neutral">{t("events.detail.hidden.badge")}</StatusBadge>
             ) : null}
             {state === "open" && !isHidden ? shareAction : null}
+            {isHidden ? null : interestAction}
           </div>
           {/* #239: only the organizers get here; nobody else sees the event. */}
           {isHidden ? (
@@ -191,13 +210,15 @@ export function EventDetail({
           {ratingPrompt}
         </div>
 
-        {/* When and where: the time is the main fact, so it is the one big thing. */}
+        {/* When and where: the date is the main fact, so it is the one big thing. */}
         <div className="flex flex-wrap items-start gap-x-8 gap-y-3">
           <div className="flex flex-col">
-            <p className={cn("typo-small", isToday ? "text-signal-ink" : "text-muted-foreground")}>
-              {day}
+            <p className={cn("typo-time", isToday ? "text-signal-ink" : "text-foreground")}>
+              {eventDate(t, event.startAt, now, locale)}
             </p>
-            <p className="typo-time text-foreground">{eventTime(event.startAt, locale)}</p>
+            <p className="typo-small text-muted-foreground">
+              {eventClock(t, event.startAt, now, locale)}
+            </p>
             <p className="typo-small text-muted-foreground">
               {t("hobbyhub.eventDetail.until", {
                 time: eventEnd(event.startAt, event.endAt, locale),
@@ -279,6 +300,7 @@ export function EventDetail({
                 action={joinAction}
               />
             ) : null)}
+          {isHidden ? null : freeSpotWatch}
           {/* Who runs it, with the organizer's own tools next to the way to the
             requests above: everything about the people in one place (#224). */}
           <div className="flex flex-col gap-3 border-t border-signal-soft/30 pt-4">

@@ -95,6 +95,21 @@ export const occupancyOf = (event: {
   };
 };
 
+// #232: the free seats of one event just before a change and right after it,
+// both counted under the event's lock, so no other change slips in between.
+export type SpotChange = {
+  freeSpotsBefore: number;
+  freeSpotsAfter: number;
+};
+
+// #232: whether a change turned a full event into one with a free seat, the
+// one moment the people watching it hear about. More seats freeing up on an
+// event that has one already, or a full event staying full, is not it.
+export const spotBecameFree = ({
+  freeSpotsBefore,
+  freeSpotsAfter,
+}: SpotChange): boolean => freeSpotsBefore <= 0 && freeSpotsAfter > 0;
+
 export type Event = Occupancy & {
   id: string;
   title: string;
@@ -422,6 +437,12 @@ export const moderationConcernsPeople = (
 export type EventChangeResult =
   { ok: true; event: Event } | { ok: false; violation: EventChangeViolation };
 
+// #232: an edit that may change the seats also says how many were free just
+// before it, so the service can tell a full event that got a free seat.
+export type EventSeatsChangeResult =
+  | { ok: true; event: Event; freeSpotsBefore: number }
+  | { ok: false; violation: EventChangeViolation };
+
 // ---------------------------------------------------------------------------
 // Public event list (F-02.3)
 // ---------------------------------------------------------------------------
@@ -430,6 +451,12 @@ export const EVENT_LIST_DEFAULT_LIMIT = 20;
 export const EVENT_LIST_MAX_LIMIT = 50;
 
 export type Page = { limit: number; offset: number };
+
+// Similar events under an event detail: how many are offered, and how far from
+// the start of the viewed event another one may start to count as "around the
+// same time".
+export const SIMILAR_EVENTS_LIMIT = 4;
+export const SIMILAR_EVENTS_WINDOW_DAYS = 14;
 
 export const EVENT_LIST_MAX_ACTIVITY_FILTERS = 50;
 
@@ -586,7 +613,14 @@ export type GroupEventListItem = EventListItem & {
   visibility: 'PUBLIC' | 'GROUP_ONLY';
 };
 
-export type GroupEventPage = { items: GroupEventListItem[]; total: number };
+export type GroupEventPage = {
+  items: GroupEventListItem[];
+  total: number;
+  // Only for a non-member asking for the past: how many group-only events
+  // there were. A number and nothing else, so the page can show blurred
+  // placeholders without the events leaving the server.
+  hiddenCount?: number;
+};
 
 export const GROUP_EVENTS_PAGE_SIZE = 10;
 

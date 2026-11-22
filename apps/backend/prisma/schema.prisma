@@ -253,22 +253,40 @@ model CancellationReason {
 
 // Groups (F-07) ------------------------------------------------------------
 
+enum GroupApprovalMode {
+  OPEN
+  APPROVAL
+
+  @@map("group_approval_mode")
+}
+
 // Only what F-07.1 needs; tags, approval, invitations and moderation come
 // with their features.
 model Group {
   id String @id @default(cuid())
 
-  name          String          @db.VarChar(80)
-  description   String          @db.Text
+  name              String            @db.VarChar(80)
+  description       String            @db.Text
   // Model datatype `Location` needs coordinates, which need geocoding. Until
   // that exists the place is free text ("Praha 8", "Brno-Žabovřesky").
-  locationName  String?         @db.VarChar(100)
-  usualSchedule String?         @db.VarChar(100)
+  locationName      String?           @db.VarChar(100)
+  usualSchedule     String?           @db.VarChar(100)
+  // A short line under the name, in the group's own words, emoji welcome.
+  tagline           String?           @db.VarChar(120)
   // F-07.1: every group is public for now; PRIVATE arrives with F-07.1b.
-  visibility    GroupVisibility @default(PUBLIC)
-  status        GroupStatus     @default(ACTIVE)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  visibility        GroupVisibility   @default(PUBLIC)
+  status            GroupStatus       @default(ACTIVE)
+  // #276, ADR-0028: OPEN lets anyone in at once, APPROVAL keeps the request
+  // the admins decide on (ADR-0008).
+  approvalMode      GroupApprovalMode @default(APPROVAL)
+  // ISO weekdays the group meets on, 1 = Monday .. 7 = Sunday; the free text
+  // `usualSchedule` keeps the hours. A CHECK in the migration keeps the range.
+  meetingDays       Int[]             @default([])
+  // Where the group meets, for the map and the radius filter; both or none.
+  locationLatitude  Decimal?          @db.Decimal(9, 6)
+  locationLongitude Decimal?          @db.Decimal(9, 6)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   activity           Activity            @relation(fields: [activityId], references: [id])
   activityId         String
@@ -334,15 +352,15 @@ model Event {
   notes       String? @db.Text
   imageUrl    String? @db.Text
 
-  status       EventStatus     @default(DRAFT)
-  visibility   EventVisibility @default(PUBLIC)
-  approvalMode ApprovalMode    @default(MANUAL)
-  venueType    VenueType
+  status          EventStatus     @default(DRAFT)
+  visibility      EventVisibility @default(PUBLIC)
+  approvalMode    ApprovalMode    @default(MANUAL)
+  venueType       VenueType
   // #218, ADR-0029: true: everyone who sees the event sees its exact address,
   // the place name and the map pin. false: only the organizers and the people
   // with a seat see the address; the others get the district and the city.
   // Never true for an online event (CHECK event_online_address_not_public).
-  isAddressPublic Boolean @default(false)
+  isAddressPublic Boolean         @default(false)
 
   startAt     DateTime
   endAt       DateTime
@@ -426,6 +444,8 @@ model Event {
   reminders             EventReminder[]
   // #236: the calls to rate it that went out.
   ratingPrompts         RatingPrompt[]
+  // #231, ADR-0030: who saved it to their "Zajímá mě" list; private to each.
+  interests             EventInterest[]
 
   @@index([organizerId])
   @@index([activityId])
@@ -466,6 +486,30 @@ model Participation {
   @@index([userId])
   @@index([eventId, status])
   @@map("participation")
+}
+
+// #231, ADR-0030: an event a person saved to their "Zajímá mě" list, to come
+// back to later. Private to that person: nobody else, the organizers and the
+// administration included, ever sees who saved what or how many did. Saving
+// reserves nothing and is not a request to join. At most once per person and
+// event; it goes with either of them. #232 adds whether the person also
+// watches the event for a free seat, as a column of this row.
+model EventInterest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+
+  // #232: the person wants to hear when a seat frees up on the full event.
+  // Only ever on a saved event (the row is the saving); taking a seat clears it.
+  watchesFreeSpot Boolean @default(false)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@map("event_interest")
 }
 
 // #233, ADR-0021: a reminder that went out for an event. The poller inserts
@@ -586,7 +630,7 @@ model Rating {
 
 // #227, ADR-0026: where a friend request stands. A rejected request is kept
 // (decidedAt) but does not stop a new one between the same two people.
-// #65, ADR-0028: who blocked: an administrator (both ways) or the blocker
+// #65, ADR-0031: who blocked: an administrator (both ways) or the blocker
 // themselves (one way).
 enum UserBlockSource {
   ADMINISTRATOR
@@ -995,6 +1039,8 @@ model User {
   coOrganizedEvents      Event[]                @relation("EventCoOrganizers")
   participations         Participation[]
   participationRequests  ParticipationRequest[]
+  // #231, ADR-0030: the events on the user's own "Zajímá mě" list.
+  eventInterests         EventInterest[]
   groupMemberships       GroupMembership[]
   membershipRequests     MembershipRequest[]
   notifications          Notification[]         @relation("NotificationRecipient")
@@ -1021,7 +1067,7 @@ model User {
 // administrator made (`createdBy` set, with a reason) applies both ways and is
 // stored once, with the smaller id as the blocker (CHECK
 // user_block_admin_ordered in the migration). A row a user makes (#65,
-// ADR-0028) applies one way: the blocker's content does not exist for the
+// ADR-0031) applies one way: the blocker's content does not exist for the
 // blocked, and the blocker sends the blocked no requests.
 model UserBlock {
   id String @id @default(cuid())
@@ -1035,7 +1081,7 @@ model UserBlock {
   // Seen by the administration only; 10–500 characters, set exactly when an
   // administrator made the block (CHECK in the migration).
   reason      String?        @db.VarChar(500)
-  // #65, ADR-0028: who made the block. ADMINISTRATOR exactly when
+  // #65, ADR-0031: who made the block. ADMINISTRATOR exactly when
   // `createdBy` is set (CHECK user_block_source in the migration), so a user
   // and an administrator may each block the same pair.
   source      UserBlockSource

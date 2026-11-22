@@ -118,7 +118,7 @@ export class RatingsService {
 
     let participants: RatingTarget[] = [];
     if (event.organizerId === user.id) {
-      // #65, ADR-0028: nor the people the organizer blocked themselves.
+      // #65, ADR-0031: nor the people the organizer blocked themselves.
       const hidden = await this.blocks.mutedFor(user.id);
       const people = await this.repository.getRateableParticipants(eventId, [
         event.organizerId,
@@ -174,7 +174,7 @@ export class RatingsService {
         // Blocked from an organizer, the event does not exist for them.
         const organizerIds = [event.organizerId, ...event.coOrganizerIds];
         if (organizerIds.some((id) => hidden.includes(id))) return false;
-        // #65, ADR-0028: whoever blocked the organizer does not rate them.
+        // #65, ADR-0031: whoever blocked the organizer does not rate them.
         if (blocked.includes(event.organizerId)) return false;
         return (
           organizerRatingViolations({
@@ -210,7 +210,7 @@ export class RatingsService {
     if (events.length === 0) return new Map();
 
     const ids = events.map(({ id }) => id);
-    // #65, ADR-0028: the same people as the list to rate, so the count can
+    // #65, ADR-0031: the same people as the list to rate, so the count can
     // reach zero; whoever the organizer blocked is not rated.
     const [seats, rated, hidden] = await Promise.all([
       this.repository.getRateableSeatsAt(ids),
@@ -250,7 +250,7 @@ export class RatingsService {
     now: Date = new Date(),
   ): Promise<Rating> {
     const { event, seat } = await this.getRatingEvent(eventId, user.id);
-    // #65, ADR-0028: whoever blocked the organizer does not rate them.
+    // #65, ADR-0031: whoever blocked the organizer does not rate them.
     if (await this.hasBlocked(user.id, event.organizerId)) {
       throw new NotFoundException('Organizer not found');
     }
@@ -285,7 +285,7 @@ export class RatingsService {
   /**
    * The main organizer rates one participant. To someone who does not run the
    * event, it does not exist; a participant blocked from the organizer or by
-   * them (ADR-0028), or without any seat, is not found.
+   * them (ADR-0031), or without any seat, is not found.
    */
   async rateParticipant(
     user: Identity,
@@ -297,7 +297,7 @@ export class RatingsService {
     const event = await this.getEventOf(eventId);
     if (!isAnyOrganizerOf(event, user.id)) throw eventNotFound();
 
-    // #65, ADR-0028: nor someone the organizer blocked themselves.
+    // #65, ADR-0031: nor someone the organizer blocked themselves.
     const hidden = await this.blocks.mutedFor(user.id);
     const participantSeat = hidden.includes(participantId)
       ? null
@@ -337,7 +337,7 @@ export class RatingsService {
   /**
    * "Moje hodnocení": the revealed ratings the person received one way. The
    * view already leaves out those of anyone who does not exist for them
-   * (ADR-0022, ADR-0028).
+   * (ADR-0022, ADR-0031).
    */
   getReceived(
     user: Identity,
@@ -362,7 +362,7 @@ export class RatingsService {
   }
 
   /**
-   * #65, ADR-0028: a rating is something one says to the other, and whoever
+   * #65, ADR-0031: a rating is something one says to the other, and whoever
    * blocked someone says nothing to them.
    */
   private async hasBlocked(userId: string, otherId: string): Promise<boolean> {
