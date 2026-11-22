@@ -9,6 +9,7 @@ import { FriendshipModule } from './modules/friendship/friendship.module';
 import { GroupModule } from './modules/group/group.module';
 import { LevelModule } from './modules/level/level.module';
 import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
+import { LandingModule } from './modules/landing/landing.module';
 import { MyEventsModule } from './modules/my-events/my-events.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
@@ -50,6 +51,8 @@ const imports = [
   ReportModule,
   // #236, ADR-0027: ratings after an event.
   RatingModule,
+  // #215: the pre-filtered rows of the landing page.
+  LandingModule,
 ];
 
 @Module({

@@ -18,6 +18,7 @@ import {
   MyGroup,
   NEARBY_GROUPS_LIMIT,
   NearbyGroups,
+  TrendingGroup,
 } from '@/modules/group/domain/group';
 import { GroupRepository } from '@/modules/group/repositories/group.repository';
 import {
@@ -260,6 +261,35 @@ export class GroupsService {
       await this.blocks.hiddenFor(user.id),
     );
     return { city, groups };
+  }
+
+  // #215 "Skupiny pro tebe": groups of the person's activities they are not in.
+  async listGroupsForActivities(
+    user: Identity,
+    activityIds: string[],
+    limit: number,
+  ): Promise<Group[]> {
+    return this.groupRepository.listGroupsOfActivities(
+      user.id,
+      activityIds,
+      limit,
+      await this.blocks.hiddenFor(user.id),
+    );
+  }
+
+  // #215 "Trendy skupiny": the most new members since `since`. A signed-in
+  // person does not get the groups they are already in.
+  async listTrendingGroups(
+    viewer: Identity | undefined,
+    since: Date,
+    limit: number,
+  ): Promise<TrendingGroup[]> {
+    return this.groupRepository.listTrendingGroups(
+      viewer?.id,
+      since,
+      limit,
+      await this.blocks.hiddenFor(viewer?.id),
+    );
   }
 
   // A visitor (no user) sees every public group.

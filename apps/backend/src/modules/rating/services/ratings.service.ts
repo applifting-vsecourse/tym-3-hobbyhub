@@ -69,6 +69,16 @@ export class RatingsService {
     return this.repository.getUserScores(userId);
   }
 
+  /**
+   * #215: the organizer scores others may see (from three revealed ratings);
+   * whether this viewer may see them at all is the caller's.
+   */
+  getPublicOrganizerScores(
+    userIds: string[],
+  ): Promise<Map<string, RatingScore>> {
+    return this.repository.getPublicOrganizerScores(userIds);
+  }
+
   /** The score of an event from its participants' ratings. */
   getEventScore(eventId: string): Promise<RatingScore> {
     return this.repository.getEventScore(eventId);

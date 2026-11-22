@@ -34,10 +34,14 @@ export function eventDay(t: TFunction, startAt: Date, now: Date, locale: string)
   )
 }
 
+/** The day alone, short: "Dnes", "Zítra", then "čt 29. 10.". */
+export function eventShortDay(t: TFunction, startAt: Date, now: Date, locale: string): string {
+  return nearDay(t, startAt, now) ?? formatEventDay(startAt, locale)
+}
+
 /** Day and time short enough for a pill: "Dnes 19:00", "Zítra 10:00", then "čt 29. 10. 18:30". */
 export function eventWhen(t: TFunction, startAt: Date, now: Date, locale: string): string {
-  const day = nearDay(t, startAt, now) ?? formatEventDay(startAt, locale)
-  return `${day} ${eventTime(startAt, locale)}`
+  return `${eventShortDay(t, startAt, now, locale)} ${eventTime(startAt, locale)}`
 }
 
 /** End of an event: just "20:30" on the start day, with the date when it ends on another. */

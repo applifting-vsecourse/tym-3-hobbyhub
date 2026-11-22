@@ -9,6 +9,9 @@ import {
   type PlaceFilter,
 } from "@/components/hobbyhub/FiltersSheet"
 
+/** #215: "Last minute" in the event list is an event that starts within this many hours. */
+export const LAST_MINUTE_HOURS = 4
+
 /** The server refuses longer texts, so the address and the fields cut them. */
 export const EVENT_SEARCH_MAX_LENGTH = FILTER_TEXT_MAX_LENGTH
 
@@ -85,6 +88,12 @@ export const eventsListSearchSchema = eventsSearchSchema.extend({
     .transform((value) => value === true || value === "true")
     .optional()
     .catch(undefined),
+  // #215: "Last minute", as the landing page's row links to it.
+  soon: z
+    .union([z.boolean(), z.literal("true")])
+    .transform((value) => value === true || value === "true")
+    .optional()
+    .catch(undefined),
   priceFrom: amount("price"),
   priceTo: amount("price"),
   hoursFrom: amount("duration"),
@@ -97,6 +106,7 @@ type ListRangesSearch = Partial<
   Pick<
     z.infer<typeof eventsListSearchSchema>,
     | "free"
+    | "soon"
     | "priceFrom"
     | "priceTo"
     | "hoursFrom"
@@ -127,6 +137,8 @@ export type EventFilterValues = {
   dateTo: string
   /** Only events with a free seat (#214). */
   freeSpotsOnly: boolean
+  /** #215: only events that start within `LAST_MINUTE_HOURS`. */
+  lastMinute: boolean
   /** Ranges as typed; empty means no bound. Price in CZK, duration in hours. */
   priceFrom: string
   priceTo: string
@@ -152,6 +164,7 @@ export function filtersFromSearch({
   from,
   to,
   free: isFree,
+  soon: isSoon,
   priceFrom,
   priceTo,
   hoursFrom,
@@ -183,6 +196,7 @@ export function filtersFromSearch({
       dateFrom: isDateReversed ? "" : (from ?? ""),
       dateTo: isDateReversed ? "" : (to ?? ""),
       freeSpotsOnly: isFree ?? false,
+      lastMinute: isSoon ?? false,
       priceFrom: isPriceReversed ? "" : rangeText(priceFrom),
       priceTo: isPriceReversed ? "" : rangeText(priceTo),
       hoursFrom: isHoursReversed ? "" : rangeText(hoursFrom),
@@ -222,6 +236,7 @@ export function searchWithFilters<T extends EventsSearch & ListRangesSearch>(
     ...(next.dateFrom !== undefined && { from: nonEmpty(next.dateFrom) }),
     ...(next.dateTo !== undefined && { to: nonEmpty(next.dateTo) }),
     ...(next.freeSpotsOnly !== undefined && { free: next.freeSpotsOnly ? true : undefined }),
+    ...(next.lastMinute !== undefined && { soon: next.lastMinute ? true : undefined }),
     ...(next.priceFrom !== undefined && { priceFrom: rangeNumber(next.priceFrom) }),
     ...(next.priceTo !== undefined && { priceTo: rangeNumber(next.priceTo) }),
     ...(next.hoursFrom !== undefined && { hoursFrom: rangeNumber(next.hoursFrom) }),
@@ -243,6 +258,7 @@ export const activeFilterCount = (filters: EventFilterValues): number =>
     filters.place !== null,
     filters.dateFrom !== "" || filters.dateTo !== "",
     filters.freeSpotsOnly,
+    filters.lastMinute,
     filters.priceFrom !== "" || filters.priceTo !== "",
     filters.hoursFrom !== "" || filters.hoursTo !== "",
     filters.capacityFrom !== "" || filters.capacityTo !== "",
@@ -257,6 +273,7 @@ export const hasFilters = (filters: EventFilterValues): boolean =>
   filters.dateFrom !== "" ||
   filters.dateTo !== "" ||
   filters.freeSpotsOnly ||
+  filters.lastMinute ||
   filters.priceFrom !== "" ||
   filters.priceTo !== "" ||
   filters.hoursFrom !== "" ||

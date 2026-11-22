@@ -107,6 +107,10 @@ Blokovaný nemůže podat žádost o účast ani o členství ([#65][65]), v tab
 - **Akce zablokovaná správcem** se pro všechny kromě organizátora a superadmina chová, jako by neexistovala ([#239][239], [ADR-0022](../adr/adr-0022.md)). Organizátor ji dál vidí v detailu a v Moje akce i s důvodem.
 - **Upozornění na skrytí a odkrytí akce** dostanou organizátoři, schválení účastníci, žadatelé a náhradníci. Důvod nese jen upozornění organizátorů. Ostatní vidí v aplikaci jen název akce, kterou znali, a že ji správce odstranil, bez odkazu na ni; e-mail podle pravidla výše nenese ani název.
 - **Přítel účastníka** ([#226][226], [#227][227]) vidí u akce jméno přítele, **jen když to přítel povolil** přepínačem „Přátelé vidí moje budoucí akce“. Jinak se přítel nezobrazí ani nezapočítá. Návštěvník přátele nemá. Účastník a organizátor vidí přátele mezi ostatními v jmenném seznamu, přepínač před nimi nic neskrývá. Platí jen pro akce, které člověk sám vidět smí.
+- **Úvodní stránka** ([#215][215]) ukazuje jen veřejné akce, které by člověk našel i v seznamu akcí, a nic nového o lidech:
+  - Řada „Jdou tvoji přátelé“ a jména přátel na kartách akcí jsou jen pro přihlášeného a jen s přáteli, kteří zapnuli „Přátelé vidí moje budoucí akce“; ostatní se nezapočítají ani do toho, zda se řada vůbec ukáže.
+  - Průměr hodnocení organizátora na kartě „Top akce“ vidí jen přihlášený, a to od 3 odkrytých hodnocení, jako na profilu. Návštěvník u organizátora vidí jen jméno. Pořadí řady „Top akce“ počítá se stejným veřejným průměrem.
+  - Vlastní bydliště a vlastní aktivity přihlášeného se vracejí jen jemu, pro odkaz „Zobrazit vše“; nikomu jinému se neukazují.
 
 ## Žádosti o účast a o členství
 
@@ -280,3 +284,4 @@ Uživatel nahlásí akci nebo jiného uživatele a správce nahlášení vyřizu
 [212]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/212
 [262]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/262
 [218]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/218
+[215]: https://github.com/applifting-vsecourse/tym-3-hobbyhub/issues/215

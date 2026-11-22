@@ -1,44 +1,42 @@
-import { useMemo, useState, type CSSProperties } from "react"
+import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { ArrowRight } from "lucide-react"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { AppShell } from "@/app/AppShell"
-import { ROUTES } from "@/app/routes"
 import { Footer } from "@/components/Footer"
 import { AppForm } from "@/components/form/AppForm"
 import { EMPTY_FILTERS, FiltersSheet } from "@/components/hobbyhub/FiltersSheet"
-import { Hero } from "@/components/hobbyhub/Hero"
-import { RosterSeats } from "@/components/hobbyhub/RosterSeats"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Seo } from "@/components/Seo"
-import { Button } from "@/components/ui/button"
 
 import { activityName } from "@/features/activity/activityName"
 import { activitiesQueryOptions } from "@/features/activity/api/activitiesQueryOptions"
-import { AccountLanguageLinks } from "@/features/auth/components/AccountLanguageLinks"
-import { upcomingEventsQueryOptions } from "@/features/event/api/eventsQueryOptions"
-import { UpcomingEvents } from "@/features/event/components/UpcomingEvents"
+import { AccountLanguageChoice } from "@/features/auth/components/AccountLanguageChoice"
+import { useSession } from "@/features/auth/hooks/useSession"
 import { EVENT_SEARCH_MAX_LENGTH, nonEmpty } from "@/features/event/lib/eventsSearch"
-import { AudienceClaims } from "@/features/landing/components/AudienceClaims"
-import { HowItWorks } from "@/features/landing/components/HowItWorks"
+import {
+  freeEventsCountQueryOptions,
+  landingQueryOptions,
+} from "@/features/landing/api/landingQueryOptions"
+import { LandingHero } from "@/features/landing/components/LandingHero"
+import { LandingRows } from "@/features/landing/components/LandingRows"
+import { readLandingCity, saveLandingCity } from "@/features/landing/lib/landingCity"
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
 })
 
-// The events are the page's main section (#216): two full rows, six on `md` and
-// `lg`, eight in the four columns of a large screen (#224).
-const UPCOMING_EVENTS_COUNT = 8
-
 function LandingPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user, isPending: isSessionPending } = useSession()
   const searchForm = useForm({ defaultValues: { q: "" } })
   const searchText = useWatch({ control: searchForm.control, name: "q" })
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  // #215: the visitor's city for "Ve tvém okolí", remembered in this browser.
+  const [city, setCity] = useState(readLandingCity)
   const activitiesQuery = useQuery(activitiesQueryOptions())
   const activityOptions = useMemo(
     () =>
@@ -50,9 +48,18 @@ function LandingPage() {
       })),
     [activitiesQuery.data, t],
   )
-  const upcomingQuery = useQuery(upcomingEventsQueryOptions(UPCOMING_EVENTS_COUNT))
-  // A real figure for the kicker; until it is known the static line stands in.
-  const total = upcomingQuery.data?.total
+  // The rows depend on who asks: wait for the session, so a signed-in person
+  // never first sees the visitor's rows.
+  const landingQuery = useQuery({
+    ...landingQueryOptions(user?.id ?? null, city),
+    enabled: !isSessionPending,
+  })
+  const freeCountQuery = useQuery(freeEventsCountQueryOptions())
+
+  const changeCity = (next: string) => {
+    setCity(next)
+    saveLandingCity(next)
+  }
 
   // Searching or filtering from the landing page opens the event list already filtered.
   const openEvents = (filters: { activities?: string[]; location?: string } = {}) => {
@@ -65,8 +72,8 @@ function LandingPage() {
       },
     })
   }
-  // The same field twice: in the header from `lg`, in the page below it. Both
-  // share one form, so what is typed in one shows in the other.
+  // The same field twice: in the header from `lg`, above the hero below it.
+  // Both share one form, so what is typed in one shows in the other.
   const searchField = (
     <AppForm
       form={searchForm}
@@ -88,11 +95,14 @@ function LandingPage() {
 
   return (
     <>
-      <Seo title={t("landing.seoTitle")} />
+      <Seo
+        title={t("landing.seoTitle")}
+        description={t("landing.seoDescription")}
+      />
       <AppShell
         className="mx-auto flex w-full max-w-page flex-col gap-12 px-page py-6 md:gap-16 md:py-10"
         search={searchField}
-        footer={<Footer language={<AccountLanguageLinks />} />}
+        footer={<Footer language={<AccountLanguageChoice />} />}
       >
         <FiltersSheet
           isOpen={isFiltersOpen}
@@ -107,119 +117,17 @@ function LandingPage() {
           }}
           activityOptions={activityOptions}
         />
-        <div className="lg:hidden">{searchField}</div>
-        <Hero
-          className="[--seat-delay:400ms]"
-          isAnimated
-          titleAs="h1"
-          kicker={
-            total ? t("landing.hero.kickerCount", { count: total }) : t("landing.hero.kicker")
-          }
-          title={t("landing.hero.title")}
-          text={t("landing.hero.text")}
-          taken={7}
-          capacity={10}
-          action={
-            <Button asChild>
-              <Link to={ROUTES.events}>{t("landing.actions.find")}</Link>
-            </Button>
-          }
-          secondaryAction={
-            <Button
-              asChild
-              variant="secondary"
-            >
-              <Link to={ROUTES.newEvent}>{t("landing.actions.create")}</Link>
-            </Button>
-          }
+        <div className="-mb-6 lg:hidden">{searchField}</div>
+        <LandingHero freeEventCount={freeCountQuery.data} />
+        <LandingRows
+          landing={landingQuery.data}
+          isLoading={isSessionPending || landingQuery.isPending}
+          error={landingQuery.error}
+          onRetry={() => void landingQuery.refetch()}
+          isSignedIn={Boolean(user)}
+          onCityChange={changeCity}
+          activityLabel={(activity) => activityName(t, activity)}
         />
-
-        <section
-          aria-labelledby="upcoming-heading"
-          className="flex enter flex-col gap-4"
-          style={{ "--enter-index": 1 } as CSSProperties}
-        >
-          <div className="flex items-baseline justify-between gap-4">
-            <h2
-              id="upcoming-heading"
-              className="typo-h2"
-            >
-              {t("landing.upcoming.title")}
-            </h2>
-            <Button
-              asChild
-              variant="link"
-              className="group max-md:hidden"
-            >
-              <Link to={ROUTES.events}>
-                {t("landing.upcoming.all")}
-                <ArrowRight
-                  aria-hidden
-                  className="transition-transform duration-200 motion-safe:group-hover:translate-x-1"
-                />
-              </Link>
-            </Button>
-          </div>
-          <UpcomingEvents
-            events={upcomingQuery.data?.items ?? []}
-            activityLabel={(item) => activityName(t, item)}
-            isLoading={upcomingQuery.isPending}
-            error={upcomingQuery.error}
-            onReload={() => void upcomingQuery.refetch()}
-          />
-          <Button
-            asChild
-            variant="outline"
-            className="md:hidden"
-          >
-            <Link to={ROUTES.events}>{t("landing.upcoming.all")}</Link>
-          </Button>
-        </section>
-
-        <AudienceClaims />
-
-        <HowItWorks />
-
-        {/* Groups (#151): the invitation. The same dashed accent surface as
-            "Tvoje místo" on an event, with the crew and one free seat: what a
-            group is for, and one way in. No cards of particular groups: the
-            list is a click away, and a visitor cannot tell a good pick from a
-            random one. */}
-        <section
-          aria-labelledby="groups-heading"
-          className="flex reveal flex-col gap-3"
-        >
-          <h2
-            id="groups-heading"
-            className="typo-h3"
-          >
-            {t("landing.groups.title")}
-          </h2>
-          {/* Centred as one block: on a wide screen the seats and the text sit in
-              the middle of the invitation, not at its left edge (#224). */}
-          <div className="flex flex-col gap-6 rounded-xl border border-dashed border-primary bg-accent p-5 text-accent-foreground md:flex-row md:items-center md:justify-center md:gap-12 md:px-12 md:py-10">
-            <div
-              aria-hidden
-              className="shrink-0"
-            >
-              <RosterSeats
-                size="lg"
-                isInviting
-                taken={4}
-                capacity={5}
-              />
-            </div>
-            <div className="flex flex-col gap-3">
-              <p className="typo-title">{t("landing.groups.seatTitle")}</p>
-              <p className="max-w-xl typo-body">{t("landing.groups.text")}</p>
-              <div className="pt-2 *:max-md:w-full">
-                <Button asChild>
-                  <Link to={ROUTES.groups}>{t("landing.groups.browse")}</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
       </AppShell>
     </>
   )

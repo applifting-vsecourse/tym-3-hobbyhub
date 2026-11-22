@@ -35,6 +35,8 @@ export type EventFilters = {
   radiusKm: number
   /** Only events with a free seat. */
   freeSpotsOnly: boolean
+  /** #215: only events that start within a few hours ("Last minute"). */
+  lastMinute: boolean
   /** Ranges as typed (number text); empty means no bound. Price in CZK, duration in hours. */
   priceFrom: string
   priceTo: string
@@ -52,6 +54,7 @@ export const EMPTY_FILTERS: EventFilters = {
   place: null,
   radiusKm: DEFAULT_RADIUS_KM,
   freeSpotsOnly: false,
+  lastMinute: false,
   priceFrom: "",
   priceTo: "",
   hoursFrom: "",
@@ -495,6 +498,14 @@ export function FiltersFields({
             }
           >
             {t("hobbyhub.filters.freeSpots")}
+          </FilterChip>
+          <FilterChip
+            pressed={draft.lastMinute}
+            onPressedChange={(isPressed) =>
+              setDraft((current) => ({ ...current, lastMinute: isPressed }))
+            }
+          >
+            {t("hobbyhub.filters.lastMinute")}
           </FilterChip>
         </div>
       ) : null}
