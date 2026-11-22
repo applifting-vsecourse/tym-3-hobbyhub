@@ -117,8 +117,8 @@ describe("EventList", () => {
     expect(
       screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent),
     ).toEqual(["Blízká akce", "Daleká akce"])
-    expect(screen.getByText(/ · 2,3 km$/)).toBeInTheDocument()
-    expect(screen.getByText(/ · 186 km$/)).toBeInTheDocument()
+    expect(screen.getByText("2,3 km")).toBeInTheDocument()
+    expect(screen.getByText("186 km")).toBeInTheDocument()
     expect(screen.getByText("Dnes")).toBeInTheDocument()
     expect(screen.getByText("Zítra")).toBeInTheDocument()
     expect(screen.getByText("19:00")).toBeInTheDocument()
