@@ -590,6 +590,19 @@ describe('EventsService', () => {
       expect(notifications.notifySpotAvailable).not.toHaveBeenCalled();
     });
 
+    // The repository already leaves out people with a seat or a waiting or
+    // rejected request; the service asks it for this event and adds nobody.
+    it('tells only the watchers the repository finds for the event', async () => {
+      const { repository, notifications, service } = watching(['w1']);
+
+      await service.notifyIfSpotFreed('e1', freed, null);
+
+      expect(repository.getFreeSpotWatcherIds).toHaveBeenCalledWith('e1');
+      expect(notifications.notifySpotAvailable).toHaveBeenCalledWith(
+        expect.objectContaining({ watcherIds: ['w1'] }),
+      );
+    });
+
     it('leaves out whoever freed the seat and the organizers', async () => {
       const { notifications, service } = watching([
         'leaver',

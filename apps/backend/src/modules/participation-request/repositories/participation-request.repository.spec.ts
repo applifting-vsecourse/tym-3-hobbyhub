@@ -375,6 +375,39 @@ describeDb('ParticipationRequestRepository', () => {
     );
   });
 
+  // #232: asking to join is what the watching was for; it stops with the
+  // request, in the same transaction, and the event stays saved.
+  describe('createPending', () => {
+    it('stops the applicant watching the event for a free seat', async () => {
+      const {
+        eventId,
+        userIds: [userId, other],
+      } = await eventWith(1, 2);
+      await prisma.eventInterest.createMany({
+        data: [
+          { userId: userId!, eventId, watchesFreeSpot: true },
+          { userId: other!, eventId, watchesFreeSpot: true },
+        ],
+      });
+
+      await expect(
+        repository.createPending({ eventId, userId: userId!, at }),
+      ).resolves.toMatchObject({ status: 'PENDING' });
+
+      await expect(
+        prisma.eventInterest.findMany({
+          where: { eventId },
+          select: { userId: true, watchesFreeSpot: true },
+        }),
+      ).resolves.toEqual(
+        expect.arrayContaining([
+          { userId: userId!, watchesFreeSpot: false },
+          { userId: other!, watchesFreeSpot: true },
+        ]),
+      );
+    });
+  });
+
   describe('createApproved', () => {
     // #232: whoever gets a seat stops watching for one; the event stays saved.
     it('stops the new participant watching the event for a free seat', async () => {

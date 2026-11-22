@@ -135,14 +135,26 @@ const seatRefusal = async (
   return (await freeSpotsOf(tx, eventId)) <= 0 ? 'EVENT_FULL' : null;
 };
 
+// #232: whoever asks to join or gets a seat stops watching the event for a
+// free seat, in the same transaction: the notification is for someone who
+// could still ask. The flag is a column of the "Zajímá mě" row (ADR-0030);
+// clearing it here spares this module a dependency on that one, which depends
+// on this one. The event stays on the list.
+const stopWatching = async (
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  userId: string,
+): Promise<void> => {
+  await tx.eventInterest.updateMany({
+    where: { eventId, userId, watchesFreeSpot: true },
+    data: { watchesFreeSpot: false },
+  });
+};
+
 // The roster holds a person once: an earlier row of theirs (waitlisted,
 // invited, cancelled) becomes the seat. What a cancellation left goes with it:
-// a new seat starts without the old message (ADR-0017).
-//
-// #232: whoever gets a seat stops watching the event for one, in the same
-// transaction. The flag is a column of the "Zajímá mě" row (ADR-0030); clearing
-// it here spares this module a dependency on that one, which depends on this
-// one. The event stays on the list.
+// a new seat starts without the old message (ADR-0017). #232: and the
+// watching for a free seat stops.
 const takeSeat = async (
   tx: Prisma.TransactionClient,
   eventId: string,
@@ -159,10 +171,7 @@ const takeSeat = async (
       cancellationMessage: null,
     },
   });
-  await tx.eventInterest.updateMany({
-    where: { eventId, userId, watchesFreeSpot: true },
-    data: { watchesFreeSpot: false },
-  });
+  await stopWatching(tx, eventId, userId);
 };
 
 // #239, ADR-0022: the organizer who asks does not see people blocked from
@@ -596,6 +605,8 @@ export class ParticipationRequestRepository {
             status: RequestStatus.PENDING,
           },
         });
+        // #232: asking is what the watching was for.
+        await stopWatching(tx, data.eventId, data.userId);
         return mapToDomain(request);
       });
     } catch (error) {

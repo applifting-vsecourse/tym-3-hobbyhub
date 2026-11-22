@@ -187,21 +187,33 @@ describeDb('EventInterestRepository', () => {
     });
   });
 
-  // #232: whom the event module tells about a free seat.
-  it('finds the people watching who have no seat', async () => {
-    const [organizer, watcher, seated, saver, activity] = await Promise.all([
-      aUser(),
-      aUser(),
-      aUser(),
-      aUser(),
-      anActivity(),
-    ]);
+  // #232: whom the event module tells about a free seat: only who could
+  // still ask for it. A waiting or rejected request (ADR-0013) leaves the
+  // watcher out even if the flag stayed on.
+  it('finds the people watching who have no seat and no request', async () => {
+    const [organizer, watcher, seated, saver, waiting, rejected, activity] =
+      await Promise.all([
+        aUser(),
+        aUser(),
+        aUser(),
+        aUser(),
+        aUser(),
+        aUser(),
+        anActivity(),
+      ]);
     const eventId = await anEvent(organizer, activity, { day: 20 });
-    await repository.watch(watcher, eventId);
-    await repository.watch(seated, eventId);
+    for (const userId of [watcher, seated, waiting, rejected]) {
+      await repository.watch(userId, eventId);
+    }
     await repository.save(saver, eventId);
     await prisma.participation.create({
       data: { eventId, userId: seated, status: 'APPROVED' },
+    });
+    await prisma.participationRequest.createMany({
+      data: [
+        { eventId, userId: waiting, status: 'PENDING' },
+        { eventId, userId: rejected, status: 'REJECTED', decidedAt: now },
+      ],
     });
 
     await expect(

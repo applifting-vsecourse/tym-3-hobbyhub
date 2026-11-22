@@ -567,10 +567,12 @@ export class EventRepository {
     };
   }
 
-  // #232: who watches the event for a free seat and still has none. The rows
-  // are the "Zajímá mě" list's (ADR-0030); reading their ids here spares the
-  // event module a dependency on that module, which depends on this one. Who
-  // of them may still see the event is the service's to decide.
+  // #232: who watches the event for a free seat and could still ask for it:
+  // no seat, and no request waiting or rejected (ADR-0013: a rejection is
+  // final). Asking switches the watching off already; this is the safety net.
+  // The rows are the "Zajímá mě" list's (ADR-0030); reading their ids here
+  // spares the event module a dependency on that module, which depends on this
+  // one. Who of them may still see the event is the service's to decide.
   async getFreeSpotWatcherIds(eventId: string): Promise<string[]> {
     const rows = await this.prisma.eventInterest.findMany({
       where: {
@@ -579,6 +581,12 @@ export class EventRepository {
         user: {
           participations: {
             none: { eventId, status: ParticipationStatus.APPROVED },
+          },
+          participationRequests: {
+            none: {
+              eventId,
+              status: { in: [RequestStatus.PENDING, RequestStatus.REJECTED] },
+            },
           },
         },
       },
