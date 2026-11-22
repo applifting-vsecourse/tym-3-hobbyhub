@@ -114,11 +114,17 @@ export class MyEventsService {
       rows.map((row) => row.eventId),
     );
     const byId = new Map(events.map((event) => [event.id, event]));
-    // #232: only an event still ahead can be watched; the rules decide the rest.
+    // #232: only a full event still ahead can be watched, so only those are
+    // asked about (each look reads visibility, blocks and requests); the rules
+    // decide the rest.
     const watchable = await this.interestsService.getWatchableEventIds(
       user,
       events
-        .filter((event) => event.startAt.getTime() > now.getTime())
+        .filter(
+          (event) =>
+            event.startAt.getTime() > now.getTime() &&
+            event.takenCount >= event.maxParticipants,
+        )
         .map((event) => event.id),
       now,
     );

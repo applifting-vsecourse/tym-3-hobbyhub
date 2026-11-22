@@ -212,11 +212,17 @@ describe('MyEventsService', () => {
 
   // #231
   describe('getInterested', () => {
-    const anEvent = (id: string, endAt: string): EventListItem =>
+    const anEvent = (
+      id: string,
+      endAt: string,
+      { takenCount = 4, maxParticipants = 4 } = {},
+    ): EventListItem =>
       ({
         id,
         startAt: new Date(new Date(endAt).getTime() - 2 * 3600 * 1000),
         endAt: new Date(endAt),
+        takenCount,
+        maxParticipants,
       }) as EventListItem;
 
     beforeEach(() => {
@@ -254,21 +260,23 @@ describe('MyEventsService', () => {
       expect(interests.getMyPage).toHaveBeenCalledWith(user, page, filter, now);
     });
 
-    // #232: whether each is watched, and whether it may be: only what has
-    // not started is even asked about.
+    // #232: whether each is watched, and whether it may be: only a full
+    // event that has not started is even asked about.
     it('tells which events are watched and which may be', async () => {
       interests.getMyPage.mockResolvedValue({
         items: [
           { eventId: 'watched', status: 'PUBLISHED', watchesFreeSpot: true },
           { eventId: 'full', status: 'PUBLISHED', watchesFreeSpot: false },
           { eventId: 'started', status: 'PUBLISHED', watchesFreeSpot: false },
+          { eventId: 'open', status: 'PUBLISHED', watchesFreeSpot: false },
         ],
-        total: 3,
+        total: 4,
       });
       events.getListItemsByIds.mockResolvedValue([
         anEvent('watched', '2030-01-03T10:00:00Z'),
         anEvent('full', '2030-01-04T10:00:00Z'),
         anEvent('started', '2030-01-01T13:00:00Z'),
+        anEvent('open', '2030-01-05T10:00:00Z', { takenCount: 2 }),
       ]);
       interests.getWatchableEventIds.mockResolvedValue(new Set(['full']));
 
@@ -284,6 +292,7 @@ describe('MyEventsService', () => {
         ['watched', true, false],
         ['full', false, true],
         ['started', false, false],
+        ['open', false, false],
       ]);
       expect(interests.getWatchableEventIds).toHaveBeenCalledWith(
         user,
