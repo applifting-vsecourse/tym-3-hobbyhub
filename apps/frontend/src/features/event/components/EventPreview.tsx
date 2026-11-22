@@ -6,7 +6,7 @@ import { missingCount } from "@/components/hobbyhub/capacity"
 import { SeatMeter } from "@/components/hobbyhub/SeatMeter"
 import { StatusBadge } from "@/components/hobbyhub/StatusBadge"
 
-import { formatEventDay, formatEventTime } from "@/features/event/lib/eventDateTime"
+import { eventClock, eventDate } from "@/features/event/lib/eventLabels"
 
 /** Above this the seat meter stops being readable; the text summary stays. */
 const SEAT_METER_LIMIT = 30
@@ -46,10 +46,12 @@ export function EventPreview({
         <div className="flex items-start gap-3 px-4 py-3">
           <div className="flex shrink-0 flex-col">
             <p className="typo-time text-foreground">
-              {start ? formatEventTime(start, locale) : t("events.preview.noTime")}
+              {start ? eventDate(t, start, new Date(), locale) : t("events.preview.noTime")}
             </p>
             {start ? (
-              <p className="typo-small text-muted-foreground">{formatEventDay(start, locale)}</p>
+              <p className="typo-small text-muted-foreground">
+                {eventClock(t, start, new Date(), locale)}
+              </p>
             ) : null}
           </div>
           <div className="min-w-0 flex-1">
