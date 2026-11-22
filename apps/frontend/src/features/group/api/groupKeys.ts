@@ -5,6 +5,10 @@ export type DiscoverGroupsFilters = {
   activityIds: string[]
   search: string
   location: string
+  approvalMode?: "OPEN" | "APPROVAL"
+  onlyWithUpcomingEvent?: boolean
+  near?: { latitude: number; longitude: number; radiusKm: number }
+  sort?: "newest" | "nearest" | "members"
 }
 
 export const groupKeys = {
@@ -31,4 +35,5 @@ export const groupKeys = {
   // member count with it.
   requests: (id: string) => [...groupKeys.detail(id), "requests"] as const,
   members: (id: string) => [...groupKeys.detail(id), "members"] as const,
+  stats: (id: string) => [...groupKeys.detail(id), "stats"] as const,
 }

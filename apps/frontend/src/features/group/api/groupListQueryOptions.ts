@@ -34,6 +34,14 @@ export const discoverGroupsQueryOptions = (
       for (const id of filters.activityIds) searchParams.append("activityIds", id)
       if (filters.search) searchParams.set("search", filters.search)
       if (filters.location) searchParams.set("location", filters.location)
+      if (filters.approvalMode) searchParams.set("approvalMode", filters.approvalMode)
+      if (filters.onlyWithUpcomingEvent) searchParams.set("onlyWithUpcomingEvent", "true")
+      if (filters.near) {
+        searchParams.set("lat", String(filters.near.latitude))
+        searchParams.set("lng", String(filters.near.longitude))
+        searchParams.set("radiusKm", String(filters.near.radiusKm))
+      }
+      if (filters.sort) searchParams.set("sort", filters.sort)
       return groupPageSchema.parse(await api.get("groups/discover", { searchParams }).json())
     },
     initialPageParam: null as string | null,

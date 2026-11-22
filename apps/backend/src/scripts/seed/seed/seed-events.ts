@@ -1043,6 +1043,8 @@ async function seedExampleGroup(
         name,
         description: 'Rekreační florbal každý čtvrtek. Nováčci vítáni.',
         locationName: 'Praha 8',
+        locationLatitude: 50.1297,
+        locationLongitude: 14.4421,
         usualSchedule: 'Čtvrtky 19:00',
         activityId,
         memberships: {

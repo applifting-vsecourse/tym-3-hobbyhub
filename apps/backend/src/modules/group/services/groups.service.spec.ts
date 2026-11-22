@@ -33,6 +33,7 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
   description: 'Hrajeme každý čtvrtek.',
   locationName: 'Praha 8',
   usualSchedule: 'Čtvrtky 19:00',
+  tagline: null,
   visibility: 'PUBLIC',
   status: 'ACTIVE',
   createdAt: new Date('2026-01-01T12:00:00Z'),
@@ -44,6 +45,12 @@ const aGroup = (overrides: Partial<Group> = {}): Group => ({
     defaultMaxParticipants: 12,
   },
   memberCount: 1,
+  isActive: false,
+  approvalMode: 'APPROVAL',
+  meetingDays: [],
+  latitude: null,
+  longitude: null,
+  nextEvent: null,
   ...overrides,
 });
 
@@ -51,6 +58,9 @@ const input = {
   name: 'Čtvrteční florbalisté',
   activityId: 'a1',
   description: 'Hrajeme každý čtvrtek.',
+  locationName: 'Praha 8',
+  latitude: 50.1297,
+  longitude: 14.4421,
 };
 
 describe('GroupsService', () => {
@@ -151,6 +161,27 @@ describe('GroupsService', () => {
     await expect(service.getPublicGroup('g1')).resolves.toBe(group);
   });
 
+  // #239: a group's next event is not shown when the one who runs it is
+  // blocked from the viewer, so the repository is told who to leave out.
+  it('leaves the events of blocked people out of the group it shows', async () => {
+    const repository = mock<GroupRepository>();
+    repository.getGroupById.mockResolvedValue(aGroup());
+    repository.getMemberRole.mockResolvedValue(null);
+    repository.listAdminIds.mockResolvedValue([]);
+    const blocks = mock<UserBlockVisibility>();
+    blocks.hiddenFor.mockResolvedValue(['blocker']);
+    const service = new GroupsService(
+      repository,
+      mock<ActivitiesService>(),
+      mock<FriendshipService>(),
+      blocks,
+    );
+
+    await service.getPublicGroup('g1', { id: 'u1' } as Identity);
+
+    expect(repository.getGroupById).toHaveBeenCalledWith('g1', ['blocker']);
+  });
+
   it.each([
     ['private', { visibility: 'PRIVATE' as const }],
     ['cancelled', { status: 'CANCELLED' as const }],
@@ -169,6 +200,93 @@ describe('GroupsService', () => {
 
     await expect(service.getMemberRole('g1', 'u1')).resolves.toBe('MEMBER');
     expect(repository.getMemberRole).toHaveBeenCalledWith('g1', 'u1');
+  });
+
+  describe('changing a group (ADR-0028)', () => {
+    it('lets an admin change it, and nobody else', async () => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.updateGroup.mockResolvedValue(
+        aGroup({ approvalMode: 'OPEN' }),
+      );
+      repository.getMemberRole.mockResolvedValue('ADMIN');
+      const admin = { id: 'u1' } as Identity;
+
+      await service.updateGroup('g1', admin, { approvalMode: 'OPEN' });
+      expect(repository.updateGroup).toHaveBeenCalledWith('g1', {
+        approvalMode: 'OPEN',
+      });
+
+      repository.getMemberRole.mockResolvedValue('MEMBER');
+      await expect(
+        service.updateGroup('g1', admin, { approvalMode: 'APPROVAL' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    // ADR-0028: the pin must not disagree with the name of the place.
+    it.each([
+      [{ locationName: 'Brno' }],
+      [{ latitude: 49.2 }],
+      [{ locationName: 'Brno', latitude: 49.2 }],
+    ])('refuses a place without all of its parts: %j', async (place) => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('OWNER');
+
+      await expect(
+        service.updateGroup('g1', { id: 'u1' } as Identity, place),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.updateGroup).not.toHaveBeenCalled();
+    });
+
+    // `PartialType` lets null through; only the tagline and the schedule can go.
+    it.each([
+      [{ locationName: null, latitude: null, longitude: null }],
+      [{ name: null }],
+      [{ approvalMode: null }],
+    ])('refuses to take away what a group needs: %j', async (change) => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('OWNER');
+
+      await expect(
+        service.updateGroup(
+          'g1',
+          { id: 'u1' } as Identity,
+          change as unknown as Parameters<typeof service.updateGroup>[2],
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.updateGroup).not.toHaveBeenCalled();
+    });
+
+    it('lets the tagline and the schedule be taken away', async () => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('OWNER');
+      repository.updateGroup.mockResolvedValue(aGroup());
+
+      await service.updateGroup('g1', { id: 'u1' } as Identity, {
+        tagline: null,
+        usualSchedule: null,
+      });
+
+      expect(repository.updateGroup).toHaveBeenCalledWith('g1', {
+        tagline: null,
+        usualSchedule: null,
+      });
+    });
+
+    it('takes a whole place', async () => {
+      const { repository, service } = setup();
+      repository.getGroupAccess.mockResolvedValue(aGroup());
+      repository.getMemberRole.mockResolvedValue('OWNER');
+      repository.updateGroup.mockResolvedValue(aGroup());
+      const place = { locationName: 'Brno', latitude: 49.2, longitude: 16.6 };
+
+      await service.updateGroup('g1', { id: 'u1' } as Identity, place);
+
+      expect(repository.updateGroup).toHaveBeenCalledWith('g1', place);
+    });
   });
 
   describe('managing a group (F-07.3)', () => {

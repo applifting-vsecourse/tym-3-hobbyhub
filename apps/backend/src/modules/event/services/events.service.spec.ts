@@ -406,16 +406,34 @@ describe('EventsService', () => {
         },
         { limit: GROUP_EVENTS_PAGE_SIZE, offset: 10 },
       );
-      expect(groups.getPublicGroup).not.toHaveBeenCalled();
+      expect(groups.assertPublicGroup).not.toHaveBeenCalled();
+    });
+
+    it('shows the events of a group that decides on requests only as a number', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'APPROVAL',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
+      repository.countGroupEvents.mockResolvedValue(5);
+
+      for (const period of ['upcoming', 'past'] as const) {
+        await expect(
+          service.getGroupEvents('g1', undefined, period, 0, now),
+        ).resolves.toEqual({ items: [], total: 0, hiddenCount: 5 });
+      }
+      expect(repository.getGroupEvents).not.toHaveBeenCalled();
     });
 
     it('gives anyone else the upcoming public events of a public group', async () => {
       const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
       repository.getGroupEvents.mockResolvedValue(page);
 
       await service.getGroupEvents('g1', undefined, 'upcoming', 0, now);
 
-      expect(groups.getPublicGroup).toHaveBeenCalledWith('g1', undefined);
+      expect(groups.assertPublicGroup).toHaveBeenCalledWith('g1', undefined);
       expect(repository.getGroupEvents).toHaveBeenCalledWith(
         'g1',
         {
@@ -428,8 +446,32 @@ describe('EventsService', () => {
       );
     });
 
-    it('answers not found to a non-member asking for the past', async () => {
-      const { repository, service } = setup();
+    it('gives a non-member the public past events and only the count of the group-only ones', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockResolvedValue({
+        approvalMode: 'OPEN',
+      } as Awaited<ReturnType<typeof groups.assertPublicGroup>>);
+      repository.getGroupEvents.mockResolvedValue(page);
+      repository.countGroupEvents.mockResolvedValue(3);
+
+      await expect(
+        service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
+      ).resolves.toEqual({ ...page, hiddenCount: 3 });
+      expect(groups.assertPublicGroup).toHaveBeenCalled();
+      expect(repository.getGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ period: 'past', visibilities: ['PUBLIC'] }),
+        { limit: GROUP_EVENTS_PAGE_SIZE, offset: 0 },
+      );
+      expect(repository.countGroupEvents).toHaveBeenCalledWith(
+        'g1',
+        expect.objectContaining({ visibilities: ['GROUP_ONLY'] }),
+      );
+    });
+
+    it('answers not found to a non-member asking for the past of a group without a public page', async () => {
+      const { repository, groups, service } = setup();
+      groups.assertPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', { id: 'u1' } as Identity, 'past', 0, now),
@@ -439,7 +481,7 @@ describe('EventsService', () => {
 
     it('answers not found for a group without a public page', async () => {
       const { repository, groups, service } = setup();
-      groups.getPublicGroup.mockRejectedValue(new NotFoundException());
+      groups.assertPublicGroup.mockRejectedValue(new NotFoundException());
 
       await expect(
         service.getGroupEvents('g1', undefined, 'upcoming', 0, now),
