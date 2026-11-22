@@ -8,9 +8,9 @@ import { EventInterestModule } from './modules/event-interest/event-interest.mod
 import { EventModule } from './modules/event/event.module';
 import { FriendshipModule } from './modules/friendship/friendship.module';
 import { GroupModule } from './modules/group/group.module';
+import { LandingModule } from './modules/landing/landing.module';
 import { LevelModule } from './modules/level/level.module';
 import { MembershipRequestModule } from './modules/membership-request/membership-request.module';
-import { LandingModule } from './modules/landing/landing.module';
 import { MyEventsModule } from './modules/my-events/my-events.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';

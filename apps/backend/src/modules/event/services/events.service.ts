@@ -8,9 +8,9 @@ import {
   canSeeEvent,
   CreateEventData,
   Event,
+  EventAttendee,
   EventChangeViolation,
   eventChangeViolations,
-  EventAttendee,
   EventDetail,
   EventFacts,
   EventFilter,
@@ -434,7 +434,10 @@ export class EventsService {
 
   // #215: which of the people organize these events or hold a seat on them.
   // Whose name may be shown is the caller's business.
-  getAttendees(eventIds: string[], userIds: string[]): Promise<EventAttendee[]> {
+  getAttendees(
+    eventIds: string[],
+    userIds: string[],
+  ): Promise<EventAttendee[]> {
     return this.eventRepository.getAttendees(eventIds, userIds);
   }
 
