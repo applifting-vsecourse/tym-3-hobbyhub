@@ -74,7 +74,7 @@ export function FriendRequests({ now: fixedNow }: FriendRequestsProps) {
         >
           <Link
             to={ROUTES.friends}
-            search={{}}
+            search={{ tab: "search" }}
           >
             {t("friends.empty.findPeople")}
           </Link>

@@ -180,6 +180,15 @@ export const participantStatsSchema = z.object({
   gender: z.object({ male: z.number(), female: z.number(), unknown: z.number() }).nullable(),
 })
 
+/** #226: a friend on an event, with only what their public profile shows. */
+export const eventFriendSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  image: z.string().nullable(),
+})
+
+export type EventFriend = z.infer<typeof eventFriendSchema>
+
 export const eventDetailSchema = eventListItemSchema.extend({
   description: z.string(),
   equipment: z.string().nullable(),
@@ -208,6 +217,12 @@ export const eventDetailSchema = eventListItemSchema.extend({
    * only the people with a seat get it, from the participant info.
    */
   location: eventLocationSchema.nullable(),
+  /**
+   * #226: my friends who go to the event or organize it (after its end: who
+   * were there), by name. Only for a signed-in viewer, and only friends who
+   * let friends see it; absent for a visitor.
+   */
+  friends: z.array(eventFriendSchema).optional(),
 })
 
 export type EventDetail = z.infer<typeof eventDetailSchema>
@@ -249,3 +264,28 @@ export const participantInfoSchema = z.object({
 })
 
 export type ParticipantInfo = z.infer<typeof participantInfoSchema>
+
+/** #226: a page of one friend's events on their profile. */
+export const personEventPageSchema = z.object({
+  items: z.array(eventListItemSchema),
+  /** All the events of the period, not just this page. */
+  total: z.number().int(),
+  /** Where the next page starts; null on the last one. */
+  nextOffset: z.number().int().nullable(),
+})
+
+export type PersonEventPage = z.infer<typeof personEventPageSchema>
+
+/** #226: an upcoming event of my friends, with which of them go or organize it. */
+export const friendsEventSchema = z.object({
+  event: eventListItemSchema,
+  friends: z.array(eventFriendSchema),
+})
+
+export type FriendsEvent = z.infer<typeof friendsEventSchema>
+
+export const friendsEventPageSchema = z.object({
+  items: z.array(friendsEventSchema),
+  total: z.number().int(),
+  nextOffset: z.number().int().nullable(),
+})

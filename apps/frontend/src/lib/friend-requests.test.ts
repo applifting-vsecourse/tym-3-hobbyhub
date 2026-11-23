@@ -49,11 +49,13 @@ describe("decideFriendRequest (#228)", () => {
 })
 
 describe("friendRequestDecisionRefreshes (review #257)", () => {
-  it("refreshes the requests, the notifications and the sender's profile only", () => {
+  it("refreshes the requests, the notifications, the sender's profile and the events", () => {
     expect(friendRequestDecisionRefreshes("u2")).toEqual([
       ["friendship"],
       ["notifications"],
       ["profile", "user", "u2"],
+      // #226: a new friend shows in „Akce přátel“ and the event detail.
+      ["events"],
     ])
   })
 })

@@ -1,8 +1,11 @@
 import { PrismaService } from '@/core/prisma/prisma.service';
 import { Prisma } from '@/generated/prisma/client';
 import {
+  Friend,
+  FriendListSort,
   friendPairOf,
   FriendRequest,
+  FriendVisibility,
   ReceivedFriendRequest,
 } from '@/modules/friendship/domain/friendship';
 import { Injectable } from '@nestjs/common';
@@ -18,6 +21,29 @@ export type FoundUserRow = {
 export type StoredRelation = {
   isFriend: boolean;
   pendingRequest: { senderId: string } | null;
+};
+
+/**
+ * #226: the user's friends, the other side of each pair they are in, from
+ * accounts that still count and without the excluded ones. One `FROM` for the
+ * list and its number, so the two never disagree. The index on "userBId"
+ * serves the second half of the OR.
+ */
+const friendsOf = (
+  userId: string,
+  excludedIds: readonly string[],
+): Prisma.Sql => {
+  const notExcluded =
+    excludedIds.length === 0
+      ? Prisma.empty
+      : Prisma.sql`AND u."id" NOT IN (${Prisma.join([...excludedIds])})`;
+  return Prisma.sql`
+    FROM "friendship" f
+    JOIN "user" u ON u."id" = CASE WHEN f."userAId" = ${userId}
+      THEN f."userBId" ELSE f."userAId" END
+    WHERE (f."userAId" = ${userId} OR f."userBId" = ${userId})
+      AND u."status" IN ('ACTIVE', 'RESTRICTED')
+      ${notExcluded}`;
 };
 
 /** Accounts a request can reach and whose requests still count. */
@@ -37,6 +63,15 @@ const receivedWhere = (
     ...(excludedIds.length > 0 && { id: { notIn: [...excludedIds] } }),
   },
 });
+
+// #226: the order of the list of friends. Fixed SQL per choice, never text
+// from the request. The id breaks ties, so offset paging stays stable.
+const FRIEND_LIST_ORDER: Record<FriendListSort, Prisma.Sql> = {
+  newest: Prisma.sql`f."createdAt" DESC, u."id" ASC`,
+  oldest: Prisma.sql`f."createdAt" ASC, u."id" ASC`,
+  name_asc: Prisma.sql`unaccent(lower(u."name")) ASC, u."id" ASC`,
+  name_desc: Prisma.sql`unaccent(lower(u."name")) DESC, u."id" ASC`,
+};
 
 /** The second request for a pair lost the race (friend_request_one_pending_per_pair). */
 export class PendingRequestExistsError extends Error {}
@@ -399,5 +434,100 @@ export class FriendshipRepository {
     return friendships.map((friendship) =>
       friendship.userAId === userId ? friendship.userB : friendship.userA,
     );
+  }
+
+  /**
+   * #226: a page of the user's friends in the order asked, and how many there
+   * are. Only accounts that still count (not blocked or deleted) and never
+   * `excludedIds` (people blocked with the user, #239), in the page and in the
+   * total alike.
+   */
+  async listFriends(
+    userId: string,
+    sort: FriendListSort,
+    offset: number,
+    limit: number,
+    excludedIds: readonly string[] = [],
+  ): Promise<{ items: Friend[]; total: number }> {
+    const from = friendsOf(userId, excludedIds);
+    const [items, totalRows] = await Promise.all([
+      this.prisma.$queryRaw<Friend[]>`
+        SELECT u."id", u."name", u."image", f."createdAt" AS "friendsSince"
+        ${from}
+        ORDER BY ${FRIEND_LIST_ORDER[sort]}
+        OFFSET ${offset}
+        LIMIT ${limit}`,
+      this.prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT count(*) AS "total" ${from}`,
+    ]);
+    return { items, total: Number(totalRows[0]?.total ?? 0) };
+  }
+
+  /** #226: how many friends the list has, the number on the tab. */
+  async countFriends(
+    userId: string,
+    excludedIds: readonly string[] = [],
+  ): Promise<number> {
+    const rows = await this.prisma.$queryRaw<{ total: bigint }[]>`
+      SELECT count(*) AS "total" ${friendsOf(userId, excludedIds)}`;
+    return Number(rows[0]?.total ?? 0);
+  }
+
+  /**
+   * #226: the user's friends whose switch lets friends see their events of
+   * this kind. Filtered here, in the query, so a friend who did not allow it
+   * never reaches any list or number (the visibility matrix). Only accounts
+   * that still count.
+   */
+  async findFriendIdsAllowing(
+    userId: string,
+    allowing: keyof FriendVisibility,
+  ): Promise<string[]> {
+    const friend = {
+      status: { in: [...REACHABLE_STATUSES] },
+      [allowing]: true,
+    } satisfies Prisma.UserWhereInput;
+    const pairs = await this.prisma.friendship.findMany({
+      where: {
+        OR: [
+          { userAId: userId, userB: friend },
+          { userBId: userId, userA: friend },
+        ],
+      },
+      select: { userAId: true, userBId: true },
+    });
+    return pairs.map((pair) =>
+      pair.userAId === userId ? pair.userBId : pair.userAId,
+    );
+  }
+
+  /**
+   * #226: what the friend lets friends see of their events, or null when the
+   * two are not friends (or the friend's account no longer counts).
+   */
+  async findFriendVisibility(
+    viewerId: string,
+    friendId: string,
+  ): Promise<FriendVisibility | null> {
+    const friendship = await this.prisma.friendship.findUnique({
+      where: { userAId_userBId: friendPairOf(viewerId, friendId) },
+      select: { id: true },
+    });
+    if (!friendship) return null;
+    return this.prisma.user.findFirst({
+      where: { id: friendId, status: { in: [...REACHABLE_STATUSES] } },
+      select: { friendsSeeEventHistory: true, friendsSeeUpcomingEvents: true },
+    });
+  }
+
+  /**
+   * #226: the two stop being friends, for both of them. The requests between
+   * them stay as history. Whether there was a friendship to remove.
+   */
+  async removeFriendship(oneId: string, otherId: string): Promise<boolean> {
+    const { count } = await this.prisma.friendship.deleteMany({
+      where: friendPairOf(oneId, otherId),
+    });
+    return count > 0;
   }
 }
