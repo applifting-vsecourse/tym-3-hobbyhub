@@ -12,7 +12,7 @@ type AuthLayoutProps = {
   title: string
   description: string
   children: ReactNode
-  footer: ReactNode
+  footer?: ReactNode
   /** Where the back button on phones leads; without it there is none. */
   backTo?: string
   /**
@@ -66,7 +66,9 @@ export function AuthLayout({
 
           <div className="mt-6 md:mt-8">{children}</div>
 
-          <p className="mt-6 text-center typo-small text-muted-foreground">{footer}</p>
+          {footer ? (
+            <p className="mt-6 text-center typo-small text-muted-foreground">{footer}</p>
+          ) : null}
 
           {/* #262: nobody is signed in here, so the choice stays in this browser. */}
           {isAdministration ? null : <LanguageLinks className="mt-6 justify-center" />}

@@ -30,6 +30,8 @@ export function authErrorMessage(
     case "USER_ALREADY_EXISTS":
     case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
       return t("auth.errors.userExists")
+    case "GOOGLE_SIGNUP_EXPIRED":
+      return t("auth.errors.googleExpired")
     case "EMAIL_NOT_VERIFIED":
       return t("auth.errors.emailNotVerified")
     case "INVALID_EMAIL":
@@ -69,12 +71,23 @@ export function authErrorMessage(
   }
 }
 
+/** The Google account has no account here: sign-up is the way on. */
+export const isGoogleSignUpRequired = (code: string | undefined) =>
+  code === "GOOGLE_SIGNUP_REQUIRED" ||
+  code === "signup_disabled" ||
+  code === "new_user_signup_disabled"
+
 /**
  * The message for the `error` code BetterAuth puts on the return address when
  * the Google round trip fails.
  */
 export function googleErrorMessage(t: TFunction, code: string) {
   switch (code) {
+    // BetterAuth's code for a Google account with no account here, when the
+    // sign-in page does not create one: "signup disabled" with spaces turned
+    // into underscores. The other spelling is its older/generic-OAuth one.
+    case "GOOGLE_SIGNUP_REQUIRED":
+    case "signup_disabled":
     case "new_user_signup_disabled":
       return t("auth.errors.googleNoAccount")
     // The nickname was taken while the user was at Google.

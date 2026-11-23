@@ -6,6 +6,7 @@ import {
 } from 'better-auth/api';
 import { BetterAuthOptions } from 'better-auth/types';
 import { googleAvatarAsDataUrl } from './google-avatar';
+import { sealPendingGoogleUser } from './google-signup';
 import {
   consentsAtSignUp,
   Gender,
@@ -17,6 +18,9 @@ import {
 const SIGN_UP_PATH = '/sign-up/email';
 const SOCIAL_SIGN_IN_PATH = '/sign-in/social';
 const OAUTH_CALLBACK_PREFIX = '/callback/';
+
+/** Code on the return address when a Google account still has to sign up. */
+export const GOOGLE_SIGNUP_REQUIRED = 'GOOGLE_SIGNUP_REQUIRED';
 
 // The nickname is changed only through the profile (PATCH /api/profile),
 // which keeps the three columns together and waits 30 days between changes.
@@ -30,7 +34,7 @@ const PROFILE_ONLY_FIELDS = [
   'preferredLanguage',
 ];
 
-const MESSAGES: Record<RegistrationErrorCode, string> = {
+export const REGISTRATION_MESSAGES: Record<RegistrationErrorCode, string> = {
   NICKNAME_TOO_SHORT: 'The nickname must be at least 3 characters long',
   NICKNAME_TOO_LONG: 'The nickname must be at most 30 characters long',
   NICKNAME_INVALID:
@@ -56,7 +60,7 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
     if (!result.ok) {
       throw APIError.from('BAD_REQUEST', {
         code: result.code,
-        message: MESSAGES[result.code],
+        message: REGISTRATION_MESSAGES[result.code],
       });
     }
     return {
@@ -97,7 +101,7 @@ export const registrationBeforeHook = createAuthMiddleware(async (ctx) => {
     if (!result.ok) {
       throw APIError.from('BAD_REQUEST', {
         code: result.code,
-        message: MESSAGES[result.code],
+        message: REGISTRATION_MESSAGES[result.code],
       });
     }
     // The username plugin only guards its own sign-up route, so a nickname
@@ -173,9 +177,19 @@ export const registrationDatabaseHooks: BetterAuthOptions['databaseHooks'] = {
               }
             | undefined;
           if (!registration) {
+            // A Google account with no account here, signing in. BetterAuth
+            // puts the code and this message on the return address
+            // (`error`, `error_description`): the message is a sealed token of
+            // the Google user, which lets the sign-up page finish without a
+            // second round trip to Google.
+            const token = await sealPendingGoogleUser(
+              ctx.context.secret,
+              user,
+              new Date(),
+            );
             throw APIError.from('BAD_REQUEST', {
-              code: 'REGISTRATION_REQUIRED',
-              message: 'Sign up through the registration form first',
+              code: token ? GOOGLE_SIGNUP_REQUIRED : 'EMAIL_NOT_VERIFIED',
+              message: token ?? 'The Google e-mail is not verified',
             });
           }
           const { username, gender, birthYear, preferredLanguage } =

@@ -6,6 +6,13 @@ import {
 } from './registration.hooks';
 
 jest.mock('./google-avatar', () => ({ googleAvatarAsDataUrl: jest.fn() }));
+// The token itself is tested with google-signup; here only that one is issued.
+jest.mock('./google-signup', () => ({
+  sealPendingGoogleUser: jest.fn(
+    (_secret: string, u: { email: string; emailVerified?: boolean }) =>
+      Promise.resolve(u.emailVerified === true ? `token-for-${u.email}` : null),
+  ),
+}));
 
 // better-auth ships ES modules, which Jest does not load: stand in for the few
 // pieces the hooks use.
@@ -24,11 +31,13 @@ const user = {
   name: 'Jana Nováková',
   email: 'jana@example.com',
   image: 'https://lh3.googleusercontent.com/a/photo',
+  emailVerified: true,
 } as never;
 const adapter = (
   taken: boolean,
-): { context: { adapter: { findOne: jest.Mock } } } => ({
+): { context: { secret: string; adapter: { findOne: jest.Mock } } } => ({
   context: {
+    secret: 'secret',
     adapter: {
       findOne: jest.fn().mockResolvedValue(taken ? { id: 'u1' } : null),
     },
@@ -76,14 +85,32 @@ describe('registrationDatabaseHooks (Google sign-up)', () => {
     expect(result.data.adulthoodConfirmedAt).toBeInstanceOf(Date);
   });
 
-  it('refuses an account created without going through the sign-up form', async () => {
+  it('sends an account made without the sign-up form to it, with a sealed Google user', async () => {
     jest.mocked(getOAuthState).mockResolvedValue({} as never);
 
     await expect(
-      createBefore(user, { path: '/callback/google' } as never),
+      createBefore(user, {
+        path: '/callback/google',
+        ...adapter(false),
+      } as never),
     ).rejects.toMatchObject({
-      body: { code: 'REGISTRATION_REQUIRED' },
+      // The message is the token the sign-up page finishes the sign-up with.
+      body: {
+        code: 'GOOGLE_SIGNUP_REQUIRED',
+        message: 'token-for-jana@example.com',
+      },
     });
+  });
+
+  it('does not make an account for a Google e-mail that is not verified', async () => {
+    jest.mocked(getOAuthState).mockResolvedValue({} as never);
+
+    await expect(
+      createBefore(
+        { ...(user as object), emailVerified: false } as never,
+        { path: '/callback/google', ...adapter(false) } as never,
+      ),
+    ).rejects.toMatchObject({ body: { code: 'EMAIL_NOT_VERIFIED' } });
   });
 
   it('refuses a nickname taken while the user was at Google', async () => {
