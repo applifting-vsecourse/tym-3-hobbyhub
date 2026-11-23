@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { sendFriendRequestErrorKey } from "@/features/friendship/api/friendshipRequests"
 import type { FriendRelation } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRequestDecision } from "@/features/friendship/components/FriendRequestDecision"
+import { RemoveFriend } from "@/features/friendship/components/RemoveFriend"
 import { WithdrawFriendRequest } from "@/features/friendship/components/WithdrawFriendRequest"
 import { useSendFriendRequest } from "@/features/friendship/hooks/useSendFriendRequest"
 
@@ -24,8 +25,8 @@ type FriendRelationActionProps = {
 /**
  * #225: under the bio of someone's profile, what I can do about friendship.
  * No relation: ask. Asked: a disabled "Žádost odeslána" and "Zrušit žádost".
- * They ask me: a band with the note and Přijmout / Zamítnout (#228). Friends: the "Přítel" badge, to
- * which #226 adds removing the friend.
+ * They ask me: a band with the note and Přijmout / Zamítnout (#228). Friends: the "Přítel" badge and
+ * "Odebrat z přátel" (#226).
  */
 export function FriendRelationAction({
   userId,
@@ -95,13 +96,19 @@ export function FriendRelationAction({
       )
     case "friends":
       return (
-        <Badge
-          variant="success"
-          className="px-3 py-1"
-        >
-          <FriendHeartIcon aria-hidden />
-          {t("friends.relation.friends")}
-        </Badge>
+        <div className="flex flex-col items-start gap-3">
+          <Badge
+            variant="success"
+            className="px-3 py-1"
+          >
+            <FriendHeartIcon aria-hidden />
+            {t("friends.relation.friends")}
+          </Badge>
+          <RemoveFriend
+            friendId={userId}
+            friendName={userName}
+          />
+        </div>
       )
   }
 }

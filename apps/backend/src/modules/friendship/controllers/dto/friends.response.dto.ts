@@ -1,5 +1,7 @@
 import {
+  Friend,
   FRIEND_RELATIONS,
+  FriendPage,
   FriendRelation,
   FriendSearchPage,
   FriendSearchResult,
@@ -67,6 +69,12 @@ export class FriendSearchPageResponseDto {
 
 // #228: how many requests wait for me.
 export class FriendRequestCountResponseDto {
+  @ApiProperty()
+  count!: number;
+}
+
+// #226: how many friends I have, the number on the tab.
+export class FriendCountResponseDto {
   @ApiProperty()
   count!: number;
 }
@@ -140,6 +148,61 @@ export class ReceivedFriendRequestPageResponseDto {
       items: page.items.map((item) =>
         ReceivedFriendRequestResponseDto.fromDomain(item),
       ),
+      total: page.total,
+      nextOffset: page.nextOffset,
+    };
+  }
+}
+
+// #226: one of my friends, with only what their public profile shows.
+export class FriendResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ description: 'The nickname, the one public name (ADR-0025)' })
+  name!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'WebP data URL of the photo',
+  })
+  image!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'When the two became friends',
+  })
+  friendsSince!: Date;
+
+  static fromDomain(friend: Friend): FriendResponseDto {
+    return {
+      id: friend.id,
+      name: friend.name,
+      image: friend.image,
+      friendsSince: friend.friendsSince,
+    };
+  }
+}
+
+export class FriendPageResponseDto {
+  @ApiProperty({ type: [FriendResponseDto] })
+  items!: FriendResponseDto[];
+
+  @ApiProperty({ description: 'All my friends, not just this page' })
+  total!: number;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Offset of the next page; null on the last one',
+  })
+  nextOffset!: number | null;
+
+  static fromDomain(page: FriendPage): FriendPageResponseDto {
+    return {
+      items: page.items.map((item) => FriendResponseDto.fromDomain(item)),
       total: page.total,
       nextOffset: page.nextOffset,
     };

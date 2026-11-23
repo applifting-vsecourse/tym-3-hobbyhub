@@ -12,18 +12,29 @@ import { api, HTTPError } from "@/lib/api-client"
 export const friendshipRootKey = ["friendship"] as const
 export const notificationsRootKey = ["notifications"] as const
 export const profileRootKey = ["profile"] as const
+// #226: the events, where friends show (the detail, „Akce přátel“).
+export const eventsRootKey = ["events"] as const
 
 /** One person's profile; `profileKeys.user` is this one. */
 export const profileUserKey = (userId: string) => [...profileRootKey, "user", userId] as const
 
 /**
  * What a decision refreshes: the requests and their number, the
- * notifications (the server marked the request's one read) and the profile
- * of the person who asked (the relation changed). Nothing else: not my own
- * profile, nor the others I visited (review #257).
+ * notifications (the server marked the request's one read), the profile of
+ * the person who asked (the relation changed) and (#226) the events, where a
+ * new friend shows. Nothing else: not my own profile, nor the others I
+ * visited (review #257).
  */
 export const friendRequestDecisionRefreshes = (senderId: string) =>
-  [friendshipRootKey, notificationsRootKey, profileUserKey(senderId)] as const
+  [friendshipRootKey, notificationsRootKey, profileUserKey(senderId), eventsRootKey] as const
+
+/**
+ * #226: what removing a friend refreshes: the friends, their number and the
+ * search (the relation), the friend's profile (the relation and their
+ * events) and the events, which no longer name the one removed.
+ */
+export const friendRemovalRefreshes = (friendId: string) =>
+  [friendshipRootKey, profileUserKey(friendId), eventsRootKey] as const
 
 export type FriendRequestDecision = "accept" | "reject"
 

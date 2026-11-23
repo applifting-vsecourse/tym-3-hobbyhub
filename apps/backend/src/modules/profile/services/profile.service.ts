@@ -1,4 +1,9 @@
-import { FriendVisibility } from '@/modules/friendship/domain/friendship';
+import { EventPeriod, PersonEventPage } from '@/modules/event/domain/event';
+import { FriendEventsService } from '@/modules/event/services/friend-events.service';
+import {
+  FriendVisibility,
+  friendVisibilitySwitchOf,
+} from '@/modules/friendship/domain/friendship';
 import { FriendshipService } from '@/modules/friendship/services/friendship.service';
 import {
   HomeAddress,
@@ -48,6 +53,7 @@ export class ProfileService {
     private readonly friendshipService: FriendshipService,
     private readonly blocks: UserBlockVisibility,
     private readonly ratingsService: RatingsService,
+    private readonly friendEvents: FriendEventsService,
   ) {}
 
   async getProfile(user: Identity, now = new Date()): Promise<Profile> {
@@ -111,11 +117,21 @@ export class ProfileService {
       ? null
       : await this.profileRepository.getPublicRow(userId);
     if (!row) throw new NotFoundException('User not found');
-    const [interests, relation, ratings] = await Promise.all([
+    const [interests, relation, ratings, shown] = await Promise.all([
       this.onboardingService.getInterestsOf(userId),
       this.friendshipService.relationBetween(viewer.id, userId),
       this.ratingsService.getUserScores(userId),
+      this.friendshipService.friendVisibilityFor(viewer.id, userId),
     ]);
+    // #226: a friend's events, each part only when its switch allows it;
+    // otherwise the field is not in the answer at all.
+    const [upcomingEvents, pastEvents] = await Promise.all(
+      (['upcoming', 'past'] as const).map((period) =>
+        shown?.[friendVisibilitySwitchOf(period)]
+          ? this.friendEvents.getPersonEvents(userId, viewer, period, 0)
+          : undefined,
+      ),
+    );
     return {
       id: row.id,
       name: row.name,
@@ -127,7 +143,30 @@ export class ProfileService {
       // #236: someone opening their own public profile sees it as others do.
       ratings: shownUserRatingScores(ratings, false),
       isBlockedByMe: blocked.includes(userId),
+      ...(upcomingEvents && { upcomingEvents }),
+      ...(pastEvents && { pastEvents }),
     };
+  }
+
+  /**
+   * #226: a further page of a friend's upcoming or past events on their
+   * profile. To anyone the profile does not show them to (not a friend, the
+   * switch off, blocked) they do not exist: 404, like a missing profile.
+   */
+  async getFriendEvents(
+    userId: string,
+    viewer: Identity,
+    period: EventPeriod,
+    offset: number,
+  ): Promise<PersonEventPage> {
+    const hidden = await this.blocks.hiddenFor(viewer.id);
+    const shown = hidden.includes(userId)
+      ? null
+      : await this.friendshipService.friendVisibilityFor(viewer.id, userId);
+    if (!shown?.[friendVisibilitySwitchOf(period)]) {
+      throw new NotFoundException('Events not found');
+    }
+    return this.friendEvents.getPersonEvents(userId, viewer, period, offset);
   }
 
   // Only what is sent is changed; `null` clears the bio or the photo. Nothing
