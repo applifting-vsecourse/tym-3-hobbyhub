@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { relativeTime } from "@/features/notification/lib/relativeTime"
+import { relativeTime } from "@/lib/relativeTime"
 
 const now = new Date("2030-01-10T12:00:00Z")
 const ago = (ms: number) => new Date(now.getTime() - ms)

@@ -1,3 +1,5 @@
+import { eventsRootKey } from "@/lib/friend-requests"
+
 import type { GroupEventPeriod } from "@/features/event/api/eventSchemas"
 
 /** The visitor's position, rounded, so a small move does not refetch. */
@@ -16,6 +18,8 @@ export type EventListFilters = {
   dateTo?: string
   /** Only events that still have a free seat (#214). */
   freeSpotsOnly?: boolean
+  /** #215: only events that start within a few hours ("Last minute"). */
+  lastMinute?: boolean
   /** Contribution per seat in CZK, inclusive; empty means no bound (#214). */
   priceFrom?: string
   priceTo?: string
@@ -32,13 +36,12 @@ export type EventListFilters = {
 }
 
 export const eventKeys = {
-  all: () => ["events"] as const,
+  // The root removing a friend refreshes too (lib/friend-requests).
+  all: () => eventsRootKey,
   lists: () => [...eventKeys.all(), "list"] as const,
   list: (filters: EventListFilters) => [...eventKeys.lists(), filters] as const,
   // Every event with a place, for the map: all pages of one filter.
   map: (filters: EventListFilters) => [...eventKeys.lists(), "map", filters] as const,
-  // The few soonest events on the landing page.
-  upcoming: (limit: number) => [...eventKeys.lists(), "upcoming", limit] as const,
   // Detail (F-02.4). Keyed by viewer too: a group-only event (F-07.2) shows to
   // its group's members only, so signing out must not leave it in the cache.
   details: () => [...eventKeys.all(), "detail"] as const,
@@ -61,5 +64,11 @@ export const eventKeys = {
     [...eventKeys.all(), "participant-info", id, userId] as const,
   // The organizer's full view (F-05.10).
   managed: (id: string) => [...eventKeys.all(), "managed", id] as const,
+  // #226: the upcoming events of my friends („Akce přátel“), keyed by viewer
+  // so a switch of account never shows the previous one's friends.
+  friendsEvents: (viewerId: string) => [...eventKeys.all(), "friends", viewerId] as const,
+  // #226: a friend's events on their profile, past or upcoming.
+  personEvents: (userId: string, period: GroupEventPeriod) =>
+    [...eventKeys.all(), "person", userId, period] as const,
   cancellationReasons: () => ["cancellation-reasons"] as const,
 }

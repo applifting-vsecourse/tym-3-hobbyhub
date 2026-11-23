@@ -18,6 +18,7 @@ const aNotification = (
   actor: { id: 'u2', name: APPLICANT },
   event: { id: 'e1', title: EVENT_TITLE },
   group: null,
+  friendRequest: null,
   ...overrides,
 });
 
@@ -380,6 +381,43 @@ describe('notificationEmailOf', () => {
     expect(
       notificationEmailOf(aNotification({ type: 'CONFIRMATION_PROMPT' })),
     ).toBeNull();
+  });
+
+  describe('a friend request (#228)', () => {
+    const friendRequest = { id: 'fr1', status: 'PENDING' as const };
+
+    it('tells the recipient there is a request, without the name, and leads to the tab', () => {
+      const content = notificationEmailOf(
+        aNotification({
+          type: 'FRIEND_REQUEST',
+          event: null,
+          friendRequest,
+        }),
+      );
+
+      expect(content).toEqual(
+        expect.objectContaining({
+          subject: 'Máš novou žádost o přátelství',
+          buttonLabel: 'Zobrazit žádosti',
+          path: '/friends?tab=requests',
+          critical: false,
+        }),
+      );
+      const text = JSON.stringify(content);
+      expect(text).not.toContain(APPLICANT);
+    });
+
+    it('has no e-mail for an accepted request, only the bell', () => {
+      expect(
+        notificationEmailOf(
+          aNotification({
+            type: 'FRIEND_REQUEST_ACCEPTED',
+            event: null,
+            friendRequest: { id: 'fr1', status: 'ACCEPTED' },
+          }),
+        ),
+      ).toBeNull();
+    });
   });
 
   it('has no e-mail when the event or group is gone', () => {

@@ -174,3 +174,91 @@ export function friendRequestViolations(
 ): FriendRequestViolation[] {
   return senderId === recipientId ? ['SELF_REQUEST'] : [];
 }
+
+// #228: the requests waiting for the recipient's decision, newest first, a
+// page of 20 at a time. The total is the number on the tab „Žádosti“.
+export const RECEIVED_FRIEND_REQUESTS_PAGE_SIZE = 20;
+
+/**
+ * One request waiting for my decision, with only what the sender's public
+ * profile shows (the visibility matrix), never their e-mail.
+ */
+export type ReceivedFriendRequest = {
+  id: string;
+  requestedAt: Date;
+  sender: {
+    id: string;
+    /** The nickname, the one name a person has (ADR-0025). */
+    name: string;
+    image: string | null;
+  };
+};
+
+export type ReceivedFriendRequestPage = {
+  items: ReceivedFriendRequest[];
+  /** All the requests waiting for me, not just this page. */
+  total: number;
+  /** Where the next page starts; null on the last one. */
+  nextOffset: number | null;
+};
+
+// #226: the list of my friends, a page of 20 at a time, newest friendship
+// first unless I pick another order.
+export const FRIENDS_PAGE_SIZE = 20;
+
+export const FRIEND_LIST_SORTS = [
+  'newest',
+  'oldest',
+  'name_asc',
+  'name_desc',
+] as const;
+
+export type FriendListSort = (typeof FRIEND_LIST_SORTS)[number];
+
+export const DEFAULT_FRIEND_LIST_SORT: FriendListSort = 'newest';
+
+/**
+ * One of my friends, with only what their public profile shows (the
+ * visibility matrix), and since when we are friends.
+ */
+export type Friend = {
+  id: string;
+  /** The nickname, the one name a person has (ADR-0025). */
+  name: string;
+  image: string | null;
+  friendsSince: Date;
+};
+
+export type FriendPage = {
+  items: Friend[];
+  /** All my friends shown, not just this page. */
+  total: number;
+  /** Where the next page starts; null on the last one. */
+  nextOffset: number | null;
+};
+
+/**
+ * #226: which of a friend's events, by when they happen. Upcoming ones (not
+ * over yet) follow „Přátelé vidí moje budoucí akce“, past ones (over) „Přátelé
+ * vidí moji historii akcí“.
+ */
+export type FriendEventsPeriod = 'upcoming' | 'past';
+
+/** The switch that lets friends see a person's events of the period. */
+export function friendVisibilitySwitchOf(
+  period: FriendEventsPeriod,
+): keyof FriendVisibility {
+  return period === 'upcoming'
+    ? 'friendsSeeUpcomingEvents'
+    : 'friendsSeeEventHistory';
+}
+
+export type FriendRemovalViolation = 'SELF_REMOVAL';
+
+/** Rules of removing a friend that need no data from elsewhere. Never throws. */
+export function friendRemovalViolations(
+  userId: string,
+  friendId: string,
+): FriendRemovalViolation[] {
+  return userId === friendId ? ['SELF_REMOVAL'] : [];
+}

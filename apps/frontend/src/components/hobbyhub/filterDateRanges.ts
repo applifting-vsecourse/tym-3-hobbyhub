@@ -41,3 +41,9 @@ export const thisWeekendRange = (now: Date = new Date()): DateRange => {
   const saturday = addDays(today, Math.max(6 - day, 0))
   return { dateFrom: toIsoDay(saturday), dateTo: toIsoDay(addDays(today, 7 - day)) }
 }
+
+/** Today in Prague, as a one-day range (#215). */
+export const todayRange = (now: Date = new Date()): DateRange => {
+  const today = toIsoDay(pragueToday(now))
+  return { dateFrom: today, dateTo: today }
+}

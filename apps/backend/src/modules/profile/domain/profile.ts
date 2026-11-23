@@ -1,3 +1,4 @@
+import { PersonEventPage } from '@/modules/event/domain/event';
 import {
   FriendRelation,
   FriendVisibility,
@@ -79,6 +80,13 @@ export type PublicProfile = {
   // #65, ADR-0031: whether the viewer blocked this person. Only ever about
   // the viewer's own choice; the blocked never learn of it.
   isBlockedByMe: boolean;
+  /**
+   * #226: the first page of the person's upcoming events, only for a friend
+   * and only when the person lets friends see them; absent otherwise.
+   */
+  upcomingEvents?: PersonEventPage;
+  /** #226: the first page of the past events, by the history switch the same way. */
+  pastEvents?: PersonEventPage;
 };
 
 export type ProfileViolation =

@@ -1,21 +1,24 @@
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
-import { RefreshCw } from "lucide-react"
+import { Loader2, RefreshCw, UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Loader } from "@/components/hobbyhub/Loader"
-import { PersonAvatar } from "@/components/hobbyhub/PersonAvatar"
 import { SearchField } from "@/components/hobbyhub/SearchField"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
 import { friendSearchQueryOptions } from "@/features/friendship/api/friendshipQueryOptions"
+import { sendFriendRequestErrorKey } from "@/features/friendship/api/friendshipRequests"
 import {
   FRIEND_SEARCH_MAX_LENGTH,
   FRIEND_SEARCH_MIN_LENGTH,
   type FriendSearchItem,
 } from "@/features/friendship/api/friendshipSchemas"
 import { FriendRelationBadge } from "@/features/friendship/components/FriendRelationBadge"
+import { PersonCard } from "@/features/friendship/components/PersonCard"
+import { RemoveFriend } from "@/features/friendship/components/RemoveFriend"
+import { useSendFriendRequest } from "@/features/friendship/hooks/useSendFriendRequest"
 
 type FriendSearchProps = {
   /** The text in the address (`?q=`): what is searched. */
@@ -123,22 +126,61 @@ export function FriendSearch({ text, typed, onTypedChange }: FriendSearchProps) 
   )
 }
 
-/** One person found: the card is the link to their profile. */
+/**
+ * One person found: the card leads to their profile. A friend can be removed
+ * right here (#226).
+ */
 function FriendSearchCard({ person }: { person: FriendSearchItem }) {
   return (
-    <Link
-      to="/profile/$userId"
-      params={{ userId: person.id }}
-      className="flex min-h-16 items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+    <PersonCard
+      person={person}
+      aside={<FriendRelationBadge relation={person.relation} />}
+      action={
+        person.relation === "friends" ? (
+          <RemoveFriend
+            friendId={person.id}
+            friendName={person.name}
+            variant="icon"
+          />
+        ) : person.relation === "none" ? (
+          <SendFriendRequestIcon person={person} />
+        ) : undefined
+      }
+    />
+  )
+}
+
+/**
+ * #226: asks for friendship right from the search, without opening the
+ * profile. The search reloads after it, so the card shows the new relation.
+ */
+function SendFriendRequestIcon({ person }: { person: FriendSearchItem }) {
+  const { t } = useTranslation()
+  const send = useSendFriendRequest(person.id, () => Promise.resolve())
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      className="relative size-11 shrink-0 md:size-9"
+      aria-label={t("friends.action.sendShortLabel", { name: person.name })}
+      title={t("friends.action.send")}
+      disabled={send.isPending}
+      onClick={() =>
+        send.mutate(undefined, {
+          onError: (error) => toast.error(t(sendFriendRequestErrorKey(error))),
+        })
+      }
     >
-      <PersonAvatar
-        name={person.name}
-        photo={person.image}
-      />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="typo-title break-words text-foreground">{person.name}</span>
-      </span>
-      <FriendRelationBadge relation={person.relation} />
-    </Link>
+      {send.isPending ? (
+        <Loader2
+          aria-hidden
+          className="animate-spin"
+        />
+      ) : (
+        <UserPlus aria-hidden />
+      )}
+    </Button>
   )
 }

@@ -14,6 +14,7 @@ import { YourSeat } from "@/components/hobbyhub/YourSeat"
 import { cn } from "@/lib/utils"
 
 import type { EventDetail as EventDetailData } from "@/features/event/api/eventSchemas"
+import { FriendsOnEvent } from "@/features/event/components/FriendsOnEvent"
 import { formatContribution } from "@/features/event/lib/eventDateTime"
 import {
   eventClock,
@@ -188,6 +189,15 @@ export function EventDetail({
             {state === "open" && !isHidden ? shareAction : null}
             {isHidden ? null : interestAction}
           </div>
+          {/* #226: which of my friends go, or were there once it is over,
+              right under the title, before the time and the place. */}
+          {event.friends ? (
+            <FriendsOnEvent
+              friends={event.friends}
+              period={event.endAt > now ? "upcoming" : "past"}
+              variant="band"
+            />
+          ) : null}
           {/* #239: only the organizers get here; nobody else sees the event. */}
           {isHidden ? (
             <p className="typo-body text-foreground">

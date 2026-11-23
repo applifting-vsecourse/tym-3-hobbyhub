@@ -1,7 +1,11 @@
 import {
+  Friend,
   FRIEND_SEARCH_MAX_RESULTS,
   FRIEND_SEARCH_PAGE_SIZE,
   FriendRequest,
+  FRIENDS_PAGE_SIZE,
+  RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+  ReceivedFriendRequest,
 } from '@/modules/friendship/domain/friendship';
 import {
   FoundUserRow,
@@ -9,6 +13,7 @@ import {
   PendingRequestExistsError,
   StoredRelation,
 } from '@/modules/friendship/repositories/friendship.repository';
+import { NotificationsService } from '@/modules/notification/services/notifications.service';
 import { Identity } from '@/shared/auth/domain/identity';
 import { UserBlockVisibility } from '@/shared/user-block/user-block-visibility';
 import {
@@ -43,17 +48,20 @@ const noRelations = (ids: readonly string[]): Map<string, StoredRelation> =>
 describe('FriendshipService', () => {
   const setup = (): {
     repository: ReturnType<typeof mock<FriendshipRepository>>;
+    notifications: ReturnType<typeof mock<NotificationsService>>;
     blocks: ReturnType<typeof mock<UserBlockVisibility>>;
     service: FriendshipService;
   } => {
     const repository = mock<FriendshipRepository>();
+    const notifications = mock<NotificationsService>();
     const blocks = mock<UserBlockVisibility>();
     blocks.hiddenFor.mockResolvedValue([]);
     blocks.hiddenFrom.mockResolvedValue([]);
     return {
       repository,
+      notifications,
       blocks,
-      service: new FriendshipService(repository, blocks),
+      service: new FriendshipService(repository, notifications, blocks),
     };
   };
 
@@ -234,6 +242,7 @@ describe('FriendshipService', () => {
       context.repository.areFriends.mockResolvedValue(false);
       context.repository.findPendingRequestBetween.mockResolvedValue(null);
       context.repository.countRequestsSince.mockResolvedValue(0);
+      context.repository.createRequest.mockResolvedValue('r1');
       return context;
     };
 
@@ -246,6 +255,33 @@ describe('FriendshipService', () => {
         notifyRecipient: true,
       });
       expect(repository.createRequest).toHaveBeenCalledWith('u1', 'u2');
+    });
+
+    it('tells the recipient about the request (#228)', async () => {
+      const { notifications, service } = reachableStranger();
+      await service.sendRequest(me, 'u2');
+      expect(notifications.notifyFriendRequest).toHaveBeenCalledWith({
+        request: { id: 'r1' },
+        sender: me,
+        recipientId: 'u2',
+      });
+    });
+
+    it('tells nobody about a request over the limit (#228)', async () => {
+      const { repository, notifications, service } = reachableStranger();
+      repository.countRequestsSince.mockResolvedValue(3);
+      await service.sendRequest(me, 'u2');
+      expect(repository.createRequest).toHaveBeenCalled();
+      expect(notifications.notifyFriendRequest).not.toHaveBeenCalled();
+    });
+
+    it('tells nobody when the request was refused', async () => {
+      const { repository, notifications, service } = reachableStranger();
+      repository.areFriends.mockResolvedValue(true);
+      await expect(service.sendRequest(me, 'u2')).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(notifications.notifyFriendRequest).not.toHaveBeenCalled();
     });
 
     // The recipient hears of at most 3 requests from the same sender an hour.
@@ -359,7 +395,7 @@ describe('FriendshipService', () => {
   describe('withdrawRequest', () => {
     it('takes back my pending request, leaving no relation', async () => {
       const { repository, service } = setup();
-      repository.withdrawPendingRequest.mockResolvedValue(true);
+      repository.withdrawPendingRequest.mockResolvedValue('r1');
       await expect(service.withdrawRequest(me, 'u2')).resolves.toBe('none');
       expect(repository.withdrawPendingRequest).toHaveBeenCalledWith(
         'u1',
@@ -368,13 +404,25 @@ describe('FriendshipService', () => {
       );
     });
 
+    it("removes the recipient's notification of it (#228)", async () => {
+      const { repository, notifications, service } = setup();
+      repository.withdrawPendingRequest.mockResolvedValue('r1');
+      await service.withdrawRequest(me, 'u2');
+      expect(
+        notifications.removeFriendRequestNotifications,
+      ).toHaveBeenCalledWith({ id: 'r1' });
+    });
+
     // Never sent, already decided, or it is the other one asking me.
     it('answers a conflict when I have no pending request to the person', async () => {
-      const { repository, service } = setup();
-      repository.withdrawPendingRequest.mockResolvedValue(false);
+      const { repository, notifications, service } = setup();
+      repository.withdrawPendingRequest.mockResolvedValue(null);
       await expect(service.withdrawRequest(me, 'u2')).rejects.toBeInstanceOf(
         ConflictException,
       );
+      expect(
+        notifications.removeFriendRequestNotifications,
+      ).not.toHaveBeenCalled();
     });
 
     it('refuses oneself, without asking', async () => {
@@ -386,10 +434,327 @@ describe('FriendshipService', () => {
     });
   });
 
+  describe('listReceivedRequests (#228)', () => {
+    const aReceived = (id: string): ReceivedFriendRequest => ({
+      id,
+      requestedAt: new Date('2026-11-15T10:00:00Z'),
+      sender: {
+        id: `s-${id}`,
+        name: `Sender ${id}`,
+        image: null,
+      },
+    });
+
+    it('asks for a page of the requests waiting for me', async () => {
+      const { repository, service } = setup();
+      repository.listReceivedRequests.mockResolvedValue({
+        items: [],
+        total: 0,
+      });
+      await expect(service.listReceivedRequests(me, 0)).resolves.toEqual({
+        items: [],
+        total: 0,
+        nextOffset: null,
+      });
+      expect(repository.listReceivedRequests).toHaveBeenCalledWith(
+        'u1',
+        0,
+        RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        [],
+      );
+    });
+
+    // Review #257: what cannot be decided (404) is not listed or counted.
+    it('leaves out the requests of people blocked with me, either way', async () => {
+      const { repository, blocks, service } = setup();
+      blocks.hiddenFor.mockResolvedValue(['b1']);
+      blocks.hiddenFrom.mockResolvedValue(['b2', 'b1']);
+      repository.listReceivedRequests.mockResolvedValue({
+        items: [],
+        total: 0,
+      });
+      repository.countReceivedRequests.mockResolvedValue(0);
+
+      await service.listReceivedRequests(me, 0);
+      await service.countReceivedRequests(me);
+
+      expect(repository.listReceivedRequests).toHaveBeenCalledWith(
+        'u1',
+        0,
+        RECEIVED_FRIEND_REQUESTS_PAGE_SIZE,
+        ['b1', 'b2'],
+      );
+      expect(repository.countReceivedRequests).toHaveBeenCalledWith('u1', [
+        'b1',
+        'b2',
+      ]);
+    });
+
+    it('says where the next page starts while more wait', async () => {
+      const { repository, service } = setup();
+      const items = Array.from(
+        { length: RECEIVED_FRIEND_REQUESTS_PAGE_SIZE },
+        (_, index) => aReceived(String(index)),
+      );
+      repository.listReceivedRequests.mockResolvedValue({ items, total: 45 });
+      await expect(service.listReceivedRequests(me, 20)).resolves.toMatchObject(
+        { total: 45, nextOffset: 40 },
+      );
+    });
+
+    it('has no next page after the last one', async () => {
+      const { repository, service } = setup();
+      repository.listReceivedRequests.mockResolvedValue({
+        items: [aReceived('a')],
+        total: 21,
+      });
+      await expect(service.listReceivedRequests(me, 20)).resolves.toMatchObject(
+        { nextOffset: null },
+      );
+    });
+  });
+
+  describe.each([
+    ['acceptRequest', 'acceptPendingRequest', 'friends'],
+    ['rejectRequest', 'rejectPendingRequest', 'none'],
+  ] as const)('%s (#228)', (method, repositoryMethod, relation) => {
+    const reachableSender = (): ReturnType<typeof setup> => {
+      const context = setup();
+      context.repository.isReachable.mockResolvedValue(true);
+      context.repository[repositoryMethod].mockResolvedValue('r1');
+      return context;
+    };
+
+    it('decides the pending request the sender sent me', async () => {
+      const { repository, service } = reachableSender();
+      await expect(service[method](me, 'u2')).resolves.toBe(relation);
+      expect(repository[repositoryMethod]).toHaveBeenCalledWith(
+        'u2',
+        'u1',
+        expect.any(Date),
+      );
+    });
+
+    it('marks my notification of the request read', async () => {
+      const { notifications, service } = reachableSender();
+      await service[method](me, 'u2');
+      expect(
+        notifications.markFriendRequestNotificationRead,
+      ).toHaveBeenCalledWith(me, { id: 'r1' });
+    });
+
+    it('answers a conflict when nothing waits (decided elsewhere, withdrawn)', async () => {
+      const { repository, notifications, service } = reachableSender();
+      repository[repositoryMethod].mockResolvedValue(null);
+      await expect(service[method](me, 'u2')).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(
+        notifications.markFriendRequestNotificationRead,
+      ).not.toHaveBeenCalled();
+      expect(notifications.notifyFriendRequestAccepted).not.toHaveBeenCalled();
+    });
+
+    it('refuses oneself, without asking', async () => {
+      const { repository, service } = reachableSender();
+      await expect(service[method](me, 'u1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository[repositoryMethod]).not.toHaveBeenCalled();
+    });
+
+    it('answers not found for a blocked or deleted sender', async () => {
+      const { repository, service } = reachableSender();
+      repository.isReachable.mockResolvedValue(false);
+      await expect(service[method](me, 'u2')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(repository[repositoryMethod]).not.toHaveBeenCalled();
+    });
+
+    // #239: nothing passes between a blocked pair, either way (review #257).
+    it.each(['hiddenFor', 'hiddenFrom'] as const)(
+      'answers not found when the pair is blocked (%s)',
+      async (side) => {
+        const { repository, blocks, service } = reachableSender();
+        blocks[side].mockResolvedValue(['u2']);
+        await expect(service[method](me, 'u2')).rejects.toBeInstanceOf(
+          NotFoundException,
+        );
+        expect(blocks[side]).toHaveBeenCalledWith('u1');
+        expect(repository[repositoryMethod]).not.toHaveBeenCalled();
+      },
+    );
+  });
+
+  it('counts the requests waiting for me (#228)', async () => {
+    const { repository, service } = setup();
+    repository.countReceivedRequests.mockResolvedValue(3);
+    await expect(service.countReceivedRequests(me)).resolves.toBe(3);
+    expect(repository.countReceivedRequests).toHaveBeenCalledWith('u1', []);
+  });
+
+  it('tells the sender their request was accepted (#228)', async () => {
+    const { repository, notifications, service } = setup();
+    repository.isReachable.mockResolvedValue(true);
+    repository.acceptPendingRequest.mockResolvedValue('r1');
+    await service.acceptRequest(me, 'u2');
+    expect(notifications.notifyFriendRequestAccepted).toHaveBeenCalledWith({
+      request: { id: 'r1' },
+      senderId: 'u2',
+      acceptedBy: me,
+    });
+  });
+
+  it('tells nobody about a rejection (#228)', async () => {
+    const { repository, notifications, service } = setup();
+    repository.isReachable.mockResolvedValue(true);
+    repository.rejectPendingRequest.mockResolvedValue('r1');
+    await service.rejectRequest(me, 'u2');
+    expect(notifications.notifyFriendRequestAccepted).not.toHaveBeenCalled();
+    expect(notifications.notifyFriendRequest).not.toHaveBeenCalled();
+  });
+
   // #239, ADR-0022: the clean-up of a block by an administrator.
+  describe('countFriends (#226)', () => {
+    it('counts the friends of the list, without people blocked either way', async () => {
+      const { repository, blocks, service } = setup();
+      blocks.hiddenFor.mockResolvedValue(['b1']);
+      blocks.hiddenFrom.mockResolvedValue(['b2']);
+      repository.countFriends.mockResolvedValue(12);
+
+      await expect(service.countFriends(me)).resolves.toBe(12);
+      expect(repository.countFriends).toHaveBeenCalledWith('u1', ['b1', 'b2']);
+    });
+  });
+
+  describe('listFriends (#226)', () => {
+    const aFriend = (id: string): Friend => ({
+      id,
+      name: `Friend ${id}`,
+      image: null,
+      friendsSince: new Date('2026-11-15T10:00:00Z'),
+    });
+
+    it('asks for a page in the order chosen, without people blocked either way', async () => {
+      const { repository, blocks, service } = setup();
+      blocks.hiddenFor.mockResolvedValue(['b1']);
+      blocks.hiddenFrom.mockResolvedValue(['b2', 'b1']);
+      repository.listFriends.mockResolvedValue({
+        items: [aFriend('u2')],
+        total: 1,
+      });
+
+      await expect(service.listFriends(me, 'name_desc', 0)).resolves.toEqual({
+        items: [aFriend('u2')],
+        total: 1,
+        nextOffset: null,
+      });
+      expect(repository.listFriends).toHaveBeenCalledWith(
+        'u1',
+        'name_desc',
+        0,
+        FRIENDS_PAGE_SIZE,
+        ['b1', 'b2'],
+      );
+    });
+
+    it('says where the next page starts', async () => {
+      const { repository, service } = setup();
+      repository.listFriends.mockResolvedValue({
+        items: Array.from({ length: FRIENDS_PAGE_SIZE }, (_, i) =>
+          aFriend(`u${i + 2}`),
+        ),
+        total: 45,
+      });
+
+      await expect(
+        service.listFriends(me, 'newest', 20),
+      ).resolves.toMatchObject({ total: 45, nextOffset: 40 });
+    });
+
+    it('has no next page when nothing came back', async () => {
+      const { repository, service } = setup();
+      repository.listFriends.mockResolvedValue({ items: [], total: 3 });
+
+      await expect(
+        service.listFriends(me, 'oldest', 60),
+      ).resolves.toMatchObject({ nextOffset: null });
+    });
+  });
+
+  describe('removeFriend (#226)', () => {
+    it('removes the friendship for both, silently', async () => {
+      const { repository, notifications, service } = setup();
+      repository.removeFriendship.mockResolvedValue(true);
+
+      await expect(service.removeFriend(me, 'u2')).resolves.toBe('none');
+      expect(repository.removeFriendship).toHaveBeenCalledWith('u1', 'u2');
+      expect(notifications.notifyFriendRequest).not.toHaveBeenCalled();
+      expect(notifications.notifyFriendRequestAccepted).not.toHaveBeenCalled();
+    });
+
+    it('answers the same when they were no longer friends', async () => {
+      const { repository, service } = setup();
+      repository.removeFriendship.mockResolvedValue(false);
+
+      await expect(service.removeFriend(me, 'u2')).resolves.toBe('none');
+    });
+
+    it('refuses oneself', async () => {
+      const { repository, service } = setup();
+
+      await expect(service.removeFriend(me, 'u1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.removeFriendship).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('friendIdsShowingEvents (#226)', () => {
+    it.each([
+      ['upcoming', 'friendsSeeUpcomingEvents'],
+      ['past', 'friendsSeeEventHistory'],
+    ] as const)('filters %s events by %s', async (period, switchName) => {
+      const { repository, service } = setup();
+      repository.findFriendIdsAllowing.mockResolvedValue(['u2']);
+
+      await expect(
+        service.friendIdsShowingEvents('u1', period),
+      ).resolves.toEqual(['u2']);
+      expect(repository.findFriendIdsAllowing).toHaveBeenCalledWith(
+        'u1',
+        switchName,
+      );
+    });
+  });
+
+  describe('friendVisibilityFor (#226)', () => {
+    it("gives the friend's switches", async () => {
+      const { repository, service } = setup();
+      const visibility = {
+        friendsSeeEventHistory: true,
+        friendsSeeUpcomingEvents: false,
+      };
+      repository.findFriendVisibility.mockResolvedValue(visibility);
+
+      await expect(service.friendVisibilityFor('u1', 'u2')).resolves.toBe(
+        visibility,
+      );
+    });
+
+    it('is nothing for oneself', async () => {
+      const { repository, service } = setup();
+
+      await expect(service.friendVisibilityFor('u1', 'u1')).resolves.toBeNull();
+      expect(repository.findFriendVisibility).not.toHaveBeenCalled();
+    });
+  });
+
   describe('removeBlockedPair', () => {
     it('ends the friendship and the pending requests of the pair', async () => {
       const { repository, service } = setup();
+      repository.removeBlockedPair.mockResolvedValue();
       const now = new Date('2030-01-01T12:00:00Z');
       await service.removeBlockedPair('u1', 'u2', now);
       expect(repository.removeBlockedPair).toHaveBeenCalledWith(

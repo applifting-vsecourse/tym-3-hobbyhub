@@ -32,3 +32,55 @@ export const friendSearchPageSchema = z.object({
 })
 
 export const friendRelationResponseSchema = z.object({ relation: friendRelationSchema })
+
+/** #228: a request waiting for my decision, with the sender's public profile only. */
+export const receivedFriendRequestSchema = z.object({
+  id: z.string(),
+  requestedAt: z.coerce.date(),
+  sender: z.object({
+    id: z.string(),
+    name: z.string(),
+    image: z.string().nullable(),
+  }),
+})
+
+export type ReceivedFriendRequest = z.infer<typeof receivedFriendRequestSchema>
+
+export const receivedFriendRequestPageSchema = z.object({
+  items: z.array(receivedFriendRequestSchema),
+  /** All the requests waiting for me: the number on the tab. */
+  total: z.number().int(),
+  /** Where the next page starts; null on the last one. */
+  nextOffset: z.number().int().nullable(),
+})
+
+/** #226: the orders of the friends list; the newest friendship first by default. */
+export const FRIEND_LIST_SORTS = ["newest", "oldest", "name_asc", "name_desc"] as const
+
+export type FriendListSort = (typeof FRIEND_LIST_SORTS)[number]
+
+export const DEFAULT_FRIEND_LIST_SORT = "newest" satisfies FriendListSort
+
+/** #226: one of my friends, with only their public profile and since when. */
+export const friendSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  image: z.string().nullable(),
+  friendsSince: z.coerce.date(),
+})
+
+export type Friend = z.infer<typeof friendSchema>
+
+export const friendPageSchema = z.object({
+  items: z.array(friendSchema),
+  /** All my friends, the number in the heading. */
+  total: z.number().int(),
+  /** Where the next page starts; null on the last one. */
+  nextOffset: z.number().int().nullable(),
+})
+
+/** #226: how many friends I have, the number on the tab. */
+export const friendCountSchema = z.object({ count: z.number().int() })
+
+/** #228: how many requests wait for me, the number on the tab. */
+export const friendRequestCountSchema = z.object({ count: z.number().int() })

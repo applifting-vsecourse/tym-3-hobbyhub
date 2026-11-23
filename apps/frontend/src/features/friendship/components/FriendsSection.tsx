@@ -1,29 +1,41 @@
-import { Link } from "@tanstack/react-router"
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
-import { ROUTES } from "@/app/routes"
-import { Button } from "@/components/ui/button"
-
+import type { FriendListSort } from "@/features/friendship/api/friendshipSchemas"
+import { FriendRequests } from "@/features/friendship/components/FriendRequests"
 import { FriendSearch } from "@/features/friendship/components/FriendSearch"
+import { FriendsList } from "@/features/friendship/components/FriendsList"
 import { FriendsTabs } from "@/features/friendship/components/FriendsTabs"
 import type { FriendsTab } from "@/features/friendship/lib/friendsSearch"
 
 type FriendsSectionProps = {
   tab: FriendsTab
+  /** #226: the order of the friends, from the address. */
+  sort?: FriendListSort
   /** "Vyhledat uživatele" (#225): the text searched and the one in the field. */
   search?: {
     text: string
     typed: string
     onTypedChange: (typed: string) => void
   }
+  /**
+   * #226: the events of my friends; the event feature owns them. `preview`
+   * (the nearest few) stands above the friends, `list` is „Akce přátel“.
+   */
+  friendsEvents?: { preview: ReactNode; list: ReactNode }
 }
 
 /**
- * Přátelé (#227): one place for finding people, the friends and the friend
- * requests. #225 fills the search; the friends (#226) and the requests (#228)
- * still say in one sentence what will be there.
+ * Přátelé (#227): one place for the friends, their events, the friend requests
+ * and finding people. #225 fills the search, #228 the requests, #226 the
+ * friends and their events.
  */
-export function FriendsSection({ tab, search }: FriendsSectionProps) {
+export function FriendsSection({
+  tab,
+  sort = "newest",
+  search,
+  friendsEvents,
+}: FriendsSectionProps) {
   const { t } = useTranslation()
 
   return (
@@ -38,22 +50,15 @@ export function FriendsSection({ tab, search }: FriendsSectionProps) {
           search ? (
             <FriendSearch {...search} />
           ) : null
+        ) : tab === "requests" ? (
+          <FriendRequests />
+        ) : tab === "events" ? (
+          friendsEvents?.list
         ) : (
-          <>
-            <p className="typo-body text-muted-foreground">{t(`friends.empty.${tab}`)}</p>
-            <Button
-              asChild
-              variant="link"
-              className="w-fit px-0"
-            >
-              <Link
-                to={ROUTES.friends}
-                search={{}}
-              >
-                {t("friends.empty.findPeople")}
-              </Link>
-            </Button>
-          </>
+          <div className="flex flex-col gap-8">
+            {friendsEvents?.preview}
+            <FriendsList sort={sort} />
+          </div>
         )}
       </section>
     </div>

@@ -2,14 +2,24 @@ import { friendsValidationPipe } from '@/modules/friendship/controllers/friends-
 import { FRIEND_SEARCH_MAX_LENGTH } from '@/modules/friendship/domain/friendship';
 import { BadRequestException } from '@nestjs/common';
 import {
+  FriendPageResponseDto,
+  FriendResponseDto,
   FriendSearchItemResponseDto,
   FriendSearchPageResponseDto,
+  ReceivedFriendRequestPageResponseDto,
+  ReceivedFriendRequestResponseDto,
 } from './friends.response.dto';
+import { ListFriendsQuery } from './list-friends.query';
+import { ListReceivedFriendRequestsQuery } from './list-received-friend-requests.query';
 import { SearchFriendsQuery } from './search-friends.query';
 import { SendFriendRequestDto } from './send-friend-request.dto';
 
 const validate = (
-  metatype: typeof SearchFriendsQuery | typeof SendFriendRequestDto,
+  metatype:
+    | typeof SearchFriendsQuery
+    | typeof SendFriendRequestDto
+    | typeof ListReceivedFriendRequestsQuery
+    | typeof ListFriendsQuery,
   value: unknown,
   type: 'query' | 'body',
 ): Promise<unknown> =>
@@ -91,6 +101,112 @@ describe('FriendSearchPageResponseDto', () => {
       'image',
       'name',
       'relation',
+    ]);
+  });
+});
+
+describe('ListReceivedFriendRequestsQuery (#228)', () => {
+  it('starts at the first page', async () => {
+    await expect(
+      validate(ListReceivedFriendRequestsQuery, {}, 'query'),
+    ).resolves.toMatchObject({ offset: 0 });
+  });
+
+  it('reads the offset from the address', async () => {
+    await expect(
+      validate(ListReceivedFriendRequestsQuery, { offset: '20' }, 'query'),
+    ).resolves.toMatchObject({ offset: 20 });
+  });
+
+  it.each([[{ offset: '-1' }], [{ offset: 'abc' }], [{ status: 'ACCEPTED' }]])(
+    'refuses %j',
+    async (query) => {
+      await expect(
+        validate(ListReceivedFriendRequestsQuery, query, 'query'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    },
+  );
+});
+
+describe('ReceivedFriendRequestPageResponseDto (#228)', () => {
+  it('carries only the public profile of the sender, never the e-mail', () => {
+    const request = {
+      id: 'r1',
+      requestedAt: new Date('2026-11-15T10:00:00Z'),
+      sender: {
+        id: 'u2',
+        name: 'Libor',
+        image: null,
+        email: 'libor@example.com',
+      },
+      recipientId: 'u1',
+    } as unknown as ReceivedFriendRequestResponseDto;
+    const response = ReceivedFriendRequestPageResponseDto.fromDomain({
+      items: [request],
+      total: 1,
+      nextOffset: null,
+    });
+    expect(Object.keys(response.items[0]).sort()).toEqual([
+      'id',
+      'requestedAt',
+      'sender',
+    ]);
+    expect(Object.keys(response.items[0].sender).sort()).toEqual([
+      'id',
+      'image',
+      'name',
+    ]);
+  });
+});
+
+describe('ListFriendsQuery (#226)', () => {
+  it('starts at the first page, newest friendship first', async () => {
+    await expect(
+      validate(ListFriendsQuery, {}, 'query'),
+    ).resolves.toMatchObject({ sort: 'newest', offset: 0 });
+  });
+
+  it.each(['newest', 'oldest', 'name_asc', 'name_desc'])(
+    'takes the order %s',
+    async (sort) => {
+      await expect(
+        validate(ListFriendsQuery, { sort, offset: '20' }, 'query'),
+      ).resolves.toMatchObject({ sort, offset: 20 });
+    },
+  );
+
+  it.each([
+    [{ sort: 'email' }],
+    [{ sort: 'createdAt DESC' }],
+    [{ offset: '-1' }],
+    [{ userId: 'u2' }],
+  ])('refuses %j', async (query) => {
+    await expect(
+      validate(ListFriendsQuery, query, 'query'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('FriendPageResponseDto (#226)', () => {
+  it('carries only the public profile and since when, never the e-mail', () => {
+    const friend = {
+      id: 'u2',
+      name: 'Libor',
+      image: null,
+      friendsSince: new Date('2026-11-15T10:00:00Z'),
+      email: 'libor@example.com',
+      friendsSeeUpcomingEvents: true,
+    } as unknown as FriendResponseDto;
+    const response = FriendPageResponseDto.fromDomain({
+      items: [friend],
+      total: 1,
+      nextOffset: null,
+    });
+    expect(Object.keys(response.items[0]).sort()).toEqual([
+      'friendsSince',
+      'id',
+      'image',
+      'name',
     ]);
   });
 });

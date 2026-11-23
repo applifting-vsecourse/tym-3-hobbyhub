@@ -1,4 +1,5 @@
 import { EventsService } from '@/modules/event/services/events.service';
+import { FriendEventsService } from '@/modules/event/services/friend-events.service';
 import { OptionalUser, User } from '@/shared/auth/decorators/user.decorator';
 import { Identity } from '@/shared/auth/domain/identity';
 import { AuthenticatedUserGuard } from '@/shared/auth/guards/authenticated-user.guard';
@@ -43,7 +44,10 @@ import { eventsValidationPipe } from './events-validation.pipe';
 @Controller('events')
 @UsePipes(eventsValidationPipe)
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private readonly friendEventsService: FriendEventsService,
+  ) {}
 
   // Public: browsing events needs no account (E2). A signed-in user does not
   // see the events of people blocked from them (#239).
@@ -67,6 +71,7 @@ export class EventsController {
       {
         ...eventFilterOf(query),
         onlyWithFreeSpots: query.onlyWithFreeSpots,
+        startsWithinHours: query.startsWithinHours,
         priceFrom: query.priceFrom,
         priceTo: query.priceTo,
         durationHoursFrom: query.durationHoursFrom,
@@ -324,7 +329,9 @@ export class EventsController {
     @OptionalUser() user: Identity | undefined,
     @Param('id') id: string,
   ): Promise<EventDetailResponseDto> {
-    const event = await this.eventsService.getEventDetail(id, user);
-    return EventDetailResponseDto.fromDomainDetail(event);
+    // #226: with my friends on it, for a signed-in viewer.
+    return EventDetailResponseDto.fromDomainWithFriends(
+      await this.friendEventsService.getEventDetail(id, user),
+    );
   }
 }

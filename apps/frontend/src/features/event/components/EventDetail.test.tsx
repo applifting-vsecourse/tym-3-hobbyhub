@@ -164,6 +164,37 @@ describe("EventDetail", () => {
     expect(screen.getByRole("link", { name: "Jana" }).getAttribute("href")).toBe("/profile/org-1")
   })
 
+  describe("friends on the event (#226)", () => {
+    const friend = (id: string, name: string) => ({ id, name, image: null })
+
+    it("names the friends who go, each a link to the profile", async () => {
+      await renderDetail({ friends: [friend("f1", "Libor"), friend("f2", "Eva")] })
+
+      expect(screen.getByText(/Jdou vaši přátelé/)).toHaveTextContent(
+        "Jdou vaši přátelé Libor a Eva",
+      )
+      expect(screen.getByRole("link", { name: "Libor" })).toHaveAttribute("href", "/profile/f1")
+    })
+
+    it("says who was there once the event is over", async () => {
+      await renderDetail({
+        startAt: new Date(2026, 9, 20, 19, 0),
+        endAt: new Date(2026, 9, 20, 20, 30),
+        status: "FINISHED",
+        friends: [friend("f1", "Libor")],
+      })
+
+      expect(screen.getByText(/zúčastnil/)).toHaveTextContent(
+        "Akce se z vašich přátel zúčastnil(a) Libor",
+      )
+    })
+
+    it("names nobody without friends there, or for a visitor", async () => {
+      await renderDetail({ friends: [] })
+      expect(screen.queryByText(/vaši přátelé|vašich přátel/)).toBeNull()
+    })
+  })
+
   it("names the organizer without a link for a visitor", async () => {
     await renderDetail({ organizerId: "org-1", organizerName: "Jana" })
 

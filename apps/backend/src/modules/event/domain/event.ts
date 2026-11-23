@@ -531,6 +531,11 @@ export type EventFilter = {
 // holds in all, and `onlyWithFreeSpots` keeps the events that still have a seat.
 export type EventListRanges = {
   onlyWithFreeSpots?: boolean;
+  /**
+   * #215 "Last minute": only events that have not started and start within
+   * this many hours.
+   */
+  startsWithinHours?: number;
   priceFrom?: number;
   priceTo?: number;
   durationHoursFrom?: number;
@@ -623,6 +628,83 @@ export type GroupEventPage = {
 };
 
 export const GROUP_EVENTS_PAGE_SIZE = 10;
+
+// #226, ADR-0026: the events of friends. A friend counts on an event they hold
+// a seat on (approved, or attended once it is over; never pending, waitlisted
+// or a no-show) or organize. A page of 10 at a time.
+export const FRIEND_EVENTS_PAGE_SIZE = 10;
+
+export const FRIEND_SEAT_STATUSES = ['APPROVED', 'ATTENDED'] as const;
+
+// Upcoming: not over yet, so one going on now still counts; past: over.
+export type EventPeriod = GroupEventsPeriod;
+
+/**
+ * Which friends' switch applies to an event: upcoming until it ends, past
+ * after. A cancelled event, one that did not take place or a draft has no
+ * friends to show (null).
+ */
+export const friendPeriodOf = (
+  event: { status: EventStatus; endAt: Date },
+  now: Date,
+): EventPeriod | null => {
+  if (event.status !== 'PUBLISHED' && event.status !== 'FINISHED') return null;
+  return event.endAt.getTime() > now.getTime() ? 'upcoming' : 'past';
+};
+
+/**
+ * Who looks at events through a friend, as the queries need it: the groups
+ * they are in (for group-only events) and the people whose events do not
+ * exist for them (#239).
+ */
+export type EventViewerScope = {
+  userId: string;
+  groupIds: string[];
+  hiddenOrganizerIds: string[];
+};
+
+/** A friend on an event: only what their public profile shows. */
+export type EventFriend = {
+  id: string;
+  /** The nickname, the one name a person has (ADR-0025). */
+  name: string;
+  image: string | null;
+};
+
+/** A page of the events of one person, as a friend may see them. */
+export type PersonEventPage = {
+  items: EventListItem[];
+  total: number;
+  /** Where the next page starts; null on the last one. */
+  nextOffset: number | null;
+};
+
+/** An upcoming event my friends go to or organize, with which of them. */
+export type FriendsEventItem = {
+  event: EventListItem;
+  friends: EventFriend[];
+};
+
+export type FriendsEventPage = {
+  items: FriendsEventItem[];
+  total: number;
+  nextOffset: number | null;
+};
+
+/** The detail of an event, with my friends on it (#226) when I am signed in. */
+export type EventDetailWithFriends = {
+  event: EventDetail;
+  /** Absent for a visitor, who has no friends. */
+  friends?: EventFriend[];
+};
+
+/** Where the next page starts after `count` items from `offset`, of `total`. */
+export const nextOffsetOf = (
+  offset: number,
+  count: number,
+  total: number,
+): number | null =>
+  count > 0 && offset + count < total ? offset + count : null;
 
 // Statistics are hidden below this many included participants, so nobody can
 // be picked out of them (F-06.7).
@@ -750,3 +832,42 @@ export type AdminUserEvents = {
 };
 
 export const ADMIN_USER_EVENTS_LIMIT = 50;
+
+// #215: the most hours ahead "Last minute" may look in the event list.
+export const EVENT_LIST_MAX_STARTS_WITHIN_HOURS = 48;
+
+// #215: how one row of the landing page picks its events. Every row holds
+// only what the event list shows (public, published, not hidden) and on top
+// of it: not started yet, a free seat left, not organized by the viewer.
+// `order` decides which come first; the rest narrows the row.
+export type LandingEventOrder = 'soonest' | 'top' | 'nearest';
+
+export type LandingEventSelection = {
+  order: LandingEventOrder;
+  limit: number;
+  /** Starts no later than this instant ("Last minute"). */
+  startsBefore?: Date;
+  /** First and last day (YYYY-MM-DD, `EVENT_LIST_TIME_ZONE`) of the start. */
+  dateFrom?: string;
+  dateTo?: string;
+  /**
+   * "Tvoje oblíbené aktivity": an activity of this person's profile, an
+   * activity or an organizer of an event they played, or one of their groups.
+   */
+  likedBy?: string;
+  /** Organized by one of these people, or one of them holds an approved seat. */
+  attendedByAnyOf?: string[];
+  /** Within the radius of a point; an event without a position is left out. */
+  around?: AroundFilter;
+  /** In this city, ignoring case. */
+  city?: string;
+};
+
+// #215: what the viewer already is on an event a landing row shows.
+export type ViewerEventState = 'JOINED' | 'PENDING';
+
+// #215: a city with upcoming events, for the visitor's choice of "near".
+export type LandingCity = { city: string; eventCount: number };
+
+// #215: someone organizes the event or holds an approved seat on it.
+export type EventAttendee = { eventId: string; userId: string };

@@ -1,6 +1,8 @@
 import { ActivityResponseDto } from '@/modules/activity/controllers/dto/activity.response.dto';
 import {
   EventDetail,
+  EventDetailWithFriends,
+  EventFriend,
   EventListItem,
   EventListPage,
   ParticipantStats,
@@ -271,6 +273,35 @@ export class EventDetailResponseDto extends EventListItemResponseDto {
       'The exact address, when the organizer made it public (#218); null otherwise, when only the people with a seat get it from /participant-info',
   })
   location!: EventLocationResponseDto | null;
+
+  // #226: declared inline, as the friends' DTOs import this file.
+  @ApiPropertyOptional({
+    description:
+      'My friends who go to or organize the event and let friends see it (by name). Only for a signed-in viewer; a friend who did not allow it is never here nor counted',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        image: { type: 'string', nullable: true },
+      },
+    },
+  })
+  friends?: EventFriend[];
+
+  // #226: the detail with my friends on it; a visitor gets no `friends` at all.
+  static fromDomainWithFriends({
+    event,
+    friends,
+  }: EventDetailWithFriends): EventDetailResponseDto {
+    return {
+      ...EventDetailResponseDto.fromDomainDetail(event),
+      ...(friends && {
+        friends: friends.map(({ id, name, image }) => ({ id, name, image })),
+      }),
+    };
+  }
 
   static fromDomainDetail(event: EventDetail): EventDetailResponseDto {
     return {
